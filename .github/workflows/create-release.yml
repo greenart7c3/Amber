@@ -28,7 +28,7 @@ jobs:
       - name: Build AAB
         run: ./gradlew clean bundleRelease --stacktrace
 
-      - name: Sign AAB (Google Play)
+      - name: Sign AAB
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/bundle/release
@@ -40,7 +40,7 @@ jobs:
       - name: Build APK
         run: ./gradlew assembleRelease --stacktrace
 
-      - name: Sign APK (Google Play)
+      - name: Sign APK
         uses: r0adkll/sign-android-release@v1
         with:
           releaseDirectory: app/build/outputs/apk/release
@@ -60,8 +60,8 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload Play APK Universal Asset
-        id: upload-release-asset-play-universal-apk
+      - name: Upload APK Universal Asset
+        id: upload-release-asset-universal-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -71,8 +71,8 @@ jobs:
           asset_name: amber-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload Play APK x86 Asset
-        id: upload-release-asset-play-x86-apk
+      - name: Upload APK x86 Asset
+        id: upload-release-asset-x86-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -82,8 +82,8 @@ jobs:
           asset_name: amber-x86-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload Play APK x86_64 Asset
-        id: upload-release-asset-play-x86-64-apk
+      - name: Upload APK x86_64 Asset
+        id: upload-release-asset-x86-64-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -93,7 +93,7 @@ jobs:
           asset_name: amber-x86_64-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload Google Play AAB Asset
+      - name: Upload AAB Asset
         id: upload-release-asset-aab
         uses: actions/upload-release-asset@v1
         env:

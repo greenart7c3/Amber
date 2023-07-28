@@ -6,7 +6,6 @@ import com.google.gson.JsonElement
 import com.google.gson.JsonParseException
 import java.lang.reflect.Type
 
-
 // REQUEST OBJECTS
 
 abstract class Request(var method: String? = null)

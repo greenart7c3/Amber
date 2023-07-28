@@ -5,5 +5,3 @@ class EOSETime(var time: Long) {
         return time.toString()
     }
 }
-
-

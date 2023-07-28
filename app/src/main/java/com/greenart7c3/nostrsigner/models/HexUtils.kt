@@ -1,9 +1,9 @@
 package com.greenart7c3.nostrsigner.models
 
 import com.greenart7c3.nostrsigner.service.KeyPair
-import com.greenart7c3.nostrsigner.toShortenHex
 import com.greenart7c3.nostrsigner.service.bechToBytes
 import com.greenart7c3.nostrsigner.service.nip19.Nip19
+import com.greenart7c3.nostrsigner.toShortenHex
 import fr.acinq.secp256k1.Hex
 
 /** Makes the distinction between String and Hex **/

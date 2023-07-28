@@ -32,7 +32,7 @@ class MainActivity : AppCompatActivity() {
                     val accountStateViewModel: AccountStateViewModel = viewModel {
                         AccountStateViewModel()
                     }
-                    AccountScreen(accountStateViewModel, event, this@MainActivity)
+                    AccountScreen(accountStateViewModel, event)
                 }
             }
         }

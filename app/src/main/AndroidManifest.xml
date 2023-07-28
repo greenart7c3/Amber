@@ -6,7 +6,7 @@
 
     <application
         android:name=".nostrsigner"
-        android:allowBackup="true"
+        android:allowBackup="false"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
@@ -15,7 +15,9 @@
         android:supportsRtl="true"
         android:theme="@style/Theme.NostrSigner"
         android:launchMode="singleTop"
-        tools:targetApi="31">
+        android:configChanges="orientation|screenSize|screenLayout"
+        android:usesCleartextTraffic="true"
+        tools:targetApi="33">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -38,6 +40,11 @@
                 <data android:scheme="nostrsigner" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name="com.journeyapps.barcodescanner.CaptureActivity"
+            android:screenOrientation="fullSensor"
+            tools:replace="screenOrientation" />
     </application>
 
 </manifest>

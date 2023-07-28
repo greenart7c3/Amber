@@ -20,7 +20,6 @@ class MainActivity : AppCompatActivity() {
         setContent {
             var event: IntentData? = null
             if (intent.data != null) {
-                println(intent?.extras?.getString("relays"))
                 val list = intent?.extras?.getString("relays")!!.split(",")
                 event = IntentData(intent?.data?.toString() ?: "", list)
             }

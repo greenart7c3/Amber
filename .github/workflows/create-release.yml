@@ -31,16 +31,7 @@ jobs:
       - name: Sign AAB (Google Play)
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: app/build/outputs/bundle/playRelease
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Sign AAB (F-Droid)
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/bundle/fdroidRelease
+          releaseDirectory: app/build/outputs/bundle/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -52,16 +43,7 @@ jobs:
       - name: Sign APK (Google Play)
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: app/build/outputs/apk/play/release
-          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
-          alias: ${{ secrets.KEY_ALIAS }}
-          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
-          keyPassword: ${{ secrets.KEY_PASSWORD }}
-
-      - name: Sign APK (F-Droid)
-        uses: r0adkll/sign-android-release@v1
-        with:
-          releaseDirectory: app/build/outputs/apk/fdroid/release
+          releaseDirectory: app/build/outputs/apk/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
@@ -85,7 +67,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: app/build/outputs/apk/release/app-play-universal-release-unsigned-signed.apk
+          asset_path: app/build/outputs/apk/release/app-universal-release-unsigned-signed.apk
           asset_name: amber-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
@@ -96,7 +78,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-play-x86-release-unsigned-signed.apk
+          asset_path: app/build/outputs/apk/release/app-x86-release-unsigned-signed.apk
           asset_name: amber-x86-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
@@ -107,12 +89,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-play-x86_64-release-unsigned-signed.apk
+          asset_path: app/build/outputs/apk/release/app-x86_64-release-unsigned-signed.apk
           asset_name: amber-x86_64-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
       - name: Upload Google Play AAB Asset
-        id: upload-release-asset-play-aab
+        id: upload-release-asset-aab
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

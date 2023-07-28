@@ -78,7 +78,6 @@ jobs:
           draft: false
           prerelease: false
 
-      # Google Play APK
       - name: Upload Play APK Universal Asset
         id: upload-release-asset-play-universal-apk
         uses: actions/upload-release-asset@v1
@@ -86,8 +85,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: app/build/outputs/apk/play/release/app-play-universal-release-unsigned-signed.apk
-          asset_name: amber-googleplay-universal-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/release/app-play-universal-release-unsigned-signed.apk
+          asset_name: amber-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
       - name: Upload Play APK x86 Asset
@@ -97,8 +96,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/play/release/app-play-x86-release-unsigned-signed.apk
-          asset_name: amber-googleplay-x86-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/release/app-play-x86-release-unsigned-signed.apk
+          asset_name: amber-x86-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
       - name: Upload Play APK x86_64 Asset
@@ -108,47 +107,10 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/play/release/app-play-x86_64-release-unsigned-signed.apk
-          asset_name: amber-googleplay-x86_64-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/release/app-play-x86_64-release-unsigned-signed.apk
+          asset_name: amber-x86_64-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      # F-Droid APK
-      - name: Upload F-Droid APK Universal Asset
-        id: upload-release-asset-fdroid-universal-apk
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fdroid/release/app-fdroid-universal-release-unsigned-signed.apk
-          asset_name: amber-fdroid-universal-${{ github.ref_name }}.apk
-          asset_content_type: application/zip
-
-      - name: Upload F-Droid APK x86 Asset
-        id: upload-release-asset-fdroid-x86-apk
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fdroid/release/app-fdroid-x86-release-unsigned-signed.apk
-          asset_name: amber-fdroid-x86-${{ github.ref_name }}.apk
-          asset_content_type: application/zip
-
-      - name: Upload F-Droid APK x86_64 Asset
-        id: upload-release-asset-fdroid-x86-64-apk
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/fdroid/release/app-fdroid-x86_64-release-unsigned-signed.apk
-          asset_name: amber-fdroid-x86_64-${{ github.ref_name }}.apk
-          asset_content_type: application/zip
-
-
-
-      # Google Play AAB
       - name: Upload Google Play AAB Asset
         id: upload-release-asset-play-aab
         uses: actions/upload-release-asset@v1
@@ -156,18 +118,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/bundle/playRelease/app-play-release.aab
-          asset_name: amber-googleplay-${{ github.ref_name }}.aab
-          asset_content_type: application/zip
-
-      # FDroid AAB
-      - name: Upload F-Droid AAB Asset
-        id: upload-release-asset-fdroid-aab
-        uses: actions/upload-release-asset@v1
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/bundle/fdroidRelease/app-fdroid-release.aab
-          asset_name: amber-fdroid-${{ github.ref_name }}.aab
+          asset_path: app/build/outputs/bundle/app-release.aab
+          asset_name: amber-${{ github.ref_name }}.aab
           asset_content_type: application/zip

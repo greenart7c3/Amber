@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.Absolute.Center
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,6 +20,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.models.Account
@@ -40,7 +41,11 @@ fun AccountScreen(
     val accountState by accountStateViewModel.accountContent.collectAsState()
 
     Column {
-        Crossfade(targetState = accountState, animationSpec = tween(durationMillis = 100)) { state ->
+        Crossfade(
+            targetState = accountState,
+            animationSpec = tween(durationMillis = 100),
+            label = "Login"
+        ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {
                     LoginPage(accountStateViewModel)
@@ -65,6 +70,7 @@ fun MainScreen(account: Account, json: IntentData?, mainActivity: MainActivity) 
         mutableStateOf(false)
     }
     val relaysToPost = remember { mutableListOf<Relay>() }
+    val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
         bottomBar = {
@@ -86,10 +92,27 @@ fun MainScreen(account: Account, json: IntentData?, mainActivity: MainActivity) 
                 Button(
                     shape = ButtonBorder,
                     onClick = {
-                        if (relaysToPost.isEmpty()) {
-                            relaysToPost.addAll(relays)
+                        if (event.value == null) {
+                            return@Button
                         }
 
+                        val signedEvent = Event.create(
+                            account.keyPair.privKey!!,
+                            event.value!!.kind,
+                            event.value!!.tags,
+                            event.value!!.content,
+                            event.value!!.createdAt
+                        )
+                        val rawJson = signedEvent.toJson()
+                        clipboardManager.setText(AnnotatedString(rawJson))
+                    }
+                ) {
+                    Text("Sign")
+                }
+
+                Button(
+                    shape = ButtonBorder,
+                    onClick = {
                         if (event.value == null) {
                             return@Button
                         }
@@ -102,6 +125,10 @@ fun MainScreen(account: Account, json: IntentData?, mainActivity: MainActivity) 
                         )
 //                        val rawJson = signedEvent.toJson()
 //                        val resultIntent = Intent()
+
+                        if (relaysToPost.isEmpty()) {
+                            relaysToPost.addAll(relays)
+                        }
 
                         relaysToPost.forEach {
                             it.connectAndRun { relay ->

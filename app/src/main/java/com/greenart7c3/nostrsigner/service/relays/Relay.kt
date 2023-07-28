@@ -80,7 +80,7 @@ class Relay(
 
         try {
             val request = Request.Builder()
-                .header("User-Agent", "Amethyst/${BuildConfig.VERSION_NAME}")
+                .header("User-Agent", "Amber/${BuildConfig.VERSION_NAME}")
                 .url(url.trim())
                 .build()
 

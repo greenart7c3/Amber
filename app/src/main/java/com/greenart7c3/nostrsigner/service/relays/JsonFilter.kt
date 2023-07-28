@@ -1,10 +1,9 @@
-package com.vitorpamplona.amethyst.service.relays
+package com.greenart7c3.nostrsigner.service.relays
 
 import com.google.gson.Gson
 import com.google.gson.GsonBuilder
 import com.google.gson.JsonArray
 import com.google.gson.JsonObject
-import com.greenart7c3.nostrsigner.service.relays.EOSETime
 
 class JsonFilter(
     val ids: List<String>? = null,

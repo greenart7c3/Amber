@@ -1,14 +1,12 @@
+import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+
 buildscript {
     ext {
-        fragment_version = "1.6.0"
         lifecycle_version = '2.6.1'
         compose_ui_version = '1.4.3'
         nav_version = "2.6.0"
-        room_version = "2.4.3"
         accompanist_version = '0.30.0'
         coil_version = '2.4.0'
-        vico_version = '1.7.1'
-        exoplayer_version = '1.1.0'
     }
 }
 
@@ -29,7 +27,7 @@ task installGitHook(type: Copy) {
 tasks.getByPath(':app:preBuild').dependsOn installGitHook
 
 subprojects {
-    tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).configureEach {
+    tasks.withType(KotlinCompile).configureEach {
         kotlinOptions {
             if (project.findProperty("composeCompilerReports") == "true") {
                 freeCompilerArgs += [

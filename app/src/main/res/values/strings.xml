@@ -1,3 +1,19 @@
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name">Amber</string>
+    <string name="account_backup_tips_md" tools:ignore="Typos">
+        ## Key Backup and Safety Tips
+        \n\nYour account is secured by a secret key. The key is long random string starting with **nsec1**. Anyone who has access to your secret key can publish content using your identity.
+        \n\n- Do **not** put your secret key in any website or software you do not trust.
+        \n- Amber developers will **never** ask you for your secret key.
+        \n- **Do** keep a secure backup of your secret key for account recovery. We recommend using a password manager.
+    </string>
+    <string name="secret_key_copied_to_clipboard">Secret key (nsec) copied to clipboard</string>
+    <string name="copy_my_secret_key">Copy my secret key</string>
+    <string name="biometric_authentication_failed">Authentication failed</string>
+    <string name="biometric_error">Error</string>
+    <string name="copies_the_nsec_id_your_password_to_the_clipboard_for_backup">Copies the Nsec ID (your password) to the clipboard for backup</string>
+    <string name="public_key_npub_copied_to_clipboard">Public key (npub) copied to clipboard</string>
+    <string name="copies_the_npub_id_your_user_to_the_clipboard_for_backup">Copies the Npub ID (your user) to the clipboard for backup</string>
+    <string name="copy_my_public_key">Copy my public key</string>
+    <string name="event_pubkey_is_not_equal_to_current_logged_in_user">Event pubkey is not equal to current logged in user</string>
 </resources>

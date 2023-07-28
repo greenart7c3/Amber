@@ -29,6 +29,26 @@ class AccountStateViewModel : ViewModel() {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun prepareLogoutOrSwitch() {
+        when (val state = accountContent.value) {
+            is AccountState.LoggedIn -> {
+                GlobalScope.launch(Dispatchers.Main) {
+                    state.account.saveable.removeObserver(saveListener)
+                }
+            }
+            else -> {}
+        }
+
+        _accountContent.update { AccountState.LoggedOff }
+    }
+
+    fun logOff(npub: String) {
+        prepareLogoutOrSwitch()
+        LocalPreferences.updatePrefsForLogout(npub)
+        tryLoginExistingAccount()
+    }
+
     fun startUI(key: String) {
         if (!key.startsWith("nsec")) {
             throw Exception("Not nsec key")

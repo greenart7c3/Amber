@@ -107,4 +107,12 @@ dependencies {
 
     // Websockets API
     implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
+
+    // Markdown (With fix for full-image bleeds)
+    implementation('com.github.vitorpamplona.compose-richtext:richtext-ui:a0954aba63')
+    implementation('com.github.vitorpamplona.compose-richtext:richtext-ui-material:a0954aba63')
+    implementation('com.github.vitorpamplona.compose-richtext:richtext-commonmark:a0954aba63')
+
+    // Biometrics
+    implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
 }

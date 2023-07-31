@@ -17,7 +17,6 @@ import com.greenart7c3.nostrsigner.models.HexKey
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
-import com.greenart7c3.nostrsigner.service.nip19.Nip19
 import fr.acinq.secp256k1.Hex
 import java.lang.reflect.Type
 import java.math.BigDecimal
@@ -147,18 +146,6 @@ open class Event(
         }
     }
 
-    open fun toNIP19(): String {
-        return if (this is AddressableEvent) {
-            ATag(kind, pubKey, dTag(), null).toNAddr()
-        } else {
-            Nip19.createNEvent(id, pubKey, kind, null)
-        }
-    }
-
-    fun toNostrUri(): String {
-        return "nostr:${toNIP19()}"
-    }
-
     /**
      * Checks if the ID is correct and then if the pubKey's secret key signed the event.
      */
@@ -279,11 +266,9 @@ open class Event(
             .registerTypeAdapter(Request::class.java, RequestDeserializer())
             .create()
 
-        fun fromJson(json: String, lenient: Boolean = false): Event = gson.fromJson(json, Event::class.java).getRefinedEvent(lenient)
+        fun fromJson(json: String): Event = gson.fromJson(json, Event::class.java).getRefinedEvent()
 
-        fun fromJson(json: JsonElement, lenient: Boolean = false): Event = gson.fromJson(json, Event::class.java).getRefinedEvent(lenient)
-
-        fun Event.getRefinedEvent(lenient: Boolean = false): Event = when (kind) {
+        fun Event.getRefinedEvent(): Event = when (kind) {
             else -> this
         }
 

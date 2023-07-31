@@ -2,36 +2,14 @@ package com.greenart7c3.nostrsigner.service.model
 
 import android.util.Log
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.models.hexToByteArray
 import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.bechToBytes
 import com.greenart7c3.nostrsigner.service.nip19.Tlv
-import com.greenart7c3.nostrsigner.service.toByteArray
-import com.greenart7c3.nostrsigner.service.toNAddress
 import fr.acinq.secp256k1.Hex
 
 @Immutable
 data class ATag(val kind: Int, val pubKeyHex: String, val dTag: String, val relay: String?) {
     fun toTag() = "$kind:$pubKeyHex:$dTag"
-
-    fun toNAddr(): String {
-        val kind = kind.toByteArray()
-        val author = pubKeyHex.hexToByteArray()
-        val dTag = dTag.toByteArray(Charsets.UTF_8)
-        val relay = relay?.toByteArray(Charsets.UTF_8)
-
-        var fullArray = byteArrayOf(Tlv.Type.SPECIAL.id, dTag.size.toByte()) + dTag
-
-        if (relay != null) {
-            fullArray = fullArray + byteArrayOf(Tlv.Type.RELAY.id, relay.size.toByte()) + relay
-        }
-
-        fullArray = fullArray +
-            byteArrayOf(Tlv.Type.AUTHOR.id, author.size.toByte()) + author +
-            byteArrayOf(Tlv.Type.KIND.id, kind.size.toByte()) + kind
-
-        return fullArray.toNAddress()
-    }
 
     companion object {
         fun isATag(key: String): Boolean {

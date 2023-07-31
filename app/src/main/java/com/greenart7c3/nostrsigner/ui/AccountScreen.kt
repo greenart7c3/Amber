@@ -31,5 +31,3 @@ fun AccountScreen(
         }
     }
 }
-
-

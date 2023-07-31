@@ -20,8 +20,7 @@ class MainActivity : AppCompatActivity() {
         setContent {
             var event: IntentData? = null
             if (intent.data != null) {
-                val list = intent?.extras?.getString("relays")?.split(",") ?: listOf()
-                event = IntentData(intent?.data?.toString() ?: "", list)
+                event = IntentData(intent?.data?.toString() ?: "")
             }
 
             NostrSignerTheme {

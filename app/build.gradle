@@ -105,9 +105,6 @@ dependencies {
     // Json Serialization
     implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
 
-    // Websockets API
-    implementation 'com.squareup.okhttp3:okhttp:5.0.0-alpha.11'
-
     // Markdown (With fix for full-image bleeds)
     implementation('com.github.vitorpamplona.compose-richtext:richtext-ui:a0954aba63')
     implementation('com.github.vitorpamplona.compose-richtext:richtext-ui-material:a0954aba63')

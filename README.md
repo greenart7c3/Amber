@@ -7,7 +7,7 @@ Designed to have your keys on only one application
 - [x] Offline
 - [ ] Use nip-46 or make an addendum in nip-46
 - [ ] Improve the ui (currently its showing a text with the raw json of the event)
-- [ ] Check if we can use Amber to sign the events of web applications
+- [x] Check if we can use Amber to sign the events of web applications
 - [ ] Change the sign button to just copy the signature of the event
 
 # Adding Amber support for your application
@@ -50,11 +50,27 @@ intent.`package` = "com.greenart7c3.nostrsigner"
 context.startActivity(intent)
 ```
 
-* In Amber you will see 3 buttons
-  
-  - The left one you can select the relays to post the Event
-  - The button in the middle is to sign the event and copy the raw event json to the clipboard
-  - The button on the right is to sign the event and send to the choosen relays
+# Support for Web Applications
+
+* Create the Nostr Event
+
+* Convert the event to json
+
+```js
+const json = JSON.stringify(note)
+```
+
+* Create the intent
+
+```js
+const intent = `nostrsigner:${json}`
+```
+
+* Send the intent
+
+```js
+window.location.href = intent;
+```
 
 # Contributing
 

@@ -2,6 +2,13 @@
 
 Designed to have your keys on only one application
 
+# Current Features
+
+- [x] Offline
+- [ ] Use nip-46 or make an addendum in nip-46
+- [ ] Improve the ui (currently its showing a text with the raw json of the event)
+- [ ] Check if we can use Amber to sign the events of web applications
+
 # Adding Amber support for your application
 
 * Add a package querie in your AndroidManifest.xml
@@ -28,12 +35,6 @@ val json = event.toJson()
 
 ```kotlin
 val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json"))
-```
-
-* Add an extra information with the write relays separated by commas of the current user
-
-```kotlin
-intent.putExtra("relays", "wss://relay.damus.io,wss://nostr.wine")
 ```
 
 * Set the package name of the signer app for the intent

@@ -1,7 +1,7 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'org.jlleitschuh.gradle.ktlint' version "11.3.1"
+    id 'org.jlleitschuh.gradle.ktlint' version "11.5.0"
 }
 
 android {
@@ -70,7 +70,7 @@ dependencies {
     implementation "androidx.compose.runtime:runtime-livedata:$compose_ui_version"
 
     // Navigation
-    implementation("androidx.navigation:navigation-compose:$nav_version")
+    implementation "androidx.navigation:navigation-compose:$nav_version"
 
     // Observe Live data as State
     implementation "androidx.compose.runtime:runtime-livedata:$compose_ui_version"
@@ -99,7 +99,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 
     // For QR generation
-    implementation 'com.google.zxing:core:3.5.1'
+    implementation 'com.google.zxing:core:3.5.2'
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 
     // Json Serialization

@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
+import java.net.URLDecoder
 
 class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -20,7 +21,8 @@ class MainActivity : AppCompatActivity() {
         setContent {
             var event: IntentData? = null
             if (intent.data != null) {
-                event = IntentData(intent?.data?.toString() ?: "")
+                val data = URLDecoder.decode(intent?.data?.toString() ?: "", "utf-8")
+                event = IntentData(data)
             }
 
             NostrSignerTheme {

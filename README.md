@@ -24,7 +24,7 @@ Designed to have your keys on only one application
 * Create the Nostr Event
 
 ```kotlin
-val event = TextNoteEvent(noteId = "", pubKey, TimeUtils.now(), tags, message, signature = "")
+val event = TextNoteEvent(id, pubKey, TimeUtils.now(), tags, message, signature = "")
 ```
 
 * Convert the event to json

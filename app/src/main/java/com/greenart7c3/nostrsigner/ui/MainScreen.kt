@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
+@OptIn(ExperimentalStdlibApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?) {
@@ -111,9 +112,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     return@Button
                                 }
 
-                                val pubKey = CryptoUtils.pubkeyCreate(account.keyPair.privKey!!).toHexKey()
-                                val id = Event.generateId(pubKey, event.value!!.createdAt, event.value!!.kind, event.value!!.tags, event.value!!.content)
-                                val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+                                val id = event.value!!.id.hexToByteArray()
+                                val sig = CryptoUtils.sign(id, account.keyPair.privKey!!).toHexKey()
 
                                 clipboardManager.setText(AnnotatedString(sig))
                             }

@@ -29,6 +29,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.toHexKey
+import com.greenart7c3.nostrsigner.service.CryptoUtils
 import com.greenart7c3.nostrsigner.service.model.Event
 import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
@@ -110,15 +111,11 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     return@Button
                                 }
 
-                                val signedEvent = Event.create(
-                                    account.keyPair.privKey!!,
-                                    event.value!!.kind,
-                                    event.value!!.tags,
-                                    event.value!!.content,
-                                    event.value!!.createdAt
-                                )
-                                val rawJson = signedEvent.toJson()
-                                clipboardManager.setText(AnnotatedString(rawJson))
+                                val pubKey = CryptoUtils.pubkeyCreate(account.keyPair.privKey!!).toHexKey()
+                                val id = Event.generateId(pubKey, event.value!!.createdAt, event.value!!.kind, event.value!!.tags, event.value!!.content)
+                                val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+
+                                clipboardManager.setText(AnnotatedString(sig))
                             }
                         ) {
                             Text("Sign")

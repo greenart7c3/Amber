@@ -9,6 +9,7 @@ Designed to have your keys on only one application
 - [ ] Improve the ui (currently its showing a text with the raw json of the event)
 - [x] Check if we can use Amber to sign the events of web applications
 - [ ] Change the sign button to just copy the signature of the event
+- [ ] User a service or another aproach to not open the app always to get the signed event on android
 
 # Adding Amber support for your application
 

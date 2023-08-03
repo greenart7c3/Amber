@@ -6,6 +6,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.KeyPair
 import com.greenart7c3.nostrsigner.service.bechToBytes
+import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -50,11 +51,12 @@ class AccountStateViewModel : ViewModel() {
     }
 
     fun startUI(key: String) {
-        if (!key.startsWith("nsec")) {
-            throw Exception("Not nsec key")
+        val account = if (key.startsWith("nsec")) {
+            Account(KeyPair(privKey = key.bechToBytes()))
+        } else {
+            Account(KeyPair(Hex.decode(key)))
         }
 
-        val account = Account(KeyPair(privKey = key.bechToBytes()))
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account)
     }

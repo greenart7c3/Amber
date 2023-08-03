@@ -23,6 +23,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
@@ -116,9 +117,17 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 val sig = CryptoUtils.sign(id, account.keyPair.privKey!!).toHexKey()
 
                                 clipboardManager.setText(AnnotatedString(sig))
+
+                                coroutineScope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.signature_copied_to_the_clipboard),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
                             }
                         ) {
-                            Text("Sign")
+                            Text(stringResource(R.string.sign))
                         }
                     }
                 }

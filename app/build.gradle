@@ -26,7 +26,6 @@ android {
             // minifyEnabled false
             // proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             resValue "string", "app_name", "@string/app_name_release"
-            signingConfig signingConfigs.debug
         }
         debug {
             applicationIdSuffix '.debug'

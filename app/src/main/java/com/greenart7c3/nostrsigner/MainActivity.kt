@@ -21,8 +21,17 @@ class MainActivity : AppCompatActivity() {
         setContent {
             var event: IntentData? = null
             if (intent.data != null) {
-                val data = URLDecoder.decode(intent?.data?.toString()?.replace("+", "%2b") ?: "", "utf-8")
-                event = IntentData(data, intent.getStringExtra("name") ?: "")
+                var data = URLDecoder.decode(intent?.data?.toString()?.replace("+", "%2b") ?: "", "utf-8")
+                val split = data.split(";")
+                var name = ""
+                if (split.isNotEmpty()) {
+                    if (split.last().lowercase().contains("name=")) {
+                        name = split.last().replace("name=", "")
+                        val newList = split.toList().dropLast(1)
+                        data = newList.joinToString("")
+                    }
+                }
+                event = IntentData(data, name)
             }
 
             NostrSignerTheme {

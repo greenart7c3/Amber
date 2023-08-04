@@ -36,7 +36,7 @@ val json = event.toJson()
 * Create the intent using the **nostrsigner** scheme
 
 ```kotlin
-val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json"))
+val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json;name=Your Application name"))
 ```
 
 * Set the package name of the signer app for the intent
@@ -64,7 +64,7 @@ const json = JSON.stringify(note)
 * Create the intent
 
 ```js
-const intent = `nostrsigner:${json}`
+const intent = `nostrsigner:${json};name=Your Application name`
 ```
 
 * Send the intent

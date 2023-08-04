@@ -296,6 +296,15 @@ open class Event(
             return CryptoUtils.sha256(rawEventJson.toByteArray())
         }
 
+        fun setPubKeyIfEmpty(event: Event, pubKey: HexKey): Event {
+            if (event.pubKey.isEmpty()) {
+                val id = generateId(pubKey, event.createdAt, event.kind, event.tags, event.content)
+                return Event(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, "")
+            }
+
+            return event
+        }
+
         fun create(privateKey: ByteArray, kind: Int, tags: List<List<String>> = emptyList(), content: String = "", createdAt: Long = TimeUtils.now()): Event {
             val pubKey = CryptoUtils.pubkeyCreate(privateKey).toHexKey()
             val id = generateId(pubKey, createdAt, kind, tags, content)

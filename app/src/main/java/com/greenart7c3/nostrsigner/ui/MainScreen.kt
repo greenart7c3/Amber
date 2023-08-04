@@ -116,7 +116,9 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             return@EventData
                         }
 
-                        if (event.value!!.pubKey != account.keyPair.pubKey.toHexKey()) {
+                        val localEvent = Event.setPubKeyIfEmpty(event.value!!, account.keyPair.pubKey.toHexKey())
+
+                        if (localEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
@@ -127,7 +129,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             return@EventData
                         }
 
-                        val id = event.value!!.id.hexToByteArray()
+                        val id = localEvent.id.hexToByteArray()
                         val sig = CryptoUtils.sign(id, account.keyPair.privKey!!).toHexKey()
 
                         clipboardManager.setText(AnnotatedString(sig))

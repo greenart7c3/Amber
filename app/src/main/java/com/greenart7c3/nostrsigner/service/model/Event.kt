@@ -39,6 +39,9 @@ open class Event(
     override fun createdAt(): Long = createdAt
 
     override fun kind(): Int = kind
+    override fun description(): String {
+        return "event"
+    }
 
     override fun tags(): List<List<String>> = tags
 

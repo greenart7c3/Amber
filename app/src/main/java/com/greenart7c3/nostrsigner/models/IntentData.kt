@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.models
 
 class IntentData(
-    val data: String
+    val data: String,
+    val name: String
 )

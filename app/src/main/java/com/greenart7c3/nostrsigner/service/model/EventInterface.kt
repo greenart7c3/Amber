@@ -14,6 +14,8 @@ interface EventInterface {
 
     fun kind(): Int
 
+    fun description(): String
+
     fun tags(): List<List<String>>
 
     fun content(): String

@@ -21,8 +21,8 @@ class MainActivity : AppCompatActivity() {
         setContent {
             var event: IntentData? = null
             if (intent.data != null) {
-                val data = URLDecoder.decode(intent?.data?.toString() ?: "", "utf-8")
-                event = IntentData(data)
+                val data = URLDecoder.decode(intent?.data?.toString()?.replace("+", "%2b") ?: "", "utf-8")
+                event = IntentData(data, intent.getStringExtra("name") ?: "")
             }
 
             NostrSignerTheme {

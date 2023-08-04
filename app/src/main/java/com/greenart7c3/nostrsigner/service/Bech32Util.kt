@@ -203,6 +203,11 @@ fun ByteArray.toNsec() = Bech32.encodeBytes(hrp = "nsec", this, Bech32.Encoding.
 fun ByteArray.toNpub() = Bech32.encodeBytes(hrp = "npub", this, Bech32.Encoding.Bech32)
 fun ByteArray.toNEvent() = Bech32.encodeBytes(hrp = "nevent", this, Bech32.Encoding.Bech32)
 
+fun String.toShortenHex(): String {
+    if (length <= 16) return this
+    return replaceRange(8, length - 8, ":")
+}
+
 fun String.bechToBytes(hrp: String? = null): ByteArray {
     val decodedForm = Bech32.decodeBytes(this)
     hrp?.also {

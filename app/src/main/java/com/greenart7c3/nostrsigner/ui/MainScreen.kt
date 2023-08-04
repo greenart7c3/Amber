@@ -68,10 +68,6 @@ import org.json.JSONObject
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?) {
-    val event = remember {
-        mutableStateOf<Event?>(null)
-    }
-
     val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -104,21 +100,14 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
             }
         } else {
             json.let {
-                val data = it.data.replace("nostrsigner:", "")
-                event.value = Event.fromJson(data)
+                val event = it.data
 
                 EventData(
                     it.name,
-                    event.value!!,
-                    data,
+                    event,
+                    event.toJson(),
                     {
-                        if (event.value == null) {
-                            return@EventData
-                        }
-
-                        val localEvent = Event.setPubKeyIfEmpty(event.value!!, account.keyPair.pubKey.toHexKey())
-
-                        if (localEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                        if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
@@ -129,7 +118,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             return@EventData
                         }
 
-                        val id = localEvent.id.hexToByteArray()
+                        val id = event.id.hexToByteArray()
                         val sig = CryptoUtils.sign(id, account.keyPair.privKey!!).toHexKey()
 
                         clipboardManager.setText(AnnotatedString(sig))

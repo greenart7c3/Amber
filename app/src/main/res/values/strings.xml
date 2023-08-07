@@ -20,4 +20,5 @@
     <string name="scan_qr">Scan QR</string>
     <string name="signature_copied_to_the_clipboard">Signature copied to the clipboard</string>
     <string name="sign">Sign</string>
+    <string name="raw_json_copied_to_the_clipboard">Raw json copied to the clipboard</string>
 </resources>

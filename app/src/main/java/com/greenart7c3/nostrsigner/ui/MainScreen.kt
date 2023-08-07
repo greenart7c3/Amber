@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -39,6 +40,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -61,6 +63,7 @@ import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
@@ -106,6 +109,9 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                     it.name,
                     event,
                     event.toJson(),
+                    coroutineScope,
+                    clipboardManager,
+                    context,
                     {
                         if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                             coroutineScope.launch {
@@ -146,6 +152,9 @@ fun EventData(
     appName: String,
     event: Event,
     rawJson: String,
+    coroutineScope: CoroutineScope,
+    clipboardManager: ClipboardManager,
+    context: Context,
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
@@ -231,6 +240,27 @@ fun EventData(
                 modifier = Modifier.padding(5.dp),
                 text = JSONObject(rawJson).toString(2)
             )
+            Row(
+                Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center
+            ) {
+                Button(
+                    shape = ButtonBorder,
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(rawJson))
+
+                        coroutineScope.launch {
+                            Toast.makeText(
+                                context,
+                                context.getString(R.string.raw_json_copied_to_the_clipboard),
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
+                ) {
+                    Text("Copy raw json")
+                }
+            }
         }
         Spacer(modifier = Modifier.weight(1f))
 //        Row(
@@ -324,6 +354,9 @@ fun Preview() {
                 "App",
                 event,
                 data,
+                rememberCoroutineScope(),
+                LocalClipboardManager.current,
+                LocalContext.current,
                 { },
                 { }
             )

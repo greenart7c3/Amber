@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.models.HexKey
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
+import com.greenart7c3.nostrsigner.service.KeyPair
 import fr.acinq.secp256k1.Hex
 import java.lang.reflect.Type
 import java.math.BigDecimal
@@ -198,15 +199,15 @@ open class Event(
         ): Event {
             val jsonObject = json.asJsonObject
             return Event(
-                id = jsonObject.get("id").asString,
-                pubKey = jsonObject.get("pubkey").asString,
-                createdAt = jsonObject.get("created_at").asLong,
+                id = jsonObject.get("id")?.asString ?: "",
+                pubKey = jsonObject.get("pubkey")?.asString ?: "",
+                createdAt = jsonObject.get("created_at")?.asLong ?: TimeUtils.now(),
                 kind = jsonObject.get("kind").asInt,
-                tags = jsonObject.get("tags").asJsonArray.map {
+                tags = jsonObject.get("tags")?.asJsonArray?.map {
                     it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }
-                },
+                } ?: emptyList(),
                 content = jsonObject.get("content").asString,
-                sig = jsonObject.get("sig").asString
+                sig = jsonObject.get("sig")?.asString ?: ""
             )
         }
     }
@@ -296,10 +297,12 @@ open class Event(
             return CryptoUtils.sha256(rawEventJson.toByteArray())
         }
 
-        fun setPubKeyIfEmpty(event: Event, pubKey: HexKey): Event {
+        fun setPubKeyIfEmpty(event: Event, keyPair: KeyPair): Event {
             if (event.pubKey.isEmpty()) {
+                val pubKey = keyPair.pubKey.toHexKey()
                 val id = generateId(pubKey, event.createdAt, event.kind, event.tags, event.content)
-                return Event(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, "")
+                val signature = CryptoUtils.sign(id, keyPair.privKey!!).toHexKey()
+                return Event(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, signature)
             }
 
             return event

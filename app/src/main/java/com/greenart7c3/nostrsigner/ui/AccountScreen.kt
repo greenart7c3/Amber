@@ -8,7 +8,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.model.Event
 import java.net.URLDecoder
 
@@ -43,7 +42,7 @@ fun AccountScreen(
                         }
                         var event = Event.fromJson(data)
                         if (event.pubKey.isEmpty()) {
-                            event = Event.setPubKeyIfEmpty(event, state.account.keyPair.pubKey.toHexKey())
+                            event = Event.setPubKeyIfEmpty(event, state.account.keyPair)
                         }
                         intentData = IntentData(event, name)
                     }

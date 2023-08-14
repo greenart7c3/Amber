@@ -12,19 +12,21 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,6 +55,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.theme.Font14SP
+import com.greenart7c3.nostrsigner.ui.theme.Size35dp
+import com.greenart7c3.nostrsigner.ui.theme.placeholderText
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -118,7 +122,8 @@ fun LoginPage(
                 ),
                 placeholder = {
                     Text(
-                        text = "nsec.."
+                        text = "nsec..",
+                        color = MaterialTheme.colors.placeholderText
                     )
                 },
                 trailingIcon = {
@@ -149,7 +154,7 @@ fun LoginPage(
                             painter = painterResource(R.drawable.ic_qrcode),
                             null,
                             modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colorScheme.primary
+                            tint = MaterialTheme.colors.primary
                         )
                     }
                 },
@@ -167,8 +172,8 @@ fun LoginPage(
             if (errorMessage.isNotBlank()) {
                 Text(
                     text = errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall
+                    color = MaterialTheme.colors.error,
+                    style = MaterialTheme.typography.caption
                 )
             }
 
@@ -190,9 +195,14 @@ fun LoginPage(
                             }
                         }
                     },
+                    shape = RoundedCornerShape(Size35dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp)
+                        .height(50.dp),
+                    colors = ButtonDefaults
+                        .buttonColors(
+                            backgroundColor = MaterialTheme.colors.primary
+                        )
                 ) {
                     Text(text = "Login")
                 }
@@ -211,7 +221,7 @@ fun LoginPage(
             style = TextStyle(
                 fontSize = Font14SP,
                 textDecoration = TextDecoration.Underline,
-                color = MaterialTheme.colorScheme.primary,
+                color = MaterialTheme.colors.primary,
                 textAlign = TextAlign.Center
             )
         )

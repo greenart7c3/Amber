@@ -7,18 +7,18 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.AlertDialog
+import androidx.compose.material.Divider
+import androidx.compose.material.Icon
+import androidx.compose.material.IconButton
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.ScaffoldState
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Divider
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -42,7 +42,7 @@ import kotlinx.coroutines.launch
 fun Drawer(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
-    drawerState: DrawerState
+    scaffoldState: ScaffoldState
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
     var backupDialogOpen by remember { mutableStateOf(false) }
@@ -83,34 +83,34 @@ fun Drawer(
 
     Surface(
         modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.background
+        color = MaterialTheme.colors.background
     ) {
         Column {
             Spacer(modifier = Modifier.weight(1f))
             IconRow(
                 title = "Backup Keys",
                 icon = Icons.Default.Key,
-                tint = MaterialTheme.colorScheme.onBackground,
+                tint = MaterialTheme.colors.onBackground,
                 onClick = {
                     scope.launch {
-                        drawerState.close()
+                        scaffoldState.drawerState.close()
                     }
                     backupDialogOpen = true
                 }
             )
-            BottomContent(account, drawerState)
+            BottomContent(account, scaffoldState)
         }
     }
     if (backupDialogOpen) {
         AccountBackupDialog(account, onClose = { backupDialogOpen = false })
     }
-    BackHandler(enabled = drawerState.isOpen) {
-        scope.launch { drawerState.close() }
+    BackHandler(enabled = scaffoldState.drawerState.isOpen) {
+        scope.launch { scaffoldState.drawerState.close() }
     }
 }
 
 @Composable
-fun BottomContent(account: Account, drawerState: DrawerState) {
+fun BottomContent(account: Account, scaffoldState: ScaffoldState) {
     val coroutineScope = rememberCoroutineScope()
 
     // store the dialog open or close state
@@ -140,14 +140,14 @@ fun BottomContent(account: Account, drawerState: DrawerState) {
             IconButton(onClick = {
                 dialogOpen = true
                 coroutineScope.launch {
-                    drawerState.close()
+                    scaffoldState.drawerState.close()
                 }
             }) {
                 Icon(
                     Icons.Default.QrCode,
                     null,
                     modifier = Modifier.size(24.dp),
-                    tint = MaterialTheme.colorScheme.primary
+                    tint = MaterialTheme.colors.primary
                 )
             }
         }

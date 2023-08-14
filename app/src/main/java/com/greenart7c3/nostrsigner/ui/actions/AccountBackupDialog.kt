@@ -16,15 +16,14 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.material.Button
+import androidx.compose.material.ButtonDefaults
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Surface
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
-import androidx.compose.material3.Button
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
@@ -43,8 +42,11 @@ import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.service.toNsec
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
+import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.halilibo.richtext.markdown.Markdown
-import com.halilibo.richtext.ui.material3.Material3RichText
+import com.halilibo.richtext.ui.RichTextStyle
+import com.halilibo.richtext.ui.material.MaterialRichText
+import com.halilibo.richtext.ui.resolveDefaults
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -57,7 +59,7 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
+                    .background(MaterialTheme.colors.background)
                     .fillMaxSize()
             ) {
                 Row(
@@ -77,7 +79,9 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center
                 ) {
-                    Material3RichText {
+                    MaterialRichText(
+                        style = RichTextStyle().resolveDefaults()
+                    ) {
                         Markdown(
                             content = stringResource(R.string.account_backup_tips_md)
                         )
@@ -120,15 +124,19 @@ private fun NSecCopyButton(
                 copyNSec(context, scope, account, clipboardManager)
             }
         },
+        shape = ButtonBorder,
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = MaterialTheme.colors.primary
+        ),
         contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp)
     ) {
         Icon(
+            tint = MaterialTheme.colors.onPrimary,
             imageVector = Icons.Default.Key,
             contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            Modifier.size(18.dp)
+            modifier = Modifier.padding(end = 5.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
-        Text(stringResource(id = R.string.copy_my_secret_key))
+        Text(stringResource(id = R.string.copy_my_secret_key), color = MaterialTheme.colors.onPrimary)
     }
 }
 
@@ -152,16 +160,21 @@ private fun NPubCopyButton(
                 ).show()
             }
         },
+        shape = ButtonBorder,
+        colors = ButtonDefaults.buttonColors(
+            backgroundColor = MaterialTheme.colors.primary
+        ),
         contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp)
     ) {
         Icon(
+            tint = MaterialTheme.colors.onPrimary,
             imageVector = Icons.Default.Key,
             contentDescription = stringResource(R.string.copies_the_npub_id_your_user_to_the_clipboard_for_backup),
-            Modifier.size(18.dp)
+            modifier = Modifier.padding(end = 5.dp)
         )
-        Spacer(modifier = Modifier.width(8.dp))
         Text(
-            stringResource(R.string.copy_my_public_key)
+            stringResource(R.string.copy_my_public_key),
+            color = MaterialTheme.colors.onPrimary
         )
     }
 }

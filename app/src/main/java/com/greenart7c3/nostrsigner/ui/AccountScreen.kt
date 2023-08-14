@@ -20,8 +20,7 @@ fun AccountScreen(
     Column {
         Crossfade(
             targetState = accountState,
-            animationSpec = tween(durationMillis = 100),
-            label = ""
+            animationSpec = tween(durationMillis = 100)
         ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {

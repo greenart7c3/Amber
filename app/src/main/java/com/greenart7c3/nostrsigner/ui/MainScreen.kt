@@ -17,22 +17,21 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.Button
+import androidx.compose.material.Card
+import androidx.compose.material.Divider
+import androidx.compose.material.DrawerValue
+import androidx.compose.material.Icon
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Scaffold
+import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
-import androidx.compose.material3.DrawerValue
-import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalDrawerSheet
-import androidx.compose.material3.ModalNavigationDrawer
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material.rememberDrawerState
+import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,99 +63,94 @@ import com.greenart7c3.nostrsigner.service.model.Event
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
+import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
 @OptIn(ExperimentalStdlibApi::class)
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?, packageName: String?) {
-    val drawerState = rememberDrawerState(initialValue = DrawerValue.Closed)
-
+    val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
-    ModalNavigationDrawer(
-        drawerState = drawerState,
+    Scaffold(
+        scaffoldState = scaffoldState,
         drawerContent = {
-            ModalDrawerSheet {
-                Drawer(
-                    accountStateViewModel = accountStateViewModel,
-                    account = account,
-                    drawerState = drawerState
-                )
-            }
+            Drawer(
+                accountStateViewModel = accountStateViewModel,
+                account = account,
+                scaffoldState = scaffoldState
+            )
+        },
+        topBar = {
+            MainAppBar(
+                scaffoldState,
+                accountStateViewModel,
+                account
+            )
         }
     ) {
-        Scaffold(
-            topBar = {
-                MainAppBar(
-                    drawerState,
-                    accountStateViewModel,
-                    account
-                )
+        if (json == null) {
+            Column(
+                Modifier.fillMaxSize(),
+                Arrangement.Center,
+                Alignment.CenterHorizontally
+            ) {
+                Text("No event to sign")
             }
-        ) {
-            if (json == null) {
-                Column(
-                    Modifier.fillMaxSize(),
-                    Arrangement.Center,
-                    Alignment.CenterHorizontally
-                ) {
-                    Text("No event to sign")
-                }
-            } else {
-                json.let {
-                    val event = it.data
+        } else {
+            json.let {
+                val event = it.data
 
-                    EventData(
-                        packageName ?: it.name,
-                        event,
-                        event.toJson(),
-                        coroutineScope,
-                        clipboardManager,
-                        context,
-                        {
-                            if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
-                                coroutineScope.launch {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                return@EventData
-                            }
-
-                            val id = event.id.hexToByteArray()
-                            val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
-
-                            clipboardManager.setText(AnnotatedString(sig))
-
+                EventData(
+                    packageName ?: it.name,
+                    event,
+                    event.toJson(),
+                    coroutineScope,
+                    clipboardManager,
+                    context,
+                    {
+                        if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                             coroutineScope.launch {
-                                val activity = context.getAppCompatActivity()
-                                if (packageName != null) {
-                                    val intent = Intent()
-                                    intent.putExtra("signature", sig)
-                                    activity?.setResult(RESULT_OK, intent)
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.signature_copied_to_the_clipboard),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                activity?.finish()
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    Toast.LENGTH_SHORT
+                                ).show()
                             }
-                        },
-                        {
-                            context.getAppCompatActivity()?.finish()
+                            return@EventData
                         }
-                    )
-                }
+
+                        val id = event.id.hexToByteArray()
+                        val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+
+                        clipboardManager.setText(AnnotatedString(sig))
+
+                        coroutineScope.launch {
+                            val activity = context.getAppCompatActivity()
+                            if (packageName != null) {
+                                val intent = Intent()
+                                intent.putExtra("signature", sig)
+                                activity?.setResult(RESULT_OK, intent)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.signature_copied_to_the_clipboard),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            activity?.finish()
+                        }
+                    },
+                    {
+                        context.getAppCompatActivity()?.finish()
+                    }
+                )
             }
         }
     }
@@ -186,7 +180,6 @@ fun EventData(
         Modifier
             .fillMaxSize()
             .padding(8.dp)
-            .verticalScroll(scroll)
     ) {
         Text(
             modifier = Modifier.fillMaxWidth(),
@@ -242,6 +235,7 @@ fun EventData(
             contentAlignment = Alignment.Center
         ) {
             Button(
+                shape = ButtonBorder,
                 onClick = {
                     showMore = !showMore
                 }
@@ -251,7 +245,10 @@ fun EventData(
         }
         if (showMore) {
             Text(
-                modifier = Modifier.padding(5.dp),
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(5.dp)
+                    .verticalScroll(rememberScrollState()),
                 text = JSONObject(rawJson).toString(2)
             )
             Row(
@@ -259,6 +256,7 @@ fun EventData(
                 horizontalArrangement = Arrangement.Center
             ) {
                 Button(
+                    shape = ButtonBorder,
                     onClick = {
                         clipboardManager.setText(AnnotatedString(rawJson))
 
@@ -274,27 +272,9 @@ fun EventData(
                     Text("Copy raw json")
                 }
             }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
         }
-        Spacer(modifier = Modifier.weight(1f))
-//        Row(
-//            horizontalArrangement = Arrangement.SpaceBetween,
-//            verticalAlignment = Alignment.CenterVertically,
-//            modifier = Modifier
-//                .clickable {
-//                    checked = !checked
-//                }
-//        ) {
-//            Text(
-//                modifier = Modifier.weight(1f),
-//                text = "Remember my choice and don't ask again"
-//            )
-//            Switch(
-//                checked = checked,
-//                onCheckedChange = {
-//                    checked = !checked
-//                }
-//            )
-//        }
 
         Row(
             Modifier
@@ -303,12 +283,14 @@ fun EventData(
             Arrangement.Center
         ) {
             Button(
+                shape = ButtonBorder,
                 onClick = onReject
             ) {
                 Text("Reject")
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(
+                shape = ButtonBorder,
                 onClick = onAccept
             ) {
                 Text("Accept")
@@ -335,7 +317,7 @@ fun EventRow(
         Icon(
             icon,
             null,
-            tint = MaterialTheme.colorScheme.onBackground
+            tint = MaterialTheme.colors.onBackground
         )
         Text(
             modifier = Modifier.padding(start = 8.dp),
@@ -352,7 +334,7 @@ fun EventRow(
     }
 }
 
-@SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
+@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Preview(device = "id:Nexus S")
 @Composable
 fun Preview() {

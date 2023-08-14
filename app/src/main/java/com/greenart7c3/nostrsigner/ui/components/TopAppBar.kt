@@ -1,31 +1,31 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.material.AlertDialog
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.ScaffoldState
-import androidx.compose.material.Text
-import androidx.compose.material.TextButton
-import androidx.compose.material.TopAppBar
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DrawerState
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainAppBar(scaffoldState: ScaffoldState, accountStateViewModel: AccountStateViewModel, account: Account) {
+fun MainAppBar(drawerState: DrawerState, accountStateViewModel: AccountStateViewModel, account: Account) {
     val scope = rememberCoroutineScope()
     TopAppBar(
         title = { Text(text = "Amber") },
@@ -33,14 +33,14 @@ fun MainAppBar(scaffoldState: ScaffoldState, accountStateViewModel: AccountState
             IconButton(
                 onClick = {
                     scope.launch {
-                        scaffoldState.drawerState.open()
+                        drawerState.open()
                     }
                 }
             ) {
                 Icon(
                     imageVector = Icons.Default.Menu,
                     contentDescription = null,
-                    tint = MaterialTheme.colors.onSurface
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
             }
         },
@@ -49,9 +49,7 @@ fun MainAppBar(scaffoldState: ScaffoldState, accountStateViewModel: AccountState
                 accountStateViewModel = accountStateViewModel,
                 account = account
             )
-        },
-        backgroundColor = Color.Transparent,
-        elevation = 0.dp
+        }
     )
 }
 
@@ -98,7 +96,7 @@ fun LogoutButton(accountStateViewModel: AccountStateViewModel, account: Account)
         Icon(
             imageVector = Icons.Default.Logout,
             contentDescription = null,
-            tint = MaterialTheme.colors.onSurface
+            tint = MaterialTheme.colorScheme.onSurface
         )
     }
 }

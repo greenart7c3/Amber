@@ -14,7 +14,8 @@ import java.net.URLDecoder
 @Composable
 fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
-    intent: Intent
+    intent: Intent,
+    packageName: String?
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
 
@@ -47,7 +48,7 @@ fun AccountScreen(
                         intentData = IntentData(event, name)
                     }
 
-                    MainScreen(state.account, accountStateViewModel, intentData)
+                    MainScreen(state.account, accountStateViewModel, intentData, packageName)
                 }
             }
         }

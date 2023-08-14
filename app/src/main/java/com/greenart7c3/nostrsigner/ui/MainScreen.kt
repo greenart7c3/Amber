@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
+import android.app.Activity.RESULT_OK
+import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -67,7 +69,7 @@ import org.json.JSONObject
 @OptIn(ExperimentalStdlibApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
-fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?) {
+fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?, packageName: String?) {
     val scaffoldState = rememberScaffoldState(rememberDrawerState(DrawerValue.Closed))
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -103,7 +105,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                 val event = it.data
 
                 EventData(
-                    it.name,
+                    packageName ?: it.name,
                     event,
                     event.toJson(),
                     {
@@ -124,12 +126,19 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                         clipboardManager.setText(AnnotatedString(sig))
 
                         coroutineScope.launch {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.signature_copied_to_the_clipboard),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                            context.getAppCompatActivity()?.finish()
+                            val activity = context.getAppCompatActivity()
+                            if (packageName != null) {
+                                val intent = Intent()
+                                intent.putExtra("signature", sig)
+                                activity?.setResult(RESULT_OK, intent)
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.signature_copied_to_the_clipboard),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            activity?.finish()
                         }
                     },
                     {

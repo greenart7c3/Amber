@@ -132,7 +132,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             }
 
                             val id = event.id.hexToByteArray()
-                            val sig = CryptoUtils.sign(id, account.keyPair.privKey!!).toHexKey()
+                            val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
 
                             clipboardManager.setText(AnnotatedString(sig))
 

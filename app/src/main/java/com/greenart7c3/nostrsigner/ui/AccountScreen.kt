@@ -7,9 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.service.model.Event
-import java.net.URLDecoder
+import com.greenart7c3.nostrsigner.service.IntentUtils
 
 @Composable
 fun AccountScreen(
@@ -30,24 +28,7 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    var intentData: IntentData? = null
-                    if (intent.data != null) {
-                        var data = URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
-                        val split = data.split(";")
-                        var name = ""
-                        if (split.isNotEmpty()) {
-                            if (split.last().lowercase().contains("name=")) {
-                                name = split.last().replace("name=", "")
-                                val newList = split.toList().dropLast(1)
-                                data = newList.joinToString("")
-                            }
-                        }
-                        var event = Event.fromJson(data)
-                        if (event.pubKey.isEmpty()) {
-                            event = Event.setPubKeyIfEmpty(event, state.account.keyPair)
-                        }
-                        intentData = IntentData(event, name)
-                    }
+                    val intentData = IntentUtils.getIntentData(intent, state.account.keyPair)
 
                     MainScreen(state.account, accountStateViewModel, intentData, packageName)
                 }

@@ -149,7 +149,7 @@ object LocalPreferences {
     fun saveToEncryptedStorage(account: Account) {
         val prefs = encryptedPreferences(account.keyPair.pubKey.toNpub())
         prefs.edit().apply {
-            account.keyPair.privKey?.let { putString(PrefKeys.NOSTR_PRIVKEY, it.toHexKey()) }
+            account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it.toHexKey()) }
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
         }.apply()
     }

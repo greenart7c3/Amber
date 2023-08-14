@@ -301,7 +301,7 @@ open class Event(
             if (event.pubKey.isEmpty()) {
                 val pubKey = keyPair.pubKey.toHexKey()
                 val id = generateId(pubKey, event.createdAt, event.kind, event.tags, event.content)
-                val signature = CryptoUtils.sign(id, keyPair.privKey!!).toHexKey()
+                val signature = CryptoUtils.sign(id, keyPair.privKey).toHexKey()
                 return Event(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, signature)
             }
 

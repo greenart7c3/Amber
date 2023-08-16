@@ -10,17 +10,15 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.NostrSigner"
+        android:theme="@style/Theme.SignerSplash"
         android:launchMode="singleTop"
         android:configChanges="orientation|screenSize|screenLayout"
         android:usesCleartextTraffic="true"
         tools:targetApi="33">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:theme="@style/Theme.NostrSigner">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

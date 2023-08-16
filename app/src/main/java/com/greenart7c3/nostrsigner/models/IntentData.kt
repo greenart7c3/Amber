@@ -1,8 +1,15 @@
 package com.greenart7c3.nostrsigner.models
 
-import com.greenart7c3.nostrsigner.service.model.Event
-
 class IntentData(
-    val data: Event,
-    val name: String
+    val data: String,
+    val name: String,
+    val type: SignerType
 )
+
+enum class SignerType {
+    SIGN_EVENT,
+    NIP04_ENCRYPT,
+    NIP04_DECRYPT,
+    NIP44_ENCRYPT,
+    NIP44_DECRYPT
+}

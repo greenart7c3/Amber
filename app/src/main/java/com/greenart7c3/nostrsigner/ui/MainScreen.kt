@@ -49,22 +49,22 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.Event
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import org.json.JSONObject
@@ -105,9 +105,10 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
             }
         } else {
             json.let {
-                val event = it.data
+                val event = IntentUtils.getIntent(it.data, account.keyPair)
 
                 EventData(
+                    it.type,
                     packageName ?: it.name,
                     event,
                     event.toJson(),
@@ -158,6 +159,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
 
 @Composable
 fun EventData(
+    type: SignerType,
     appName: String,
     event: Event,
     rawJson: String,
@@ -331,28 +333,5 @@ fun EventRow(
             overflow = TextOverflow.Ellipsis,
             modifier = Modifier.fillMaxWidth()
         )
-    }
-}
-
-@SuppressLint("UnusedMaterialScaffoldPaddingParameter")
-@Preview(device = "id:Nexus S")
-@Composable
-fun Preview() {
-    val event = Event("123", "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19", TimeUtils.now(), 1, listOf(), "This is a test 123 123 123 123 123 123", "")
-    val data = event.toJson()
-
-    NostrSignerTheme(darkTheme = true) {
-        Scaffold {
-            EventData(
-                "App",
-                event,
-                data,
-                rememberCoroutineScope(),
-                LocalClipboardManager.current,
-                LocalContext.current,
-                { },
-                { }
-            )
-        }
     }
 }

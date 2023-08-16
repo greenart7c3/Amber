@@ -27,7 +27,7 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    val intentData = IntentUtils.getIntentData(intent, state.account.keyPair)
+                    val intentData = IntentUtils.getIntentData(intent)
 
                     MainScreen(state.account, accountStateViewModel, intentData, packageName)
                 }

@@ -15,7 +15,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
@@ -57,6 +56,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.hexToByteArray
 import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -117,6 +117,28 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                     clipboardManager,
                     context,
                     {
+                        if (it.type == SignerType.NIP04_DECRYPT) {
+                            val sig = CryptoUtils.decrypt(event.content, account.keyPair.privKey, event.talkingWith(account.keyPair.pubKey.toHexKey()).hexToByteArray())
+                            clipboardManager.setText(AnnotatedString(sig))
+
+                            coroutineScope.launch {
+                                val activity = context.getAppCompatActivity()
+                                if (packageName != null) {
+                                    val intent = Intent()
+                                    intent.putExtra("signature", sig)
+                                    activity?.setResult(RESULT_OK, intent)
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.signature_copied_to_the_clipboard),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                activity?.finish()
+                            }
+                            return@EventData
+                        }
+
                         if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                             coroutineScope.launch {
                                 Toast.makeText(
@@ -173,10 +195,6 @@ fun EventData(
     var showMore by remember {
         mutableStateOf(false)
     }
-    var checked by remember {
-        mutableStateOf(false)
-    }
-    val scroll = rememberScrollState()
     val eventDescription = event.description()
 
     Column(
@@ -197,7 +215,7 @@ fun EventData(
         ) {
             Column(Modifier.padding(6.dp)) {
                 Text(
-                    "wants you to sign a $eventDescription",
+                    if (type == SignerType.NIP04_DECRYPT) "wants you to decrypt a message" else "wants you to sign a $eventDescription",
                     fontWeight = FontWeight.Bold
                 )
 

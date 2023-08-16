@@ -16,13 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Divider
 import androidx.compose.material.DrawerValue
 import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
+import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
@@ -47,6 +47,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
@@ -246,12 +247,11 @@ fun EventData(
             }
         }
         if (showMore) {
-            Text(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(5.dp)
-                    .verticalScroll(rememberScrollState()),
-                text = JSONObject(rawJson).toString(2)
+            OutlinedTextField(
+                modifier = Modifier.weight(1f),
+                value = TextFieldValue(JSONObject(rawJson).toString(2)),
+                onValueChange = { },
+                readOnly = true
             )
             Row(
                 Modifier.fillMaxWidth(),

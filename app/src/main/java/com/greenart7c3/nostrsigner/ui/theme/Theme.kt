@@ -17,6 +17,7 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.view.WindowCompat
 
 val Shapes = Shapes(
     small = RoundedCornerShape(4.dp),
@@ -74,11 +75,14 @@ fun NostrSignerTheme(
     if (!view.isInEditMode) {
         SideEffect {
             val window = (view.context as Activity).window
+            val insetsController = WindowCompat.getInsetsController(window, view)
             if (darkTheme) {
                 window.statusBarColor = colors.background.toArgb()
             } else {
                 window.statusBarColor = colors.primary.toArgb()
             }
+            window.navigationBarColor = colors.background.toArgb()
+            insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }
 }

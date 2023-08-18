@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +20,6 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val packageName = callingPackage
-            val referrer = referrer?.host
-
-            Log.d("test", referrer ?: "")
 
             NostrSignerTheme {
                 Surface(

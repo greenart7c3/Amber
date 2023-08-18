@@ -23,8 +23,9 @@ object IntentUtils {
                     name = split.last().replace("name=", "")
                 }
             }
+            val pubKey = intent.extras?.getString("pubKey") ?: ""
 
-            return IntentData(data, name, type)
+            return IntentData(data, name, type, pubKey)
         }
         return null
     }

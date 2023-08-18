@@ -3,9 +3,6 @@ package com.greenart7c3.nostrsigner.ui.previews
 import android.annotation.SuppressLint
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
@@ -27,9 +24,6 @@ fun EventDataPreview() {
                 "App",
                 event,
                 data,
-                rememberCoroutineScope(),
-                LocalClipboardManager.current,
-                LocalContext.current,
                 { },
                 { }
             )

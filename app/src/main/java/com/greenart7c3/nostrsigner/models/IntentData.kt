@@ -3,7 +3,8 @@ package com.greenart7c3.nostrsigner.models
 class IntentData(
     val data: String,
     val name: String,
-    val type: SignerType
+    val type: SignerType,
+    val pubKey: HexKey
 )
 
 enum class SignerType {

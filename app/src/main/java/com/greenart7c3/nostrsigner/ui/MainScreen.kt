@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
-import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
@@ -41,7 +40,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -66,11 +64,10 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import kotlinx.coroutines.CoroutineScope
+import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.launch
 import org.json.JSONObject
 
-@OptIn(ExperimentalStdlibApi::class)
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
 fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?, packageName: String?) {
@@ -106,19 +103,17 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
             }
         } else {
             json.let {
-                val event = IntentUtils.getIntent(it.data, account.keyPair)
-
-                EventData(
-                    it.type,
-                    packageName ?: it.name,
-                    event,
-                    event.toJson(),
-                    coroutineScope,
-                    clipboardManager,
-                    context,
-                    {
-                        if (it.type == SignerType.NIP04_DECRYPT) {
-                            val sig = CryptoUtils.decrypt(event.content, account.keyPair.privKey, event.talkingWith(account.keyPair.pubKey.toHexKey()).hexToByteArray())
+                val appName = packageName ?: it.name
+                if (it.type == SignerType.NIP04_DECRYPT) {
+                    DecryptData(
+                        appName,
+                        it.data,
+                        {
+                            val sig = CryptoUtils.decrypt(
+                                it.data,
+                                account.keyPair.privKey,
+                                Hex.decode(it.pubKey)
+                            )
                             clipboardManager.setText(AnnotatedString(sig))
 
                             coroutineScope.launch {
@@ -136,47 +131,143 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 }
                                 activity?.finish()
                             }
-                            return@EventData
+                            return@DecryptData
+                        },
+                        {
+                            context.getAppCompatActivity()?.finish()
                         }
+                    )
+                } else {
+                    val event = IntentUtils.getIntent(it.data, account.keyPair)
 
-                        if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
+                    EventData(
+                        it.type,
+                        appName,
+                        event,
+                        event.toJson(),
+                        {
+                            if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
+                                coroutineScope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                return@EventData
+                            }
+
+                            val id = event.id.hexToByteArray()
+                            val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+
+                            clipboardManager.setText(AnnotatedString(sig))
+
                             coroutineScope.launch {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                    Toast.LENGTH_SHORT
-                                ).show()
+                                val activity = context.getAppCompatActivity()
+                                if (packageName != null) {
+                                    val intent = Intent()
+                                    intent.putExtra("signature", sig)
+                                    activity?.setResult(RESULT_OK, intent)
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.signature_copied_to_the_clipboard),
+                                        Toast.LENGTH_SHORT
+                                    ).show()
+                                }
+                                activity?.finish()
                             }
-                            return@EventData
+                        },
+                        {
+                            context.getAppCompatActivity()?.finish()
                         }
+                    )
+                }
+            }
+        }
+    }
+}
 
-                        val id = event.id.hexToByteArray()
-                        val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+@Composable
+fun AppTitle(appName: String) {
+    Text(
+        modifier = Modifier.fillMaxWidth(),
+        text = appName,
+        fontWeight = FontWeight.Bold,
+        textAlign = TextAlign.Center
+    )
+}
 
-                        clipboardManager.setText(AnnotatedString(sig))
+@Composable
+fun AcceptRejectButtons(
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .padding(10.dp),
+        Arrangement.Center
+    ) {
+        Button(
+            shape = ButtonBorder,
+            onClick = onReject
+        ) {
+            Text("Reject")
+        }
+        Spacer(modifier = Modifier.width(8.dp))
+        Button(
+            shape = ButtonBorder,
+            onClick = onAccept
+        ) {
+            Text("Accept")
+        }
+    }
+}
 
-                        coroutineScope.launch {
-                            val activity = context.getAppCompatActivity()
-                            if (packageName != null) {
-                                val intent = Intent()
-                                intent.putExtra("signature", sig)
-                                activity?.setResult(RESULT_OK, intent)
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.signature_copied_to_the_clipboard),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            activity?.finish()
-                        }
-                    },
-                    {
-                        context.getAppCompatActivity()?.finish()
-                    }
+@Composable
+fun DecryptData(
+    appName: String,
+    data: String,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+    ) {
+        AppTitle(appName)
+        Spacer(Modifier.size(4.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(Modifier.padding(6.dp)) {
+                Text(
+                    "wants you to decrypt data",
+                    fontWeight = FontWeight.Bold
+                )
+
+                EventRow(
+                    Icons.Default.ContentPaste,
+                    "Content ",
+                    data
+                )
+
+                Divider(
+                    modifier = Modifier.padding(top = 15.dp),
+                    thickness = Dp.Hairline
                 )
             }
         }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        AcceptRejectButtons(
+            onAccept,
+            onReject
+        )
     }
 }
 
@@ -186,9 +277,6 @@ fun EventData(
     appName: String,
     event: Event,
     rawJson: String,
-    coroutineScope: CoroutineScope,
-    clipboardManager: ClipboardManager,
-    context: Context,
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
@@ -202,12 +290,7 @@ fun EventData(
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = appName,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center
-        )
+        AppTitle(appName)
         Spacer(Modifier.size(4.dp))
         Card(
             modifier = Modifier
@@ -249,72 +332,79 @@ fun EventData(
                 )
             }
         }
-        Box(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 4.dp),
-            contentAlignment = Alignment.Center
-        ) {
-            Button(
-                shape = ButtonBorder,
-                onClick = {
-                    showMore = !showMore
-                }
-            ) {
-                Text(text = if (!showMore) "Show Details" else "Hide Details")
-            }
-        }
+        RawJsonButton(
+            onCLick = {
+                showMore = !showMore
+            },
+            if (!showMore) "Show Details" else "Hide Details"
+        )
         if (showMore) {
-            OutlinedTextField(
-                modifier = Modifier.weight(1f),
-                value = TextFieldValue(JSONObject(rawJson).toString(2)),
-                onValueChange = { },
-                readOnly = true
-            )
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                Button(
-                    shape = ButtonBorder,
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(rawJson))
-
-                        coroutineScope.launch {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.raw_json_copied_to_the_clipboard),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                    }
-                ) {
-                    Text("Copy raw json")
-                }
-            }
+            RawJson(rawJson, Modifier.weight(1f))
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(10.dp),
-            Arrangement.Center
+        AcceptRejectButtons(
+            onAccept,
+            onReject
+        )
+    }
+}
+
+@Composable
+fun RawJsonButton(
+    onCLick: () -> Unit,
+    text: String
+) {
+    Box(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Button(
+            shape = ButtonBorder,
+            onClick = onCLick
         ) {
-            Button(
-                shape = ButtonBorder,
-                onClick = onReject
-            ) {
-                Text("Reject")
+            Text(text)
+        }
+    }
+}
+
+@Composable
+fun RawJson(
+    rawJson: String,
+    modifier: Modifier
+) {
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val clipboardManager = LocalClipboardManager.current
+
+    OutlinedTextField(
+        modifier = modifier,
+        value = TextFieldValue(JSONObject(rawJson).toString(2)),
+        onValueChange = { },
+        readOnly = true
+    )
+    Row(
+        Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.Center
+    ) {
+        Button(
+            shape = ButtonBorder,
+            onClick = {
+                clipboardManager.setText(AnnotatedString(rawJson))
+
+                coroutineScope.launch {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.raw_json_copied_to_the_clipboard),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                shape = ButtonBorder,
-                onClick = onAccept
-            ) {
-                Text("Accept")
-            }
+        ) {
+            Text("Copy raw json")
         }
     }
 }

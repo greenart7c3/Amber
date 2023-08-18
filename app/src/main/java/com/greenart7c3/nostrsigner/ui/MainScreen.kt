@@ -104,16 +104,24 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
         } else {
             json.let {
                 val appName = packageName ?: it.name
-                if (it.type == SignerType.NIP04_DECRYPT) {
-                    DecryptData(
+                if (it.type == SignerType.NIP04_DECRYPT || it.type == SignerType.NIP04_ENCRYPT) {
+                    EncryptDecryptData(
                         appName,
                         it.data,
                         {
-                            val sig = CryptoUtils.decrypt(
-                                it.data,
-                                account.keyPair.privKey,
-                                Hex.decode(it.pubKey)
-                            )
+                            val sig = if (it.type == SignerType.NIP04_DECRYPT) {
+                                CryptoUtils.decrypt(
+                                    it.data,
+                                    account.keyPair.privKey,
+                                    Hex.decode(it.pubKey)
+                                )
+                            } else {
+                                CryptoUtils.encrypt(
+                                    it.data,
+                                    account.keyPair.privKey,
+                                    Hex.decode(it.pubKey)
+                                )
+                            }
                             clipboardManager.setText(AnnotatedString(sig))
 
                             coroutineScope.launch {
@@ -131,7 +139,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 }
                                 activity?.finish()
                             }
-                            return@DecryptData
+                            return@EncryptDecryptData
                         },
                         {
                             context.getAppCompatActivity()?.finish()
@@ -226,7 +234,7 @@ fun AcceptRejectButtons(
 }
 
 @Composable
-fun DecryptData(
+fun EncryptDecryptData(
     appName: String,
     data: String,
     onAccept: () -> Unit,
@@ -245,7 +253,7 @@ fun DecryptData(
         ) {
             Column(Modifier.padding(6.dp)) {
                 Text(
-                    "wants you to decrypt data",
+                    "wants you to encrypt/decrypt data",
                     fontWeight = FontWeight.Bold
                 )
 

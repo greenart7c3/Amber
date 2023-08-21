@@ -174,7 +174,10 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 val activity = context.getAppCompatActivity()
                                 if (packageName != null) {
                                     val intent = Intent()
+                                    val signedEvent = Event(event.id, event.pubKey, event.createdAt, event.kind, event.tags, event.content, sig)
+                                    intent.putExtra("event", signedEvent.toJson())
                                     intent.putExtra("signature", sig)
+
                                     activity?.setResult(RESULT_OK, intent)
                                 } else {
                                     Toast.makeText(

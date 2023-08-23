@@ -12,5 +12,6 @@ enum class SignerType {
     NIP04_ENCRYPT,
     NIP04_DECRYPT,
     NIP44_ENCRYPT,
-    NIP44_DECRYPT
+    NIP44_DECRYPT,
+    GET_PUBLIC_KEY
 }

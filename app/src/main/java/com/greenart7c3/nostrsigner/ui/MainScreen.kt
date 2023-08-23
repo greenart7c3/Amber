@@ -60,6 +60,7 @@ import com.greenart7c3.nostrsigner.service.CryptoUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.Event
+import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
@@ -104,95 +105,126 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
         } else {
             json.let {
                 val appName = packageName ?: it.name
-                if (it.type == SignerType.NIP04_DECRYPT || it.type == SignerType.NIP04_ENCRYPT) {
-                    EncryptDecryptData(
-                        appName,
-                        it.data,
-                        {
-                            val sig = if (it.type == SignerType.NIP04_DECRYPT) {
-                                CryptoUtils.decrypt(
-                                    it.data,
-                                    account.keyPair.privKey,
-                                    Hex.decode(it.pubKey)
-                                )
-                            } else {
-                                CryptoUtils.encrypt(
-                                    it.data,
-                                    account.keyPair.privKey,
-                                    Hex.decode(it.pubKey)
-                                )
-                            }
-                            clipboardManager.setText(AnnotatedString(sig))
+                when (it.type) {
+                    SignerType.GET_PUBLIC_KEY -> {
+                        LoginWithPubKey(
+                            appName,
+                            {
+                                val sig = account.keyPair.pubKey.toNpub()
 
-                            coroutineScope.launch {
-                                val activity = context.getAppCompatActivity()
-                                if (packageName != null) {
-                                    val intent = Intent()
-                                    intent.putExtra("signature", sig)
-                                    activity?.setResult(RESULT_OK, intent)
-                                } else {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.signature_copied_to_the_clipboard),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                activity?.finish()
-                            }
-                            return@EncryptDecryptData
-                        },
-                        {
-                            context.getAppCompatActivity()?.finish()
-                        }
-                    )
-                } else {
-                    val event = IntentUtils.getIntent(it.data, account.keyPair)
-
-                    EventData(
-                        it.type,
-                        appName,
-                        event,
-                        event.toJson(),
-                        {
-                            if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                                 coroutineScope.launch {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    val activity = context.getAppCompatActivity()
+                                    if (packageName != null) {
+                                        val intent = Intent()
+                                        intent.putExtra("signature", sig)
+                                        activity?.setResult(RESULT_OK, intent)
+                                    } else {
+                                        clipboardManager.setText(AnnotatedString(sig))
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.signature_copied_to_the_clipboard),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    activity?.finish()
                                 }
-                                return@EventData
+                                return@LoginWithPubKey
+                            },
+                            {
+                                context.getAppCompatActivity()?.finish()
                             }
-
-                            val id = event.id.hexToByteArray()
-                            val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
-
-                            clipboardManager.setText(AnnotatedString(sig))
-
-                            coroutineScope.launch {
-                                val activity = context.getAppCompatActivity()
-                                if (packageName != null) {
-                                    val intent = Intent()
-                                    val signedEvent = Event(event.id, event.pubKey, event.createdAt, event.kind, event.tags, event.content, sig)
-                                    intent.putExtra("event", signedEvent.toJson())
-                                    intent.putExtra("signature", sig)
-
-                                    activity?.setResult(RESULT_OK, intent)
+                        )
+                    }
+                    SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> {
+                        EncryptDecryptData(
+                            appName,
+                            it.data,
+                            {
+                                val sig = if (it.type == SignerType.NIP04_DECRYPT) {
+                                    CryptoUtils.decrypt(
+                                        it.data,
+                                        account.keyPair.privKey,
+                                        Hex.decode(it.pubKey)
+                                    )
                                 } else {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.signature_copied_to_the_clipboard),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
+                                    CryptoUtils.encrypt(
+                                        it.data,
+                                        account.keyPair.privKey,
+                                        Hex.decode(it.pubKey)
+                                    )
                                 }
-                                activity?.finish()
+
+                                coroutineScope.launch {
+                                    val activity = context.getAppCompatActivity()
+                                    if (packageName != null) {
+                                        val intent = Intent()
+                                        intent.putExtra("signature", sig)
+                                        activity?.setResult(RESULT_OK, intent)
+                                    } else {
+                                        clipboardManager.setText(AnnotatedString(sig))
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.signature_copied_to_the_clipboard),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    activity?.finish()
+                                }
+                                return@EncryptDecryptData
+                            },
+                            {
+                                context.getAppCompatActivity()?.finish()
                             }
-                        },
-                        {
-                            context.getAppCompatActivity()?.finish()
-                        }
-                    )
+                        )
+                    }
+                    else -> {
+                        val event = IntentUtils.getIntent(it.data, account.keyPair)
+
+                        EventData(
+                            it.type,
+                            appName,
+                            event,
+                            event.toJson(),
+                            {
+                                if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
+                                    coroutineScope.launch {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    return@EventData
+                                }
+
+                                val id = event.id.hexToByteArray()
+                                val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+
+                                coroutineScope.launch {
+                                    val activity = context.getAppCompatActivity()
+                                    if (packageName != null) {
+                                        val intent = Intent()
+                                        val signedEvent = Event(event.id, event.pubKey, event.createdAt, event.kind, event.tags, event.content, sig)
+                                        intent.putExtra("event", signedEvent.toJson())
+                                        intent.putExtra("signature", sig)
+
+                                        activity?.setResult(RESULT_OK, intent)
+                                    } else {
+                                        clipboardManager.setText(AnnotatedString(sig))
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.signature_copied_to_the_clipboard),
+                                            Toast.LENGTH_SHORT
+                                        ).show()
+                                    }
+                                    activity?.finish()
+                                }
+                            },
+                            {
+                                context.getAppCompatActivity()?.finish()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -269,6 +301,43 @@ fun EncryptDecryptData(
                 Divider(
                     modifier = Modifier.padding(top = 15.dp),
                     thickness = Dp.Hairline
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        AcceptRejectButtons(
+            onAccept,
+            onReject
+        )
+    }
+}
+
+@Composable
+fun LoginWithPubKey(
+    appName: String,
+    onAccept: () -> Unit,
+    onReject: () -> Unit
+) {
+    Column(
+        Modifier
+            .fillMaxSize()
+            .padding(8.dp)
+    ) {
+        AppTitle(appName)
+        Spacer(Modifier.size(4.dp))
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+        ) {
+            Column(
+                Modifier
+                    .padding(6.dp)
+            ) {
+                Text(
+                    "wants to read your public key",
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

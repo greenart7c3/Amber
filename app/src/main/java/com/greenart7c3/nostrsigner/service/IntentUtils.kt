@@ -14,6 +14,7 @@ object IntentUtils {
                 "sign_event" -> SignerType.SIGN_EVENT
                 "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
                 "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                "get_public_key" -> SignerType.GET_PUBLIC_KEY
                 else -> SignerType.SIGN_EVENT
             }
             val split = data.split(";")

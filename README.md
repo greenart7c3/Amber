@@ -45,6 +45,26 @@ val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json;name=Your A
 intent.`package` = "com.greenart7c3.nostrsigner"
 ```
 
+* Set the type eg (sign_event, nip04_encrypt, nip04_decrypt, nip44_encrypt, nip44_decrypt, get_public_key)
+
+```kotlin
+val signerType = when (type) {
+    SignerType.SIGN_EVENT -> "sign_event"
+    SignerType.NIP04_ENCRYPT -> "nip04_encrypt"
+    SignerType.NIP04_DECRYPT -> "nip04_decrypt"
+    SignerType.NIP44_ENCRYPT -> "nip44_encrypt"
+    SignerType.NIP44_DECRYPT -> "nip44_decrypt"
+    SignerType.GET_PUBLIC_KEY -> "get_public_key"
+}
+intent.putExtra("type", signerType)
+```
+
+* Set the pubkey if using nip04_decrypt
+
+```kotlin
+intent.putExtra("pubKey", pubKey)
+```
+
 * Start the signer Activity
 
 ```kotlin

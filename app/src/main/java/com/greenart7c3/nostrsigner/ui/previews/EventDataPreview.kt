@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import androidx.compose.material.Scaffold
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.tooling.preview.Preview
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.model.Event
 import com.greenart7c3.nostrsigner.ui.EventData
@@ -20,7 +19,6 @@ fun EventDataPreview() {
     NostrSignerTheme(darkTheme = true) {
         Scaffold {
             EventData(
-                SignerType.SIGN_EVENT,
                 "App",
                 event,
                 data,

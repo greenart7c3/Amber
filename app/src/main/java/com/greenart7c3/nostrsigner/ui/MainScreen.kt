@@ -138,7 +138,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                     SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> {
                         EncryptDecryptData(
                             appName,
-                            it.data,
+                            it.type,
                             {
                                 val sig = if (it.type == SignerType.NIP04_DECRYPT) {
                                     CryptoUtils.decrypt(
@@ -181,7 +181,6 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                         val event = IntentUtils.getIntent(it.data, account.keyPair)
 
                         EventData(
-                            it.type,
                             appName,
                             event,
                             event.toJson(),
@@ -271,7 +270,7 @@ fun AcceptRejectButtons(
 @Composable
 fun EncryptDecryptData(
     appName: String,
-    data: String,
+    type: SignerType,
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
@@ -287,20 +286,10 @@ fun EncryptDecryptData(
                 .fillMaxWidth()
         ) {
             Column(Modifier.padding(6.dp)) {
+                val message = if (type == SignerType.NIP04_ENCRYPT) "encrypt" else "decrypt"
                 Text(
-                    "wants you to encrypt/decrypt data",
+                    "wants you to $message data",
                     fontWeight = FontWeight.Bold
-                )
-
-                EventRow(
-                    Icons.Default.ContentPaste,
-                    "Content ",
-                    data
-                )
-
-                Divider(
-                    modifier = Modifier.padding(top = 15.dp),
-                    thickness = Dp.Hairline
                 )
             }
         }
@@ -353,7 +342,6 @@ fun LoginWithPubKey(
 
 @Composable
 fun EventData(
-    type: SignerType,
     appName: String,
     event: Event,
     rawJson: String,
@@ -377,8 +365,13 @@ fun EventData(
                 .fillMaxWidth()
         ) {
             Column(Modifier.padding(6.dp)) {
+                val message = if (event.kind == 22242) {
+                    "client authentication"
+                } else {
+                    eventDescription
+                }
                 Text(
-                    if (type == SignerType.NIP04_DECRYPT) "wants you to decrypt a message" else "wants you to sign a $eventDescription",
+                    "wants you to sign a $message",
                     fontWeight = FontWeight.Bold
                 )
 

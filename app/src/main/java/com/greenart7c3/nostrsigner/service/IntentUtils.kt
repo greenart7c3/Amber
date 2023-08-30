@@ -9,7 +9,12 @@ import java.net.URLDecoder
 object IntentUtils {
     fun getIntentData(intent: Intent): IntentData? {
         if (intent.data != null) {
-            val data = URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
+            val data = try {
+                URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
+            } catch (e: Exception) {
+                intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
+            }
+
             val type = when (intent.extras?.getString("type")) {
                 "sign_event" -> SignerType.SIGN_EVENT
                 "nip04_encrypt" -> SignerType.NIP04_ENCRYPT

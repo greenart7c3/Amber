@@ -140,37 +140,48 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             appName,
                             it.type,
                             {
-                                val sig = if (it.type == SignerType.NIP04_DECRYPT) {
-                                    CryptoUtils.decrypt(
-                                        it.data,
-                                        account.keyPair.privKey,
-                                        Hex.decode(it.pubKey)
-                                    )
-                                } else {
-                                    CryptoUtils.encrypt(
-                                        it.data,
-                                        account.keyPair.privKey,
-                                        Hex.decode(it.pubKey)
-                                    )
-                                }
-
-                                coroutineScope.launch {
-                                    val activity = context.getAppCompatActivity()
-                                    if (packageName != null) {
-                                        val intent = Intent()
-                                        intent.putExtra("signature", sig)
-                                        activity?.setResult(RESULT_OK, intent)
+                                try {
+                                    val sig = if (it.type == SignerType.NIP04_DECRYPT) {
+                                        CryptoUtils.decrypt(
+                                            it.data,
+                                            account.keyPair.privKey,
+                                            Hex.decode(it.pubKey)
+                                        )
                                     } else {
-                                        clipboardManager.setText(AnnotatedString(sig))
+                                        CryptoUtils.encrypt(
+                                            it.data,
+                                            account.keyPair.privKey,
+                                            Hex.decode(it.pubKey)
+                                        )
+                                    }
+                                    coroutineScope.launch {
+                                        val activity = context.getAppCompatActivity()
+                                        if (packageName != null) {
+                                            val intent = Intent()
+                                            intent.putExtra("signature", sig)
+                                            activity?.setResult(RESULT_OK, intent)
+                                        } else {
+                                            clipboardManager.setText(AnnotatedString(sig))
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.signature_copied_to_the_clipboard),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        activity?.finish()
+                                    }
+                                    return@EncryptDecryptData
+                                } catch (e: Exception) {
+                                    val message = if (it.type == SignerType.NIP04_ENCRYPT) "encrypt" else "decrypt"
+                                    coroutineScope.launch {
                                         Toast.makeText(
                                             context,
-                                            context.getString(R.string.signature_copied_to_the_clipboard),
+                                            "Error to $message data",
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
-                                    activity?.finish()
+                                    return@EncryptDecryptData
                                 }
-                                return@EncryptDecryptData
                             },
                             {
                                 context.getAppCompatActivity()?.finish()

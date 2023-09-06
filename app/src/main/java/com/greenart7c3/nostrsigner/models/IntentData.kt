@@ -4,7 +4,8 @@ class IntentData(
     val data: String,
     val name: String,
     val type: SignerType,
-    val pubKey: HexKey
+    val pubKey: HexKey,
+    val id: String
 )
 
 enum class SignerType {

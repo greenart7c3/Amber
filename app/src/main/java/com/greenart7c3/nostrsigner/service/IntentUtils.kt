@@ -9,19 +9,27 @@ import java.net.URLDecoder
 object IntentUtils {
     fun getIntentData(intent: Intent): IntentData? {
         if (intent.data != null) {
-            val data = try {
-                URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
-            } catch (e: Exception) {
-                intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
-            }
-
             val type = when (intent.extras?.getString("type")) {
                 "sign_event" -> SignerType.SIGN_EVENT
                 "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
                 "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+                "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
                 "get_public_key" -> SignerType.GET_PUBLIC_KEY
                 else -> SignerType.SIGN_EVENT
             }
+
+            val data = try {
+                when (type) {
+                    SignerType.NIP44_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_DECRYPT, SignerType.NIP04_ENCRYPT -> {
+                        intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
+                    }
+                    else -> URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
+                }
+            } catch (e: Exception) {
+                intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
+            }
+
             val split = data.split(";")
             var name = ""
             if (split.isNotEmpty()) {
@@ -30,8 +38,9 @@ object IntentUtils {
                 }
             }
             val pubKey = intent.extras?.getString("pubKey") ?: ""
+            val id = intent.extras?.getString("id") ?: ""
 
-            return IntentData(data, name, type, pubKey)
+            return IntentData(data, name, type, pubKey, id)
         }
         return null
     }

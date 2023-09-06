@@ -59,7 +59,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.models.hexToByteArray
 import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -70,9 +69,17 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.Drawer
 import com.greenart7c3.nostrsigner.ui.components.MainAppBar
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.vitorpamplona.quartz.crypto.CryptoUtils.decryptNIP04
+import com.vitorpamplona.quartz.crypto.CryptoUtils.decryptNIP44
+import com.vitorpamplona.quartz.crypto.CryptoUtils.encryptNIP44
+import com.vitorpamplona.quartz.crypto.CryptoUtils.getSharedSecretNIP44
+import com.vitorpamplona.quartz.crypto.Nip44Version
+import com.vitorpamplona.quartz.crypto.decodeNIP44
+import com.vitorpamplona.quartz.crypto.encodeNIP44
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.launch
 import org.json.JSONObject
+import com.vitorpamplona.quartz.encoders.hexToByteArray as hexToByteArray1
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
 @Composable
@@ -149,8 +156,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             }
                         )
                     }
-                    SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> {
-                        val key = if (it.type == SignerType.NIP04_DECRYPT) {
+                    SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
+                        val key = if (it.type == SignerType.NIP04_DECRYPT || it.type == SignerType.NIP44_DECRYPT) {
                             "$packageName-decryptnip4"
                         } else {
                             "$packageName-encryptnip4"
@@ -167,19 +174,45 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             it.type,
                             {
                                 try {
-                                    val sig = if (it.type == SignerType.NIP04_DECRYPT) {
-                                        CryptoUtils.decrypt(
-                                            it.data,
-                                            account.keyPair.privKey,
-                                            Hex.decode(it.pubKey)
-                                        )
-                                    } else {
-                                        CryptoUtils.encrypt(
-                                            it.data,
-                                            account.keyPair.privKey,
-                                            Hex.decode(it.pubKey)
-                                        )
+                                    val sig = try {
+                                        when (it.type) {
+                                            SignerType.NIP04_DECRYPT -> {
+                                                CryptoUtils.decrypt(
+                                                    it.data,
+                                                    account.keyPair.privKey,
+                                                    Hex.decode(it.pubKey)
+                                                )
+                                            }
+                                            SignerType.NIP04_ENCRYPT -> {
+                                                CryptoUtils.encrypt(
+                                                    it.data,
+                                                    account.keyPair.privKey,
+                                                    Hex.decode(it.pubKey)
+                                                )
+                                            }
+                                            SignerType.NIP44_ENCRYPT -> {
+                                                val sharedSecret = getSharedSecretNIP44(account.keyPair.privKey, it.pubKey.hexToByteArray1())
+
+                                                encodeNIP44(
+                                                    encryptNIP44(
+                                                        it.data,
+                                                        sharedSecret
+                                                    )
+                                                )
+                                            }
+                                            else -> {
+                                                val toDecrypt = decodeNIP44(it.data) ?: return@EncryptDecryptData
+                                                when (toDecrypt.v) {
+                                                    Nip44Version.NIP04.versionCode -> decryptNIP04(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                                    Nip44Version.NIP44.versionCode -> decryptNIP44(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                                    else -> null
+                                                }
+                                            }
+                                        } ?: "Could not decrypt the message"
+                                    } catch (e: Exception) {
+                                        "Could not decrypt the message"
                                     }
+
                                     coroutineScope.launch {
                                         val activity = context.getAppCompatActivity()
                                         if (packageName != null) {
@@ -187,6 +220,9 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                             LocalPreferences.saveToEncryptedStorage(account)
                                             val intent = Intent()
                                             intent.putExtra("signature", sig)
+                                            if (it.type == SignerType.NIP44_DECRYPT || it.type == SignerType.NIP04_DECRYPT) {
+                                                intent.putExtra("id", it.id)
+                                            }
                                             activity?.setResult(RESULT_OK, intent)
                                         } else {
                                             clipboardManager.setText(AnnotatedString(sig))
@@ -242,7 +278,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     return@EventData
                                 }
 
-                                val id = event.id.hexToByteArray()
+                                val id = event.id.hexToByteArray1()
                                 val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
 
                                 coroutineScope.launch {

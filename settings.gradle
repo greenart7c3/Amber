@@ -16,3 +16,4 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Nostr Signer"
 include ':app'
+include ':quartz'

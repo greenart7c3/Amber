@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.KeyPair
 import com.greenart7c3.nostrsigner.service.toNpub
 import fr.acinq.secp256k1.jni.BuildConfig
+import org.json.JSONObject
 import java.io.File
 
 // Release mode (!BuildConfig.DEBUG) always uses encrypted preferences
@@ -22,6 +23,7 @@ private object PrefKeys {
     const val SAVED_ACCOUNTS = "all_saved_accounts"
     const val NOSTR_PRIVKEY = "nostr_privkey"
     const val NOSTR_PUBKEY = "nostr_pubkey"
+    const val REMEMBER_APPS = "remember_apps"
 }
 
 object LocalPreferences {
@@ -151,6 +153,8 @@ object LocalPreferences {
         prefs.edit().apply {
             account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it.toHexKey()) }
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
+            val jsonObject = JSONObject(account.savedApps.toMap())
+            putString(PrefKeys.REMEMBER_APPS, jsonObject.toString())
         }.apply()
     }
 
@@ -163,8 +167,21 @@ object LocalPreferences {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
 
+            val jsonString = getString(PrefKeys.REMEMBER_APPS, null)
+            val outputMap = mutableMapOf<String, Boolean>()
+            if (jsonString != null) {
+                val jsonObject = JSONObject(jsonString)
+                val keysItr: Iterator<String> = jsonObject.keys()
+                while (keysItr.hasNext()) {
+                    val key = keysItr.next()
+                    val value: Boolean = jsonObject.getBoolean(key)
+                    outputMap[key] = value
+                }
+            }
+
             return Account(
-                keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())
+                keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
+                savedApps = outputMap
             )
         }
     }

@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +23,7 @@ import androidx.compose.material.Icon
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.Scaffold
+import androidx.compose.material.Switch
 import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccessTime
@@ -31,6 +33,8 @@ import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.rememberDrawerState
 import androidx.compose.material.rememberScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,6 +53,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -76,7 +81,6 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-
     Scaffold(
         scaffoldState = scaffoldState,
         drawerContent = {
@@ -107,7 +111,15 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                 val appName = packageName ?: it.name
                 when (it.type) {
                     SignerType.GET_PUBLIC_KEY -> {
+                        val key = "$packageName-public-key"
+                        val remember = remember {
+                            mutableStateOf(account.savedApps[key] ?: false)
+                        }
+                        val shouldRunOnAccept = account.savedApps[key] ?: false
                         LoginWithPubKey(
+                            shouldRunOnAccept,
+                            remember,
+                            packageName,
                             appName,
                             {
                                 val sig = account.keyPair.pubKey.toNpub()
@@ -115,6 +127,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 coroutineScope.launch {
                                     val activity = context.getAppCompatActivity()
                                     if (packageName != null) {
+                                        account.savedApps[key] = remember.value
+                                        LocalPreferences.saveToEncryptedStorage(account)
                                         val intent = Intent()
                                         intent.putExtra("signature", sig)
                                         activity?.setResult(RESULT_OK, intent)
@@ -136,7 +150,19 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                         )
                     }
                     SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> {
+                        val key = if (it.type == SignerType.NIP04_DECRYPT) {
+                            "$packageName-decryptnip4"
+                        } else {
+                            "$packageName-encryptnip4"
+                        }
+                        val remember = remember {
+                            mutableStateOf(account.savedApps[key] ?: false)
+                        }
+                        val shouldRunOnAccept = account.savedApps[key] ?: false
                         EncryptDecryptData(
+                            shouldRunOnAccept,
+                            remember,
+                            packageName,
                             appName,
                             it.type,
                             {
@@ -157,6 +183,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     coroutineScope.launch {
                                         val activity = context.getAppCompatActivity()
                                         if (packageName != null) {
+                                            account.savedApps[key] = remember.value
+                                            LocalPreferences.saveToEncryptedStorage(account)
                                             val intent = Intent()
                                             intent.putExtra("signature", sig)
                                             activity?.setResult(RESULT_OK, intent)
@@ -190,8 +218,15 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                     }
                     else -> {
                         val event = IntentUtils.getIntent(it.data, account.keyPair)
-
+                        val key = "$packageName-${event.kind}"
+                        val remember = remember {
+                            mutableStateOf(account.savedApps[key] ?: false)
+                        }
+                        val shouldRunOnAccept = account.savedApps[key] ?: false
                         EventData(
+                            shouldRunOnAccept,
+                            remember,
+                            packageName,
                             appName,
                             event,
                             event.toJson(),
@@ -213,6 +248,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 coroutineScope.launch {
                                     val activity = context.getAppCompatActivity()
                                     if (packageName != null) {
+                                        account.savedApps[key] = remember.value
+                                        LocalPreferences.saveToEncryptedStorage(account)
                                         val intent = Intent()
                                         val signedEvent = Event(event.id, event.pubKey, event.createdAt, event.kind, event.tags, event.content, sig)
                                         intent.putExtra("event", signedEvent.toJson())
@@ -252,6 +289,41 @@ fun AppTitle(appName: String) {
 }
 
 @Composable
+fun RememberMyChoice(
+    shouldRunOnAccept: Boolean,
+    remember: MutableState<Boolean>,
+    packageName: String?,
+    onAccept: () -> Unit
+) {
+    if (shouldRunOnAccept) {
+        LaunchedEffect(Unit) {
+            onAccept()
+        }
+    }
+    if (packageName != null) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .clickable {
+                    remember.value = !remember.value
+                }
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = "Remember my choice and don't ask again"
+            )
+            Switch(
+                checked = remember.value,
+                onCheckedChange = {
+                    remember.value = !remember.value
+                }
+            )
+        }
+    }
+}
+
+@Composable
 fun AcceptRejectButtons(
     onAccept: () -> Unit,
     onReject: () -> Unit
@@ -280,6 +352,9 @@ fun AcceptRejectButtons(
 
 @Composable
 fun EncryptDecryptData(
+    shouldRunOnAccept: Boolean,
+    remember: MutableState<Boolean>,
+    packageName: String?,
     appName: String,
     type: SignerType,
     onAccept: () -> Unit,
@@ -307,6 +382,13 @@ fun EncryptDecryptData(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        RememberMyChoice(
+            shouldRunOnAccept,
+            remember,
+            packageName,
+            onAccept
+        )
+
         AcceptRejectButtons(
             onAccept,
             onReject
@@ -316,6 +398,9 @@ fun EncryptDecryptData(
 
 @Composable
 fun LoginWithPubKey(
+    shouldRunOnAccept: Boolean,
+    remember: MutableState<Boolean>,
+    packageName: String?,
     appName: String,
     onAccept: () -> Unit,
     onReject: () -> Unit
@@ -344,6 +429,13 @@ fun LoginWithPubKey(
 
         Spacer(modifier = Modifier.weight(1f))
 
+        RememberMyChoice(
+            shouldRunOnAccept,
+            remember,
+            packageName,
+            onAccept
+        )
+
         AcceptRejectButtons(
             onAccept,
             onReject
@@ -353,6 +445,9 @@ fun LoginWithPubKey(
 
 @Composable
 fun EventData(
+    shouldRunOnAccept: Boolean,
+    remember: MutableState<Boolean>,
+    packageName: String?,
     appName: String,
     event: Event,
     rawJson: String,
@@ -427,6 +522,13 @@ fun EventData(
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }
+
+        RememberMyChoice(
+            shouldRunOnAccept,
+            remember,
+            packageName,
+            onAccept
+        )
 
         AcceptRejectButtons(
             onAccept,

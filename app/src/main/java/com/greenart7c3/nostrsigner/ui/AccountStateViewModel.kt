@@ -52,9 +52,9 @@ class AccountStateViewModel : ViewModel() {
 
     fun startUI(key: String) {
         val account = if (key.startsWith("nsec")) {
-            Account(KeyPair(privKey = key.bechToBytes()))
+            Account(KeyPair(privKey = key.bechToBytes()), mutableMapOf())
         } else {
-            Account(KeyPair(Hex.decode(key)))
+            Account(KeyPair(Hex.decode(key)), mutableMapOf())
         }
 
         LocalPreferences.updatePrefsForLogin(account)
@@ -62,16 +62,14 @@ class AccountStateViewModel : ViewModel() {
     }
 
     fun newKey() {
-        val account = Account(KeyPair())
+        val account = Account(KeyPair(), mutableMapOf())
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
     fun startUI(account: Account) {
-        if (account.keyPair.privKey != null) {
-            _accountContent.update { AccountState.LoggedIn(account) }
-        }
+        _accountContent.update { AccountState.LoggedIn(account) }
 
         GlobalScope.launch(Dispatchers.Main) {
             account.saveable.observeForever(saveListener)

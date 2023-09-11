@@ -3,9 +3,9 @@ package com.greenart7c3.nostrsigner.service.model
 import android.util.Log
 import androidx.compose.runtime.Immutable
 import com.google.gson.reflect.TypeToken
-import com.greenart7c3.nostrsigner.models.HexKey
-import com.greenart7c3.nostrsigner.models.hexToByteArray
 import com.greenart7c3.nostrsigner.service.CryptoUtils
+import com.vitorpamplona.quartz.encoders.HexKey
+import com.vitorpamplona.quartz.encoders.hexToByteArray
 
 @Immutable
 abstract class GeneralListEvent(

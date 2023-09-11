@@ -1,7 +1,7 @@
 package com.greenart7c3.nostrsigner.service.model
 
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.models.HexKey
+import com.vitorpamplona.quartz.encoders.HexKey
 import java.math.BigDecimal
 
 @Immutable

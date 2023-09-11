@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui
 import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.Intent
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -59,7 +60,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -76,9 +76,22 @@ import com.vitorpamplona.quartz.crypto.CryptoUtils.getSharedSecretNIP44
 import com.vitorpamplona.quartz.crypto.Nip44Version
 import com.vitorpamplona.quartz.crypto.decodeNIP44
 import com.vitorpamplona.quartz.crypto.encodeNIP44
+import com.vitorpamplona.quartz.encoders.Bech32
+import com.vitorpamplona.quartz.encoders.hexToByteArray
+import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.events.LnZapPrivateEvent
+import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
+import java.nio.charset.Charset
+import java.security.SecureRandom
+import javax.crypto.Cipher
+import javax.crypto.spec.IvParameterSpec
+import javax.crypto.spec.SecretKeySpec
 import com.vitorpamplona.quartz.encoders.hexToByteArray as hexToByteArray1
 
 @SuppressLint("UnusedMaterialScaffoldPaddingParameter")
@@ -156,9 +169,11 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             }
                         )
                     }
-                    SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
+                    SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
                         val key = if (it.type == SignerType.NIP04_DECRYPT || it.type == SignerType.NIP44_DECRYPT) {
                             "$packageName-decryptnip4"
+                        } else if (it.type == SignerType.DECRYPT_ZAP_EVENT) {
+                            "$packageName-DECRYPT_ZAP_EVENT"
                         } else {
                             "$packageName-encryptnip4"
                         }
@@ -174,66 +189,132 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             it.type,
                             {
                                 try {
-                                    val sig = try {
-                                        when (it.type) {
-                                            SignerType.NIP04_DECRYPT -> {
-                                                CryptoUtils.decrypt(
-                                                    it.data,
-                                                    account.keyPair.privKey,
-                                                    Hex.decode(it.pubKey)
-                                                )
-                                            }
-                                            SignerType.NIP04_ENCRYPT -> {
-                                                CryptoUtils.encrypt(
-                                                    it.data,
-                                                    account.keyPair.privKey,
-                                                    Hex.decode(it.pubKey)
-                                                )
-                                            }
-                                            SignerType.NIP44_ENCRYPT -> {
-                                                val sharedSecret = getSharedSecretNIP44(account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                    coroutineScope.launch(Dispatchers.IO) {
+                                        val sig = try {
+                                            withTimeout(1000L) {
+                                                async<String> {
+                                                    when (it.type) {
+                                                        SignerType.DECRYPT_ZAP_EVENT -> {
+                                                            val event = com.vitorpamplona.quartz.events.Event.fromJson(it.data) as LnZapRequestEvent
+                                                            val loggedInPrivateKey = account.keyPair.privKey
 
-                                                encodeNIP44(
-                                                    encryptNIP44(
-                                                        it.data,
-                                                        sharedSecret
-                                                    )
-                                                )
-                                            }
-                                            else -> {
-                                                val toDecrypt = decodeNIP44(it.data) ?: return@EncryptDecryptData
-                                                when (toDecrypt.v) {
-                                                    Nip44Version.NIP04.versionCode -> decryptNIP04(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
-                                                    Nip44Version.NIP44.versionCode -> decryptNIP44(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
-                                                    else -> null
-                                                }
-                                            }
-                                        } ?: "Could not decrypt the message"
-                                    } catch (e: Exception) {
-                                        "Could not decrypt the message"
-                                    }
+                                                            if (event.isPrivateZap()) {
+                                                                val recipientPK = event.zappedAuthor().firstOrNull()
+                                                                val recipientPost = event.zappedPost().firstOrNull()
+                                                                if (recipientPK == account.keyPair.pubKey.toHexKey()) {
+                                                                    // if the receiver is logged in, these are the params.
+                                                                    val privateKeyToUse = loggedInPrivateKey
+                                                                    val pubkeyToUse = event.pubKey
 
-                                    coroutineScope.launch {
+                                                                    event.getPrivateZapEvent(privateKeyToUse, pubkeyToUse)?.toJson() ?: ""
+                                                                } else {
+                                                                    // if the sender is logged in, these are the params
+                                                                    val altPubkeyToUse = recipientPK
+                                                                    val altPrivateKeyToUse = if (recipientPost != null) {
+                                                                        LnZapRequestEvent.createEncryptionPrivateKey(
+                                                                            loggedInPrivateKey.toHexKey(),
+                                                                            recipientPost,
+                                                                            event.createdAt
+                                                                        )
+                                                                    } else if (recipientPK != null) {
+                                                                        LnZapRequestEvent.createEncryptionPrivateKey(
+                                                                            loggedInPrivateKey.toHexKey(),
+                                                                            recipientPK,
+                                                                            event.createdAt
+                                                                        )
+                                                                    } else {
+                                                                        null
+                                                                    }
+
+                                                                    try {
+                                                                        if (altPrivateKeyToUse != null && altPubkeyToUse != null) {
+                                                                            val altPubKeyFromPrivate = com.vitorpamplona.quartz.crypto.CryptoUtils.pubkeyCreate(altPrivateKeyToUse).toHexKey()
+
+                                                                            if (altPubKeyFromPrivate == event.pubKey) {
+                                                                                val result = event.getPrivateZapEvent(altPrivateKeyToUse, altPubkeyToUse)
+
+                                                                                result?.toJson() ?: ""
+                                                                            } else {
+                                                                                null
+                                                                            }
+                                                                        } else {
+                                                                            null
+                                                                        }
+                                                                    } catch (e: Exception) {
+                                                                        Log.e("Account", "Failed to create pubkey for ZapRequest ${event.id}", e)
+                                                                        null
+                                                                    }
+                                                                }
+                                                            } else {
+                                                                null
+                                                            }
+                                                        }
+                                                        SignerType.NIP04_DECRYPT -> {
+                                                            CryptoUtils.decrypt(
+                                                                it.data,
+                                                                account.keyPair.privKey,
+                                                                Hex.decode(it.pubKey)
+                                                            )
+                                                        }
+                                                        SignerType.NIP04_ENCRYPT -> {
+                                                            CryptoUtils.encrypt(
+                                                                it.data,
+                                                                account.keyPair.privKey,
+                                                                Hex.decode(it.pubKey)
+                                                            )
+                                                        }
+                                                        SignerType.NIP44_ENCRYPT -> {
+                                                            val sharedSecret = getSharedSecretNIP44(account.keyPair.privKey, it.pubKey.hexToByteArray1())
+
+                                                            encodeNIP44(
+                                                                encryptNIP44(
+                                                                    it.data,
+                                                                    sharedSecret
+                                                                )
+                                                            )
+                                                        }
+                                                        else -> {
+                                                            val toDecrypt = decodeNIP44(it.data) ?: return@async "Could not decrypt the message"
+                                                            when (toDecrypt.v) {
+                                                                Nip44Version.NIP04.versionCode -> decryptNIP04(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                                                Nip44Version.NIP44.versionCode -> decryptNIP44(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                                                else -> null
+                                                            }
+                                                        }
+                                                    } ?: "Could not decrypt the message"
+                                                }.await()
+                                            }
+                                        } catch (e: Exception) {
+                                            "Could not decrypt the message"
+                                        }
+
                                         val activity = context.getAppCompatActivity()
                                         if (packageName != null) {
                                             account.savedApps[key] = remember.value
                                             LocalPreferences.saveToEncryptedStorage(account)
                                             val intent = Intent()
-                                            intent.putExtra("signature", sig)
+                                            if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                                intent.putExtra("signature", "")
+                                            } else {
+                                                intent.putExtra("signature", sig)
+                                            }
                                             if (it.type == SignerType.NIP44_DECRYPT || it.type == SignerType.NIP04_DECRYPT) {
                                                 intent.putExtra("id", it.id)
                                             }
                                             activity?.setResult(RESULT_OK, intent)
                                         } else {
                                             clipboardManager.setText(AnnotatedString(sig))
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.signature_copied_to_the_clipboard),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
+                                            coroutineScope.launch {
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.signature_copied_to_the_clipboard),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
                                         }
                                         activity?.finish()
                                     }
+
                                     return@EncryptDecryptData
                                 } catch (e: Exception) {
                                     val message = if (it.type == SignerType.NIP04_ENCRYPT) "encrypt" else "decrypt"
@@ -278,29 +359,128 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     return@EventData
                                 }
 
-                                val id = event.id.hexToByteArray1()
-                                val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+                                val localEvent = com.vitorpamplona.quartz.events.Event.fromJson(it.data)
+                                if (localEvent is LnZapRequestEvent) {
+                                    val isPrivateZap = localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }
+                                    val originalNoteId = localEvent.zappedPost()[0]
+                                    val pubkey = localEvent.zappedAuthor()[0]
+                                    Log.d("originalNoteId", originalNoteId)
+                                    var privkey = account.keyPair.privKey
+                                    var pubKey = account.keyPair.pubKey.toHexKey()
+                                    if (isPrivateZap) {
+                                        val encryptionPrivateKey = LnZapRequestEvent.createEncryptionPrivateKey(
+                                            privkey.toHexKey(),
+                                            originalNoteId,
+                                            localEvent.createdAt
+                                        )
+                                        val noteJson = (LnZapPrivateEvent.create(privkey, listOf(localEvent.tags[0], localEvent.tags[1]), localEvent.content)).toJson()
+                                        val encryptedContent = encryptPrivateZapMessage(
+                                            noteJson,
+                                            encryptionPrivateKey,
+                                            pubkey.hexToByteArray()
+                                        )
+                                        var tags = localEvent.tags.filter { !it.contains("anon") }
+                                        tags = tags + listOf(listOf("anon", encryptedContent))
+                                        Log.d("tags", tags.toString())
+                                        privkey = encryptionPrivateKey // sign event with generated privkey
+                                        pubKey = com.vitorpamplona.quartz.crypto.CryptoUtils.pubkeyCreate(encryptionPrivateKey).toHexKey() // updated event with according pubkey
 
-                                coroutineScope.launch {
-                                    val activity = context.getAppCompatActivity()
-                                    if (packageName != null) {
-                                        account.savedApps[key] = remember.value
-                                        LocalPreferences.saveToEncryptedStorage(account)
-                                        val intent = Intent()
-                                        val signedEvent = Event(event.id, event.pubKey, event.createdAt, event.kind, event.tags, event.content, sig)
-                                        intent.putExtra("event", signedEvent.toJson())
-                                        intent.putExtra("signature", sig)
+                                        val id = com.vitorpamplona.quartz.events.Event.generateId(
+                                            pubKey,
+                                            localEvent.createdAt,
+                                            LnZapRequestEvent.kind,
+                                            tags,
+                                            ""
+                                        )
+                                        val sig = com.vitorpamplona.quartz.crypto.CryptoUtils.sign(id, privkey)
+                                        val event = LnZapRequestEvent(id.toHexKey(), pubKey, localEvent.createdAt, tags, "", sig.toHexKey())
+                                        coroutineScope.launch {
+                                            val activity = context.getAppCompatActivity()
+                                            if (packageName != null) {
+                                                account.savedApps[key] = remember.value
+                                                LocalPreferences.saveToEncryptedStorage(account)
+                                                val intent = Intent()
+                                                intent.putExtra("event", event.toJson())
+                                                intent.putExtra("signature", event.toJson())
 
-                                        activity?.setResult(RESULT_OK, intent)
+                                                activity?.setResult(RESULT_OK, intent)
+                                            } else {
+                                                clipboardManager.setText(AnnotatedString(event.toJson()))
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.signature_copied_to_the_clipboard),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                            activity?.finish()
+                                        }
                                     } else {
-                                        clipboardManager.setText(AnnotatedString(sig))
-                                        Toast.makeText(
-                                            context,
-                                            context.getString(R.string.signature_copied_to_the_clipboard),
-                                            Toast.LENGTH_SHORT
-                                        ).show()
+                                        val id = event.id.hexToByteArray1()
+                                        val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+
+                                        coroutineScope.launch {
+                                            val activity = context.getAppCompatActivity()
+                                            if (packageName != null) {
+                                                account.savedApps[key] = remember.value
+                                                LocalPreferences.saveToEncryptedStorage(account)
+                                                val intent = Intent()
+                                                val signedEvent = Event(
+                                                    event.id,
+                                                    event.pubKey,
+                                                    event.createdAt,
+                                                    event.kind,
+                                                    event.tags,
+                                                    event.content,
+                                                    sig
+                                                )
+                                                intent.putExtra("event", signedEvent.toJson())
+                                                intent.putExtra("signature", sig)
+
+                                                activity?.setResult(RESULT_OK, intent)
+                                            } else {
+                                                clipboardManager.setText(AnnotatedString(sig))
+                                                Toast.makeText(
+                                                    context,
+                                                    context.getString(R.string.signature_copied_to_the_clipboard),
+                                                    Toast.LENGTH_SHORT
+                                                ).show()
+                                            }
+                                            activity?.finish()
+                                        }
                                     }
-                                    activity?.finish()
+                                } else {
+                                    val id = event.id.hexToByteArray1()
+                                    val sig = CryptoUtils.sign(id, account.keyPair.privKey).toHexKey()
+
+                                    coroutineScope.launch {
+                                        val activity = context.getAppCompatActivity()
+                                        if (packageName != null) {
+                                            account.savedApps[key] = remember.value
+                                            LocalPreferences.saveToEncryptedStorage(account)
+                                            val intent = Intent()
+                                            val signedEvent = Event(
+                                                event.id,
+                                                event.pubKey,
+                                                event.createdAt,
+                                                event.kind,
+                                                event.tags,
+                                                event.content,
+                                                sig
+                                            )
+                                            intent.putExtra("event", signedEvent.toJson())
+                                            intent.putExtra("signature", sig)
+
+                                            activity?.setResult(RESULT_OK, intent)
+                                        } else {
+                                            clipboardManager.setText(AnnotatedString(sig))
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.signature_copied_to_the_clipboard),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        activity?.finish()
+                                    }
                                 }
                             },
                             {
@@ -664,4 +844,23 @@ fun EventRow(
             modifier = Modifier.fillMaxWidth()
         )
     }
+}
+
+fun encryptPrivateZapMessage(msg: String, privkey: ByteArray, pubkey: ByteArray): String {
+    val sharedSecret = com.vitorpamplona.quartz.crypto.CryptoUtils.getSharedSecretNIP04(privkey, pubkey)
+    val iv = ByteArray(16)
+    SecureRandom().nextBytes(iv)
+
+    val keySpec = SecretKeySpec(sharedSecret, "AES")
+    val ivSpec = IvParameterSpec(iv)
+
+    val utf8message = msg.toByteArray(Charset.forName("utf-8"))
+    val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
+    cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
+    val encryptedMsg = cipher.doFinal(utf8message)
+
+    val encryptedMsgBech32 = Bech32.encode("pzap", Bech32.eight2five(encryptedMsg), Bech32.Encoding.Bech32)
+    val ivBech32 = Bech32.encode("iv", Bech32.eight2five(iv), Bech32.Encoding.Bech32)
+
+    return encryptedMsgBech32 + "_" + ivBech32
 }

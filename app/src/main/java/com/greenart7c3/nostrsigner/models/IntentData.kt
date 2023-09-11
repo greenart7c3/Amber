@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
+import com.vitorpamplona.quartz.encoders.HexKey
+
 class IntentData(
     val data: String,
     val name: String,
@@ -14,5 +16,6 @@ enum class SignerType {
     NIP04_DECRYPT,
     NIP44_ENCRYPT,
     NIP44_DECRYPT,
-    GET_PUBLIC_KEY
+    GET_PUBLIC_KEY,
+    DECRYPT_ZAP_EVENT
 }

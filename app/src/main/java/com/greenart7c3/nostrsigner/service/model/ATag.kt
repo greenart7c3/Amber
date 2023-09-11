@@ -2,9 +2,9 @@ package com.greenart7c3.nostrsigner.service.model
 
 import android.util.Log
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.bechToBytes
 import com.greenart7c3.nostrsigner.service.nip19.Tlv
+import com.vitorpamplona.quartz.encoders.toHexKey
 import fr.acinq.secp256k1.Hex
 
 @Immutable

@@ -16,6 +16,7 @@ object IntentUtils {
                 "nip44_decrypt" -> SignerType.NIP44_DECRYPT
                 "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
                 "get_public_key" -> SignerType.GET_PUBLIC_KEY
+                "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
                 else -> SignerType.SIGN_EVENT
             }
 

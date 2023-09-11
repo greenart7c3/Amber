@@ -1,6 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.models.toHexKey
+import com.vitorpamplona.quartz.encoders.toHexKey
 
 class KeyPair(
     privKey: ByteArray? = null,

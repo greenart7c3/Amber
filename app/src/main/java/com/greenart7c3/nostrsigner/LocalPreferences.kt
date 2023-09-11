@@ -4,10 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.hexToByteArray
-import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.KeyPair
 import com.greenart7c3.nostrsigner.service.toNpub
+import com.vitorpamplona.quartz.encoders.hexToByteArray
+import com.vitorpamplona.quartz.encoders.toHexKey
 import fr.acinq.secp256k1.jni.BuildConfig
 import org.json.JSONObject
 import java.io.File

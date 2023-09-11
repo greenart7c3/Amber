@@ -13,11 +13,11 @@ import com.google.gson.JsonPrimitive
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.google.gson.annotations.SerializedName
-import com.greenart7c3.nostrsigner.models.HexKey
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.models.toHexKey
 import com.greenart7c3.nostrsigner.service.CryptoUtils
 import com.greenart7c3.nostrsigner.service.KeyPair
+import com.vitorpamplona.quartz.encoders.HexKey
+import com.vitorpamplona.quartz.encoders.toHexKey
 import fr.acinq.secp256k1.Hex
 import java.lang.reflect.Type
 import java.math.BigDecimal

@@ -126,10 +126,10 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
             }
         } else {
             json.let {
+                var key = "$packageName-${it.type}"
                 val appName = packageName ?: it.name
                 when (it.type) {
                     SignerType.GET_PUBLIC_KEY -> {
-                        val key = "$packageName-public-key"
                         val remember = remember {
                             mutableStateOf(account.savedApps[key] ?: false)
                         }
@@ -168,13 +168,6 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                         )
                     }
                     SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-                        val key = if (it.type == SignerType.NIP04_DECRYPT || it.type == SignerType.NIP44_DECRYPT) {
-                            "$packageName-decryptnip4"
-                        } else if (it.type == SignerType.DECRYPT_ZAP_EVENT) {
-                            "$packageName-DECRYPT_ZAP_EVENT"
-                        } else {
-                            "$packageName-encryptnip4"
-                        }
                         val remember = remember {
                             mutableStateOf(account.savedApps[key] ?: false)
                         }
@@ -331,7 +324,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                     }
                     else -> {
                         val event = IntentUtils.getIntent(it.data, account.keyPair)
-                        val key = "$packageName-${event.kind}"
+                        key = "$packageName-${it.type}-${event.kind}"
                         val remember = remember {
                             mutableStateOf(account.savedApps[key] ?: false)
                         }

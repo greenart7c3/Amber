@@ -83,9 +83,7 @@ import com.vitorpamplona.quartz.events.LnZapPrivateEvent
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withTimeout
 import org.json.JSONObject
 import java.nio.charset.Charset
 import java.security.SecureRandom
@@ -191,99 +189,95 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                 try {
                                     coroutineScope.launch(Dispatchers.IO) {
                                         val sig = try {
-                                            withTimeout(1000L) {
-                                                async<String> {
-                                                    when (it.type) {
-                                                        SignerType.DECRYPT_ZAP_EVENT -> {
-                                                            val event = com.vitorpamplona.quartz.events.Event.fromJson(it.data) as LnZapRequestEvent
-                                                            val loggedInPrivateKey = account.keyPair.privKey
+                                            when (it.type) {
+                                                SignerType.DECRYPT_ZAP_EVENT -> {
+                                                    val event = com.vitorpamplona.quartz.events.Event.fromJson(it.data) as LnZapRequestEvent
+                                                    val loggedInPrivateKey = account.keyPair.privKey
 
-                                                            if (event.isPrivateZap()) {
-                                                                val recipientPK = event.zappedAuthor().firstOrNull()
-                                                                val recipientPost = event.zappedPost().firstOrNull()
-                                                                if (recipientPK == account.keyPair.pubKey.toHexKey()) {
-                                                                    // if the receiver is logged in, these are the params.
-                                                                    val privateKeyToUse = loggedInPrivateKey
-                                                                    val pubkeyToUse = event.pubKey
+                                                    if (event.isPrivateZap()) {
+                                                        val recipientPK = event.zappedAuthor().firstOrNull()
+                                                        val recipientPost = event.zappedPost().firstOrNull()
+                                                        if (recipientPK == account.keyPair.pubKey.toHexKey()) {
+                                                            // if the receiver is logged in, these are the params.
+                                                            val privateKeyToUse = loggedInPrivateKey
+                                                            val pubkeyToUse = event.pubKey
 
-                                                                    event.getPrivateZapEvent(privateKeyToUse, pubkeyToUse)?.toJson() ?: ""
-                                                                } else {
-                                                                    // if the sender is logged in, these are the params
-                                                                    val altPubkeyToUse = recipientPK
-                                                                    val altPrivateKeyToUse = if (recipientPost != null) {
-                                                                        LnZapRequestEvent.createEncryptionPrivateKey(
-                                                                            loggedInPrivateKey.toHexKey(),
-                                                                            recipientPost,
-                                                                            event.createdAt
-                                                                        )
-                                                                    } else if (recipientPK != null) {
-                                                                        LnZapRequestEvent.createEncryptionPrivateKey(
-                                                                            loggedInPrivateKey.toHexKey(),
-                                                                            recipientPK,
-                                                                            event.createdAt
-                                                                        )
-                                                                    } else {
-                                                                        null
-                                                                    }
-
-                                                                    try {
-                                                                        if (altPrivateKeyToUse != null && altPubkeyToUse != null) {
-                                                                            val altPubKeyFromPrivate = com.vitorpamplona.quartz.crypto.CryptoUtils.pubkeyCreate(altPrivateKeyToUse).toHexKey()
-
-                                                                            if (altPubKeyFromPrivate == event.pubKey) {
-                                                                                val result = event.getPrivateZapEvent(altPrivateKeyToUse, altPubkeyToUse)
-
-                                                                                result?.toJson() ?: ""
-                                                                            } else {
-                                                                                null
-                                                                            }
-                                                                        } else {
-                                                                            null
-                                                                        }
-                                                                    } catch (e: Exception) {
-                                                                        Log.e("Account", "Failed to create pubkey for ZapRequest ${event.id}", e)
-                                                                        null
-                                                                    }
-                                                                }
+                                                            event.getPrivateZapEvent(privateKeyToUse, pubkeyToUse)?.toJson() ?: ""
+                                                        } else {
+                                                            // if the sender is logged in, these are the params
+                                                            val altPubkeyToUse = recipientPK
+                                                            val altPrivateKeyToUse = if (recipientPost != null) {
+                                                                LnZapRequestEvent.createEncryptionPrivateKey(
+                                                                    loggedInPrivateKey.toHexKey(),
+                                                                    recipientPost,
+                                                                    event.createdAt
+                                                                )
+                                                            } else if (recipientPK != null) {
+                                                                LnZapRequestEvent.createEncryptionPrivateKey(
+                                                                    loggedInPrivateKey.toHexKey(),
+                                                                    recipientPK,
+                                                                    event.createdAt
+                                                                )
                                                             } else {
                                                                 null
                                                             }
-                                                        }
-                                                        SignerType.NIP04_DECRYPT -> {
-                                                            CryptoUtils.decrypt(
-                                                                it.data,
-                                                                account.keyPair.privKey,
-                                                                Hex.decode(it.pubKey)
-                                                            )
-                                                        }
-                                                        SignerType.NIP04_ENCRYPT -> {
-                                                            CryptoUtils.encrypt(
-                                                                it.data,
-                                                                account.keyPair.privKey,
-                                                                Hex.decode(it.pubKey)
-                                                            )
-                                                        }
-                                                        SignerType.NIP44_ENCRYPT -> {
-                                                            val sharedSecret = getSharedSecretNIP44(account.keyPair.privKey, it.pubKey.hexToByteArray1())
 
-                                                            encodeNIP44(
-                                                                encryptNIP44(
-                                                                    it.data,
-                                                                    sharedSecret
-                                                                )
-                                                            )
-                                                        }
-                                                        else -> {
-                                                            val toDecrypt = decodeNIP44(it.data) ?: return@async "Could not decrypt the message"
-                                                            when (toDecrypt.v) {
-                                                                Nip44Version.NIP04.versionCode -> decryptNIP04(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
-                                                                Nip44Version.NIP44.versionCode -> decryptNIP44(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
-                                                                else -> null
+                                                            try {
+                                                                if (altPrivateKeyToUse != null && altPubkeyToUse != null) {
+                                                                    val altPubKeyFromPrivate = com.vitorpamplona.quartz.crypto.CryptoUtils.pubkeyCreate(altPrivateKeyToUse).toHexKey()
+
+                                                                    if (altPubKeyFromPrivate == event.pubKey) {
+                                                                        val result = event.getPrivateZapEvent(altPrivateKeyToUse, altPubkeyToUse)
+
+                                                                        result?.toJson() ?: ""
+                                                                    } else {
+                                                                        null
+                                                                    }
+                                                                } else {
+                                                                    null
+                                                                }
+                                                            } catch (e: Exception) {
+                                                                Log.e("Account", "Failed to create pubkey for ZapRequest ${event.id}", e)
+                                                                null
                                                             }
                                                         }
-                                                    } ?: "Could not decrypt the message"
-                                                }.await()
-                                            }
+                                                    } else {
+                                                        null
+                                                    }
+                                                }
+                                                SignerType.NIP04_DECRYPT -> {
+                                                    CryptoUtils.decrypt(
+                                                        it.data,
+                                                        account.keyPair.privKey,
+                                                        Hex.decode(it.pubKey)
+                                                    )
+                                                }
+                                                SignerType.NIP04_ENCRYPT -> {
+                                                    CryptoUtils.encrypt(
+                                                        it.data,
+                                                        account.keyPair.privKey,
+                                                        Hex.decode(it.pubKey)
+                                                    )
+                                                }
+                                                SignerType.NIP44_ENCRYPT -> {
+                                                    val sharedSecret = getSharedSecretNIP44(account.keyPair.privKey, it.pubKey.hexToByteArray1())
+
+                                                    encodeNIP44(
+                                                        encryptNIP44(
+                                                            it.data,
+                                                            sharedSecret
+                                                        )
+                                                    )
+                                                }
+                                                else -> {
+                                                    val toDecrypt = decodeNIP44(it.data) ?: return@launch
+                                                    when (toDecrypt.v) {
+                                                        Nip44Version.NIP04.versionCode -> decryptNIP04(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                                        Nip44Version.NIP44.versionCode -> decryptNIP44(toDecrypt, account.keyPair.privKey, it.pubKey.hexToByteArray1())
+                                                        else -> null
+                                                    }
+                                                }
+                                            } ?: "Could not decrypt the message"
                                         } catch (e: Exception) {
                                             "Could not decrypt the message"
                                         }

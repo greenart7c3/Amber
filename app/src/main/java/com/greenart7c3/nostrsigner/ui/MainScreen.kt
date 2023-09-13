@@ -284,8 +284,10 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
 
                                         val activity = context.getAppCompatActivity()
                                         if (packageName != null) {
-                                            account.savedApps[key] = remember.value
-                                            LocalPreferences.saveToEncryptedStorage(account)
+                                            if (remember.value) {
+                                                account.savedApps[key] = remember.value
+                                                LocalPreferences.saveToEncryptedStorage(account)
+                                            }
                                             val intent = Intent()
                                             if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
                                                 intent.putExtra("signature", "")
@@ -391,8 +393,10 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                         coroutineScope.launch {
                                             val activity = context.getAppCompatActivity()
                                             if (packageName != null) {
-                                                account.savedApps[key] = remember.value
-                                                LocalPreferences.saveToEncryptedStorage(account)
+                                                if (remember.value) {
+                                                    account.savedApps[key] = remember.value
+                                                    LocalPreferences.saveToEncryptedStorage(account)
+                                                }
                                                 val intent = Intent()
                                                 intent.putExtra("event", event.toJson())
                                                 intent.putExtra("signature", event.toJson())
@@ -449,8 +453,10 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     coroutineScope.launch {
                                         val activity = context.getAppCompatActivity()
                                         if (packageName != null) {
-                                            account.savedApps[key] = remember.value
-                                            LocalPreferences.saveToEncryptedStorage(account)
+                                            if (remember.value) {
+                                                account.savedApps[key] = remember.value
+                                                LocalPreferences.saveToEncryptedStorage(account)
+                                            }
                                             val intent = Intent()
                                             val signedEvent = Event(
                                                 event.id,

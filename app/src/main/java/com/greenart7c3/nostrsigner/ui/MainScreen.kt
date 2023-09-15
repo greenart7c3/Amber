@@ -287,9 +287,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                             } else {
                                                 intent.putExtra("signature", sig)
                                             }
-                                            if (it.type == SignerType.NIP44_DECRYPT || it.type == SignerType.NIP04_DECRYPT) {
-                                                intent.putExtra("id", it.id)
-                                            }
+                                            intent.putExtra("id", it.id)
                                             activity?.setResult(RESULT_OK, intent)
                                         } else {
                                             clipboardManager.setText(AnnotatedString(sig))
@@ -389,6 +387,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                                     LocalPreferences.saveToEncryptedStorage(account)
                                                 }
                                                 val intent = Intent()
+                                                intent.putExtra("id", it.id)
                                                 intent.putExtra("event", event.toJson())
                                                 intent.putExtra("signature", event.toJson())
 

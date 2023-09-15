@@ -422,6 +422,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                                     event.content,
                                                     sig
                                                 )
+                                                intent.putExtra("id", it.id)
                                                 intent.putExtra("event", signedEvent.toJson())
                                                 intent.putExtra("signature", sig)
 
@@ -458,6 +459,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                                 event.content,
                                                 sig
                                             )
+                                            intent.putExtra("id", it.id)
                                             intent.putExtra("event", signedEvent.toJson())
                                             intent.putExtra("signature", sig)
 

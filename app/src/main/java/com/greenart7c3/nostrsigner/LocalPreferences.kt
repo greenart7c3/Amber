@@ -148,6 +148,13 @@ object LocalPreferences {
         saveToEncryptedStorage(account)
     }
 
+    fun deleteSavedApps(account: Account) {
+        val prefs = encryptedPreferences(account.keyPair.pubKey.toNpub())
+        prefs.edit().apply {
+            remove(PrefKeys.REMEMBER_APPS)
+        }.apply()
+    }
+
     fun saveToEncryptedStorage(account: Account) {
         val prefs = encryptedPreferences(account.keyPair.pubKey.toNpub())
         prefs.edit().apply {

@@ -353,7 +353,6 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                     val isPrivateZap = localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }
                                     val originalNoteId = localEvent.zappedPost()[0]
                                     val pubkey = localEvent.zappedAuthor()[0]
-                                    Log.d("originalNoteId", originalNoteId)
                                     var privkey = account.keyPair.privKey
                                     var pubKey = account.keyPair.pubKey.toHexKey()
                                     if (isPrivateZap) {
@@ -370,7 +369,6 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                                         )
                                         var tags = localEvent.tags.filter { !it.contains("anon") }
                                         tags = tags + listOf(listOf("anon", encryptedContent))
-                                        Log.d("tags", tags.toString())
                                         privkey = encryptionPrivateKey // sign event with generated privkey
                                         pubKey = com.vitorpamplona.quartz.crypto.CryptoUtils.pubkeyCreate(encryptionPrivateKey).toHexKey() // updated event with according pubkey
 

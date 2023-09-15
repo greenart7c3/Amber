@@ -5,17 +5,22 @@
     <application
         android:name=".nostrsigner"
         android:allowBackup="false"
-
+        android:configChanges="orientation|screenSize|screenLayout"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:launchMode="singleTop"
         android:supportsRtl="true"
         android:theme="@style/Theme.SignerSplash"
-        android:launchMode="singleTop"
-        android:configChanges="orientation|screenSize|screenLayout"
         android:usesCleartextTraffic="true"
         tools:targetApi="33">
+        <provider
+            android:name=".SignerProvider"
+            android:authorities="com.greenart7c3.nostrsigner.SIGN_EVENT;com.greenart7c3.nostrsigner.NIP04_ENCRYPT;com.greenart7c3.nostrsigner.NIP04_DECRYPT;com.greenart7c3.nostrsigner.NIP44_ENCRYPT;com.greenart7c3.nostrsigner.NIP44_DECRYPT;com.greenart7c3.nostrsigner.GET_PUBLIC_KEY;com.greenart7c3.nostrsigner.DECRYPT_ZAP_EVENT"
+            android:enabled="true"
+            android:exported="true" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true">
@@ -24,20 +29,20 @@
 
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="com.greenart7c3.nostrsigner.MAIN_ACTIVITY" />
+
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
-
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
+
                 <data android:scheme="nostrsigner" />
             </intent-filter>
         </activity>
-
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"

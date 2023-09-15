@@ -17,6 +17,7 @@ import androidx.compose.material.Surface
 import androidx.compose.material.Text
 import androidx.compose.material.TextButton
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.runtime.Composable
@@ -31,6 +32,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -87,6 +89,17 @@ fun Drawer(
     ) {
         Column {
             Spacer(modifier = Modifier.weight(1f))
+            IconRow(
+                title = "Reset permissions",
+                icon = Icons.Default.ClearAll,
+                tint = MaterialTheme.colors.onBackground,
+                onClick = {
+                    scope.launch {
+                        scaffoldState.drawerState.close()
+                        LocalPreferences.deleteSavedApps(account)
+                    }
+                }
+            )
             IconRow(
                 title = "Backup Keys",
                 icon = Icons.Default.Key,

@@ -48,6 +48,7 @@ class SignerProvider : ContentProvider() {
             "content://com.greenart7c3.nostrsigner.SIGN_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val json = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val event = Event.fromJson(json)
                 val key = "$packageName-SIGN_EVENT-${event.kind}"
@@ -118,6 +119,7 @@ class SignerProvider : ContentProvider() {
             "content://com.greenart7c3.nostrsigner.NIP04_DECRYPT" -> {
                 val packageName = callingPackage ?: return null
                 val encryptedContent = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
                 val key = "$packageName-NIP04_DECRYPT"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
@@ -140,6 +142,7 @@ class SignerProvider : ContentProvider() {
             "content://com.greenart7c3.nostrsigner.NIP44_DECRYPT" -> {
                 val packageName = callingPackage ?: return null
                 val encryptedContent = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
                 val key = "$packageName-NIP44_DECRYPT"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
@@ -171,6 +174,7 @@ class SignerProvider : ContentProvider() {
             "content://com.greenart7c3.nostrsigner.NIP04_ENCRYPT" -> {
                 val packageName = callingPackage ?: return null
                 val decryptedContent = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
                 val key = "$packageName-NIP04_ENCRYPT"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
@@ -201,6 +205,7 @@ class SignerProvider : ContentProvider() {
             "content://com.greenart7c3.nostrsigner.NIP44_ENCRYPT" -> {
                 val packageName = callingPackage ?: return null
                 val decryptedContent = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
                 val key = "$packageName-NIP44_ENCRYPT"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
@@ -226,6 +231,7 @@ class SignerProvider : ContentProvider() {
             "content://com.greenart7c3.nostrsigner.DECRYPT_ZAP_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val encryptedContent = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
                 val key = "$packageName-DECRYPT_ZAP_EVENT"
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val isRemembered = account.savedApps[key] ?: false

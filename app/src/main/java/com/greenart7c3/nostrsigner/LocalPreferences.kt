@@ -89,6 +89,10 @@ object LocalPreferences {
         updateCurrentAccount(npub)
     }
 
+    fun containsAccount(npub: String): Boolean {
+        return savedAccounts().contains(npub)
+    }
+
     /**
      * Removes the account from the app level shared preferences
      */

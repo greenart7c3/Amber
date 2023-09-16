@@ -21,4 +21,10 @@
     <string name="signature_copied_to_the_clipboard">Signature copied to the clipboard</string>
     <string name="sign">Sign</string>
     <string name="raw_json_copied_to_the_clipboard">Raw json copied to the clipboard</string>
+    <string name="reset_permissions">Reset permissions</string>
+    <string name="logout">Logout</string>
+    <string name="logging_out_deletes_all_your_local_information_make_sure_to_have_your_private_keys_backed_up_to_avoid_losing_your_account_do_you_want_to_continue">Logging out deletes all your local information. Make sure to have your private keys backed up to avoid losing your account. Do you want to continue?</string>
+    <string name="cancel">Cancel</string>
+    <string name="do_you_want_to_reset_all_permissions">Do you want to reset all permissions?</string>
+    <string name="confirm">Confirm</string>
 </resources>

@@ -28,11 +28,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -47,16 +49,17 @@ fun Drawer(
     scaffoldState: ScaffoldState
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
+    var resetPermissions by remember { mutableStateOf(false) }
     var backupDialogOpen by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     if (logoutDialog) {
         AlertDialog(
             title = {
-                Text(text = "Logout")
+                Text(text = stringResource(R.string.logout))
             },
             text = {
-                Text(text = "Logging out deletes all your local information. Make sure to have your private keys backed up to avoid losing your account. Do you want to continue?")
+                Text(text = stringResource(R.string.logging_out_deletes_all_your_local_information_make_sure_to_have_your_private_keys_backed_up_to_avoid_losing_your_account_do_you_want_to_continue))
             },
             onDismissRequest = {
                 logoutDialog = false
@@ -68,7 +71,7 @@ fun Drawer(
                         accountStateViewModel.logOff(account.keyPair.pubKey.toNpub())
                     }
                 ) {
-                    Text(text = "Logout")
+                    Text(text = stringResource(R.string.logout))
                 }
             },
             dismissButton = {
@@ -77,7 +80,43 @@ fun Drawer(
                         logoutDialog = false
                     }
                 ) {
-                    Text(text = "Cancel")
+                    Text(text = stringResource(R.string.cancel))
+                }
+            }
+        )
+    }
+
+    if (resetPermissions) {
+        AlertDialog(
+            title = {
+                Text(text = stringResource(R.string.reset_permissions))
+            },
+            text = {
+                Text(text = stringResource(R.string.do_you_want_to_reset_all_permissions))
+            },
+            onDismissRequest = {
+                resetPermissions = false
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        resetPermissions = false
+                        scope.launch {
+                            scaffoldState.drawerState.close()
+                            LocalPreferences.deleteSavedApps(account)
+                        }
+                    }
+                ) {
+                    Text(text = stringResource(R.string.confirm))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        resetPermissions = false
+                    }
+                ) {
+                    Text(text = stringResource(R.string.cancel))
                 }
             }
         )
@@ -94,10 +133,7 @@ fun Drawer(
                 icon = Icons.Default.ClearAll,
                 tint = MaterialTheme.colors.onBackground,
                 onClick = {
-                    scope.launch {
-                        scaffoldState.drawerState.close()
-                        LocalPreferences.deleteSavedApps(account)
-                    }
+                    resetPermissions = true
                 }
             )
             IconRow(

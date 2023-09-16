@@ -580,7 +580,14 @@ fun EncryptDecryptData(
                 .fillMaxWidth()
         ) {
             Column(Modifier.padding(6.dp)) {
-                val message = if (type == SignerType.NIP04_ENCRYPT) "encrypt" else "decrypt"
+                val message = when (type) {
+                    SignerType.NIP44_ENCRYPT -> "encrypt nip44"
+                    SignerType.NIP04_ENCRYPT -> "encrypt nip04"
+                    SignerType.NIP44_DECRYPT -> "decrypt nip44"
+                    SignerType.NIP04_DECRYPT -> "decrypt nip04"
+                    SignerType.DECRYPT_ZAP_EVENT -> "decrypt zap event"
+                    else -> "encrypt/decrypt"
+                }
                 Text(
                     "wants you to $message data",
                     fontWeight = FontWeight.Bold

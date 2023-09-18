@@ -1,7 +1,9 @@
 package com.greenart7c3.nostrsigner.service.model
 
 import androidx.compose.runtime.Immutable
+import com.vitorpamplona.quartz.encoders.ATag
 import com.vitorpamplona.quartz.encoders.HexKey
+import com.vitorpamplona.quartz.events.EmojiUrl
 import java.math.BigDecimal
 
 @Immutable

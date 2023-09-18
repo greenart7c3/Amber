@@ -39,14 +39,14 @@ import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics
-import com.greenart7c3.nostrsigner.service.toNpub
-import com.greenart7c3.nostrsigner.service.toNsec
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material.MaterialRichText
 import com.halilibo.richtext.ui.resolveDefaults
+import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.encoders.toNsec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

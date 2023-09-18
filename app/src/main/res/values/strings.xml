@@ -27,4 +27,5 @@
     <string name="cancel">Cancel</string>
     <string name="do_you_want_to_reset_all_permissions">Do you want to reset all permissions?</string>
     <string name="confirm">Confirm</string>
+    <string name="could_not_decrypt_the_message">Could not decrypt the message</string>
 </resources>

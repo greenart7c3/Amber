@@ -20,8 +20,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.launch
 
 @Composable

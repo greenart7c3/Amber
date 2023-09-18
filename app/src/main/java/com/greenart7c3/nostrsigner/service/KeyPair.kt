@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 
 class KeyPair(

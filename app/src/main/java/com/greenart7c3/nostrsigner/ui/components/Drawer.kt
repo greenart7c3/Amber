@@ -36,10 +36,10 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.toNpub
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.ShowQRDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
+import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.launch
 
 @Composable

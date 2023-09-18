@@ -5,7 +5,7 @@ import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.KeyPair
-import com.greenart7c3.nostrsigner.service.bechToBytes
+import com.vitorpamplona.quartz.encoders.bechToBytes
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers

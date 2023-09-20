@@ -100,7 +100,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-play-arm64-v8a-release-unsigned-signed.apk
+          asset_path: app/build/outputs/apk/release/app-arm64-v8a-release-unsigned-signed.apk
           asset_name: amber-arm64-v8a-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
@@ -111,7 +111,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-play-armeabi-v7a-release-unsigned-signed.apk
+          asset_path: app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned-signed.apk
           asset_name: amber-armeabi-v7a-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 

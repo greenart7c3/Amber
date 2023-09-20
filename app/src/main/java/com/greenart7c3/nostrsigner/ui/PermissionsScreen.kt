@@ -127,12 +127,13 @@ fun PermissionsScreen(
                 ) {
                     Text(
                         selectedPackage!!,
-                        Modifier.fillMaxWidth().padding(8.dp),
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
                         fontWeight = FontWeight.Bold,
                         textAlign = TextAlign.Center,
                         fontSize = 18.sp
                     )
-                    Divider()
                     LazyColumn(
                         Modifier.weight(1f)
                     ) {

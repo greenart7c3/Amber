@@ -8,7 +8,7 @@ import com.greenart7c3.nostrsigner.service.KeyPair
 @Stable
 class Account(
     val keyPair: KeyPair,
-    val savedApps: MutableMap<String, Boolean>
+    var savedApps: MutableMap<String, Boolean>
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
 }

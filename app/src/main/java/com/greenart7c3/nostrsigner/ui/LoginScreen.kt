@@ -17,16 +17,15 @@ import androidx.compose.foundation.text.ClickableText
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.Button
-import androidx.compose.material.ButtonDefaults
-import androidx.compose.material.Icon
-import androidx.compose.material.IconButton
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.OutlinedTextField
-import androidx.compose.material.Text
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.Button
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -56,7 +55,6 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.theme.Font14SP
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
-import com.greenart7c3.nostrsigner.ui.theme.placeholderText
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -122,8 +120,7 @@ fun LoginPage(
                 ),
                 placeholder = {
                     Text(
-                        text = "nsec..",
-                        color = MaterialTheme.colors.placeholderText
+                        text = "nsec.."
                     )
                 },
                 trailingIcon = {
@@ -154,7 +151,7 @@ fun LoginPage(
                             painter = painterResource(R.drawable.ic_qrcode),
                             null,
                             modifier = Modifier.size(24.dp),
-                            tint = MaterialTheme.colors.primary
+                            tint = MaterialTheme.colorScheme.primary
                         )
                     }
                 },
@@ -162,7 +159,7 @@ fun LoginPage(
                 keyboardActions = KeyboardActions(
                     onGo = {
                         try {
-                            accountViewModel.startUI(key.value.text)
+                            accountViewModel.startUI(key.value.text, null)
                         } catch (e: Exception) {
                             errorMessage = "Invalid key"
                         }
@@ -172,8 +169,8 @@ fun LoginPage(
             if (errorMessage.isNotBlank()) {
                 Text(
                     text = errorMessage,
-                    color = MaterialTheme.colors.error,
-                    style = MaterialTheme.typography.caption
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
 
@@ -188,7 +185,7 @@ fun LoginPage(
 
                         if (key.value.text.isNotBlank()) {
                             try {
-                                accountViewModel.startUI(key.value.text)
+                                accountViewModel.startUI(key.value.text, null)
                             } catch (e: Exception) {
                                 Log.e("Login", "Could not sign in", e)
                                 errorMessage = "Invalid key"
@@ -198,11 +195,7 @@ fun LoginPage(
                     shape = RoundedCornerShape(Size35dp),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(50.dp),
-                    colors = ButtonDefaults
-                        .buttonColors(
-                            backgroundColor = MaterialTheme.colors.primary
-                        )
+                        .height(50.dp)
                 ) {
                     Text(text = "Login")
                 }
@@ -221,7 +214,7 @@ fun LoginPage(
             style = TextStyle(
                 fontSize = Font14SP,
                 textDecoration = TextDecoration.Underline,
-                color = MaterialTheme.colors.primary,
+                color = MaterialTheme.colorScheme.primary,
                 textAlign = TextAlign.Center
             )
         )

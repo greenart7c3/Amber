@@ -21,12 +21,12 @@ class AccountStateViewModel : ViewModel() {
     val accountContent = _accountContent.asStateFlow()
 
     init {
-        tryLoginExistingAccount()
+        tryLoginExistingAccount(null)
     }
 
-    private fun tryLoginExistingAccount() {
+    private fun tryLoginExistingAccount(route: String?) {
         LocalPreferences.loadFromEncryptedStorage()?.let {
-            startUI(it)
+            startUI(it, route)
         }
     }
 
@@ -47,10 +47,16 @@ class AccountStateViewModel : ViewModel() {
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
         LocalPreferences.updatePrefsForLogout(npub)
-        tryLoginExistingAccount()
+        tryLoginExistingAccount(null)
     }
 
-    fun startUI(key: String) {
+    fun switchUser(npub: String, route: String?) {
+        prepareLogoutOrSwitch()
+        LocalPreferences.switchToAccount(npub)
+        tryLoginExistingAccount(route)
+    }
+
+    fun startUI(key: String, route: String?) {
         val account = if (key.startsWith("nsec")) {
             Account(KeyPair(privKey = key.bechToBytes()), mutableMapOf())
         } else {
@@ -58,18 +64,18 @@ class AccountStateViewModel : ViewModel() {
         }
 
         LocalPreferences.updatePrefsForLogin(account)
-        startUI(account)
+        startUI(account, route)
     }
 
     fun newKey() {
         val account = Account(KeyPair(), mutableMapOf())
         LocalPreferences.updatePrefsForLogin(account)
-        startUI(account)
+        startUI(account, null)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun startUI(account: Account) {
-        _accountContent.update { AccountState.LoggedIn(account) }
+    fun startUI(account: Account, route: String?) {
+        _accountContent.update { AccountState.LoggedIn(account, route) }
 
         GlobalScope.launch(Dispatchers.Main) {
             account.saveable.observeForever(saveListener)

@@ -157,6 +157,7 @@ object LocalPreferences {
         prefs.edit().apply {
             remove(PrefKeys.REMEMBER_APPS)
         }.apply()
+        account.savedApps = mutableMapOf()
     }
 
     fun saveToEncryptedStorage(account: Account) {

@@ -20,7 +20,8 @@ fun AccountScreen(
     Column {
         Crossfade(
             targetState = accountState,
-            animationSpec = tween(durationMillis = 100)
+            animationSpec = tween(durationMillis = 100),
+            label = "AccountScreen"
         ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {
@@ -29,7 +30,7 @@ fun AccountScreen(
                 is AccountState.LoggedIn -> {
                     val intentData = IntentUtils.getIntentData(intent)
 
-                    MainScreen(state.account, accountStateViewModel, intentData, packageName)
+                    MainScreen(state.account, accountStateViewModel, intentData, packageName, state.route)
                 }
             }
         }

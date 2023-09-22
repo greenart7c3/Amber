@@ -14,6 +14,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -51,7 +52,7 @@ fun HomeScreen(
                 Arrangement.Center,
                 Alignment.CenterHorizontally
             ) {
-                Text("No event to sign")
+                Text(stringResource(R.string.no_event_to_sign))
             }
         } else {
             json.let {
@@ -112,13 +113,13 @@ fun HomeScreen(
                                                 account,
                                                 it.pubKey
                                             )
-                                                ?: context.getString(R.string.could_not_decrypt_the_message)
+                                                ?: "Could not decrypt the message"
                                         } catch (e: Exception) {
-                                            context.getString(R.string.could_not_decrypt_the_message)
+                                            "Could not decrypt the message"
                                         }
 
                                         val result =
-                                            if (sig == context.getString(R.string.could_not_decrypt_the_message) && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                            if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
                                                 ""
                                             } else {
                                                 sig
@@ -140,14 +141,14 @@ fun HomeScreen(
                                     return@EncryptDecryptData
                                 } catch (e: Exception) {
                                     val message = if (it.type.toString().contains("ENCRYPT", true)) {
-                                        "encrypt"
+                                        context.getString(R.string.encrypt)
                                     } else {
-                                        "decrypt"
+                                        context.getString(R.string.decrypt)
                                     }
                                     coroutineScope.launch {
                                         Toast.makeText(
                                             context,
-                                            "Error to $message data",
+                                            context.getString(R.string.error_to_data, message),
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }

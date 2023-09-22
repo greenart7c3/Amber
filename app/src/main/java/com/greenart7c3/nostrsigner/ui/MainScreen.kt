@@ -21,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -77,7 +78,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = "Amber") }
+                title = { Text(text = stringResource(id = R.string.app_name)) }
             )
         },
         bottomBar = {

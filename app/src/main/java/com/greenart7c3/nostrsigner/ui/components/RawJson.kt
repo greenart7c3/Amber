@@ -12,6 +12,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import com.greenart7c3.nostrsigner.R
@@ -52,7 +53,7 @@ fun RawJson(
                 }
             }
         ) {
-            Text("Copy raw json")
+            Text(stringResource(R.string.copy_raw_json))
         }
     }
 }

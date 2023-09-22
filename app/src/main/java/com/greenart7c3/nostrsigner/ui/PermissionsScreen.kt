@@ -139,12 +139,12 @@ fun PermissionsScreen(
                     ) {
                         itemsIndexed(permissions, { index, _ -> index }) { index, permission ->
                             val message = when (permission) {
-                                "NIP04_DECRYPT" -> "Decrypt nip 04 data"
-                                "NIP44_DECRYPT" -> "Decrypt nip 44 data"
-                                "NIP44_ENCRYPT" -> "Encrypt nip 44 data"
-                                "NIP04_ENCRYPT" -> "Encrypt nip 04 data"
-                                "DECRYPT_ZAP_EVENT" -> "Decrypt zap data"
-                                "GET_PUBLIC_KEY" -> "Read your public key"
+                                "NIP04_DECRYPT" -> stringResource(R.string.decrypt_nip_04_data)
+                                "NIP44_DECRYPT" -> stringResource(R.string.decrypt_nip_44_data)
+                                "NIP44_ENCRYPT" -> stringResource(R.string.encrypt_nip_44_data)
+                                "NIP04_ENCRYPT" -> stringResource(R.string.encrypt_nip_04_data)
+                                "DECRYPT_ZAP_EVENT" -> stringResource(R.string.decrypt_zap_data)
+                                "GET_PUBLIC_KEY" -> stringResource(R.string.read_your_public_key)
                                 else -> "Sign event kind ${permission.split("-").last()}"
                             }
                             Row(
@@ -187,7 +187,7 @@ fun PermissionsScreen(
                             },
                             Modifier.padding(6.dp)
                         ) {
-                            Text("Cancel")
+                            Text(stringResource(id = R.string.cancel))
                         }
                         Button(
                             onClick = {
@@ -204,7 +204,7 @@ fun PermissionsScreen(
                             },
                             Modifier.padding(6.dp)
                         ) {
-                            Text("Confirm")
+                            Text(stringResource(id = R.string.confirm))
                         }
                     }
                 }
@@ -220,7 +220,7 @@ fun PermissionsScreen(
                 .padding(16.dp)
         ) {
             IconRow(
-                title = "Reset permissions",
+                title = stringResource(id = R.string.reset_permissions),
                 icon = Icons.Default.ClearAll,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
@@ -237,7 +237,7 @@ fun PermissionsScreen(
                 Arrangement.Center,
                 Alignment.CenterHorizontally
             ) {
-                Text("No permissions granted")
+                Text(stringResource(R.string.no_permissions_granted))
             }
         } else {
             LazyColumn(

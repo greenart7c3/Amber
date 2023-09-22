@@ -73,7 +73,7 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             IconRow(
-                title = "Backup Keys",
+                title = stringResource(R.string.backup_keys),
                 icon = Icons.Default.Key,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
@@ -86,7 +86,7 @@ fun SettingsScreen(
                 .padding(16.dp)
         ) {
             IconRow(
-                title = "Logout",
+                title = stringResource(R.string.logout),
                 icon = Icons.Default.ExitToApp,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {

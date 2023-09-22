@@ -11,8 +11,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.R
 
 @Composable
 fun LoginWithPubKey(
@@ -39,7 +41,7 @@ fun LoginWithPubKey(
                     .padding(6.dp)
             ) {
                 Text(
-                    "wants to read your public key",
+                    stringResource(R.string.wants_to_read_your_public_key),
                     fontWeight = FontWeight.Bold
                 )
             }

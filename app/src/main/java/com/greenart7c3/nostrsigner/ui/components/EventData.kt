@@ -20,9 +20,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.model.Event
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -41,7 +43,7 @@ fun EventData(
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
     }
-    val eventDescription = event.description()
+    val eventDescription = stringResource(R.string.event)
 
     Column(
         Modifier
@@ -56,36 +58,36 @@ fun EventData(
         ) {
             Column(Modifier.padding(6.dp)) {
                 val message = if (event.kind == 22242) {
-                    "client authentication"
+                    stringResource(R.string.client_authentication)
                 } else {
                     eventDescription
                 }
                 Text(
-                    "wants you to sign a $message",
+                    stringResource(R.string.wants_you_to_sign_a, message),
                     fontWeight = FontWeight.Bold
                 )
 
                 EventRow(
                     Icons.Default.CalendarMonth,
-                    "Kind ",
+                    stringResource(R.string.kind),
                     "${event.kind}"
                 )
 
                 EventRow(
                     Icons.Default.AccessTime,
-                    "Created at ",
+                    stringResource(R.string.created_at),
                     TimeUtils.format(event.createdAt)
                 )
 
                 EventRow(
                     Icons.Default.Person,
-                    "Signed by ",
+                    stringResource(R.string.signed_by),
                     event.pubKey.toShortenHex()
                 )
 
                 EventRow(
                     Icons.Default.ContentPaste,
-                    "Content ",
+                    stringResource(R.string.content),
                     event.content
                 )
 
@@ -99,7 +101,7 @@ fun EventData(
             onCLick = {
                 showMore = !showMore
             },
-            if (!showMore) "Show Details" else "Hide Details"
+            if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details)
         )
         if (showMore) {
             RawJson(rawJson, Modifier.weight(1f))

@@ -10,6 +10,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import com.greenart7c3.nostrsigner.R
 
 @Composable
 fun RememberMyChoice(
@@ -34,7 +36,7 @@ fun RememberMyChoice(
         ) {
             Text(
                 modifier = Modifier.weight(1f),
-                text = "Remember my choice and don't ask again"
+                text = stringResource(R.string.remember_my_choice_and_don_t_ask_again)
             )
             Switch(
                 checked = remember.value,

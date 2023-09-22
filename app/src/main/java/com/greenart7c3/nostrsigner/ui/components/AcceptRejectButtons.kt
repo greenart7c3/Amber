@@ -10,7 +10,9 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 
 @Composable
@@ -28,14 +30,14 @@ fun AcceptRejectButtons(
             shape = ButtonBorder,
             onClick = onReject
         ) {
-            Text("Reject")
+            Text(stringResource(R.string.reject))
         }
         Spacer(modifier = Modifier.width(8.dp))
         Button(
             shape = ButtonBorder,
             onClick = onAccept
         ) {
-            Text("Accept")
+            Text(stringResource(R.string.accept))
         }
     }
 }

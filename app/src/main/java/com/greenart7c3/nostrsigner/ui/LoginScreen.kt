@@ -41,7 +41,9 @@ import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalAutofill
 import androidx.compose.ui.platform.LocalAutofillTree
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.ImeAction
@@ -66,6 +68,7 @@ fun LoginPage(
     var dialogOpen by remember {
         mutableStateOf(false)
     }
+    val context = LocalContext.current
 
     Column(
         modifier = Modifier
@@ -120,7 +123,7 @@ fun LoginPage(
                 ),
                 placeholder = {
                     Text(
-                        text = "nsec.."
+                        text = stringResource(R.string.nsec)
                     )
                 },
                 trailingIcon = {
@@ -129,9 +132,9 @@ fun LoginPage(
                             Icon(
                                 imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                 contentDescription = if (showPassword) {
-                                    "Show password"
+                                    stringResource(R.string.show_password)
                                 } else {
-                                    "Hide password"
+                                    stringResource(R.string.hide_password)
                                 }
                             )
                         }
@@ -161,7 +164,7 @@ fun LoginPage(
                         try {
                             accountViewModel.startUI(key.value.text, null)
                         } catch (e: Exception) {
-                            errorMessage = "Invalid key"
+                            errorMessage = context.getString(R.string.invalid_key)
                         }
                     }
                 )
@@ -180,7 +183,7 @@ fun LoginPage(
                 Button(
                     onClick = {
                         if (key.value.text.isBlank()) {
-                            errorMessage = "Key is required"
+                            errorMessage = context.getString(R.string.key_is_required)
                         }
 
                         if (key.value.text.isNotBlank()) {
@@ -188,7 +191,7 @@ fun LoginPage(
                                 accountViewModel.startUI(key.value.text, null)
                             } catch (e: Exception) {
                                 Log.e("Login", "Could not sign in", e)
-                                errorMessage = "Invalid key"
+                                errorMessage = context.getString(R.string.invalid_key)
                             }
                         }
                     },
@@ -197,14 +200,14 @@ fun LoginPage(
                         .fillMaxWidth()
                         .height(50.dp)
                 ) {
-                    Text(text = "Login")
+                    Text(text = stringResource(R.string.login))
                 }
             }
         }
 
         // The last child is glued to the bottom.
         ClickableText(
-            text = AnnotatedString("Generate a new key"),
+            text = AnnotatedString(stringResource(R.string.generate_a_new_key)),
             modifier = Modifier
                 .padding(20.dp)
                 .fillMaxWidth(),

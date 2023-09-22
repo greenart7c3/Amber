@@ -62,7 +62,7 @@ fun PermissionsScreen(
     val savedApps = localAccount!!.savedApps
     val applications = savedApps.keys.toList().map {
         it.split("-").first()
-    }.toSet()
+    }.toSet().sorted()
     var resetPermissions by remember { mutableStateOf(false) }
     var selectedPackage by remember { mutableStateOf<String?>(null) }
     var permissions by remember { mutableStateOf(listOf<String>()) }
@@ -168,8 +168,7 @@ fun PermissionsScreen(
                                     modifier = Modifier
                                         .size(22.dp)
                                         .clickable {
-                                            permissions =
-                                                permissions.filterIndexed { i, _ -> i != index }
+                                            permissions = permissions.filterIndexed { i, _ -> i != index }
                                         },
                                     tint = Color.Red
                                 )
@@ -256,7 +255,7 @@ fun PermissionsScreen(
                             onClick = {
                                 permissions = localAccount.savedApps.keys.filter { item -> item.startsWith(applications.elementAt(it)) }.map { item ->
                                     item.replace("${applications.elementAt(it)}-", "")
-                                }
+                                }.sorted()
                                 selectedPackage = applications.elementAt(it)
                             }
                         )

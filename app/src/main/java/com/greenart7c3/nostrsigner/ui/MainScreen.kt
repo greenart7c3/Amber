@@ -23,10 +23,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -82,27 +84,29 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
             )
         },
         bottomBar = {
-            NavigationBar {
-                val currentRoute = navBackStackEntry?.destination?.route
-                items.forEach {
-                    val selected = currentRoute == it.route
-                    NavigationBarItem(
-                        selected = selected,
-                        onClick = {
-                            navController.navigate(it.route) {
-                                popUpTo(0)
+            if (navBackStackEntry?.destination?.route?.contains("Permission/") == false) {
+                NavigationBar {
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    items.forEach {
+                        val selected = currentRoute == it.route
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(it.route) {
+                                    popUpTo(0)
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    if (selected) it.selectedIcon else it.icon,
+                                    it.route
+                                )
+                            },
+                            label = {
+                                Text(it.route)
                             }
-                        },
-                        icon = {
-                            Icon(
-                                if (selected) it.selectedIcon else it.icon,
-                                it.route
-                            )
-                        },
-                        label = {
-                            Text(it.route)
-                        }
-                    )
+                        )
+                    }
                 }
             }
         }
@@ -135,7 +139,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             .fillMaxSize()
                             .padding(padding),
                         account = account,
-                        accountStateViewModel = accountStateViewModel
+                        accountStateViewModel = accountStateViewModel,
+                        navController = navController
                     )
                 }
             )
@@ -149,6 +154,22 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                             .padding(padding),
                         accountStateViewModel,
                         account
+                    )
+                }
+            )
+
+            composable(
+                Route.Permission.route,
+                arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
+                content = {
+                    EditPermission(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                        accountStateViewModel = accountStateViewModel,
+                        selectedPackage = it.arguments?.getString("packageName")!!,
+                        navController = navController
                     )
                 }
             )

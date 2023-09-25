@@ -33,4 +33,10 @@ sealed class Route(
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings
     )
+
+    data object Permission : Route(
+        route = "Permission/{packageName}",
+        icon = Icons.Outlined.ViewList,
+        selectedIcon = Icons.Default.ViewList
+    )
 }

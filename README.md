@@ -6,10 +6,11 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 
 - [x] Offline
 - [ ] Use nip-46 or make an addendum in nip-46
-- [ ] Improve the ui (currently its showing a text with the raw json of the event)
+- [x] Improve the ui (currently its showing a text with the raw json of the event)
 - [x] Check if we can use Amber to sign the events of web applications
 - [x] Change the sign button to just copy the signature of the event
-- [ ] Use a service or another approach to not open the app always to get the signed event on android
+- [x] Use content provider to sign events in background when you checked the remember my choice option on android
+- [ ] Support for multiple accounts
 
 # Adding Amber support for your application
 
@@ -36,7 +37,7 @@ val json = event.toJson()
 * Create the intent using the **nostrsigner** scheme
 
 ```kotlin
-val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json;name=Your Application name"))
+val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json"))
 ```
 
 * Set the package name of the signer app for the intent
@@ -55,14 +56,27 @@ val signerType = when (type) {
     SignerType.NIP44_ENCRYPT -> "nip44_encrypt"
     SignerType.NIP44_DECRYPT -> "nip44_decrypt"
     SignerType.GET_PUBLIC_KEY -> "get_public_key"
+    SignerType.DECRYPT_ZAP_EVENT -> "decrypt_zap_event"
 }
 intent.putExtra("type", signerType)
 ```
 
-* Set the pubkey if using nip04_decrypt
+* Set the pubkey used for encryption/decryption
 
 ```kotlin
 intent.putExtra("pubKey", pubKey)
+```
+
+* Create an id or set the id as the id of the event so you can control in your application what response you are receiving
+
+```kotlin
+intent.putExtra("id", event.id)
+```
+
+* Set the current npub of the logged in user, so amber knows what user it has to sign the transaction (not yet implemented)
+
+```kotlin
+intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
 ```
 
 * Start the signer Activity
@@ -70,6 +84,68 @@ intent.putExtra("pubKey", pubKey)
 ```kotlin
 context.startActivity(intent)
 ```
+
+## Sign transactions in background
+
+* Create the Nostr Event
+
+```kotlin
+val event = TextNoteEvent(id, pubKey, TimeUtils.now(), tags, message, signature = "")
+```
+
+* Create the content resolver using the following scheme
+
+```kotlin
+"content://com.greenart7c3.nostrsigner.$signerType"
+```
+
+* The signer types are
+
+```kotlin
+enum class SignerType {
+    SIGN_EVENT,
+    NIP04_ENCRYPT,
+    NIP04_DECRYPT,
+    NIP44_ENCRYPT,
+    NIP44_DECRYPT,
+    GET_PUBLIC_KEY,
+    DECRYPT_ZAP_EVENT
+}
+```
+
+* In the projection parameter of the contentResolver.query you must send a list with the following data
+    * The event json
+    * The hex pub key for encryption/decryption
+    * The current logged in user npub
+
+* Example
+
+```kotlin
+context.contentResolver.query(
+    Uri.parse("content://com.greenart7c3.nostrsigner.$signerType"),
+    listOf(event.toJson(), "hex pubKey for encryption/decryption", "logged in user npub"),
+    null,
+    null,
+    null
+).use {
+    if (it !== null) {
+        if (it.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            if (index < 0) {
+                Log.d("getDataFromResolver", "column '$columnName' not found")
+                return null
+            }
+            return it.getString(index)
+        }
+    }
+}
+```
+
+* If the user did not check the remember my choice option, the npub is not in amber or the signer type is not recognized the contentResolver will return null
+
+* For the SIGN_EVENT type amber returns two columns "signature" and "event". The column event is the signed event json
+
+* For the other types amber returns the column "signature"
 
 # Support for Web Applications
 

@@ -68,4 +68,7 @@
     <string name="show_details">Show Details</string>
     <string name="hide_details">Hide Details</string>
     <string name="copy_raw_json">Copy raw json</string>
+    <string name="add_new_account">Add New Account</string>
+    <string name="select_account">Select Account</string>
+    <string name="active_account">Active Account</string>
 </resources>

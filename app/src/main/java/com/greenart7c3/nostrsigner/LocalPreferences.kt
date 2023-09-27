@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.compose.runtime.Immutable
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
@@ -26,10 +27,25 @@ private object PrefKeys {
     const val REMEMBER_APPS = "remember_apps"
 }
 
+@Immutable
+data class AccountInfo(
+    val npub: String,
+    val hasPrivKey: Boolean
+)
+
 object LocalPreferences {
     private const val comma = ","
 
     private var currentAccount: String? = null
+
+    fun allSavedAccounts(): List<AccountInfo> {
+        return savedAccounts().map { npub ->
+            AccountInfo(
+                npub,
+                true
+            )
+        }
+    }
 
     fun currentAccount(): String? {
         if (currentAccount == null) {

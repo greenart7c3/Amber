@@ -21,7 +21,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -34,7 +33,9 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.delay
 
 fun sendResult(
@@ -80,7 +81,9 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(
-                title = { Text(text = stringResource(id = R.string.app_name)) }
+                title = {
+                    Text(account.keyPair.pubKey.toNpub().toShortenHex())
+                }
             )
         },
         bottomBar = {

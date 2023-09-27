@@ -27,7 +27,7 @@ class MainActivity : AppCompatActivity() {
                     color = MaterialTheme.colorScheme.background
                 ) {
                     val accountStateViewModel: AccountStateViewModel = viewModel {
-                        AccountStateViewModel()
+                        AccountStateViewModel(intent.getStringExtra("current_user"))
                     }
                     AccountScreen(accountStateViewModel, intent, packageName)
                 }

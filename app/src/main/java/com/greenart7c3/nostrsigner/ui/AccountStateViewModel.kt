@@ -16,16 +16,17 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Stable
-class AccountStateViewModel : ViewModel() {
+class AccountStateViewModel(npub: String?) : ViewModel() {
     private val _accountContent = MutableStateFlow<AccountState>(AccountState.LoggedOff)
     val accountContent = _accountContent.asStateFlow()
 
     init {
-        tryLoginExistingAccount(null)
+        tryLoginExistingAccount(null, npub)
     }
 
-    private fun tryLoginExistingAccount(route: String?) {
-        LocalPreferences.loadFromEncryptedStorage()?.let {
+    private fun tryLoginExistingAccount(route: String?, npub: String?) {
+        val currentUser = npub ?: LocalPreferences.currentAccount()
+        LocalPreferences.loadFromEncryptedStorage(currentUser)?.let {
             startUI(it, route)
         }
     }
@@ -47,13 +48,13 @@ class AccountStateViewModel : ViewModel() {
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
         LocalPreferences.updatePrefsForLogout(npub)
-        tryLoginExistingAccount(null)
+        tryLoginExistingAccount(null, null)
     }
 
     fun switchUser(npub: String, route: String?) {
         prepareLogoutOrSwitch()
         LocalPreferences.switchToAccount(npub)
-        tryLoginExistingAccount(route)
+        tryLoginExistingAccount(route, npub)
     }
 
     fun startUI(key: String, route: String?) {

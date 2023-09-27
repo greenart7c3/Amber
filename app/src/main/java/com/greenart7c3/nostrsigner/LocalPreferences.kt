@@ -25,6 +25,7 @@ private object PrefKeys {
     const val NOSTR_PRIVKEY = "nostr_privkey"
     const val NOSTR_PUBKEY = "nostr_pubkey"
     const val REMEMBER_APPS = "remember_apps"
+    const val ACCOUNT_NAME = "account_name"
 }
 
 @Immutable
@@ -44,7 +45,7 @@ object LocalPreferences {
                 npub,
                 true
             )
-        }
+        }.toSet().toList()
     }
 
     fun currentAccount(): String? {
@@ -183,11 +184,24 @@ object LocalPreferences {
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
             val jsonObject = JSONObject(account.savedApps.toMap())
             putString(PrefKeys.REMEMBER_APPS, jsonObject.toString())
+            putString(PrefKeys.ACCOUNT_NAME, account.name)
         }.apply()
     }
 
     fun loadFromEncryptedStorage(): Account? {
         return loadFromEncryptedStorage(currentAccount())
+    }
+
+    fun setAccountName(npub: String, value: String) {
+        encryptedPreferences(npub).edit().apply {
+            putString(PrefKeys.ACCOUNT_NAME, value)
+        }.apply()
+    }
+
+    fun getAccountName(npub: String): String {
+        encryptedPreferences(npub).apply {
+            return getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
+        }
     }
 
     fun loadFromEncryptedStorage(npub: String?): Account? {
@@ -206,9 +220,11 @@ object LocalPreferences {
                     outputMap[key] = value
                 }
             }
+            val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
 
             return Account(
                 keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
+                name = name,
                 savedApps = outputMap
             )
         }

@@ -71,4 +71,5 @@
     <string name="add_new_account">Add New Account</string>
     <string name="select_account">Select Account</string>
     <string name="active_account">Active Account</string>
+    <string name="edit_name">Edit name</string>
 </resources>

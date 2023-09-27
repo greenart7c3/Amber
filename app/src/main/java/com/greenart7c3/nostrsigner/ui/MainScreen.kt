@@ -17,7 +17,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
@@ -36,7 +35,6 @@ import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
-import kotlinx.coroutines.delay
 
 fun sendResult(
     context: Context,
@@ -73,7 +71,13 @@ fun sendResult(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, json: IntentData?, packageName: String?, route: String?) {
+fun MainScreen(
+    account: Account,
+    accountStateViewModel: AccountStateViewModel,
+    json: IntentData?,
+    packageName: String?,
+    route: String?
+) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val items = listOf(Route.Home, Route.Permissions, Route.Settings)
@@ -82,7 +86,8 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(account.keyPair.pubKey.toNpub().toShortenHex())
+                    val name = LocalPreferences.getAccountName(account.keyPair.pubKey.toNpub())
+                    Text(name.ifBlank { account.keyPair.pubKey.toNpub().toShortenHex() })
                 }
             )
         },
@@ -116,7 +121,7 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
     ) { padding ->
         NavHost(
             navController,
-            startDestination = Route.Home.route,
+            startDestination = route ?: Route.Home.route,
             enterTransition = { fadeIn(animationSpec = tween(200)) },
             exitTransition = { fadeOut(animationSpec = tween(200)) }
         ) {
@@ -176,17 +181,6 @@ fun MainScreen(account: Account, accountStateViewModel: AccountStateViewModel, j
                     )
                 }
             )
-        }
-    }
-
-    LaunchedEffect(Unit) {
-        if (route !== null) {
-            delay(200)
-            try {
-                navController.navigate(route) {
-                    popUpTo(0)
-                }
-            } catch (_: Exception) { }
         }
     }
 }

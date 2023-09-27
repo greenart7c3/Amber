@@ -48,6 +48,8 @@ import com.greenart7c3.nostrsigner.ui.LoginPage
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.encoders.toNpub
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -119,6 +121,7 @@ fun AccountsBottomSheet(
                                 LocalPreferences.setAccountName(currentNpub, it)
                                 showNameDialog = false
                                 currentNpub = ""
+                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Settings.route)
                             }
                         )
                     }

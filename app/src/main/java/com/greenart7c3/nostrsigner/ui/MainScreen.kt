@@ -7,20 +7,34 @@ import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -33,8 +47,10 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
+import kotlinx.coroutines.launch
 
 fun sendResult(
     context: Context,
@@ -81,13 +97,50 @@ fun MainScreen(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val items = listOf(Route.Home, Route.Permissions, Route.Settings)
+    var shouldShowBottomSheet by remember { mutableStateOf(false) }
+
+    val sheetState = rememberModalBottomSheetState(
+        confirmValueChange = { it != SheetValue.PartiallyExpanded },
+        skipPartiallyExpanded = true
+    )
+    val scope = rememberCoroutineScope()
 
     Scaffold(
         topBar = {
+            if (shouldShowBottomSheet) {
+                AccountsBottomSheet(
+                    sheetState = sheetState,
+                    account = account,
+                    accountStateViewModel = accountStateViewModel,
+                    onClose = {
+                        scope.launch {
+                            shouldShowBottomSheet = false
+                            sheetState.hide()
+                        }
+                    }
+                )
+            }
+
             CenterAlignedTopAppBar(
                 title = {
                     val name = LocalPreferences.getAccountName(account.keyPair.pubKey.toNpub())
-                    Text(name.ifBlank { account.keyPair.pubKey.toNpub().toShortenHex() })
+                    Row(
+                        Modifier.clickable {
+                            scope.launch {
+                                sheetState.show()
+                                shouldShowBottomSheet = true
+                            }
+                        },
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(name.ifBlank { account.keyPair.pubKey.toNpub().toShortenHex() })
+                        Icon(
+                            imageVector = Icons.Default.ExpandMore,
+                            null,
+                            modifier = Modifier.size(20.dp),
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
+                        )
+                    }
                 }
             )
         },

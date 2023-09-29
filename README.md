@@ -155,6 +155,8 @@ context.contentResolver.query(
 
 * You can send a callbackUrl so your user doesn't need to copy the event manually to your application
 
+* For Encryption/Decryption you should also send the hex pubkey that will be used to encrypt/decrypt the data eg (S.pubKey=cb8b8d378690f9a4a4f412c4e295051c4b76c3db24dc3941860fd3980f07d21d)
+
 ```js
 <!DOCTYPE html>
 <html lang="en">

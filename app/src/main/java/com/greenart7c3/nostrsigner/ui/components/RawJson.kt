@@ -23,15 +23,22 @@ import org.json.JSONObject
 @Composable
 fun RawJson(
     rawJson: String,
-    modifier: Modifier
+    modifier: Modifier,
+    label: String = stringResource(R.string.copy_raw_json)
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
+    val value = try {
+        JSONObject(rawJson).toString(2)
+    } catch (e: Exception) {
+        rawJson
+    }
 
     OutlinedTextField(
-        modifier = modifier,
-        value = TextFieldValue(JSONObject(rawJson).toString(2)),
+        modifier = modifier
+            .fillMaxWidth(),
+        value = TextFieldValue(value),
         onValueChange = { },
         readOnly = true
     )
@@ -47,13 +54,13 @@ fun RawJson(
                 coroutineScope.launch {
                     Toast.makeText(
                         context,
-                        context.getString(R.string.raw_json_copied_to_the_clipboard),
+                        context.getString(R.string.data_copied_to_the_clipboard),
                         Toast.LENGTH_SHORT
                     ).show()
                 }
             }
         ) {
-            Text(stringResource(R.string.copy_raw_json))
+            Text(stringResource(R.string.copy) + label)
         }
     }
 }

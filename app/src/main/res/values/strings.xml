@@ -20,7 +20,7 @@
     <string name="scan_qr">Scan QR</string>
     <string name="signature_copied_to_the_clipboard">Signature copied to the clipboard</string>
     <string name="sign">Sign</string>
-    <string name="raw_json_copied_to_the_clipboard">Raw json copied to the clipboard</string>
+    <string name="raw_json_copied_to_the_clipboard"> copied to the clipboard</string>
     <string name="reset_permissions">Reset permissions</string>
     <string name="logout">Logout</string>
     <string name="logging_out_deletes_all_your_local_information_make_sure_to_have_your_private_keys_backed_up_to_avoid_losing_your_account_do_you_want_to_continue">Logging out deletes all your local information. Make sure to have your private keys backed up to avoid losing your account. Do you want to continue?</string>
@@ -67,9 +67,14 @@
     <string name="content">"Content "</string>
     <string name="show_details">Show Details</string>
     <string name="hide_details">Hide Details</string>
-    <string name="copy_raw_json">Copy raw json</string>
+    <string name="copy_raw_json">Raw json</string>
     <string name="add_new_account">Add New Account</string>
     <string name="select_account">Select Account</string>
     <string name="active_account">Active Account</string>
     <string name="edit_name">Edit name</string>
+    <string name="copy_to_clipboard">Copy to clipboard</string>
+    <string name="copy">"Copy "</string>
+    <string name="my_public_key">my public key</string>
+    <string name="encrypted_decrypted_data">Encrypted/Decrypted data</string>
+    <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
 </resources>

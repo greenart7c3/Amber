@@ -89,7 +89,8 @@ fun HomeScreen(
                             },
                             {
                                 context.getAppCompatActivity()?.finish()
-                            }
+                            },
+                            account
                         )
                     }
 
@@ -159,6 +160,19 @@ fun HomeScreen(
                             },
                             {
                                 context.getAppCompatActivity()?.finish()
+                            },
+                            {
+                                try {
+                                    AmberUtils.encryptOrDecryptData(
+                                        it.data,
+                                        it.type,
+                                        account,
+                                        it.pubKey
+                                    )
+                                        ?: "Could not decrypt the message"
+                                } catch (e: Exception) {
+                                    "Could not decrypt the message"
+                                }
                             }
                         )
                     }

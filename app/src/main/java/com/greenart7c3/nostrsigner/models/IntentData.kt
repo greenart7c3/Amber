@@ -7,7 +7,8 @@ class IntentData(
     val name: String,
     val type: SignerType,
     val pubKey: HexKey,
-    val id: String
+    val id: String,
+    val callBackUrl: String?
 )
 
 enum class SignerType {

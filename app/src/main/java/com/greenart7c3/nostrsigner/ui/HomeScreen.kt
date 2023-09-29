@@ -79,9 +79,10 @@ fun HomeScreen(
                                         key,
                                         remember.value,
                                         clipboardManager,
+                                        sig,
                                         "",
-                                        "",
-                                        sig
+                                        sig,
+                                        it.callBackUrl
                                     )
                                 }
                                 return@LoginWithPubKey
@@ -132,9 +133,10 @@ fun HomeScreen(
                                             key,
                                             remember.value,
                                             clipboardManager,
-                                            "",
+                                            result,
                                             it.id,
-                                            result
+                                            result,
+                                            it.callBackUrl
                                         )
                                     }
 
@@ -162,8 +164,7 @@ fun HomeScreen(
                     }
 
                     else -> {
-                        val event =
-                            IntentUtils.getIntent(it.data, account.keyPair)
+                        val event = IntentUtils.getIntent(it.data, account.keyPair)
                         key = "$packageName-${it.type}-${event.kind}"
                         val remember = remember {
                             mutableStateOf(account.savedApps[key] ?: false)
@@ -188,16 +189,16 @@ fun HomeScreen(
                                     return@EventData
                                 }
 
-                                val localEvent =
-                                    Event.fromJson(
-                                        it.data
-                                    )
+                                val localEvent = try {
+                                    Event.fromJson(it.data)
+                                } catch (e: Exception) {
+                                    Event.fromJson(event.toJson())
+                                }
                                 if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) {
-                                    val resultEvent =
-                                        AmberUtils.getZapRequestEvent(
-                                            localEvent,
-                                            account.keyPair.privKey
-                                        )
+                                    val resultEvent = AmberUtils.getZapRequestEvent(
+                                        localEvent,
+                                        account.keyPair.privKey
+                                    )
                                     coroutineScope.launch {
                                         sendResult(
                                             context,
@@ -208,7 +209,8 @@ fun HomeScreen(
                                             clipboardManager,
                                             resultEvent.toJson(),
                                             it.id,
-                                            resultEvent.toJson()
+                                            resultEvent.toJson(),
+                                            it.callBackUrl
                                         )
                                     }
                                 } else {
@@ -227,7 +229,8 @@ fun HomeScreen(
                                             clipboardManager,
                                             signedEvent.toJson(),
                                             it.id,
-                                            signedEvent.sig
+                                            signedEvent.sig,
+                                            it.callBackUrl
                                         )
                                     }
                                 }

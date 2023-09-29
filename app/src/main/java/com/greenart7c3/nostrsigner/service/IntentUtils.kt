@@ -41,7 +41,7 @@ object IntentUtils {
             val pubKey = intent.extras?.getString("pubKey") ?: ""
             val id = intent.extras?.getString("id") ?: ""
 
-            return IntentData(data, name, type, pubKey, id)
+            return IntentData(data, name, type, pubKey, id, intent.extras?.getString("callbackUrl"))
         }
         return null
     }

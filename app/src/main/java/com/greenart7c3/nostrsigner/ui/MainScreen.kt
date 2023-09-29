@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -61,7 +62,8 @@ fun sendResult(
     clipboardManager: ClipboardManager,
     event: String,
     id: String,
-    value: String
+    value: String,
+    callBackUrl: String?
 ) {
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
@@ -74,6 +76,10 @@ fun sendResult(
         intent.putExtra("id", id)
         intent.putExtra("event", event)
         activity?.setResult(RESULT_OK, intent)
+    } else if (callBackUrl != null) {
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.data = Uri.parse(callBackUrl + event)
+        context.startActivity(intent)
     } else {
         clipboardManager.setText(AnnotatedString(value))
         Toast.makeText(

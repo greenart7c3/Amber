@@ -10,7 +10,7 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 - [x] Check if we can use Amber to sign the events of web applications
 - [x] Change the sign button to just copy the signature of the event
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
-- [ ] Support for multiple accounts
+- [x] Support for multiple accounts
 
 # Adding Amber support for your application
 

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
+import android.net.Uri
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.Event
@@ -31,13 +32,8 @@ object IntentUtils {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
             }
 
-            val split = data.split(";")
-            var name = ""
-            if (split.isNotEmpty()) {
-                if (split.last().lowercase().contains("name=")) {
-                    name = split.last().replace("name=", "")
-                }
-            }
+            val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
+            val name = if (callbackUrl.isNotBlank()) Uri.parse(callbackUrl).host ?: "" else ""
             val pubKey = intent.extras?.getString("pubKey") ?: ""
             val id = intent.extras?.getString("id") ?: ""
 

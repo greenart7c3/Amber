@@ -173,7 +173,7 @@ context.contentResolver.query(
             var url = new URL(window.location.href);
             var params = url.searchParams;
             if (params) {
-                var param1 = params.get("signature");
+                var param1 = params.get("event");
                 if (param1) alert(param1)
             }
             let json = {

@@ -149,24 +149,44 @@ context.contentResolver.query(
 
 # Support for Web Applications
 
-* Create the Nostr Event
+* Here's an index.html with an example of how to open amber to sign an event
 
-* Convert the event to json
+* The S.type= can be sign_event, nip04_encrypt, nip44_encrypt, nip04_decrypt, nip44_decrypt, get_public_key or decrypt_zap_event
 
-```js
-const json = JSON.stringify(note)
-```
-
-* Create the intent
+* You can send a callbackUrl so your user doesn't need to copy the event manually to your application
 
 ```js
-const intent = `nostrsigner:${json};name=Your Application name`
-```
-
-* Send the intent
-
-```js
-window.location.href = intent;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+</head>
+<body>
+    <h1>Test</h1>
+       
+    <script>
+        window.onload = function() {
+            var url = new URL(window.location.href);
+            var params = url.searchParams;
+            if (params) {
+                var param1 = params.get("signature");
+                if (param1) alert(param1)
+            }
+            let json = {
+                kind: 1,
+                content: "test"
+            }
+            let encodedJson = encodeURIComponent(JSON.stringify(json))
+            var newAnchor = document.createElement("a");
+            newAnchor.href = `intent:${encodedJson}#Intent;scheme=nostrsigner;S.type=sign_event;S.callbackUrl=https://example.com/?event=;end`;
+            newAnchor.textContent = "Open amber";
+            document.body.appendChild(newAnchor)
+        }
+    </script>
+</body>
+</html>
 ```
 
 # Contributing

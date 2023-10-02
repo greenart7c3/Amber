@@ -25,7 +25,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     }
 
     private fun tryLoginExistingAccount(route: String?, npub: String?) {
-        val currentUser = npub ?: LocalPreferences.currentAccount()
+        var currentUser = npub ?: LocalPreferences.currentAccount()
+        if (currentUser != null && !LocalPreferences.containsAccount(currentUser)) {
+            currentUser = LocalPreferences.currentAccount()
+        }
         LocalPreferences.loadFromEncryptedStorage(currentUser)?.let {
             startUI(it, route)
         }

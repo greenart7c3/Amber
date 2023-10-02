@@ -89,10 +89,8 @@ fun sendResult(
         // Convert the compressed data to Base64
         val compressedData = byteArrayOutputStream.toByteArray()
         val encodedString = Base64.getEncoder().encodeToString(compressedData)
-        val encodedString2 = Uri.encode(encodedString)
-
         val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(callBackUrl + encodedString2)
+        intent.data = Uri.parse(callBackUrl + Uri.encode("Signer1$encodedString"))
         context.startActivity(intent)
     } else {
         clipboardManager.setText(AnnotatedString(value))

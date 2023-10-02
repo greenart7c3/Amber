@@ -42,15 +42,7 @@ object IntentUtils {
         return null
     }
     fun getIntent(data: String, keyPair: KeyPair): Event {
-        var tempData = data
-        val split = data.split(";")
-        if (split.isNotEmpty()) {
-            if (split.last().lowercase().contains("name=")) {
-                val newList = split.toList().dropLast(1)
-                tempData = newList.joinToString("")
-            }
-        }
-        var event = Event.fromJson(tempData)
+        var event = Event.fromJson(data)
         if (event.pubKey.isEmpty()) {
             event = Event.setPubKeyIfEmpty(event, keyPair)
         }

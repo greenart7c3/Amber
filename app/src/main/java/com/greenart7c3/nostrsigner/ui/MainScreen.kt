@@ -52,6 +52,9 @@ import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.launch
+import java.io.ByteArrayOutputStream
+import java.util.Base64
+import java.util.zip.GZIPOutputStream
 
 fun sendResult(
     context: Context,
@@ -77,8 +80,19 @@ fun sendResult(
         intent.putExtra("event", event)
         activity?.setResult(RESULT_OK, intent)
     } else if (callBackUrl != null) {
+        // Compress the string using GZIP
+        val byteArrayOutputStream = ByteArrayOutputStream()
+        val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
+        gzipOutputStream.write(event.toByteArray())
+        gzipOutputStream.close()
+
+        // Convert the compressed data to Base64
+        val compressedData = byteArrayOutputStream.toByteArray()
+        val encodedString = Base64.getEncoder().encodeToString(compressedData)
+        val encodedString2 = Uri.encode(encodedString)
+
         val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(callBackUrl + event)
+        intent.data = Uri.parse(callBackUrl + encodedString2)
         context.startActivity(intent)
     } else {
         clipboardManager.setText(AnnotatedString(value))
@@ -152,7 +166,7 @@ fun MainScreen(
         },
         bottomBar = {
             if (navBackStackEntry?.destination?.route?.contains("Permission/") == false) {
-                NavigationBar {
+                NavigationBar(tonalElevation = 0.dp) {
                     val currentRoute = navBackStackEntry?.destination?.route
                     items.forEach {
                         val selected = currentRoute == it.route

@@ -107,6 +107,16 @@ fun HomeScreen(
                             it.type,
                             {
                                 try {
+                                    if (it.type == SignerType.NIP04_ENCRYPT && it.data.contains("?iv=")) {
+                                        coroutineScope.launch {
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.message_already_encrypted),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                    }
+
                                     coroutineScope.launch(Dispatchers.IO) {
                                         val sig = try {
                                             AmberUtils.encryptOrDecryptData(

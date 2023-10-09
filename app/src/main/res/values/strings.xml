@@ -77,4 +77,5 @@
     <string name="my_public_key">my public key</string>
     <string name="encrypted_decrypted_data">Encrypted/Decrypted data</string>
     <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
+    <string name="message_already_encrypted">Message already encrypted</string>
 </resources>

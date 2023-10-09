@@ -86,11 +86,15 @@ object AmberUtils {
                 decryptedContent
             }
             SignerType.NIP04_ENCRYPT -> {
-                CryptoUtils.encryptNIP04(
-                    data,
-                    account.keyPair.privKey,
-                    Hex.decode(pubKey)
-                )
+                if (data.contains("?iv=")) {
+                    null
+                } else {
+                    CryptoUtils.encryptNIP04(
+                        data,
+                        account.keyPair.privKey,
+                        Hex.decode(pubKey)
+                    )
+                }
             }
             SignerType.NIP44_ENCRYPT -> {
                 val sharedSecret = CryptoUtils.getSharedSecretNIP44(

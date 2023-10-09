@@ -106,66 +106,68 @@ fun HomeScreen(
                             appName,
                             it.type,
                             {
-                                try {
-                                    if (it.type == SignerType.NIP04_ENCRYPT && it.data.contains("?iv=")) {
-                                        coroutineScope.launch {
-                                            Toast.makeText(
-                                                context,
-                                                context.getString(R.string.message_already_encrypted),
-                                                Toast.LENGTH_SHORT
-                                            ).show()
-                                        }
-                                    }
-
-                                    coroutineScope.launch(Dispatchers.IO) {
-                                        val sig = try {
-                                            AmberUtils.encryptOrDecryptData(
-                                                it.data,
-                                                it.type,
-                                                account,
-                                                it.pubKey
-                                            )
-                                                ?: "Could not decrypt the message"
-                                        } catch (e: Exception) {
-                                            "Could not decrypt the message"
-                                        }
-
-                                        val result =
-                                            if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                                                ""
-                                            } else {
-                                                sig
-                                            }
-
-                                        sendResult(
-                                            context,
-                                            packageName,
-                                            account,
-                                            key,
-                                            remember.value,
-                                            clipboardManager,
-                                            result,
-                                            it.id,
-                                            result,
-                                            it.callBackUrl
-                                        )
-                                    }
-
-                                    return@EncryptDecryptData
-                                } catch (e: Exception) {
-                                    val message = if (it.type.toString().contains("ENCRYPT", true)) {
-                                        context.getString(R.string.encrypt)
-                                    } else {
-                                        context.getString(R.string.decrypt)
-                                    }
+                                if (it.type == SignerType.NIP04_ENCRYPT && it.data.contains("?iv=")) {
                                     coroutineScope.launch {
                                         Toast.makeText(
                                             context,
-                                            context.getString(R.string.error_to_data, message),
+                                            context.getString(R.string.message_already_encrypted),
                                             Toast.LENGTH_SHORT
                                         ).show()
                                     }
                                     return@EncryptDecryptData
+                                } else {
+                                    try {
+                                        coroutineScope.launch(Dispatchers.IO) {
+                                            val sig = try {
+                                                AmberUtils.encryptOrDecryptData(
+                                                    it.data,
+                                                    it.type,
+                                                    account,
+                                                    it.pubKey
+                                                )
+                                                    ?: "Could not decrypt the message"
+                                            } catch (e: Exception) {
+                                                "Could not decrypt the message"
+                                            }
+
+                                            val result =
+                                                if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                                    ""
+                                                } else {
+                                                    sig
+                                                }
+
+                                            sendResult(
+                                                context,
+                                                packageName,
+                                                account,
+                                                key,
+                                                remember.value,
+                                                clipboardManager,
+                                                result,
+                                                it.id,
+                                                result,
+                                                it.callBackUrl
+                                            )
+                                        }
+
+                                        return@EncryptDecryptData
+                                    } catch (e: Exception) {
+                                        val message =
+                                            if (it.type.toString().contains("ENCRYPT", true)) {
+                                                context.getString(R.string.encrypt)
+                                            } else {
+                                                context.getString(R.string.decrypt)
+                                            }
+                                        coroutineScope.launch {
+                                            Toast.makeText(
+                                                context,
+                                                context.getString(R.string.error_to_data, message),
+                                                Toast.LENGTH_SHORT
+                                            ).show()
+                                        }
+                                        return@EncryptDecryptData
+                                    }
                                 }
                             },
                             {

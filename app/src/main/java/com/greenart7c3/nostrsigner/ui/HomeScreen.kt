@@ -106,7 +106,7 @@ fun HomeScreen(
                             appName,
                             it.type,
                             {
-                                if (it.type == SignerType.NIP04_ENCRYPT && it.data.contains("?iv=")) {
+                                if (it.type == SignerType.NIP04_ENCRYPT && it.data.contains("?iv=", ignoreCase = true)) {
                                     coroutineScope.launch {
                                         Toast.makeText(
                                             context,
@@ -130,25 +130,36 @@ fun HomeScreen(
                                                 "Could not decrypt the message"
                                             }
 
-                                            val result =
-                                                if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                                                    ""
-                                                } else {
-                                                    sig
+                                            if (it.type == SignerType.NIP04_ENCRYPT && sig == "Could not decrypt the message") {
+                                                coroutineScope.launch {
+                                                    Toast.makeText(
+                                                        context,
+                                                        "Error encrypting content",
+                                                        Toast.LENGTH_SHORT
+                                                    ).show()
                                                 }
+                                                return@launch
+                                            } else {
+                                                val result =
+                                                    if (sig == "Could not decrypt the message" && (it.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                                        ""
+                                                    } else {
+                                                        sig
+                                                    }
 
-                                            sendResult(
-                                                context,
-                                                packageName,
-                                                account,
-                                                key,
-                                                remember.value,
-                                                clipboardManager,
-                                                result,
-                                                it.id,
-                                                result,
-                                                it.callBackUrl
-                                            )
+                                                sendResult(
+                                                    context,
+                                                    packageName,
+                                                    account,
+                                                    key,
+                                                    remember.value,
+                                                    clipboardManager,
+                                                    result,
+                                                    it.id,
+                                                    result,
+                                                    it.callBackUrl
+                                                )
+                                            }
                                         }
 
                                         return@EncryptDecryptData

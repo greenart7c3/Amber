@@ -76,7 +76,7 @@ object AmberUtils {
                     account.keyPair.privKey,
                     Hex.decode(pubKey)
                 )
-                if (decryptedContent.contains("?iv=")) {
+                if (decryptedContent.contains("?iv=", ignoreCase = true)) {
                     decryptedContent = CryptoUtils.decryptNIP04(
                         decryptedContent,
                         account.keyPair.privKey,
@@ -86,14 +86,24 @@ object AmberUtils {
                 decryptedContent
             }
             SignerType.NIP04_ENCRYPT -> {
-                if (data.contains("?iv=")) {
+                if (data.contains("?iv=", ignoreCase = true)) {
                     null
                 } else {
-                    CryptoUtils.encryptNIP04(
+                    val encryptedContent = CryptoUtils.encryptNIP04(
                         data,
                         account.keyPair.privKey,
                         Hex.decode(pubKey)
                     )
+                    val decryptedContent = CryptoUtils.decryptNIP04(
+                        encryptedContent,
+                        account.keyPair.privKey,
+                        Hex.decode(pubKey)
+                    )
+                    if (decryptedContent != data) {
+                        throw Exception("Error encrypting content")
+                    } else {
+                        encryptedContent
+                    }
                 }
             }
             SignerType.NIP44_ENCRYPT -> {

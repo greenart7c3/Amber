@@ -97,9 +97,13 @@ class SignerProvider : ContentProvider() {
                 } catch (e: Exception) {
                     "Could not decrypt the message"
                 }
-                val cursor = MatrixCursor(arrayOf("signature"))
-                cursor.addRow(arrayOf<Any>(result))
-                return cursor
+                if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
+                    return null
+                } else {
+                    val cursor = MatrixCursor(arrayOf("signature"))
+                    cursor.addRow(arrayOf<Any>(result))
+                    return cursor
+                }
             }
 
             "content://com.greenart7c3.nostrsigner.GET_PUBLIC_KEY" -> {

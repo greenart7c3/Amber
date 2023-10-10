@@ -71,18 +71,11 @@ object AmberUtils {
                 decryptZapEvent(data, account)
             }
             SignerType.NIP04_DECRYPT -> {
-                var decryptedContent = CryptoUtils.decryptNIP04(
+                val decryptedContent = CryptoUtils.decryptNIP04(
                     data,
                     account.keyPair.privKey,
                     Hex.decode(pubKey)
                 )
-                if (decryptedContent.contains("?iv=", ignoreCase = true)) {
-                    decryptedContent = CryptoUtils.decryptNIP04(
-                        decryptedContent,
-                        account.keyPair.privKey,
-                        Hex.decode(pubKey)
-                    )
-                }
                 decryptedContent
             }
             SignerType.NIP04_ENCRYPT -> {

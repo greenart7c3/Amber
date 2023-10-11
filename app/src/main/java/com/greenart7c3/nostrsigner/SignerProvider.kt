@@ -35,8 +35,9 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
         sortOrder: String?
     ): Cursor? {
+        val appId = BuildConfig.APPLICATION_ID
         return when (uri.toString()) {
-            "content://com.greenart7c3.nostrsigner.SIGN_EVENT" -> {
+            "content://$appId.SIGN_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val json = projection?.first() ?: return null
                 if (!LocalPreferences.containsAccount(projection[2])) return null
@@ -63,16 +64,16 @@ class SignerProvider : ContentProvider() {
                 cursor.addRow(arrayOf(signedEvent.sig, signedEvent.toJson()))
                 return cursor
             }
-            "content://com.greenart7c3.nostrsigner.NIP04_DECRYPT",
-            "content://com.greenart7c3.nostrsigner.NIP44_DECRYPT",
-            "content://com.greenart7c3.nostrsigner.NIP04_ENCRYPT",
-            "content://com.greenart7c3.nostrsigner.NIP44_ENCRYPT",
-            "content://com.greenart7c3.nostrsigner.DECRYPT_ZAP_EVENT" -> {
+            "content://$appId.NIP04_DECRYPT",
+            "content://$appId.NIP44_DECRYPT",
+            "content://$appId.NIP04_ENCRYPT",
+            "content://$appId.NIP44_ENCRYPT",
+            "content://$appId.DECRYPT_ZAP_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val content = projection?.first() ?: return null
                 if (!LocalPreferences.containsAccount(projection[2])) return null
-                val stringType = uri.toString().replace("content://com.greenart7c3.nostrsigner.", "")
-                val key = "$packageName-${uri.toString().replace("content://com.greenart7c3.nostrsigner.", "")}"
+                val stringType = uri.toString().replace("content://$appId.", "")
+                val key = "$packageName-${uri.toString().replace("content://$appId.", "")}"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val isRemembered = account.savedApps[key] ?: false
@@ -106,7 +107,7 @@ class SignerProvider : ContentProvider() {
                 }
             }
 
-            "content://com.greenart7c3.nostrsigner.GET_PUBLIC_KEY" -> {
+            "content://$appId.GET_PUBLIC_KEY" -> {
                 val packageName = callingPackage ?: return null
                 val key = "$packageName-GET_PUBLIC_KEY"
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null

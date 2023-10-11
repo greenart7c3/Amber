@@ -18,7 +18,7 @@
         tools:targetApi="33">
         <provider
             android:name=".SignerProvider"
-            android:authorities="com.greenart7c3.nostrsigner.SIGN_EVENT;com.greenart7c3.nostrsigner.NIP04_ENCRYPT;com.greenart7c3.nostrsigner.NIP04_DECRYPT;com.greenart7c3.nostrsigner.NIP44_ENCRYPT;com.greenart7c3.nostrsigner.NIP44_DECRYPT;com.greenart7c3.nostrsigner.GET_PUBLIC_KEY;com.greenart7c3.nostrsigner.DECRYPT_ZAP_EVENT"
+            android:authorities="${applicationId}.SIGN_EVENT;${applicationId}.NIP04_ENCRYPT;${applicationId}.NIP04_DECRYPT;${applicationId}.NIP44_ENCRYPT;${applicationId}.NIP44_DECRYPT;${applicationId}.GET_PUBLIC_KEY;${applicationId}.DECRYPT_ZAP_EVENT"
             android:enabled="true"
             android:exported="true" />
 

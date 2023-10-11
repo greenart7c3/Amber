@@ -3,7 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import android.util.Log
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.service.model.Event
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.Nip44Version
 import com.vitorpamplona.quartz.crypto.decodeNIP44
@@ -12,6 +12,7 @@ import com.vitorpamplona.quartz.encoders.Bech32
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapPrivateEvent
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
@@ -22,10 +23,10 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 object AmberUtils {
-    fun getSignedEvent(unsignedEvent: Event, privateKey: ByteArray): Event {
+    fun getSignedEvent(unsignedEvent: AmberEvent, privateKey: ByteArray): AmberEvent {
         val id = unsignedEvent.id.hexToByteArray()
         val sig = CryptoUtils.sign(id, privateKey).toHexKey()
-        return Event(
+        return AmberEvent(
             unsignedEvent.id,
             unsignedEvent.pubKey,
             unsignedEvent.createdAt,
@@ -55,7 +56,7 @@ object AmberUtils {
         privkey = encryptionPrivateKey // sign event with generated privkey
         val pubKey = CryptoUtils.pubkeyCreate(encryptionPrivateKey).toHexKey() // updated event with according pubkey
 
-        val id = Event.generateId(
+        val id = AmberEvent.generateId(
             pubKey,
             localEvent.createdAt,
             LnZapRequestEvent.kind,
@@ -131,7 +132,7 @@ object AmberUtils {
         }
     }
     private fun decryptZapEvent(data: String, account: Account): String? {
-        val event = com.vitorpamplona.quartz.events.Event.fromJson(data) as LnZapRequestEvent
+        val event = Event.fromJson(data) as LnZapRequestEvent
 
         val loggedInPrivateKey = account.keyPair.privKey
 

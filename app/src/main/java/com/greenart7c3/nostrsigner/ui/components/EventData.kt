@@ -26,7 +26,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.service.model.Event
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 
 @Composable
@@ -35,7 +35,7 @@ fun EventData(
     remember: MutableState<Boolean>,
     packageName: String?,
     appName: String,
-    event: Event,
+    event: AmberEvent,
     rawJson: String,
     onAccept: () -> Unit,
     onReject: () -> Unit

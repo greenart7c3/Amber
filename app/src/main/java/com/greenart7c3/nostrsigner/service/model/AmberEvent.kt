@@ -27,7 +27,7 @@ import java.math.BigDecimal
 import java.util.*
 
 @Immutable
-open class Event(
+open class AmberEvent(
     val id: HexKey,
     @SerializedName("pubkey") val pubKey: HexKey,
     @SerializedName("created_at") val createdAt: Long,
@@ -35,7 +35,7 @@ open class Event(
     val tags: List<List<String>>,
     val content: String,
     val sig: HexKey
-) : EventInterface {
+) : AmberEventInterface {
     override fun id(): HexKey = id
 
     override fun pubKey(): HexKey = pubKey
@@ -228,14 +228,14 @@ open class Event(
         return CryptoUtils.sha256(rawEventJson.toByteArray()).toHexKey()
     }
 
-    private class EventDeserializer : JsonDeserializer<Event> {
+    private class EventDeserializer : JsonDeserializer<AmberEvent> {
         override fun deserialize(
             json: JsonElement,
             typeOfT: Type?,
             context: JsonDeserializationContext?
-        ): Event {
+        ): AmberEvent {
             val jsonObject = json.asJsonObject
-            return Event(
+            return AmberEvent(
                 id = jsonObject.get("id")?.asString ?: "",
                 pubKey = jsonObject.get("pubkey")?.asString ?: "",
                 createdAt = jsonObject.get("created_at")?.asLong ?: TimeUtils.now(),
@@ -249,9 +249,9 @@ open class Event(
         }
     }
 
-    private class EventSerializer : JsonSerializer<Event> {
+    private class EventSerializer : JsonSerializer<AmberEvent> {
         override fun serialize(
-            src: Event,
+            src: AmberEvent,
             typeOfSrc: Type?,
             context: JsonSerializationContext?
         ): JsonElement {
@@ -405,17 +405,17 @@ open class Event(
     companion object {
         val gson: Gson = GsonBuilder()
             .disableHtmlEscaping()
-            .registerTypeAdapter(Event::class.java, EventSerializer())
-            .registerTypeAdapter(Event::class.java, EventDeserializer())
+            .registerTypeAdapter(AmberEvent::class.java, EventSerializer())
+            .registerTypeAdapter(AmberEvent::class.java, EventDeserializer())
             .registerTypeAdapter(ByteArray::class.java, ByteArraySerializer())
             .registerTypeAdapter(ByteArray::class.java, ByteArrayDeserializer())
             .registerTypeAdapter(Response::class.java, ResponseDeserializer())
             .registerTypeAdapter(Request::class.java, RequestDeserializer())
             .create()
 
-        fun fromJson(json: String): Event = gson.fromJson(json, Event::class.java).getRefinedEvent()
+        fun fromJson(json: String): AmberEvent = gson.fromJson(json, AmberEvent::class.java).getRefinedEvent()
 
-        fun Event.getRefinedEvent(): Event = when (kind) {
+        fun AmberEvent.getRefinedEvent(): AmberEvent = when (kind) {
             else -> this
         }
 
@@ -440,22 +440,22 @@ open class Event(
             return CryptoUtils.sha256(rawEventJson.toByteArray())
         }
 
-        fun setPubKeyIfEmpty(event: Event, keyPair: KeyPair): Event {
+        fun setPubKeyIfEmpty(event: AmberEvent, keyPair: KeyPair): AmberEvent {
             if (event.pubKey.isEmpty()) {
                 val pubKey = keyPair.pubKey.toHexKey()
                 val id = generateId(pubKey, event.createdAt, event.kind, event.tags, event.content)
                 val signature = CryptoUtils.sign(id, keyPair.privKey).toHexKey()
-                return Event(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, signature)
+                return AmberEvent(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, signature)
             }
 
             return event
         }
 
-        fun create(privateKey: ByteArray, kind: Int, tags: List<List<String>> = emptyList(), content: String = "", createdAt: Long = TimeUtils.now()): Event {
+        fun create(privateKey: ByteArray, kind: Int, tags: List<List<String>> = emptyList(), content: String = "", createdAt: Long = TimeUtils.now()): AmberEvent {
             val pubKey = CryptoUtils.pubkeyCreate(privateKey).toHexKey()
             val id = generateId(pubKey, createdAt, kind, tags, content)
             val sig = CryptoUtils.sign(id, privateKey).toHexKey()
-            return Event(id.toHexKey(), pubKey, createdAt, kind, tags, content, sig)
+            return AmberEvent(id.toHexKey(), pubKey, createdAt, kind, tags, content, sig)
         }
     }
 }

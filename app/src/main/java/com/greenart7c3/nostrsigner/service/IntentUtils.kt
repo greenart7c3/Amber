@@ -4,7 +4,7 @@ import android.content.Intent
 import android.net.Uri
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.service.model.Event
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import java.net.URLDecoder
 
 object IntentUtils {
@@ -41,10 +41,10 @@ object IntentUtils {
         }
         return null
     }
-    fun getIntent(data: String, keyPair: KeyPair): Event {
-        var event = Event.fromJson(data)
+    fun getIntent(data: String, keyPair: KeyPair): AmberEvent {
+        var event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
-            event = Event.setPubKeyIfEmpty(event, keyPair)
+            event = AmberEvent.setPubKeyIfEmpty(event, keyPair)
         }
         return event
     }

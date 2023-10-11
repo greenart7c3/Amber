@@ -7,7 +7,7 @@ import com.vitorpamplona.quartz.events.EmojiUrl
 import java.math.BigDecimal
 
 @Immutable
-interface EventInterface {
+interface AmberEventInterface {
     fun id(): HexKey
 
     fun pubKey(): HexKey

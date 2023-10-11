@@ -7,6 +7,7 @@ import android.database.MatrixCursor
 import android.net.Uri
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
@@ -57,7 +58,7 @@ class SignerProvider : ContentProvider() {
                 }
 
                 val signedEvent = AmberUtils.getSignedEvent(
-                    com.greenart7c3.nostrsigner.service.model.Event.fromJson(json),
+                    AmberEvent.fromJson(json),
                     account.keyPair.privKey
                 )
                 val cursor = MatrixCursor(arrayOf("signature", "event"))

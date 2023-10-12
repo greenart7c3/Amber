@@ -72,33 +72,18 @@ object AmberUtils {
                 decryptZapEvent(data, account)
             }
             SignerType.NIP04_DECRYPT -> {
-                val decryptedContent = CryptoUtils.decryptNIP04(
+                CryptoUtils.decryptNIP04(
                     data,
                     account.keyPair.privKey,
                     Hex.decode(pubKey)
                 )
-                decryptedContent
             }
             SignerType.NIP04_ENCRYPT -> {
-                if (data.contains("?iv=", ignoreCase = true)) {
-                    null
-                } else {
-                    val encryptedContent = CryptoUtils.encryptNIP04(
-                        data,
-                        account.keyPair.privKey,
-                        Hex.decode(pubKey)
-                    )
-                    val decryptedContent = CryptoUtils.decryptNIP04(
-                        encryptedContent,
-                        account.keyPair.privKey,
-                        Hex.decode(pubKey)
-                    )
-                    if (decryptedContent != data) {
-                        throw Exception("Error encrypting content")
-                    } else {
-                        encryptedContent
-                    }
-                }
+                CryptoUtils.encryptNIP04(
+                    data,
+                    account.keyPair.privKey,
+                    Hex.decode(pubKey)
+                )
             }
             SignerType.NIP44_ENCRYPT -> {
                 val sharedSecret = CryptoUtils.getSharedSecretNIP44(

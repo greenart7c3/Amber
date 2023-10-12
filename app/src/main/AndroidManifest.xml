@@ -15,6 +15,7 @@
         android:theme="@style/Theme.SignerSplash"
         android:usesCleartextTraffic="true"
         android:enableOnBackInvokedCallback="true"
+        android:windowSoftInputMode="adjustResize"
         tools:targetApi="33">
         <provider
             android:name=".SignerProvider"

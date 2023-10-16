@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
@@ -19,6 +20,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
@@ -103,7 +105,19 @@ fun SettingsScreen(
                 }
             )
         }
+        Box(
+            Modifier
+                .padding(16.dp)
+        ) {
+            IconRow(
+                title = "v" + BuildConfig.VERSION_NAME,
+                icon = Icons.Default.PhoneAndroid,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = { }
+            )
+        }
     }
+
     if (backupDialogOpen) {
         AccountBackupDialog(account, onClose = { backupDialogOpen = false })
     }

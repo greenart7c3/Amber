@@ -11,6 +11,7 @@ import androidx.compose.material.icons.filled.AccessTime
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
 import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
@@ -90,6 +91,14 @@ fun EventData(
                     stringResource(R.string.content),
                     event.content
                 )
+
+                if (event.kind == 22242) {
+                    EventRow(
+                        Icons.Default.Wifi,
+                        stringResource(R.string.relay),
+                        event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1)?.removePrefix("wss://")?.removePrefix("ws://") ?: ""
+                    )
+                }
 
                 Divider(
                     modifier = Modifier.padding(top = 15.dp),

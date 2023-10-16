@@ -86,17 +86,17 @@ fun EventData(
                     event.pubKey.toShortenHex()
                 )
 
-                EventRow(
-                    Icons.Default.ContentPaste,
-                    stringResource(R.string.content),
-                    event.content
-                )
-
                 if (event.kind == 22242) {
                     EventRow(
                         Icons.Default.Wifi,
                         stringResource(R.string.relay),
                         event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1)?.removePrefix("wss://")?.removePrefix("ws://") ?: ""
+                    )
+                } else {
+                    EventRow(
+                        Icons.Default.ContentPaste,
+                        stringResource(R.string.content),
+                        event.content
                     )
                 }
 

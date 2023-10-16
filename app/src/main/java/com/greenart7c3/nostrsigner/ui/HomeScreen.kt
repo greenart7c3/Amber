@@ -82,7 +82,8 @@ fun HomeScreen(
                                         sig,
                                         "",
                                         sig,
-                                        it.callBackUrl
+                                        it.callBackUrl,
+                                        it.type
                                     )
                                 }
                                 return@LoginWithPubKey
@@ -157,7 +158,8 @@ fun HomeScreen(
                                                     result,
                                                     it.id,
                                                     result,
-                                                    it.callBackUrl
+                                                    it.callBackUrl,
+                                                    it.type
                                                 )
                                             }
                                         }
@@ -247,7 +249,8 @@ fun HomeScreen(
                                             resultEvent.toJson(),
                                             it.id,
                                             resultEvent.toJson(),
-                                            it.callBackUrl
+                                            it.callBackUrl,
+                                            it.type
                                         )
                                     }
                                 } else {
@@ -267,7 +270,8 @@ fun HomeScreen(
                                             signedEvent.toJson(),
                                             it.id,
                                             signedEvent.sig,
-                                            it.callBackUrl
+                                            it.callBackUrl,
+                                            it.type
                                         )
                                     }
                                 }

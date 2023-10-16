@@ -4,17 +4,22 @@ import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Card
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -35,6 +40,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -45,7 +52,10 @@ import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.History
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
@@ -66,13 +76,15 @@ fun sendResult(
     event: String,
     id: String,
     value: String,
-    callBackUrl: String?
+    callBackUrl: String?,
+    type: SignerType
 ) {
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
         if (rememberChoice) {
             account.savedApps[key] = rememberChoice
         }
+        account.history.add(History(packageName, type.toString(), TimeUtils.now()))
         LocalPreferences.saveToEncryptedStorage(account)
         val intent = Intent()
         intent.putExtra("signature", value)
@@ -114,7 +126,7 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val items = listOf(Route.Home, Route.Permissions, Route.Settings)
+    val items = listOf(Route.Home, Route.Permissions, Route.History, Route.Settings)
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(
@@ -238,6 +250,37 @@ fun MainScreen(
             )
 
             composable(
+                Route.History.route,
+                content = {
+                    val history = LocalPreferences.loadHistory(account.keyPair.pubKey.toNpub())
+                    LazyColumn(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(16.dp)
+                    ) {
+                        items(history.size) {
+                            Card(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(4.dp)
+                            ) {
+                                Column(
+                                    Modifier
+                                        .fillMaxWidth()
+                                        .padding(8.dp)
+                                ) {
+                                    Text(history[it].appName)
+                                    Text(history[it].type.toLowerCase(Locale.current))
+                                    Text(timeAgoShort(history[it].time, "now"))
+                                }
+                            }
+                        }
+                    }
+                }
+            )
+
+            composable(
                 Route.Permission.route,
                 arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
                 content = {
@@ -254,4 +297,20 @@ fun MainScreen(
             )
         }
     }
+}
+
+fun timeAgoShort(mills: Long?, stringForNow: String): String {
+    if (mills == null) return " "
+
+    var humanReadable = DateUtils.getRelativeTimeSpanString(
+        mills * 1000,
+        System.currentTimeMillis(),
+        DateUtils.MINUTE_IN_MILLIS,
+        DateUtils.FORMAT_ABBREV_ALL
+    ).toString()
+    if (humanReadable.startsWith("In") || humanReadable.startsWith("0")) {
+        humanReadable = stringForNow
+    }
+
+    return humanReadable
 }

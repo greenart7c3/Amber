@@ -5,7 +5,9 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import com.greenart7c3.nostrsigner.models.History
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -61,6 +63,10 @@ class SignerProvider : ContentProvider() {
                     AmberEvent.fromJson(json),
                     account.keyPair.privKey
                 )
+
+                account.history.add(History(packageName, "SIGN_EVENT", TimeUtils.now()))
+                LocalPreferences.saveToEncryptedStorage(account)
+
                 val cursor = MatrixCursor(arrayOf("signature", "event"))
                 cursor.addRow(arrayOf(signedEvent.sig, signedEvent.toJson()))
                 return cursor
@@ -99,6 +105,10 @@ class SignerProvider : ContentProvider() {
                 } catch (e: Exception) {
                     "Could not decrypt the message"
                 }
+
+                account.history.add(History(packageName, stringType, TimeUtils.now()))
+                LocalPreferences.saveToEncryptedStorage(account)
+
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
                     return null
                 } else {
@@ -114,6 +124,9 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val isRemembered = account.savedApps[key] ?: false
                 if (!isRemembered) return null
+
+                account.history.add(History(packageName, "GET_PUBLIC_KEY", TimeUtils.now()))
+                LocalPreferences.saveToEncryptedStorage(account)
 
                 val cursor = MatrixCursor(arrayOf("signature"))
                 cursor.addRow(arrayOf<Any>(account.keyPair.pubKey.toNpub()))

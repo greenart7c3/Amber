@@ -1,9 +1,11 @@
 package com.greenart7c3.nostrsigner.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ViewList
+import androidx.compose.material.icons.outlined.History
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material.icons.outlined.ViewList
@@ -38,5 +40,11 @@ sealed class Route(
         route = "Permission/{packageName}",
         icon = Icons.Outlined.ViewList,
         selectedIcon = Icons.Default.ViewList
+    )
+
+    data object History : Route(
+        route = "History",
+        icon = Icons.Outlined.History,
+        selectedIcon = Icons.Default.History
     )
 }

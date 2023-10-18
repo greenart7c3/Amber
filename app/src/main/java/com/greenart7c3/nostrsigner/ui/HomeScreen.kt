@@ -80,10 +80,8 @@ fun HomeScreen(
                                         remember.value,
                                         clipboardManager,
                                         sig,
-                                        "",
                                         sig,
-                                        it.callBackUrl,
-                                        it.type
+                                        it
                                     )
                                 }
                                 return@LoginWithPubKey
@@ -156,10 +154,8 @@ fun HomeScreen(
                                                     remember.value,
                                                     clipboardManager,
                                                     result,
-                                                    it.id,
                                                     result,
-                                                    it.callBackUrl,
-                                                    it.type
+                                                    it
                                                 )
                                             }
                                         }
@@ -247,10 +243,8 @@ fun HomeScreen(
                                             remember.value,
                                             clipboardManager,
                                             resultEvent.toJson(),
-                                            it.id,
                                             resultEvent.toJson(),
-                                            it.callBackUrl,
-                                            it.type
+                                            it
                                         )
                                     }
                                 } else {
@@ -268,10 +262,8 @@ fun HomeScreen(
                                             remember.value,
                                             clipboardManager,
                                             signedEvent.toJson(),
-                                            it.id,
                                             signedEvent.sig,
-                                            it.callBackUrl,
-                                            it.type
+                                            it
                                         )
                                     }
                                 }

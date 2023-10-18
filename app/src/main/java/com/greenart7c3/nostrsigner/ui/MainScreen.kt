@@ -52,9 +52,10 @@ import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.History
 import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -74,36 +75,46 @@ fun sendResult(
     rememberChoice: Boolean,
     clipboardManager: ClipboardManager,
     event: String,
-    id: String,
     value: String,
-    callBackUrl: String?,
-    type: SignerType
+    intentData: IntentData
 ) {
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
         if (rememberChoice) {
             account.savedApps[key] = rememberChoice
         }
-        account.history.add(History(packageName, type.toString(), TimeUtils.now()))
+        account.history.add(History(packageName, intentData.type.toString(), TimeUtils.now()))
         LocalPreferences.saveToEncryptedStorage(account)
         val intent = Intent()
         intent.putExtra("signature", value)
-        intent.putExtra("id", id)
+        intent.putExtra("id", intentData.id)
         intent.putExtra("event", event)
         activity?.setResult(RESULT_OK, intent)
-    } else if (callBackUrl != null) {
-        // Compress the string using GZIP
-        val byteArrayOutputStream = ByteArrayOutputStream()
-        val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
-        gzipOutputStream.write(event.toByteArray())
-        gzipOutputStream.close()
+    } else if (intentData.callBackUrl != null) {
+        if (intentData.returnType == ReturnType.SIGNATURE) {
+            val intent = Intent(Intent.ACTION_VIEW)
+            intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(value))
+            context.startActivity(intent)
+        } else {
+            if (intentData.compression == CompressionType.GZIP) {
+                // Compress the string using GZIP
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
+                gzipOutputStream.write(event.toByteArray())
+                gzipOutputStream.close()
 
-        // Convert the compressed data to Base64
-        val compressedData = byteArrayOutputStream.toByteArray()
-        val encodedString = Base64.getEncoder().encodeToString(compressedData)
-        val intent = Intent(Intent.ACTION_VIEW)
-        intent.data = Uri.parse(callBackUrl + Uri.encode("Signer1$encodedString"))
-        context.startActivity(intent)
+                // Convert the compressed data to Base64
+                val compressedData = byteArrayOutputStream.toByteArray()
+                val encodedString = Base64.getEncoder().encodeToString(compressedData)
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(intentData.callBackUrl + Uri.encode("Signer1$encodedString"))
+                context.startActivity(intent)
+            } else {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(event))
+                context.startActivity(intent)
+            }
+        }
     } else {
         clipboardManager.setText(AnnotatedString(value))
         Toast.makeText(

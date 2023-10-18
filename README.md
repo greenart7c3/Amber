@@ -157,6 +157,10 @@ context.contentResolver.query(
 
 * For Encryption/Decryption you should also send the hex pubkey that will be used to encrypt/decrypt the data eg (S.pubKey=cb8b8d378690f9a4a4f412c4e295051c4b76c3db24dc3941860fd3980f07d21d)
 
+* S.returnType can be signature or event
+
+* S.compressionType can be none or gzip (used when you using S.returnType == "event") because there are limitations to android intents and browsers urls
+
 ```js
 <!DOCTYPE html>
 <html lang="en">
@@ -182,7 +186,7 @@ context.contentResolver.query(
             }
             let encodedJson = encodeURIComponent(JSON.stringify(json))
             var newAnchor = document.createElement("a");
-            newAnchor.href = `intent:${encodedJson}#Intent;scheme=nostrsigner;S.type=sign_event;S.callbackUrl=https://example.com/?event=;end`;
+            newAnchor.href = `intent:${encodedJson}#Intent;scheme=nostrsigner;S.compressionType=none;S.returnType=signature;S.type=sign_event;S.callbackUrl=https://example.com/?event=;end`;
             newAnchor.textContent = "Open amber";
             document.body.appendChild(newAnchor)
         }

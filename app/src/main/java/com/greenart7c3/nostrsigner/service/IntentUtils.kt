@@ -2,7 +2,9 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import android.net.Uri
+import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import java.net.URLDecoder
@@ -37,7 +39,19 @@ object IntentUtils {
             val pubKey = intent.extras?.getString("pubKey") ?: ""
             val id = intent.extras?.getString("id") ?: ""
 
-            return IntentData(data, name, type, pubKey, id, intent.extras?.getString("callbackUrl"))
+            val compressionType = if (intent.extras?.getString("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE
+            val returnType = if (intent.extras?.getString("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE
+
+            return IntentData(
+                data,
+                name,
+                type,
+                pubKey,
+                id,
+                intent.extras?.getString("callbackUrl"),
+                compressionType,
+                returnType
+            )
         }
         return null
     }

@@ -8,7 +8,9 @@ class IntentData(
     val type: SignerType,
     val pubKey: HexKey,
     val id: String,
-    val callBackUrl: String?
+    val callBackUrl: String?,
+    val compression: CompressionType,
+    val returnType: ReturnType
 )
 
 enum class SignerType {
@@ -19,4 +21,14 @@ enum class SignerType {
     NIP44_DECRYPT,
     GET_PUBLIC_KEY,
     DECRYPT_ZAP_EVENT
+}
+
+enum class ReturnType {
+    SIGNATURE,
+    EVENT
+}
+
+enum class CompressionType {
+    NONE,
+    GZIP
 }

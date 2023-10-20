@@ -263,7 +263,7 @@ fun MainScreen(
             composable(
                 Route.History.route,
                 content = {
-                    val history = LocalPreferences.loadHistory(account.keyPair.pubKey.toNpub())
+                    val history = LocalPreferences.loadHistory(account.keyPair.pubKey.toNpub()).sortedWith(compareByDescending { it.time })
                     LazyColumn(
                         Modifier
                             .fillMaxSize()

@@ -3,8 +3,8 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 buildscript {
     ext {
         lifecycle_version = '2.6.1'
-        compose_ui_version = '1.5.3'
-        compose_ui_test_version = '1.5.3'
+        compose_ui_version = '1.5.4'
+        compose_ui_test_version = '1.5.4'
         nav_version = "2.7.4"
         core_ktx_version = '1.12.0'
     }

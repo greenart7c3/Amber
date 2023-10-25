@@ -161,6 +161,8 @@ context.contentResolver.query(
 
 * S.compressionType can be none or gzip (used when you using S.returnType == "event") because there are limitations to android intents and browsers urls
 
+* When using gzip it will return "Signer1" + Base 64 gzip encoded event json
+
 ```js
 <!DOCTYPE html>
 <html lang="en">

@@ -122,10 +122,22 @@ fun sendResult(
             }
         }
     } else {
-        clipboardManager.setText(AnnotatedString(value))
+        val result = if (intentData.returnType == ReturnType.SIGNATURE) {
+            value
+        } else {
+            event
+        }
+        val message = if (intentData.returnType == ReturnType.SIGNATURE) {
+            context.getString(R.string.signature_copied_to_the_clipboard)
+        } else {
+            context.getString(R.string.event_copied_to_the_clipboard)
+        }
+
+        clipboardManager.setText(AnnotatedString(result))
+
         Toast.makeText(
             context,
-            context.getString(R.string.signature_copied_to_the_clipboard),
+            message,
             Toast.LENGTH_SHORT
         ).show()
     }

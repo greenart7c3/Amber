@@ -80,4 +80,5 @@
     <string name="message_already_encrypted">Message already encrypted</string>
     <string name="relay">Relay</string>
     <string name="go_to_top">go to top</string>
+    <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
 </resources>

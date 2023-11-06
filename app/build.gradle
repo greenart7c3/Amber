@@ -57,7 +57,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        kotlinCompilerExtensionVersion = "1.5.3"
     }
 
     packagingOptions {
@@ -124,6 +124,4 @@ dependencies {
 
     // Biometrics
     implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
-
-
 }

@@ -12,9 +12,11 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
 - [x] Support for multiple accounts
 
-# Adding Amber support for your application
+# Usage for Android applications
 
-* Add a package querie in your AndroidManifest.xml
+Amber uses Intents and Content Resolvers to communicate between applications.
+
+To be able to use Amber in your application you should add the following package visibility needs:
 
 ```xml
 <queries>
@@ -22,146 +24,447 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 </queries>
 ```
 
-* Create the Nostr Event
+## Using Intents
+
+To get the result back from Amber you should use registerForActivityResult or rememberLauncherForActivityResult in Kotlin. If you are using another framework check the documentation of your framework or a third party library to get the result.
+
+Create the Intent using the **nostrsigner** scheme:
 
 ```kotlin
-val event = TextNoteEvent(id, pubKey, TimeUtils.now(), tags, message, signature = "")
+val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$content"))
 ```
 
-* Convert the event to json
-
-```kotlin
-val json = event.toJson()
-```
-
-* Create the intent using the **nostrsigner** scheme
-
-```kotlin
-val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$json"))
-```
-
-* Set the package name of the signer app for the intent
+* Set the Amber package name
 
 ```kotlin
 intent.`package` = "com.greenart7c3.nostrsigner"
 ```
 
-* Set the type eg (sign_event, nip04_encrypt, nip04_decrypt, nip44_encrypt, nip44_decrypt, get_public_key)
+### Methods
 
-```kotlin
-val signerType = when (type) {
-    SignerType.SIGN_EVENT -> "sign_event"
-    SignerType.NIP04_ENCRYPT -> "nip04_encrypt"
-    SignerType.NIP04_DECRYPT -> "nip04_decrypt"
-    SignerType.NIP44_ENCRYPT -> "nip44_encrypt"
-    SignerType.NIP44_DECRYPT -> "nip44_decrypt"
-    SignerType.GET_PUBLIC_KEY -> "get_public_key"
-    SignerType.DECRYPT_ZAP_EVENT -> "decrypt_zap_event"
-}
-intent.putExtra("type", signerType)
-```
+- **get_public_key**
+  - params:
 
-* Set the pubkey used for encryption/decryption
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "get_public_key")
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **npub** in the signature field
 
-```kotlin
-intent.putExtra("pubKey", pubKey)
-```
+      ```kotlin
+      val npub = intent.data?.getStringExtra("signature")
+      ```
 
-* Create an id or set the id as the id of the event so you can control in your application what response you are receiving
+- **sign_event**
+  - params:
 
-```kotlin
-intent.putExtra("id", event.id)
-```
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$eventJson"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "sign_event")
+    // to control the result in your application in case you are not waiting the result before sending another intent
+    intent.putExtra("id", event.id)
+    // Send the current logged in user npub
+    intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **signature**, **id** and **event** fields
 
-* Set the current npub of the logged in user, so amber knows what user it has to sign the transaction (not yet implemented)
+      ```kotlin
+      val signature = intent.data?.getStringExtra("signature")
+      // the id you sent
+      val id = intent.data?.getStringExtra("id")
+      val signedEventJson = intent.data?.getStringExtra("event")
+      ```
 
-```kotlin
-intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
-```
+- **nip04_encrypt**
+  - params:
 
-* Start the signer Activity
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$plaintext"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "nip04_encrypt")
+    // to control the result in your application in case you are not waiting the result before sending another intent
+    intent.putExtra("id", "some_id")
+    // Send the current logged in user npub
+    intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    // Send the hex pubKey that will be used for encrypting the data
+    intent.putExtra("pubKey", pubKey)
+    
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **signature** and **id** fields
 
-```kotlin
-context.startActivity(intent)
-```
+      ```kotlin
+      val encryptedText = intent.data?.getStringExtra("signature")
+      // the id you sent
+      val id = intent.data?.getStringExtra("id")
+      ```
 
-## Sign transactions in background
+- **nip44_encrypt**
+  - params:
 
-* Create the Nostr Event
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$plaintext"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "nip44_encrypt")
+    // to control the result in your application in case you are not waiting the result before sending another intent
+    intent.putExtra("id", "some_id")
+    // Send the current logged in user npub
+    intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    // Send the hex pubKey that will be used for encrypting the data
+    intent.putExtra("pubKey", pubKey)
+    
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **signature** and **id** fields
 
-```kotlin
-val event = TextNoteEvent(id, pubKey, TimeUtils.now(), tags, message, signature = "")
-```
+      ```kotlin
+      val encryptedText = intent.data?.getStringExtra("signature")
+      // the id you sent
+      val id = intent.data?.getStringExtra("id")
+      ```      
 
-* Create the content resolver using the following scheme
+- **nip04_decrypt**
+  - params:
 
-```kotlin
-"content://com.greenart7c3.nostrsigner.$signerType"
-```
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$encryptedText"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "nip04_decrypt")
+    // to control the result in your application in case you are not waiting the result before sending another intent
+    intent.putExtra("id", "some_id")
+    // Send the current logged in user npub
+    intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    // Send the hex pubKey that will be used for decrypting the data
+    intent.putExtra("pubKey", pubKey)
+    
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **signature** and **id** fields
 
-* The signer types are
+      ```kotlin
+      val plainText = intent.data?.getStringExtra("signature")
+      // the id you sent
+      val id = intent.data?.getStringExtra("id")
+      ```      
 
-```kotlin
-enum class SignerType {
-    SIGN_EVENT,
-    NIP04_ENCRYPT,
-    NIP04_DECRYPT,
-    NIP44_ENCRYPT,
-    NIP44_DECRYPT,
-    GET_PUBLIC_KEY,
-    DECRYPT_ZAP_EVENT
-}
-```
+- **nip44_decrypt**
+  - params:
 
-* In the projection parameter of the contentResolver.query you must send a list with the following data
-    * The event json
-    * The hex pub key for encryption/decryption
-    * The current logged in user npub
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$encryptedText"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "nip04_decrypt")
+    // to control the result in your application in case you are not waiting the result before sending another intent
+    intent.putExtra("id", "some_id")
+    // Send the current logged in user npub
+    intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    // Send the hex pubKey that will be used for decrypting the data
+    intent.putExtra("pubKey", pubKey)
+    
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **signature** and **id** fields
 
-* Example
+      ```kotlin
+      val plainText = intent.data?.getStringExtra("signature")
+      // the id you sent
+      val id = intent.data?.getStringExtra("id")
+      ```        
 
-```kotlin
-context.contentResolver.query(
-    Uri.parse("content://com.greenart7c3.nostrsigner.$signerType"),
-    listOf(event.toJson(), "hex pubKey for encryption/decryption", "logged in user npub"),
-    null,
-    null,
-    null
-).use {
-    if (it !== null) {
-        if (it.moveToFirst()) {
+- **decrypt_zap_event**
+  - params:
+
+    ```kotlin
+    val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:$eventJson"))
+    intent.`package` = "com.greenart7c3.nostrsigner"
+    intent.putExtra("type", "decrypt_zap_event")
+    // to control the result in your application in case you are not waiting the result before sending another intent
+    intent.putExtra("id", "some_id")
+    // Send the current logged in user npub
+    intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    context.startActivity(intent)
+    ```
+  - result:
+    - If the user approved intent it will return the **signature** and **id** fields
+
+      ```kotlin
+      val eventJson = intent.data?.getStringExtra("signature")
+      // the id you sent
+      val id = intent.data?.getStringExtra("id")
+      ```         
+
+## Using Content Resolver
+
+To get the result back from Amber you should use contentResolver.query in Kotlin. If you are using another framework check the documentation of your framework or a third party library to get the result.
+
+If the user did not check the remember my choice option, the npub is not in amber or the signer type is not recognized the contentResolver will return null
+
+For the SIGN_EVENT type amber returns two columns "signature" and "event". The column event is the signed event json
+
+For the other types amber returns the column "signature"
+
+### Methods
+
+- **get_public_key**
+  - params:
+
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.GET_PUBLIC_KEY"),
+        listOf("login"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **npub** in the signature column
+
+      ```kotlin
+        if (result == null) return
+
+        if (result.moveToFirst()) {
             val index = it.getColumnIndex("signature")
-            if (index < 0) {
-                Log.d("getDataFromResolver", "column '$columnName' not found")
-                return null
-            }
-            return it.getString(index)
+            if (index < 0) return
+            val npub = it.getString(index)
         }
-    }
-}
-```
+      ```
 
-* If the user did not check the remember my choice option, the npub is not in amber or the signer type is not recognized the contentResolver will return null
+- **sign_event**
+  - params:
 
-* For the SIGN_EVENT type amber returns two columns "signature" and "event". The column event is the signed event json
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.SIGN_EVENT"),
+        listOf("$eventJson", "", "${logged_in_user_npub}"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **signature** and the **event** columns
 
-* For the other types amber returns the column "signature"
+      ```kotlin
+        if (result == null) return
 
-# Support for Web Applications
+        if (result.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            val indexJson = it.getColumnIndex("event")
+            val signature = it.getString(index)
+            val eventJson = it.getString(indexJson)
+        }
+      ```
 
-* Here's an index.html with an example of how to open amber to sign an event
+- **nip04_encrypt**
+  - params:
 
-* The S.type= can be sign_event, nip04_encrypt, nip44_encrypt, nip04_decrypt, nip44_decrypt, get_public_key or decrypt_zap_event
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.NIP04_ENCRYPT"),
+        listOf("$plainText", "${hex_pub_key}", "${logged_in_user_npub}"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **signature** column
 
-* You can send a callbackUrl so your user doesn't need to copy the event manually to your application
+      ```kotlin
+        if (result == null) return
 
-* For Encryption/Decryption you should also send the hex pubkey that will be used to encrypt/decrypt the data eg (S.pubKey=cb8b8d378690f9a4a4f412c4e295051c4b76c3db24dc3941860fd3980f07d21d)
+        if (result.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            val encryptedText = it.getString(index)
+        }
+      ```
 
-* S.returnType can be signature or event
+- **nip44_encrypt**
+  - params:
 
-* S.compressionType can be none or gzip (used when you using S.returnType == "event") because there are limitations to android intents and browsers urls
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.NIP44_ENCRYPT"),
+        listOf("$plainText", "${hex_pub_key}", "${logged_in_user_npub}"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **signature** column
 
-* When using gzip it will return "Signer1" + Base 64 gzip encoded event json
+      ```kotlin
+        if (result == null) return
+
+        if (result.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            val encryptedText = it.getString(index)
+        }
+      ```    
+
+- **nip04_decrypt**
+  - params:
+
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.NIP04_DECRYPT"),
+        listOf("$encryptedText", "${hex_pub_key}", "${logged_in_user_npub}"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **signature** column
+
+      ```kotlin
+        if (result == null) return
+
+        if (result.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            val encryptedText = it.getString(index)
+        }
+      ```    
+
+- **nip44_decrypt**
+  - params:
+
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.NIP44_DECRYPT"),
+        listOf("$encryptedText", "${hex_pub_key}", "${logged_in_user_npub}"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **signature** column
+
+      ```kotlin
+        if (result == null) return
+
+        if (result.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            val encryptedText = it.getString(index)
+        }
+      ```      
+
+- **decrypt_zap_event**
+  - params:
+
+    ```kotlin
+    val result = context.contentResolver.query(
+        Uri.parse("content://com.greenart7c3.nostrsigner.DECRYPT_ZAP_EVENT"),
+        listOf("$eventJson", "", "${logged_in_user_npub}"),
+        null,
+        null,
+        null
+    )
+    ```
+  - result:
+    - Will return the **signature** column
+
+      ```kotlin
+        if (result == null) return
+
+        if (result.moveToFirst()) {
+            val index = it.getColumnIndex("signature")
+            val eventJson = it.getString(index)
+        }
+      ```    
+
+# Usage for Web Applications
+
+Since web applications can't receive a result from the intent you should add a modal to paste the signature or the event json or create a callback url.
+
+If you send the callback url parameter Amber will send the result to the url.
+
+If you don't send a callback url Amber will copy the result to the clipboard.
+
+You can configure the returnType to be **signature** or **event**.
+
+Android intents and browsers url has limitations, so if you are using the returnType of **event** consider using the parameter **compressionType=gzip** that will return "Signer1" + Base 64 gzip encoded event json
+
+## Methods
+
+- **get_public_key**
+  - params:
+
+    ```js
+    const intent = `intent:#Intent;scheme=nostrsigner;S.compressionType=none;S.returnType=signature;S.type=get_public_key;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ```
+
+- **sign_event**
+  - params:
+
+    ```js
+    const intent = `intent:${eventJson}#Intent;scheme=nostrsigner;S.compressionType=none;S.returnType=signature;S.type=sign_event;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ``` 
+
+- **nip04_encrypt**
+  - params:
+
+    ```js
+    const intent = `intent:${plainText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip04_encrypt;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ``` 
+
+- **nip44_encrypt**
+  - params:
+
+    ```js
+    const intent = `intent:${plainText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip44_encrypt;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ```   
+
+- **nip04_decrypt**
+  - params:
+
+    ```js
+    const intent = `intent:${encryptedText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip44_encrypt;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ```     
+
+- **nip44_decrypt**
+  - params:
+
+    ```js
+    const intent = `intent:${encryptedText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip44_decrypt;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ```     
+
+- **decrypt_zap_event**
+  - params:
+
+    ```js
+    const intent = `intent:${eventJson}#Intent;scheme=nostrsigner;S.compressionType=none;S.returnType=signature;S.type=decrypt_zap_event;S.callbackUrl=https://example.com/?event=;end`;
+
+    window.href = intent;
+    ```          
+
+## Example
 
 ```js
 <!DOCTYPE html>

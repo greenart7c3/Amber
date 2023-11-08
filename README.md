@@ -506,6 +506,6 @@ Android intents and browsers url has limitations, so if you are using the return
 
 # Contributors
 
-<a align="center" href="https://github.com/vitorpamplona/amethyst/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=vitorpamplona/amethyst" />
+<a align="center" href="https://github.com/greenart7c3/amber/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=greenart7c3/amber" />
 </a>

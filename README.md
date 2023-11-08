@@ -503,3 +503,9 @@ Android intents and browsers url has limitations, so if you are using the return
 # Contributing
 
 [Issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) are very welcome.
+
+# Contributors
+
+<a align="center" href="https://github.com/vitorpamplona/amethyst/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=vitorpamplona/amethyst" />
+</a>

@@ -80,14 +80,16 @@ fun sendResult(
     clipboardManager: ClipboardManager,
     event: String,
     value: String,
-    intentData: IntentData
+    intentData: IntentData,
+    kind: Int? = null
 ) {
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
         if (rememberChoice) {
             account.savedApps[key] = true
         }
-        account.history.add(History(packageName, intentData.type.toString(), TimeUtils.now()))
+
+        account.history.add(History(packageName, intentData.type.toString(), TimeUtils.now(), kind))
         LocalPreferences.saveToEncryptedStorage(account)
         val intent = Intent()
         intent.putExtra("signature", value)
@@ -322,6 +324,9 @@ fun MainScreen(
                                 ) {
                                     Text(history[it].appName)
                                     Text(history[it].type.toLowerCase(Locale.current))
+                                    history[it].kind?.let {
+                                        Text("$it")
+                                    }
                                     Text(timeAgoShort(history[it].time, "now"))
                                 }
                             }

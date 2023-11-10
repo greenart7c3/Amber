@@ -244,7 +244,8 @@ fun HomeScreen(
                                             clipboardManager,
                                             resultEvent.toJson(),
                                             resultEvent.toJson(),
-                                            it
+                                            it,
+                                            resultEvent.kind
                                         )
                                     }
                                 } else {
@@ -263,7 +264,8 @@ fun HomeScreen(
                                             clipboardManager,
                                             signedEvent.toJson(),
                                             signedEvent.sig,
-                                            it
+                                            it,
+                                            signedEvent.kind
                                         )
                                     }
                                 }

@@ -126,13 +126,11 @@ object AmberUtils {
             val recipientPost = event.zappedPost().firstOrNull()
             if (recipientPK == account.keyPair.pubKey.toHexKey()) {
                 // if the receiver is logged in, these are the params.
-                val privateKeyToUse = loggedInPrivateKey
                 val pubkeyToUse = event.pubKey
 
-                event.getPrivateZapEvent(privateKeyToUse, pubkeyToUse)?.toJson() ?: ""
+                event.getPrivateZapEvent(loggedInPrivateKey, pubkeyToUse)?.toJson() ?: ""
             } else {
                 // if the sender is logged in, these are the params
-                val altPubkeyToUse = recipientPK
                 val altPrivateKeyToUse = if (recipientPost != null) {
                     LnZapRequestEvent.createEncryptionPrivateKey(
                         loggedInPrivateKey.toHexKey(),
@@ -150,11 +148,11 @@ object AmberUtils {
                 }
 
                 try {
-                    if (altPrivateKeyToUse != null && altPubkeyToUse != null) {
+                    if (altPrivateKeyToUse != null && recipientPK != null) {
                         val altPubKeyFromPrivate = CryptoUtils.pubkeyCreate(altPrivateKeyToUse).toHexKey()
 
                         if (altPubKeyFromPrivate == event.pubKey) {
-                            val result = event.getPrivateZapEvent(altPrivateKeyToUse, altPubkeyToUse)
+                            val result = event.getPrivateZapEvent(altPrivateKeyToUse, recipientPK)
 
                             result?.toJson() ?: ""
                         } else {
@@ -173,7 +171,7 @@ object AmberUtils {
         }
     }
 
-    fun encryptPrivateZapMessage(msg: String, privkey: ByteArray, pubkey: ByteArray): String {
+    private fun encryptPrivateZapMessage(msg: String, privkey: ByteArray, pubkey: ByteArray): String {
         val sharedSecret = CryptoUtils.getSharedSecretNIP04(privkey, pubkey)
         val iv = ByteArray(16)
         SecureRandom().nextBytes(iv)

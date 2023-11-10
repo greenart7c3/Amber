@@ -8,7 +8,8 @@ import com.greenart7c3.nostrsigner.service.KeyPair
 class History(
     val appName: String,
     val type: String,
-    val time: Long
+    val time: Long,
+    val kind: Int?
 )
 
 @Stable

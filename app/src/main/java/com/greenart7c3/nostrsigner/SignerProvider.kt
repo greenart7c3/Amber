@@ -64,7 +64,7 @@ class SignerProvider : ContentProvider() {
                     account.keyPair.privKey
                 )
 
-                account.history.add(History(packageName, "SIGN_EVENT", TimeUtils.now()))
+                account.history.add(History(packageName, "SIGN_EVENT", TimeUtils.now(), signedEvent.kind))
                 LocalPreferences.saveToEncryptedStorage(account)
 
                 val cursor = MatrixCursor(arrayOf("signature", "event"))
@@ -106,7 +106,7 @@ class SignerProvider : ContentProvider() {
                     "Could not decrypt the message"
                 }
 
-                account.history.add(History(packageName, stringType, TimeUtils.now()))
+                account.history.add(History(packageName, stringType, TimeUtils.now(), null))
                 LocalPreferences.saveToEncryptedStorage(account)
 
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
@@ -125,7 +125,7 @@ class SignerProvider : ContentProvider() {
                 val isRemembered = account.savedApps[key] ?: false
                 if (!isRemembered) return null
 
-                account.history.add(History(packageName, "GET_PUBLIC_KEY", TimeUtils.now()))
+                account.history.add(History(packageName, "GET_PUBLIC_KEY", TimeUtils.now(), null))
                 LocalPreferences.saveToEncryptedStorage(account)
 
                 val cursor = MatrixCursor(arrayOf("signature"))

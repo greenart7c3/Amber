@@ -54,6 +54,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -96,6 +97,7 @@ fun sendResult(
         intent.putExtra("signature", value)
         intent.putExtra("id", intentData.id)
         intent.putExtra("event", event)
+        intent.putExtra("package", BuildConfig.APPLICATION_ID)
         activity?.setResult(RESULT_OK, intent)
     } else if (intentData.callBackUrl != null) {
         if (intentData.returnType == ReturnType.SIGNATURE) {

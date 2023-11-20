@@ -6,14 +6,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccessTime
-import androidx.compose.material.icons.filled.CalendarMonth
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Wifi
 import androidx.compose.material3.Card
-import androidx.compose.material3.Divider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -22,13 +15,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.service.toShortenHex
 
 @Composable
 fun EventData(
@@ -36,6 +31,7 @@ fun EventData(
     remember: MutableState<Boolean>,
     packageName: String?,
     appName: String,
+    applicationName: String?,
     event: AmberEvent,
     rawJson: String,
     onAccept: () -> Unit,
@@ -44,65 +40,40 @@ fun EventData(
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
     }
-    val eventDescription = stringResource(R.string.event)
 
     Column(
         Modifier
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        AppTitle(appName)
+        val text = if (event.kind == 22242) "requests client authentication" else "requests event signature"
+        Text(
+            buildAnnotatedString {
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(applicationName ?: appName)
+                }
+                append(" $text")
+            },
+            fontSize = 18.sp
+        )
         Spacer(Modifier.size(4.dp))
         Card(
             modifier = Modifier
                 .fillMaxWidth()
         ) {
-            Column(Modifier.padding(6.dp)) {
-                val message = if (event.kind == 22242) {
-                    stringResource(R.string.client_authentication)
-                } else {
-                    eventDescription
-                }
+            Column(Modifier.padding(16.dp)) {
                 Text(
-                    stringResource(R.string.wants_you_to_sign_a, message),
+                    "Event content",
                     fontWeight = FontWeight.Bold
                 )
-
-                EventRow(
-                    Icons.Default.CalendarMonth,
-                    stringResource(R.string.kind),
-                    "${event.kind}"
-                )
-
-                EventRow(
-                    Icons.Default.AccessTime,
-                    stringResource(R.string.created_at),
-                    TimeUtils.format(event.createdAt)
-                )
-
-                EventRow(
-                    Icons.Default.Person,
-                    stringResource(R.string.signed_by),
-                    event.pubKey.toShortenHex()
-                )
-
-                if (event.kind == 22242) {
-                    EventRow(
-                        Icons.Default.Wifi,
-                        stringResource(R.string.relay),
-                        event.tags.firstOrNull { it.size > 1 && it[0] == "relay" }?.get(1)?.removePrefix("wss://")?.removePrefix("ws://") ?: ""
-                    )
-                } else {
-                    EventRow(
-                        Icons.Default.ContentPaste,
-                        stringResource(R.string.content),
-                        event.content
-                    )
-                }
-
-                Divider(
-                    modifier = Modifier.padding(top = 15.dp),
-                    thickness = Dp.Hairline
+                val content = if (event.kind == 22242) event.relay() else event.content
+                Text(
+                    content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
                 )
             }
         }

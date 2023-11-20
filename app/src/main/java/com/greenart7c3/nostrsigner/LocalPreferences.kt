@@ -4,11 +4,8 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.Immutable
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.History
-import com.greenart7c3.nostrsigner.service.KeyPair
+import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -28,7 +25,6 @@ private object PrefKeys {
     const val NOSTR_PRIVKEY = "nostr_privkey"
     const val NOSTR_PUBKEY = "nostr_pubkey"
     const val REMEMBER_APPS = "remember_apps"
-    const val HISTORY = "history"
     const val ACCOUNT_NAME = "account_name"
 }
 
@@ -184,13 +180,11 @@ object LocalPreferences {
     fun saveToEncryptedStorage(account: Account) {
         val prefs = encryptedPreferences(account.keyPair.pubKey.toNpub())
         prefs.edit().apply {
-            account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it.toHexKey()) }
+            account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
             val jsonObject = JSONObject(account.savedApps.toMap())
             putString(PrefKeys.REMEMBER_APPS, jsonObject.toString())
             putString(PrefKeys.ACCOUNT_NAME, account.name)
-            val historyObject = Gson().toJson(account.history)
-            putString(PrefKeys.HISTORY, historyObject)
         }.apply()
     }
 
@@ -207,14 +201,6 @@ object LocalPreferences {
     fun getAccountName(npub: String): String {
         encryptedPreferences(npub).apply {
             return getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
-        }
-    }
-
-    fun loadHistory(npub: String?): MutableList<History> {
-        encryptedPreferences(npub).apply {
-            val historyJson = getString(PrefKeys.HISTORY, "[]") ?: "[]"
-            val listType = object : TypeToken<List<History>>() {}.type
-            return Gson().fromJson<List<History>>(historyJson, listType).toMutableList()
         }
     }
 
@@ -236,15 +222,10 @@ object LocalPreferences {
             }
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
 
-            val historyJson = getString(PrefKeys.HISTORY, "[]") ?: "[]"
-            val listType = object : TypeToken<List<History>>() {}.type
-            val history = Gson().fromJson<List<History>>(historyJson, listType).toMutableList()
-
             return Account(
                 keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
                 name = name,
-                savedApps = outputMap,
-                history = history
+                savedApps = outputMap
             )
         }
     }

@@ -18,27 +18,22 @@ import androidx.compose.ui.text.input.TextFieldValue
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import kotlinx.coroutines.launch
-import org.json.JSONObject
 
 @Composable
 fun RawJson(
     rawJson: String,
     modifier: Modifier,
-    label: String = stringResource(R.string.copy_raw_json)
+    label: String = stringResource(R.string.copy_raw_json),
+    onCopy: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
-    val value = try {
-        JSONObject(rawJson).toString(2)
-    } catch (e: Exception) {
-        rawJson
-    }
 
     OutlinedTextField(
         modifier = modifier
             .fillMaxWidth(),
-        value = TextFieldValue(value),
+        value = TextFieldValue(rawJson),
         onValueChange = { },
         readOnly = true
     )
@@ -49,14 +44,18 @@ fun RawJson(
         Button(
             shape = ButtonBorder,
             onClick = {
-                clipboardManager.setText(AnnotatedString(rawJson))
+                if (onCopy != null) {
+                    onCopy()
+                } else {
+                    clipboardManager.setText(AnnotatedString(rawJson))
 
-                coroutineScope.launch {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.data_copied_to_the_clipboard),
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    coroutineScope.launch {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.data_copied_to_the_clipboard),
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
                 }
             }
         ) {

@@ -9,20 +9,19 @@ import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material3.Card
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -46,7 +45,7 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -59,14 +58,15 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.CompressionType
-import com.greenart7c3.nostrsigner.models.History
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
@@ -83,21 +83,28 @@ fun sendResult(
     event: String,
     value: String,
     intentData: IntentData,
-    kind: Int? = null
+    permissions: List<Permission>? = null
 ) {
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
+        permissions?.filter { it.checked }?.forEach {
+            val type = it.type.toUpperCase(Locale.current)
+            val permissionKey = if (it.type == "sign_event") "$packageName-$type-${it.kind}" else "$packageName-$type"
+            account.savedApps[permissionKey] = true
+        }
+
         if (rememberChoice) {
             account.savedApps[key] = true
         }
 
-        account.history.add(History(packageName, intentData.type.toString(), TimeUtils.now(), kind))
         LocalPreferences.saveToEncryptedStorage(account)
         val intent = Intent()
         intent.putExtra("signature", value)
         intent.putExtra("id", intentData.id)
         intent.putExtra("event", event)
-        intent.putExtra("package", BuildConfig.APPLICATION_ID)
+        if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+            intent.putExtra("package", BuildConfig.APPLICATION_ID)
+        }
         activity?.setResult(RESULT_OK, intent)
     } else if (intentData.callBackUrl != null) {
         if (intentData.returnType == ReturnType.SIGNATURE) {
@@ -167,11 +174,12 @@ fun MainScreen(
     accountStateViewModel: AccountStateViewModel,
     json: IntentData?,
     packageName: String?,
+    appName: String?,
     route: String?
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
-    val items = listOf(Route.Home, Route.Permissions, Route.History, Route.Settings)
+    val items = listOf(Route.Home, Route.Permissions, Route.Settings)
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
 
     val sheetState = rememberModalBottomSheetState(
@@ -180,6 +188,7 @@ fun MainScreen(
     )
     val scope = rememberCoroutineScope()
     val listState = rememberLazyListState()
+    val interactionSource = remember { MutableInteractionSource() }
 
     Scaffold(
         floatingActionButton = {
@@ -210,12 +219,21 @@ fun MainScreen(
                 title = {
                     val name = LocalPreferences.getAccountName(account.keyPair.pubKey.toNpub())
                     Row(
-                        Modifier.clickable {
-                            scope.launch {
-                                sheetState.show()
-                                shouldShowBottomSheet = true
-                            }
-                        },
+                        Modifier
+                            .border(
+                                border = ButtonDefaults.outlinedButtonBorder,
+                                shape = ButtonBorder
+                            )
+                            .padding(8.dp)
+                            .clickable(
+                                interactionSource = interactionSource,
+                                indication = null
+                            ) {
+                                scope.launch {
+                                    sheetState.show()
+                                    shouldShowBottomSheet = true
+                                }
+                            },
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(name.ifBlank { account.keyPair.pubKey.toNpub().toShortenHex() })
@@ -272,6 +290,7 @@ fun MainScreen(
                             .padding(padding),
                         json,
                         packageName,
+                        appName,
                         account
                     )
                 }
@@ -301,41 +320,6 @@ fun MainScreen(
                         accountStateViewModel,
                         account
                     )
-                }
-            )
-
-            composable(
-                Route.History.route,
-                content = {
-                    val history = LocalPreferences.loadHistory(account.keyPair.pubKey.toNpub()).sortedWith(compareByDescending { it.time })
-                    LazyColumn(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(16.dp),
-                        state = listState
-                    ) {
-                        items(history.size) {
-                            Card(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(4.dp)
-                            ) {
-                                Column(
-                                    Modifier
-                                        .fillMaxWidth()
-                                        .padding(8.dp)
-                                ) {
-                                    Text(history[it].appName)
-                                    Text(history[it].type.toLowerCase(Locale.current))
-                                    history[it].kind?.let {
-                                        Text("$it")
-                                    }
-                                    Text(timeAgoShort(history[it].time, "now"))
-                                }
-                            }
-                        }
-                    }
                 }
             )
 

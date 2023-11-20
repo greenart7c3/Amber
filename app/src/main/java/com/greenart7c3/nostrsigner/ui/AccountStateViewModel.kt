@@ -4,7 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.KeyPair
+import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -62,9 +62,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun startUI(key: String, route: String?) {
         val account = if (key.startsWith("nsec")) {
-            Account(KeyPair(privKey = key.bechToBytes()), "", mutableMapOf())
+            Account(KeyPair(privKey = key.bechToBytes()), name = "", savedApps = mutableMapOf())
         } else {
-            Account(KeyPair(Hex.decode(key)), "", mutableMapOf())
+            Account(KeyPair(Hex.decode(key)), name = "", savedApps = mutableMapOf())
         }
 
         LocalPreferences.updatePrefsForLogin(account)
@@ -72,7 +72,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     }
 
     fun newKey() {
-        val account = Account(KeyPair(), "", mutableMapOf())
+        val account = Account(KeyPair(), name = "", savedApps = mutableMapOf())
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account, null)
     }

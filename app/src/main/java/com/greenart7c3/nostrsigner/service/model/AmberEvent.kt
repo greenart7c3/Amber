@@ -15,12 +15,13 @@ import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.google.gson.annotations.SerializedName
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.service.KeyPair
 import com.vitorpamplona.quartz.crypto.CryptoUtils
+import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.ATag
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.EmojiUrl
+import com.vitorpamplona.quartz.events.Event
 import fr.acinq.secp256k1.Hex
 import java.lang.reflect.Type
 import java.math.BigDecimal
@@ -63,6 +64,8 @@ open class AmberEvent(
     override fun taggedUrls() = tags.filter { it.size > 1 && it[0] == "r" }.map { it[1] }
 
     override fun taggedEmojis() = tags.filter { it.size > 2 && it[0] == "emoji" }.map { EmojiUrl(it[1], it[2]) }
+
+    fun relay() = tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
 
     override fun isSensitive() = tags.any {
         (it.size > 0 && it[0].equals("content-warning", true)) ||
@@ -419,6 +422,18 @@ open class AmberEvent(
             else -> this
         }
 
+        fun toEvent(amberEvent: AmberEvent): Event {
+            return Event(
+                amberEvent.id,
+                amberEvent.pubKey,
+                amberEvent.createdAt,
+                amberEvent.kind,
+                amberEvent.tags,
+                amberEvent.content,
+                amberEvent.sig
+            )
+        }
+
         fun generateId(pubKey: HexKey, createdAt: Long, kind: Int, tags: List<List<String>>, content: String): ByteArray {
             val rawEvent = listOf(
                 0,
@@ -444,7 +459,7 @@ open class AmberEvent(
             if (event.pubKey.isEmpty()) {
                 val pubKey = keyPair.pubKey.toHexKey()
                 val id = generateId(pubKey, event.createdAt, event.kind, event.tags, event.content)
-                val signature = CryptoUtils.sign(id, keyPair.privKey).toHexKey()
+                val signature = CryptoUtils.sign(id, keyPair.privKey!!).toHexKey()
                 return AmberEvent(id.toHexKey(), pubKey, event.createdAt, event.kind, event.tags, event.content, signature)
             }
 

@@ -13,7 +13,8 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
     intent: Intent,
-    packageName: String?
+    packageName: String?,
+    appName: String?
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
 
@@ -30,7 +31,7 @@ fun AccountScreen(
                 is AccountState.LoggedIn -> {
                     val intentData = IntentUtils.getIntentData(intent)
 
-                    MainScreen(state.account, accountStateViewModel, intentData, packageName, state.route)
+                    MainScreen(state.account, accountStateViewModel, intentData, packageName, appName, state.route)
                 }
             }
         }

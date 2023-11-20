@@ -21,6 +21,6 @@ fun PostButton(modifier: Modifier = Modifier, onPost: () -> Unit = {}, isActive:
         shape = ButtonBorder,
         contentPadding = PaddingValues(0.dp)
     ) {
-        Text(text = "Post", color = Color.White)
+        Text(text = "Save", color = Color.White)
     }
 }

@@ -2,11 +2,15 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import android.net.Uri
+import com.google.gson.Gson
+import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.vitorpamplona.quartz.crypto.KeyPair
 import java.net.URLDecoder
 
 object IntentUtils {
@@ -41,6 +45,11 @@ object IntentUtils {
 
             val compressionType = if (intent.extras?.getString("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE
             val returnType = if (intent.extras?.getString("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE
+            val listType = object : TypeToken<List<Permission>>() {}.type
+            val permissions = Gson().fromJson<List<Permission>?>(intent.extras?.getString("permissions"), listType)
+            permissions?.forEach {
+                it.checked = true
+            }
 
             return IntentData(
                 data,
@@ -50,7 +59,8 @@ object IntentUtils {
                 id,
                 intent.extras?.getString("callbackUrl"),
                 compressionType,
-                returnType
+                returnType,
+                permissions
             )
         }
         return null

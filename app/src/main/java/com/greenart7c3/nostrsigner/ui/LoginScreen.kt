@@ -47,13 +47,13 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.theme.Font14SP
@@ -76,7 +76,7 @@ fun LoginPage(
             .fillMaxSize()
             .navigationBarsPadding()
             .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.SpaceBetween
+        verticalArrangement = Arrangement.Center
     ) {
         // The first child is glued to the top.
         // Hence we have nothing at the top, an empty box is used.
@@ -205,23 +205,20 @@ fun LoginPage(
                     Text(text = stringResource(R.string.login))
                 }
             }
-        }
-
-        // The last child is glued to the bottom.
-        ClickableText(
-            text = AnnotatedString(stringResource(R.string.generate_a_new_key)),
-            modifier = Modifier
-                .padding(20.dp)
-                .fillMaxWidth(),
-            onClick = {
-                accountViewModel.newKey()
-            },
-            style = TextStyle(
-                fontSize = Font14SP,
-                textDecoration = TextDecoration.Underline,
-                color = MaterialTheme.colorScheme.primary,
-                textAlign = TextAlign.Center
+            ClickableText(
+                text = AnnotatedString(stringResource(R.string.generate_a_new_key)),
+                modifier = Modifier
+                    .padding(30.dp)
+                    .fillMaxWidth(),
+                onClick = {
+                    accountViewModel.newKey()
+                },
+                style = TextStyle(
+                    fontSize = Font14SP,
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center
+                )
             )
-        )
+        }
     }
 }

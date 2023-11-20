@@ -2,6 +2,39 @@ package com.greenart7c3.nostrsigner.models
 
 import com.vitorpamplona.quartz.encoders.HexKey
 
+data class Permission(
+    val type: String,
+    val kind: Int?,
+    var checked: Boolean = true
+) {
+    override fun toString(): String {
+        return when (type) {
+            "nip04_encrypt" -> {
+                "Encrypt data using nip 4"
+            }
+            "nip04_decrypt" -> {
+                "Decrypt data using nip 4"
+            }
+            "nip44_decrypt" -> {
+                "Decrypt data using nip 44"
+            }
+            "nip44_encrypt" -> {
+                "Encrypt data using nip 44"
+            }
+            "decrypt_zap_event" -> {
+                "Decrypt private zaps"
+            }
+            "sign_event" -> {
+                when (kind) {
+                    22242 -> "Client authentication"
+                    else -> "Event kind $kind"
+                }
+            }
+            else -> type
+        }
+    }
+}
+
 class IntentData(
     val data: String,
     val name: String,
@@ -10,7 +43,8 @@ class IntentData(
     val id: String,
     val callBackUrl: String?,
     val compression: CompressionType,
-    val returnType: ReturnType
+    val returnType: ReturnType,
+    val permissions: List<Permission>?
 )
 
 enum class SignerType {

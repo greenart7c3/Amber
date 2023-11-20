@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.service
 import android.util.Log
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.Nip44Version
 import com.vitorpamplona.quartz.crypto.decodeNIP44
@@ -13,7 +12,6 @@ import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.LnZapPrivateEvent
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
 import java.nio.charset.Charset
@@ -23,49 +21,6 @@ import javax.crypto.spec.IvParameterSpec
 import javax.crypto.spec.SecretKeySpec
 
 object AmberUtils {
-    fun getSignedEvent(unsignedEvent: AmberEvent, privateKey: ByteArray): AmberEvent {
-        val id = unsignedEvent.id.hexToByteArray()
-        val sig = CryptoUtils.sign(id, privateKey).toHexKey()
-        return AmberEvent(
-            unsignedEvent.id,
-            unsignedEvent.pubKey,
-            unsignedEvent.createdAt,
-            unsignedEvent.kind,
-            unsignedEvent.tags,
-            unsignedEvent.content,
-            sig
-        )
-    }
-    fun getZapRequestEvent(localEvent: LnZapRequestEvent, privateKey: ByteArray): LnZapRequestEvent {
-        val originalNoteId = localEvent.zappedPost().firstOrNull()
-        val pubkey = localEvent.zappedAuthor()[0]
-        var privkey = privateKey
-        val encryptionPrivateKey = LnZapRequestEvent.createEncryptionPrivateKey(
-            privkey.toHexKey(),
-            originalNoteId ?: pubkey,
-            localEvent.createdAt
-        )
-        val noteJson = (LnZapPrivateEvent.create(privkey, listOf(localEvent.tags[0], localEvent.tags[1]), localEvent.content)).toJson()
-        val encryptedContent = encryptPrivateZapMessage(
-            noteJson,
-            encryptionPrivateKey,
-            pubkey.hexToByteArray()
-        )
-        var tags = localEvent.tags.filter { !it.contains("anon") }
-        tags = tags + listOf(listOf("anon", encryptedContent))
-        privkey = encryptionPrivateKey // sign event with generated privkey
-        val pubKey = CryptoUtils.pubkeyCreate(encryptionPrivateKey).toHexKey() // updated event with according pubkey
-
-        val id = AmberEvent.generateId(
-            pubKey,
-            localEvent.createdAt,
-            LnZapRequestEvent.kind,
-            tags,
-            ""
-        )
-        val sig = CryptoUtils.sign(id, privkey)
-        return LnZapRequestEvent(id.toHexKey(), pubKey, localEvent.createdAt, tags, "", sig.toHexKey())
-    }
     fun encryptOrDecryptData(data: String, type: SignerType, account: Account, pubKey: HexKey): String? {
         return when (type) {
             SignerType.DECRYPT_ZAP_EVENT -> {
@@ -74,20 +29,20 @@ object AmberUtils {
             SignerType.NIP04_DECRYPT -> {
                 CryptoUtils.decryptNIP04(
                     data,
-                    account.keyPair.privKey,
+                    account.keyPair.privKey!!,
                     Hex.decode(pubKey)
                 )
             }
             SignerType.NIP04_ENCRYPT -> {
                 CryptoUtils.encryptNIP04(
                     data,
-                    account.keyPair.privKey,
+                    account.keyPair.privKey!!,
                     Hex.decode(pubKey)
                 )
             }
             SignerType.NIP44_ENCRYPT -> {
                 val sharedSecret = CryptoUtils.getSharedSecretNIP44(
-                    account.keyPair.privKey,
+                    account.keyPair.privKey!!,
                     pubKey.hexToByteArray()
                 )
 
@@ -103,12 +58,12 @@ object AmberUtils {
                 when (toDecrypt.v) {
                     Nip44Version.NIP04.versionCode -> CryptoUtils.decryptNIP04(
                         toDecrypt,
-                        account.keyPair.privKey,
+                        account.keyPair.privKey!!,
                         pubKey.hexToByteArray()
                     )
                     Nip44Version.NIP44.versionCode -> CryptoUtils.decryptNIP44(
                         toDecrypt,
-                        account.keyPair.privKey,
+                        account.keyPair.privKey!!,
                         pubKey.hexToByteArray()
                     )
                     else -> null
@@ -128,18 +83,18 @@ object AmberUtils {
                 // if the receiver is logged in, these are the params.
                 val pubkeyToUse = event.pubKey
 
-                event.getPrivateZapEvent(loggedInPrivateKey, pubkeyToUse)?.toJson() ?: ""
+                event.getPrivateZapEvent(loggedInPrivateKey!!, pubkeyToUse)?.toJson() ?: ""
             } else {
                 // if the sender is logged in, these are the params
                 val altPrivateKeyToUse = if (recipientPost != null) {
                     LnZapRequestEvent.createEncryptionPrivateKey(
-                        loggedInPrivateKey.toHexKey(),
+                        loggedInPrivateKey!!.toHexKey(),
                         recipientPost,
                         event.createdAt
                     )
                 } else if (recipientPK != null) {
                     LnZapRequestEvent.createEncryptionPrivateKey(
-                        loggedInPrivateKey.toHexKey(),
+                        loggedInPrivateKey!!.toHexKey(),
                         recipientPK,
                         event.createdAt
                     )
@@ -153,7 +108,6 @@ object AmberUtils {
 
                         if (altPubKeyFromPrivate == event.pubKey) {
                             val result = event.getPrivateZapEvent(altPrivateKeyToUse, recipientPK)
-
                             result?.toJson() ?: ""
                         } else {
                             null

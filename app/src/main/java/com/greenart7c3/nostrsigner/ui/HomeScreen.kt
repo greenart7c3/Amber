@@ -37,6 +37,7 @@ fun HomeScreen(
     modifier: Modifier,
     json: IntentData?,
     packageName: String?,
+    applicationName: String?,
     account: Account
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -63,13 +64,11 @@ fun HomeScreen(
                         val remember = remember {
                             mutableStateOf(account.savedApps[key] ?: false)
                         }
-                        val shouldRunOnAccept = account.savedApps[key] ?: false
                         LoginWithPubKey(
-                            shouldRunOnAccept,
-                            remember,
-                            packageName,
                             appName,
-                            {
+                            applicationName,
+                            json.permissions,
+                            { permissions ->
                                 val sig = account.keyPair.pubKey.toNpub()
                                 coroutineScope.launch {
                                     sendResult(
@@ -81,15 +80,15 @@ fun HomeScreen(
                                         clipboardManager,
                                         sig,
                                         sig,
-                                        it
+                                        it,
+                                        permissions = permissions
                                     )
                                 }
                                 return@LoginWithPubKey
                             },
                             {
                                 context.getAppCompatActivity()?.finish()
-                            },
-                            account
+                            }
                         )
                     }
 
@@ -99,9 +98,11 @@ fun HomeScreen(
                         }
                         val shouldRunOnAccept = account.savedApps[key] ?: false
                         EncryptDecryptData(
+                            it.data,
                             shouldRunOnAccept,
                             remember,
                             packageName,
+                            applicationName,
                             appName,
                             it.type,
                             {
@@ -210,8 +211,9 @@ fun HomeScreen(
                             remember,
                             packageName,
                             appName,
+                            applicationName,
                             event,
-                            event.toJson(),
+                            it.data,
                             {
                                 if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                                     coroutineScope.launch {
@@ -229,31 +231,8 @@ fun HomeScreen(
                                 } catch (e: Exception) {
                                     Event.fromJson(event.toJson())
                                 }
-                                if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) {
-                                    val resultEvent = AmberUtils.getZapRequestEvent(
-                                        localEvent,
-                                        account.keyPair.privKey
-                                    )
-                                    coroutineScope.launch {
-                                        sendResult(
-                                            context,
-                                            packageName,
-                                            account,
-                                            key,
-                                            remember.value,
-                                            clipboardManager,
-                                            resultEvent.toJson(),
-                                            resultEvent.toJson(),
-                                            it,
-                                            resultEvent.kind
-                                        )
-                                    }
-                                } else {
-                                    val signedEvent = AmberUtils.getSignedEvent(
-                                        event,
-                                        account.keyPair.privKey
-                                    )
 
+                                account.signer.sign<Event>(localEvent.createdAt, localEvent.kind, localEvent.tags, localEvent.content) { signedEvent ->
                                     coroutineScope.launch {
                                         sendResult(
                                             context,
@@ -263,9 +242,8 @@ fun HomeScreen(
                                             remember.value,
                                             clipboardManager,
                                             signedEvent.toJson(),
-                                            signedEvent.sig,
-                                            it,
-                                            signedEvent.kind
+                                            if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig,
+                                            it
                                         )
                                     }
                                 }

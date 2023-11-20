@@ -5,14 +5,10 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
-import com.greenart7c3.nostrsigner.models.History
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.AmberUtils
-import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.LnZapRequestEvent
 
 class SignerProvider : ContentProvider() {
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
@@ -51,24 +47,19 @@ class SignerProvider : ContentProvider() {
                 val isRemembered = account.savedApps[key] ?: false
                 if (!isRemembered) return null
 
-                if (event is LnZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) {
-                    val signedEvent = AmberUtils.getZapRequestEvent(event, account.keyPair.privKey)
+                var cursor: MatrixCursor? = null
 
-                    val cursor = MatrixCursor(arrayOf("signature", "event"))
-                    cursor.addRow(arrayOf(signedEvent.sig, signedEvent.toJson()))
-                    return cursor
+                account.signer.sign<Event>(event.createdAt, event.kind, event.tags, event.content) { signedEvent ->
+                    val localCursor = MatrixCursor(arrayOf("signature", "event")).also {
+                        it.addRow(arrayOf(signedEvent.sig, signedEvent.toJson()))
+                    }
+                    cursor = localCursor
                 }
 
-                val signedEvent = AmberUtils.getSignedEvent(
-                    AmberEvent.fromJson(json),
-                    account.keyPair.privKey
-                )
+                while (cursor == null) {
+                    // do nothing
+                }
 
-                account.history.add(History(packageName, "SIGN_EVENT", TimeUtils.now(), signedEvent.kind))
-                LocalPreferences.saveToEncryptedStorage(account)
-
-                val cursor = MatrixCursor(arrayOf("signature", "event"))
-                cursor.addRow(arrayOf(signedEvent.sig, signedEvent.toJson()))
                 return cursor
             }
             "content://$appId.NIP04_DECRYPT",
@@ -106,7 +97,6 @@ class SignerProvider : ContentProvider() {
                     "Could not decrypt the message"
                 }
 
-                account.history.add(History(packageName, stringType, TimeUtils.now(), null))
                 LocalPreferences.saveToEncryptedStorage(account)
 
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
@@ -125,7 +115,6 @@ class SignerProvider : ContentProvider() {
                 val isRemembered = account.savedApps[key] ?: false
                 if (!isRemembered) return null
 
-                account.history.add(History(packageName, "GET_PUBLIC_KEY", TimeUtils.now(), null))
                 LocalPreferences.saveToEncryptedStorage(account)
 
                 val cursor = MatrixCursor(arrayOf("signature"))

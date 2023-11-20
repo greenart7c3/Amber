@@ -178,7 +178,7 @@ private fun copyNSec(
     account: Account,
     clipboardManager: ClipboardManager
 ) {
-    account.keyPair.privKey.let {
+    account.keyPair.privKey?.let {
         clipboardManager.setText(AnnotatedString(it.toNsec()))
         scope.launch {
             Toast.makeText(

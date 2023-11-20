@@ -28,28 +28,28 @@ val Font14SP = 14.sp
 
 val Size35dp = 35.dp
 
-val Purple200 = Color(0xFFBB86FC)
-val Purple500 = Color(0xFF6200EE)
-val Purple700 = Color(0xFF3700B3)
-val Teal200 = Color(0xFF03DAC5)
-
 val ButtonBorder = RoundedCornerShape(20.dp)
 val Size20Modifier = Modifier.size(20.dp)
 
+val primaryColor = Color(0xFFF16F26)
+val primaryVariant = Color(0xFFC8541A)
+val secondaryColor = Color(0xFFFF8E4C)
+
 private val DarkColorPalette = darkColorScheme(
-    primary = Purple200,
-    secondary = Purple700,
-    tertiary = Teal200
+    primary = primaryColor,
+    secondary = primaryVariant,
+    tertiary = secondaryColor,
+    primaryContainer = secondaryColor,
+    secondaryContainer = secondaryColor
 )
 
 private val LightColorPalette = lightColorScheme(
-    primary = Purple500,
-    secondary = Purple700,
-    tertiary = Teal200
+    primary = primaryColor,
+    secondary = primaryVariant,
+    tertiary = secondaryColor,
+    primaryContainer = secondaryColor,
+    secondaryContainer = secondaryColor
 )
-
-private val DarkPlaceholderText = DarkColorPalette.onSurface.copy(alpha = 0.32f)
-private val LightPlaceholderText = LightColorPalette.onSurface.copy(alpha = 0.32f)
 
 @Composable
 fun NostrSignerTheme(

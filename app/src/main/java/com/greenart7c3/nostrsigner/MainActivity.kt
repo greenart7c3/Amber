@@ -22,6 +22,12 @@ class MainActivity : AppCompatActivity() {
 
         setContent {
             val packageName = callingPackage
+            val appName = if (packageName != null) {
+                val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
+                applicationContext.packageManager.getApplicationLabel(info).toString()
+            } else {
+                null
+            }
 
             NostrSignerTheme {
                 Surface(
@@ -31,7 +37,7 @@ class MainActivity : AppCompatActivity() {
                     val accountStateViewModel: AccountStateViewModel = viewModel {
                         AccountStateViewModel(intent.getStringExtra("current_user"))
                     }
-                    AccountScreen(accountStateViewModel, intent, packageName)
+                    AccountScreen(accountStateViewModel, intent, packageName, appName)
                 }
             }
         }

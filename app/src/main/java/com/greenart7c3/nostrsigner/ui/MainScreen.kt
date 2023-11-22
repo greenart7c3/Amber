@@ -87,6 +87,9 @@ fun sendResult(
 ) {
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
+        if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+            account.savedApps.clear()
+        }
         permissions?.filter { it.checked }?.forEach {
             val type = it.type.toUpperCase(Locale.current)
             val permissionKey = if (it.type == "sign_event") "$packageName-$type-${it.kind}" else "$packageName-$type"

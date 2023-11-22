@@ -15,7 +15,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
 val Shapes = Shapes(
@@ -23,8 +22,6 @@ val Shapes = Shapes(
     medium = RoundedCornerShape(4.dp),
     large = RoundedCornerShape(0.dp)
 )
-
-val Font14SP = 14.sp
 
 val Size35dp = 35.dp
 
@@ -37,6 +34,7 @@ val secondaryColor = Color(0xFFFF8E4C)
 
 private val DarkColorPalette = darkColorScheme(
     primary = primaryColor,
+    onPrimary = Color.White,
     secondary = primaryVariant,
     tertiary = secondaryColor,
     primaryContainer = secondaryColor,

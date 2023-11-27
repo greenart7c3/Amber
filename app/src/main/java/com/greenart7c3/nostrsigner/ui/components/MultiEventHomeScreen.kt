@@ -100,6 +100,7 @@ fun MultiEventHomeScreen(
         ) {
             items(intents.size) {
                 var isExpanded by remember { mutableStateOf(false) }
+                val intentData = intents[it]
                 Card(
                     Modifier
                         .padding(4.dp)
@@ -107,20 +108,19 @@ fun MultiEventHomeScreen(
                             isExpanded = !isExpanded
                         }
                 ) {
-                    intents[it].let {
-                        val name = LocalPreferences.getAccountName(it.currentAccount)
-                        Row(
-                            Modifier
-                                .fillMaxWidth(),
-                            Arrangement.Center,
-                            Alignment.CenterVertically
-                        ) {
-                            Text(
-                                name.ifBlank { it.currentAccount.toShortenHex() },
-                                fontWeight = FontWeight.Bold
-                            )
-                        }
+                    val name = LocalPreferences.getAccountName(intentData.currentAccount)
+                    Row(
+                        Modifier
+                            .fillMaxWidth(),
+                        Arrangement.Center,
+                        Alignment.CenterVertically
+                    ) {
+                        Text(
+                            name.ifBlank { intentData.currentAccount.toShortenHex() },
+                            fontWeight = FontWeight.Bold
+                        )
                     }
+
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
@@ -139,82 +139,78 @@ fun MultiEventHomeScreen(
                             tint = Color.LightGray
                         )
 
-                        intents[it].let {
-                            val appName = applicationName ?: packageName ?: it.name
-                            val text = if (it.type == SignerType.SIGN_EVENT) {
-                                val event =
-                                    IntentUtils.getIntent(it.data, accountParam.keyPair)
-                                if (event.kind == 22242) "requests client authentication" else "requests event signature"
-                            } else {
-                                when (it.type) {
-                                    SignerType.NIP44_ENCRYPT -> stringResource(R.string.encrypt_nip44)
-                                    SignerType.NIP04_ENCRYPT -> stringResource(R.string.encrypt_nip04)
-                                    SignerType.NIP44_DECRYPT -> stringResource(R.string.decrypt_nip44)
-                                    SignerType.NIP04_DECRYPT -> stringResource(R.string.decrypt_nip04)
-                                    SignerType.DECRYPT_ZAP_EVENT -> stringResource(R.string.decrypt_zap_event)
-                                    else -> stringResource(R.string.encrypt_decrypt)
-                                }
+                        val appName = applicationName ?: packageName ?: intentData.name
+                        val text = if (intentData.type == SignerType.SIGN_EVENT) {
+                            val event = IntentUtils.getIntent(intentData.data, accountParam.keyPair)
+                            if (event.kind == 22242) "requests client authentication" else "requests event signature"
+                        } else {
+                            when (intentData.type) {
+                                SignerType.NIP44_ENCRYPT -> stringResource(R.string.encrypt_nip44)
+                                SignerType.NIP04_ENCRYPT -> stringResource(R.string.encrypt_nip04)
+                                SignerType.NIP44_DECRYPT -> stringResource(R.string.decrypt_nip44)
+                                SignerType.NIP04_DECRYPT -> stringResource(R.string.decrypt_nip04)
+                                SignerType.DECRYPT_ZAP_EVENT -> stringResource(R.string.decrypt_zap_event)
+                                else -> stringResource(R.string.encrypt_decrypt)
                             }
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append(appName)
-                                    }
-                                    append(" $text")
-                                },
-                                fontSize = 18.sp
-                            )
-
-                            Switch(
-                                checked = it.checked.value,
-                                onCheckedChange = { _ ->
-                                    it.checked.value = !it.checked.value
-                                }
-                            )
                         }
-                    }
-                    intents[it].let {
-                        if (isExpanded) {
-                            Column(
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(10.dp)
-                            ) {
-                                Text(
-                                    "Event content",
-                                    fontWeight = FontWeight.Bold
-                                )
-                                val content = if (it.type == SignerType.SIGN_EVENT) {
-                                    val event = IntentUtils.getIntent(
-                                        it.data,
-                                        accountParam.keyPair
-                                    )
-                                    if (event.kind == 22242) event.relay() else event.content
-                                } else {
-                                    it.data
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = buildAnnotatedString {
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append(appName)
                                 }
+                                append(" $text")
+                            },
+                            fontSize = 18.sp
+                        )
 
-                                Text(
-                                    content,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp)
+                        Switch(
+                            checked = intentData.checked.value,
+                            onCheckedChange = { _ ->
+                                intentData.checked.value = !intentData.checked.value
+                            }
+                        )
+                    }
+
+                    if (isExpanded) {
+                        Column(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(10.dp)
+                        ) {
+                            Text(
+                                "Event content",
+                                fontWeight = FontWeight.Bold
+                            )
+                            val content = if (intentData.type == SignerType.SIGN_EVENT) {
+                                val event = IntentUtils.getIntent(
+                                    intentData.data,
+                                    accountParam.keyPair
                                 )
-                                RememberMyChoice(
-                                    shouldRunOnAccept = false,
-                                    it.rememberMyChoice.value,
-                                    packageName,
-                                    { }
-                                ) {
-                                    it.rememberMyChoice.value = !it.rememberMyChoice.value
-                                    intents.filter { intentData ->
-                                        intentData.type == it.type
-                                    }.forEach { intentData ->
-                                        intentData.rememberMyChoice.value = it.rememberMyChoice.value
-                                    }
+                                if (event.kind == 22242) event.relay() else event.content
+                            } else {
+                                intentData.data
+                            }
+
+                            Text(
+                                content,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp)
+                            )
+                            RememberMyChoice(
+                                shouldRunOnAccept = false,
+                                intentData.rememberMyChoice.value,
+                                packageName,
+                                { }
+                            ) {
+                                intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
+                                intents.filter { it ->
+                                    intentData.type == it.type
+                                }.forEach { it ->
+                                    it.rememberMyChoice.value = intentData.rememberMyChoice.value
                                 }
                             }
                         }

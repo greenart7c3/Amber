@@ -175,7 +175,7 @@ fun GoToTop(goToTop: () -> Unit) {
 fun MainScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    intents: List<IntentData?>,
+    intents: List<IntentData>,
     packageName: String?,
     appName: String?,
     route: String?

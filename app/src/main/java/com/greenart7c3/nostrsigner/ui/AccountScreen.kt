@@ -20,7 +20,7 @@ fun AccountScreen(
     mainViewModel: MainViewModel
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
-    val intents by mainViewModel.intents.observeAsState()
+    val intents by mainViewModel.intents.observeAsState(mutableListOf())
 
     Column {
         Crossfade(
@@ -33,9 +33,13 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    val localIntents = intents?.mapNotNull { it } ?: listOf()
-                    val newIntents = localIntents.ifEmpty {
-                        listOf(IntentUtils.getIntentData(intent))
+                    val newIntents = intents.ifEmpty {
+                        val intentData = IntentUtils.getIntentData(intent)
+                        if (intentData == null) {
+                            listOf()
+                        } else {
+                            listOf(intentData)
+                        }
                     }
 
                     MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, state.route)

@@ -22,7 +22,7 @@ import com.greenart7c3.nostrsigner.ui.components.SingleEventHomeScreen
 @Composable
 fun HomeScreen(
     modifier: Modifier,
-    intents: List<IntentData?>,
+    intents: List<IntentData>,
     packageName: String?,
     applicationName: String?,
     account: Account
@@ -34,7 +34,7 @@ fun HomeScreen(
         Box(
             modifier
         ) {
-            if (intents.filterNotNull().isEmpty()) {
+            if (intents.isEmpty()) {
                 Column(
                     Modifier.fillMaxSize(),
                     Arrangement.Center,
@@ -43,17 +43,15 @@ fun HomeScreen(
                     Text(stringResource(R.string.no_event_to_sign))
                 }
             } else if (intents.size == 1) {
-                intents.first()?.let {
-                    SingleEventHomeScreen(
-                        packageName,
-                        applicationName,
-                        it,
-                        account
-                    )
-                }
+                SingleEventHomeScreen(
+                    packageName,
+                    applicationName,
+                    intents.first(),
+                    account
+                )
             } else {
                 MultiEventHomeScreen(
-                    intents.filterNotNull(),
+                    intents,
                     applicationName,
                     packageName,
                     account

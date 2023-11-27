@@ -23,7 +23,7 @@ class MainViewModel : ViewModel() {
     var intents = IntentLiveData()
 }
 
-class IntentLiveData : MutableLiveData<MutableList<IntentData?>>(mutableListOf())
+class IntentLiveData : MutableLiveData<MutableList<IntentData>>(mutableListOf())
 
 class MainActivity : AppCompatActivity() {
     private val mainViewModel = MainViewModel()
@@ -60,9 +60,10 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         if (intent == null) return
 
-        val list = mutableListOf(IntentUtils.getIntentData(intent))
+        val intentData = IntentUtils.getIntentData(intent) ?: return
+        val list = mutableListOf(intentData)
         mainViewModel.intents.value?.forEach {
-            if (list.none { item -> item?.id == it?.id }) {
+            if (list.none { item -> item.id == it.id }) {
                 list.add(it)
             }
         }

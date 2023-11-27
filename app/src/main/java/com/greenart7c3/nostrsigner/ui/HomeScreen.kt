@@ -369,7 +369,8 @@ fun HomeScreen(
                                             Alignment.CenterVertically
                                         ) {
                                             Text(
-                                                name.ifBlank { it.currentAccount.toShortenHex() }
+                                                name.ifBlank { it.currentAccount.toShortenHex() },
+                                                fontWeight = FontWeight.Bold
                                             )
                                         }
                                     }

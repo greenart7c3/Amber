@@ -175,7 +175,7 @@ fun GoToTop(goToTop: () -> Unit) {
 fun MainScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    json: IntentData?,
+    intents: List<IntentData?>,
     packageName: String?,
     appName: String?,
     route: String?
@@ -291,7 +291,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding),
-                        json,
+                        intents,
                         packageName,
                         appName,
                         account

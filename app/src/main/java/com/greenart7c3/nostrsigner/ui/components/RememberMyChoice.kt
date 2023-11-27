@@ -7,7 +7,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -16,9 +15,10 @@ import com.greenart7c3.nostrsigner.R
 @Composable
 fun RememberMyChoice(
     shouldRunOnAccept: Boolean,
-    remember: MutableState<Boolean>,
+    remember: Boolean,
     packageName: String?,
-    onAccept: () -> Unit
+    onAccept: () -> Unit,
+    onChanged: () -> Unit
 ) {
     if (shouldRunOnAccept) {
         LaunchedEffect(Unit) {
@@ -31,7 +31,7 @@ fun RememberMyChoice(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .clickable {
-                    remember.value = !remember.value
+                    onChanged()
                 }
         ) {
             Text(
@@ -39,9 +39,9 @@ fun RememberMyChoice(
                 text = stringResource(R.string.remember_my_choice_and_don_t_ask_again)
             )
             Switch(
-                checked = remember.value,
+                checked = remember,
                 onCheckedChange = {
-                    remember.value = !remember.value
+                    onChanged()
                 }
             )
         }

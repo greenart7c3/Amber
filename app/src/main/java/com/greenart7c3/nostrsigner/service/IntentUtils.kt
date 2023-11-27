@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import android.net.Uri
+import androidx.compose.runtime.mutableStateOf
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.models.CompressionType
@@ -60,7 +61,10 @@ object IntentUtils {
                 intent.extras?.getString("callbackUrl"),
                 compressionType,
                 returnType,
-                permissions
+                permissions,
+                intent.extras?.getString("current_user") ?: "",
+                mutableStateOf(true),
+                mutableStateOf(false)
             )
         }
         return null

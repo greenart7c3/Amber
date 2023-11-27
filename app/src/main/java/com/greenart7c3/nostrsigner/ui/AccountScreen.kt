@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import com.greenart7c3.nostrsigner.MainViewModel
 import com.greenart7c3.nostrsigner.service.IntentUtils
 
 @Composable
@@ -14,9 +16,11 @@ fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
     intent: Intent,
     packageName: String?,
-    appName: String?
+    appName: String?,
+    mainViewModel: MainViewModel
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
+    val intents by mainViewModel.intents.observeAsState()
 
     Column {
         Crossfade(
@@ -29,9 +33,12 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    val intentData = IntentUtils.getIntentData(intent)
+                    val localIntents = intents?.mapNotNull { it } ?: listOf()
+                    val newIntents = localIntents.ifEmpty {
+                        listOf(IntentUtils.getIntentData(intent))
+                    }
 
-                    MainScreen(state.account, accountStateViewModel, intentData, packageName, appName, state.route)
+                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, state.route)
                 }
             }
         }

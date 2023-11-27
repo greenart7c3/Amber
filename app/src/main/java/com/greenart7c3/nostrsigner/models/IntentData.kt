@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.models
 
+import androidx.compose.runtime.MutableState
 import com.vitorpamplona.quartz.encoders.HexKey
 
 data class Permission(
@@ -44,7 +45,10 @@ class IntentData(
     val callBackUrl: String?,
     val compression: CompressionType,
     val returnType: ReturnType,
-    val permissions: List<Permission>?
+    val permissions: List<Permission>?,
+    val currentAccount: String,
+    val checked: MutableState<Boolean>,
+    val rememberMyChoice: MutableState<Boolean>
 )
 
 enum class SignerType {

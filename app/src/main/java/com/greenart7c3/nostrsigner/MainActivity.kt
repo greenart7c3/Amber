@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
@@ -9,12 +10,24 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
+import androidx.lifecycle.MutableLiveData
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 
+class MainViewModel : ViewModel() {
+    var intents = IntentLiveData()
+}
+
+class IntentLiveData : MutableLiveData<MutableList<IntentData?>>(mutableListOf())
+
 class MainActivity : AppCompatActivity() {
+    private val mainViewModel = MainViewModel()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -37,9 +50,23 @@ class MainActivity : AppCompatActivity() {
                     val accountStateViewModel: AccountStateViewModel = viewModel {
                         AccountStateViewModel(intent.getStringExtra("current_user"))
                     }
-                    AccountScreen(accountStateViewModel, intent, packageName, appName)
+                    AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel)
                 }
             }
         }
+    }
+
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        if (intent == null) return
+
+        val list = mutableListOf(IntentUtils.getIntentData(intent))
+        mainViewModel.intents.value?.forEach {
+            if (list.none { item -> item?.id == it?.id }) {
+                list.add(it)
+            }
+        }
+
+        mainViewModel.intents.value = list
     }
 }

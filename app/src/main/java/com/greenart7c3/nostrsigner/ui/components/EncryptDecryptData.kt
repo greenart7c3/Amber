@@ -122,10 +122,12 @@ fun EncryptDecryptData(
 
         RememberMyChoice(
             shouldRunOnAccept,
-            remember,
+            remember.value,
             packageName,
             onAccept
-        )
+        ) {
+            remember.value = !remember.value
+        }
 
         AcceptRejectButtons(
             onAccept,

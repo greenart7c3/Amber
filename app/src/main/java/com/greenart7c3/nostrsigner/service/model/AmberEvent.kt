@@ -33,7 +33,7 @@ open class AmberEvent(
     @SerializedName("pubkey") val pubKey: HexKey,
     @SerializedName("created_at") val createdAt: Long,
     val kind: Int,
-    val tags: List<List<String>>,
+    val tags: Array<Array<String>>,
     val content: String,
     val sig: HexKey
 ) : AmberEventInterface {
@@ -48,7 +48,7 @@ open class AmberEvent(
         return "event"
     }
 
-    override fun tags(): List<List<String>> = tags
+    override fun tags(): Array<Array<String>> = tags
 
     override fun content(): String = content
 
@@ -244,8 +244,8 @@ open class AmberEvent(
                 createdAt = jsonObject.get("created_at")?.asLong ?: TimeUtils.now(),
                 kind = jsonObject.get("kind").asInt,
                 tags = jsonObject.get("tags")?.asJsonArray?.map {
-                    it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }
-                } ?: emptyList(),
+                    it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }.toTypedArray()
+                }?.toTypedArray() ?: emptyArray(),
                 content = jsonObject.get("content").asString,
                 sig = jsonObject.get("sig")?.asString ?: ""
             )
@@ -434,7 +434,7 @@ open class AmberEvent(
             )
         }
 
-        fun generateId(pubKey: HexKey, createdAt: Long, kind: Int, tags: List<List<String>>, content: String): ByteArray {
+        fun generateId(pubKey: HexKey, createdAt: Long, kind: Int, tags: Array<Array<String>>, content: String): ByteArray {
             val rawEvent = listOf(
                 0,
                 pubKey,
@@ -466,7 +466,7 @@ open class AmberEvent(
             return event
         }
 
-        fun create(privateKey: ByteArray, kind: Int, tags: List<List<String>> = emptyList(), content: String = "", createdAt: Long = TimeUtils.now()): AmberEvent {
+        fun create(privateKey: ByteArray, kind: Int, tags: Array<Array<String>> = emptyArray(), content: String = "", createdAt: Long = TimeUtils.now()): AmberEvent {
             val pubKey = CryptoUtils.pubkeyCreate(privateKey).toHexKey()
             val id = generateId(pubKey, createdAt, kind, tags, content)
             val sig = CryptoUtils.sign(id, privateKey).toHexKey()

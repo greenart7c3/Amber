@@ -18,7 +18,7 @@ interface AmberEventInterface {
 
     fun description(): String
 
-    fun tags(): List<List<String>>
+    fun tags(): Array<Array<String>>
 
     fun content(): String
 

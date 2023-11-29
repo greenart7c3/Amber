@@ -48,6 +48,31 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     ```kotlin
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"))
     intent.`package` = "com.greenart7c3.nostrsigner"
+    
+    // You can send some default permissions for the user authorize for ever
+    val permissions = listOf(
+      Permission(
+          "sign_event",
+          22242
+      ),
+      Permission(
+          "nip04_encrypt"
+      ),
+      Permission(
+          "nip04_decrypt"
+      ),
+      Permission(
+          "nip44_encrypt"
+      ),
+      Permission(
+          "nip44_decrypt"
+      ),
+      Permission(
+          "decrypt_zap_event"
+      ),
+    )
+    intent.putExtra("permissions", permissions.toJson())
+     
     intent.putExtra("type", "get_public_key")
     context.startActivity(intent)
     ```
@@ -69,6 +94,9 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     intent.putExtra("id", event.id)
     // Send the current logged in user npub
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
+    
+    // If you are sending multiple intents without awaiting you can add some intent flags to sign all events withou opening multiple screens
+    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
     
     context.startActivity(intent)
     ```

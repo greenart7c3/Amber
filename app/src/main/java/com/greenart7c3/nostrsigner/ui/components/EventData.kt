@@ -24,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.vitorpamplona.quartz.events.Event
 
 @Composable
 fun EventData(
@@ -32,7 +33,7 @@ fun EventData(
     packageName: String?,
     appName: String,
     applicationName: String?,
-    event: AmberEvent,
+    event: Event,
     rawJson: String,
     onAccept: () -> Unit,
     onReject: () -> Unit
@@ -66,7 +67,7 @@ fun EventData(
                     "Event content",
                     fontWeight = FontWeight.Bold
                 )
-                val content = if (event.kind == 22242) event.relay() else event.content
+                val content = if (event.kind == 22242) AmberEvent.relay(event) else event.content
                 Text(
                     content,
                     maxLines = 1,

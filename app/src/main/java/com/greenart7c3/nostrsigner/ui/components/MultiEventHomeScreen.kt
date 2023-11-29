@@ -46,6 +46,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
@@ -187,7 +188,7 @@ fun MultiEventHomeScreen(
                                     intentData.data,
                                     accountParam.keyPair
                                 )
-                                if (event.kind == 22242) event.relay() else event.content
+                                if (event.kind == 22242) AmberEvent.relay(event) else event.content
                             } else {
                                 intentData.data
                             }

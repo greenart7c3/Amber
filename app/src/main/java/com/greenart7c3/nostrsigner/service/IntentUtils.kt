@@ -12,6 +12,8 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.crypto.KeyPair
+import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.events.Event
 import java.net.URLDecoder
 
 object IntentUtils {
@@ -69,11 +71,21 @@ object IntentUtils {
         }
         return null
     }
-    fun getIntent(data: String, keyPair: KeyPair): AmberEvent {
-        var event = AmberEvent.fromJson(data)
+    fun getIntent(data: String, keyPair: KeyPair): Event {
+        val event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
-            event = AmberEvent.setPubKeyIfEmpty(event, keyPair)
+            event.pubKey = keyPair.pubKey.toHexKey()
         }
-        return event
+        if (event.id.isEmpty()) {
+            event.id = Event.generateId(
+                event.pubKey,
+                event.createdAt,
+                event.kind,
+                event.tags,
+                event.content
+            ).toHexKey()
+        }
+
+        return AmberEvent.toEvent(event)
     }
 }

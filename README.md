@@ -81,6 +81,8 @@ intent.`package` = "com.greenart7c3.nostrsigner"
 
       ```kotlin
       val npub = intent.data?.getStringExtra("signature")
+      // The package name of the signer application
+      val packageName = intent.data?.getStringExtra("package")
       ```
 
 - **sign_event**

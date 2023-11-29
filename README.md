@@ -95,7 +95,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     // Send the current logged in user npub
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
     
-    // If you are sending multiple intents without awaiting you can add some intent flags to sign all events withou opening multiple screens
+    // If you are sending multiple intents without awaiting you can add some intent flags to sign all events without opening multiple screens
     intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
     
     context.startActivity(intent)

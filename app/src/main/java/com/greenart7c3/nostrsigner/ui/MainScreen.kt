@@ -88,7 +88,14 @@ fun sendResult(
     val activity = context.getAppCompatActivity()
     if (packageName != null) {
         if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-            account.savedApps.clear()
+            val keysToClear = account.savedApps.filter {
+                it.key.startsWith(packageName)
+            }.map {
+                it.key
+            }
+            keysToClear.forEach {
+                account.savedApps.remove(it)
+            }
         }
         permissions?.filter { it.checked }?.forEach {
             val type = it.type.toUpperCase(Locale.current)

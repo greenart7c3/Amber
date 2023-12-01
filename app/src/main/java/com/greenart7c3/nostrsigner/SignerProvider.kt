@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.events.LnZapRequestEvent
 
 class SignerProvider : ContentProvider() {
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
@@ -51,7 +52,8 @@ class SignerProvider : ContentProvider() {
 
                 account.signer.sign<Event>(event.createdAt, event.kind, event.tags, event.content) { signedEvent ->
                     val localCursor = MatrixCursor(arrayOf("signature", "event")).also {
-                        it.addRow(arrayOf(signedEvent.sig, signedEvent.toJson()))
+                        val signature = if (event is LnZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig
+                        it.addRow(arrayOf(signature, signedEvent.toJson()))
                     }
                     cursor = localCursor
                 }

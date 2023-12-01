@@ -62,12 +62,23 @@ class MainActivity : AppCompatActivity() {
 
         val intentData = IntentUtils.getIntentData(intent) ?: return
         val list = mutableListOf(intentData)
+        if (mainViewModel.intents.value == null) {
+            mainViewModel.intents.value = mutableListOf()
+        }
         mainViewModel.intents.value?.forEach {
             if (list.none { item -> item.id == it.id }) {
                 list.add(it)
             }
         }
 
-        mainViewModel.intents.value = list
+        list.forEach {
+            val list2 = mainViewModel.intents.value!!
+            if (list2.none { item -> item.id == it.id }) {
+                list2.add(it)
+            }
+        }
+        mainViewModel.intents.value = mainViewModel.intents.value?.map {
+            it
+        }?.toMutableList()
     }
 }

@@ -33,8 +33,14 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
+                    val intentData = IntentUtils.getIntentData(intent)
+                    if (intentData != null) {
+                        if (intents.none { item -> item.id == intentData.id }) {
+                            intents.add(intentData)
+                        }
+                    }
+
                     val newIntents = intents.ifEmpty {
-                        val intentData = IntentUtils.getIntentData(intent)
                         if (intentData == null) {
                             listOf()
                         } else {

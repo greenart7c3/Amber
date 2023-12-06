@@ -60,7 +60,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         if (intent == null) return
 
-        val intentData = IntentUtils.getIntentData(intent) ?: return
+        val intentData = IntentUtils.getIntentData(intent, callingPackage) ?: return
         val list = mutableListOf(intentData)
         if (mainViewModel.intents.value == null) {
             mainViewModel.intents.value = mutableListOf()

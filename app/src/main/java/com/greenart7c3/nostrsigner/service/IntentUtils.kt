@@ -17,7 +17,7 @@ import com.vitorpamplona.quartz.events.Event
 import java.net.URLDecoder
 
 object IntentUtils {
-    fun getIntentData(intent: Intent): IntentData? {
+    fun getIntentData(intent: Intent, packageName: String?): IntentData? {
         if (intent.data != null) {
             val type = when (intent.extras?.getString("type")) {
                 "sign_event" -> SignerType.SIGN_EVENT
@@ -31,11 +31,10 @@ object IntentUtils {
             }
 
             val data = try {
-                when (type) {
-                    SignerType.NIP44_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_DECRYPT, SignerType.NIP04_ENCRYPT -> {
-                        intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
-                    }
-                    else -> URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
+                if (packageName == null) {
+                    URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
+                } else {
+                    intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
                 }
             } catch (e: Exception) {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""

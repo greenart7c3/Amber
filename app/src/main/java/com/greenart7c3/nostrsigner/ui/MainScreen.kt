@@ -68,11 +68,15 @@ import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.toNpub
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
 
+@OptIn(DelicateCoroutinesApi::class)
 fun sendResult(
     context: Context,
     packageName: String?,
@@ -155,11 +159,13 @@ fun sendResult(
 
         clipboardManager.setText(AnnotatedString(result))
 
-        Toast.makeText(
-            context,
-            message,
-            Toast.LENGTH_SHORT
-        ).show()
+        GlobalScope.launch(Dispatchers.Main) {
+            Toast.makeText(
+                context,
+                message,
+                Toast.LENGTH_SHORT
+            ).show()
+        }
     }
     activity?.finish()
 }

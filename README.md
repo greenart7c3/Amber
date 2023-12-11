@@ -106,6 +106,14 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     - If the user approved intent it will return the **signature**, **id** and **event** fields
 
       ```kotlin
+      // if you used the flags (Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP) when sending the intent and there's more than 1 event amber will return an array with the results
+      [
+        {"package":null,"signature":"event_signature","id":"event_id"},
+        {"package":null,"signature":"event_signature","id":"event_id"},
+        {"package":null,"signature":"event_signature","id":"event_id"}
+      ]
+      
+      // if you sent only 1 event or did not used the flags (Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP) Amber will return the fields signature, id and event
       val signature = intent.data?.getStringExtra("signature")
       // the id you sent
       val id = intent.data?.getStringExtra("id")

@@ -72,7 +72,7 @@ dependencies {
     implementation('com.github.vitorpamplona.amethyst:quartz:main-SNAPSHOT') {
         exclude group: 'net.java.dev.jna'
     }
-    implementation 'net.java.dev.jna:jna:5.13.0@aar'
+    implementation 'net.java.dev.jna:jna:5.14.0@aar'
     implementation "androidx.core:core-splashscreen:1.0.1"
 
     implementation "androidx.core:core-ktx:$core_ktx_version"
@@ -95,7 +95,7 @@ dependencies {
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.8'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha01'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha02'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"

@@ -86,7 +86,7 @@ object LocalPreferences {
     }
 
     private val prefsDirPath: String
-        get() = "${nostrsigner.instance.filesDir.parent}/shared_prefs/"
+        get() = "${Nostrsigner.instance.filesDir.parent}/shared_prefs/"
 
     private fun addAccount(npub: String) {
         val accounts = savedAccounts().toMutableList()
@@ -135,7 +135,7 @@ object LocalPreferences {
     private fun encryptedPreferences(npub: String? = null): SharedPreferences {
         return if (BuildConfig.DEBUG && DEBUG_PLAINTEXT_PREFERENCES) {
             val preferenceFile = if (npub == null) DEBUG_PREFERENCES_NAME else "${DEBUG_PREFERENCES_NAME}_$npub"
-            nostrsigner.instance.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
+            Nostrsigner.instance.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
         } else {
             return EncryptedStorage.preferences(npub)
         }

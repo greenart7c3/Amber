@@ -4,7 +4,6 @@ import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
-import android.text.format.DateUtils
 import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
@@ -356,20 +355,4 @@ fun MainScreen(
             )
         }
     }
-}
-
-fun timeAgoShort(mills: Long?, stringForNow: String): String {
-    if (mills == null) return " "
-
-    var humanReadable = DateUtils.getRelativeTimeSpanString(
-        mills * 1000,
-        System.currentTimeMillis(),
-        DateUtils.MINUTE_IN_MILLIS,
-        DateUtils.FORMAT_ABBREV_ALL
-    ).toString()
-    if (humanReadable.startsWith("In") || humanReadable.startsWith("0")) {
-        humanReadable = stringForNow
-    }
-
-    return humanReadable
 }

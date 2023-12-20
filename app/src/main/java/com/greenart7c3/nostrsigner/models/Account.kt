@@ -7,13 +7,6 @@ import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.signers.NostrSigner
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
 
-class History(
-    val appName: String,
-    val type: String,
-    val time: Long,
-    val kind: Int?
-)
-
 @Stable
 class Account(
     val keyPair: KeyPair,

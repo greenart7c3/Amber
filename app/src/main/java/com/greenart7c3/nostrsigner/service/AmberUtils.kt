@@ -7,18 +7,12 @@ import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.Nip44Version
 import com.vitorpamplona.quartz.crypto.decodeNIP44
 import com.vitorpamplona.quartz.crypto.encodeNIP44
-import com.vitorpamplona.quartz.encoders.Bech32
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
-import java.nio.charset.Charset
-import java.security.SecureRandom
-import javax.crypto.Cipher
-import javax.crypto.spec.IvParameterSpec
-import javax.crypto.spec.SecretKeySpec
 
 object AmberUtils {
     fun encryptOrDecryptData(data: String, type: SignerType, account: Account, pubKey: HexKey): String? {
@@ -123,25 +117,6 @@ object AmberUtils {
         } else {
             null
         }
-    }
-
-    private fun encryptPrivateZapMessage(msg: String, privkey: ByteArray, pubkey: ByteArray): String {
-        val sharedSecret = CryptoUtils.getSharedSecretNIP04(privkey, pubkey)
-        val iv = ByteArray(16)
-        SecureRandom().nextBytes(iv)
-
-        val keySpec = SecretKeySpec(sharedSecret, "AES")
-        val ivSpec = IvParameterSpec(iv)
-
-        val utf8message = msg.toByteArray(Charset.forName("utf-8"))
-        val cipher = Cipher.getInstance("AES/CBC/PKCS5Padding")
-        cipher.init(Cipher.ENCRYPT_MODE, keySpec, ivSpec)
-        val encryptedMsg = cipher.doFinal(utf8message)
-
-        val encryptedMsgBech32 = Bech32.encode("pzap", Bech32.eight2five(encryptedMsg), Bech32.Encoding.Bech32)
-        val ivBech32 = Bech32.encode("iv", Bech32.eight2five(iv), Bech32.Encoding.Bech32)
-
-        return encryptedMsgBech32 + "_" + ivBech32
     }
 }
 

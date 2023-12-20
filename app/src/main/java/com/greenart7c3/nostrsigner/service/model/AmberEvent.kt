@@ -80,7 +80,7 @@ open class AmberEvent(
     }
 
     companion object {
-        val gson: Gson = GsonBuilder()
+        private val gson: Gson = GsonBuilder()
             .disableHtmlEscaping()
             .registerTypeAdapter(AmberEvent::class.java, EventSerializer())
             .registerTypeAdapter(AmberEvent::class.java, EventDeserializer())

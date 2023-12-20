@@ -209,10 +209,10 @@ fun MultiEventHomeScreen(
                                 { }
                             ) {
                                 intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
-                                intents.filter { it ->
-                                    intentData.type == it.type
-                                }.forEach { it ->
-                                    it.rememberMyChoice.value = intentData.rememberMyChoice.value
+                                intents.filter { item ->
+                                    intentData.type == item.type
+                                }.forEach { item ->
+                                    item.rememberMyChoice.value = intentData.rememberMyChoice.value
                                 }
                             }
                         }

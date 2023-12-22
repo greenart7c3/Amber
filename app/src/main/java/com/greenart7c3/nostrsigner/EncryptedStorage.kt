@@ -11,7 +11,7 @@ object EncryptedStorage {
     }
 
     fun preferences(npub: String? = null): EncryptedSharedPreferences {
-        val context = Nostrsigner.instance
+        val context = nostrsigner.instance
         val masterKey: MasterKey = MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
             .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)
             .build()

@@ -4,9 +4,6 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.crypto.Nip44Version
-import com.vitorpamplona.quartz.crypto.decodeNIP44
-import com.vitorpamplona.quartz.crypto.encodeNIP44
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -35,33 +32,18 @@ object AmberUtils {
                 )
             }
             SignerType.NIP44_ENCRYPT -> {
-                val sharedSecret = CryptoUtils.getSharedSecretNIP44(
+                CryptoUtils.encryptNIP44v2(
+                    data,
+                    account.keyPair.privKey!!,
+                    pubKey.hexToByteArray()
+                ).encodePayload()
+            }
+            else -> {
+                CryptoUtils.decryptNIP44(
+                    data,
                     account.keyPair.privKey!!,
                     pubKey.hexToByteArray()
                 )
-
-                encodeNIP44(
-                    CryptoUtils.encryptNIP44(
-                        data,
-                        sharedSecret
-                    )
-                )
-            }
-            else -> {
-                val toDecrypt = decodeNIP44(data) ?: return null
-                when (toDecrypt.v) {
-                    Nip44Version.NIP04.versionCode -> CryptoUtils.decryptNIP04(
-                        toDecrypt,
-                        account.keyPair.privKey!!,
-                        pubKey.hexToByteArray()
-                    )
-                    Nip44Version.NIP44.versionCode -> CryptoUtils.decryptNIP44(
-                        toDecrypt,
-                        account.keyPair.privKey!!,
-                        pubKey.hexToByteArray()
-                    )
-                    else -> null
-                }
             }
         }
     }

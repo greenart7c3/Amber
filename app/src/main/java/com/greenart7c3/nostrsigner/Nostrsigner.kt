@@ -1,4 +1,4 @@
-package com.greenart7c3.nostrsigner
+package com.greenart7c3.Nostrsigner
 
 import android.app.Application
 

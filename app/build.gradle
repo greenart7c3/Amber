@@ -12,8 +12,8 @@ android {
         applicationId "com.greenart7c3.nostrsigner"
         minSdk 26
         targetSdk 34
-        versionCode 38
-        versionName "0.7.0"
+        versionCode 39
+        versionName "0.7.1"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -69,7 +69,7 @@ android {
 }
 
 dependencies {
-    implementation('com.github.vitorpamplona.amethyst:quartz:v0.83.0') {
+    implementation('com.github.vitorpamplona.amethyst:quartz:main-SNAPSHOT') {
         exclude group: 'net.java.dev.jna'
     }
     implementation 'net.java.dev.jna:jna:5.14.0@aar'

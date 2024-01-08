@@ -20,7 +20,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
@@ -48,7 +47,6 @@ fun SettingsScreen(
     var backupDialogOpen by remember { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
-    val uriHandler = LocalUriHandler.current
     val context = LocalContext.current
 
     val sheetState = rememberModalBottomSheetState(

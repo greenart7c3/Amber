@@ -2,8 +2,11 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CurrencyBitcoin
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhoneAndroid
@@ -18,14 +21,20 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
+import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.launch
@@ -40,6 +49,8 @@ fun SettingsScreen(
     var backupDialogOpen by remember { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
+    val uriHandler = LocalUriHandler.current
+    val context = LocalContext.current
 
     val sheetState = rememberModalBottomSheetState(
         confirmValueChange = { it != SheetValue.PartiallyExpanded },
@@ -105,6 +116,21 @@ fun SettingsScreen(
                 }
             )
         }
+
+        Box(
+            Modifier
+                .padding(16.dp)
+        ) {
+            IconRow(
+                title = stringResource(R.string.support_development),
+                icon = Icons.Default.CurrencyBitcoin,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    uriHandler.openUri(context.getString(R.string.support_development_uri))
+                }
+            )
+        }
+
         Box(
             Modifier
                 .padding(16.dp)
@@ -116,6 +142,23 @@ fun SettingsScreen(
                 onClick = { }
             )
         }
+        Spacer(modifier = Modifier.weight(1f))
+
+        HyperlinkText(
+            Modifier
+                .fillMaxWidth()
+                .padding(vertical = 24.dp),
+            fullText = "Made possible by OpenSats \n\nSource code",
+            hyperLinks = mutableMapOf(
+                "OpenSats" to "https://opensats.org",
+                "Source code" to "https://github.com/greenart7c3/amber"
+            ),
+            textStyle = TextStyle(
+                textAlign = TextAlign.Center
+            ),
+            linkTextColor = MaterialTheme.colorScheme.primary,
+            fontSize = 18.sp
+        )
     }
 
     if (backupDialogOpen) {

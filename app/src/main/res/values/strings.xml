@@ -67,4 +67,6 @@
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
     <string name="select_deselect_all">Select/Deselect all</string>
     <string name="decrypt_content">Decrypt content</string>
+    <string name="support_development_uri">https://donate.greenart7c3.com/apps/gubjiRzruRLo6hMviH2hmSrvJjt/pos/static</string>
+    <string name="support_development">Support development</string>
 </resources>

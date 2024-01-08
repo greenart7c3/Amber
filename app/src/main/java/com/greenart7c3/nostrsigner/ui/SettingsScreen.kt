@@ -6,10 +6,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.CurrencyBitcoin
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.PhoneAndroid
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
@@ -26,6 +24,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
@@ -117,46 +116,23 @@ fun SettingsScreen(
             )
         }
 
-        Box(
-            Modifier
-                .padding(16.dp)
-        ) {
-            IconRow(
-                title = stringResource(R.string.support_development),
-                icon = Icons.Default.CurrencyBitcoin,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    uriHandler.openUri(context.getString(R.string.support_development_uri))
-                }
-            )
-        }
-
-        Box(
-            Modifier
-                .padding(16.dp)
-        ) {
-            IconRow(
-                title = "v" + BuildConfig.VERSION_NAME,
-                icon = Icons.Default.PhoneAndroid,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = { }
-            )
-        }
         Spacer(modifier = Modifier.weight(1f))
 
         HyperlinkText(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
-            fullText = "Made possible by OpenSats \n\nSource code",
+            fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(R.string.support_development)}\n\n${context.getString(R.string.source_code)}\n\n${context.getString(R.string.made_possible_by)} ${context.getString(R.string.opensats)}",
             hyperLinks = mutableMapOf(
-                "OpenSats" to "https://opensats.org",
-                "Source code" to "https://github.com/greenart7c3/amber"
+                stringResource(R.string.opensats) to stringResource(R.string.opensats_uri),
+                stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
+                stringResource(R.string.support_development) to stringResource(R.string.support_development_uri)
             ),
             textStyle = TextStyle(
                 textAlign = TextAlign.Center
             ),
             linkTextColor = MaterialTheme.colorScheme.primary,
+            linkTextDecoration = TextDecoration.Underline,
             fontSize = 18.sp
         )
     }

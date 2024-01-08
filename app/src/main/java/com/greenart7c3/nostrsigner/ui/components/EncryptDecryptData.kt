@@ -104,7 +104,9 @@ fun EncryptDecryptData(
             RawJson(
                 content,
                 Modifier.weight(1f),
-                stringResource(R.string.encrypted_decrypted_data)
+                stringResource(R.string.encrypted_decrypted_data),
+                type,
+                onCopy
             ) {
                 clipboardManager.setText(AnnotatedString(onCopy()))
 

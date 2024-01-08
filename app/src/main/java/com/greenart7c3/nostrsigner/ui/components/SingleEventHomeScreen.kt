@@ -197,6 +197,7 @@ fun SingleEventHomeScreen(
                 applicationName,
                 event,
                 intentData.data,
+                intentData.type,
                 {
                     if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
                         coroutineScope.launch {

@@ -66,4 +66,5 @@
     <string name="go_to_top">go to top</string>
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
     <string name="select_deselect_all">Select/Deselect all</string>
+    <string name="decrypt_content">Decrypt content</string>
 </resources>

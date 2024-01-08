@@ -23,6 +23,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.events.Event
 
@@ -35,6 +36,7 @@ fun EventData(
     applicationName: String?,
     event: Event,
     rawJson: String,
+    type: SignerType,
     onAccept: () -> Unit,
     onReject: () -> Unit
 ) {
@@ -85,7 +87,7 @@ fun EventData(
             if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details)
         )
         if (showMore) {
-            RawJson(rawJson, Modifier.weight(1f))
+            RawJson(rawJson, Modifier.weight(1f), type = type)
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }

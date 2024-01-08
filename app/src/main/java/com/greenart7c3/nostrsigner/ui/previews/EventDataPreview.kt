@@ -9,6 +9,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.ui.components.EventData
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
@@ -35,6 +36,7 @@ fun EventDataPreview() {
                     null,
                     event,
                     data,
+                    SignerType.SIGN_EVENT,
                     { },
                     { }
                 )

@@ -111,7 +111,7 @@ fun LoginWithPubKey(
                             .padding(horizontal = 8.dp)
                             .clickable {
                                 selectAll = !selectAll
-                                dialogPermissions = dialogPermissions.mapIndexed { j, item ->
+                                dialogPermissions = dialogPermissions.map { item ->
                                     item.copy(checked = selectAll)
                                 }
                             }
@@ -124,7 +124,7 @@ fun LoginWithPubKey(
                             checked = selectAll,
                             onCheckedChange = {
                                 selectAll = !selectAll
-                                dialogPermissions = dialogPermissions.mapIndexed { j, item ->
+                                dialogPermissions = dialogPermissions.map { item ->
                                     item.copy(checked = selectAll)
                                 }
                             }

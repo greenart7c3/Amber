@@ -65,6 +65,9 @@ fun LoginWithPubKey(
         var dialogPermissions by remember {
             mutableStateOf(localPermissions?.map { it.copy() } ?: listOf())
         }
+        var selectAll by remember {
+            mutableStateOf(true)
+        }
         Dialog(
             onDismissRequest = {
                 showAdjustDialog = false
@@ -101,12 +104,38 @@ fun LoginWithPubKey(
                         )
                     }
 
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(horizontal = 8.dp)
+                            .clickable {
+                                selectAll = !selectAll
+                                dialogPermissions = dialogPermissions.mapIndexed { j, item ->
+                                    item.copy(checked = selectAll)
+                                }
+                            }
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = stringResource(R.string.select_deselect_all)
+                        )
+                        Switch(
+                            checked = selectAll,
+                            onCheckedChange = {
+                                selectAll = !selectAll
+                                dialogPermissions = dialogPermissions.mapIndexed { j, item ->
+                                    item.copy(checked = selectAll)
+                                }
+                            }
+                        )
+                    }
+
                     LazyColumn(
                         Modifier.padding(16.dp)
                     ) {
                         items(dialogPermissions.size) {
                             val permission = dialogPermissions[it]
-
                             Row(
                                 horizontalArrangement = Arrangement.SpaceBetween,
                                 verticalAlignment = Alignment.CenterVertically,

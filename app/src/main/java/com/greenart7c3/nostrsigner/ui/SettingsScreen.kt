@@ -127,7 +127,8 @@ fun SettingsScreen(
                 stringResource(R.string.support_development) to stringResource(R.string.support_development_uri)
             ),
             textStyle = TextStyle(
-                textAlign = TextAlign.Center
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.inverseSurface
             ),
             linkTextColor = MaterialTheme.colorScheme.primary,
             linkTextDecoration = TextDecoration.Underline,

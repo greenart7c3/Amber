@@ -252,6 +252,8 @@ For the SIGN_EVENT type amber returns two columns "signature" and "event". The c
 
 For the other types amber returns the column "signature"
 
+If the user chose to always reject the event Amber will return the column "rejected" and you should not open Amber
+
 ### Methods
 
 - **get_public_key**
@@ -261,7 +263,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.GET_PUBLIC_KEY"),
         listOf("login"),
-        null,
+        "1",
         null,
         null
     )
@@ -286,7 +288,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.SIGN_EVENT"),
         listOf("$eventJson", "", "${logged_in_user_npub}"),
-        null,
+        "1",
         null,
         null
     )
@@ -312,7 +314,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.NIP04_ENCRYPT"),
         listOf("$plainText", "${hex_pub_key}", "${logged_in_user_npub}"),
-        null,
+        "1",
         null,
         null
     )
@@ -336,7 +338,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.NIP44_ENCRYPT"),
         listOf("$plainText", "${hex_pub_key}", "${logged_in_user_npub}"),
-        null,
+        "1",
         null,
         null
     )
@@ -360,7 +362,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.NIP04_DECRYPT"),
         listOf("$encryptedText", "${hex_pub_key}", "${logged_in_user_npub}"),
-        null,
+        "1",
         null,
         null
     )
@@ -384,7 +386,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.NIP44_DECRYPT"),
         listOf("$encryptedText", "${hex_pub_key}", "${logged_in_user_npub}"),
-        null,
+        "1",
         null,
         null
     )
@@ -408,7 +410,7 @@ For the other types amber returns the column "signature"
     val result = context.contentResolver.query(
         Uri.parse("content://com.greenart7c3.nostrsigner.DECRYPT_ZAP_EVENT"),
         listOf("$eventJson", "", "${logged_in_user_npub}"),
-        null,
+        "1",
         null,
         null
     )

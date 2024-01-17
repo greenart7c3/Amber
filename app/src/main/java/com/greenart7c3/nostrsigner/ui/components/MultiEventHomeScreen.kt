@@ -259,8 +259,7 @@ fun MultiEventHomeScreen(
                                         }
                                         val key = "$packageName-${intentData.type}-${localEvent.kind}"
                                         if (intentData.rememberMyChoice.value) {
-                                            localAccount.savedApps[key] =
-                                                intentData.rememberMyChoice.value
+                                            localAccount.savedApps[key] = intentData.rememberMyChoice.value
                                             LocalPreferences.saveToEncryptedStorage(
                                                 localAccount
                                             )
@@ -281,11 +280,12 @@ fun MultiEventHomeScreen(
                                         }
                                     } else {
                                         val key = "$packageName-${intentData.type}"
-                                        localAccount.savedApps[key] =
-                                            intentData.rememberMyChoice.value
-                                        LocalPreferences.saveToEncryptedStorage(
-                                            localAccount
-                                        )
+                                        if (intentData.rememberMyChoice.value) {
+                                            localAccount.savedApps[key] = intentData.rememberMyChoice.value
+                                            LocalPreferences.saveToEncryptedStorage(
+                                                localAccount
+                                            )
+                                        }
                                         val signature = AmberUtils.encryptOrDecryptData(
                                             intentData.data,
                                             intentData.type,

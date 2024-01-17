@@ -7,6 +7,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -38,7 +39,7 @@ fun SingleEventHomeScreen(
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> {
             val remember = remember {
-                mutableStateOf(account.savedApps[key] ?: false)
+                mutableStateOf(account.savedApps[key] != null)
             }
             LoginWithPubKey(
                 appName,
@@ -63,6 +64,11 @@ fun SingleEventHomeScreen(
                     return@LoginWithPubKey
                 },
                 {
+                    if (remember.value) {
+                        account.savedApps[key] = false
+                    }
+
+                    LocalPreferences.saveToEncryptedStorage(account)
                     context.getAppCompatActivity()?.finish()
                 }
             )
@@ -70,7 +76,7 @@ fun SingleEventHomeScreen(
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
             val remember = remember {
-                mutableStateOf(account.savedApps[key] ?: false)
+                mutableStateOf(account.savedApps[key] != null)
             }
             val shouldRunOnAccept = account.savedApps[key] ?: false
             EncryptDecryptData(
@@ -164,6 +170,11 @@ fun SingleEventHomeScreen(
                     }
                 },
                 {
+                    if (remember.value) {
+                        account.savedApps[key] = false
+                    }
+
+                    LocalPreferences.saveToEncryptedStorage(account)
                     context.getAppCompatActivity()?.finish()
                 },
                 {
@@ -186,7 +197,7 @@ fun SingleEventHomeScreen(
             val event = IntentUtils.getIntent(intentData.data, account.keyPair)
             key = "$packageName-${intentData.type}-${event.kind}"
             val remember = remember {
-                mutableStateOf(account.savedApps[key] ?: false)
+                mutableStateOf(account.savedApps[key] != null)
             }
             val shouldRunOnAccept = account.savedApps[key] ?: false
             EventData(
@@ -238,6 +249,11 @@ fun SingleEventHomeScreen(
                     }
                 },
                 {
+                    if (remember.value) {
+                        account.savedApps[key] = false
+                    }
+
+                    LocalPreferences.saveToEncryptedStorage(account)
                     context.getAppCompatActivity()?.finish()
                 }
             )

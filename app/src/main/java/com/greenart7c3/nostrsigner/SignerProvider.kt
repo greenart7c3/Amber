@@ -45,8 +45,19 @@ class SignerProvider : ContentProvider() {
                     LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val event = Event.fromJson(json)
                 val key = "$packageName-SIGN_EVENT-${event.kind}"
-                val isRemembered = account.savedApps[key] ?: false
-                if (!isRemembered) return null
+                val currentSelection = selection ?: "0"
+                if (currentSelection == "1") {
+                    val isRemembered = account.savedApps[key] ?: return null
+                    if (!isRemembered) {
+                        val cursor = MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
+                        return cursor
+                    }
+                } else {
+                    val isRemembered = account.savedApps[key] ?: false
+                    if (!isRemembered) return null
+                }
 
                 var cursor: MatrixCursor? = null
 
@@ -76,8 +87,19 @@ class SignerProvider : ContentProvider() {
                 val key = "$packageName-${uri.toString().replace("content://$appId.", "")}"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
-                val isRemembered = account.savedApps[key] ?: false
-                if (!isRemembered) return null
+                val currentSelection = selection ?: "0"
+                if (currentSelection == "1") {
+                    val isRemembered = account.savedApps[key] ?: return null
+                    if (!isRemembered) {
+                        val cursor = MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
+                        return cursor
+                    }
+                } else {
+                    val isRemembered = account.savedApps[key] ?: false
+                    if (!isRemembered) return null
+                }
 
                 val type = when (stringType) {
                     "NIP04_DECRYPT" -> SignerType.NIP04_DECRYPT
@@ -114,8 +136,19 @@ class SignerProvider : ContentProvider() {
                 val packageName = callingPackage ?: return null
                 val key = "$packageName-GET_PUBLIC_KEY"
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
-                val isRemembered = account.savedApps[key] ?: false
-                if (!isRemembered) return null
+                val currentSelection = selection ?: "0"
+                if (currentSelection == "1") {
+                    val isRemembered = account.savedApps[key] ?: return null
+                    if (!isRemembered) {
+                        val cursor = MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
+                        return cursor
+                    }
+                } else {
+                    val isRemembered = account.savedApps[key] ?: false
+                    if (!isRemembered) return null
+                }
 
                 LocalPreferences.saveToEncryptedStorage(account)
 

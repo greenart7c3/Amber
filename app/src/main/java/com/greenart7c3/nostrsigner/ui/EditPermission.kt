@@ -10,16 +10,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -45,13 +45,17 @@ fun EditPermission(
     navController: NavController
 ) {
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
-    var permissions by remember {
-        mutableStateOf(
-            localAccount.savedApps.keys.filter { item -> item.startsWith(selectedPackage) }.map { item ->
-                item.replace("$selectedPackage-", "")
-            }.sorted()
+    val permissions = remember {
+        val pairsList = buildList {
+            for (key in localAccount.savedApps.keys.toList().sorted()) {
+                add(Pair(key, localAccount.savedApps[key]))
+            }
+        }
+        mutableStateMapOf(
+            *pairsList.toTypedArray()
         )
     }
+
     val scope = rememberCoroutineScope()
 
     Column(
@@ -69,8 +73,8 @@ fun EditPermission(
         LazyColumn(
             Modifier.weight(1f)
         ) {
-            itemsIndexed(permissions, { index, _ -> index }) { index, permission ->
-                val message = when (permission) {
+            itemsIndexed(permissions.keys.toList().sorted(), { index, _ -> index }) { _, permission ->
+                val message = when (permission.replace("$selectedPackage-", "")) {
                     "NIP04_DECRYPT" -> stringResource(R.string.decrypt_nip_04_data)
                     "NIP44_DECRYPT" -> stringResource(R.string.decrypt_nip_44_data)
                     "NIP44_ENCRYPT" -> stringResource(R.string.encrypt_nip_44_data)
@@ -84,6 +88,18 @@ fun EditPermission(
                         .padding(vertical = 15.dp, horizontal = 25.dp)
                         .fillMaxWidth()
                 ) {
+                    val localPermission = permissions[permission]!!
+                    Icon(
+                        if (localPermission) Icons.Default.Check else Icons.Default.Close,
+                        null,
+                        modifier = Modifier
+                            .size(22.dp)
+                            .padding(end = 4.dp)
+                            .clickable {
+                                permissions[permission] = !permissions[permission]!!
+                            },
+                        tint = if (localPermission) Color.Green else Color.Red
+                    )
                     Row(
                         modifier = Modifier
                             .weight(1f),
@@ -100,8 +116,7 @@ fun EditPermission(
                         modifier = Modifier
                             .size(22.dp)
                             .clickable {
-                                permissions =
-                                    permissions.filterIndexed { i, _ -> i != index }
+                                permissions.remove(permission)
                             },
                         tint = Color.Red
                     )
@@ -126,7 +141,7 @@ fun EditPermission(
                     scope.launch {
                         val localSaved = localAccount.savedApps.filter { !it.key.contains(selectedPackage) }.toMutableMap()
                         permissions.forEach {
-                            localSaved["$selectedPackage-$it"] = true
+                            localSaved[it.key] = it.value!!
                         }
                         localAccount.savedApps = localSaved
                         LocalPreferences.saveToEncryptedStorage(localAccount)

@@ -16,12 +16,30 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 
 Amber uses Intents and Content Resolvers to communicate between applications.
 
-To be able to use Amber in your application you should add the following package visibility needs:
+To be able to use Amber in your application you should add the following in your AndroidManifest.xml:
 
 ```xml
 <queries>
-    <package android:name="com.greenart7c3.nostrsigner"/>
+  <intent>
+    <action android:name="android.intent.action.VIEW" />
+    <category android:name="android.intent.category.BROWSABLE" />
+    <data android:scheme="nostrsigner" />
+  </intent>
 </queries>
+```
+
+Then you can use this function to check if there's an external signer installed:
+
+```kotlin
+fun isExternalSignerInstalled(context: Context): Boolean {
+  val intent =
+    Intent().apply {
+      action = Intent.ACTION_VIEW
+      data = Uri.parse("nostrsigner:")
+    }
+  val infos = context.packageManager.queryIntentActivities(intent, 0)
+  return infos.size > 0
+}
 ```
 
 ## Using Intents

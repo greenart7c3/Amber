@@ -48,6 +48,7 @@ fun EditPermission(
     val permissions = remember {
         val pairsList = buildList {
             for (key in localAccount.savedApps.keys.toList().sorted()) {
+                if (!key.contains("$selectedPackage-")) continue
                 add(Pair(key, localAccount.savedApps[key]))
             }
         }

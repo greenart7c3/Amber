@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.ViewList
@@ -24,8 +26,8 @@ sealed class Route(
 
     data object Permissions : Route(
         route = "Permissions",
-        icon = Icons.Outlined.ViewList,
-        selectedIcon = Icons.Default.ViewList
+        icon = Icons.AutoMirrored.Outlined.ViewList,
+        selectedIcon = Icons.AutoMirrored.Default.ViewList
     )
 
     data object Settings : Route(
@@ -36,7 +38,7 @@ sealed class Route(
 
     data object Permission : Route(
         route = "Permission/{packageName}",
-        icon = Icons.Outlined.ViewList,
-        selectedIcon = Icons.Default.ViewList
+        icon = Icons.AutoMirrored.Outlined.ViewList,
+        selectedIcon = Icons.AutoMirrored.Default.ViewList
     )
 }

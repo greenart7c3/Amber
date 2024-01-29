@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ArrowForward
 import androidx.compose.material.icons.filled.ClearAll
 import androidx.compose.material3.AlertDialog
@@ -133,7 +134,7 @@ fun PermissionsScreen(
                     ) {
                         IconRow(
                             title = applications.elementAt(it),
-                            icon = Icons.Default.ArrowForward,
+                            icon = Icons.AutoMirrored.Default.ArrowForward,
                             tint = MaterialTheme.colorScheme.onBackground,
                             onClick = {
                                 navController.navigate("Permission/${applications.elementAt(it)}")

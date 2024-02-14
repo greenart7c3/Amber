@@ -81,4 +81,9 @@ class MainActivity : AppCompatActivity() {
             it
         }?.toMutableList()
     }
+
+    override fun onDestroy() {
+        mainViewModel.intents.value?.clear()
+        super.onDestroy()
+    }
 }

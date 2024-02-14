@@ -88,18 +88,18 @@ dependencies {
     // Observe Live data as State
     implementation "androidx.compose.runtime:runtime-livedata:$compose_ui_version"
 
-    implementation "androidx.compose.material3:material3:1.1.2"
+    implementation "androidx.compose.material3:material3:1.2.0"
     implementation "androidx.compose.material:material-icons-extended:$compose_ui_version"
 
     implementation 'androidx.appcompat:appcompat:1.6.1'
 
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'io.mockk:mockk:1.13.9'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha02'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha03'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
     androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
     debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_test_version"
+    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
 
     implementation 'androidx.security:security-crypto-ktx:1.1.0-alpha06'
 
@@ -109,7 +109,7 @@ dependencies {
     implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
 
     // For QR generation
-    implementation 'com.google.zxing:core:3.5.2'
+    implementation 'com.google.zxing:core:3.5.3'
     implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
 
     // Json Serialization

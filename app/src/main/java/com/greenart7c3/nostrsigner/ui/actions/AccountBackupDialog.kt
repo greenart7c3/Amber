@@ -18,13 +18,18 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
@@ -38,8 +43,10 @@ import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics
+import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.halilibo.richtext.markdown.Markdown
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.Material3RichText
@@ -89,7 +96,104 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                     Spacer(modifier = Modifier.height(30.dp))
 
                     NSecCopyButton(account)
+                    NSecQrButton(account)
                     NPubCopyButton(account)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun NSecQrButton(
+    account: Account
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+
+    if (showDialog) {
+        QrCodeDialog(
+            content = account.keyPair.privKey!!.toNsec()
+        ) {
+            showDialog = false
+        }
+    }
+
+    val keyguardLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                showDialog = true
+            }
+        }
+
+    Button(
+        modifier = Modifier.padding(horizontal = 3.dp),
+        onClick = {
+            Biometrics.authenticate(
+                title = context.getString(R.string.show_qr_code),
+                context = context,
+                scope = scope,
+                keyguardLauncher = keyguardLauncher
+            ) {
+                showDialog = true
+            }
+        },
+        shape = ButtonBorder,
+        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp)
+    ) {
+        Icon(
+            tint = MaterialTheme.colorScheme.onPrimary,
+            imageVector = Icons.Default.QrCode,
+            contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
+            modifier = Modifier.padding(end = 5.dp)
+        )
+        Text(
+            stringResource(id = R.string.show_qr_code),
+            color = MaterialTheme.colorScheme.onPrimary
+        )
+    }
+}
+
+@Composable
+private fun QrCodeDialog(content: String, onClose: () -> Unit) {
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(modifier = Modifier.fillMaxSize()) {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize()
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CloseButton(onCancel = onClose)
+                }
+
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 30.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Size35dp)
+                    ) {
+                        QrCodeDrawer(content)
+                    }
                 }
             }
         }

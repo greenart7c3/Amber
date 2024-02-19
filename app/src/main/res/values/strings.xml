@@ -74,4 +74,6 @@
     <string name="opensats_uri">https://opensats.org</string>
     <string name="amber_github_uri">https://github.com/greenart7c3/amber</string>
     <string name="made_possible_by">Made possible by</string>
+    <string name="show_qr_code">Show QR Code</string>
+    <string name="shows_qr_code_with_you_private_key">Shows QR Code with you private key</string>
 </resources>

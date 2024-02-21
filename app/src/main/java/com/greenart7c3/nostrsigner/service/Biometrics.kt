@@ -5,23 +5,20 @@ import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
-import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
 import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
 import com.greenart7c3.nostrsigner.R
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.launch
 
 object Biometrics {
     fun authenticate(
         title: String,
         context: Context,
-        scope: CoroutineScope,
         keyguardLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
-        onApproved: () -> Unit
+        onApproved: () -> Unit,
+        onError: (String, String) -> Unit
     ) {
         val fragmentContext = context.getAppCompatActivity()!!
         val keyguardManager =
@@ -34,10 +31,11 @@ object Biometrics {
 
         @Suppress("DEPRECATION")
         fun keyguardPrompt() {
-            val intent = keyguardManager.createConfirmDeviceCredentialIntent(
-                context.getString(R.string.app_name),
-                title
-            )
+            val intent =
+                keyguardManager.createConfirmDeviceCredentialIntent(
+                    context.getString(R.string.app_name_release),
+                    title
+                )
 
             keyguardLauncher.launch(intent)
         }
@@ -50,49 +48,51 @@ object Biometrics {
         val biometricManager = BiometricManager.from(context)
         val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG or BiometricManager.Authenticators.DEVICE_CREDENTIAL
 
-        val promptInfo = BiometricPrompt.PromptInfo.Builder()
-            .setTitle(context.getString(R.string.app_name))
-            .setSubtitle(title)
-            .setAllowedAuthenticators(authenticators)
-            .build()
+        val promptInfo =
+            BiometricPrompt.PromptInfo.Builder()
+                .setTitle(context.getString(R.string.app_name_release))
+                .setSubtitle(title)
+                .setAllowedAuthenticators(authenticators)
+                .build()
 
-        val biometricPrompt = BiometricPrompt(
-            fragmentContext,
-            object : BiometricPrompt.AuthenticationCallback() {
-                override fun onAuthenticationError(errorCode: Int, errString: CharSequence) {
-                    super.onAuthenticationError(errorCode, errString)
+        val biometricPrompt =
+            BiometricPrompt(
+                fragmentContext,
+                object : BiometricPrompt.AuthenticationCallback() {
+                    override fun onAuthenticationError(
+                        errorCode: Int,
+                        errString: CharSequence
+                    ) {
+                        super.onAuthenticationError(errorCode, errString)
 
-                    when (errorCode) {
-                        BiometricPrompt.ERROR_NEGATIVE_BUTTON -> keyguardPrompt()
-                        BiometricPrompt.ERROR_LOCKOUT -> keyguardPrompt()
-                        else ->
-                            scope.launch {
-                                Toast.makeText(
-                                    context,
-                                    "${context.getString(R.string.biometric_error)}: $errString",
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
+                        when (errorCode) {
+                            BiometricPrompt.ERROR_NEGATIVE_BUTTON -> keyguardPrompt()
+                            BiometricPrompt.ERROR_LOCKOUT -> keyguardPrompt()
+                            else ->
+                                onError(
+                                    context.getString(R.string.biometric_authentication_failed),
+                                    context.getString(
+                                        R.string.biometric_authentication_failed_explainer_with_error,
+                                        errString
+                                    )
+                                )
+                        }
                     }
-                }
 
-                override fun onAuthenticationFailed() {
-                    super.onAuthenticationFailed()
-                    scope.launch {
-                        Toast.makeText(
-                            context,
+                    override fun onAuthenticationFailed() {
+                        super.onAuthenticationFailed()
+                        onError(
                             context.getString(R.string.biometric_authentication_failed),
-                            Toast.LENGTH_SHORT
-                        ).show()
+                            context.getString(R.string.biometric_authentication_failed_explainer)
+                        )
+                    }
+
+                    override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
+                        super.onAuthenticationSucceeded(result)
+                        onApproved()
                     }
                 }
-
-                override fun onAuthenticationSucceeded(result: BiometricPrompt.AuthenticationResult) {
-                    super.onAuthenticationSucceeded(result)
-                    onApproved()
-                }
-            }
-        )
+            )
 
         when (biometricManager.canAuthenticate(authenticators)) {
             BiometricManager.BIOMETRIC_SUCCESS -> biometricPrompt.authenticate(promptInfo)

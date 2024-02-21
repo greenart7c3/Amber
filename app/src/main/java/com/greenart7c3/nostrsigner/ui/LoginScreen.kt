@@ -28,6 +28,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -65,6 +66,13 @@ fun LoginPage(
         mutableStateOf(false)
     }
     val context = LocalContext.current
+    val password = remember { mutableStateOf(TextFieldValue("")) }
+    val needsPassword =
+        remember {
+            derivedStateOf {
+                key.value.text.startsWith("ncryptsec1")
+            }
+        }
 
     Column(
         modifier = Modifier
@@ -90,24 +98,35 @@ fun LoginPage(
                 mutableStateOf(false)
             }
 
-            val autofillNode = AutofillNode(
-                autofillTypes = listOf(AutofillType.Password),
-                onFill = { key.value = TextFieldValue(it) }
-            )
+            var showCharsPassword by remember { mutableStateOf(false) }
+
+            val autofillNodeKey =
+                AutofillNode(
+                    autofillTypes = listOf(AutofillType.Password),
+                    onFill = { key.value = TextFieldValue(it) }
+                )
+
+            val autofillNodePassword =
+                AutofillNode(
+                    autofillTypes = listOf(AutofillType.Password),
+                    onFill = { key.value = TextFieldValue(it) }
+                )
+
             val autofill = LocalAutofill.current
-            LocalAutofillTree.current += autofillNode
+            LocalAutofillTree.current += autofillNodeKey
+            LocalAutofillTree.current += autofillNodePassword
 
             OutlinedTextField(
                 modifier = Modifier
                     .onGloballyPositioned { coordinates ->
-                        autofillNode.boundingBox = coordinates.boundsInWindow()
+                        autofillNodeKey.boundingBox = coordinates.boundsInWindow()
                     }
                     .onFocusChanged { focusState ->
                         autofill?.run {
                             if (focusState.isFocused) {
-                                requestAutofillForNode(autofillNode)
+                                requestAutofillForNode(autofillNodeKey)
                             } else {
-                                cancelAutofillForNode(autofillNode)
+                                cancelAutofillForNode(autofillNodeKey)
                             }
                         }
                     },
@@ -158,10 +177,21 @@ fun LoginPage(
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                 keyboardActions = KeyboardActions(
                     onGo = {
-                        try {
-                            accountViewModel.startUI(key.value.text, null)
-                        } catch (e: Exception) {
-                            errorMessage = context.getString(R.string.invalid_key)
+                        if (key.value.text.isBlank()) {
+                            errorMessage = context.getString(R.string.key_is_required)
+                        }
+
+                        if (needsPassword.value && password.value.text.isBlank()) {
+                            errorMessage = context.getString(R.string.password_is_required)
+                        }
+
+                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                            try {
+                                accountViewModel.startUI(key.value.text, password.value.text, null)
+                            } catch (e: Exception) {
+                                Log.e("Login", "Could not sign in", e)
+                                errorMessage = context.getString(R.string.invalid_key)
+                            }
                         }
                     }
                 )
@@ -176,6 +206,86 @@ fun LoginPage(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            if (needsPassword.value) {
+                OutlinedTextField(
+                    modifier =
+                    Modifier
+                        .onGloballyPositioned { coordinates ->
+                            autofillNodePassword.boundingBox = coordinates.boundsInWindow()
+                        }
+                        .onFocusChanged { focusState ->
+                            autofill?.run {
+                                if (focusState.isFocused) {
+                                    requestAutofillForNode(autofillNodePassword)
+                                } else {
+                                    cancelAutofillForNode(autofillNodePassword)
+                                }
+                            }
+                        },
+                    value = password.value,
+                    onValueChange = {
+                        password.value = it
+                        if (errorMessage.isNotEmpty()) {
+                            errorMessage = ""
+                        }
+                    },
+                    keyboardOptions =
+                    KeyboardOptions(
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Go
+                    ),
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.ncryptsec_password)
+                        )
+                    },
+                    trailingIcon = {
+                        Row {
+                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                Icon(
+                                    imageVector =
+                                    if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    contentDescription =
+                                    if (showCharsPassword) {
+                                        stringResource(R.string.show_password)
+                                    } else {
+                                        stringResource(
+                                            R.string.hide_password
+                                        )
+                                    }
+                                )
+                            }
+                        }
+                    },
+                    visualTransformation =
+                    if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardActions =
+                    KeyboardActions(
+                        onGo = {
+                            if (key.value.text.isBlank()) {
+                                errorMessage = context.getString(R.string.key_is_required)
+                            }
+
+                            if (needsPassword.value && password.value.text.isBlank()) {
+                                errorMessage = context.getString(R.string.password_is_required)
+                            }
+
+                            if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                try {
+                                    accountViewModel.startUI(key.value.text, password.value.text, null)
+                                } catch (e: Exception) {
+                                    Log.e("Login", "Could not sign in", e)
+                                    errorMessage = context.getString(R.string.invalid_key)
+                                }
+                            }
+                        }
+                    )
+                )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Box(modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp)) {
                 Button(
                     onClick = {
@@ -183,9 +293,13 @@ fun LoginPage(
                             errorMessage = context.getString(R.string.key_is_required)
                         }
 
-                        if (key.value.text.isNotBlank()) {
+                        if (needsPassword.value && password.value.text.isBlank()) {
+                            errorMessage = context.getString(R.string.password_is_required)
+                        }
+
+                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
                             try {
-                                accountViewModel.startUI(key.value.text, null)
+                                accountViewModel.startUI(key.value.text, password.value.text, null)
                             } catch (e: Exception) {
                                 Log.e("Login", "Could not sign in", e)
                                 errorMessage = context.getString(R.string.invalid_key)
@@ -200,6 +314,8 @@ fun LoginPage(
                     Text(text = stringResource(R.string.login))
                 }
             }
+
+            Spacer(modifier = Modifier.height(10.dp))
 
             TextButton(
                 modifier = Modifier

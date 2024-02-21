@@ -76,4 +76,14 @@
     <string name="made_possible_by">Made possible by</string>
     <string name="show_qr_code">Show QR Code</string>
     <string name="shows_qr_code_with_you_private_key">Shows QR Code with you private key</string>
+    <string name="account_backup_tips3_md" tools:ignore="Typos">
+        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
+        \n\nIf you lose your password, you will not be able to recover your key.
+    </string>
+    <string name="ncryptsec_password">password to open the key</string>
+    <string name="password_is_required">Password is required</string>
+    <string name="failed_to_encrypt_key">Failed to encrypt your private key</string>
+    <string name="biometric_authentication_failed_explainer">Biometrics failed to authenticate the owner of this phone</string>
+    <string name="biometric_authentication_failed_explainer_with_error">Biometrics failed to authenticate the owner of this phone. Error: %1$s</string>
+    <string name="encrypt_and_copy_my_secret_key">Encrypt and copy my secret key</string>
 </resources>

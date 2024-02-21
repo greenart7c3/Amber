@@ -4,6 +4,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
+import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import fr.acinq.secp256k1.Hex
@@ -60,8 +61,12 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         tryLoginExistingAccount(route, npub)
     }
 
-    fun startUI(key: String, route: String?) {
-        val account = if (key.startsWith("nsec")) {
+    fun startUI(key: String, password: String, route: String?) {
+        val account = if (key.startsWith("ncryptsec")) {
+            val newKey = CryptoUtils.decryptNIP49(key, password)
+                ?: throw Exception("Could not decrypt key with provided password")
+            Account(KeyPair(Hex.decode(newKey)), name = "", savedApps = mutableMapOf())
+        } else if (key.startsWith("nsec")) {
             Account(KeyPair(privKey = key.bechToBytes()), name = "", savedApps = mutableMapOf())
         } else {
             Account(KeyPair(Hex.decode(key)), name = "", savedApps = mutableMapOf())

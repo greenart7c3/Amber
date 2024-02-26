@@ -69,10 +69,7 @@ android {
 }
 
 dependencies {
-    implementation('com.github.vitorpamplona.amethyst:quartz:v0.84.3') {
-        exclude group: 'net.java.dev.jna'
-    }
-    implementation 'net.java.dev.jna:jna:5.14.0@aar'
+    implementation('com.github.vitorpamplona.amethyst:quartz:v0.84.3')
     implementation "androidx.core:core-splashscreen:1.0.1"
 
     implementation "androidx.core:core-ktx:$core_ktx_version"

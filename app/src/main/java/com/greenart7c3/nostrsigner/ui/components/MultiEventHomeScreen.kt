@@ -310,6 +310,7 @@ fun MultiEventHomeScreen(
                                 intent.putExtra("results", json)
                                 activity?.setResult(Activity.RESULT_OK, intent)
                             }
+                            activity?.intent = null
                             activity?.finish()
                         } finally {
                             onLoading(false)

@@ -166,6 +166,7 @@ fun sendResult(
             ).show()
         }
     }
+    activity?.intent = null
     activity?.finish()
 }
 

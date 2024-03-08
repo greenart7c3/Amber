@@ -69,6 +69,7 @@ fun SingleEventHomeScreen(
                     }
 
                     LocalPreferences.saveToEncryptedStorage(account)
+                    context.getAppCompatActivity()?.intent = null
                     context.getAppCompatActivity()?.finish()
                 }
             )
@@ -175,6 +176,7 @@ fun SingleEventHomeScreen(
                     }
 
                     LocalPreferences.saveToEncryptedStorage(account)
+                    context.getAppCompatActivity()?.intent = null
                     context.getAppCompatActivity()?.finish()
                 },
                 {
@@ -254,6 +256,7 @@ fun SingleEventHomeScreen(
                     }
 
                     LocalPreferences.saveToEncryptedStorage(account)
+                    context.getAppCompatActivity()?.intent = null
                     context.getAppCompatActivity()?.finish()
                 }
             )

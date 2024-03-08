@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
 import androidx.compose.runtime.MutableState
+import com.greenart7c3.nostrsigner.service.BunkerRequest
 import com.vitorpamplona.quartz.encoders.HexKey
 
 data class Permission(
@@ -132,10 +133,12 @@ class IntentData(
     val permissions: List<Permission>?,
     val currentAccount: String,
     val checked: MutableState<Boolean>,
-    val rememberMyChoice: MutableState<Boolean>
+    val rememberMyChoice: MutableState<Boolean>,
+    val bunkerRequest: BunkerRequest?
 )
 
 enum class SignerType {
+    CONNECT,
     SIGN_EVENT,
     NIP04_ENCRYPT,
     NIP04_DECRYPT,

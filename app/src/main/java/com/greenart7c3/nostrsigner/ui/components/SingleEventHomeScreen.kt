@@ -30,14 +30,18 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account
 ) {
-    var key = "$packageName-${intentData.type}"
+    var key = if (intentData.bunkerRequest != null) {
+        "${intentData.bunkerRequest.localKey}-${intentData.type}"
+    } else {
+        "$packageName-${intentData.type}"
+    }
     val appName = packageName ?: intentData.name
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
     when (intentData.type) {
-        SignerType.GET_PUBLIC_KEY -> {
+        SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
             val remember = remember {
                 mutableStateOf(account.savedApps[key] != null)
             }
@@ -46,7 +50,11 @@ fun SingleEventHomeScreen(
                 applicationName,
                 intentData.permissions,
                 { permissions ->
-                    val sig = account.keyPair.pubKey.toNpub()
+                    val sig = if (intentData.type == SignerType.CONNECT) {
+                        "ack"
+                    } else {
+                        account.keyPair.pubKey.toNpub()
+                    }
                     coroutineScope.launch {
                         sendResult(
                             context,
@@ -80,11 +88,16 @@ fun SingleEventHomeScreen(
                 mutableStateOf(account.savedApps[key] != null)
             }
             val shouldRunOnAccept = account.savedApps[key] ?: false
+            val localPackageName = if (intentData.bunkerRequest != null) {
+                intentData.bunkerRequest.localKey
+            } else {
+                packageName
+            }
             EncryptDecryptData(
                 intentData.data,
                 shouldRunOnAccept,
                 remember,
-                packageName,
+                localPackageName,
                 applicationName,
                 appName,
                 intentData.type,
@@ -197,15 +210,20 @@ fun SingleEventHomeScreen(
 
         else -> {
             val event = IntentUtils.getIntent(intentData.data, account.keyPair)
-            key = "$packageName-${intentData.type}-${event.kind}"
+            key = "$key-${event.kind}"
             val remember = remember {
                 mutableStateOf(account.savedApps[key] != null)
             }
             val shouldRunOnAccept = account.savedApps[key] ?: false
+            val localPackageName = if (intentData.bunkerRequest != null) {
+                intentData.bunkerRequest.localKey
+            } else {
+                packageName
+            }
             EventData(
                 shouldRunOnAccept,
                 remember,
-                packageName,
+                localPackageName,
                 appName,
                 applicationName,
                 event,

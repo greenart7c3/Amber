@@ -15,10 +15,9 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -41,6 +40,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
@@ -52,6 +52,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -61,12 +62,16 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.events.Event
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -74,6 +79,12 @@ import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
+
+data class BunkerResponse(
+    val id: String,
+    val result: String,
+    val error: String?
+)
 
 @OptIn(DelicateCoroutinesApi::class)
 fun sendResult(
@@ -89,7 +100,45 @@ fun sendResult(
     permissions: List<Permission>? = null
 ) {
     val activity = context.getAppCompatActivity()
-    if (packageName != null) {
+    if (intentData.bunkerRequest != null) {
+        if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+            val keysToClear = account.savedApps.filter {
+                it.key.startsWith(intentData.bunkerRequest.localKey)
+            }.map {
+                it.key
+            }
+            keysToClear.forEach {
+                account.savedApps.remove(it)
+            }
+        }
+        permissions?.filter { it.checked }?.forEach {
+            val type = it.type.toUpperCase(Locale.current)
+            val permissionKey = if (it.type == "sign_event") "${intentData.bunkerRequest.localKey}-$type-${it.kind}" else "${intentData.bunkerRequest.localKey}-$type"
+            account.savedApps[permissionKey] = true
+        }
+        if (rememberChoice) {
+            account.savedApps[key] = true
+        }
+
+        account.signer.nip04Encrypt(
+            ObjectMapper().writeValueAsString(BunkerResponse(intentData.bunkerRequest.id, event, null)),
+            intentData.bunkerRequest.localKey
+        ) { encryptedContent ->
+            account.signer.sign<Event>(
+                TimeUtils.now(),
+                24133,
+                arrayOf(arrayOf("p", intentData.bunkerRequest.localKey)),
+                encryptedContent
+            ) {
+                LocalPreferences.saveToEncryptedStorage(account)
+                GlobalScope.launch(Dispatchers.IO) {
+                    Client.send(it, relay = "wss://relay.nsec.app", onDone = {
+                        activity?.finish()
+                    })
+                }
+            }
+        }
+    } else if (packageName != null) {
         if (intentData.type == SignerType.GET_PUBLIC_KEY) {
             val keysToClear = account.savedApps.filter {
                 it.key.startsWith(packageName)
@@ -119,6 +168,7 @@ fun sendResult(
             intent.putExtra("package", BuildConfig.APPLICATION_ID)
         }
         activity?.setResult(RESULT_OK, intent)
+        activity?.finish()
     } else if (intentData.callBackUrl != null) {
         if (intentData.returnType == ReturnType.SIGNATURE) {
             val intent = Intent(Intent.ACTION_VIEW)
@@ -144,6 +194,7 @@ fun sendResult(
                 context.startActivity(intent)
             }
         }
+        activity?.finish()
     } else {
         val result = if (intentData.returnType == ReturnType.SIGNATURE) {
             value
@@ -165,6 +216,7 @@ fun sendResult(
                 Toast.LENGTH_SHORT
             ).show()
         }
+        activity?.finish()
     }
     activity?.intent = null
     activity?.finish()
@@ -177,8 +229,8 @@ fun GoToTop(goToTop: () -> Unit) {
         shape = CircleShape
     ) {
         Icon(
-            Icons.Default.ArrowUpward,
-            contentDescription = stringResource(R.string.go_to_top)
+            Icons.Default.Add,
+            contentDescription = stringResource(R.string.connect_app)
         )
     }
 }
@@ -203,16 +255,15 @@ fun MainScreen(
         skipPartiallyExpanded = true
     )
     val scope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
     val interactionSource = remember { MutableInteractionSource() }
+    val clipboardManager = LocalClipboardManager.current
 
     Scaffold(
         floatingActionButton = {
-            if (navBackStackEntry?.destination?.route?.contains("History") == true) {
+            if (navBackStackEntry?.destination?.route?.contains("Permission") == true) {
                 GoToTop {
-                    scope.launch {
-                        listState.scrollToItem(0)
-                    }
+                    val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
+                    clipboardManager.setText(AnnotatedString(bunkerUrl))
                 }
             }
         },

@@ -63,7 +63,7 @@
     <string name="encrypted_decrypted_data">Encrypted/Decrypted data</string>
     <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
     <string name="message_already_encrypted">Message already encrypted</string>
-    <string name="go_to_top">go to top</string>
+    <string name="connect_app">Connect app</string>
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
     <string name="select_deselect_all">Select/Deselect all</string>
     <string name="decrypt_content">Decrypt content</string>
@@ -73,7 +73,6 @@
     <string name="source_code">Source code</string>
     <string name="opensats_uri">https://opensats.org</string>
     <string name="amber_github_uri">https://github.com/greenart7c3/amber</string>
-    <string name="made_possible_by">Made possible by</string>
     <string name="show_qr_code">Show QR Code</string>
     <string name="shows_qr_code_with_you_private_key">Shows QR Code with you private key</string>
     <string name="account_backup_tips3_md" tools:ignore="Typos">

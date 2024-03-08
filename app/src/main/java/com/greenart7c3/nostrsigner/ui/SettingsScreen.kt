@@ -120,9 +120,8 @@ fun SettingsScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
-            fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(R.string.support_development)}\n\n${context.getString(R.string.source_code)}\n\n${context.getString(R.string.made_possible_by)} ${context.getString(R.string.opensats)}",
+            fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(R.string.support_development)}\n\n${context.getString(R.string.source_code)}",
             hyperLinks = mutableMapOf(
-                stringResource(R.string.opensats) to stringResource(R.string.opensats_uri),
                 stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
                 stringResource(R.string.support_development) to stringResource(R.string.support_development_uri)
             ),

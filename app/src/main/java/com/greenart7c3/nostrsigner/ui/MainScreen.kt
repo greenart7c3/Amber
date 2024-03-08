@@ -133,6 +133,7 @@ fun sendResult(
                 LocalPreferences.saveToEncryptedStorage(account)
                 GlobalScope.launch(Dispatchers.IO) {
                     Client.send(it, relay = "wss://relay.nsec.app", onDone = {
+                        activity?.intent = null
                         activity?.finish()
                     })
                 }
@@ -168,6 +169,7 @@ fun sendResult(
             intent.putExtra("package", BuildConfig.APPLICATION_ID)
         }
         activity?.setResult(RESULT_OK, intent)
+        activity?.intent = null
         activity?.finish()
     } else if (intentData.callBackUrl != null) {
         if (intentData.returnType == ReturnType.SIGNATURE) {
@@ -194,6 +196,7 @@ fun sendResult(
                 context.startActivity(intent)
             }
         }
+        activity?.intent = null
         activity?.finish()
     } else {
         val result = if (intentData.returnType == ReturnType.SIGNATURE) {
@@ -216,10 +219,9 @@ fun sendResult(
                 Toast.LENGTH_SHORT
             ).show()
         }
+        activity?.intent = null
         activity?.finish()
     }
-    activity?.intent = null
-    activity?.finish()
 }
 
 @Composable

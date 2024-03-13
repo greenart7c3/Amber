@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
@@ -25,6 +26,8 @@ class MainViewModel : ViewModel() {
 
 class IntentLiveData : MutableLiveData<MutableList<IntentData>>(mutableListOf())
 
+fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
+
 class MainActivity : AppCompatActivity() {
     private val mainViewModel = MainViewModel()
 
@@ -32,6 +35,11 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         installSplashScreen()
+
+        if (intent.isLaunchFromHistory()) {
+            Log.d("isLaunchFromHistory", "Cleared intent history")
+            intent = Intent()
+        }
 
         setContent {
             val packageName = callingPackage

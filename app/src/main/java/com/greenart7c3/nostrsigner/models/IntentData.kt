@@ -105,6 +105,7 @@ data class Permission(
                     30315 -> "User statuses"
                     30402 -> "Classified listing"
                     30403 -> "Draft classified listing"
+                    31234 -> "Generic draft event"
                     31922 -> "Date-Based calendar event"
                     31923 -> "Time-Based calendar event"
                     31924 -> "Calendar"
@@ -121,7 +122,7 @@ data class Permission(
     }
 }
 
-class IntentData(
+data class IntentData(
     val data: String,
     val name: String,
     val type: SignerType,

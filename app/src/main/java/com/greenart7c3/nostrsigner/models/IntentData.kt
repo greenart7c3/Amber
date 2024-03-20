@@ -120,7 +120,7 @@ data class Permission(
     }
 }
 
-class IntentData(
+data class IntentData(
     val data: String,
     val name: String,
     val type: SignerType,

@@ -11,25 +11,18 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
-
-class MainViewModel : ViewModel() {
-    var intents = IntentLiveData()
-}
-
-class IntentLiveData : MutableLiveData<MutableList<IntentData>>(mutableListOf())
+import kotlinx.coroutines.flow.MutableStateFlow
 
 fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
 class MainActivity : AppCompatActivity() {
-    private val mainViewModel = MainViewModel()
+    private val intents = MutableStateFlow<List<IntentData>>(listOf())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -58,7 +51,7 @@ class MainActivity : AppCompatActivity() {
                     val accountStateViewModel: AccountStateViewModel = viewModel {
                         AccountStateViewModel(intent.getStringExtra("current_user"))
                     }
-                    AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel)
+                    AccountScreen(accountStateViewModel, intent, packageName, appName, intents)
                 }
             }
         }
@@ -69,29 +62,18 @@ class MainActivity : AppCompatActivity() {
         if (intent == null) return
 
         val intentData = IntentUtils.getIntentData(intent, callingPackage) ?: return
-        val list = mutableListOf(intentData)
-        if (mainViewModel.intents.value == null) {
-            mainViewModel.intents.value = mutableListOf()
-        }
-        mainViewModel.intents.value?.forEach {
-            if (list.none { item -> item.id == it.id }) {
-                list.add(it)
-            }
-        }
 
-        list.forEach {
-            val list2 = mainViewModel.intents.value!!
-            if (list2.none { item -> item.id == it.id }) {
-                list2.add(it)
-            }
+        if (intents.value.none { item -> item.id == intentData.id }) {
+            intents.value += listOf(intentData)
         }
-        mainViewModel.intents.value = mainViewModel.intents.value?.map {
-            it
-        }?.toMutableList()
+        intents.value = intents.value.map {
+            it.copy()
+        }.toMutableList()
     }
 
     override fun onDestroy() {
-        mainViewModel.intents.value?.clear()
+        intents.value = emptyList()
+
         super.onDestroy()
     }
 }

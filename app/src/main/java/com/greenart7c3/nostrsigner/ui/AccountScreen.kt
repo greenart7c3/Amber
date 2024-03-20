@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
@@ -7,20 +8,21 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.livedata.observeAsState
-import com.greenart7c3.nostrsigner.MainViewModel
+import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import kotlinx.coroutines.flow.MutableStateFlow
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
     intent: Intent,
     packageName: String?,
     appName: String?,
-    mainViewModel: MainViewModel
+    flow: MutableStateFlow<List<IntentData>>
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
-    val intents by mainViewModel.intents.observeAsState(mutableListOf())
+    val intents by flow.collectAsState(initial = emptyList())
 
     Column {
         Crossfade(
@@ -36,7 +38,7 @@ fun AccountScreen(
                     val intentData = IntentUtils.getIntentData(intent, packageName)
                     if (intentData != null) {
                         if (intents.none { item -> item.id == intentData.id }) {
-                            intents.add(intentData)
+                            flow.value = listOf(intentData)
                         }
                     }
 

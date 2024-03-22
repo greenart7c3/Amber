@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
@@ -7,22 +8,53 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.BunkerRequest
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
+@OptIn(DelicateCoroutinesApi::class)
+fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Context) {
+    account.signer.nip04Encrypt(
+        ObjectMapper().writeValueAsString(BunkerResponse(bunkerRequest.id, "", "user rejected")),
+        bunkerRequest.localKey
+    ) { encryptedContent ->
+        account.signer.sign<Event>(
+            TimeUtils.now(),
+            24133,
+            arrayOf(arrayOf("p", bunkerRequest.localKey)),
+            encryptedContent
+        ) {
+            LocalPreferences.saveToEncryptedStorage(account)
+            GlobalScope.launch(Dispatchers.IO) {
+                Client.send(it, relay = "wss://relay.nsec.app", onDone = {
+                    context.getAppCompatActivity()?.intent = null
+                    context.getAppCompatActivity()?.finish()
+                })
+            }
+        }
+    }
+}
+
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun SingleEventHomeScreen(
     packageName: String?,
@@ -76,9 +108,13 @@ fun SingleEventHomeScreen(
                         account.savedApps[key] = false
                     }
 
-                    LocalPreferences.saveToEncryptedStorage(account)
-                    context.getAppCompatActivity()?.intent = null
-                    context.getAppCompatActivity()?.finish()
+                    if (intentData.bunkerRequest != null) {
+                        sendBunkerError(account, intentData.bunkerRequest, context)
+                    } else {
+                        LocalPreferences.saveToEncryptedStorage(account)
+                        context.getAppCompatActivity()?.intent = null
+                        context.getAppCompatActivity()?.finish()
+                    }
                 }
             )
         }
@@ -188,9 +224,13 @@ fun SingleEventHomeScreen(
                         account.savedApps[key] = false
                     }
 
-                    LocalPreferences.saveToEncryptedStorage(account)
-                    context.getAppCompatActivity()?.intent = null
-                    context.getAppCompatActivity()?.finish()
+                    if (intentData.bunkerRequest != null) {
+                        sendBunkerError(account, intentData.bunkerRequest, context)
+                    } else {
+                        LocalPreferences.saveToEncryptedStorage(account)
+                        context.getAppCompatActivity()?.intent = null
+                        context.getAppCompatActivity()?.finish()
+                    }
                 },
                 {
                     try {
@@ -273,9 +313,13 @@ fun SingleEventHomeScreen(
                         account.savedApps[key] = false
                     }
 
-                    LocalPreferences.saveToEncryptedStorage(account)
-                    context.getAppCompatActivity()?.intent = null
-                    context.getAppCompatActivity()?.finish()
+                    if (intentData.bunkerRequest != null) {
+                        sendBunkerError(account, intentData.bunkerRequest, context)
+                    } else {
+                        LocalPreferences.saveToEncryptedStorage(account)
+                        context.getAppCompatActivity()?.intent = null
+                        context.getAppCompatActivity()?.finish()
+                    }
                 }
             )
         }

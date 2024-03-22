@@ -101,7 +101,7 @@ fun sendResult(
 ) {
     val activity = context.getAppCompatActivity()
     if (intentData.bunkerRequest != null) {
-        if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+        if (intentData.type == SignerType.CONNECT) {
             val keysToClear = account.savedApps.filter {
                 it.key.startsWith(intentData.bunkerRequest.localKey)
             }.map {

@@ -21,6 +21,11 @@ object IntentUtils {
         val type = when (bunkerRequest.method) {
             "connect" -> SignerType.CONNECT
             "sign_event" -> SignerType.SIGN_EVENT
+            "get_public_get" -> SignerType.GET_PUBLIC_KEY
+            "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+            "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+            "nip44_decrypt" -> SignerType.NIP44_DECRYPT
             else -> SignerType.SIGN_EVENT
         }
 
@@ -30,12 +35,16 @@ object IntentUtils {
                 val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
                 AmberEvent.toEvent(amberEvent).toJson()
             }
+            "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.params.getOrElse(1) { "" }
             else -> ""
         }
 
-        val pubKey = ""
+        val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
+            bunkerRequest.params.first()
+        } else {
+            ""
+        }
         val id = bunkerRequest.id
-        val compressionType = if (intent.extras?.getString("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE
 
         return IntentData(
             data,
@@ -44,7 +53,7 @@ object IntentUtils {
             pubKey,
             id,
             intent.extras?.getString("callbackUrl"),
-            compressionType,
+            CompressionType.NONE,
             ReturnType.EVENT,
             listOf(),
             intent.extras?.getString("current_user") ?: "",

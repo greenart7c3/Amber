@@ -54,7 +54,6 @@ fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Con
     }
 }
 
-@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun SingleEventHomeScreen(
     packageName: String?,

@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import android.net.Uri
+import android.provider.Browser
 import androidx.compose.runtime.mutableStateOf
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -17,6 +18,70 @@ import com.vitorpamplona.quartz.events.Event
 import java.net.URLDecoder
 
 object IntentUtils {
+    private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?): IntentData {
+        val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")
+        val parameters = data.replace("nostrsigner:", "").split("?").toMutableList()
+        parameters.removeFirst()
+
+        if (parameters.isEmpty() || parameters.toString() == "[]") {
+            return getIntentDataFromIntent(intent, packageName)
+        }
+
+        var type = SignerType.SIGN_EVENT
+        var pubKey = ""
+        var compressionType = CompressionType.NONE
+        var callbackUrl = ""
+        var returnType = ReturnType.SIGNATURE
+        parameters.joinToString("?").split("&").forEach {
+            val params = it.split("=").toMutableList()
+            val parameter = params.removeFirst()
+            val parameterData = params.joinToString("=")
+            if (parameter == "type") {
+                type = when (parameterData) {
+                    "sign_event" -> SignerType.SIGN_EVENT
+                    "get_public_get" -> SignerType.GET_PUBLIC_KEY
+                    "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+                    "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                    "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+                    "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+                    else -> SignerType.SIGN_EVENT
+                }
+            }
+            if (parameter == "pubkey") {
+                pubKey = parameterData
+            }
+            if (parameter == "compressionType") {
+                if (parameterData == "gzip") {
+                    compressionType = CompressionType.GZIP
+                }
+            }
+            if (parameter == "callbackUrl") {
+                callbackUrl = parameterData
+            }
+            if (parameter == "returnType") {
+                if (parameterData == "event") {
+                    returnType = ReturnType.EVENT
+                }
+            }
+        }
+
+        return IntentData(
+            localData,
+            "",
+            type,
+            pubKey,
+            "",
+            callbackUrl,
+            compressionType,
+            returnType,
+            listOf(),
+            "",
+            mutableStateOf(true),
+            mutableStateOf(false),
+            null
+        )
+    }
+
     private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest): IntentData {
         val type = when (bunkerRequest.method) {
             "connect" -> SignerType.CONNECT
@@ -131,8 +196,10 @@ object IntentUtils {
 
         return if (bunkerRequest != null) {
             getIntentDataFromBunkerRequest(intent, bunkerRequest)
-        } else {
+        } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
             getIntentDataFromIntent(intent, packageName)
+        } else {
+            getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName)
         }
     }
     fun getIntent(data: String, keyPair: KeyPair): Event {

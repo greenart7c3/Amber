@@ -38,15 +38,25 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.Client
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.BunkerResponse
+import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
 import com.vitorpamplona.quartz.events.SealedGossipEvent
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
@@ -142,6 +152,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     private fun notify(
         event: Event,
         acc: Account
@@ -153,17 +164,109 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val bunkerRequest = BunkerRequest.mapper.readValue(it, BunkerRequest::class.java)
             bunkerRequest.localKey = event.pubKey
 
-            notificationManager()
-                .sendNotification(
-                    event.id,
-                    "${event.pubKey.toShortenHex()} wants you to sign an event",
-                    "Bunker",
-                    "nostrsigner:",
-                    "PrivateMessagesID",
-                    DM_GROUP_KEY,
-                    applicationContext,
-                    bunkerRequest
-                )
+            val type = when (bunkerRequest.method) {
+                "connect" -> SignerType.CONNECT
+                "sign_event" -> SignerType.SIGN_EVENT
+                "get_public_get" -> SignerType.GET_PUBLIC_KEY
+                "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+                "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+                "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+                else -> SignerType.SIGN_EVENT
+            }
+
+            val data = when (bunkerRequest.method) {
+                "connect" -> "ack"
+                "sign_event" -> {
+                    val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
+                    AmberEvent.toEvent(amberEvent).toJson()
+                }
+                "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.params.getOrElse(1) { "" }
+                else -> ""
+            }
+
+            val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
+                bunkerRequest.params.first()
+            } else if (bunkerRequest.method == "sign_event") {
+                val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
+                amberEvent.pubKey
+            } else {
+                ""
+            }
+
+            val cursor = applicationContext.contentResolver.query(
+                Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
+                arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
+                "1",
+                null,
+                bunkerRequest.localKey
+            )
+
+            cursor.use {
+                if (it == null) {
+                    notificationManager()
+                        .sendNotification(
+                            event.id,
+                            "${event.pubKey.toShortenHex()} wants you to sign an event",
+                            "Bunker",
+                            "nostrsigner:",
+                            "PrivateMessagesID",
+                            DM_GROUP_KEY,
+                            applicationContext,
+                            bunkerRequest
+                        )
+                } else {
+                    if (it.moveToFirst()) {
+                        if (it.getColumnIndex("rejected") > -1) {
+                            acc.signer.nip04Encrypt(
+                                ObjectMapper().writeValueAsString(BunkerResponse(bunkerRequest.id, "", "user rejected")),
+                                bunkerRequest.localKey
+                            ) { encryptedContent ->
+                                acc.signer.sign<Event>(
+                                    TimeUtils.now(),
+                                    24133,
+                                    arrayOf(arrayOf("p", bunkerRequest.localKey)),
+                                    encryptedContent
+                                ) {
+                                    GlobalScope.launch(Dispatchers.IO) {
+                                        Client.send(it, relay = "wss://relay.nsec.app", onDone = { })
+                                    }
+                                }
+                            }
+                        } else {
+                            val index = it.getColumnIndex("event")
+                            val result = it.getString(index)
+                            acc.signer.nip04Encrypt(
+                                ObjectMapper().writeValueAsString(BunkerResponse(bunkerRequest.id, result, null)),
+                                bunkerRequest.localKey
+                            ) { encryptedContent ->
+                                acc.signer.sign<Event>(
+                                    TimeUtils.now(),
+                                    24133,
+                                    arrayOf(arrayOf("p", bunkerRequest.localKey)),
+                                    encryptedContent
+                                ) {
+                                    GlobalScope.launch(Dispatchers.IO) {
+                                        Client.send(it, relay = "wss://relay.nsec.app", onDone = { })
+                                    }
+                                }
+                            }
+                        }
+                    } else {
+                        notificationManager()
+                            .sendNotification(
+                                event.id,
+                                "${event.pubKey.toShortenHex()} wants you to sign an event",
+                                "Bunker",
+                                "nostrsigner:",
+                                "PrivateMessagesID",
+                                DM_GROUP_KEY,
+                                applicationContext,
+                                bunkerRequest
+                            )
+                    }
+                }
+            }
         }
     }
 

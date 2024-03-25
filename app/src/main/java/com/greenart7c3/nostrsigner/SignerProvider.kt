@@ -56,7 +56,7 @@ class SignerProvider : ContentProvider() {
                 val permission = LocalPreferences.appDatabase!!
                     .applicationDao()
                     .getPermission(
-                        packageName,
+                        sortOrder ?: packageName,
                         "SIGN_EVENT",
                         event.kind
                     )
@@ -105,7 +105,7 @@ class SignerProvider : ContentProvider() {
                 val permission = LocalPreferences.appDatabase!!
                     .applicationDao()
                     .getPermission(
-                        packageName,
+                        sortOrder ?: packageName,
                         uri.toString().replace("content://$appId.", "")
                     )
 
@@ -145,8 +145,8 @@ class SignerProvider : ContentProvider() {
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
                     return null
                 } else {
-                    val cursor = MatrixCursor(arrayOf("signature"))
-                    cursor.addRow(arrayOf<Any>(result))
+                    val cursor = MatrixCursor(arrayOf("signature", "event"))
+                    cursor.addRow(arrayOf<Any>(result, result))
                     return cursor
                 }
             }
@@ -159,7 +159,7 @@ class SignerProvider : ContentProvider() {
                 val permission = LocalPreferences.appDatabase!!
                     .applicationDao()
                     .getPermission(
-                        packageName,
+                        sortOrder ?: packageName,
                         "GET_PUBLIC_KEY"
                     )
 

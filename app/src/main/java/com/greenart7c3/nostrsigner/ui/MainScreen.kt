@@ -262,7 +262,7 @@ fun MainScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (navBackStackEntry?.destination?.route?.contains("Permission") == true) {
+            if (navBackStackEntry?.destination?.route == "Permissions") {
                 GoToTop {
                     val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
                     clipboardManager.setText(AnnotatedString(bunkerUrl))

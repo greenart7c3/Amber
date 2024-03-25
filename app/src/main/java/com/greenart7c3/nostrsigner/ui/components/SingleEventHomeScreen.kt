@@ -11,6 +11,7 @@ import androidx.compose.ui.platform.LocalContext
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -30,6 +31,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 @OptIn(DelicateCoroutinesApi::class)
 fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Context) {
@@ -43,13 +46,32 @@ fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Con
             arrayOf(arrayOf("p", bunkerRequest.localKey)),
             encryptedContent
         ) {
-            LocalPreferences.saveToEncryptedStorage(account)
             GlobalScope.launch(Dispatchers.IO) {
                 Client.send(it, relay = "wss://relay.nsec.app", onDone = {
                     context.getAppCompatActivity()?.intent = null
                     context.getAppCompatActivity()?.finish()
                 })
             }
+        }
+    }
+}
+
+fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean) {
+    runBlocking {
+        withContext(Dispatchers.IO) {
+            LocalPreferences.appDatabase!!
+                .applicationDao()
+                .insertPermissions(
+                    listOf(
+                        ApplicationPermissionsEntity(
+                            null,
+                            key,
+                            intentData.type.toString(),
+                            kind,
+                            value
+                        )
+                    )
+                )
         }
     }
 }
@@ -61,10 +83,10 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account
 ) {
-    var key = if (intentData.bunkerRequest != null) {
-        "${intentData.bunkerRequest.localKey}-${intentData.type}"
+    val key = if (intentData.bunkerRequest != null) {
+        intentData.bunkerRequest.localKey
     } else {
-        "$packageName-${intentData.type}"
+        "$packageName"
     }
     val appName = packageName ?: intentData.name
     val coroutineScope = rememberCoroutineScope()
@@ -73,8 +95,18 @@ fun SingleEventHomeScreen(
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
+            val permission = runBlocking {
+                withContext(Dispatchers.IO) {
+                    LocalPreferences.appDatabase!!
+                        .applicationDao()
+                        .getPermission(
+                            key,
+                            intentData.type.toString()
+                        )
+                }
+            }
             val remember = remember {
-                mutableStateOf(account.savedApps[key] != null)
+                mutableStateOf(permission?.acceptable == true)
             }
             LoginWithPubKey(
                 appName,
@@ -97,20 +129,21 @@ fun SingleEventHomeScreen(
                             sig,
                             sig,
                             intentData,
-                            permissions = permissions
+                            null,
+                            permissions = permissions,
+                            appName = applicationName ?: appName
                         )
                     }
                     return@LoginWithPubKey
                 },
                 {
                     if (remember.value) {
-                        account.savedApps[key] = false
+                        acceptOrRejectPermission(key, intentData, null, false)
                     }
 
                     if (intentData.bunkerRequest != null) {
                         sendBunkerError(account, intentData.bunkerRequest, context)
                     } else {
-                        LocalPreferences.saveToEncryptedStorage(account)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
@@ -119,10 +152,21 @@ fun SingleEventHomeScreen(
         }
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-            val remember = remember {
-                mutableStateOf(account.savedApps[key] != null)
+            val permission = runBlocking {
+                withContext(Dispatchers.IO) {
+                    LocalPreferences.appDatabase!!
+                        .applicationDao()
+                        .getPermission(
+                            key,
+                            intentData.type.toString()
+                        )
+                }
             }
-            val shouldRunOnAccept = account.savedApps[key] ?: false
+            val remember = remember {
+                mutableStateOf(permission?.acceptable == true)
+            }
+
+            val shouldRunOnAccept = permission?.acceptable == true
             val localPackageName = if (intentData.bunkerRequest != null) {
                 intentData.bunkerRequest.localKey
             } else {
@@ -191,7 +235,8 @@ fun SingleEventHomeScreen(
                                         clipboardManager,
                                         result,
                                         result,
-                                        intentData
+                                        intentData,
+                                        null
                                     )
                                 }
                             }
@@ -220,13 +265,12 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        account.savedApps[key] = false
+                        acceptOrRejectPermission(key, intentData, null, false)
                     }
 
                     if (intentData.bunkerRequest != null) {
                         sendBunkerError(account, intentData.bunkerRequest, context)
                     } else {
-                        LocalPreferences.saveToEncryptedStorage(account)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
@@ -249,11 +293,22 @@ fun SingleEventHomeScreen(
 
         else -> {
             val event = IntentUtils.getIntent(intentData.data, account.keyPair)
-            key = "$key-${event.kind}"
-            val remember = remember {
-                mutableStateOf(account.savedApps[key] != null)
+            val permission = runBlocking {
+                withContext(Dispatchers.IO) {
+                    LocalPreferences.appDatabase!!
+                        .applicationDao()
+                        .getPermission(
+                            key,
+                            intentData.type.toString(),
+                            event.kind
+                        )
+                }
             }
-            val shouldRunOnAccept = account.savedApps[key] ?: false
+            val remember = remember {
+                mutableStateOf(permission?.acceptable == true)
+            }
+
+            val shouldRunOnAccept = permission?.acceptable == true
             val localPackageName = if (intentData.bunkerRequest != null) {
                 intentData.bunkerRequest.localKey
             } else {
@@ -302,20 +357,20 @@ fun SingleEventHomeScreen(
                                 clipboardManager,
                                 signedEvent.toJson(),
                                 if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig,
-                                intentData
+                                intentData,
+                                localEvent.kind
                             )
                         }
                     }
                 },
                 {
                     if (remember.value) {
-                        account.savedApps[key] = false
+                        acceptOrRejectPermission(key, intentData, event.kind, false)
                     }
 
                     if (intentData.bunkerRequest != null) {
                         sendBunkerError(account, intentData.bunkerRequest, context)
                     } else {
-                        LocalPreferences.saveToEncryptedStorage(account)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }

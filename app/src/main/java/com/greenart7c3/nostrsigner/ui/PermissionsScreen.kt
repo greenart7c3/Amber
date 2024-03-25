@@ -1,16 +1,21 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.graphics.drawable.Icon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ClearAll
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -23,17 +28,23 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 @Composable
 fun PermissionsScreen(
@@ -42,19 +53,24 @@ fun PermissionsScreen(
     accountStateViewModel: AccountStateViewModel,
     navController: NavController
 ) {
+    val context = LocalContext.current
     val lifecycleEvent = rememberLifecycleEvent()
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())
-    val savedApps = localAccount!!.savedApps
-    val applications = savedApps.keys.toList().map {
-        it.split("-").first()
-    }.toSet().sorted()
+    val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
+    val applications = remember {
+        mutableListOf<ApplicationEntity>()
+    }
     var resetPermissions by remember { mutableStateOf(false) }
     var selectedPackage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
+    var permission by remember { mutableStateOf<ApplicationEntity?>(null) }
 
     LaunchedEffect(lifecycleEvent) {
         if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
             selectedPackage = null
+        }
+        scope.launch(Dispatchers.IO) {
+            applications.clear()
+            applications.addAll(AppDatabase.getDatabase(context).applicationDao().getAll())
         }
     }
 
@@ -74,7 +90,7 @@ fun PermissionsScreen(
                     onClick = {
                         resetPermissions = false
                         scope.launch {
-                            LocalPreferences.deleteSavedApps(localAccount)
+                            LocalPreferences.deleteSavedApps()
                             accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
                         }
                     }
@@ -92,6 +108,22 @@ fun PermissionsScreen(
                 }
             }
         )
+    }
+
+    permission?.let {
+        EditAppDialog(
+            permission = it,
+            onClose = { permission = null }
+        ) { name ->
+            runBlocking {
+                withContext(Dispatchers.IO) {
+                    LocalPreferences.appDatabase!!
+                        .applicationDao()
+                        .changeApplicationName(it.key, name)
+                }
+            }
+            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
+        }
     }
 
     Column(
@@ -127,18 +159,37 @@ fun PermissionsScreen(
                     .fillMaxSize()
             ) {
                 items(applications.size) {
-                    Box(
-                        Modifier
-                            .padding(16.dp)
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        IconRow(
-                            title = applications.elementAt(it),
-                            icon = Icons.AutoMirrored.Default.ArrowForward,
-                            tint = MaterialTheme.colorScheme.onBackground,
+                        Box(
+                            Modifier
+                                .padding(16.dp)
+                                .weight(0.9f)
+                        ) {
+                            val localPermission = applications.elementAt(it)
+                            IconRow(
+                                title = localPermission.name.ifBlank { localPermission.key },
+                                icon = Icons.AutoMirrored.Default.ArrowForward,
+                                tint = MaterialTheme.colorScheme.onBackground,
+                                onClick = {
+                                    navController.navigate("Permission/${applications.elementAt(it).key}")
+                                }
+                            )
+                        }
+                        IconButton(
                             onClick = {
-                                navController.navigate("Permission/${applications.elementAt(it)}")
-                            }
-                        )
+                                permission = applications.elementAt(it)
+                            },
+                            Modifier
+                                .padding(16.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.edit_name),
+                                tint = MaterialTheme.colorScheme.onSurface
+                            )
+                        }
                     }
                 }
             }

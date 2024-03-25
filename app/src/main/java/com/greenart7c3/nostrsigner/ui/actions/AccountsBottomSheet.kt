@@ -16,7 +16,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -70,7 +69,6 @@ fun AccountsBottomSheet(
         }
     ) {
         val accounts = LocalPreferences.allSavedAccounts()
-
         var popupExpanded by remember { mutableStateOf(false) }
         val scrollState = rememberScrollState()
         var showNameDialog by remember { mutableStateOf(false) }

@@ -257,11 +257,12 @@ fun MultiEventHomeScreen(
                                                 ).toJson()
                                             )
                                         }
-                                        val key = "$packageName-${intentData.type}-${localEvent.kind}"
                                         if (intentData.rememberMyChoice.value) {
-                                            localAccount.savedApps[key] = intentData.rememberMyChoice.value
-                                            LocalPreferences.saveToEncryptedStorage(
-                                                localAccount
+                                            acceptOrRejectPermission(
+                                                packageName,
+                                                intentData,
+                                                localEvent.kind,
+                                                intentData.rememberMyChoice.value
                                             )
                                         }
                                         localAccount.signer.sign<Event>(
@@ -279,11 +280,12 @@ fun MultiEventHomeScreen(
                                             )
                                         }
                                     } else {
-                                        val key = "$packageName-${intentData.type}"
                                         if (intentData.rememberMyChoice.value) {
-                                            localAccount.savedApps[key] = intentData.rememberMyChoice.value
-                                            LocalPreferences.saveToEncryptedStorage(
-                                                localAccount
+                                            acceptOrRejectPermission(
+                                                packageName,
+                                                intentData,
+                                                null,
+                                                intentData.rememberMyChoice.value
                                             )
                                         }
                                         val signature = AmberUtils.encryptOrDecryptData(

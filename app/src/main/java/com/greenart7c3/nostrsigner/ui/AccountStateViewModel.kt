@@ -65,11 +65,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         val account = if (key.startsWith("ncryptsec")) {
             val newKey = CryptoUtils.decryptNIP49(key, password)
                 ?: throw Exception("Could not decrypt key with provided password")
-            Account(KeyPair(Hex.decode(newKey)), name = "", savedApps = mutableMapOf())
+            Account(KeyPair(Hex.decode(newKey)), name = "")
         } else if (key.startsWith("nsec")) {
-            Account(KeyPair(privKey = key.bechToBytes()), name = "", savedApps = mutableMapOf())
+            Account(KeyPair(privKey = key.bechToBytes()), name = "")
         } else {
-            Account(KeyPair(Hex.decode(key)), name = "", savedApps = mutableMapOf())
+            Account(KeyPair(Hex.decode(key)), name = "")
         }
 
         LocalPreferences.updatePrefsForLogin(account)
@@ -77,7 +77,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     }
 
     fun newKey() {
-        val account = Account(KeyPair(), name = "", savedApps = mutableMapOf())
+        val account = Account(KeyPair(), name = "")
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account, null)
     }

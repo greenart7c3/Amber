@@ -5,11 +5,15 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 class SignerProvider : ContentProvider() {
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
@@ -35,19 +39,29 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
         sortOrder: String?
     ): Cursor? {
+        LocalPreferences.appDatabase = runBlocking {
+            withContext(Dispatchers.IO) {
+                AppDatabase.getDatabase(context!!)
+            }
+        }
         val appId = BuildConfig.APPLICATION_ID
         return when (uri.toString()) {
             "content://$appId.SIGN_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val json = projection?.first() ?: return null
                 if (!LocalPreferences.containsAccount(projection[2])) return null
-                val account =
-                    LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
+                val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val event = Event.fromJson(json)
-                val key = "$packageName-SIGN_EVENT-${event.kind}"
                 val currentSelection = selection ?: "0"
+                val permission = LocalPreferences.appDatabase!!
+                    .applicationDao()
+                    .getPermission(
+                        packageName,
+                        "SIGN_EVENT",
+                        event.kind
+                    )
                 if (currentSelection == "1") {
-                    val isRemembered = account.savedApps[key] ?: return null
+                    val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
                         val cursor = MatrixCursor(arrayOf("rejected")).also {
                             it.addRow(arrayOf("true"))
@@ -55,7 +69,7 @@ class SignerProvider : ContentProvider() {
                         return cursor
                     }
                 } else {
-                    val isRemembered = account.savedApps[key] ?: false
+                    val isRemembered = permission?.acceptable ?: false
                     if (!isRemembered) return null
                 }
 
@@ -84,12 +98,19 @@ class SignerProvider : ContentProvider() {
                 val content = projection?.first() ?: return null
                 if (!LocalPreferences.containsAccount(projection[2])) return null
                 val stringType = uri.toString().replace("content://$appId.", "")
-                val key = "$packageName-${uri.toString().replace("content://$appId.", "")}"
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
+
+                val permission = LocalPreferences.appDatabase!!
+                    .applicationDao()
+                    .getPermission(
+                        packageName,
+                        uri.toString().replace("content://$appId.", "")
+                    )
+
                 if (currentSelection == "1") {
-                    val isRemembered = account.savedApps[key] ?: return null
+                    val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
                         val cursor = MatrixCursor(arrayOf("rejected")).also {
                             it.addRow(arrayOf("true"))
@@ -97,7 +118,7 @@ class SignerProvider : ContentProvider() {
                         return cursor
                     }
                 } else {
-                    val isRemembered = account.savedApps[key] ?: false
+                    val isRemembered = permission?.acceptable ?: false
                     if (!isRemembered) return null
                 }
 
@@ -121,8 +142,6 @@ class SignerProvider : ContentProvider() {
                     "Could not decrypt the message"
                 }
 
-                LocalPreferences.saveToEncryptedStorage(account)
-
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
                     return null
                 } else {
@@ -134,11 +153,18 @@ class SignerProvider : ContentProvider() {
 
             "content://$appId.GET_PUBLIC_KEY" -> {
                 val packageName = callingPackage ?: return null
-                val key = "$packageName-GET_PUBLIC_KEY"
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val currentSelection = selection ?: "0"
+
+                val permission = LocalPreferences.appDatabase!!
+                    .applicationDao()
+                    .getPermission(
+                        packageName,
+                        "GET_PUBLIC_KEY"
+                    )
+
                 if (currentSelection == "1") {
-                    val isRemembered = account.savedApps[key] ?: return null
+                    val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
                         val cursor = MatrixCursor(arrayOf("rejected")).also {
                             it.addRow(arrayOf("true"))
@@ -146,11 +172,9 @@ class SignerProvider : ContentProvider() {
                         return cursor
                     }
                 } else {
-                    val isRemembered = account.savedApps[key] ?: false
+                    val isRemembered = permission?.acceptable ?: false
                     if (!isRemembered) return null
                 }
-
-                LocalPreferences.saveToEncryptedStorage(account)
 
                 val cursor = MatrixCursor(arrayOf("signature"))
                 cursor.addRow(arrayOf<Any>(account.keyPair.pubKey.toNpub()))

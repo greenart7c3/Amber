@@ -41,10 +41,14 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
 import com.vitorpamplona.quartz.events.SealedGossipEvent
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
 data class BunkerRequest(
     val id: String,
@@ -91,6 +95,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     private val DM_GROUP_KEY = "com.greenart7c3.nostrsigner.DM_NOTIFICATION"
     suspend fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
+
+        LocalPreferences.appDatabase = runBlocking { withContext(Dispatchers.IO) { AppDatabase.getDatabase(applicationContext) } }
 
         // PushNotification Wraps don't include a receiver.
         // Test with all logged in accounts

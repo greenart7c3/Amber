@@ -11,6 +11,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.R
@@ -21,6 +22,7 @@ fun LogoutButton(
     acc: AccountInfo,
     accountStateViewModel: AccountStateViewModel
 ) {
+    val context = LocalContext.current
     var logoutDialog by remember { mutableStateOf(false) }
     if (logoutDialog) {
         LogoutDialog(

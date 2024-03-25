@@ -4,12 +4,19 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.Immutable
+import androidx.core.content.edit
+import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import fr.acinq.secp256k1.jni.BuildConfig
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.json.JSONObject
 import java.io.File
 
@@ -35,9 +42,9 @@ data class AccountInfo(
 )
 
 object LocalPreferences {
-    private const val comma = ","
-
+    private const val COMMA = ","
     private var currentAccount: String? = null
+    var appDatabase: AppDatabase? = null
 
     fun allSavedAccounts(): List<AccountInfo> {
         return savedAccounts().map { npub ->
@@ -70,7 +77,7 @@ object LocalPreferences {
     private fun savedAccounts(): List<String> {
         if (savedAccounts == null) {
             savedAccounts = encryptedPreferences()
-                .getString(PrefKeys.SAVED_ACCOUNTS, null)?.split(comma) ?: listOf()
+                .getString(PrefKeys.SAVED_ACCOUNTS, null)?.split(COMMA) ?: listOf()
         }
         return savedAccounts!!
     }
@@ -80,7 +87,7 @@ object LocalPreferences {
             savedAccounts = accounts
 
             encryptedPreferences().edit().apply {
-                putString(PrefKeys.SAVED_ACCOUNTS, accounts.joinToString(comma).ifBlank { null })
+                putString(PrefKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
             }.apply()
         }
     }
@@ -169,12 +176,8 @@ object LocalPreferences {
         saveToEncryptedStorage(account)
     }
 
-    fun deleteSavedApps(account: Account) {
-        val prefs = encryptedPreferences(account.keyPair.pubKey.toNpub())
-        prefs.edit().apply {
-            remove(PrefKeys.REMEMBER_APPS)
-        }.apply()
-        account.savedApps = mutableMapOf()
+    suspend fun deleteSavedApps() = withContext(Dispatchers.IO) {
+        appDatabase?.clearAllTables()
     }
 
     fun saveToEncryptedStorage(account: Account) {
@@ -182,8 +185,6 @@ object LocalPreferences {
         prefs.edit().apply {
             account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
-            val jsonObject = JSONObject(account.savedApps.toMap())
-            putString(PrefKeys.REMEMBER_APPS, jsonObject.toString())
             putString(PrefKeys.ACCOUNT_NAME, account.name)
         }.apply()
     }
@@ -204,6 +205,33 @@ object LocalPreferences {
         }
     }
 
+    private suspend fun convertToDatabase(map: MutableMap<String, Boolean>) = withContext(Dispatchers.IO) {
+        map.forEach {
+            val splitData = it.key.split("-")
+            appDatabase?.applicationDao()?.deletePermissions(splitData.first())
+        }
+        map.forEach {
+            val splitData = it.key.split("-")
+            appDatabase?.applicationDao()?.insertApplication(
+                ApplicationEntity(
+                    splitData.first(),
+                    ""
+                )
+            )
+            appDatabase?.applicationDao()?.insertPermissions(
+                listOf(
+                    ApplicationPermissionsEntity(
+                        id = null,
+                        pkKey = splitData.first(),
+                        type = splitData[1],
+                        kind = runCatching { splitData[2].toInt() }.getOrNull(),
+                        acceptable = it.value
+                    )
+                )
+            )
+        }
+    }
+
     fun loadFromEncryptedStorage(npub: String?): Account? {
         encryptedPreferences(npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
@@ -220,12 +248,15 @@ object LocalPreferences {
                     outputMap[key] = value
                 }
             }
+            runBlocking { convertToDatabase(outputMap) }
+            this.edit().apply {
+                remove(PrefKeys.REMEMBER_APPS)
+            }.apply()
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
 
             return Account(
                 keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
-                name = name,
-                savedApps = outputMap
+                name = name
             )
         }
     }

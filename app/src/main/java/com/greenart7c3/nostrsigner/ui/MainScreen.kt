@@ -8,11 +8,15 @@ import android.widget.Toast
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -27,8 +31,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
@@ -43,9 +49,11 @@ import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -56,6 +64,9 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -67,6 +78,8 @@ import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
+import com.greenart7c3.nostrsigner.ui.components.CloseButton
+import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -76,6 +89,8 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
@@ -97,27 +112,54 @@ fun sendResult(
     event: String,
     value: String,
     intentData: IntentData,
-    permissions: List<Permission>? = null
+    kind: Int?,
+    permissions: List<Permission>? = null,
+    appName: String? = null
 ) {
     val activity = context.getAppCompatActivity()
+    if (intentData.type == SignerType.CONNECT) {
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                LocalPreferences.appDatabase?.applicationDao()?.deletePermissions(key)
+            }
+        }
+    }
+
+    val application = ApplicationWithPermissions(
+        application = ApplicationEntity(key, appName ?: ""),
+        permissions = mutableListOf()
+    )
+
+    permissions?.filter { it.checked }?.forEach {
+        application.permissions.add(
+            ApplicationPermissionsEntity(
+                null,
+                key,
+                it.type.toUpperCase(Locale.current),
+                it.kind,
+                true
+            )
+        )
+    }
+    if (rememberChoice) {
+        application.permissions.add(
+            ApplicationPermissionsEntity(
+                null,
+                key,
+                intentData.type.toString(),
+                kind,
+                true
+            )
+        )
+    }
+
     if (intentData.bunkerRequest != null) {
         if (intentData.type == SignerType.CONNECT) {
-            val keysToClear = account.savedApps.filter {
-                it.key.startsWith(intentData.bunkerRequest.localKey)
-            }.map {
-                it.key
+            runBlocking {
+                withContext(Dispatchers.IO) {
+                    LocalPreferences.appDatabase?.applicationDao()?.deletePermissions(key)
+                }
             }
-            keysToClear.forEach {
-                account.savedApps.remove(it)
-            }
-        }
-        permissions?.filter { it.checked }?.forEach {
-            val type = it.type.toUpperCase(Locale.current)
-            val permissionKey = if (it.type == "sign_event") "${intentData.bunkerRequest.localKey}-$type-${it.kind}" else "${intentData.bunkerRequest.localKey}-$type"
-            account.savedApps[permissionKey] = true
-        }
-        if (rememberChoice) {
-            account.savedApps[key] = true
         }
 
         account.signer.nip04Encrypt(
@@ -130,7 +172,11 @@ fun sendResult(
                 arrayOf(arrayOf("p", intentData.bunkerRequest.localKey)),
                 encryptedContent
             ) {
-                LocalPreferences.saveToEncryptedStorage(account)
+                runBlocking {
+                    withContext(Dispatchers.IO) {
+                        LocalPreferences.appDatabase?.applicationDao()?.insertApplicationWithPermissions(application)
+                    }
+                }
                 GlobalScope.launch(Dispatchers.IO) {
                     Client.send(it, relay = "wss://relay.nsec.app", onDone = {
                         activity?.intent = null
@@ -140,27 +186,12 @@ fun sendResult(
             }
         }
     } else if (packageName != null) {
-        if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-            val keysToClear = account.savedApps.filter {
-                it.key.startsWith(packageName)
-            }.map {
-                it.key
-            }
-            keysToClear.forEach {
-                account.savedApps.remove(it)
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                LocalPreferences.appDatabase?.applicationDao()?.insertApplicationWithPermissions(application)
             }
         }
-        permissions?.filter { it.checked }?.forEach {
-            val type = it.type.toUpperCase(Locale.current)
-            val permissionKey = if (it.type == "sign_event") "$packageName-$type-${it.kind}" else "$packageName-$type"
-            account.savedApps[permissionKey] = true
-        }
 
-        if (rememberChoice) {
-            account.savedApps[key] = true
-        }
-
-        LocalPreferences.saveToEncryptedStorage(account)
         val intent = Intent()
         intent.putExtra("signature", value)
         intent.putExtra("id", intentData.id)
@@ -234,6 +265,65 @@ fun GoToTop(goToTop: () -> Unit) {
             Icons.Default.Add,
             contentDescription = stringResource(R.string.connect_app)
         )
+    }
+}
+
+@Composable
+fun EditAppDialog(permission: ApplicationEntity, onClose: () -> Unit, onPost: (String) -> Unit) {
+    val name = permission.name
+    var textFieldvalue by remember {
+        mutableStateOf(TextFieldValue(name))
+    }
+    Dialog(
+        onDismissRequest = {
+            onClose()
+        }
+    ) {
+        Surface {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxWidth()
+                    .padding(8.dp)
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    CloseButton(
+                        onCancel = {
+                            onClose()
+                        }
+                    )
+                    PostButton(
+                        isActive = true,
+                        onPost = {
+                            onPost(textFieldvalue.text)
+                        }
+                    )
+                }
+
+                Column(
+                    modifier = Modifier
+                        .padding(horizontal = 30.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    OutlinedTextField(
+                        value = textFieldvalue.text,
+                        onValueChange = {
+                            textFieldvalue = TextFieldValue(it)
+                        },
+                        label = {
+                            Text("Name")
+                        }
+                    )
+                }
+            }
+        }
     }
 }
 

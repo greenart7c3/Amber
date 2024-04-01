@@ -74,24 +74,26 @@ fun EncryptDecryptData(
             fontSize = 18.sp
         )
         Spacer(Modifier.size(4.dp))
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(Modifier.padding(6.dp)) {
-                Text(
-                    "Event content",
-                    fontWeight = FontWeight.Bold
-                )
+        if (!type.toString().contains("DECRYPT")) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Column(Modifier.padding(6.dp)) {
+                    Text(
+                        "Event content",
+                        fontWeight = FontWeight.Bold
+                    )
 
-                Text(
-                    content,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                )
+                    Text(
+                        content,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                    )
+                }
             }
         }
         RawJsonButton(

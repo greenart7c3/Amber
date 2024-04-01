@@ -23,6 +23,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.events.Event
@@ -49,7 +50,8 @@ fun EventData(
             .fillMaxSize()
             .padding(8.dp)
     ) {
-        val text = if (event.kind == 22242) "requests client authentication" else "requests event signature"
+        val permission = Permission("sign_event", event.kind)
+        val text = "wants you to sign a $permission"
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -60,24 +62,27 @@ fun EventData(
             fontSize = 18.sp
         )
         Spacer(Modifier.size(4.dp))
-        Card(
-            modifier = Modifier
-                .fillMaxWidth()
-        ) {
-            Column(Modifier.padding(16.dp)) {
-                Text(
-                    "Event content",
-                    fontWeight = FontWeight.Bold
-                )
-                val content = if (event.kind == 22242) AmberEvent.relay(event) else event.content
-                Text(
-                    content,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                )
+
+        val content = if (event.kind == 22242) AmberEvent.relay(event) else event.content
+        if (content.isNotBlank()) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+            ) {
+                Column(Modifier.padding(16.dp)) {
+                    Text(
+                        "Event content",
+                        fontWeight = FontWeight.Bold
+                    )
+                    Text(
+                        content,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp)
+                    )
+                }
             }
         }
         RawJsonButton(

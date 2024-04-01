@@ -3,13 +3,17 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.content.Context
 import android.widget.Toast
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -18,6 +22,7 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.BunkerRequest
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -67,12 +72,22 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account
 ) {
+    var applicationEntity by remember {
+        mutableStateOf<ApplicationEntity?>(null)
+    }
     val key = if (intentData.bunkerRequest != null) {
         intentData.bunkerRequest.localKey
     } else {
         "$packageName"
     }
-    val appName = packageName ?: intentData.name
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            applicationEntity = LocalPreferences.appDatabase!!.applicationDao().getByKey(key)
+        }
+    }
+
+    val appName = applicationEntity?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current

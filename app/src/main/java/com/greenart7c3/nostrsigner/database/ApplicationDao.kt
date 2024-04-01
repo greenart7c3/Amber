@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.database
 
 import androidx.room.Dao
+import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
@@ -70,4 +71,7 @@ interface ApplicationDao {
             insertPermissions(application.permissions)
         }
     }
+
+    @Delete
+    fun delete(entity: ApplicationEntity)
 }

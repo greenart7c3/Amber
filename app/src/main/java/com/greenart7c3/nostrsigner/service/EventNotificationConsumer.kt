@@ -44,19 +44,13 @@ import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
 import com.vitorpamplona.quartz.events.SealedGossipEvent
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
@@ -68,6 +62,28 @@ data class BunkerRequest(
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
+    }
+
+    override fun equals(other: Any?): Boolean {
+        if (this === other) return true
+        if (javaClass != other?.javaClass) return false
+
+        other as BunkerRequest
+
+        if (id != other.id) return false
+        if (method != other.method) return false
+        if (!params.contentEquals(other.params)) return false
+        if (localKey != other.localKey) return false
+
+        return true
+    }
+
+    override fun hashCode(): Int {
+        var result = id.hashCode()
+        result = 31 * result + method.hashCode()
+        result = 31 * result + params.contentHashCode()
+        result = 31 * result + localKey.hashCode()
+        return result
     }
 
     companion object {
@@ -102,7 +118,7 @@ data class BunkerRequest(
 }
 
 class EventNotificationConsumer(private val applicationContext: Context) {
-    private val DM_GROUP_KEY = "com.greenart7c3.nostrsigner.DM_NOTIFICATION"
+    private val groupKey = "com.greenart7c3.nostrsigner.DM_NOTIFICATION"
     suspend fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
 
@@ -152,7 +168,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun notify(
         event: Event,
         acc: Account
@@ -164,26 +179,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val bunkerRequest = BunkerRequest.mapper.readValue(it, BunkerRequest::class.java)
             bunkerRequest.localKey = event.pubKey
 
-            val type = when (bunkerRequest.method) {
-                "connect" -> SignerType.CONNECT
-                "sign_event" -> SignerType.SIGN_EVENT
-                "get_public_get" -> SignerType.GET_PUBLIC_KEY
-                "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-                "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-                "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-                "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-                else -> SignerType.SIGN_EVENT
-            }
-
-            val data = when (bunkerRequest.method) {
-                "connect" -> "ack"
-                "sign_event" -> {
-                    val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-                    AmberEvent.toEvent(amberEvent).toJson()
-                }
-                "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.params.getOrElse(1) { "" }
-                else -> ""
-            }
+            val type = IntentUtils.getTypeFromBunker(bunkerRequest)
+            val data = IntentUtils.getDataFromBunker(bunkerRequest)
 
             val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
                 bunkerRequest.params.first()
@@ -202,8 +199,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 bunkerRequest.localKey
             )
 
-            cursor.use {
-                if (it == null) {
+            cursor.use { localCursor ->
+                if (localCursor == null) {
                     notificationManager()
                         .sendNotification(
                             event.id,
@@ -211,46 +208,27 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             "Bunker",
                             "nostrsigner:",
                             "PrivateMessagesID",
-                            DM_GROUP_KEY,
+                            groupKey,
                             applicationContext,
                             bunkerRequest
                         )
                 } else {
-                    if (it.moveToFirst()) {
-                        if (it.getColumnIndex("rejected") > -1) {
-                            acc.signer.nip04Encrypt(
-                                ObjectMapper().writeValueAsString(BunkerResponse(bunkerRequest.id, "", "user rejected")),
-                                bunkerRequest.localKey
-                            ) { encryptedContent ->
-                                acc.signer.sign<Event>(
-                                    TimeUtils.now(),
-                                    24133,
-                                    arrayOf(arrayOf("p", bunkerRequest.localKey)),
-                                    encryptedContent
-                                ) {
-                                    GlobalScope.launch(Dispatchers.IO) {
-                                        Client.send(it, relay = "wss://relay.nsec.app", onDone = { })
-                                    }
-                                }
-                            }
+                    if (localCursor.moveToFirst()) {
+                        if (localCursor.getColumnIndex("rejected") > -1) {
+                            IntentUtils.sendBunkerResponse(
+                                acc,
+                                bunkerRequest.localKey,
+                                BunkerResponse(bunkerRequest.id, "", "user rejected")
+                            ) { }
                         } else {
-                            val index = it.getColumnIndex("event")
-                            val result = it.getString(index)
-                            acc.signer.nip04Encrypt(
-                                ObjectMapper().writeValueAsString(BunkerResponse(bunkerRequest.id, result, null)),
-                                bunkerRequest.localKey
-                            ) { encryptedContent ->
-                                acc.signer.sign<Event>(
-                                    TimeUtils.now(),
-                                    24133,
-                                    arrayOf(arrayOf("p", bunkerRequest.localKey)),
-                                    encryptedContent
-                                ) {
-                                    GlobalScope.launch(Dispatchers.IO) {
-                                        Client.send(it, relay = "wss://relay.nsec.app", onDone = { })
-                                    }
-                                }
-                            }
+                            val index = localCursor.getColumnIndex("event")
+                            val result = localCursor.getString(index)
+
+                            IntentUtils.sendBunkerResponse(
+                                acc,
+                                bunkerRequest.localKey,
+                                BunkerResponse(bunkerRequest.id, result, null)
+                            ) { }
                         }
                     } else {
                         notificationManager()
@@ -260,7 +238,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 "Bunker",
                                 "nostrsigner:",
                                 "PrivateMessagesID",
-                                DM_GROUP_KEY,
+                                groupKey,
                                 applicationContext,
                                 bunkerRequest
                             )
@@ -270,7 +248,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    fun NotificationManager.sendNotification(
+    private fun NotificationManager.sendNotification(
         id: String,
         messageBody: String,
         messageTitle: String,
@@ -359,7 +337,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         notify(notId, builder.build())
     }
 
-    fun notificationManager(): NotificationManager {
+    private fun notificationManager(): NotificationManager {
         return ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
     }
 }

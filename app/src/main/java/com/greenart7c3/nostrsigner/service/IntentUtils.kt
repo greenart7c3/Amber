@@ -4,17 +4,26 @@ import android.content.Intent
 import android.net.Uri
 import android.provider.Browser
 import androidx.compose.runtime.mutableStateOf
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import java.net.URLDecoder
 
 object IntentUtils {
@@ -82,8 +91,8 @@ object IntentUtils {
         )
     }
 
-    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest): IntentData {
-        val type = when (bunkerRequest.method) {
+    fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType {
+        return when (bunkerRequest.method) {
             "connect" -> SignerType.CONNECT
             "sign_event" -> SignerType.SIGN_EVENT
             "get_public_get" -> SignerType.GET_PUBLIC_KEY
@@ -93,8 +102,10 @@ object IntentUtils {
             "nip44_decrypt" -> SignerType.NIP44_DECRYPT
             else -> SignerType.SIGN_EVENT
         }
+    }
 
-        val data = when (bunkerRequest.method) {
+    fun getDataFromBunker(bunkerRequest: BunkerRequest): String {
+        return when (bunkerRequest.method) {
             "connect" -> "ack"
             "sign_event" -> {
                 val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
@@ -103,6 +114,39 @@ object IntentUtils {
             "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt" -> bunkerRequest.params.getOrElse(1) { "" }
             else -> ""
         }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    fun sendBunkerResponse(
+        account: Account,
+        localKey: String,
+        bunkerResponse: BunkerResponse,
+        onSign: (() -> Unit)? = null,
+        onDone: () -> Unit
+    ) {
+        account.signer.nip04Encrypt(
+            ObjectMapper().writeValueAsString(bunkerResponse),
+            localKey
+        ) { encryptedContent ->
+            account.signer.sign<Event>(
+                TimeUtils.now(),
+                24133,
+                arrayOf(arrayOf("p", localKey)),
+                encryptedContent
+            ) {
+                if (onSign != null) {
+                    onSign()
+                }
+                GlobalScope.launch(Dispatchers.IO) {
+                    Client.send(it, relay = "wss://relay.nsec.app", onDone = onDone)
+                }
+            }
+        }
+    }
+
+    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest): IntentData {
+        val type = getTypeFromBunker(bunkerRequest)
+        val data = getDataFromBunker(bunkerRequest)
 
         val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
             bunkerRequest.params.first()
@@ -115,7 +159,7 @@ object IntentUtils {
             val split = bunkerRequest.params[2].split(",")
             split.forEach {
                 val split2 = it.split(":")
-                val type = split2.first()
+                val permissionType = split2.first()
                 val kind = try {
                     split2[1].toInt()
                 } catch (_: Exception) {
@@ -124,7 +168,7 @@ object IntentUtils {
 
                 permissions.add(
                     Permission(
-                        type,
+                        permissionType,
                         kind
                     )
                 )

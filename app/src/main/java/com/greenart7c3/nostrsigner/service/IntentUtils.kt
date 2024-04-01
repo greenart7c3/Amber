@@ -3,8 +3,11 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Intent
 import android.net.Uri
 import android.provider.Browser
+import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.models.Account
@@ -25,6 +28,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
+
+data class BunkerMetada(
+    val name: String,
+    val url: String,
+    val description: String
+)
 
 object IntentUtils {
     private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?): IntentData {
@@ -244,6 +253,54 @@ object IntentUtils {
         )
     }
 
+    private fun metaDataFromJson(json: String): BunkerMetada {
+        val objectMapper = jacksonObjectMapper()
+            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+
+        return objectMapper.readValue(json, BunkerMetada::class.java)
+    }
+
+    private fun getIntentFromNostrConnect(intent: Intent): IntentData? {
+        try {
+            val data = intent.dataString.toString().replace("nostrconnect://", "")
+            val split = data.split("?")
+            var relay = "wss://relay.nsec.app"
+            var name = ""
+            val pubKey = split.first()
+            val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
+            val splitParsedData = parsedData.split("&")
+            splitParsedData.forEach {
+                val internalSplit = it.split("=")
+                if (internalSplit.first() == "relay") {
+                    relay = internalSplit[1]
+                }
+                if (internalSplit.first() == "metadata") {
+                    val bunkerMetada = metaDataFromJson(internalSplit[1])
+                    name = bunkerMetada.name
+                }
+            }
+
+            return IntentData(
+                "ack",
+                name,
+                SignerType.CONNECT,
+                pubKey,
+                "",
+                null,
+                CompressionType.NONE,
+                ReturnType.EVENT,
+                listOf(),
+                "",
+                mutableStateOf(true),
+                mutableStateOf(false),
+                BunkerRequest("", "connect", arrayOf(pubKey), pubKey)
+            )
+        } catch (e: Exception) {
+            Log.e("nostrconnect", e.message, e)
+            return null
+        }
+    }
+
     fun getIntentData(intent: Intent, packageName: String?): IntentData? {
         if (intent.data == null) {
             return null
@@ -258,7 +315,9 @@ object IntentUtils {
             null
         }
 
-        return if (bunkerRequest != null) {
+        return if (intent.dataString?.startsWith("nostrconnect:") == true) {
+            return getIntentFromNostrConnect(intent)
+        } else if (bunkerRequest != null) {
             getIntentDataFromBunkerRequest(intent, bunkerRequest)
         } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
             getIntentDataFromIntent(intent, packageName)

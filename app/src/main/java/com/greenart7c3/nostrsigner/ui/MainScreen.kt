@@ -147,7 +147,7 @@ fun sendResult(
             "",
             account.keyPair.pubKey.toHexKey(),
             true,
-            ""
+            intentData.bunkerRequest?.secret ?: ""
         ),
         permissions = mutableListOf()
     )

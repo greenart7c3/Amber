@@ -114,7 +114,6 @@ fun EditPermission(
             textAlign = TextAlign.Center,
             fontSize = 18.sp
         )
-
         Text(
             applicationData.secret,
             Modifier

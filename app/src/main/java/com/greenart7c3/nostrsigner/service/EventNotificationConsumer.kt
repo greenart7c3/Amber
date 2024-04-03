@@ -107,7 +107,7 @@ data class BunkerRequest(
                 }.toTypedArray(),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
                 relays = listOf("wss://relay.nsec.app"),
-                secret = ""
+                secret = jsonObject.get("secret")?.asText()?.intern() ?: ""
             )
         }
 

@@ -85,7 +85,11 @@ fun SingleEventHomeScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            applicationEntity = LocalPreferences.appDatabase!!.applicationDao().getByKey(key)?.application
+            applicationEntity = if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
+                LocalPreferences.appDatabase!!.applicationDao().getBySecret(intentData.bunkerRequest.secret)?.application
+            } else {
+                LocalPreferences.appDatabase!!.applicationDao().getByKey(key)?.application
+            }
         }
     }
 

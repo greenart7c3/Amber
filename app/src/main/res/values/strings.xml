@@ -86,4 +86,6 @@
     <string name="biometric_authentication_failed_explainer_with_error">Biometrics failed to authenticate the owner of this phone. Error: %1$s</string>
     <string name="encrypt_and_copy_my_secret_key">Encrypt and copy my secret key</string>
     <string name="delete">Delete</string>
+    <string name="permissions">Permissions</string>
+    <string name="delete_application">Delete Application</string>
 </resources>

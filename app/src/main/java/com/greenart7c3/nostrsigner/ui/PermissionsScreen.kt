@@ -10,12 +10,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.ClearAll
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -45,44 +41,6 @@ import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-
-@Composable
-fun DeleteDialog(
-    onCancel: () -> Unit,
-    onConfirm: () -> Unit
-) {
-    AlertDialog(
-        title = {
-            Text(text = stringResource(R.string.delete))
-        },
-        text = {
-            Text(text = "Are you sure you want to remove this application?")
-        },
-        onDismissRequest = {
-            onCancel()
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm()
-                }
-            ) {
-                Text(text = stringResource(R.string.delete))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onCancel()
-                }
-            ) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        }
-    )
-}
 
 @Composable
 fun PermissionsScreen(
@@ -98,10 +56,9 @@ fun PermissionsScreen(
         mutableListOf<ApplicationEntity>()
     }
     var resetPermissions by remember { mutableStateOf(false) }
+
     var selectedPackage by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    var permission by remember { mutableStateOf<ApplicationEntity?>(null) }
-    var deletePermission by remember { mutableStateOf<ApplicationEntity?>(null) }
 
     LaunchedEffect(lifecycleEvent) {
         if (lifecycleEvent == Lifecycle.Event.ON_RESUME) {
@@ -147,39 +104,6 @@ fun PermissionsScreen(
                 }
             }
         )
-    }
-
-    permission?.let {
-        EditAppDialog(
-            permission = it,
-            onClose = { permission = null }
-        ) { name ->
-            runBlocking {
-                withContext(Dispatchers.IO) {
-                    LocalPreferences.appDatabase!!
-                        .applicationDao()
-                        .changeApplicationName(it.key, name)
-                }
-            }
-            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
-        }
-    }
-
-    deletePermission?.let {
-        DeleteDialog(
-            onCancel = {
-                deletePermission = null
-            }
-        ) {
-            runBlocking {
-                withContext(Dispatchers.IO) {
-                    LocalPreferences.appDatabase!!
-                        .applicationDao()
-                        .delete(it)
-                }
-            }
-            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
-        }
     }
 
     Column(
@@ -231,32 +155,6 @@ fun PermissionsScreen(
                                 onClick = {
                                     navController.navigate("Permission/${applications.elementAt(it).key}")
                                 }
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                permission = applications.elementAt(it)
-                            },
-                            Modifier
-                                .padding(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Edit,
-                                contentDescription = stringResource(R.string.edit_name),
-                                tint = MaterialTheme.colorScheme.onSurface
-                            )
-                        }
-                        IconButton(
-                            onClick = {
-                                deletePermission = applications.elementAt(it)
-                            },
-                            Modifier
-                                .padding(16.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Delete,
-                                contentDescription = stringResource(R.string.delete),
-                                tint = MaterialTheme.colorScheme.onSurface
                             )
                         }
                     }

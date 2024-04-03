@@ -22,23 +22,30 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationChannel
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.Context
+import android.content.Intent
+import android.graphics.drawable.BitmapDrawable
+import android.net.Uri
+import android.service.notification.StatusBarNotification
+import androidx.core.app.NotificationCompat
+import com.greenart7c3.nostrsigner.MainActivity
+import com.greenart7c3.nostrsigner.R
 
 object NotificationUtils {
     private var dmChannel: NotificationChannel? = null
 
-    fun NotificationManager.getOrCreateDMChannel(applicationContext: Context): NotificationChannel {
+    fun getOrCreateDMChannel(applicationContext: Context): NotificationChannel {
         if (dmChannel != null) return dmChannel!!
 
         dmChannel =
             NotificationChannel(
-                "PrivateMessagesID",
-                "Private Messages",
-                NotificationManager.IMPORTANCE_DEFAULT
+                "BunkerID",
+                "Bunker Notifications",
+                NotificationManager.IMPORTANCE_HIGH
             )
                 .apply {
-                    description =
-                        "test"
+                    description = "Notifications for Approving or Rejecting Bunker requests."
                 }
 
         // Register the channel with the system
@@ -50,8 +57,92 @@ object NotificationUtils {
         return dmChannel!!
     }
 
-    /** Cancels all notifications. */
-    fun NotificationManager.cancelNotifications() {
-        cancelAll()
+    fun NotificationManager.sendNotification(
+        id: String,
+        messageBody: String,
+        messageTitle: String,
+        uri: String,
+        channelId: String,
+        notificationGroupKey: String,
+        applicationContext: Context,
+        bunkerRequest: BunkerRequest
+    ) {
+        sendNotification(
+            id = id,
+            messageBody = messageBody,
+            messageTitle = messageTitle,
+            picture = null,
+            uri = uri,
+            channelId,
+            notificationGroupKey,
+            applicationContext = applicationContext,
+            bunkerRequest
+        )
+    }
+
+    private fun NotificationManager.sendNotification(
+        id: String,
+        messageBody: String,
+        messageTitle: String,
+        picture: BitmapDrawable?,
+        uri: String,
+        channelId: String,
+        notificationGroupKey: String,
+        applicationContext: Context,
+        bunkerRequest: BunkerRequest
+    ) {
+        val notId = id.hashCode()
+        val notifications: Array<StatusBarNotification> = getActiveNotifications()
+        for (notification in notifications) {
+            if (notification.id == notId) {
+                return
+            }
+        }
+
+        val contentIntent = Intent(applicationContext, MainActivity::class.java).apply { data = Uri.parse(uri) }
+        contentIntent.putExtra("bunker", bunkerRequest.toJson())
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+        val contentPendingIntent = PendingIntent.getActivity(
+            applicationContext,
+            notId,
+            contentIntent,
+            PendingIntent.FLAG_MUTABLE
+        )
+        // Build the notification
+        val builderPublic = NotificationCompat.Builder(
+            applicationContext,
+            channelId
+        )
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
+            .setColor(0xFFBF00)
+            .setContentTitle(messageTitle)
+            .setContentText("new event to sign")
+            .setLargeIcon(picture?.bitmap)
+            // .setGroup(messageTitle)
+            // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
+            // activate this
+            .setContentIntent(contentPendingIntent)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        // Build the notification
+        val builder = NotificationCompat.Builder(
+            applicationContext,
+            channelId
+        )
+            .setSmallIcon(R.mipmap.ic_launcher_foreground)
+            .setColor(0xFFBF00)
+            .setContentTitle(messageTitle)
+            .setContentText(messageBody)
+            .setLargeIcon(picture?.bitmap)
+            // .setGroup(messageTitle)
+            // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
+            // activate this
+            .setContentIntent(contentPendingIntent)
+            .setPublicVersion(builderPublic.build())
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
+            .setAutoCancel(true)
+
+        notify(notId, builder.build())
     }
 }

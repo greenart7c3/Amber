@@ -21,14 +21,11 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationManager
-import android.app.PendingIntent
 import android.content.Context
-import android.content.Intent
-import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
-import android.service.notification.StatusBarNotification
 import android.util.Log
-import androidx.core.app.NotificationCompat
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -40,11 +37,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.MainActivity
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -110,9 +108,9 @@ data class BunkerRequest(
                     it.asText().intern()
                 }.toTypedArray(),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
-                relays = jsonObject.get("relays").asIterable().toList().map {
+                relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
                     it.asText().intern()
-                },
+                } ?: listOf("wss://relay.nsec.app"),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: ""
             )
         }
@@ -193,10 +191,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val type = IntentUtils.getTypeFromBunker(bunkerRequest)
             val data = IntentUtils.getDataFromBunker(bunkerRequest)
 
+            var amberEvent: AmberEvent? = null
+
             val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
                 bunkerRequest.params.first()
             } else if (bunkerRequest.method == "sign_event") {
-                val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
+                amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
                 amberEvent.pubKey
             } else {
                 ""
@@ -215,6 +215,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 return@nip04Decrypt
             }
 
+            var applicationWithSecret: ApplicationWithPermissions? = null
             if (type == SignerType.CONNECT) {
                 val secret = try {
                     bunkerRequest.params[1]
@@ -222,7 +223,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     ""
                 }
                 bunkerRequest.secret = secret
-                val applicationWithSecret = LocalPreferences.appDatabase!!.applicationDao().getBySecret(secret)
+                applicationWithSecret = LocalPreferences.appDatabase!!.applicationDao().getBySecret(secret)
                 if (applicationWithSecret == null || secret.isBlank()) {
                     IntentUtils.sendBunkerResponse(
                         acc,
@@ -242,15 +243,31 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 bunkerRequest.localKey
             )
 
+            var name = event.pubKey.toShortenHex()
+            if (permission != null) {
+                name = permission.application.name
+            } else if (applicationWithSecret != null) {
+                name = applicationWithSecret.application.name
+            }
+
+            val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
+            var message = "$name requests $bunkerPermission"
+            if (type == SignerType.SIGN_EVENT) {
+                message = "$name wants you to sign a $bunkerPermission"
+            }
+            if (type == SignerType.CONNECT) {
+                message = "$name $bunkerPermission"
+            }
+
             cursor.use { localCursor ->
                 if (localCursor == null) {
                     notificationManager()
                         .sendNotification(
                             event.id,
-                            "${event.pubKey.toShortenHex()} wants you to sign an event",
+                            message,
                             "Bunker",
                             "nostrsigner:",
-                            "PrivateMessagesID",
+                            "BunkerID",
                             groupKey,
                             applicationContext,
                             bunkerRequest
@@ -279,10 +296,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         notificationManager()
                             .sendNotification(
                                 event.id,
-                                "${event.pubKey.toShortenHex()} wants you to sign an event",
+                                message,
                                 "Bunker",
                                 "nostrsigner:",
-                                "PrivateMessagesID",
+                                "BunkerID",
                                 groupKey,
                                 applicationContext,
                                 bunkerRequest
@@ -291,95 +308,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 }
             }
         }
-    }
-
-    private fun NotificationManager.sendNotification(
-        id: String,
-        messageBody: String,
-        messageTitle: String,
-        uri: String,
-        channelId: String,
-        notificationGroupKey: String,
-        applicationContext: Context,
-        bunkerRequest: BunkerRequest
-    ) {
-        sendNotification(
-            id = id,
-            messageBody = messageBody,
-            messageTitle = messageTitle,
-            picture = null,
-            uri = uri,
-            channelId,
-            notificationGroupKey,
-            applicationContext = applicationContext,
-            bunkerRequest
-        )
-    }
-
-    private fun NotificationManager.sendNotification(
-        id: String,
-        messageBody: String,
-        messageTitle: String,
-        picture: BitmapDrawable?,
-        uri: String,
-        channelId: String,
-        notificationGroupKey: String,
-        applicationContext: Context,
-        bunkerRequest: BunkerRequest
-    ) {
-        val notId = id.hashCode()
-        val notifications: Array<StatusBarNotification> = getActiveNotifications()
-        for (notification in notifications) {
-            if (notification.id == notId) {
-                return
-            }
-        }
-
-        val contentIntent = Intent(applicationContext, MainActivity::class.java).apply { data = Uri.parse(uri) }
-        contentIntent.putExtra("bunker", bunkerRequest.toJson())
-        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
-        val contentPendingIntent = PendingIntent.getActivity(
-            applicationContext,
-            notId,
-            contentIntent,
-            PendingIntent.FLAG_MUTABLE
-        )
-        // Build the notification
-        val builderPublic = NotificationCompat.Builder(
-            applicationContext,
-            channelId
-        )
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
-            .setColor(0xFFBF00)
-            .setContentTitle(messageTitle)
-            .setContentText("new event to sign")
-            .setLargeIcon(picture?.bitmap)
-            // .setGroup(messageTitle)
-            // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
-            // activate this
-            .setContentIntent(contentPendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-
-        // Build the notification
-        val builder = NotificationCompat.Builder(
-            applicationContext,
-            channelId
-        )
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
-            .setColor(0xFFBF00)
-            .setContentTitle(messageTitle)
-            .setContentText(messageBody)
-            .setLargeIcon(picture?.bitmap)
-            // .setGroup(messageTitle)
-            // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
-            // activate this
-            .setContentIntent(contentPendingIntent)
-            .setPublicVersion(builderPublic.build())
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-
-        notify(notId, builder.build())
     }
 
     private fun notificationManager(): NotificationManager {

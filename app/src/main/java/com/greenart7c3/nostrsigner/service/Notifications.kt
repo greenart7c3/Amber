@@ -1,10 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.app.NotificationManager
 import android.content.Intent
 import android.util.Log
 import android.util.LruCache
-import androidx.core.content.ContextCompat
 import com.google.firebase.messaging.FirebaseMessagingService
 import com.google.firebase.messaging.RemoteMessage
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -52,13 +50,9 @@ class Notifications : FirebaseMessagingService() {
     private suspend fun receiveIfNew(event: GiftWrapEvent) {
         if (eventCache.get(event.id) == null) {
             eventCache.put(event.id, event.id)
+            getOrCreateDMChannel(applicationContext)
             EventNotificationConsumer(applicationContext).consume(event)
-            notificationManager().getOrCreateDMChannel(applicationContext)
         }
-    }
-
-    fun notificationManager(): NotificationManager {
-        return ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
     }
 
     override fun onNewToken(token: String) {

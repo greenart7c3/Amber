@@ -117,6 +117,7 @@ data class Permission(
                     else -> "Event kind $kind"
                 }
             }
+            "connect" -> "would like your permission to read your public key and sign events on your behalf"
             else -> type
         }
     }

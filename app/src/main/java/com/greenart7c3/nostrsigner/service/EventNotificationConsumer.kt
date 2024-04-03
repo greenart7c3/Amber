@@ -77,6 +77,8 @@ data class BunkerRequest(
         if (method != other.method) return false
         if (!params.contentEquals(other.params)) return false
         if (localKey != other.localKey) return false
+        if (relays != other.relays) return false
+        if (secret != other.secret) return false
 
         return true
     }
@@ -86,6 +88,8 @@ data class BunkerRequest(
         result = 31 * result + method.hashCode()
         result = 31 * result + params.contentHashCode()
         result = 31 * result + localKey.hashCode()
+        result = 31 * result + relays.hashCode()
+        result = 31 * result + secret.hashCode()
         return result
     }
 
@@ -106,7 +110,9 @@ data class BunkerRequest(
                     it.asText().intern()
                 }.toTypedArray(),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
-                relays = listOf("wss://relay.nsec.app"),
+                relays = jsonObject.get("relays").asIterable().toList().map {
+                    it.asText().intern()
+                },
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: ""
             )
         }

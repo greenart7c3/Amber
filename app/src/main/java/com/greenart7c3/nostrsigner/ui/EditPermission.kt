@@ -13,10 +13,13 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,12 +34,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -47,7 +53,9 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -62,6 +70,7 @@ fun EditPermission(
     selectedPackage: String,
     navController: NavController
 ) {
+    val clipboardManager = LocalClipboardManager.current
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
@@ -102,6 +111,19 @@ fun EditPermission(
         }
     }
 
+    var showDialog by remember {
+        mutableStateOf(false)
+    }
+
+    val bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app&secret=${applicationData.secret}"
+    if (showDialog) {
+        QrCodeDialog(
+            content = bunkerUri
+        ) {
+            showDialog = false
+        }
+    }
+
     Column(
         modifier = modifier
     ) {
@@ -114,15 +136,38 @@ fun EditPermission(
             textAlign = TextAlign.Center,
             fontSize = 18.sp
         )
-        Text(
-            applicationData.secret,
-            Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            fontSize = 18.sp
-        )
+
+        if (!applicationData.isConnected) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    bunkerUri,
+                    Modifier
+                        .weight(0.9f)
+                        .padding(8.dp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis
+                )
+                IconButton(
+                    onClick = {
+                        clipboardManager.setText(AnnotatedString(bunkerUri))
+                    }
+                ) {
+                    Icon(Icons.Default.ContentPaste, stringResource(R.string.copy_to_clipboard))
+                }
+                IconButton(
+                    onClick = {
+                        showDialog = true
+                    }
+                ) {
+                    Icon(Icons.Default.QrCode, stringResource(R.string.show_qr_code))
+                }
+            }
+        }
         OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()

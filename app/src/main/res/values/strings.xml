@@ -88,4 +88,5 @@
     <string name="delete">Delete</string>
     <string name="permissions">Permissions</string>
     <string name="delete_application">Delete Application</string>
+    <string name="copy_to_clipboard">Copy to clipboard</string>
 </resources>

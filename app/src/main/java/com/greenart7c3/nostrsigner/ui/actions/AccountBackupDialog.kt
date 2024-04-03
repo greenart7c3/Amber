@@ -284,7 +284,7 @@ private fun NSecQrButton(
 }
 
 @Composable
-private fun QrCodeDialog(content: String, onClose: () -> Unit) {
+fun QrCodeDialog(content: String, onClose: () -> Unit) {
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false)

@@ -151,7 +151,15 @@ object Client : RelayPool.Listener {
         val relay = Relay(url, true, true, feedTypes ?: emptySet())
         RelayPool.addRelay(relay)
 
-        relay.connectAndRun {
+        relay.connectAndRun(
+            onOk = {
+                GlobalScope.launch(Dispatchers.IO) {
+                    if (onDone != null) {
+                        onDone()
+                    }
+                }
+            }
+        ) {
             allSubscriptions().forEach { relay.sendFilter(requestId = it) }
 
             onConnected(relay)

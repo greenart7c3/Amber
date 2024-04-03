@@ -63,6 +63,7 @@ class Relay(
     private var socket: WebSocket? = null
     private var isReady: Boolean = false
     private var usingCompression: Boolean = false
+    private var onOk: (() -> Unit)? = null
 
     var eventDownloadCounterInBytes = 0
     private var eventUploadCounterInBytes = 0
@@ -99,7 +100,8 @@ class Relay(
 
     private var connectingBlock = AtomicBoolean()
 
-    fun connectAndRun(onConnected: (Relay) -> Unit) {
+    fun connectAndRun(onOk: (() -> Unit)? = null, onConnected: (Relay) -> Unit) {
+        this.onOk = onOk
         Log.d("Relay", "Relay.connect $url hasProxy: ${this.httpClient.proxy != null}")
         // BRB is crashing OkHttp Deflater object :(
         if (url.contains("brb.io")) return
@@ -296,6 +298,7 @@ class Relay(
 
                     Log.w("Relay", "Relay on OK $url, $eventId, $success, $message")
                     it.onSendResponse(this@Relay, eventId, success, message)
+                    onOk?.let { it() }
                 }
             "AUTH" ->
                 listeners.forEach {

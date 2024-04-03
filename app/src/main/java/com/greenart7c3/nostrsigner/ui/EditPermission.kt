@@ -114,6 +114,16 @@ fun EditPermission(
             textAlign = TextAlign.Center,
             fontSize = 18.sp
         )
+
+        Text(
+            applicationData.secret,
+            Modifier
+                .fillMaxWidth()
+                .padding(8.dp),
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+            fontSize = 18.sp
+        )
         OutlinedTextField(
             modifier = Modifier
                 .fillMaxWidth()

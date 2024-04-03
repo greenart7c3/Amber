@@ -151,23 +151,13 @@ object Client : RelayPool.Listener {
         val relay = Relay(url, true, true, feedTypes ?: emptySet())
         RelayPool.addRelay(relay)
 
-        relay.connectAndRun(
-            onOk = {
-                GlobalScope.launch(Dispatchers.IO) {
-                    relay.disconnect()
-                    RelayPool.removeRelay(relay)
-                    if (onDone != null) {
-                        onDone()
-                    }
-                }
-            }
-        ) {
+        relay.connectAndRun {
             allSubscriptions().forEach { relay.sendFilter(requestId = it) }
 
             onConnected(relay)
 
             GlobalScope.launch(Dispatchers.IO) {
-                delay(10000) // waits for a reply
+                delay(60000) // waits for a reply
                 if (relay.isConnected()) {
                     relay.disconnect()
                     RelayPool.removeRelay(relay)

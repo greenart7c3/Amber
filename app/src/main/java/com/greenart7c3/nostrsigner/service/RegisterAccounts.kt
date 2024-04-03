@@ -24,7 +24,10 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.nostrsigner
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.RelayAuthEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -61,20 +64,21 @@ class RegisterAccounts(
         notificationToken: String,
         onReady: (List<RelayAuthEvent>) -> Unit
     ) {
-        val readyToSend =
-            accounts.mapNotNull {
-                val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
-                if (acc != null) {
-                    val relayToUse = "wss://relay.nsec.app" // TODO: do not use a fixed relay
-                    if (relayToUse != null) {
-                        Pair(acc, relayToUse)
-                    } else {
-                        null
+        val readyToSend: MutableList<Pair<Account, String>> = mutableListOf()
+        accounts.forEach {
+            val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
+            if (acc != null) {
+                LocalPreferences.appDatabase = AppDatabase.getDatabase(nostrsigner.instance.applicationContext)
+                val permissions = LocalPreferences.appDatabase!!.applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
+                permissions.forEach { permission ->
+                    permission.relays.forEach { relay ->
+                        readyToSend.add(
+                            Pair(acc, relay)
+                        )
                     }
-                } else {
-                    null
                 }
             }
+        }
 
         val listOfAuthEvents = mutableListOf<RelayAuthEvent>()
         recursiveAuthCreation(
@@ -85,7 +89,7 @@ class RegisterAccounts(
         )
     }
 
-    fun postRegistrationEvent(events: List<RelayAuthEvent>) {
+    private fun postRegistrationEvent(events: List<RelayAuthEvent>) {
         try {
             val jsonObject =
                 """{
@@ -105,7 +109,7 @@ class RegisterAccounts(
 
             val client = HttpClientManager.getHttpClient()
 
-            val isSucess = client.newCall(request).execute().use { it.isSuccessful }
+            client.newCall(request).execute().use { it.isSuccessful }
         } catch (e: java.lang.Exception) {
             if (e is CancellationException) throw e
             val tag = "FirebaseMsgService"

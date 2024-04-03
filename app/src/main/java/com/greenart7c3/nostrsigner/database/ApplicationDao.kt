@@ -9,11 +9,14 @@ import androidx.room.Transaction
 
 @Dao
 interface ApplicationDao {
-    @Query("SELECT * FROM application")
-    fun getAll(): List<ApplicationEntity>
+    @Query("SELECT * FROM application where pubKey = :pubKey")
+    fun getAll(pubKey: String): List<ApplicationEntity>
 
     @Query("SELECT * FROM application WHERE `key` = :key")
-    fun getByKey(key: String): ApplicationEntity
+    fun getByKey(key: String): ApplicationWithPermissions?
+
+    @Query("SELECT * FROM application WHERE secret = :secret")
+    fun getBySecret(secret: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
     fun getAllByKey(key: String): List<ApplicationPermissionsEntity>

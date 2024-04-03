@@ -28,6 +28,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
+import java.util.UUID
 
 data class BunkerMetada(
     val name: String,
@@ -130,6 +131,7 @@ object IntentUtils {
         account: Account,
         localKey: String,
         bunkerResponse: BunkerResponse,
+        relays: List<String>,
         onSign: (() -> Unit)? = null,
         onDone: () -> Unit
     ) {
@@ -147,7 +149,9 @@ object IntentUtils {
                     onSign()
                 }
                 GlobalScope.launch(Dispatchers.IO) {
-                    Client.send(it, relay = "wss://relay.nsec.app", onDone = onDone)
+                    relays.forEach { relay ->
+                        Client.send(it, relay = relay, onDone = onDone)
+                    }
                 }
             }
         }
@@ -264,7 +268,7 @@ object IntentUtils {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
-            var relay = "wss://relay.nsec.app"
+            val relays: MutableList<String> = mutableListOf()
             var name = ""
             val pubKey = split.first()
             val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
@@ -272,7 +276,7 @@ object IntentUtils {
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
                 if (internalSplit.first() == "relay") {
-                    relay = internalSplit[1]
+                    relays.add(internalSplit[1])
                 }
                 if (internalSplit.first() == "metadata") {
                     val bunkerMetada = metaDataFromJson(internalSplit[1])
@@ -293,7 +297,14 @@ object IntentUtils {
                 "",
                 mutableStateOf(true),
                 mutableStateOf(false),
-                BunkerRequest("", "connect", arrayOf(pubKey), pubKey)
+                BunkerRequest(
+                    UUID.randomUUID().toString().substring(0, 4),
+                    "connect",
+                    arrayOf(pubKey),
+                    pubKey,
+                    relays,
+                    ""
+                )
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)

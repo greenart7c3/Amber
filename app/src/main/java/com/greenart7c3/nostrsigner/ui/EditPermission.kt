@@ -59,7 +59,7 @@ fun EditPermission(
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
     var applicationData by remember {
-        mutableStateOf<ApplicationEntity>(ApplicationEntity(selectedPackage, ""))
+        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, ""))
     }
 
     val scope = rememberCoroutineScope()
@@ -67,7 +67,7 @@ fun EditPermission(
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
             permissions.addAll(LocalPreferences.appDatabase!!.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            applicationData = LocalPreferences.appDatabase!!.applicationDao().getByKey(selectedPackage)
+            applicationData = LocalPreferences.appDatabase!!.applicationDao().getByKey(selectedPackage)!!.application
         }
     }
 

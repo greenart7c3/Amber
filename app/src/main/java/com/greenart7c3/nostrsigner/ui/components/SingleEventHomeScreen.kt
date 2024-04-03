@@ -35,10 +35,12 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 
 fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Context) {
+    val relays = bunkerRequest.relays.ifEmpty { listOf("wss://relay.nsec.app") }
     IntentUtils.sendBunkerResponse(
         account,
         bunkerRequest.localKey,
-        BunkerResponse(bunkerRequest.id, "", "user rejected")
+        BunkerResponse(bunkerRequest.id, "", "user rejected"),
+        relays
     ) {
         context.getAppCompatActivity()?.intent = null
         context.getAppCompatActivity()?.finish()
@@ -83,7 +85,7 @@ fun SingleEventHomeScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            applicationEntity = LocalPreferences.appDatabase!!.applicationDao().getByKey(key)
+            applicationEntity = LocalPreferences.appDatabase!!.applicationDao().getByKey(key)?.application
         }
     }
 

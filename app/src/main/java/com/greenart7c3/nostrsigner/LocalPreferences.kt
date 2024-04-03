@@ -205,7 +205,7 @@ object LocalPreferences {
         }
     }
 
-    private suspend fun convertToDatabase(map: MutableMap<String, Boolean>) = withContext(Dispatchers.IO) {
+    private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String) = withContext(Dispatchers.IO) {
         map.forEach {
             val splitData = it.key.split("-")
             appDatabase?.applicationDao()?.deletePermissions(splitData.first())
@@ -215,6 +215,13 @@ object LocalPreferences {
             appDatabase?.applicationDao()?.insertApplication(
                 ApplicationEntity(
                     splitData.first(),
+                    "",
+                    emptyList(),
+                    "",
+                    "",
+                    "",
+                    pubKey,
+                    true,
                     ""
                 )
             )
@@ -248,7 +255,7 @@ object LocalPreferences {
                     outputMap[key] = value
                 }
             }
-            runBlocking { convertToDatabase(outputMap) }
+            runBlocking { convertToDatabase(outputMap, pubKey) }
             this.edit().apply {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()

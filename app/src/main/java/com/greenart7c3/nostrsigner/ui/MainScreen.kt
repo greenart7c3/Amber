@@ -73,6 +73,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
@@ -90,6 +91,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.Base64
+import java.util.UUID
 import java.util.zip.GZIPOutputStream
 
 data class BunkerResponse(
@@ -113,6 +115,17 @@ fun sendResult(
     permissions: List<Permission>? = null,
     appName: String? = null
 ) {
+    if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                val application = LocalPreferences.appDatabase?.applicationDao()?.getBySecret(intentData.bunkerRequest.secret)
+                application?.let {
+                    LocalPreferences.appDatabase?.applicationDao()?.delete(it.application)
+                }
+            }
+        }
+    }
+
     val activity = context.getAppCompatActivity()
     if (intentData.type == SignerType.CONNECT || (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY)) {
         runBlocking {
@@ -122,10 +135,23 @@ fun sendResult(
         }
     }
 
-    val application = ApplicationWithPermissions(
-        application = ApplicationEntity(key, appName ?: ""),
+    val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
+    val savedApplication = runBlocking { withContext(Dispatchers.IO) { LocalPreferences.appDatabase?.applicationDao()?.getByKey(key) } }
+    val application = savedApplication ?: ApplicationWithPermissions(
+        application = ApplicationEntity(
+            key,
+            appName ?: "",
+            relays,
+            "",
+            "",
+            "",
+            account.keyPair.pubKey.toHexKey(),
+            true,
+            ""
+        ),
         permissions = mutableListOf()
     )
+    application.application.isConnected = true
 
     permissions?.filter { it.checked }?.forEach {
         application.permissions.add(
@@ -155,10 +181,13 @@ fun sendResult(
             account,
             intentData.bunkerRequest.localKey,
             BunkerResponse(intentData.bunkerRequest.id, event, null),
+            relays,
             onSign = {
                 runBlocking {
                     withContext(Dispatchers.IO) {
                         LocalPreferences.appDatabase?.applicationDao()?.insertApplicationWithPermissions(application)
+                        PushNotificationUtils.hasInit = false
+                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
                     }
                 }
             }
@@ -335,8 +364,30 @@ fun MainScreen(
         floatingActionButton = {
             if (navBackStackEntry?.destination?.route == "Permissions") {
                 GoToTop {
-                    val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
+                    val secret = UUID.randomUUID().toString()
+                    val application = ApplicationEntity(
+                        secret,
+                        "",
+                        listOf("wss://relay.nsec.app"),
+                        "",
+                        "",
+                        "",
+                        account.keyPair.pubKey.toHexKey(),
+                        false,
+                        secret
+                    )
+                    scope.launch(Dispatchers.IO) {
+                        LocalPreferences.appDatabase?.applicationDao()?.insertApplication(
+                            application
+                        )
+                    }
+
+                    val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app&secret=${application.secret}"
                     clipboardManager.setText(AnnotatedString(bunkerUrl))
+                    scope.launch(Dispatchers.Main) {
+                        navController.popBackStack()
+                        accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                    }
                 }
             }
         },

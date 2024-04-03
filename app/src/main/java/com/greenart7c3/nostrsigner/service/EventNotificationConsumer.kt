@@ -44,6 +44,7 @@ import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -58,7 +59,9 @@ data class BunkerRequest(
     val id: String,
     val method: String,
     val params: Array<String>,
-    var localKey: String
+    var localKey: String,
+    var relays: List<String>,
+    var secret: String
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
@@ -102,7 +105,9 @@ data class BunkerRequest(
                 params = jsonObject.get("params").asIterable().toList().map {
                     it.asText().intern()
                 }.toTypedArray(),
-                localKey = jsonObject.get("localKey")?.asText()?.intern() ?: ""
+                localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
+                relays = listOf("wss://relay.nsec.app"),
+                secret = ""
             )
         }
 
@@ -191,6 +196,38 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
+            val permission = LocalPreferences.appDatabase!!.applicationDao().getByKey(bunkerRequest.localKey)
+            val relays = permission?.application?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: bunkerRequest.relays
+
+            if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
+                IntentUtils.sendBunkerResponse(
+                    acc,
+                    bunkerRequest.localKey,
+                    BunkerResponse(bunkerRequest.id, "ack", null),
+                    relays
+                ) { }
+                return@nip04Decrypt
+            }
+
+            if (type == SignerType.CONNECT) {
+                val secret = try {
+                    bunkerRequest.params[1]
+                } catch (_: Exception) {
+                    ""
+                }
+                bunkerRequest.secret = secret
+                val applicationWithSecret = LocalPreferences.appDatabase!!.applicationDao().getBySecret(secret)
+                if (applicationWithSecret == null || secret.isBlank()) {
+                    IntentUtils.sendBunkerResponse(
+                        acc,
+                        bunkerRequest.localKey,
+                        BunkerResponse(bunkerRequest.id, "", "invalid secret"),
+                        relays
+                    ) { }
+                    return@nip04Decrypt
+                }
+            }
+
             val cursor = applicationContext.contentResolver.query(
                 Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
                 arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
@@ -218,7 +255,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             IntentUtils.sendBunkerResponse(
                                 acc,
                                 bunkerRequest.localKey,
-                                BunkerResponse(bunkerRequest.id, "", "user rejected")
+                                BunkerResponse(bunkerRequest.id, "", "user rejected"),
+                                relays
                             ) { }
                         } else {
                             val index = localCursor.getColumnIndex("event")
@@ -227,7 +265,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             IntentUtils.sendBunkerResponse(
                                 acc,
                                 bunkerRequest.localKey,
-                                BunkerResponse(bunkerRequest.id, result, null)
+                                BunkerResponse(bunkerRequest.id, result, null),
+                                relays
                             ) { }
                         }
                     } else {

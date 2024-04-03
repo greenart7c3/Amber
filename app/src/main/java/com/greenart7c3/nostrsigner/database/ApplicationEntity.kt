@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
+import androidx.room.TypeConverter
 
 @Entity(
     tableName = "application",
@@ -24,7 +25,14 @@ import androidx.room.Relation
 data class ApplicationEntity(
     @PrimaryKey(autoGenerate = false)
     val key: String,
-    val name: String
+    val name: String,
+    val relays: List<String>,
+    val url: String,
+    val icon: String,
+    val description: String,
+    val pubKey: String,
+    var isConnected: Boolean,
+    val secret: String
 )
 
 data class ApplicationWithPermissions(
@@ -35,3 +43,15 @@ data class ApplicationWithPermissions(
     )
     val permissions: MutableList<ApplicationPermissionsEntity>
 )
+
+class Converters {
+    @TypeConverter
+    fun fromString(stringListString: String): List<String> {
+        return stringListString.split(",").map { it }
+    }
+
+    @TypeConverter
+    fun toString(stringList: List<String>): String {
+        return stringList.joinToString(separator = ",")
+    }
+}

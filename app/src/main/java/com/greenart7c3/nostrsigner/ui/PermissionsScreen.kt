@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.graphics.drawable.Icon
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -39,8 +38,10 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -108,7 +109,7 @@ fun PermissionsScreen(
         }
         scope.launch(Dispatchers.IO) {
             applications.clear()
-            applications.addAll(AppDatabase.getDatabase(context).applicationDao().getAll())
+            applications.addAll(AppDatabase.getDatabase(context).applicationDao().getAll(localAccount.keyPair.pubKey.toHexKey()))
         }
     }
 
@@ -224,7 +225,7 @@ fun PermissionsScreen(
                         ) {
                             val localPermission = applications.elementAt(it)
                             IconRow(
-                                title = localPermission.name.ifBlank { localPermission.key },
+                                title = localPermission.name.ifBlank { localPermission.key.toShortenHex() },
                                 icon = Icons.AutoMirrored.Default.ArrowForward,
                                 tint = MaterialTheme.colorScheme.onBackground,
                                 onClick = {

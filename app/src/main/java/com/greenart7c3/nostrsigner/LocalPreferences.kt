@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import androidx.compose.runtime.Immutable
-import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -176,8 +175,10 @@ object LocalPreferences {
         saveToEncryptedStorage(account)
     }
 
-    suspend fun deleteSavedApps() = withContext(Dispatchers.IO) {
-        appDatabase?.clearAllTables()
+    suspend fun deleteSavedApps(applications: List<ApplicationEntity>) = withContext(Dispatchers.IO) {
+        applications.forEach {
+            appDatabase?.applicationDao()?.delete(it)
+        }
     }
 
     fun saveToEncryptedStorage(account: Account) {

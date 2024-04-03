@@ -78,8 +78,6 @@ fun EditPermission(
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
             permissions.addAll(LocalPreferences.appDatabase!!.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            permissions.addAll(LocalPreferences.appDatabase!!.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            permissions.addAll(LocalPreferences.appDatabase!!.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
             applicationData = LocalPreferences.appDatabase!!.applicationDao().getByKey(selectedPackage)!!.application
         }
     }

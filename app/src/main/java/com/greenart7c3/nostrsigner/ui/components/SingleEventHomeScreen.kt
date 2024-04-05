@@ -68,19 +68,21 @@ fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, va
                 permissions = mutableListOf()
             )
 
-            application.permissions.add(
-                ApplicationPermissionsEntity(
-                    null,
-                    key,
-                    intentData.type.toString(),
-                    kind,
-                    value
+            if (application.permissions.none { it.type == intentData.type.toString() && it.kind == kind }) {
+                application.permissions.add(
+                    ApplicationPermissionsEntity(
+                        null,
+                        key,
+                        intentData.type.toString(),
+                        kind,
+                        value
+                    )
                 )
-            )
 
-            LocalPreferences.appDatabase!!
-                .applicationDao()
-                .insertApplicationWithPermissions(application)
+                LocalPreferences.appDatabase!!
+                    .applicationDao()
+                    .insertApplicationWithPermissions(application)
+            }
         }
     }
 }

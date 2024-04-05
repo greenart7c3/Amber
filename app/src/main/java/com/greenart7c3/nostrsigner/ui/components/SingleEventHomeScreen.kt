@@ -15,6 +15,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -47,22 +48,39 @@ fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Con
     }
 }
 
-fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean) {
+fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean, appName: String, account: Account) {
     runBlocking {
         withContext(Dispatchers.IO) {
+            val application = LocalPreferences.appDatabase!!
+                .applicationDao()
+                .getByKey(key) ?: ApplicationWithPermissions(
+                application = ApplicationEntity(
+                    key,
+                    appName,
+                    listOf(),
+                    "",
+                    "",
+                    "",
+                    account.keyPair.pubKey.toHexKey(),
+                    true,
+                    intentData.bunkerRequest?.secret ?: ""
+                ),
+                permissions = mutableListOf()
+            )
+
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    key,
+                    intentData.type.toString(),
+                    kind,
+                    value
+                )
+            )
+
             LocalPreferences.appDatabase!!
                 .applicationDao()
-                .insertPermissions(
-                    listOf(
-                        ApplicationPermissionsEntity(
-                            null,
-                            key,
-                            intentData.type.toString(),
-                            kind,
-                            value
-                        )
-                    )
-                )
+                .insertApplicationWithPermissions(application)
         }
     }
 }
@@ -143,7 +161,7 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        acceptOrRejectPermission(key, intentData, null, false)
+                        acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account)
                     }
 
                     if (intentData.bunkerRequest != null) {
@@ -270,7 +288,7 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        acceptOrRejectPermission(key, intentData, null, false)
+                        acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account)
                     }
 
                     if (intentData.bunkerRequest != null) {
@@ -370,7 +388,7 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        acceptOrRejectPermission(key, intentData, event.kind, false)
+                        acceptOrRejectPermission(key, intentData, event.kind, false, applicationName ?: appName, account)
                     }
 
                     if (intentData.bunkerRequest != null) {

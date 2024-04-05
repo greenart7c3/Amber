@@ -262,7 +262,9 @@ fun MultiEventHomeScreen(
                                                 packageName,
                                                 intentData,
                                                 localEvent.kind,
-                                                intentData.rememberMyChoice.value
+                                                intentData.rememberMyChoice.value,
+                                                applicationName ?: packageName,
+                                                localAccount
                                             )
                                         }
                                         localAccount.signer.sign<Event>(
@@ -285,7 +287,9 @@ fun MultiEventHomeScreen(
                                                 packageName,
                                                 intentData,
                                                 null,
-                                                intentData.rememberMyChoice.value
+                                                intentData.rememberMyChoice.value,
+                                                applicationName ?: packageName,
+                                                localAccount
                                             )
                                         }
                                         val signature = AmberUtils.encryptOrDecryptData(

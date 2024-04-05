@@ -103,7 +103,7 @@ class RegisterAccounts(
             val request =
                 Request.Builder()
                     .header("User-Agent", "Amber/${BuildConfig.VERSION_NAME}")
-                    .url("http://10.0.2.2:3000/register") // TODO: change to production url
+                    .url("https://ctbs2dn5-3000.brs.devtunnels.ms/register") // TODO: change to production url
                     .post(body)
                     .build()
 

@@ -15,8 +15,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -32,11 +34,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -45,14 +51,18 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -265,16 +275,99 @@ fun sendResult(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GoToTop(goToTop: () -> Unit) {
-    FloatingActionButton(
-        onClick = goToTop,
-        shape = CircleShape
-    ) {
-        Icon(
-            Icons.Default.Add,
-            contentDescription = stringResource(R.string.connect_app)
-        )
+fun GoToTop(
+    accountStateViewModel: AccountStateViewModel,
+    account: Account,
+    goToTop: () -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var dialogOpen by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+
+    if (dialogOpen) {
+        SimpleQrCodeScanner {
+            dialogOpen = false
+            if (!it.isNullOrEmpty()) {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(it)
+                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                context.getAppCompatActivity()?.startActivity(intent)
+                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+            }
+        }
+    }
+
+    Column {
+        if (expanded) {
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
+                    PlainTooltip {
+                        Text("Connect to a new application")
+                    }
+                },
+                state = rememberTooltipState()
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        dialogOpen = true
+                        expanded = false
+                    },
+                    modifier = Modifier.size(55.dp),
+                    shape = CircleShape
+                ) {
+                    Text(
+                        text = "Qr Code",
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            TooltipBox(
+                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
+                tooltip = {
+                    PlainTooltip {
+                        Text("Creates a new application")
+                    }
+                },
+                state = rememberTooltipState()
+            ) {
+                FloatingActionButton(
+                    onClick = {
+                        goToTop()
+                        expanded = false
+                    },
+                    modifier = Modifier.size(55.dp),
+                    shape = CircleShape
+                ) {
+                    Text(
+                        text = "New App",
+                        color = Color.White,
+                        textAlign = TextAlign.Center,
+                        fontSize = 12.sp
+                    )
+                }
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+        }
+
+        FloatingActionButton(
+            onClick = {
+                expanded = !expanded
+            },
+            shape = CircleShape
+        ) {
+            Icon(
+                Icons.Default.Add,
+                contentDescription = stringResource(R.string.connect_app)
+            )
+        }
     }
 }
 
@@ -363,7 +456,10 @@ fun MainScreen(
     Scaffold(
         floatingActionButton = {
             if (navBackStackEntry?.destination?.route == "Permissions") {
-                GoToTop {
+                GoToTop(
+                    accountStateViewModel,
+                    account
+                ) {
                     val secret = UUID.randomUUID().toString()
                     val application = ApplicationEntity(
                         secret,

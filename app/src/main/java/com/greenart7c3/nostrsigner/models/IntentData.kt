@@ -11,6 +11,7 @@ data class Permission(
 ) {
     override fun toString(): String {
         return when (type) {
+            "get_public_key" -> "Read your public key"
             "nip04_encrypt" -> {
                 "Encrypt data using nip 4"
             }

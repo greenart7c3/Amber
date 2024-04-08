@@ -147,6 +147,7 @@ fun sendResult(
 
     val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
     val savedApplication = runBlocking { withContext(Dispatchers.IO) { LocalPreferences.appDatabase?.applicationDao()?.getByKey(key) } }
+
     val application = savedApplication ?: ApplicationWithPermissions(
         application = ApplicationEntity(
             key,
@@ -181,6 +182,18 @@ fun sendResult(
                 key,
                 intentData.type.toString(),
                 kind,
+                true
+            )
+        )
+    }
+
+    if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
+        application.permissions.add(
+            ApplicationPermissionsEntity(
+                null,
+                key,
+                SignerType.GET_PUBLIC_KEY.toString(),
+                null,
                 true
             )
         )

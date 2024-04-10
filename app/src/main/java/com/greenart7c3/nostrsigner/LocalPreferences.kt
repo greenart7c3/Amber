@@ -32,6 +32,7 @@ private object PrefKeys {
     const val NOSTR_PUBKEY = "nostr_pubkey"
     const val REMEMBER_APPS = "remember_apps"
     const val ACCOUNT_NAME = "account_name"
+    const val RATIONALE = "rationale"
 }
 
 @Immutable
@@ -69,6 +70,19 @@ object LocalPreferences {
                 putString(PrefKeys.CURRENT_ACCOUNT, npub)
             }.apply()
         }
+    }
+
+    fun shouldShowRationale(): Boolean? {
+        if (!encryptedPreferences().contains(PrefKeys.RATIONALE)) {
+            return null
+        }
+        return encryptedPreferences().getBoolean(PrefKeys.RATIONALE, true)
+    }
+
+    fun updateShoulShowRationale(value: Boolean) {
+        encryptedPreferences().edit().apply {
+            putBoolean(PrefKeys.RATIONALE, value)
+        }.apply()
     }
 
     private var savedAccounts: List<String>? = null

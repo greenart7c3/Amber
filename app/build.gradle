@@ -36,6 +36,17 @@ android {
         }
     }
 
+    flavorDimensions += "version"
+
+    productFlavors {
+        create("play") {
+            dimension = "version"
+        }
+        create("offline") {
+            dimension = "version"
+        }
+    }
+
     splits {
         abi {
             enable true
@@ -125,8 +136,8 @@ dependencies {
     // Biometrics
     implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
 
-    implementation platform('com.google.firebase:firebase-bom:32.8.0')
-    implementation('com.google.firebase:firebase-messaging:23.4.1')
+    playImplementation platform('com.google.firebase:firebase-bom:32.8.0')
+    playImplementation('com.google.firebase:firebase-messaging:23.4.1')
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
 }

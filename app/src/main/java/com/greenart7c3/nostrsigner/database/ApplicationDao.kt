@@ -13,9 +13,11 @@ interface ApplicationDao {
     fun getAll(pubKey: String): List<ApplicationEntity>
 
     @Query("SELECT * FROM application WHERE `key` = :key")
+    @Transaction
     fun getByKey(key: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM application WHERE secret = :secret")
+    @Transaction
     fun getBySecret(secret: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")

@@ -68,6 +68,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.substring
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -574,7 +575,7 @@ fun MainScreen(
                     accountStateViewModel,
                     account
                 ) {
-                    val secret = UUID.randomUUID().toString()
+                    val secret = UUID.randomUUID().toString().substring(0, 6)
                     val application = ApplicationEntity(
                         secret,
                         "",

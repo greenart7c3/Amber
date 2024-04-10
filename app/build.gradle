@@ -46,6 +46,9 @@ android {
         create("play") {
             dimension = "version"
         }
+        create("free") {
+            dimension = "version"
+        }
         create("offline") {
             dimension = "version"
         }
@@ -142,6 +145,7 @@ dependencies {
 
     playImplementation platform('com.google.firebase:firebase-bom:32.8.0')
     playImplementation('com.google.firebase:firebase-messaging:23.4.1')
+    freeImplementation('com.github.UnifiedPush:android-connector:2.2.0')
     ksp("androidx.room:room-compiler:$room_version")
     implementation("androidx.room:room-ktx:$room_version")
 }

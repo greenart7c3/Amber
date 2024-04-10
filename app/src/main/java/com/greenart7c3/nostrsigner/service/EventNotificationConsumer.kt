@@ -244,9 +244,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
 
             var name = event.pubKey.toShortenHex()
-            if (permission != null) {
+            if (permission != null && permission.application.name.isNotBlank()) {
                 name = permission.application.name
-            } else if (applicationWithSecret != null) {
+            } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
                 name = applicationWithSecret.application.name
             }
 

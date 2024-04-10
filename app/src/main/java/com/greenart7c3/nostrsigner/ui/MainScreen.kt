@@ -522,12 +522,14 @@ fun MainScreen(
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
 
-    LaunchedEffect(Unit) {
-        askNotificationPermission(
-            context,
-            requestPermissionLauncher
-        ) {
-            showDialog = true
+    if (BuildConfig.FLAVOR != "offline") {
+        LaunchedEffect(Unit) {
+            askNotificationPermission(
+                context,
+                requestPermissionLauncher
+            ) {
+                showDialog = true
+            }
         }
     }
 

@@ -567,7 +567,7 @@ fun MainScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (navBackStackEntry?.destination?.route == "Permissions") {
+            if (navBackStackEntry?.destination?.route == "Permissions" && BuildConfig.FLAVOR != "offline") {
                 GoToTop(
                     accountStateViewModel,
                     account

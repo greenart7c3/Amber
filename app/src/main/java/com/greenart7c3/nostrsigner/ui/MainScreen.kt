@@ -3,8 +3,13 @@ package com.greenart7c3.nostrsigner.ui
 import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
+import androidx.activity.compose.ManagedActivityResultLauncher
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -25,6 +30,8 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -44,6 +51,7 @@ import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -64,6 +72,7 @@ import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -443,6 +452,39 @@ fun EditAppDialog(permission: ApplicationEntity, onClose: () -> Unit, onPost: (S
     }
 }
 
+private fun askNotificationPermission(
+    context: Context,
+    requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
+    onShouldShowRequestPermissionRationale: () -> Unit
+) {
+    if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
+        initNotifications()
+        return
+    }
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+        val shouldShowRationale = LocalPreferences.shouldShowRationale()
+        if (shouldShowRationale == null) {
+            requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+            return
+        }
+
+        if (!shouldShowRationale) {
+            return
+        }
+
+        onShouldShowRequestPermissionRationale()
+    } else {
+        requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+    }
+}
+
+private fun initNotifications() {
+    runBlocking {
+        PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
+    }
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -465,6 +507,63 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val interactionSource = remember { MutableInteractionSource() }
     val clipboardManager = LocalClipboardManager.current
+
+    val requestPermissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted: Boolean ->
+        if (isGranted) {
+            initNotifications()
+        } else {
+            if (LocalPreferences.shouldShowRationale() == null) {
+                LocalPreferences.updateShoulShowRationale(true)
+            }
+        }
+    }
+    val context = LocalContext.current
+    var showDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        askNotificationPermission(
+            context,
+            requestPermissionLauncher
+        ) {
+            showDialog = true
+        }
+    }
+
+    if (showDialog) {
+        AlertDialog(
+            onDismissRequest = {
+                showDialog = false
+            },
+            title = {
+                Text(text = "Permission Needed")
+            },
+            text = {
+                Text(text = "Notifications are needed to use Amber as a nsec bunker.")
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        showDialog = false
+                        requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+                    }
+                ) {
+                    Text(text = "Allow")
+                }
+            },
+            dismissButton = {
+                Button(
+                    onClick = {
+                        showDialog = false
+                        LocalPreferences.updateShoulShowRationale(false)
+                    }
+                ) {
+                    Text(text = "Deny")
+                }
+            }
+        )
+    }
 
     Scaffold(
         floatingActionButton = {

@@ -235,6 +235,16 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 }
             }
 
+            if (permission == null && applicationWithSecret == null) {
+                IntentUtils.sendBunkerResponse(
+                    acc,
+                    bunkerRequest.localKey,
+                    BunkerResponse(bunkerRequest.id, "", "no permission"),
+                    relays
+                ) { }
+                return@nip04Decrypt
+            }
+
             val cursor = applicationContext.contentResolver.query(
                 Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
                 arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),

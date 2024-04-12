@@ -90,63 +90,65 @@ android {
 }
 
 dependencies {
-    implementation('com.github.vitorpamplona.amethyst:quartz:v0.86.2') {
+    implementation(libs.quartz) {
         exclude group: 'net.java.dev.jna'
     }
-    implementation 'net.java.dev.jna:jna:5.14.0@aar'
-    implementation "androidx.core:core-splashscreen:1.0.1"
+    implementation(libs.jna) {
+        artifact { type = "aar" }
+    }
+    implementation libs.core.splashscreen
 
-    implementation "androidx.core:core-ktx:$core_ktx_version"
-    implementation 'androidx.activity:activity-compose:1.8.2'
-    implementation "androidx.compose.ui:ui:$compose_ui_version"
-    implementation "androidx.compose.ui:ui-tooling-preview:$compose_ui_version"
+    implementation libs.core.ktx
+    implementation libs.activity.compose
+    implementation libs.ui
+    implementation libs.ui.tooling.preview
 
-    implementation "androidx.compose.runtime:runtime-livedata:$compose_ui_version"
+    implementation libs.runtime.livedata
 
     // Navigation
-    implementation "androidx.navigation:navigation-compose:$nav_version"
+    implementation libs.navigation.compose
 
     // Observe Live data as State
-    implementation "androidx.compose.runtime:runtime-livedata:$compose_ui_version"
+    implementation libs.runtime.livedata
 
-    implementation "androidx.compose.material3:material3:1.2.1"
-    implementation "androidx.compose.material:material-icons-extended:$compose_ui_version"
+    implementation libs.material3
+    implementation libs.material.icons.extended
 
-    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation libs.appcompat
 
-    testImplementation 'junit:junit:4.13.2'
-    testImplementation 'io.mockk:mockk:1.13.10'
-    androidTestImplementation 'androidx.test.ext:junit:1.2.0-alpha03'
-    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-    androidTestImplementation "androidx.compose.ui:ui-test-junit4:$compose_ui_version"
-    debugImplementation "androidx.compose.ui:ui-tooling:$compose_ui_version"
-    debugImplementation "androidx.compose.ui:ui-test-manifest:$compose_ui_version"
+    testImplementation libs.junit
+    testImplementation libs.mockk
+    androidTestImplementation libs.ext.junit
+    androidTestImplementation libs.espresso.core
+    androidTestImplementation libs.ui.test.junit4
+    debugImplementation libs.ui.tooling
+    debugImplementation libs.ui.test.manifest
 
-    implementation 'androidx.security:security-crypto-ktx:1.1.0-alpha06'
+    implementation libs.security.crypto.ktx
 
     // Lifecycle
-    implementation "androidx.lifecycle:lifecycle-runtime-compose:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-viewmodel-compose:$lifecycle_version"
-    implementation "androidx.lifecycle:lifecycle-runtime-ktx:$lifecycle_version"
+    implementation libs.lifecycle.runtime.compose
+    implementation libs.lifecycle.viewmodel.compose
+    implementation libs.lifecycle.runtime.ktx
 
     // For QR generation
-    implementation 'com.google.zxing:core:3.5.3'
-    implementation 'com.journeyapps:zxing-android-embedded:4.3.0'
+    implementation libs.core
+    implementation libs.zxing.android.embedded
 
     // Json Serialization
-    implementation 'com.squareup.retrofit2:converter-gson:2.9.0'
+    implementation libs.converter.gson
 
     // Markdown (With fix for full-image bleeds)
-    implementation('com.github.vitorpamplona.compose-richtext:richtext-ui:48702a8ced')
-    implementation('com.github.vitorpamplona.compose-richtext:richtext-ui-material3:48702a8ced')
-    implementation('com.github.vitorpamplona.compose-richtext:richtext-commonmark:48702a8ced')
+    implementation(libs.richtext.ui)
+    implementation(libs.richtext.ui.material3)
+    implementation(libs.richtext.commonmark)
 
     // Biometrics
-    implementation "androidx.biometric:biometric-ktx:1.2.0-alpha05"
+    implementation libs.biometric.ktx
 
-    playImplementation platform('com.google.firebase:firebase-bom:32.8.0')
-    playImplementation('com.google.firebase:firebase-messaging:23.4.1')
-    freeImplementation('com.github.UnifiedPush:android-connector:2.2.0')
-    ksp("androidx.room:room-compiler:$room_version")
-    implementation("androidx.room:room-ktx:$room_version")
+    playImplementation platform(libs.firebase.bom)
+    playImplementation(libs.firebase.messaging)
+    freeImplementation(libs.android.connector)
+    ksp(libs.room.compiler)
+    implementation(libs.room.ktx)
 }

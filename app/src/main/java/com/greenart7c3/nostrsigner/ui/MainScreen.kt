@@ -482,6 +482,7 @@ private fun askNotificationPermission(
 
 private fun initNotifications() {
     runBlocking {
+        PushNotificationUtils.hasInit = false
         PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
     }
 }

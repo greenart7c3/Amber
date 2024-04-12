@@ -258,7 +258,7 @@ fun MultiEventHomeScreen(
                                             )
                                         }
                                         if (intentData.rememberMyChoice.value) {
-                                            acceptOrRejectPermission(
+                                            AmberUtils.acceptOrRejectPermission(
                                                 packageName,
                                                 intentData,
                                                 localEvent.kind,
@@ -283,7 +283,7 @@ fun MultiEventHomeScreen(
                                         }
                                     } else {
                                         if (intentData.rememberMyChoice.value) {
-                                            acceptOrRejectPermission(
+                                            AmberUtils.acceptOrRejectPermission(
                                                 packageName,
                                                 intentData,
                                                 null,

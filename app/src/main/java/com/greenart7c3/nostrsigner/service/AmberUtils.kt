@@ -1,8 +1,15 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Context
 import android.util.Log
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
@@ -98,6 +105,54 @@ object AmberUtils {
             }
         } else {
             null
+        }
+    }
+
+    fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Context) {
+        val relays = bunkerRequest.relays.ifEmpty { listOf("wss://relay.nsec.app") }
+        IntentUtils.sendBunkerResponse(
+            account,
+            bunkerRequest.localKey,
+            BunkerResponse(bunkerRequest.id, "", "user rejected"),
+            relays
+        ) {
+            context.getAppCompatActivity()?.intent = null
+            context.getAppCompatActivity()?.finish()
+        }
+    }
+
+    suspend fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean, appName: String, account: Account) {
+        val application = nostrsigner.instance.database
+            .applicationDao()
+            .getByKey(key) ?: ApplicationWithPermissions(
+            application = ApplicationEntity(
+                key,
+                appName,
+                listOf(),
+                "",
+                "",
+                "",
+                account.keyPair.pubKey.toHexKey(),
+                true,
+                intentData.bunkerRequest?.secret ?: ""
+            ),
+            permissions = mutableListOf()
+        )
+
+        if (application.permissions.none { it.type == intentData.type.toString() && it.kind == kind }) {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    key,
+                    intentData.type.toString(),
+                    kind,
+                    value
+                )
+            )
+
+            nostrsigner.instance.database
+                .applicationDao()
+                .insertApplicationWithPermissions(application)
         }
     }
 }

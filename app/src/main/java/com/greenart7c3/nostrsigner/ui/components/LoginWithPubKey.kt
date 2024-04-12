@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -19,9 +17,6 @@ import androidx.compose.material.icons.filled.Done
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,10 +34,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.ui.actions.AdjustPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 
 @Composable
@@ -62,115 +56,16 @@ fun LoginWithPubKey(
     }
 
     if (showAdjustDialog) {
-        var dialogPermissions by remember {
-            mutableStateOf(localPermissions?.map { it.copy() } ?: listOf())
-        }
-        var selectAll by remember {
-            mutableStateOf(true)
-        }
-        Dialog(
-            onDismissRequest = {
+        AdjustPermissionsDialog(
+            localPermissions ?: emptyList(),
+            onClose = {
                 showAdjustDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Surface(modifier = Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize()
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        CloseButton(
-                            onCancel = {
-                                showAdjustDialog = false
-                            }
-                        )
-
-                        PostButton(
-                            isActive = true,
-                            onPost = {
-                                localPermissions = dialogPermissions.map {
-                                    it.copy()
-                                }
-                                showAdjustDialog = false
-                            }
-                        )
-                    }
-
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .padding(horizontal = 8.dp)
-                            .clickable {
-                                selectAll = !selectAll
-                                dialogPermissions = dialogPermissions.map { item ->
-                                    item.copy(checked = selectAll)
-                                }
-                            }
-                    ) {
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = stringResource(R.string.select_deselect_all)
-                        )
-                        Switch(
-                            checked = selectAll,
-                            onCheckedChange = {
-                                selectAll = !selectAll
-                                dialogPermissions = dialogPermissions.map { item ->
-                                    item.copy(checked = selectAll)
-                                }
-                            }
-                        )
-                    }
-
-                    LazyColumn(
-                        Modifier.padding(16.dp)
-                    ) {
-                        items(dialogPermissions.size) {
-                            val permission = dialogPermissions[it]
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .clickable {
-                                        dialogPermissions = dialogPermissions.mapIndexed { j, item ->
-                                            if (it == j) {
-                                                item.copy(checked = !item.checked)
-                                            } else {
-                                                item
-                                            }
-                                        }
-                                    }
-                            ) {
-                                Text(
-                                    modifier = Modifier.weight(1f),
-                                    text = permission.toString()
-                                )
-                                Switch(
-                                    checked = permission.checked,
-                                    onCheckedChange = { _ ->
-                                        dialogPermissions = dialogPermissions.mapIndexed { j, item ->
-                                            if (it == j) {
-                                                item.copy(checked = !item.checked)
-                                            } else {
-                                                item
-                                            }
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
             }
+        ) { dialogPermissions ->
+            localPermissions = dialogPermissions.map {
+                it.copy()
+            }
+            showAdjustDialog = false
         }
     }
 
@@ -184,7 +79,7 @@ fun LoginWithPubKey(
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
                     append(applicationName ?: appName)
                 }
-                append(" would like your permission to read your public key and sign events on your behalf")
+                append(stringResource(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf))
             },
             fontSize = 18.sp
         )
@@ -222,10 +117,10 @@ fun LoginWithPubKey(
                     val isAnyChecked = it.take(3).any { permission -> permission.checked }
                     Icon(
                         if (isAnyChecked) Icons.Default.Done else Icons.Default.Close,
-                        "...and more",
+                        stringResource(R.string.and_more),
                         tint = if (isAnyChecked) Color.Green else Color.Red
                     )
-                    Text(text = "${it.size - 3} more...")
+                    Text(text = stringResource(R.string.more, it.size - 3))
                 }
             }
         }
@@ -248,7 +143,7 @@ fun LoginWithPubKey(
                         modifier = Modifier
                             .padding(8.dp)
                     ) {
-                        Text(text = "Adjust")
+                        Text(text = stringResource(R.string.adjust))
                     }
                 }
             }
@@ -262,7 +157,7 @@ fun LoginWithPubKey(
                     onAccept(localPermissions)
                 }
             ) {
-                Text("Grant Permissions")
+                Text(stringResource(R.string.grant_permissions))
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(

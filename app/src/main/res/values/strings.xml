@@ -89,4 +89,9 @@
     <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="nothing_to_approve_yet">Nothing to approve yet</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Why not explore your favorite nostr app a bit?</string>
+    <string name="grant_permissions">Grant Permissions</string>
+    <string name="adjust">Adjust</string>
+    <string name="more">%1$s more...</string>
+    <string name="and_more">...and more</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
 </resources>

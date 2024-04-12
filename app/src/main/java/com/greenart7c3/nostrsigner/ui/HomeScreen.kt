@@ -3,7 +3,9 @@ package com.greenart7c3.nostrsigner.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,6 +15,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -40,7 +45,13 @@ fun HomeScreen(
                     Arrangement.Center,
                     Alignment.CenterHorizontally
                 ) {
-                    Text(stringResource(R.string.no_event_to_sign))
+                    Text(
+                        stringResource(R.string.nothing_to_approve_yet),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 21.sp
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text(stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit))
                 }
             } else if (intents.size == 1) {
                 SingleEventHomeScreen(

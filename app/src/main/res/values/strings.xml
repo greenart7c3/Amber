@@ -24,7 +24,7 @@
     <string name="cancel">Cancel</string>
     <string name="do_you_want_to_reset_all_permissions">Do you want to reset all permissions?</string>
     <string name="confirm">Confirm</string>
-    <string name="nsec">nsec..</string>
+    <string name="nsec">Nsec / private key</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
     <string name="invalid_key">Invalid key</string>
@@ -87,4 +87,6 @@
     <string name="permissions">Permissions</string>
     <string name="delete_application">Delete Application</string>
     <string name="copy_to_clipboard">Copy to clipboard</string>
+    <string name="nothing_to_approve_yet">Nothing to approve yet</string>
+    <string name="why_not_explore_your_favorite_nostr_app_a_bit">Why not explore your favorite nostr app a bit?</string>
 </resources>

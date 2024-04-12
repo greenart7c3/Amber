@@ -3,8 +3,8 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.LruCache
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -44,7 +44,7 @@ data class AccountInfo(
 object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
-    var appDatabase: AppDatabase? = null
+    private var accountCache = LruCache<String, Account>(10)
 
     fun allSavedAccounts(): List<AccountInfo> {
         return savedAccounts().map { npub ->
@@ -191,7 +191,7 @@ object LocalPreferences {
 
     suspend fun deleteSavedApps(applications: List<ApplicationEntity>) = withContext(Dispatchers.IO) {
         applications.forEach {
-            appDatabase?.applicationDao()?.delete(it)
+            nostrsigner.instance.database.applicationDao().delete(it)
         }
     }
 
@@ -223,11 +223,11 @@ object LocalPreferences {
     private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String) = withContext(Dispatchers.IO) {
         map.forEach {
             val splitData = it.key.split("-")
-            appDatabase?.applicationDao()?.deletePermissions(splitData.first())
+            nostrsigner.instance.database.applicationDao().deletePermissions(splitData.first())
         }
         map.forEach {
             val splitData = it.key.split("-")
-            appDatabase?.applicationDao()?.insertApplication(
+            nostrsigner.instance.database.applicationDao().insertApplication(
                 ApplicationEntity(
                     splitData.first(),
                     "",
@@ -240,7 +240,7 @@ object LocalPreferences {
                     ""
                 )
             )
-            appDatabase?.applicationDao()?.insertPermissions(
+            nostrsigner.instance.database.applicationDao().insertPermissions(
                 listOf(
                     ApplicationPermissionsEntity(
                         id = null,
@@ -255,6 +255,9 @@ object LocalPreferences {
     }
 
     fun loadFromEncryptedStorage(npub: String?): Account? {
+        if (accountCache.get(npub) != null) {
+            return accountCache.get(npub)
+        }
         encryptedPreferences(npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
@@ -275,11 +278,12 @@ object LocalPreferences {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
-
-            return Account(
+            val account = Account(
                 keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
                 name = name
             )
+            accountCache.put(npub, account)
+            return account
         }
     }
 }

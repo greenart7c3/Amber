@@ -11,7 +11,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -19,6 +18,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.BunkerRequest
 import com.greenart7c3.nostrsigner.service.IntentUtils
@@ -32,8 +32,6 @@ import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Context) {
     val relays = bunkerRequest.relays.ifEmpty { listOf("wss://relay.nsec.app") }
@@ -48,42 +46,38 @@ fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Con
     }
 }
 
-fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean, appName: String, account: Account) {
-    runBlocking {
-        withContext(Dispatchers.IO) {
-            val application = LocalPreferences.appDatabase!!
-                .applicationDao()
-                .getByKey(key) ?: ApplicationWithPermissions(
-                application = ApplicationEntity(
-                    key,
-                    appName,
-                    listOf(),
-                    "",
-                    "",
-                    "",
-                    account.keyPair.pubKey.toHexKey(),
-                    true,
-                    intentData.bunkerRequest?.secret ?: ""
-                ),
-                permissions = mutableListOf()
+suspend fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean, appName: String, account: Account) {
+    val application = nostrsigner.instance.database
+        .applicationDao()
+        .getByKey(key) ?: ApplicationWithPermissions(
+        application = ApplicationEntity(
+            key,
+            appName,
+            listOf(),
+            "",
+            "",
+            "",
+            account.keyPair.pubKey.toHexKey(),
+            true,
+            intentData.bunkerRequest?.secret ?: ""
+        ),
+        permissions = mutableListOf()
+    )
+
+    if (application.permissions.none { it.type == intentData.type.toString() && it.kind == kind }) {
+        application.permissions.add(
+            ApplicationPermissionsEntity(
+                null,
+                key,
+                intentData.type.toString(),
+                kind,
+                value
             )
+        )
 
-            if (application.permissions.none { it.type == intentData.type.toString() && it.kind == kind }) {
-                application.permissions.add(
-                    ApplicationPermissionsEntity(
-                        null,
-                        key,
-                        intentData.type.toString(),
-                        kind,
-                        value
-                    )
-                )
-
-                LocalPreferences.appDatabase!!
-                    .applicationDao()
-                    .insertApplicationWithPermissions(application)
-            }
-        }
+        nostrsigner.instance.database
+            .applicationDao()
+            .insertApplicationWithPermissions(application)
     }
 }
 
@@ -95,7 +89,7 @@ fun SingleEventHomeScreen(
     account: Account
 ) {
     var applicationEntity by remember {
-        mutableStateOf<ApplicationEntity?>(null)
+        mutableStateOf<ApplicationWithPermissions?>(null)
     }
     val key = if (intentData.bunkerRequest != null) {
         intentData.bunkerRequest.localKey
@@ -106,29 +100,22 @@ fun SingleEventHomeScreen(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             applicationEntity = if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                LocalPreferences.appDatabase!!.applicationDao().getBySecret(intentData.bunkerRequest.secret)?.application
+                nostrsigner.instance.database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
             } else {
-                LocalPreferences.appDatabase!!.applicationDao().getByKey(key)?.application
+                nostrsigner.instance.database.applicationDao().getByKey(key)
             }
         }
     }
 
-    val appName = applicationEntity?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
+    val appName = applicationEntity?.application?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
-            val permission = runBlocking {
-                withContext(Dispatchers.IO) {
-                    LocalPreferences.appDatabase!!
-                        .applicationDao()
-                        .getPermission(
-                            key,
-                            intentData.type.toString()
-                        )
-                }
+            val permission = applicationEntity?.permissions?.firstOrNull {
+                it.pkKey == key && it.type == intentData.type.toString()
             }
             val remember = remember {
                 mutableStateOf(permission?.acceptable == true)
@@ -163,7 +150,9 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account)
+                        coroutineScope.launch(Dispatchers.IO) {
+                            acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account)
+                        }
                     }
 
                     if (intentData.bunkerRequest != null) {
@@ -177,15 +166,8 @@ fun SingleEventHomeScreen(
         }
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-            val permission = runBlocking {
-                withContext(Dispatchers.IO) {
-                    LocalPreferences.appDatabase!!
-                        .applicationDao()
-                        .getPermission(
-                            key,
-                            intentData.type.toString()
-                        )
-                }
+            val permission = applicationEntity?.permissions?.firstOrNull {
+                it.pkKey == key && it.type == intentData.type.toString()
             }
             val remember = remember {
                 mutableStateOf(permission?.acceptable == true)
@@ -290,7 +272,16 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account)
+                        coroutineScope.launch(Dispatchers.IO) {
+                            acceptOrRejectPermission(
+                                key,
+                                intentData,
+                                null,
+                                false,
+                                applicationName ?: appName,
+                                account
+                            )
+                        }
                     }
 
                     if (intentData.bunkerRequest != null) {
@@ -318,21 +309,12 @@ fun SingleEventHomeScreen(
 
         else -> {
             val event = IntentUtils.getIntent(intentData.data, account.keyPair)
-            val permission = runBlocking {
-                withContext(Dispatchers.IO) {
-                    LocalPreferences.appDatabase!!
-                        .applicationDao()
-                        .getPermission(
-                            key,
-                            intentData.type.toString(),
-                            event.kind
-                        )
-                }
+            val permission = applicationEntity?.permissions?.firstOrNull {
+                it.pkKey == key && it.type == intentData.type.toString() && it.kind == event.kind
             }
             val remember = remember {
                 mutableStateOf(permission?.acceptable == true)
             }
-
             val shouldRunOnAccept = permission?.acceptable == true
             val localPackageName = if (intentData.bunkerRequest != null) {
                 intentData.bunkerRequest.localKey
@@ -390,7 +372,9 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (remember.value) {
-                        acceptOrRejectPermission(key, intentData, event.kind, false, applicationName ?: appName, account)
+                        coroutineScope.launch(Dispatchers.IO) {
+                            acceptOrRejectPermission(key, intentData, event.kind, false, applicationName ?: appName, account)
+                        }
                     }
 
                     if (intentData.bunkerRequest != null) {

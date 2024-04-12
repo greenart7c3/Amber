@@ -37,11 +37,11 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
@@ -49,9 +49,6 @@ import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
 import com.vitorpamplona.quartz.events.SealedGossipEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 data class BunkerRequest(
     val id: String,
@@ -131,8 +128,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     suspend fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
 
-        LocalPreferences.appDatabase = runBlocking { withContext(Dispatchers.IO) { AppDatabase.getDatabase(applicationContext) } }
-
         // PushNotification Wraps don't include a receiver.
         // Test with all logged in accounts
         LocalPreferences.allSavedAccounts().forEach {
@@ -202,7 +197,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-            val permission = LocalPreferences.appDatabase!!.applicationDao().getByKey(bunkerRequest.localKey)
+            val permission = nostrsigner.instance.database.applicationDao().getByKey(bunkerRequest.localKey)
             val relays = permission?.application?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: bunkerRequest.relays
 
             if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
@@ -223,7 +218,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     ""
                 }
                 bunkerRequest.secret = secret
-                applicationWithSecret = LocalPreferences.appDatabase!!.applicationDao().getBySecret(secret)
+                applicationWithSecret = nostrsigner.instance.database.applicationDao().getBySecret(secret)
                 if (applicationWithSecret == null || secret.isBlank()) {
                     IntentUtils.sendBunkerResponse(
                         acc,

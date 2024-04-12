@@ -12,16 +12,12 @@ import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
@@ -37,12 +33,6 @@ class MainActivity : AppCompatActivity() {
             if (intent.isLaunchFromHistory()) {
                 Log.d("isLaunchFromHistory", "Cleared intent history")
                 intent = Intent()
-            }
-
-            LocalPreferences.appDatabase = runBlocking {
-                withContext(Dispatchers.IO) {
-                    AppDatabase.getDatabase(applicationContext)
-                }
             }
 
             val packageName = callingPackage

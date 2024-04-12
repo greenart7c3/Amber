@@ -53,14 +53,13 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 @Composable
 fun EditPermission(
@@ -86,8 +85,8 @@ fun EditPermission(
 
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
-            permissions.addAll(LocalPreferences.appDatabase!!.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            applicationData = LocalPreferences.appDatabase!!.applicationDao().getByKey(selectedPackage)!!.application
+            permissions.addAll(nostrsigner.instance.database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
+            applicationData = nostrsigner.instance.database.applicationDao().getByKey(selectedPackage)!!.application
         }
     }
 
@@ -97,13 +96,12 @@ fun EditPermission(
                 wantsToDelete = false
             }
         ) {
-            runBlocking {
-                withContext(Dispatchers.IO) {
-                    LocalPreferences.appDatabase!!
-                        .applicationDao()
-                        .delete(applicationData)
-                }
+            scope.launch(Dispatchers.IO) {
+                nostrsigner.instance.database
+                    .applicationDao()
+                    .delete(applicationData)
             }
+
             scope.launch(Dispatchers.Main) {
                 navController.popBackStack()
                 accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
@@ -275,9 +273,10 @@ fun EditPermission(
             Button(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        LocalPreferences.appDatabase!!.applicationDao().deletePermissions(selectedPackage)
-                        LocalPreferences.appDatabase!!.applicationDao().insertPermissions(permissions)
-                        LocalPreferences.appDatabase!!
+                        val database = nostrsigner.instance.database
+                        database.applicationDao().deletePermissions(selectedPackage)
+                        database.applicationDao().insertPermissions(permissions)
+                        database
                             .applicationDao()
                             .changeApplicationName(selectedPackage, textFieldvalue.text)
 

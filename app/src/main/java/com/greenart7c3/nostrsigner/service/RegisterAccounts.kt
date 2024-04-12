@@ -24,7 +24,6 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.nostrsigner
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -68,8 +67,7 @@ class RegisterAccounts(
         accounts.forEach {
             val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
             if (acc != null) {
-                LocalPreferences.appDatabase = AppDatabase.getDatabase(nostrsigner.instance.applicationContext)
-                val permissions = LocalPreferences.appDatabase!!.applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
+                val permissions = nostrsigner.instance.database.applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
                         readyToSend.add(

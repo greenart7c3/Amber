@@ -15,6 +15,7 @@ import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.quartz.encoders.toHexKey
 import kotlinx.coroutines.Dispatchers
@@ -36,9 +37,9 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(acc.npub)
                     account?.let {
-                        val permissions = LocalPreferences.appDatabase?.applicationDao()?.getAll(it.keyPair.pubKey.toHexKey())
-                        permissions?.forEach { app ->
-                            LocalPreferences.appDatabase?.applicationDao()?.delete(app)
+                        val permissions = nostrsigner.instance.database.applicationDao().getAll(it.keyPair.pubKey.toHexKey())
+                        permissions.forEach { app ->
+                            nostrsigner.instance.database.applicationDao().delete(app)
                         }
                     }
 

@@ -5,15 +5,11 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 class SignerProvider : ContentProvider() {
     override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
@@ -39,11 +35,6 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
         sortOrder: String?
     ): Cursor? {
-        LocalPreferences.appDatabase = runBlocking {
-            withContext(Dispatchers.IO) {
-                AppDatabase.getDatabase(context!!)
-            }
-        }
         val appId = BuildConfig.APPLICATION_ID
         return when (uri.toString()) {
             "content://$appId.SIGN_EVENT" -> {
@@ -53,7 +44,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
-                val permission = LocalPreferences.appDatabase!!
+                val permission = nostrsigner.instance.database
                     .applicationDao()
                     .getPermission(
                         sortOrder ?: packageName,
@@ -102,7 +93,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
 
-                val permission = LocalPreferences.appDatabase!!
+                val permission = nostrsigner.instance.database
                     .applicationDao()
                     .getPermission(
                         sortOrder ?: packageName,
@@ -156,7 +147,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val currentSelection = selection ?: "0"
 
-                val permission = LocalPreferences.appDatabase!!
+                val permission = nostrsigner.instance.database
                     .applicationDao()
                     .getPermission(
                         sortOrder ?: packageName,

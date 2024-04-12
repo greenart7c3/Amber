@@ -68,7 +68,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.substring
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -92,6 +91,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -107,8 +107,6 @@ import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.UUID
@@ -135,166 +133,154 @@ fun sendResult(
     permissions: List<Permission>? = null,
     appName: String? = null
 ) {
-    if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
-        runBlocking {
-            withContext(Dispatchers.IO) {
-                val application = LocalPreferences.appDatabase?.applicationDao()?.getBySecret(intentData.bunkerRequest.secret)
-                application?.let {
-                    LocalPreferences.appDatabase?.applicationDao()?.delete(it.application)
-                }
+    GlobalScope.launch(Dispatchers.IO) {
+        if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
+            val application = nostrsigner.instance.database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+            application?.let {
+                nostrsigner.instance.database.applicationDao().delete(it.application)
             }
         }
-    }
 
-    val activity = context.getAppCompatActivity()
-    if (intentData.type == SignerType.CONNECT || (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY)) {
-        runBlocking {
-            withContext(Dispatchers.IO) {
-                LocalPreferences.appDatabase?.applicationDao()?.deletePermissions(key)
-            }
+        val activity = context.getAppCompatActivity()
+        if (intentData.type == SignerType.CONNECT || (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY)) {
+            nostrsigner.instance.database.applicationDao().deletePermissions(key)
         }
-    }
 
-    val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
-    val savedApplication = runBlocking { withContext(Dispatchers.IO) { LocalPreferences.appDatabase?.applicationDao()?.getByKey(key) } }
+        val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
+        val savedApplication = nostrsigner.instance.database.applicationDao().getByKey(key)
 
-    val application = savedApplication ?: ApplicationWithPermissions(
-        application = ApplicationEntity(
-            key,
-            appName ?: "",
-            relays,
-            "",
-            "",
-            "",
-            account.keyPair.pubKey.toHexKey(),
-            true,
-            intentData.bunkerRequest?.secret ?: ""
-        ),
-        permissions = mutableListOf()
-    )
-    application.application.isConnected = true
-
-    permissions?.filter { it.checked }?.forEach {
-        application.permissions.add(
-            ApplicationPermissionsEntity(
-                null,
+        val application = savedApplication ?: ApplicationWithPermissions(
+            application = ApplicationEntity(
                 key,
-                it.type.toUpperCase(Locale.current),
-                it.kind,
-                true
-            )
+                appName ?: "",
+                relays,
+                "",
+                "",
+                "",
+                account.keyPair.pubKey.toHexKey(),
+                true,
+                intentData.bunkerRequest?.secret ?: ""
+            ),
+            permissions = mutableListOf()
         )
-    }
-    if (rememberChoice) {
-        application.permissions.add(
-            ApplicationPermissionsEntity(
-                null,
-                key,
-                intentData.type.toString(),
-                kind,
-                true
-            )
-        )
-    }
+        application.application.isConnected = true
 
-    if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
-        application.permissions.add(
-            ApplicationPermissionsEntity(
-                null,
-                key,
-                SignerType.GET_PUBLIC_KEY.toString(),
-                null,
-                true
+        permissions?.filter { it.checked }?.forEach {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    key,
+                    it.type.toUpperCase(Locale.current),
+                    it.kind,
+                    true
+                )
             )
-        )
-    }
+        }
+        if (rememberChoice) {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    key,
+                    intentData.type.toString(),
+                    kind,
+                    true
+                )
+            )
+        }
 
-    if (intentData.bunkerRequest != null) {
-        IntentUtils.sendBunkerResponse(
-            account,
-            intentData.bunkerRequest.localKey,
-            BunkerResponse(intentData.bunkerRequest.id, event, null),
-            relays,
-            onSign = {
-                runBlocking {
-                    withContext(Dispatchers.IO) {
-                        LocalPreferences.appDatabase?.applicationDao()?.insertApplicationWithPermissions(application)
-                        PushNotificationUtils.hasInit = false
+        if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
+            application.permissions.add(
+                ApplicationPermissionsEntity(
+                    null,
+                    key,
+                    SignerType.GET_PUBLIC_KEY.toString(),
+                    null,
+                    true
+                )
+            )
+        }
+
+        if (intentData.bunkerRequest != null) {
+            IntentUtils.sendBunkerResponse(
+                account,
+                intentData.bunkerRequest.localKey,
+                BunkerResponse(intentData.bunkerRequest.id, event, null),
+                relays,
+                onSign = {
+                    nostrsigner.instance.database.applicationDao().insertApplicationWithPermissions(application)
+                    PushNotificationUtils.hasInit = false
+                    GlobalScope.launch(Dispatchers.IO) {
                         PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
                     }
                 }
+            ) {
+                activity?.intent = null
+                activity?.finish()
             }
-        ) {
+        } else if (packageName != null) {
+            nostrsigner.instance.database.applicationDao().insertApplicationWithPermissions(application)
+
+            val intent = Intent()
+            intent.putExtra("signature", value)
+            intent.putExtra("id", intentData.id)
+            intent.putExtra("event", event)
+            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                intent.putExtra("package", BuildConfig.APPLICATION_ID)
+            }
+            activity?.setResult(RESULT_OK, intent)
+            activity?.intent = null
+            activity?.finish()
+        } else if (intentData.callBackUrl != null) {
+            if (intentData.returnType == ReturnType.SIGNATURE) {
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(value))
+                context.startActivity(intent)
+            } else {
+                if (intentData.compression == CompressionType.GZIP) {
+                    // Compress the string using GZIP
+                    val byteArrayOutputStream = ByteArrayOutputStream()
+                    val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
+                    gzipOutputStream.write(event.toByteArray())
+                    gzipOutputStream.close()
+
+                    // Convert the compressed data to Base64
+                    val compressedData = byteArrayOutputStream.toByteArray()
+                    val encodedString = Base64.getEncoder().encodeToString(compressedData)
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse(intentData.callBackUrl + Uri.encode("Signer1$encodedString"))
+                    context.startActivity(intent)
+                } else {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(event))
+                    context.startActivity(intent)
+                }
+            }
+            activity?.intent = null
+            activity?.finish()
+        } else {
+            val result = if (intentData.returnType == ReturnType.SIGNATURE) {
+                value
+            } else {
+                event
+            }
+            val message = if (intentData.returnType == ReturnType.SIGNATURE) {
+                context.getString(R.string.signature_copied_to_the_clipboard)
+            } else {
+                context.getString(R.string.event_copied_to_the_clipboard)
+            }
+
+            clipboardManager.setText(AnnotatedString(result))
+
+            GlobalScope.launch(Dispatchers.Main) {
+                Toast.makeText(
+                    context,
+                    message,
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
             activity?.intent = null
             activity?.finish()
         }
-    } else if (packageName != null) {
-        runBlocking {
-            withContext(Dispatchers.IO) {
-                LocalPreferences.appDatabase?.applicationDao()?.insertApplicationWithPermissions(application)
-            }
-        }
-
-        val intent = Intent()
-        intent.putExtra("signature", value)
-        intent.putExtra("id", intentData.id)
-        intent.putExtra("event", event)
-        if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-            intent.putExtra("package", BuildConfig.APPLICATION_ID)
-        }
-        activity?.setResult(RESULT_OK, intent)
-        activity?.intent = null
-        activity?.finish()
-    } else if (intentData.callBackUrl != null) {
-        if (intentData.returnType == ReturnType.SIGNATURE) {
-            val intent = Intent(Intent.ACTION_VIEW)
-            intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(value))
-            context.startActivity(intent)
-        } else {
-            if (intentData.compression == CompressionType.GZIP) {
-                // Compress the string using GZIP
-                val byteArrayOutputStream = ByteArrayOutputStream()
-                val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
-                gzipOutputStream.write(event.toByteArray())
-                gzipOutputStream.close()
-
-                // Convert the compressed data to Base64
-                val compressedData = byteArrayOutputStream.toByteArray()
-                val encodedString = Base64.getEncoder().encodeToString(compressedData)
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(intentData.callBackUrl + Uri.encode("Signer1$encodedString"))
-                context.startActivity(intent)
-            } else {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(event))
-                context.startActivity(intent)
-            }
-        }
-        activity?.intent = null
-        activity?.finish()
-    } else {
-        val result = if (intentData.returnType == ReturnType.SIGNATURE) {
-            value
-        } else {
-            event
-        }
-        val message = if (intentData.returnType == ReturnType.SIGNATURE) {
-            context.getString(R.string.signature_copied_to_the_clipboard)
-        } else {
-            context.getString(R.string.event_copied_to_the_clipboard)
-        }
-
-        clipboardManager.setText(AnnotatedString(result))
-
-        GlobalScope.launch(Dispatchers.Main) {
-            Toast.makeText(
-                context,
-                message,
-                Toast.LENGTH_SHORT
-            ).show()
-        }
-        activity?.intent = null
-        activity?.finish()
     }
 }
 
@@ -453,7 +439,7 @@ fun EditAppDialog(permission: ApplicationEntity, onClose: () -> Unit, onPost: (S
     }
 }
 
-private fun askNotificationPermission(
+private suspend fun askNotificationPermission(
     context: Context,
     requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
     onShouldShowRequestPermissionRationale: () -> Unit
@@ -480,11 +466,9 @@ private fun askNotificationPermission(
     }
 }
 
-private fun initNotifications() {
-    runBlocking {
-        PushNotificationUtils.hasInit = false
-        PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
-    }
+private suspend fun initNotifications() {
+    PushNotificationUtils.hasInit = false
+    PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -515,7 +499,9 @@ fun MainScreen(
         ActivityResultContracts.RequestPermission()
     ) { isGranted: Boolean ->
         if (isGranted) {
-            initNotifications()
+            scope.launch(Dispatchers.IO) {
+                initNotifications()
+            }
         } else {
             if (LocalPreferences.shouldShowRationale() == null) {
                 LocalPreferences.updateShoulShowRationale(true)
@@ -527,11 +513,13 @@ fun MainScreen(
 
     if (BuildConfig.FLAVOR != "offline") {
         LaunchedEffect(Unit) {
-            askNotificationPermission(
-                context,
-                requestPermissionLauncher
-            ) {
-                showDialog = true
+            launch(Dispatchers.IO) {
+                askNotificationPermission(
+                    context,
+                    requestPermissionLauncher
+                ) {
+                    showDialog = true
+                }
             }
         }
     }
@@ -590,7 +578,7 @@ fun MainScreen(
                         secret
                     )
                     scope.launch(Dispatchers.IO) {
-                        LocalPreferences.appDatabase?.applicationDao()?.insertApplication(
+                        nostrsigner.instance.database.applicationDao().insertApplication(
                             application
                         )
                     }

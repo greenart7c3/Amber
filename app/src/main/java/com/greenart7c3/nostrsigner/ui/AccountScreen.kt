@@ -9,7 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @SuppressLint("StateFlowValueCalledInComposition")
@@ -49,8 +51,9 @@ fun AccountScreen(
                             listOf(intentData)
                         }
                     }
+                    val database = nostrsigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
 
-                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, state.route)
+                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, state.route, database)
                 }
             }
         }

@@ -30,6 +30,7 @@ import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.nostrsigner
@@ -46,7 +47,8 @@ fun PermissionsScreen(
     modifier: Modifier,
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    navController: NavController
+    navController: NavController,
+    database: AppDatabase
 ) {
     val lifecycleEvent = rememberLifecycleEvent()
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
@@ -64,7 +66,7 @@ fun PermissionsScreen(
         }
         scope.launch(Dispatchers.IO) {
             applications.clear()
-            applications.addAll(nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getAll(localAccount.keyPair.pubKey.toHexKey()))
+            applications.addAll(database.applicationDao().getAll(localAccount.keyPair.pubKey.toHexKey()))
         }
     }
 
@@ -84,7 +86,7 @@ fun PermissionsScreen(
                     onClick = {
                         resetPermissions = false
                         scope.launch {
-                            LocalPreferences.deleteSavedApps(applications, account.keyPair.pubKey.toNpub())
+                            LocalPreferences.deleteSavedApps(applications, database)
                             accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
                         }
                     }

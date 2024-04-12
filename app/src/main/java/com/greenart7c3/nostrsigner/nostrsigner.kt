@@ -5,7 +5,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import java.util.concurrent.ConcurrentHashMap
 
 class nostrsigner : Application() {
-    var databases = ConcurrentHashMap<String, AppDatabase>()
+    private var databases = ConcurrentHashMap<String, AppDatabase>()
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -13,6 +13,10 @@ class nostrsigner : Application() {
         LocalPreferences.allSavedAccounts().forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
         }
+    }
+
+    fun getDatabase(npub: String): AppDatabase {
+        return databases[npub]!!
     }
 
     companion object {

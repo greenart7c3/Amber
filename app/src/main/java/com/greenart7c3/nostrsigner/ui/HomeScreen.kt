@@ -19,6 +19,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
@@ -30,7 +31,8 @@ fun HomeScreen(
     intents: List<IntentData>,
     packageName: String?,
     applicationName: String?,
-    account: Account
+    account: Account,
+    database: AppDatabase
 ) {
     var loading by remember { mutableStateOf(false) }
     if (loading) {
@@ -58,14 +60,16 @@ fun HomeScreen(
                     packageName,
                     applicationName,
                     intents.first(),
-                    account
+                    account,
+                    database
                 )
             } else {
                 MultiEventHomeScreen(
                     intents,
                     applicationName,
                     packageName,
-                    account
+                    account,
+                    database
                 ) {
                     loading = it
                 }

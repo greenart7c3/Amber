@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -43,7 +44,8 @@ fun SingleEventHomeScreen(
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
-    account: Account
+    account: Account,
+    database: AppDatabase
 ) {
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
@@ -57,9 +59,9 @@ fun SingleEventHomeScreen(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             applicationEntity = if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
             } else {
-                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getByKey(key)
+                database.applicationDao().getByKey(key)
             }
         }
     }
@@ -100,7 +102,8 @@ fun SingleEventHomeScreen(
                             intentData,
                             null,
                             permissions = permissions,
-                            appName = applicationName ?: appName
+                            appName = applicationName ?: appName,
+                            database = database
                         )
                     }
                     return@LoginWithPubKey
@@ -108,7 +111,7 @@ fun SingleEventHomeScreen(
                 {
                     if (remember.value) {
                         coroutineScope.launch(Dispatchers.IO) {
-                            AmberUtils.acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account)
+                            AmberUtils.acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account, database)
                         }
                     }
 
@@ -200,7 +203,8 @@ fun SingleEventHomeScreen(
                                         result,
                                         result,
                                         intentData,
-                                        null
+                                        null,
+                                        database
                                     )
                                 }
                             }
@@ -236,7 +240,8 @@ fun SingleEventHomeScreen(
                                 null,
                                 false,
                                 applicationName ?: appName,
-                                account
+                                account,
+                                database
                             )
                         }
                     }
@@ -351,7 +356,8 @@ fun SingleEventHomeScreen(
                                     signedEvent.toJson(),
                                     if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig,
                                     intentData,
-                                    localEvent.kind
+                                    localEvent.kind,
+                                    database
                                 )
                             }
                         }
@@ -365,7 +371,8 @@ fun SingleEventHomeScreen(
                                     event.kind,
                                     false,
                                     applicationName ?: appName,
-                                    account
+                                    account,
+                                    database
                                 )
                             }
                         }

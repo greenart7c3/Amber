@@ -197,7 +197,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-            val permission = nostrsigner.instance.databases[acc.keyPair.pubKey.toNpub()]!!.applicationDao().getByKey(bunkerRequest.localKey)
+            val database = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub())
+
+            val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
             val relays = permission?.application?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: bunkerRequest.relays
 
             if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
@@ -218,7 +220,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     ""
                 }
                 bunkerRequest.secret = secret
-                applicationWithSecret = nostrsigner.instance.databases[acc.keyPair.pubKey.toNpub()]!!.applicationDao().getBySecret(secret)
+                applicationWithSecret = database.applicationDao().getBySecret(secret)
                 if (applicationWithSecret == null || secret.isBlank()) {
                     IntentUtils.sendBunkerResponse(
                         acc,

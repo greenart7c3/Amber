@@ -2,19 +2,18 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import android.util.Log
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
@@ -122,8 +121,16 @@ object AmberUtils {
         }
     }
 
-    suspend fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean, appName: String, account: Account) {
-        val application = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
+    suspend fun acceptOrRejectPermission(
+        key: String,
+        intentData: IntentData,
+        kind: Int?,
+        value: Boolean,
+        appName: String,
+        account: Account,
+        database: AppDatabase
+    ) {
+        val application = database
             .applicationDao()
             .getByKey(key) ?: ApplicationWithPermissions(
             application = ApplicationEntity(
@@ -151,7 +158,7 @@ object AmberUtils {
                 )
             )
 
-            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
+            database
                 .applicationDao()
                 .insertApplicationWithPermissions(application)
         }

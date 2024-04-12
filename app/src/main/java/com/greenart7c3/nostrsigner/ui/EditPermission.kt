@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -67,7 +68,8 @@ fun EditPermission(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
     selectedPackage: String,
-    navController: NavController
+    navController: NavController,
+    database: AppDatabase
 ) {
     val clipboardManager = LocalClipboardManager.current
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
@@ -85,7 +87,6 @@ fun EditPermission(
 
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
-            val database = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
             permissions.addAll(database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
             applicationData = database.applicationDao().getByKey(selectedPackage)!!.application
         }
@@ -98,7 +99,7 @@ fun EditPermission(
             }
         ) {
             scope.launch(Dispatchers.IO) {
-                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
+                database
                     .applicationDao()
                     .delete(applicationData)
             }
@@ -274,7 +275,6 @@ fun EditPermission(
             Button(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        val database = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                         database.applicationDao().deletePermissions(selectedPackage)
                         database.applicationDao().insertPermissions(permissions)
                         database

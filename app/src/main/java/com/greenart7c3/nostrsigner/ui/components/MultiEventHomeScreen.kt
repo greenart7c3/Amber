@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.sp
 import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -61,6 +62,7 @@ fun MultiEventHomeScreen(
     applicationName: String?,
     packageName: String?,
     accountParam: Account,
+    database: AppDatabase,
     onLoading: (Boolean) -> Unit
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -264,7 +266,8 @@ fun MultiEventHomeScreen(
                                                 localEvent.kind,
                                                 intentData.rememberMyChoice.value,
                                                 applicationName ?: packageName,
-                                                localAccount
+                                                localAccount,
+                                                database
                                             )
                                         }
                                         localAccount.signer.sign<Event>(
@@ -289,7 +292,8 @@ fun MultiEventHomeScreen(
                                                 null,
                                                 intentData.rememberMyChoice.value,
                                                 applicationName ?: packageName,
-                                                localAccount
+                                                localAccount,
+                                                database
                                             )
                                         }
                                         val signature = AmberUtils.encryptOrDecryptData(

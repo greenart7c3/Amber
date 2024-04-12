@@ -68,7 +68,7 @@ class RegisterAccounts(
         accounts.forEach {
             val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
             if (acc != null) {
-                val permissions = nostrsigner.instance.databases[acc.keyPair.pubKey.toNpub()]!!.applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
+                val permissions = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
                         readyToSend.add(

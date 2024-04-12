@@ -75,6 +75,7 @@ import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -121,24 +122,25 @@ fun sendResult(
     value: String,
     intentData: IntentData,
     kind: Int?,
+    database: AppDatabase,
     permissions: List<Permission>? = null,
     appName: String? = null
 ) {
     GlobalScope.launch(Dispatchers.IO) {
         if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
-            val application = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+            val application = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
             application?.let {
-                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().delete(it.application)
+                database.applicationDao().delete(it.application)
             }
         }
 
         val activity = context.getAppCompatActivity()
         if (intentData.type == SignerType.CONNECT || (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY)) {
-            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().deletePermissions(key)
+            database.applicationDao().deletePermissions(key)
         }
 
         val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
-        val savedApplication = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getByKey(key)
+        val savedApplication = database.applicationDao().getByKey(key)
 
         val application = savedApplication ?: ApplicationWithPermissions(
             application = ApplicationEntity(
@@ -198,7 +200,7 @@ fun sendResult(
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
                 relays,
                 onSign = {
-                    nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().insertApplicationWithPermissions(application)
+                    database.applicationDao().insertApplicationWithPermissions(application)
                     PushNotificationUtils.hasInit = false
                     GlobalScope.launch(Dispatchers.IO) {
                         PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
@@ -209,7 +211,7 @@ fun sendResult(
                 activity?.finish()
             }
         } else if (packageName != null) {
-            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().insertApplicationWithPermissions(application)
+            database.applicationDao().insertApplicationWithPermissions(application)
 
             val intent = Intent()
             intent.putExtra("signature", value)
@@ -411,7 +413,8 @@ fun MainScreen(
     intents: List<IntentData>,
     packageName: String?,
     appName: String?,
-    route: String?
+    route: String?,
+    database: AppDatabase
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -510,7 +513,7 @@ fun MainScreen(
                         secret
                     )
                     scope.launch(Dispatchers.IO) {
-                        nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().insertApplication(
+                        database.applicationDao().insertApplication(
                             application
                         )
                     }
@@ -614,7 +617,8 @@ fun MainScreen(
                         intents,
                         packageName,
                         appName,
-                        account
+                        account,
+                        database
                     )
                 }
             )
@@ -628,7 +632,8 @@ fun MainScreen(
                             .padding(padding),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
-                        navController = navController
+                        navController = navController,
+                        database = database
                     )
                 }
             )
@@ -657,7 +662,8 @@ fun MainScreen(
                         account = account,
                         accountStateViewModel = accountStateViewModel,
                         selectedPackage = it.arguments?.getString("packageName")!!,
-                        navController = navController
+                        navController = navController,
+                        database = database
                     )
                 }
             )

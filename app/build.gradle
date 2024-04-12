@@ -44,6 +44,7 @@ android {
 
     productFlavors {
         create("play") {
+            getIsDefault().set(true)
             dimension = "version"
         }
         create("free") {

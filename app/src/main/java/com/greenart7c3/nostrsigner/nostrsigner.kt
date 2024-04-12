@@ -2,13 +2,17 @@ package com.greenart7c3.nostrsigner
 
 import android.app.Application
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import java.util.concurrent.ConcurrentHashMap
 
 class nostrsigner : Application() {
-    lateinit var database: AppDatabase
+    var databases = ConcurrentHashMap<String, AppDatabase>()
     override fun onCreate() {
         super.onCreate()
         instance = this
-        database = AppDatabase.getDatabase(this)
+
+        LocalPreferences.allSavedAccounts().forEach {
+            databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
+        }
     }
 
     companion object {

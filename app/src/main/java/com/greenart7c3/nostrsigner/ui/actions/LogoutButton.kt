@@ -18,6 +18,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -37,9 +38,9 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(acc.npub)
                     account?.let {
-                        val permissions = nostrsigner.instance.database.applicationDao().getAll(it.keyPair.pubKey.toHexKey())
+                        val permissions = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getAll(it.keyPair.pubKey.toHexKey())
                         permissions.forEach { app ->
-                            nostrsigner.instance.database.applicationDao().delete(app)
+                            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().delete(app)
                         }
                     }
 

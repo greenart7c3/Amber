@@ -126,19 +126,19 @@ fun sendResult(
 ) {
     GlobalScope.launch(Dispatchers.IO) {
         if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
-            val application = nostrsigner.instance.database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+            val application = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getBySecret(intentData.bunkerRequest.secret)
             application?.let {
-                nostrsigner.instance.database.applicationDao().delete(it.application)
+                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().delete(it.application)
             }
         }
 
         val activity = context.getAppCompatActivity()
         if (intentData.type == SignerType.CONNECT || (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY)) {
-            nostrsigner.instance.database.applicationDao().deletePermissions(key)
+            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().deletePermissions(key)
         }
 
         val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
-        val savedApplication = nostrsigner.instance.database.applicationDao().getByKey(key)
+        val savedApplication = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getByKey(key)
 
         val application = savedApplication ?: ApplicationWithPermissions(
             application = ApplicationEntity(
@@ -198,7 +198,7 @@ fun sendResult(
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
                 relays,
                 onSign = {
-                    nostrsigner.instance.database.applicationDao().insertApplicationWithPermissions(application)
+                    nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().insertApplicationWithPermissions(application)
                     PushNotificationUtils.hasInit = false
                     GlobalScope.launch(Dispatchers.IO) {
                         PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
@@ -209,7 +209,7 @@ fun sendResult(
                 activity?.finish()
             }
         } else if (packageName != null) {
-            nostrsigner.instance.database.applicationDao().insertApplicationWithPermissions(application)
+            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().insertApplicationWithPermissions(application)
 
             val intent = Intent()
             intent.putExtra("signature", value)
@@ -510,7 +510,7 @@ fun MainScreen(
                         secret
                     )
                     scope.launch(Dispatchers.IO) {
-                        nostrsigner.instance.database.applicationDao().insertApplication(
+                        nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().insertApplication(
                             application
                         )
                     }

@@ -27,6 +27,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.nostrsigner
 import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.RelayAuthEvent
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
@@ -67,7 +68,7 @@ class RegisterAccounts(
         accounts.forEach {
             val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
             if (acc != null) {
-                val permissions = nostrsigner.instance.database.applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
+                val permissions = nostrsigner.instance.databases[acc.keyPair.pubKey.toNpub()]!!.applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
                         readyToSend.add(

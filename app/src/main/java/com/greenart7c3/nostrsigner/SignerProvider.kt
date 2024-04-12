@@ -44,7 +44,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
-                val permission = nostrsigner.instance.database
+                val permission = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                     .applicationDao()
                     .getPermission(
                         sortOrder ?: packageName,
@@ -93,7 +93,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
 
-                val permission = nostrsigner.instance.database
+                val permission = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                     .applicationDao()
                     .getPermission(
                         sortOrder ?: packageName,
@@ -147,7 +147,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val currentSelection = selection ?: "0"
 
-                val permission = nostrsigner.instance.database
+                val permission = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                     .applicationDao()
                     .getPermission(
                         sortOrder ?: packageName,

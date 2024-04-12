@@ -189,9 +189,9 @@ object LocalPreferences {
         saveToEncryptedStorage(account)
     }
 
-    suspend fun deleteSavedApps(applications: List<ApplicationEntity>) = withContext(Dispatchers.IO) {
+    suspend fun deleteSavedApps(applications: List<ApplicationEntity>, npub: String) = withContext(Dispatchers.IO) {
         applications.forEach {
-            nostrsigner.instance.database.applicationDao().delete(it)
+            nostrsigner.instance.databases[npub]!!.applicationDao().delete(it)
         }
     }
 
@@ -220,14 +220,14 @@ object LocalPreferences {
         }
     }
 
-    private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String) = withContext(Dispatchers.IO) {
+    private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String, npub: String) = withContext(Dispatchers.IO) {
         map.forEach {
             val splitData = it.key.split("-")
-            nostrsigner.instance.database.applicationDao().deletePermissions(splitData.first())
+            nostrsigner.instance.databases[npub]!!.applicationDao().deletePermissions(splitData.first())
         }
         map.forEach {
             val splitData = it.key.split("-")
-            nostrsigner.instance.database.applicationDao().insertApplication(
+            nostrsigner.instance.databases[npub]!!.applicationDao().insertApplication(
                 ApplicationEntity(
                     splitData.first(),
                     "",
@@ -240,7 +240,7 @@ object LocalPreferences {
                     ""
                 )
             )
-            nostrsigner.instance.database.applicationDao().insertPermissions(
+            nostrsigner.instance.databases[npub]!!.applicationDao().insertPermissions(
                 listOf(
                     ApplicationPermissionsEntity(
                         id = null,
@@ -273,7 +273,7 @@ object LocalPreferences {
                     outputMap[key] = value
                 }
             }
-            runBlocking { convertToDatabase(outputMap, pubKey) }
+            runBlocking { convertToDatabase(outputMap, pubKey, pubKey.hexToByteArray().toNpub()) }
             this.edit().apply {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()

@@ -14,6 +14,7 @@ import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
@@ -122,7 +123,7 @@ object AmberUtils {
     }
 
     suspend fun acceptOrRejectPermission(key: String, intentData: IntentData, kind: Int?, value: Boolean, appName: String, account: Account) {
-        val application = nostrsigner.instance.database
+        val application = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
             .applicationDao()
             .getByKey(key) ?: ApplicationWithPermissions(
             application = ApplicationEntity(
@@ -150,7 +151,7 @@ object AmberUtils {
                 )
             )
 
-            nostrsigner.instance.database
+            nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                 .applicationDao()
                 .insertApplicationWithPermissions(application)
         }

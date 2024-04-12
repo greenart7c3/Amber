@@ -85,8 +85,9 @@ fun EditPermission(
 
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
-            permissions.addAll(nostrsigner.instance.database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            applicationData = nostrsigner.instance.database.applicationDao().getByKey(selectedPackage)!!.application
+            val database = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
+            permissions.addAll(database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
+            applicationData = database.applicationDao().getByKey(selectedPackage)!!.application
         }
     }
 
@@ -97,7 +98,7 @@ fun EditPermission(
             }
         ) {
             scope.launch(Dispatchers.IO) {
-                nostrsigner.instance.database
+                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                     .applicationDao()
                     .delete(applicationData)
             }
@@ -273,7 +274,7 @@ fun EditPermission(
             Button(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        val database = nostrsigner.instance.database
+                        val database = nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!
                         database.applicationDao().deletePermissions(selectedPackage)
                         database.applicationDao().insertPermissions(permissions)
                         database

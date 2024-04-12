@@ -24,16 +24,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -49,7 +48,6 @@ fun PermissionsScreen(
     accountStateViewModel: AccountStateViewModel,
     navController: NavController
 ) {
-    val context = LocalContext.current
     val lifecycleEvent = rememberLifecycleEvent()
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
     val applications = remember {
@@ -66,7 +64,7 @@ fun PermissionsScreen(
         }
         scope.launch(Dispatchers.IO) {
             applications.clear()
-            applications.addAll(AppDatabase.getDatabase(context).applicationDao().getAll(localAccount.keyPair.pubKey.toHexKey()))
+            applications.addAll(nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getAll(localAccount.keyPair.pubKey.toHexKey()))
         }
     }
 
@@ -86,7 +84,7 @@ fun PermissionsScreen(
                     onClick = {
                         resetPermissions = false
                         scope.launch {
-                            LocalPreferences.deleteSavedApps(applications)
+                            LocalPreferences.deleteSavedApps(applications, account.keyPair.pubKey.toNpub())
                             accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
                         }
                     }

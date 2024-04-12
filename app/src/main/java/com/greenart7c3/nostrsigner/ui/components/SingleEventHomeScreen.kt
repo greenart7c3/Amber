@@ -57,9 +57,9 @@ fun SingleEventHomeScreen(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             applicationEntity = if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                nostrsigner.instance.database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getBySecret(intentData.bunkerRequest.secret)
             } else {
-                nostrsigner.instance.database.applicationDao().getByKey(key)
+                nostrsigner.instance.databases[account.keyPair.pubKey.toNpub()]!!.applicationDao().getByKey(key)
             }
         }
     }

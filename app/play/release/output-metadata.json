@@ -11,7 +11,7 @@
       "type": "UNIVERSAL",
       "filters": [],
       "attributes": [],
-      "versionCode": 48,
+      "versionCode": 49,
       "versionName": "1.0.0",
       "outputFile": "app-play-universal-release.apk"
     },
@@ -24,7 +24,7 @@
         }
       ],
       "attributes": [],
-      "versionCode": 48,
+      "versionCode": 49,
       "versionName": "1.0.0",
       "outputFile": "app-play-arm64-v8a-release.apk"
     },
@@ -37,7 +37,7 @@
         }
       ],
       "attributes": [],
-      "versionCode": 48,
+      "versionCode": 49,
       "versionName": "1.0.0",
       "outputFile": "app-play-x86-release.apk"
     },
@@ -50,7 +50,7 @@
         }
       ],
       "attributes": [],
-      "versionCode": 48,
+      "versionCode": 49,
       "versionName": "1.0.0",
       "outputFile": "app-play-x86_64-release.apk"
     },
@@ -63,7 +63,7 @@
         }
       ],
       "attributes": [],
-      "versionCode": 48,
+      "versionCode": 49,
       "versionName": "1.0.0",
       "outputFile": "app-play-armeabi-v7a-release.apk"
     }

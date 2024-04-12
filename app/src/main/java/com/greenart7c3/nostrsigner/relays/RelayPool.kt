@@ -93,11 +93,11 @@ object RelayPool : Relay.Listener {
         list: List<Relay>,
         signedEvent: EventInterface
     ) {
-        list.forEach { relay -> relays.filter { it.url == relay.url }.forEach { it.send(signedEvent) } }
+        list.forEach { relay -> relays.filter { it.url == relay.url }.forEach { it.send(signedEvent, null) } }
     }
 
     fun send(signedEvent: EventInterface) {
-        relays.forEach { it.send(signedEvent) }
+        relays.forEach { it.send(signedEvent, null) }
     }
 
     fun close(subscriptionId: String) {

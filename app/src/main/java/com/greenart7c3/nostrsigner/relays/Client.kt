@@ -128,13 +128,13 @@ object Client : RelayPool.Listener {
             val useConnectedRelayIfPresent = RelayPool.getRelays(relay)
 
             if (useConnectedRelayIfPresent.isNotEmpty()) {
-                useConnectedRelayIfPresent.forEach { it.send(signedEvent) }
+                useConnectedRelayIfPresent.forEach { it.send(signedEvent, onDone) }
             } else {
                 /** temporary connection */
                 newSporadicRelay(
                     relay,
                     feedTypes,
-                    onConnected = { relay -> relay.send(signedEvent) },
+                    onConnected = { relay -> relay.send(signedEvent, null) },
                     onDone = onDone
                 )
             }

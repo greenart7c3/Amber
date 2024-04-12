@@ -101,7 +101,7 @@ object NotificationUtils {
 
         val contentIntent = Intent(applicationContext, MainActivity::class.java).apply { data = Uri.parse(uri) }
         contentIntent.putExtra("bunker", bunkerRequest.toJson())
-        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
         val contentPendingIntent = PendingIntent.getActivity(
             applicationContext,
             notId,

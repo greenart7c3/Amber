@@ -421,8 +421,12 @@ class Relay(
         Client.allSubscriptions().forEach { sendFilter(requestId = it) }
     }
 
-    fun send(signedEvent: EventInterface) {
+    fun send(signedEvent: EventInterface, onDone: (() -> Unit)?) {
         checkNotInMainThread()
+
+        if (onDone != null) {
+            onOk = onDone
+        }
 
         if (signedEvent is RelayAuthEvent) {
             authResponse[signedEvent.id] = false

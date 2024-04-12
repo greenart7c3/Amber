@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui.actions
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Logout
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -10,19 +9,23 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.vitorpamplona.quartz.encoders.toHexKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun LogoutButton(
     acc: AccountInfo,
     accountStateViewModel: AccountStateViewModel
 ) {
-    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var logoutDialog by remember { mutableStateOf(false) }
     if (logoutDialog) {
         LogoutDialog(
@@ -30,8 +33,18 @@ fun LogoutButton(
                 logoutDialog = false
             },
             onConfirm = {
-                logoutDialog = false
-                accountStateViewModel.logOff(acc.npub)
+                scope.launch(Dispatchers.IO) {
+                    val account = LocalPreferences.loadFromEncryptedStorage(acc.npub)
+                    account?.let {
+                        val permissions = LocalPreferences.appDatabase?.applicationDao()?.getAll(it.keyPair.pubKey.toHexKey())
+                        permissions?.forEach { app ->
+                            LocalPreferences.appDatabase?.applicationDao()?.delete(app)
+                        }
+                    }
+
+                    logoutDialog = false
+                    accountStateViewModel.logOff(acc.npub)
+                }
             }
         )
     }

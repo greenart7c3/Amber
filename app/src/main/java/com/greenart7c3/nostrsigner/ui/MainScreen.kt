@@ -499,6 +499,7 @@ fun MainScreen(
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val destinationRoute = navBackStackEntry?.destination?.route ?: ""
     val items = listOf(Route.Home, Route.Permissions, Route.Settings)
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
 
@@ -571,7 +572,7 @@ fun MainScreen(
 
     Scaffold(
         floatingActionButton = {
-            if (navBackStackEntry?.destination?.route == "Permissions" && BuildConfig.FLAVOR != "offline") {
+            if (destinationRoute == "Permissions" && BuildConfig.FLAVOR != "offline") {
                 GoToTop(
                     accountStateViewModel,
                     account
@@ -651,11 +652,10 @@ fun MainScreen(
             )
         },
         bottomBar = {
-            if (navBackStackEntry?.destination?.route?.contains("Permission/") == false) {
+            if (!destinationRoute.contains("Permission/")) {
                 NavigationBar(tonalElevation = 0.dp) {
-                    val currentRoute = navBackStackEntry?.destination?.route
                     items.forEach {
-                        val selected = currentRoute == it.route
+                        val selected = destinationRoute == it.route
                         NavigationBarItem(
                             selected = selected,
                             onClick = {

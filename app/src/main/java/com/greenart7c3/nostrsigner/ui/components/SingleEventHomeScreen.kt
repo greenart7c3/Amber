@@ -319,6 +319,7 @@ fun SingleEventHomeScreen(
 
         else -> {
             val result = runCatching { IntentUtils.getIntent(intentData.data, account.keyPair) }
+
             if (result.isFailure) {
                 var showError by remember {
                     mutableStateOf(false)

@@ -10,6 +10,9 @@ import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -26,7 +29,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -37,14 +42,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.PlainTooltip
+import androidx.compose.material3.RichTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
 import androidx.compose.material3.rememberModalBottomSheetState
-import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -54,6 +56,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -61,10 +64,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -85,7 +86,6 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
@@ -305,63 +305,75 @@ fun GoToTop(
         }
     }
 
-    Column {
-        if (expanded) {
-            TooltipBox(
-                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                tooltip = {
-                    PlainTooltip {
-                        Text("Connect to a new application")
-                    }
-                },
-                state = rememberTooltipState()
+    Column(
+        horizontalAlignment = Alignment.End
+    ) {
+        AnimatedVisibility(visible = expanded) {
+            Column(
+                horizontalAlignment = Alignment.End
             ) {
-                FloatingActionButton(
-                    onClick = {
-                        dialogOpen = true
-                        expanded = false
-                    },
-                    modifier = Modifier.size(55.dp),
-                    shape = CircleShape
+                Row(
+                    Modifier.padding(end = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = "Qr Code",
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-            TooltipBox(
-                positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider(),
-                tooltip = {
-                    PlainTooltip {
-                        Text("Creates a new application")
+                    RichTooltip {
+                        Text(stringResource(R.string.connect_app))
                     }
-                },
-                state = rememberTooltipState()
-            ) {
-                FloatingActionButton(
-                    onClick = {
-                        goToTop()
-                        expanded = false
-                    },
-                    modifier = Modifier.size(55.dp),
-                    shape = CircleShape
-                ) {
-                    Text(
-                        text = "New App",
-                        color = Color.White,
-                        textAlign = TextAlign.Center,
-                        fontSize = 12.sp
-                    )
+                    Spacer(modifier = Modifier.size(4.dp))
+                    FloatingActionButton(
+                        onClick = {
+                            dialogOpen = true
+                            expanded = false
+                        },
+                        modifier = Modifier.size(35.dp),
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            Icons.Default.QrCode,
+                            contentDescription = stringResource(R.string.connect_app),
+                            tint = Color.White
+                        )
+                    }
                 }
-            }
 
-            Spacer(modifier = Modifier.height(20.dp))
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    Modifier.padding(end = 10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    RichTooltip {
+                        Text(stringResource(R.string.new_app))
+                    }
+                    Spacer(modifier = Modifier.size(4.dp))
+                    FloatingActionButton(
+                        onClick = {
+                            dialogOpen = true
+                            expanded = false
+                        },
+                        modifier = Modifier.size(35.dp),
+                        shape = CircleShape
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            contentDescription = stringResource(R.string.new_app),
+                            tint = Color.White
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+            }
         }
+
+        val rotation by animateFloatAsState(
+            targetValue = if (expanded) 0f else 180f,
+            animationSpec = tween(
+                durationMillis = 150,
+                easing = LinearEasing
+            ),
+            label = "rotation"
+        )
 
         FloatingActionButton(
             onClick = {
@@ -370,8 +382,9 @@ fun GoToTop(
             shape = CircleShape
         ) {
             Icon(
-                Icons.Default.Add,
-                contentDescription = stringResource(R.string.connect_app)
+                if (expanded) Icons.Default.Close else Icons.Default.Add,
+                contentDescription = stringResource(R.string.connect_app),
+                modifier = Modifier.rotate(rotation)
             )
         }
     }

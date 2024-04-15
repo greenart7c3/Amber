@@ -21,6 +21,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -77,7 +78,7 @@ fun EditPermission(
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
     var applicationData by remember {
-        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, ""))
+        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false))
     }
     var textFieldvalue by remember(applicationData.name) {
         mutableStateOf(TextFieldValue(applicationData.name))
@@ -85,10 +86,17 @@ fun EditPermission(
     var wantsToDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
+    var checked by remember {
+        mutableStateOf(applicationData.useSecret)
+    }
+    val secret = if (checked) "&secret=${applicationData.secret}" else ""
+    val bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app$secret"
+
     LaunchedEffect(Unit) {
         scope.launch(Dispatchers.IO) {
             permissions.addAll(database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
             applicationData = database.applicationDao().getByKey(selectedPackage)!!.application
+            checked = applicationData.useSecret
         }
     }
 
@@ -115,7 +123,6 @@ fun EditPermission(
         mutableStateOf(false)
     }
 
-    val bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app&secret=${applicationData.secret}"
     if (showDialog) {
         QrCodeDialog(
             content = bunkerUri
@@ -166,6 +173,27 @@ fun EditPermission(
                 ) {
                     Icon(Icons.Default.QrCode, stringResource(R.string.show_qr_code))
                 }
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable {
+                        checked = !checked
+                    }
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = "Use secret to connect to the application"
+                )
+                Switch(
+                    checked = checked,
+                    onCheckedChange = {
+                        checked = !checked
+                    }
+                )
             }
         }
         OutlinedTextField(

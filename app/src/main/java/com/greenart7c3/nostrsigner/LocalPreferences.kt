@@ -238,7 +238,8 @@ object LocalPreferences {
                     "",
                     pubKey,
                     true,
-                    ""
+                    "",
+                    false
                 )
             )
             database.applicationDao().insertPermissions(

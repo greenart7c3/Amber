@@ -16,6 +16,9 @@ class nostrsigner : Application() {
     }
 
     fun getDatabase(npub: String): AppDatabase {
+        if (!databases.containsKey(npub)) {
+            databases[npub] = AppDatabase.getDatabase(this, npub)
+        }
         return databases[npub]!!
     }
 

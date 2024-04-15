@@ -220,17 +220,26 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 } catch (_: Exception) {
                     ""
                 }
-                bunkerRequest.secret = secret
-                applicationWithSecret = database.applicationDao().getBySecret(secret)
-                if (applicationWithSecret == null || secret.isBlank()) {
-                    IntentUtils.sendBunkerResponse(
-                        acc,
-                        bunkerRequest.localKey,
-                        BunkerResponse(bunkerRequest.id, "", "invalid secret"),
-                        relays,
-                        onLoading = { }
-                    ) { }
-                    return@nip04Decrypt
+                // TODO: make secret not optional when more applications start using it
+                if (secret.isNotBlank()) {
+                    bunkerRequest.secret = secret
+                    applicationWithSecret = database.applicationDao().getBySecret(secret)
+                    if (applicationWithSecret == null || secret.isBlank()) {
+                        IntentUtils.sendBunkerResponse(
+                            acc,
+                            bunkerRequest.localKey,
+                            BunkerResponse(bunkerRequest.id, "", "invalid secret"),
+                            relays,
+                            onLoading = { }
+                        ) { }
+                        return@nip04Decrypt
+                    }
+                } else {
+                    applicationWithSecret = database.applicationDao().getAllApplications().firstOrNull { localApp ->
+                        !localApp.application.useSecret
+                    }
+
+                    bunkerRequest.secret = applicationWithSecret?.application?.secret ?: ""
                 }
             }
 

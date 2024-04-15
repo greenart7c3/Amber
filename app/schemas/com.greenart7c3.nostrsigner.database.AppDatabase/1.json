@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 1,
-    "identityHash": "5651f3201d3521ce45fda80b053e6722",
+    "identityHash": "3267256afb5b9a388fb15f267466e995",
     "entities": [
       {
         "tableName": "application",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` TEXT NOT NULL, `name` TEXT NOT NULL, `relays` TEXT NOT NULL, `url` TEXT NOT NULL, `icon` TEXT NOT NULL, `description` TEXT NOT NULL, `pubKey` TEXT NOT NULL, `isConnected` INTEGER NOT NULL, `secret` TEXT NOT NULL, PRIMARY KEY(`key`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` TEXT NOT NULL, `name` TEXT NOT NULL, `relays` TEXT NOT NULL, `url` TEXT NOT NULL, `icon` TEXT NOT NULL, `description` TEXT NOT NULL, `pubKey` TEXT NOT NULL, `isConnected` INTEGER NOT NULL, `secret` TEXT NOT NULL, `useSecret` INTEGER NOT NULL, PRIMARY KEY(`key`))",
         "fields": [
           {
             "fieldPath": "key",
@@ -60,6 +60,12 @@
             "fieldPath": "secret",
             "columnName": "secret",
             "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "useSecret",
+            "columnName": "useSecret",
+            "affinity": "INTEGER",
             "notNull": true
           }
         ],
@@ -172,7 +178,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5651f3201d3521ce45fda80b053e6722')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3267256afb5b9a388fb15f267466e995')"
     ]
   }
 }

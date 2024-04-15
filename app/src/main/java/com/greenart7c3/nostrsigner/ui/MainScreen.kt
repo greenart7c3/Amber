@@ -154,7 +154,8 @@ fun sendResult(
                 "",
                 account.keyPair.pubKey.toHexKey(),
                 true,
-                intentData.bunkerRequest?.secret ?: ""
+                intentData.bunkerRequest?.secret ?: "",
+                intentData.bunkerRequest?.secret != null
             ),
             permissions = mutableListOf()
         )
@@ -538,13 +539,14 @@ fun MainScreen(
                             "",
                             account.keyPair.pubKey.toHexKey(),
                             false,
-                            secret
+                            secret,
+                            false
                         )
 
                         database.applicationDao().insertApplication(
                             application
                         )
-                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app&secret=${application.secret}"
+                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
                         clipboardManager.setText(AnnotatedString(bunkerUrl))
                         scope.launch(Dispatchers.Main) {
                             navController.popBackStack()

@@ -148,7 +148,8 @@ object AmberUtils {
                 "",
                 account.keyPair.pubKey.toHexKey(),
                 true,
-                intentData.bunkerRequest?.secret ?: ""
+                intentData.bunkerRequest?.secret ?: "",
+                intentData.bunkerRequest?.secret != null
             ),
             permissions = mutableListOf()
         )

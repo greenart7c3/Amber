@@ -32,7 +32,8 @@ data class ApplicationEntity(
     val description: String,
     val pubKey: String,
     var isConnected: Boolean,
-    val secret: String
+    val secret: String,
+    val useSecret: Boolean
 )
 
 data class ApplicationWithPermissions(

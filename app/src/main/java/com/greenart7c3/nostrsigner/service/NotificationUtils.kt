@@ -108,6 +108,9 @@ object NotificationUtils {
             contentIntent,
             PendingIntent.FLAG_MUTABLE
         )
+
+        IntentUtils.bunkerRequests[notId.toString()] = bunkerRequest
+
         // Build the notification
         val builderPublic = NotificationCompat.Builder(
             applicationContext,

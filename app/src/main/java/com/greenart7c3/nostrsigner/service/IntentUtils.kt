@@ -29,6 +29,7 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 
 data class BunkerMetada(
     val name: String,
@@ -37,6 +38,8 @@ data class BunkerMetada(
 )
 
 object IntentUtils {
+    val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>(0)
+
     private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?): IntentData {
         val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")
         val parameters = data.replace("nostrsigner:", "").split("?").toMutableList()
@@ -132,6 +135,7 @@ object IntentUtils {
         localKey: String,
         bunkerResponse: BunkerResponse,
         relays: List<String>,
+        onLoading: (Boolean) -> Unit,
         onSign: (() -> Unit)? = null,
         onDone: () -> Unit
     ) {
@@ -150,7 +154,7 @@ object IntentUtils {
                 }
                 GlobalScope.launch(Dispatchers.IO) {
                     relays.forEach { relay ->
-                        Client.send(it, relay = relay, onDone = onDone)
+                        Client.send(it, relay = relay, onDone = onDone, onLoading = onLoading)
                     }
                 }
             }

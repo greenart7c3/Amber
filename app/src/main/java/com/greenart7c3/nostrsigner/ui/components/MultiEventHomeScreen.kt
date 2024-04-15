@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -33,7 +34,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -41,14 +44,18 @@ import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.events.Event
@@ -67,6 +74,29 @@ fun MultiEventHomeScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val applications = remember {
+        mutableListOf<ApplicationWithPermissions>()
+    }
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            intents.forEach {
+                val key = if (it.bunkerRequest != null) {
+                    it.bunkerRequest.localKey
+                } else {
+                    "$packageName"
+                }
+
+                if (applications.none { app -> app.application.key == key }) {
+                    val application = database.applicationDao().getByKey(key)
+                    if (application != null) {
+                        applications.add(application)
+                    }
+                }
+            }
+        }
+    }
+
     Column(
         Modifier.fillMaxSize()
     ) {
@@ -105,6 +135,16 @@ fun MultiEventHomeScreen(
             items(intents.size) {
                 var isExpanded by remember { mutableStateOf(false) }
                 val intentData = intents[it]
+
+                val key = if (intentData.bunkerRequest != null) {
+                    intentData.bunkerRequest.localKey
+                } else {
+                    "$packageName"
+                }
+
+                val applicationEntity = applications.firstOrNull { application -> application.application.key == key }
+                val appName = applicationEntity?.application?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
+
                 Card(
                     Modifier
                         .padding(4.dp)
@@ -143,19 +183,13 @@ fun MultiEventHomeScreen(
                             tint = Color.LightGray
                         )
 
-                        val appName = applicationName ?: packageName ?: intentData.name
                         val text = if (intentData.type == SignerType.SIGN_EVENT) {
                             val event = IntentUtils.getIntent(intentData.data, accountParam.keyPair)
-                            if (event.kind == 22242) "requests client authentication" else "requests event signature"
+                            val permission = Permission("sign_event", event.kind)
+                            "wants you to sign a $permission"
                         } else {
-                            when (intentData.type) {
-                                SignerType.NIP44_ENCRYPT -> stringResource(R.string.encrypt_nip44)
-                                SignerType.NIP04_ENCRYPT -> stringResource(R.string.encrypt_nip04)
-                                SignerType.NIP44_DECRYPT -> stringResource(R.string.decrypt_nip44)
-                                SignerType.NIP04_DECRYPT -> stringResource(R.string.decrypt_nip04)
-                                SignerType.DECRYPT_ZAP_EVENT -> stringResource(R.string.decrypt_zap_event)
-                                else -> stringResource(R.string.encrypt_decrypt)
-                            }
+                            val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
+                            "wants you to $permission"
                         }
                         Text(
                             modifier = Modifier.weight(1f),
@@ -207,7 +241,7 @@ fun MultiEventHomeScreen(
                             RememberMyChoice(
                                 shouldRunOnAccept = false,
                                 intentData.rememberMyChoice.value,
-                                packageName,
+                                appName,
                                 { }
                             ) {
                                 intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
@@ -247,35 +281,49 @@ fun MultiEventHomeScreen(
                                     } else {
                                         accountParam
                                     } ?: continue
-                                if (packageName != null) {
-                                    if (intentData.type == SignerType.SIGN_EVENT) {
-                                        val localEvent = try {
-                                            Event.fromJson(intentData.data)
-                                        } catch (e: Exception) {
-                                            Event.fromJson(
-                                                IntentUtils.getIntent(
-                                                    intentData.data,
-                                                    localAccount.keyPair
-                                                ).toJson()
-                                            )
-                                        }
-                                        if (intentData.rememberMyChoice.value) {
-                                            AmberUtils.acceptOrRejectPermission(
-                                                packageName,
-                                                intentData,
-                                                localEvent.kind,
-                                                intentData.rememberMyChoice.value,
-                                                applicationName ?: packageName,
-                                                localAccount,
-                                                database
-                                            )
-                                        }
-                                        localAccount.signer.sign<Event>(
-                                            localEvent.createdAt,
+
+                                val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+                                val applicationEntity = database.applicationDao().getByKey(key)
+
+                                if (intentData.type == SignerType.SIGN_EVENT) {
+                                    val localEvent = try {
+                                        Event.fromJson(intentData.data)
+                                    } catch (e: Exception) {
+                                        Event.fromJson(
+                                            IntentUtils.getIntent(
+                                                intentData.data,
+                                                localAccount.keyPair
+                                            ).toJson()
+                                        )
+                                    }
+
+                                    if (intentData.rememberMyChoice.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            key,
+                                            intentData,
                                             localEvent.kind,
-                                            localEvent.tags,
-                                            localEvent.content
-                                        ) { signedEvent ->
+                                            intentData.rememberMyChoice.value,
+                                            applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                            localAccount,
+                                            database
+                                        )
+                                    }
+
+                                    localAccount.signer.sign<Event>(
+                                        localEvent.createdAt,
+                                        localEvent.kind,
+                                        localEvent.tags,
+                                        localEvent.content
+                                    ) { signedEvent ->
+                                        if (intentData.bunkerRequest != null) {
+                                            IntentUtils.sendBunkerResponse(
+                                                localAccount,
+                                                intentData.bunkerRequest.localKey,
+                                                BunkerResponse(intentData.bunkerRequest.id, signedEvent.toJson(), null),
+                                                applicationEntity?.application?.relays ?: listOf("wss://relay.nsec.app"),
+                                                onLoading = {}
+                                            ) {}
+                                        } else {
                                             results.add(
                                                 Result(
                                                     null,
@@ -284,24 +332,35 @@ fun MultiEventHomeScreen(
                                                 )
                                             )
                                         }
-                                    } else {
-                                        if (intentData.rememberMyChoice.value) {
-                                            AmberUtils.acceptOrRejectPermission(
-                                                packageName,
-                                                intentData,
-                                                null,
-                                                intentData.rememberMyChoice.value,
-                                                applicationName ?: packageName,
-                                                localAccount,
-                                                database
-                                            )
-                                        }
-                                        val signature = AmberUtils.encryptOrDecryptData(
-                                            intentData.data,
-                                            intentData.type,
+                                    }
+                                } else {
+                                    if (intentData.rememberMyChoice.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            key,
+                                            intentData,
+                                            null,
+                                            intentData.rememberMyChoice.value,
+                                            applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
                                             localAccount,
-                                            intentData.pubKey
-                                        ) ?: continue
+                                            database
+                                        )
+                                    }
+                                    val signature = AmberUtils.encryptOrDecryptData(
+                                        intentData.data,
+                                        intentData.type,
+                                        localAccount,
+                                        intentData.pubKey
+                                    ) ?: continue
+
+                                    if (intentData.bunkerRequest != null) {
+                                        IntentUtils.sendBunkerResponse(
+                                            localAccount,
+                                            intentData.bunkerRequest.localKey,
+                                            BunkerResponse(intentData.bunkerRequest.id, signature, null),
+                                            applicationEntity?.application?.relays ?: listOf("wss://relay.nsec.app"),
+                                            onLoading = {}
+                                        ) { }
+                                    } else {
                                         results.add(
                                             Result(
                                                 null,
@@ -320,8 +379,14 @@ fun MultiEventHomeScreen(
                                 intent.putExtra("results", json)
                                 activity?.setResult(Activity.RESULT_OK, intent)
                             }
-                            activity?.intent = null
-                            activity?.finish()
+                            if (intents.any { it.bunkerRequest != null }) {
+                                EventNotificationConsumer(context).notificationManager().cancelAll()
+                                activity?.intent = null
+                                activity?.finish()
+                            } else {
+                                activity?.intent = null
+                                activity?.finish()
+                            }
                         } finally {
                             onLoading(false)
                         }

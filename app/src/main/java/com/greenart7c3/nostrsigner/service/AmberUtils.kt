@@ -108,13 +108,19 @@ object AmberUtils {
         }
     }
 
-    fun sendBunkerError(account: Account, bunkerRequest: BunkerRequest, context: Context) {
+    fun sendBunkerError(
+        account: Account,
+        bunkerRequest: BunkerRequest,
+        context: Context,
+        onLoading: (Boolean) -> Unit
+    ) {
         val relays = bunkerRequest.relays.ifEmpty { listOf("wss://relay.nsec.app") }
         IntentUtils.sendBunkerResponse(
             account,
             bunkerRequest.localKey,
             BunkerResponse(bunkerRequest.id, "", "user rejected"),
-            relays
+            relays,
+            onLoading = onLoading
         ) {
             context.getAppCompatActivity()?.intent = null
             context.getAppCompatActivity()?.finish()

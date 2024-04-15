@@ -207,7 +207,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "ack", null),
-                    relays
+                    relays,
+                    onLoading = {}
                 ) { }
                 return@nip04Decrypt
             }
@@ -226,7 +227,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc,
                         bunkerRequest.localKey,
                         BunkerResponse(bunkerRequest.id, "", "invalid secret"),
-                        relays
+                        relays,
+                        onLoading = { }
                     ) { }
                     return@nip04Decrypt
                 }
@@ -237,7 +239,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "", "no permission"),
-                    relays
+                    relays,
+                    onLoading = { }
                 ) { }
                 return@nip04Decrypt
             }
@@ -270,7 +273,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 if (localCursor == null) {
                     notificationManager()
                         .sendNotification(
-                            event.id,
+                            bunkerRequest.id,
                             message,
                             "Bunker",
                             "nostrsigner:",
@@ -286,7 +289,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 acc,
                                 bunkerRequest.localKey,
                                 BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                                relays
+                                relays,
+                                onLoading = { }
                             ) { }
                         } else {
                             val index = localCursor.getColumnIndex("event")
@@ -296,13 +300,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 acc,
                                 bunkerRequest.localKey,
                                 BunkerResponse(bunkerRequest.id, result, null),
-                                relays
+                                relays,
+                                onLoading = { }
                             ) { }
                         }
                     } else {
                         notificationManager()
                             .sendNotification(
-                                event.id,
+                                bunkerRequest.id,
                                 message,
                                 "Bunker",
                                 "nostrsigner:",
@@ -317,7 +322,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    private fun notificationManager(): NotificationManager {
+    fun notificationManager(): NotificationManager {
         return ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
     }
 }

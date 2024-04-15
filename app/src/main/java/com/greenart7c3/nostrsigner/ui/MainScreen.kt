@@ -86,6 +86,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -123,6 +124,7 @@ fun sendResult(
     intentData: IntentData,
     kind: Int?,
     database: AppDatabase,
+    onLoading: (Boolean) -> Unit,
     permissions: List<Permission>? = null,
     appName: String? = null
 ) {
@@ -199,6 +201,7 @@ fun sendResult(
                 intentData.bunkerRequest.localKey,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
                 relays,
+                onLoading,
                 onSign = {
                     database.applicationDao().insertApplicationWithPermissions(application)
                     PushNotificationUtils.hasInit = false
@@ -207,6 +210,7 @@ fun sendResult(
                     }
                 }
             ) {
+                EventNotificationConsumer(context).notificationManager().cancelAll()
                 activity?.intent = null
                 activity?.finish()
             }

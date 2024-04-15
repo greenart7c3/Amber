@@ -64,6 +64,7 @@ class Relay(
     private var isReady: Boolean = false
     private var usingCompression: Boolean = false
     private var onOk: (() -> Unit)? = null
+    var onLoading: (Boolean) -> Unit = {}
 
     var eventDownloadCounterInBytes = 0
     private var eventUploadCounterInBytes = 0
@@ -243,6 +244,7 @@ class Relay(
     }
 
     fun markConnectionAsClosed() {
+        onLoading(false)
         this.socket = null
         this.isReady = false
         this.usingCompression = false
@@ -423,6 +425,8 @@ class Relay(
 
     fun send(signedEvent: EventInterface, onDone: (() -> Unit)?) {
         checkNotInMainThread()
+
+        onLoading(true)
 
         if (onDone != null) {
             onOk = onDone

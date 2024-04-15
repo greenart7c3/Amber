@@ -113,6 +113,7 @@ object Client : RelayPool.Listener {
 
     fun send(
         signedEvent: EventInterface,
+        onLoading: (Boolean) -> Unit,
         relay: String? = null,
         feedTypes: Set<FeedType>? = null,
         relayList: List<Relay>? = null,
@@ -128,14 +129,19 @@ object Client : RelayPool.Listener {
             val useConnectedRelayIfPresent = RelayPool.getRelays(relay)
 
             if (useConnectedRelayIfPresent.isNotEmpty()) {
-                useConnectedRelayIfPresent.forEach { it.send(signedEvent, onDone) }
+                useConnectedRelayIfPresent.forEach {
+                    it.onLoading = onLoading
+
+                    it.send(signedEvent, onDone)
+                }
             } else {
                 /** temporary connection */
                 newSporadicRelay(
                     relay,
                     feedTypes,
                     onConnected = { relay -> relay.send(signedEvent, null) },
-                    onDone = onDone
+                    onDone = onDone,
+                    onLoading = onLoading
                 )
             }
         }
@@ -145,10 +151,12 @@ object Client : RelayPool.Listener {
     private fun newSporadicRelay(
         url: String,
         feedTypes: Set<FeedType>?,
+        onLoading: (Boolean) -> Unit,
         onConnected: (Relay) -> Unit,
         onDone: (() -> Unit)?
     ) {
         val relay = Relay(url, true, true, feedTypes ?: emptySet())
+        relay.onLoading = onLoading
         RelayPool.addRelay(relay)
 
         relay.connectAndRun(

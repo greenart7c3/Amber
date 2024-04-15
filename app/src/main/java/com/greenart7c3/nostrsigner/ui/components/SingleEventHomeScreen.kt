@@ -52,7 +52,8 @@ fun SingleEventHomeScreen(
     applicationName: String?,
     intentData: IntentData,
     account: Account,
-    database: AppDatabase
+    database: AppDatabase,
+    onLoading: (Boolean) -> Unit
 ) {
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
@@ -110,7 +111,8 @@ fun SingleEventHomeScreen(
                             null,
                             permissions = permissions,
                             appName = applicationName ?: appName,
-                            database = database
+                            database = database,
+                            onLoading = onLoading
                         )
                     }
                     return@LoginWithPubKey
@@ -123,7 +125,7 @@ fun SingleEventHomeScreen(
                     }
 
                     if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, context)
+                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, context, onLoading = onLoading)
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
@@ -211,7 +213,8 @@ fun SingleEventHomeScreen(
                                         result,
                                         intentData,
                                         null,
-                                        database
+                                        database,
+                                        onLoading
                                     )
                                 }
                             }
@@ -254,7 +257,7 @@ fun SingleEventHomeScreen(
                     }
 
                     if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, context)
+                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, context, onLoading)
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
@@ -384,7 +387,8 @@ fun SingleEventHomeScreen(
                                         if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig,
                                         intentData,
                                         localEvent.kind,
-                                        database
+                                        database,
+                                        onLoading
                                     )
                                 }
                             }
@@ -408,7 +412,8 @@ fun SingleEventHomeScreen(
                                 AmberUtils.sendBunkerError(
                                     account,
                                     intentData.bunkerRequest,
-                                    context
+                                    context,
+                                    onLoading
                                 )
                             } else {
                                 context.getAppCompatActivity()?.intent = null

@@ -71,9 +71,11 @@ class RegisterAccounts(
                 val permissions = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
-                        readyToSend.add(
-                            Pair(acc, relay)
-                        )
+                        if (relay.isNotBlank()) {
+                            readyToSend.add(
+                                Pair(acc, relay)
+                            )
+                        }
                     }
                 }
             }

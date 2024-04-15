@@ -62,7 +62,9 @@ fun HomeScreen(
                     intents.first(),
                     account,
                     database
-                )
+                ) {
+                    loading = it
+                }
             } else {
                 MultiEventHomeScreen(
                     intents,

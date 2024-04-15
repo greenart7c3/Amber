@@ -283,7 +283,7 @@ fun sendResult(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun GoToTop(
+fun PermissionsFloatingActionButton(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
     goToTop: () -> Unit
@@ -313,7 +313,12 @@ fun GoToTop(
                 horizontalAlignment = Alignment.End
             ) {
                 Row(
-                    Modifier.padding(end = 10.dp),
+                    Modifier
+                        .padding(end = 10.dp)
+                        .clickable {
+                            dialogOpen = true
+                            expanded = false
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RichTooltip {
@@ -339,7 +344,12 @@ fun GoToTop(
                 Spacer(modifier = Modifier.height(20.dp))
 
                 Row(
-                    Modifier.padding(end = 10.dp),
+                    Modifier
+                        .padding(end = 10.dp)
+                        .clickable {
+                            goToTop()
+                            expanded = false
+                        },
                     verticalAlignment = Alignment.CenterVertically
                 ) {
                     RichTooltip {
@@ -348,7 +358,7 @@ fun GoToTop(
                     Spacer(modifier = Modifier.size(4.dp))
                     FloatingActionButton(
                         onClick = {
-                            dialogOpen = true
+                            goToTop()
                             expanded = false
                         },
                         modifier = Modifier.size(35.dp),
@@ -513,33 +523,33 @@ fun MainScreen(
     Scaffold(
         floatingActionButton = {
             if (destinationRoute == "Permissions" && BuildConfig.FLAVOR != "offline") {
-                GoToTop(
+                PermissionsFloatingActionButton(
                     accountStateViewModel,
                     account
                 ) {
-                    val secret = UUID.randomUUID().toString().substring(0, 6)
-                    val application = ApplicationEntity(
-                        secret,
-                        "",
-                        listOf("wss://relay.nsec.app"),
-                        "",
-                        "",
-                        "",
-                        account.keyPair.pubKey.toHexKey(),
-                        false,
-                        secret
-                    )
                     scope.launch(Dispatchers.IO) {
+                        val secret = UUID.randomUUID().toString().substring(0, 6)
+                        val application = ApplicationEntity(
+                            secret,
+                            "",
+                            listOf("wss://relay.nsec.app"),
+                            "",
+                            "",
+                            "",
+                            account.keyPair.pubKey.toHexKey(),
+                            false,
+                            secret
+                        )
+
                         database.applicationDao().insertApplication(
                             application
                         )
-                    }
-
-                    val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app&secret=${application.secret}"
-                    clipboardManager.setText(AnnotatedString(bunkerUrl))
-                    scope.launch(Dispatchers.Main) {
-                        navController.popBackStack()
-                        accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app&secret=${application.secret}"
+                        clipboardManager.setText(AnnotatedString(bunkerUrl))
+                        scope.launch(Dispatchers.Main) {
+                            navController.popBackStack()
+                            accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                        }
                     }
                 }
             }

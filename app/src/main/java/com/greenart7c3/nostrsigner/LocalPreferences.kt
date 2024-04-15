@@ -256,7 +256,7 @@ object LocalPreferences {
     }
 
     fun loadFromEncryptedStorage(npub: String?): Account? {
-        if (accountCache.get(npub) != null) {
+        if (npub != null && accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }
         encryptedPreferences(npub).apply {

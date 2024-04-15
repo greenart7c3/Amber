@@ -33,13 +33,13 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "x86_64"
+          "value": "x86"
         }
       ],
       "attributes": [],
       "versionCode": 51,
       "versionName": "1.0.0",
-      "outputFile": "app-play-x86_64-release.apk"
+      "outputFile": "app-play-x86-release.apk"
     },
     {
       "type": "ONE_OF_MANY",
@@ -59,13 +59,13 @@
       "filters": [
         {
           "filterType": "ABI",
-          "value": "x86"
+          "value": "x86_64"
         }
       ],
       "attributes": [],
       "versionCode": 51,
       "versionName": "1.0.0",
-      "outputFile": "app-play-x86-release.apk"
+      "outputFile": "app-play-x86_64-release.apk"
     }
   ],
   "elementType": "File",
@@ -76,9 +76,9 @@
       "baselineProfiles": [
         "baselineProfiles/1/app-play-universal-release.dm",
         "baselineProfiles/1/app-play-armeabi-v7a-release.dm",
-        "baselineProfiles/1/app-play-x86_64-release.dm",
+        "baselineProfiles/1/app-play-x86-release.dm",
         "baselineProfiles/1/app-play-arm64-v8a-release.dm",
-        "baselineProfiles/1/app-play-x86-release.dm"
+        "baselineProfiles/1/app-play-x86_64-release.dm"
       ]
     },
     {
@@ -87,9 +87,9 @@
       "baselineProfiles": [
         "baselineProfiles/0/app-play-universal-release.dm",
         "baselineProfiles/0/app-play-armeabi-v7a-release.dm",
-        "baselineProfiles/0/app-play-x86_64-release.dm",
+        "baselineProfiles/0/app-play-x86-release.dm",
         "baselineProfiles/0/app-play-arm64-v8a-release.dm",
-        "baselineProfiles/0/app-play-x86-release.dm"
+        "baselineProfiles/0/app-play-x86_64-release.dm"
       ]
     }
   ],

@@ -38,7 +38,7 @@ data class BunkerMetada(
 )
 
 object IntentUtils {
-    val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>(0)
+    val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
     private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?): IntentData {
         val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -22,8 +23,11 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.SingleEventHomeScreen
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun HomeScreen(
@@ -35,6 +39,20 @@ fun HomeScreen(
     database: AppDatabase
 ) {
     var loading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            loading = true
+            try {
+                database.applicationDao().getAllApplications().forEach {
+                    ApplicationNameCache.names[it.application.key] = it.application.name
+                }
+            } finally {
+                loading = false
+            }
+        }
+    }
+
     if (loading) {
         CenterCircularProgressIndicator(modifier)
     } else {
@@ -68,7 +86,6 @@ fun HomeScreen(
             } else {
                 MultiEventHomeScreen(
                     intents,
-                    applicationName,
                     packageName,
                     account,
                     database

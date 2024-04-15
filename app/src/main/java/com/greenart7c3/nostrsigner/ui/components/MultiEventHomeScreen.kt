@@ -20,7 +20,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,12 +43,12 @@ import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -66,7 +65,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,
-    applicationName: String?,
     packageName: String?,
     accountParam: Account,
     database: AppDatabase,
@@ -74,28 +72,6 @@ fun MultiEventHomeScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val applications = remember {
-        mutableListOf<ApplicationWithPermissions>()
-    }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            intents.forEach {
-                val key = if (it.bunkerRequest != null) {
-                    it.bunkerRequest.localKey
-                } else {
-                    "$packageName"
-                }
-
-                if (applications.none { app -> app.application.key == key }) {
-                    val application = database.applicationDao().getByKey(key)
-                    if (application != null) {
-                        applications.add(application)
-                    }
-                }
-            }
-        }
-    }
 
     Column(
         Modifier.fillMaxSize()
@@ -133,127 +109,12 @@ fun MultiEventHomeScreen(
             Modifier.fillMaxHeight(0.9f)
         ) {
             items(intents.size) {
-                var isExpanded by remember { mutableStateOf(false) }
-                val intentData = intents[it]
-
-                val key = if (intentData.bunkerRequest != null) {
-                    intentData.bunkerRequest.localKey
-                } else {
-                    "$packageName"
-                }
-
-                val applicationEntity = applications.firstOrNull { application -> application.application.key == key }
-                val appName = applicationEntity?.application?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
-
-                Card(
-                    Modifier
-                        .padding(4.dp)
-                        .clickable {
-                            isExpanded = !isExpanded
-                        }
-                ) {
-                    val name = LocalPreferences.getAccountName(intentData.currentAccount)
-                    Row(
-                        Modifier
-                            .fillMaxWidth(),
-                        Arrangement.Center,
-                        Alignment.CenterVertically
-                    ) {
-                        Text(
-                            name.ifBlank { intentData.currentAccount.toShortenHex() },
-                            fontWeight = FontWeight.Bold
-                        )
-                    }
-
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.run {
-                                if (isExpanded) {
-                                    KeyboardArrowDown
-                                } else {
-                                    KeyboardArrowUp
-                                }
-                            },
-                            contentDescription = "",
-                            tint = Color.LightGray
-                        )
-
-                        val text = if (intentData.type == SignerType.SIGN_EVENT) {
-                            val event = IntentUtils.getIntent(intentData.data, accountParam.keyPair)
-                            val permission = Permission("sign_event", event.kind)
-                            "wants you to sign a $permission"
-                        } else {
-                            val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
-                            "wants you to $permission"
-                        }
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = buildAnnotatedString {
-                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                    append(appName)
-                                }
-                                append(" $text")
-                            },
-                            fontSize = 18.sp
-                        )
-
-                        Switch(
-                            checked = intentData.checked.value,
-                            onCheckedChange = { _ ->
-                                intentData.checked.value = !intentData.checked.value
-                            }
-                        )
-                    }
-
-                    if (isExpanded) {
-                        Column(
-                            Modifier
-                                .fillMaxSize()
-                                .padding(10.dp)
-                        ) {
-                            Text(
-                                "Event content",
-                                fontWeight = FontWeight.Bold
-                            )
-                            val content = if (intentData.type == SignerType.SIGN_EVENT) {
-                                val event = IntentUtils.getIntent(
-                                    intentData.data,
-                                    accountParam.keyPair
-                                )
-                                if (event.kind == 22242) AmberEvent.relay(event) else event.content
-                            } else {
-                                intentData.data
-                            }
-
-                            Text(
-                                content,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                            )
-                            RememberMyChoice(
-                                shouldRunOnAccept = false,
-                                intentData.rememberMyChoice.value,
-                                appName,
-                                { }
-                            ) {
-                                intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
-                                intents.filter { item ->
-                                    intentData.type == item.type
-                                }.forEach { item ->
-                                    item.rememberMyChoice.value = intentData.rememberMyChoice.value
-                                }
-                            }
-                        }
-                    }
-                }
+                ListItem(
+                    intents[it],
+                    packageName,
+                    accountParam,
+                    intents
+                )
             }
         }
         Row(
@@ -394,6 +255,134 @@ fun MultiEventHomeScreen(
                 }
             ) {
                 Text("Confirm")
+            }
+        }
+    }
+}
+
+@Composable
+fun ListItem(
+    intentData: IntentData,
+    packageName: String?,
+    accountParam: Account,
+    intents: List<IntentData>
+) {
+    var isExpanded by remember { mutableStateOf(false) }
+
+    val key = if (intentData.bunkerRequest != null) {
+        intentData.bunkerRequest.localKey
+    } else {
+        "$packageName"
+    }
+
+    val appName = ApplicationNameCache.names[key] ?: key.toShortenHex()
+
+    Card(
+        Modifier
+            .padding(4.dp)
+            .clickable {
+                isExpanded = !isExpanded
+            }
+    ) {
+        val name = LocalPreferences.getAccountName(intentData.currentAccount)
+        Row(
+            Modifier
+                .fillMaxWidth(),
+            Arrangement.Center,
+            Alignment.CenterVertically
+        ) {
+            Text(
+                name.ifBlank { intentData.currentAccount.toShortenHex() },
+                fontWeight = FontWeight.Bold
+            )
+        }
+
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp)
+        ) {
+            Icon(
+                Icons.Default.run {
+                    if (isExpanded) {
+                        KeyboardArrowDown
+                    } else {
+                        KeyboardArrowUp
+                    }
+                },
+                contentDescription = "",
+                tint = Color.LightGray
+            )
+
+            val text = if (intentData.type == SignerType.SIGN_EVENT) {
+                val event = IntentUtils.getIntent(intentData.data, accountParam.keyPair)
+                val permission = Permission("sign_event", event.kind)
+                "wants you to sign a $permission"
+            } else {
+                val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
+                "wants you to $permission"
+            }
+            Text(
+                modifier = Modifier.weight(1f),
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(appName)
+                    }
+                    append(" $text")
+                },
+                fontSize = 18.sp
+            )
+
+            Switch(
+                checked = intentData.checked.value,
+                onCheckedChange = { _ ->
+                    intentData.checked.value = !intentData.checked.value
+                }
+            )
+        }
+
+        if (isExpanded) {
+            Column(
+                Modifier
+                    .fillMaxSize()
+                    .padding(10.dp)
+            ) {
+                Text(
+                    "Event content",
+                    fontWeight = FontWeight.Bold
+                )
+                val content = if (intentData.type == SignerType.SIGN_EVENT) {
+                    val event = IntentUtils.getIntent(
+                        intentData.data,
+                        accountParam.keyPair
+                    )
+                    if (event.kind == 22242) AmberEvent.relay(event) else event.content
+                } else {
+                    intentData.data
+                }
+
+                Text(
+                    content,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                )
+                RememberMyChoice(
+                    shouldRunOnAccept = false,
+                    intentData.rememberMyChoice.value,
+                    appName,
+                    { }
+                ) {
+                    intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
+                    intents.filter { item ->
+                        intentData.type == item.type
+                    }.forEach { item ->
+                        item.rememberMyChoice.value = intentData.rememberMyChoice.value
+                    }
+                }
             }
         }
     }

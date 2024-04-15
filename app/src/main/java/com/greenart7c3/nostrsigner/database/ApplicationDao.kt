@@ -23,6 +23,10 @@ interface ApplicationDao {
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
     fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
 
+    @Query("SELECT * FROM application")
+    @Transaction
+    fun getAllApplications(): List<ApplicationWithPermissions>
+
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND  kind = :kind")
     fun getPermission(key: String, type: String, kind: Int?): ApplicationPermissionsEntity?
 

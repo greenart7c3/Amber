@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: Debug APK
-          path: app/build/outputs/apk/debug/app-universal-debug.apk
+          path: app/build/outputs/apk/debug/app-play-universal-debug.apk
 
       - name: Upload Test Results
         uses: actions/upload-artifact@v3

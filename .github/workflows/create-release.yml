@@ -29,32 +29,80 @@ jobs:
       - name: Build AAB
         run: ./gradlew clean bundleRelease --stacktrace
 
-      - name: Sign AAB
+      - name: Sign play AAB
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: app/build/outputs/bundle/release
+          releaseDirectory: app/build/outputs/bundle/playRelease
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
         env:
           # override default build-tools version (29.0.3) -- optional
-          BUILD_TOOLS_VERSION: "34.0.0"          
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Sign free AAB
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/bundle/freeRelease
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Sign offline AAB
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/bundle/offlineRelease
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Build APK
         run: ./gradlew assembleRelease --stacktrace
 
-      - name: Sign APK
+      - name: Sign play APK
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: app/build/outputs/apk/release
+          releaseDirectory: app/build/outputs/apk/play/release
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
         env:
           # override default build-tools version (29.0.3) -- optional
-          BUILD_TOOLS_VERSION: "34.0.0"          
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Sign free APK
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/free/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Sign offline APK
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/apk/offline/release
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          # override default build-tools version (29.0.3) -- optional
+          BUILD_TOOLS_VERSION: "34.0.0"
 
       - name: Create Release
         id: create_release
@@ -65,70 +113,202 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
-          prerelease: false
+          prerelease: contains(github.ref, 'v*-pre')
 
-      - name: Upload APK Universal Asset
-        id: upload-release-asset-universal-apk
+      - name: Upload Play APK Universal Asset
+        id: upload-play-release-asset-universal-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }} 
-          asset_path: app/build/outputs/apk/release/app-universal-release-unsigned-signed.apk
-          asset_name: amber-universal-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/play/release/app-play-universal-release-unsigned-signed.apk
+          asset_name: amber-play-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload APK x86 Asset
-        id: upload-release-asset-x86-apk
+      - name: Upload Free APK Universal Asset
+        id: upload-free-release-asset-universal-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-x86-release-unsigned-signed.apk
-          asset_name: amber-x86-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/free/release/app-free-universal-release-unsigned-signed.apk
+          asset_name: amber-free-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload APK x86_64 Asset
-        id: upload-release-asset-x86-64-apk
+      - name: Upload Offline APK Universal Asset
+        id: upload-offline-release-asset-universal-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-x86_64-release-unsigned-signed.apk
-          asset_name: amber-x86_64-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/offline/release/app-offline-universal-release-unsigned-signed.apk
+          asset_name: amber-offline-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload APK arm64-v8a Asset
-        id: upload-release-asset-arm64-v8a-apk
+      - name: Upload Play APK x86 Asset
+        id: upload-play-release-asset-x86-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-arm64-v8a-release-unsigned-signed.apk
-          asset_name: amber-arm64-v8a-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/play/release/app-play-x86-release-unsigned-signed.apk
+          asset_name: amber-play-x86-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload APK armeabi-v7a Asset
-        id: upload-release-asset-armeabi-v7a-apk
+      - name: Upload Free APK x86 Asset
+        id: upload-free-release-asset-x86-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/release/app-armeabi-v7a-release-unsigned-signed.apk
-          asset_name: amber-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_path: app/build/outputs/apk/free/release/app-free-x86-release-unsigned-signed.apk
+          asset_name: amber-free-x86-${{ github.ref_name }}.apk
           asset_content_type: application/zip
 
-      - name: Upload AAB Asset
-        id: upload-release-asset-aab
+      - name: Upload Offline APK x86 Asset
+        id: upload-offline-release-asset-x86-apk
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/bundle/release/app-release.aab
-          asset_name: amber-${{ github.ref_name }}.aab
+          asset_path: app/build/outputs/apk/offline/release/app-offline-x86-release-unsigned-signed.apk
+          asset_name: amber-offline-x86-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Play APK x86_64 Asset
+        id: upload-play-release-asset-x86-64-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/play/release/app-play-x86_64-release-unsigned-signed.apk
+          asset_name: amber-play-x86_64-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Free APK x86_64 Asset
+        id: upload-free-release-asset-x86-64-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/free/release/app-free-x86_64-release-unsigned-signed.apk
+          asset_name: amber-free-x86_64-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Play APK x86_64 Asset
+        id: upload-offline-release-asset-x86-64-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/offline/release/app-offline-x86_64-release-unsigned-signed.apk
+          asset_name: amber-offline-x86_64-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Play APK arm64-v8a Asset
+        id: upload-play-release-asset-arm64-v8a-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/play/release/app-play-arm64-v8a-release-unsigned-signed.apk
+          asset_name: amber-play-arm64-v8a-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Free APK arm64-v8a Asset
+        id: upload-free-release-asset-arm64-v8a-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/free/release/app-free-arm64-v8a-release-unsigned-signed.apk
+          asset_name: amber-free-arm64-v8a-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Offline APK arm64-v8a Asset
+        id: upload-offline-release-asset-arm64-v8a-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/offline/release/app-offline-arm64-v8a-release-unsigned-signed.apk
+          asset_name: amber-offline-arm64-v8a-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Play APK armeabi-v7a Asset
+        id: upload-play-release-asset-armeabi-v7a-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/play/release/app-play-armeabi-v7a-release-unsigned-signed.apk
+          asset_name: amber-play-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Free APK armeabi-v7a Asset
+        id: upload-free-release-asset-armeabi-v7a-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/free/release/app-free-armeabi-v7a-release-unsigned-signed.apk
+          asset_name: amber-free-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Offline APK armeabi-v7a Asset
+        id: upload-offline-release-asset-armeabi-v7a-apk
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/apk/offline/release/app-offline-armeabi-v7a-release-unsigned-signed.apk
+          asset_name: amber-offline-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_content_type: application/zip
+
+      - name: Upload Play AAB Asset
+        id: upload-play-release-asset-aab
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/bundle/playRelease/app-play-release.aab
+          asset_name: amber-play-${{ github.ref_name }}.aab
+          asset_content_type: application/zip
+
+      - name: Upload Free AAB Asset
+        id: upload-free-release-asset-aab
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/bundle/freeRelease/app-free-release.aab
+          asset_name: amber-free-${{ github.ref_name }}.aab
+          asset_content_type: application/zip
+
+      - name: Upload Offline AAB Asset
+        id: upload-offline-release-asset-aab
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: app/build/outputs/bundle/offlineRelease/app-offline-release.aab
+          asset_name: amber-offline-${{ github.ref_name }}.aab
           asset_content_type: application/zip

@@ -23,6 +23,7 @@ richtextUi = "48702a8ced"
 roomKtx = "2.6.1"
 securityCryptoKtx = "1.1.0-alpha06"
 zxingAndroidEmbedded = "4.3.0"
+okhttp = "5.0.0-alpha.12"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -60,5 +61,6 @@ ui-test-manifest = { module = "androidx.compose.ui:ui-test-manifest", version.re
 ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose_ui" }
 ui-tooling-preview = { module = "androidx.compose.ui:ui-tooling-preview", version.ref = "compose_ui" }
 zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", version.ref = "zxingAndroidEmbedded" }
+okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 [plugins]

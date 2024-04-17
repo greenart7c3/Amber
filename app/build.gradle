@@ -151,4 +151,7 @@ dependencies {
     freeImplementation(libs.android.connector)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
+
+    freeImplementation(libs.okhttp)
+    playImplementation(libs.okhttp)
 }

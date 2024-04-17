@@ -69,9 +69,11 @@ import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
-import com.halilibo.richtext.markdown.Markdown
+import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
+import com.halilibo.richtext.commonmark.MarkdownParseOptions
+import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.RichTextStyle
-import com.halilibo.richtext.ui.material3.Material3RichText
+import com.halilibo.richtext.ui.material3.RichText
 import com.halilibo.richtext.ui.resolveDefaults
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -111,12 +113,17 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                         .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
-                    Material3RichText(
+                    val content = stringResource(R.string.account_backup_tips_md)
+
+                    val astNode =
+                        remember {
+                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content)
+                        }
+
+                    RichText(
                         style = RichTextStyle().resolveDefaults()
                     ) {
-                        Markdown(
-                            content = stringResource(R.string.account_backup_tips_md)
-                        )
+                        BasicMarkdown(astNode)
                     }
 
                     Spacer(modifier = Modifier.height(30.dp))
@@ -126,12 +133,17 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
 
                     Spacer(modifier = Modifier.height(30.dp))
 
-                    Material3RichText(
+                    val content1 = stringResource(R.string.account_backup_tips3_md)
+
+                    val astNode1 =
+                        remember {
+                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                        }
+
+                    RichText(
                         style = RichTextStyle().resolveDefaults()
                     ) {
-                        Markdown(
-                            content = stringResource(R.string.account_backup_tips3_md)
-                        )
+                        BasicMarkdown(astNode1)
                     }
 
                     Spacer(modifier = Modifier.height(10.dp))

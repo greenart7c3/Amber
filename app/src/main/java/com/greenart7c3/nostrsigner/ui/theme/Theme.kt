@@ -16,6 +16,8 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
+import com.halilibo.richtext.ui.RichTextStyle
+import com.halilibo.richtext.ui.resolveDefaults
 
 val Shapes = Shapes(
     small = RoundedCornerShape(4.dp),
@@ -31,6 +33,8 @@ val Size20Modifier = Modifier.size(20.dp)
 val primaryColor = Color(0xFFF16F26)
 val primaryVariant = Color(0xFFC8541A)
 val secondaryColor = Color(0xFFFF8E4C)
+
+val RichTextDefaults = RichTextStyle().resolveDefaults()
 
 private val DarkColorPalette = darkColorScheme(
     primary = primaryColor,

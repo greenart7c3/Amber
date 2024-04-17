@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -8,9 +9,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -29,8 +33,10 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
+import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
@@ -48,6 +54,10 @@ fun SettingsScreen(
     var logoutDialog by remember { mutableStateOf(false) }
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    var checked by remember { mutableStateOf(account.useProxy) }
+    var disconnectTorDialog by remember { mutableStateOf(false) }
+    var conectOrbotDialogOpen by remember { mutableStateOf(false) }
+    val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
 
     val sheetState = rememberModalBottomSheetState(
         confirmValueChange = { it != SheetValue.PartiallyExpanded },
@@ -114,6 +124,32 @@ fun SettingsScreen(
             )
         }
 
+        Box(
+            Modifier
+                .padding(16.dp)
+        ) {
+            IconRow(
+                title =
+                if (checked) {
+                    stringResource(R.string.disconnect_from_your_orbot_setup)
+                } else {
+                    stringResource(R.string.connect_via_tor_short)
+                },
+                icon = R.drawable.ic_tor,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onLongClick = {
+                    conectOrbotDialogOpen = true
+                },
+                onClick = {
+                    if (checked) {
+                        disconnectTorDialog = true
+                    } else {
+                        conectOrbotDialogOpen = true
+                    }
+                }
+            )
+        }
+
         Spacer(modifier = Modifier.weight(1f))
 
         HyperlinkText(
@@ -132,6 +168,60 @@ fun SettingsScreen(
             linkTextColor = MaterialTheme.colorScheme.primary,
             linkTextDecoration = TextDecoration.Underline,
             fontSize = 18.sp
+        )
+    }
+
+    if (conectOrbotDialogOpen) {
+        ConnectOrbotDialog(
+            onClose = { conectOrbotDialogOpen = false },
+            onPost = {
+                conectOrbotDialogOpen = false
+                disconnectTorDialog = false
+                checked = true
+                account.proxyPort = proxyPort.value.toInt()
+                account.useProxy = checked
+                val proxy = HttpClientManager.initProxy(account.useProxy, "127.0.0.1", account.proxyPort)
+                HttpClientManager.setDefaultProxy(proxy)
+            },
+            onError = {
+                scope.launch {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.could_not_connect_to_tor),
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            },
+            proxyPort
+        )
+    }
+
+    if (disconnectTorDialog) {
+        AlertDialog(
+            title = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_title)) },
+            text = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_text)) },
+            onDismissRequest = { disconnectTorDialog = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        disconnectTorDialog = false
+                        checked = false
+                        account.proxyPort = proxyPort.value.toInt()
+                        account.useProxy = checked
+                        val proxy = HttpClientManager.initProxy(account.useProxy, "127.0.0.1", account.proxyPort)
+                        HttpClientManager.setDefaultProxy(proxy)
+                    }
+                ) {
+                    Text(text = stringResource(R.string.yes))
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = { disconnectTorDialog = false }
+                ) {
+                    Text(text = stringResource(R.string.no))
+                }
+            }
         )
     }
 

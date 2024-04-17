@@ -12,7 +12,9 @@ import com.vitorpamplona.quartz.signers.NostrSignerInternal
 class Account(
     val keyPair: KeyPair,
     val signer: NostrSigner = NostrSignerInternal(keyPair),
-    var name: String
+    var name: String,
+    var useProxy: Boolean,
+    var proxyPort: Int
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
 

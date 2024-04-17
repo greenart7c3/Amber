@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.HttpClientManager
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -34,6 +35,8 @@ private object PrefKeys {
     const val REMEMBER_APPS = "remember_apps"
     const val ACCOUNT_NAME = "account_name"
     const val RATIONALE = "rationale"
+    const val USE_PROXY = "use_proxy"
+    const val PROXY_PORT = "proxy_port"
 }
 
 @Immutable
@@ -202,6 +205,8 @@ object LocalPreferences {
         prefs.edit().apply {
             account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
+            putBoolean(PrefKeys.USE_PROXY, account.useProxy)
+            putInt(PrefKeys.PROXY_PORT, account.proxyPort)
             putString(PrefKeys.ACCOUNT_NAME, account.name)
         }.apply()
     }
@@ -214,6 +219,9 @@ object LocalPreferences {
         encryptedPreferences(npub).edit().apply {
             putString(PrefKeys.ACCOUNT_NAME, value)
         }.apply()
+        accountCache.get(npub)?.let {
+            it.name = value
+        }
     }
 
     fun getAccountName(npub: String): String {
@@ -282,9 +290,15 @@ object LocalPreferences {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
+            val useProxy = getBoolean(PrefKeys.USE_PROXY, false)
+            val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
+            val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
+            HttpClientManager.setDefaultProxy(proxy)
             val account = Account(
                 keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
-                name = name
+                name = name,
+                useProxy = useProxy,
+                proxyPort = proxyPort
             )
             accountCache.put(npub, account)
             return account

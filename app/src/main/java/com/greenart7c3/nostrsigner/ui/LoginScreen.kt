@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.util.Log
+import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,6 +22,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,6 +34,7 @@ import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -52,8 +55,12 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.PackageUtils
+import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
@@ -73,6 +80,10 @@ fun LoginPage(
                 key.value.text.startsWith("ncryptsec1")
             }
         }
+    val useProxy = remember { mutableStateOf(false) }
+    val proxyPort = remember { mutableStateOf("9050") }
+    var connectOrbotDialogOpen by remember { mutableStateOf(false) }
+    val scope = rememberCoroutineScope()
 
     Column(
         modifier = Modifier
@@ -187,7 +198,7 @@ fun LoginPage(
 
                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
                             try {
-                                accountViewModel.startUI(key.value.text, password.value.text, null)
+                                accountViewModel.startUI(key.value.text, password.value.text, null, useProxy = useProxy.value, proxyPort = proxyPort.value.toInt())
                             } catch (e: Exception) {
                                 Log.e("Login", "Could not sign in", e)
                                 errorMessage = context.getString(R.string.invalid_key)
@@ -273,7 +284,7 @@ fun LoginPage(
 
                             if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
                                 try {
-                                    accountViewModel.startUI(key.value.text, password.value.text, null)
+                                    accountViewModel.startUI(key.value.text, password.value.text, null, useProxy = useProxy.value, proxyPort = proxyPort.value.toInt())
                                 } catch (e: Exception) {
                                     Log.e("Login", "Could not sign in", e)
                                     errorMessage = context.getString(R.string.invalid_key)
@@ -282,6 +293,46 @@ fun LoginPage(
                         }
                     )
                 )
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
+            if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Checkbox(
+                        checked = useProxy.value,
+                        onCheckedChange = {
+                            if (it) {
+                                connectOrbotDialogOpen = true
+                            } else {
+                                useProxy.value = false
+                            }
+                        }
+                    )
+
+                    Text("Connect through your Orbot setup")
+                }
+
+                if (connectOrbotDialogOpen) {
+                    ConnectOrbotDialog(
+                        onClose = { connectOrbotDialogOpen = false },
+                        onPost = {
+                            connectOrbotDialogOpen = false
+                            useProxy.value = true
+                        },
+                        onError = {
+                            scope.launch {
+                                Toast.makeText(
+                                    context,
+                                    it,
+                                    Toast.LENGTH_LONG
+                                )
+                                    .show()
+                            }
+                        },
+                        proxyPort
+                    )
+                }
             }
 
             Spacer(modifier = Modifier.height(10.dp))
@@ -299,7 +350,7 @@ fun LoginPage(
 
                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
                             try {
-                                accountViewModel.startUI(key.value.text, password.value.text, null)
+                                accountViewModel.startUI(key.value.text, password.value.text, null, useProxy = useProxy.value, proxyPort = proxyPort.value.toInt())
                             } catch (e: Exception) {
                                 Log.e("Login", "Could not sign in", e)
                                 errorMessage = context.getString(R.string.invalid_key)
@@ -322,7 +373,7 @@ fun LoginPage(
                     .padding(30.dp)
                     .fillMaxWidth(),
                 onClick = {
-                    accountViewModel.newKey()
+                    accountViewModel.newKey(useProxy.value, proxyPort.value.toInt())
                 }
             ) {
                 Text(stringResource(R.string.generate_a_new_key))

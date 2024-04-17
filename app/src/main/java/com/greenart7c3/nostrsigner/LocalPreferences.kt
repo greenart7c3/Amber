@@ -172,6 +172,7 @@ object LocalPreferences {
      */
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String) {
+        accountCache.remove(npub)
         val userPrefs = encryptedPreferences(npub)
         userPrefs.edit().clear().commit()
         removeAccount(npub)

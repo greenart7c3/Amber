@@ -231,7 +231,7 @@ object LocalPreferences {
             database.applicationDao().insertApplication(
                 ApplicationEntity(
                     splitData.first(),
-                    "",
+                    splitData.first(),
                     emptyList(),
                     "",
                     "",

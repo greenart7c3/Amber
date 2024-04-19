@@ -167,8 +167,10 @@ class Relay(
 
             try {
                 processNewRelayMessage(text)
+                onLoading(false)
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
+                onLoading(false)
                 e.printStackTrace()
                 text.chunked(2000) { chunked ->
                     listeners.forEach { it.onError(this@Relay, "", Error("Problem with $chunked")) }
@@ -325,6 +327,10 @@ class Relay(
         }
     }
 
+    fun isReady(): Boolean {
+        return this.isReady
+    }
+
     fun disconnect() {
         Log.d("Relay", "Relay.disconnect $url")
         checkNotInMainThread()
@@ -436,7 +442,11 @@ class Relay(
             authResponse[signedEvent.id] = false
             // specific protocol for this event.
             val event = """["AUTH",${signedEvent.toJson()}]"""
-            socket?.send(event)
+            var result = socket?.send(event)
+            while (result == false || result == null) {
+                Log.d("Relay", "Relay.send failed trying again $url $event")
+                result = socket?.send(event)
+            }
             eventUploadCounterInBytes += event.bytesUsedInMemory()
         } else {
             if (write) {

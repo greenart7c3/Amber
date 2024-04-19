@@ -46,6 +46,10 @@ object RelayPool : Relay.Listener {
         return relays.size
     }
 
+    fun getAll(): List<Relay> {
+        return relays
+    }
+
     fun connectedRelays(): Int {
         return relays.count { it.isConnected() }
     }

@@ -87,6 +87,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
@@ -100,6 +101,7 @@ import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -129,7 +131,28 @@ fun sendResult(
     permissions: List<Permission>? = null,
     appName: String? = null
 ) {
+    onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
+        if (intentData.bunkerRequest != null) {
+            RelayPool.getAll().forEach { relay ->
+                if (!relay.isConnected()) {
+                    relay.connectAndRun {
+                        GlobalScope.launch(Dispatchers.IO) {
+                            delay(60000)
+                            if (relay.isConnected()) {
+                                relay.disconnect()
+                            }
+                        }
+                    }
+                }
+            }
+            var count = 0
+            while (RelayPool.getAll().any { !it.isReady() } && count < 10) {
+                count++
+                Thread.sleep(1000)
+            }
+        }
+
         if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
             val application = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
             application?.let {

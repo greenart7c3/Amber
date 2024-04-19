@@ -47,6 +47,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
@@ -59,9 +60,13 @@ import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,
@@ -132,6 +137,25 @@ fun MultiEventHomeScreen(
                         try {
                             val activity = context.getAppCompatActivity()
                             val results = mutableListOf<Result>()
+                            if (intents.any { it.bunkerRequest != null }) {
+                                RelayPool.getAll().forEach { relay ->
+                                    if (!relay.isConnected()) {
+                                        relay.connectAndRun {
+                                            GlobalScope.launch(Dispatchers.IO) {
+                                                delay(60000)
+                                                if (relay.isConnected()) {
+                                                    relay.disconnect()
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                                var count = 0
+                                while (RelayPool.getAll().any { !it.isReady() } && count < 10) {
+                                    count++
+                                    Thread.sleep(1000)
+                                }
+                            }
 
                             for (intentData in intents) {
                                 val localAccount =

@@ -6,14 +6,20 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.relays.Relay
+import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.vitorpamplona.quartz.encoders.toNpub
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
@@ -54,6 +60,21 @@ fun AccountScreen(
                     }
                     val database = nostrsigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
                     val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
+                    val scope = rememberCoroutineScope()
+
+                    SideEffect {
+                        scope.launch(Dispatchers.IO) {
+                            database.applicationDao().getAllApplications().forEach {
+                                it.application.relays.forEach { url ->
+                                    if (url.isNotBlank()) {
+                                        if (RelayPool.getRelays(url).isEmpty()) {
+                                            RelayPool.addRelay(Relay(url))
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
 
                     MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
                 }

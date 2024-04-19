@@ -230,6 +230,20 @@ object LocalPreferences {
         }
     }
 
+    fun updateProxy(useProxy: Boolean, port: Int) {
+        val npub = currentAccount() ?: return
+        encryptedPreferences(npub).edit().apply {
+            putBoolean(PrefKeys.USE_PROXY, useProxy)
+            putInt(PrefKeys.PROXY_PORT, port)
+        }.apply()
+        accountCache.get(npub)?.let {
+            it.useProxy = useProxy
+            it.proxyPort = port
+        }
+        val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", port)
+        HttpClientManager.setDefaultProxy(proxy)
+    }
+
     private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String, database: AppDatabase) = withContext(Dispatchers.IO) {
         map.forEach {
             val splitData = it.key.split("-")

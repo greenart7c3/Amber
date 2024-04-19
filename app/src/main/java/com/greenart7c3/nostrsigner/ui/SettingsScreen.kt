@@ -31,9 +31,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
@@ -178,10 +178,7 @@ fun SettingsScreen(
                 conectOrbotDialogOpen = false
                 disconnectTorDialog = false
                 checked = true
-                account.proxyPort = proxyPort.value.toInt()
-                account.useProxy = checked
-                val proxy = HttpClientManager.initProxy(account.useProxy, "127.0.0.1", account.proxyPort)
-                HttpClientManager.setDefaultProxy(proxy)
+                LocalPreferences.updateProxy(true, proxyPort.value.toInt())
             },
             onError = {
                 scope.launch {
@@ -206,10 +203,7 @@ fun SettingsScreen(
                     onClick = {
                         disconnectTorDialog = false
                         checked = false
-                        account.proxyPort = proxyPort.value.toInt()
-                        account.useProxy = checked
-                        val proxy = HttpClientManager.initProxy(account.useProxy, "127.0.0.1", account.proxyPort)
-                        HttpClientManager.setDefaultProxy(proxy)
+                        LocalPreferences.updateProxy(false, proxyPort.value.toInt())
                     }
                 ) {
                     Text(text = stringResource(R.string.yes))

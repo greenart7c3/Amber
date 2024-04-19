@@ -114,4 +114,5 @@
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">Could not connect to Tor</string>
+    <string name="relays">Relays</string>
 </resources>

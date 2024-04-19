@@ -552,8 +552,8 @@ fun MainScreen(
                     accountStateViewModel,
                     account
                 ) {
+                    val secret = UUID.randomUUID().toString().substring(0, 6)
                     scope.launch(Dispatchers.IO) {
-                        val secret = UUID.randomUUID().toString().substring(0, 6)
                         val application = ApplicationEntity(
                             secret,
                             "",
@@ -573,8 +573,7 @@ fun MainScreen(
                         val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
                         clipboardManager.setText(AnnotatedString(bunkerUrl))
                         scope.launch(Dispatchers.Main) {
-                            navController.popBackStack()
-                            accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                            navController.navigate("Permission/$secret")
                         }
                     }
                 }

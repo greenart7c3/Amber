@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -24,7 +25,6 @@ fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_
 
 class MainActivity : AppCompatActivity() {
     private val intents = MutableStateFlow<List<IntentData>>(listOf())
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
             }
             contentIntent.putExtra("bunker", it.toJson())
             contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            val intentData = IntentUtils.getIntentData(contentIntent, packageName)
+            val intentData = IntentUtils.getIntentData(contentIntent, packageName, Route.Home.route)
             if (intentData != null) {
                 if (intents.value.none { item -> item.id == intentData.id }) {
                     intents.value += listOf(intentData)
@@ -83,7 +83,7 @@ class MainActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         if (intent == null) return
 
-        val intentData = IntentUtils.getIntentData(intent, callingPackage) ?: return
+        val intentData = IntentUtils.getIntentData(intent, callingPackage, intent.getStringExtra("route")) ?: return
 
         if (intents.value.none { item -> item.id == intentData.id }) {
             intents.value += listOf(intentData)

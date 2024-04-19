@@ -8,13 +8,14 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.flow.MutableStateFlow
 
-@SuppressLint("StateFlowValueCalledInComposition")
+@SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
 fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
@@ -37,7 +38,7 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    val intentData = IntentUtils.getIntentData(intent, packageName)
+                    val intentData = IntentUtils.getIntentData(intent, packageName, intent.getStringExtra("route"))
                     if (intentData != null) {
                         if (intents.none { item -> item.id == intentData.id }) {
                             flow.value = listOf(intentData)
@@ -52,8 +53,9 @@ fun AccountScreen(
                         }
                     }
                     val database = nostrsigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
+                    val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
 
-                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, state.route, database)
+                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
                 }
             }
         }

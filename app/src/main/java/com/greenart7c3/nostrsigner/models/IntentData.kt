@@ -17,5 +17,6 @@ data class IntentData(
     val currentAccount: String,
     val checked: MutableState<Boolean>,
     val rememberMyChoice: MutableState<Boolean>,
-    val bunkerRequest: BunkerRequest?
+    val bunkerRequest: BunkerRequest?,
+    val route: String?
 )

@@ -49,6 +49,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -441,7 +442,7 @@ fun MainScreen(
     intents: List<IntentData>,
     packageName: String?,
     appName: String?,
-    route: String?,
+    route: MutableState<String?>,
     database: AppDatabase
 ) {
     val navController = rememberNavController()
@@ -475,13 +476,19 @@ fun MainScreen(
     var showDialog by remember { mutableStateOf(false) }
 
     if (BuildConfig.FLAVOR != "offline") {
-        LaunchedEffect(Unit) {
+        LaunchedEffect(Unit, route.value) {
             launch(Dispatchers.IO) {
                 askNotificationPermission(
                     context,
                     requestPermissionLauncher
                 ) {
                     showDialog = true
+                }
+            }
+            launch(Dispatchers.Main) {
+                if (route.value != null) {
+                    navController.navigate(route.value!!)
+                    route.value = null
                 }
             }
         }
@@ -632,7 +639,7 @@ fun MainScreen(
     ) { padding ->
         NavHost(
             navController,
-            startDestination = route ?: Route.Home.route,
+            startDestination = route.value ?: Route.Home.route,
             enterTransition = { fadeIn(animationSpec = tween(200)) },
             exitTransition = { fadeOut(animationSpec = tween(200)) }
         ) {

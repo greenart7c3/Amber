@@ -31,6 +31,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 object NotificationUtils {
     private var dmChannel: NotificationChannel? = null
@@ -101,7 +102,8 @@ object NotificationUtils {
 
         val contentIntent = Intent(applicationContext, MainActivity::class.java).apply { data = Uri.parse(uri) }
         contentIntent.putExtra("bunker", bunkerRequest.toJson())
-        contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        contentIntent.putExtra("route", Route.Home.route)
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val contentPendingIntent = PendingIntent.getActivity(
             applicationContext,
             notId,

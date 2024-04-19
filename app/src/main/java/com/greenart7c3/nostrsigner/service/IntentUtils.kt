@@ -40,13 +40,13 @@ data class BunkerMetada(
 object IntentUtils {
     val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
-    private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?): IntentData {
+    private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?, route: String?): IntentData {
         val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")
         val parameters = data.replace("nostrsigner:", "").split("?").toMutableList()
         parameters.removeFirst()
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
-            return getIntentDataFromIntent(intent, packageName)
+            return getIntentDataFromIntent(intent, packageName, route)
         }
 
         var type = SignerType.SIGN_EVENT
@@ -100,7 +100,8 @@ object IntentUtils {
             "",
             mutableStateOf(true),
             mutableStateOf(false),
-            null
+            null,
+            route
         )
     }
 
@@ -161,7 +162,7 @@ object IntentUtils {
         }
     }
 
-    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest): IntentData {
+    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest, route: String?): IntentData {
         val type = getTypeFromBunker(bunkerRequest)
         val data = getDataFromBunker(bunkerRequest)
 
@@ -205,11 +206,12 @@ object IntentUtils {
             intent.extras?.getString("current_user") ?: "",
             mutableStateOf(true),
             mutableStateOf(false),
-            bunkerRequest
+            bunkerRequest,
+            route
         )
     }
 
-    private fun getIntentDataFromIntent(intent: Intent, packageName: String?): IntentData {
+    private fun getIntentDataFromIntent(intent: Intent, packageName: String?, route: String?): IntentData {
         val type = when (intent.extras?.getString("type")) {
             "sign_event" -> SignerType.SIGN_EVENT
             "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
@@ -257,7 +259,8 @@ object IntentUtils {
             intent.extras?.getString("current_user") ?: "",
             mutableStateOf(true),
             mutableStateOf(false),
-            null
+            null,
+            route
         )
     }
 
@@ -268,7 +271,7 @@ object IntentUtils {
         return objectMapper.readValue(json, BunkerMetada::class.java)
     }
 
-    private fun getIntentFromNostrConnect(intent: Intent): IntentData? {
+    private fun getIntentFromNostrConnect(intent: Intent, route: String?): IntentData? {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
@@ -311,7 +314,8 @@ object IntentUtils {
                     pubKey,
                     relays,
                     ""
-                )
+                ),
+                route
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
@@ -319,7 +323,7 @@ object IntentUtils {
         }
     }
 
-    fun getIntentData(intent: Intent, packageName: String?): IntentData? {
+    fun getIntentData(intent: Intent, packageName: String?, route: String?): IntentData? {
         if (intent.data == null) {
             return null
         }
@@ -334,13 +338,13 @@ object IntentUtils {
         }
 
         return if (intent.dataString?.startsWith("nostrconnect:") == true) {
-            return getIntentFromNostrConnect(intent)
+            return getIntentFromNostrConnect(intent, route)
         } else if (bunkerRequest != null) {
-            getIntentDataFromBunkerRequest(intent, bunkerRequest)
+            getIntentDataFromBunkerRequest(intent, bunkerRequest, route)
         } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-            getIntentDataFromIntent(intent, packageName)
+            getIntentDataFromIntent(intent, packageName, route)
         } else {
-            getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName)
+            getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route)
         }
     }
     fun getIntent(data: String, keyPair: KeyPair): Event {

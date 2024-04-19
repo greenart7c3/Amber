@@ -282,6 +282,9 @@ object IntentUtils {
                 if (internalSplit.first() == "relay") {
                     relays.add(internalSplit[1])
                 }
+                if (internalSplit.first() == "name") {
+                    name = internalSplit[1]
+                }
                 if (internalSplit.first() == "metadata") {
                     val bunkerMetada = metaDataFromJson(internalSplit[1])
                     name = bunkerMetada.name

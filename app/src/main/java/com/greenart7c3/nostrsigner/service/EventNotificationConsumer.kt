@@ -197,14 +197,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         acc: Account
     ) {
-        val dao = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
-        val notification = dao.getNotification(event.id)
-        if (notification != null) return
-        dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
-
         acc.signer.nip04Decrypt(event.content, event.pubKey) {
             Log.d("bunker", event.toJson())
             Log.d("bunker", it)
+
+            val dao = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
+            val notification = dao.getNotification(event.id)
+            if (notification != null) return@nip04Decrypt
+            dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
 
             val bunkerRequest = BunkerRequest.mapper.readValue(it, BunkerRequest::class.java)
             bunkerRequest.localKey = event.pubKey

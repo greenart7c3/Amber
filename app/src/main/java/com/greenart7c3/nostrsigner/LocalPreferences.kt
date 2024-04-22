@@ -10,6 +10,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.HttpClientManager
+import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.greenart7c3.nostrsigner.ui.parseNotificationType
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -37,6 +39,7 @@ private object PrefKeys {
     const val RATIONALE = "rationale"
     const val USE_PROXY = "use_proxy"
     const val PROXY_PORT = "proxy_port"
+    const val NOTIFICATION_TYPE = "notification_type"
 }
 
 @Immutable
@@ -242,6 +245,18 @@ object LocalPreferences {
         }
         val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", port)
         HttpClientManager.setDefaultProxy(proxy)
+    }
+
+    fun updateNotificationType(notificationType: NotificationType) {
+        encryptedPreferences().edit().apply {
+            putInt(PrefKeys.NOTIFICATION_TYPE, notificationType.screenCode)
+        }.apply()
+    }
+
+    fun getNotificationType(): NotificationType {
+        encryptedPreferences().apply {
+            return parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0))
+        }
     }
 
     private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String, database: AppDatabase) = withContext(Dispatchers.IO) {

@@ -87,9 +87,11 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -137,10 +139,12 @@ fun sendResult(
             RelayPool.getAll().forEach { relay ->
                 if (!relay.isConnected()) {
                     relay.connectAndRun {
-                        GlobalScope.launch(Dispatchers.IO) {
-                            delay(60000)
-                            if (relay.isConnected()) {
-                                relay.disconnect()
+                        if (!NotificationDataSource.isActive()) {
+                            GlobalScope.launch(Dispatchers.IO) {
+                                delay(60000)
+                                if (relay.isConnected()) {
+                                    relay.disconnect()
+                                }
                             }
                         }
                     }
@@ -165,7 +169,7 @@ fun sendResult(
             database.applicationDao().deletePermissions(key)
         }
 
-        val relays = intentData.bunkerRequest?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: listOf("wss://relay.nsec.app")
+        val relays = intentData.bunkerRequest?.relays ?: listOf()
         val savedApplication = database.applicationDao().getByKey(key)
 
         val application = savedApplication ?: ApplicationWithPermissions(
@@ -225,7 +229,7 @@ fun sendResult(
                 account,
                 intentData.bunkerRequest.localKey,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
-                relays,
+                application.application.relays.map { url -> Relay(url) },
                 onLoading,
                 onSign = {
                     database.applicationDao().insertApplicationWithPermissions(application)

@@ -53,8 +53,7 @@ class Relay(
     private val activeTypes: Set<FeedType> = FeedType.entries.toSet()
 ) {
     companion object {
-        // waits 3 minutes to reconnect once things fail
-        const val RECONNECTING_IN_SECONDS = 60 * 3
+        const val RECONNECTING_IN_SECONDS = 60
     }
 
     private val httpClient = HttpClientManager.getHttpClient()

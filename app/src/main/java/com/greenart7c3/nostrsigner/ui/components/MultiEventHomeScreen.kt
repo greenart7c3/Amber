@@ -47,11 +47,13 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -141,10 +143,12 @@ fun MultiEventHomeScreen(
                                 RelayPool.getAll().forEach { relay ->
                                     if (!relay.isConnected()) {
                                         relay.connectAndRun {
-                                            GlobalScope.launch(Dispatchers.IO) {
-                                                delay(60000)
-                                                if (relay.isConnected()) {
-                                                    relay.disconnect()
+                                            if (!NotificationDataSource.isActive()) {
+                                                GlobalScope.launch(Dispatchers.IO) {
+                                                    delay(60000)
+                                                    if (relay.isConnected()) {
+                                                        relay.disconnect()
+                                                    }
                                                 }
                                             }
                                         }
@@ -205,7 +209,7 @@ fun MultiEventHomeScreen(
                                                 localAccount,
                                                 intentData.bunkerRequest.localKey,
                                                 BunkerResponse(intentData.bunkerRequest.id, signedEvent.toJson(), null),
-                                                applicationEntity?.application?.relays ?: listOf("wss://relay.nsec.app"),
+                                                applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
                                                 onLoading = {}
                                             ) {}
                                         } else {
@@ -242,7 +246,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
-                                            applicationEntity?.application?.relays ?: listOf("wss://relay.nsec.app"),
+                                            applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
                                             onLoading = {}
                                         ) { }
                                     } else {

@@ -1,6 +1,9 @@
 package com.greenart7c3.nostrsigner
 
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.net.Uri
 import android.os.Bundle
 import android.util.Log
@@ -9,22 +12,33 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.Modifier
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.service.HttpClientManager
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 
 fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
 class MainActivity : AppCompatActivity() {
     private val intents = MutableStateFlow<List<IntentData>>(listOf())
+    val isOnMobileDataState = mutableStateOf(false)
+    private val isOnWifiDataState = mutableStateOf(false)
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
@@ -76,6 +90,16 @@ class MainActivity : AppCompatActivity() {
             }
         }
         IntentUtils.bunkerRequests.clear()
+
+        if (BuildConfig.FLAVOR != "offline") {
+            val connectivityManager =
+                (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
+                updateNetworkCapabilities(it)
+            }
+        }
+
         super.onResume()
     }
 
@@ -98,4 +122,76 @@ class MainActivity : AppCompatActivity() {
 
         super.onDestroy()
     }
+
+    fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities): Boolean {
+        val isOnMobileData = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        val isOnWifi = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+
+        var changedNetwork = false
+
+        if (isOnMobileDataState.value != isOnMobileData) {
+            isOnMobileDataState.value = isOnMobileData
+
+            changedNetwork = true
+        }
+
+        if (isOnWifiDataState.value != isOnWifi) {
+            isOnWifiDataState.value = isOnWifi
+
+            changedNetwork = true
+        }
+
+        if (changedNetwork) {
+            if (isOnMobileData) {
+                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_MOBILE)
+            } else {
+                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_WIFI)
+            }
+        }
+
+        return changedNetwork
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private val networkCallback =
+        object : ConnectivityManager.NetworkCallback() {
+            var lastNetwork: Network? = null
+
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                if (BuildConfig.FLAVOR == "offline") return
+
+                if (lastNetwork != null && lastNetwork != network) {
+                    GlobalScope.launch(Dispatchers.IO) {
+                        NotificationDataSource.stopSync()
+                        delay(1000)
+                        NotificationDataSource.start()
+                    }
+                }
+
+                lastNetwork = network
+            }
+
+            // Network capabilities have changed for the network
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities
+            ) {
+                super.onCapabilitiesChanged(network, networkCapabilities)
+
+                if (BuildConfig.FLAVOR == "offline") return
+
+                GlobalScope.launch(Dispatchers.IO) {
+                    Log.d(
+                        "ServiceManager NetworkCallback",
+                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${isOnMobileDataState.value} hasWifi ${isOnWifiDataState.value}"
+                    )
+                    if (updateNetworkCapabilities(networkCapabilities)) {
+                        NotificationDataSource.stopSync()
+                        delay(1000)
+                        NotificationDataSource.start()
+                    }
+                }
+            }
+        }
 }

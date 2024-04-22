@@ -24,6 +24,7 @@ roomKtx = "2.6.1"
 securityCryptoKtx = "1.1.0-alpha06"
 zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.0.0-alpha.12"
+kotlin = "1.9.23"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -64,3 +65,4 @@ zxing-android-embedded = { module = "com.journeyapps:zxing-android-embedded", ve
 okhttp = { group = "com.squareup.okhttp3", name = "okhttp", version.ref = "okhttp" }
 
 [plugins]
+jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

@@ -56,4 +56,36 @@ data class Subscription(
             }
         }
     }
+    fun hasChangedFiltersFrom(otherFilters: List<TypedFilter>?): Boolean {
+        if (typedFilters == null && otherFilters == null) return false
+        if (typedFilters?.size != otherFilters?.size) return true
+
+        typedFilters?.forEachIndexed { index, typedFilter ->
+            val otherFilter = otherFilters?.getOrNull(index) ?: return true
+
+            // Does not check SINCE on purpose. Avoids replacing the filter if SINCE was all that changed.
+            // fast check
+            if (typedFilter.filter.authors?.size != otherFilter.filter.authors?.size ||
+                typedFilter.filter.ids?.size != otherFilter.filter.ids?.size ||
+                typedFilter.filter.tags?.size != otherFilter.filter.tags?.size ||
+                typedFilter.filter.kinds?.size != otherFilter.filter.kinds?.size ||
+                typedFilter.filter.limit != otherFilter.filter.limit ||
+                typedFilter.filter.search?.length != otherFilter.filter.search?.length ||
+                typedFilter.filter.until != otherFilter.filter.until
+            ) {
+                return true
+            }
+
+            // deep check
+            if (typedFilter.filter.ids != otherFilter.filter.ids ||
+                typedFilter.filter.authors != otherFilter.filter.authors ||
+                typedFilter.filter.tags != otherFilter.filter.tags ||
+                typedFilter.filter.kinds != otherFilter.filter.kinds ||
+                typedFilter.filter.search != otherFilter.filter.search
+            ) {
+                return true
+            }
+        }
+        return false
+    }
 }

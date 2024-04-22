@@ -9,6 +9,15 @@ import androidx.room.Transaction
 
 @Dao
 interface ApplicationDao {
+    @Query("SELECT MAX(time) FROM notification")
+    fun getLatestNotification(): Long?
+
+    @Query("SELECT * FROM notification WHERE eventId = :eventId")
+    fun getNotification(eventId: String): NotificationEntity?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertNotification(notificationEntity: NotificationEntity): Long?
+
     @Query("SELECT * FROM application where pubKey = :pubKey")
     fun getAll(pubKey: String): List<ApplicationEntity>
 

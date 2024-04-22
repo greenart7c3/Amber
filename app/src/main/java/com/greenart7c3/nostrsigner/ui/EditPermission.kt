@@ -64,6 +64,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.relays.Client
+import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.PostButton
@@ -255,6 +257,18 @@ fun EditPermission(
                 database
                     .applicationDao()
                     .delete(applicationData)
+
+                val relays = mutableListOf<Relay>()
+                database.applicationDao().getAllApplications().forEach {
+                    it.application.relays.forEach { url ->
+                        if (url.isNotBlank()) {
+                            if (!relays.any { it.url == url }) {
+                                relays.add(Relay(url))
+                            }
+                        }
+                    }
+                }
+                Client.reconnect(relays.toTypedArray())
             }
 
             scope.launch(Dispatchers.Main) {
@@ -477,6 +491,17 @@ fun EditPermission(
                                 permissions
                             )
                         )
+                        val relays = mutableListOf<Relay>()
+                        database.applicationDao().getAllApplications().forEach {
+                            it.application.relays.forEach { url ->
+                                if (url.isNotBlank()) {
+                                    if (!relays.any { it.url == url }) {
+                                        relays.add(Relay(url))
+                                    }
+                                }
+                            }
+                        }
+                        Client.reconnect(relays.toTypedArray())
 
                         scope.launch(Dispatchers.Main) {
                             navController.popBackStack()

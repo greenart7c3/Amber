@@ -115,4 +115,8 @@
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">Could not connect to Tor</string>
     <string name="relays">Relays</string>
+    <string name="push_notifications">Push notifications</string>
+    <string name="direct_connection">Direct Connection</string>
+    <string name="notification_type">Notification Type</string>
+    <string name="select_the_type_of_notification_you_want_to_receive">Select the type of notification you want to receive</string>
 </resources>

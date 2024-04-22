@@ -1,11 +1,16 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Intent
 import android.widget.Toast
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Person
@@ -22,25 +27,37 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.relays.RelayPool
+import com.greenart7c3.nostrsigner.service.ConnectivityService
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
+import com.greenart7c3.nostrsigner.ui.components.TextSpinner
+import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.encoders.toNpub
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -64,6 +81,11 @@ fun SettingsScreen(
         skipPartiallyExpanded = true
     )
     val scope = rememberCoroutineScope()
+    val notificationItems = persistentListOf(
+        TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
+        TitleExplainer(stringResource(NotificationType.DIRECT.resourceId))
+    )
+    val notificationItemsIndex = LocalPreferences.getNotificationType().screenCode
 
     if (shouldShowBottomSheet) {
         AccountsBottomSheet(
@@ -123,31 +145,66 @@ fun SettingsScreen(
                 }
             )
         }
-
-        Box(
-            Modifier
-                .padding(16.dp)
-        ) {
-            IconRow(
-                title =
-                if (checked) {
-                    stringResource(R.string.disconnect_from_your_orbot_setup)
-                } else {
-                    stringResource(R.string.connect_via_tor_short)
-                },
-                icon = R.drawable.ic_tor,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onLongClick = {
-                    conectOrbotDialogOpen = true
-                },
-                onClick = {
+        if (BuildConfig.FLAVOR != "offline") {
+            Box(
+                Modifier
+                    .padding(16.dp)
+            ) {
+                IconRow(
+                    title =
                     if (checked) {
-                        disconnectTorDialog = true
+                        stringResource(R.string.disconnect_from_your_orbot_setup)
                     } else {
+                        stringResource(R.string.connect_via_tor_short)
+                    },
+                    icon = R.drawable.ic_tor,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onLongClick = {
                         conectOrbotDialogOpen = true
+                    },
+                    onClick = {
+                        if (checked) {
+                            disconnectTorDialog = true
+                        } else {
+                            conectOrbotDialogOpen = true
+                        }
+                    }
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(16.dp)
+            ) {
+                SettingsRow(
+                    R.string.notification_type,
+                    R.string.select_the_type_of_notification_you_want_to_receive,
+                    notificationItems,
+                    notificationItemsIndex
+                ) {
+                    scope.launch(Dispatchers.IO) {
+                        LocalPreferences.updateNotificationType(parseNotificationType(it))
+                        if (it == 0) {
+                            nostrsigner.instance.applicationContext.stopService(
+                                Intent(
+                                    nostrsigner.instance.applicationContext,
+                                    ConnectivityService::class.java
+                                )
+                            )
+                            NotificationDataSource.stopSync()
+                            RelayPool.disconnect()
+                        } else {
+                            nostrsigner.instance.applicationContext.startService(
+                                Intent(
+                                    nostrsigner.instance.applicationContext,
+                                    ConnectivityService::class.java
+                                )
+                            )
+                            NotificationDataSource.start()
+                        }
                     }
                 }
-            )
+            }
         }
 
         Spacer(modifier = Modifier.weight(1f))
@@ -221,5 +278,62 @@ fun SettingsScreen(
 
     if (backupDialogOpen) {
         AccountBackupDialog(account, onClose = { backupDialogOpen = false })
+    }
+}
+
+@Composable
+fun SettingsRow(
+    name: Int,
+    description: Int,
+    selectedItens: ImmutableList<TitleExplainer>,
+    selectedIndex: Int,
+    onSelect: (Int) -> Unit
+) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        Column(
+            modifier = Modifier.weight(2.0f),
+            verticalArrangement = Arrangement.spacedBy(3.dp)
+        ) {
+            Text(
+                text = stringResource(name),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis
+            )
+            Text(
+                text = stringResource(description),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.Gray,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis
+            )
+        }
+
+        TextSpinner(
+            label = "",
+            placeholder = selectedItens[selectedIndex].title,
+            options = selectedItens,
+            onSelect = onSelect,
+            modifier = Modifier
+                .windowInsetsPadding(WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
+                .weight(1f)
+        )
+    }
+}
+
+enum class NotificationType(val screenCode: Int, val resourceId: Int) {
+    PUSH(0, R.string.push_notifications),
+    DIRECT(1, R.string.direct_connection)
+}
+
+fun parseNotificationType(screenCode: Int): NotificationType {
+    return when (screenCode) {
+        NotificationType.PUSH.screenCode -> NotificationType.PUSH
+        NotificationType.DIRECT.screenCode -> NotificationType.DIRECT
+        else -> {
+            NotificationType.PUSH
+        }
     }
 }

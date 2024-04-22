@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
@@ -111,10 +112,10 @@ object AmberUtils {
     fun sendBunkerError(
         account: Account,
         bunkerRequest: BunkerRequest,
+        relays: List<Relay>,
         context: Context,
         onLoading: (Boolean) -> Unit
     ) {
-        val relays = bunkerRequest.relays.ifEmpty { listOf("wss://relay.nsec.app") }
         IntentUtils.sendBunkerResponse(
             account,
             bunkerRequest.localKey,

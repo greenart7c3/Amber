@@ -27,6 +27,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
 import android.net.Uri
+import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.MainActivity
@@ -129,6 +130,11 @@ object NotificationUtils {
             .setContentIntent(contentPendingIntent)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setExtras(
+                Bundle().apply {
+                    putString("route", Route.Home.route)
+                }
+            )
 
         // Build the notification
         val builder = NotificationCompat.Builder(
@@ -147,6 +153,11 @@ object NotificationUtils {
             .setPublicVersion(builderPublic.build())
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true)
+            .setExtras(
+                Bundle().apply {
+                    putString("route", Route.Home.route)
+                }
+            )
 
         notify(notId, builder.build())
     }

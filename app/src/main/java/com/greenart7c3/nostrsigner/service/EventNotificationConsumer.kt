@@ -38,13 +38,16 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
@@ -107,7 +110,7 @@ data class BunkerRequest(
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
                 relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
                     it.asText().intern()
-                } ?: listOf("wss://relay.nsec.app"),
+                } ?: listOf(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: ""
             )
         }
@@ -125,6 +128,22 @@ data class BunkerRequest(
 
 class EventNotificationConsumer(private val applicationContext: Context) {
     private val groupKey = "com.greenart7c3.nostrsigner.DM_NOTIFICATION"
+
+    fun consume(event: Event) {
+        if (!notificationManager().areNotificationsEnabled()) return
+        if (event.kind() != 24133) return
+
+        // PushNotification Wraps don't include a receiver.
+        // Test with all logged in accounts
+        LocalPreferences.allSavedAccounts().forEach {
+            if (it.hasPrivKey) {
+                LocalPreferences.loadFromEncryptedStorage(it.npub)?.let { acc ->
+                    notify(event, acc)
+                }
+            }
+        }
+    }
+
     suspend fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
 
@@ -133,7 +152,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         LocalPreferences.allSavedAccounts().forEach {
             if (it.hasPrivKey) {
                 LocalPreferences.loadFromEncryptedStorage(it.npub)?.let { acc ->
-                    consumeIfMatchesAccount(event, acc)
+                    if (LocalPreferences.getNotificationType() == NotificationType.PUSH) {
+                        consumeIfMatchesAccount(event, acc)
+                    }
                 }
             }
         }
@@ -176,6 +197,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         acc: Account
     ) {
+        val dao = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
+        val notification = dao.getNotification(event.id)
+        if (notification != null) return
+        dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+
         acc.signer.nip04Decrypt(event.content, event.pubKey) {
             Log.d("bunker", event.toJson())
             Log.d("bunker", it)
@@ -200,14 +226,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val database = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub())
 
             val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
-            val relays = permission?.application?.relays?.ifEmpty { listOf("wss://relay.nsec.app") } ?: bunkerRequest.relays
-
             if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
                 IntentUtils.sendBunkerResponse(
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "ack", null),
-                    relays,
+                    permission.application.relays.map { url -> Relay(url) },
                     onLoading = {}
                 ) { }
                 return@nip04Decrypt
@@ -229,7 +253,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             acc,
                             bunkerRequest.localKey,
                             BunkerResponse(bunkerRequest.id, "", "invalid secret"),
-                            relays,
+                            applicationWithSecret?.application?.relays?.map { url -> Relay(url) } ?: listOf(),
                             onLoading = { }
                         ) { }
                         return@nip04Decrypt
@@ -240,6 +264,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     }
 
                     bunkerRequest.secret = applicationWithSecret?.application?.secret ?: ""
+                    bunkerRequest.relays = applicationWithSecret?.application?.relays ?: bunkerRequest.relays
                 }
             }
 
@@ -248,7 +273,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "", "no permission"),
-                    relays,
+                    listOf(),
                     onLoading = { }
                 ) { }
                 return@nip04Decrypt
@@ -277,6 +302,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             if (type == SignerType.CONNECT) {
                 message = "$name $bunkerPermission"
             }
+            val relaysUrl = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
+            val relays = relaysUrl.map { url -> Relay(url) }
 
             cursor.use { localCursor ->
                 if (localCursor == null) {

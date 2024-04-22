@@ -122,9 +122,9 @@ object Client : RelayPool.Listener {
         checkNotInMainThread()
 
         if (relayList != null) {
-            RelayPool.sendToSelectedRelays(relayList, signedEvent)
+            RelayPool.sendToSelectedRelays(relayList, signedEvent, onLoading, onDone)
         } else if (relay == null) {
-            RelayPool.send(signedEvent)
+            RelayPool.send(signedEvent, onLoading, onDone)
         } else {
             val useConnectedRelayIfPresent = RelayPool.getRelays(relay)
 

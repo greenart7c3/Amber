@@ -17,15 +17,20 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Client
+import com.greenart7c3.nostrsigner.relays.Relay
+import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.net.URLDecoder
 import java.util.UUID
@@ -135,7 +140,7 @@ object IntentUtils {
         account: Account,
         localKey: String,
         bunkerResponse: BunkerResponse,
-        relays: List<String>,
+        relays: List<Relay>,
         onLoading: (Boolean) -> Unit,
         onSign: (() -> Unit)? = null,
         onDone: () -> Unit
@@ -153,10 +158,25 @@ object IntentUtils {
                 if (onSign != null) {
                     onSign()
                 }
+
                 GlobalScope.launch(Dispatchers.IO) {
-                    relays.forEach { relay ->
-                        Client.send(it, relay = relay, onDone = onDone, onLoading = onLoading)
+                    if (RelayPool.getAll().isEmpty()) {
+                        val database = nostrsigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        val savedRelays = mutableListOf<Relay>()
+                        database.applicationDao().getAllApplications().forEach {
+                            it.application.relays.forEach { url ->
+                                if (url.isNotBlank()) {
+                                    if (!savedRelays.any { it.url == url }) {
+                                        savedRelays.add(Relay(url))
+                                    }
+                                }
+                            }
+                        }
+                        Client.reconnect(savedRelays.toTypedArray())
+                        delay(1000)
                     }
+
+                    Client.send(it, relayList = relays, onDone = onDone, onLoading = onLoading)
                 }
             }
         }

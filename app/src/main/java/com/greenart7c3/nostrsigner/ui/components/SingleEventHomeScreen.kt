@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -125,7 +126,8 @@ fun SingleEventHomeScreen(
                     }
 
                     if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, context, onLoading = onLoading)
+                        val relays = applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList()
+                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, relays, context, onLoading = onLoading)
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
@@ -257,7 +259,7 @@ fun SingleEventHomeScreen(
                     }
 
                     if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, context, onLoading)
+                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(), context, onLoading)
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
@@ -412,6 +414,7 @@ fun SingleEventHomeScreen(
                                 AmberUtils.sendBunkerError(
                                     account,
                                     intentData.bunkerRequest,
+                                    applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
                                     context,
                                     onLoading
                                 )

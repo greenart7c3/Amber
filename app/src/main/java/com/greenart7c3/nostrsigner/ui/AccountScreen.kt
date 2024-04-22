@@ -11,13 +11,18 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
-import com.greenart7c3.nostrsigner.relays.RelayPool
+import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -64,14 +69,21 @@ fun AccountScreen(
 
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
+                            val relays = mutableListOf<Relay>()
                             database.applicationDao().getAllApplications().forEach {
                                 it.application.relays.forEach { url ->
                                     if (url.isNotBlank()) {
-                                        if (RelayPool.getRelays(url).isEmpty()) {
-                                            RelayPool.addRelay(Relay(url))
+                                        if (!relays.any { it.url == url }) {
+                                            relays.add(Relay(url))
                                         }
                                     }
                                 }
+                            }
+                            delay(1000)
+                            if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                nostrsigner.instance.applicationContext.startService(Intent(nostrsigner.instance.applicationContext, ConnectivityService::class.java))
+                                Client.reconnect(relays.toTypedArray())
+                                NotificationDataSource.start()
                             }
                         }
                     }

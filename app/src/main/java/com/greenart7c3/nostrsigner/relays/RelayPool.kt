@@ -63,10 +63,8 @@ object RelayPool : Relay.Listener {
     }
 
     fun loadRelays(relayList: List<Relay>) {
-        if (!relayList.isNullOrEmpty()) {
+        if (relayList.isNotEmpty()) {
             relayList.forEach { addRelay(it) }
-        } else {
-            Constants.convertDefaultRelays().forEach { addRelay(it) }
         }
     }
 
@@ -95,13 +93,23 @@ object RelayPool : Relay.Listener {
 
     fun sendToSelectedRelays(
         list: List<Relay>,
-        signedEvent: EventInterface
+        signedEvent: EventInterface,
+        onLoading: (Boolean) -> Unit,
+        onDone: (() -> Unit)? = null
     ) {
-        list.forEach { relay -> relays.filter { it.url == relay.url }.forEach { it.send(signedEvent, null) } }
+        list.forEach { relay ->
+            relays.filter { it.url == relay.url }.forEach {
+                it.onLoading = onLoading
+                it.send(signedEvent, onDone)
+            }
+        }
     }
 
-    fun send(signedEvent: EventInterface) {
-        relays.forEach { it.send(signedEvent, null) }
+    fun send(signedEvent: EventInterface, onLoading: (Boolean) -> Unit, onDone: (() -> Unit)? = null) {
+        relays.forEach {
+            it.onLoading = onLoading
+            it.send(signedEvent, onDone)
+        }
     }
 
     fun close(subscriptionId: String) {

@@ -8,21 +8,25 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -38,6 +42,8 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -50,8 +56,10 @@ import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
+import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
+import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -85,7 +93,7 @@ fun SettingsScreen(
         TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
         TitleExplainer(stringResource(NotificationType.DIRECT.resourceId))
     )
-    val notificationItemsIndex = LocalPreferences.getNotificationType().screenCode
+    var notificationTypeDialog by remember { mutableStateOf(false) }
 
     if (shouldShowBottomSheet) {
         AccountsBottomSheet(
@@ -99,6 +107,75 @@ fun SettingsScreen(
                 }
             }
         )
+    }
+
+    if (notificationTypeDialog) {
+        var notificationItemsIndex by remember {
+            mutableIntStateOf(LocalPreferences.getNotificationType().screenCode)
+        }
+        Dialog(
+            onDismissRequest = {
+                notificationTypeDialog = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false)
+        ) {
+            Surface(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(10.dp)
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        CloseButton {
+                            notificationTypeDialog = false
+                        }
+
+                        PostButton(isActive = true) {
+                            notificationTypeDialog = false
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.updateNotificationType(parseNotificationType(notificationItemsIndex))
+                                if (notificationItemsIndex == 0) {
+                                    nostrsigner.instance.applicationContext.stopService(
+                                        Intent(
+                                            nostrsigner.instance.applicationContext,
+                                            ConnectivityService::class.java
+                                        )
+                                    )
+                                    NotificationDataSource.stopSync()
+                                    RelayPool.disconnect()
+                                } else {
+                                    nostrsigner.instance.applicationContext.startService(
+                                        Intent(
+                                            nostrsigner.instance.applicationContext,
+                                            ConnectivityService::class.java
+                                        )
+                                    )
+                                    NotificationDataSource.start()
+                                }
+                            }
+                        }
+                    }
+
+                    Column {
+                        Box(
+                            Modifier
+                                .padding(8.dp)
+                        ) {
+                            SettingsRow(
+                                R.string.notification_type,
+                                R.string.select_the_type_of_notification_you_want_to_receive,
+                                notificationItems,
+                                notificationItemsIndex
+                            ) {
+                                notificationItemsIndex = it
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (logoutDialog) {
@@ -176,34 +253,14 @@ fun SettingsScreen(
                 Modifier
                     .padding(16.dp)
             ) {
-                SettingsRow(
-                    R.string.notification_type,
-                    R.string.select_the_type_of_notification_you_want_to_receive,
-                    notificationItems,
-                    notificationItemsIndex
-                ) {
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateNotificationType(parseNotificationType(it))
-                        if (it == 0) {
-                            nostrsigner.instance.applicationContext.stopService(
-                                Intent(
-                                    nostrsigner.instance.applicationContext,
-                                    ConnectivityService::class.java
-                                )
-                            )
-                            NotificationDataSource.stopSync()
-                            RelayPool.disconnect()
-                        } else {
-                            nostrsigner.instance.applicationContext.startService(
-                                Intent(
-                                    nostrsigner.instance.applicationContext,
-                                    ConnectivityService::class.java
-                                )
-                            )
-                            NotificationDataSource.start()
-                        }
+                IconRow(
+                    title = stringResource(R.string.notification_type),
+                    icon = Icons.Default.Notifications,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        notificationTypeDialog = true
                     }
-                }
+                )
             }
         }
 

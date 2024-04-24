@@ -10,7 +10,7 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 
 @Composable
-fun PostButton(modifier: Modifier = Modifier, onPost: () -> Unit = {}, isActive: Boolean) {
+fun PostButton(modifier: Modifier = Modifier, isActive: Boolean, onPost: () -> Unit = {}) {
     Button(
         enabled = isActive,
         modifier = modifier,

@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 @Composable
 fun PostButton(modifier: Modifier = Modifier, onPost: () -> Unit = {}, isActive: Boolean) {
     Button(
+        enabled = isActive,
         modifier = modifier,
         onClick = {
             if (isActive) {

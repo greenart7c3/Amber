@@ -95,6 +95,7 @@ fun EditPermission(
     var textFieldvalue by remember(applicationData.name) {
         mutableStateOf(TextFieldValue(applicationData.name))
     }
+
     var wantsToDelete by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
@@ -121,6 +122,9 @@ fun EditPermission(
     }
 
     if (editRelaysDialog) {
+        var textFieldRelay by remember {
+            mutableStateOf(TextFieldValue(""))
+        }
         val relays2 = remember {
             val localRelays = mutableStateListOf<String>()
             applicationData.relays.forEach {
@@ -154,7 +158,7 @@ fun EditPermission(
                             editRelaysDialog = false
                         }
                         PostButton(
-                            isActive = true,
+                            isActive = !applicationData.isConnected,
                             onPost = {
                                 applicationData = applicationData.copy(
                                     relays = relays2.map { it }
@@ -202,15 +206,16 @@ fun EditPermission(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         OutlinedTextField(
+                            enabled = !applicationData.isConnected,
                             modifier = Modifier
                                 .fillMaxWidth(0.9f)
                                 .padding(horizontal = 16.dp),
-                            value = textFieldvalue.text,
+                            value = textFieldRelay.text,
                             keyboardOptions = KeyboardOptions(
                                 imeAction = ImeAction.Done
                             ),
                             onValueChange = {
-                                textFieldvalue = TextFieldValue(it)
+                                textFieldRelay = TextFieldValue(it)
                             },
                             label = {
                                 Text("Relay")
@@ -218,7 +223,8 @@ fun EditPermission(
                         )
                         IconButton(
                             onClick = {
-                                val url = textFieldvalue.text
+                                if (applicationData.isConnected) return@IconButton
+                                val url = textFieldRelay.text
                                 if (url.isNotBlank() && url != "/") {
                                     var addedWSS =
                                         if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
@@ -232,7 +238,7 @@ fun EditPermission(
                                         }
                                     if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
                                     relays2.add(addedWSS)
-                                    textFieldvalue = TextFieldValue("")
+                                    textFieldRelay = TextFieldValue("")
                                 }
                             }
                         ) {
@@ -373,7 +379,8 @@ fun EditPermission(
                 Text("Name")
             }
         )
-        if (!applicationData.isConnected) {
+
+        if (applicationData.secret.isNotEmpty()) {
             Row(
                 Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center
@@ -388,6 +395,7 @@ fun EditPermission(
                 }
             }
         }
+
         LazyColumn(
             Modifier.weight(1f)
         ) {

@@ -103,10 +103,8 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
     }
 
-    override fun onNewIntent(intent: Intent?) {
+    override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        if (intent == null) return
-
         val intentData = IntentUtils.getIntentData(intent, callingPackage, intent.getStringExtra("route")) ?: return
 
         if (intents.value.none { item -> item.id == intentData.id }) {

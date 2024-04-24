@@ -104,6 +104,13 @@ jobs:
           # override default build-tools version (29.0.3) -- optional
           BUILD_TOOLS_VERSION: "34.0.0"
 
+      - uses: kaisugi/action-regex-match@v1.0.1
+        id: regex-match
+        with:
+          text: ${{ github.ref }}
+          regex: '(v*-pre*)'
+          flags: gm
+
       - name: Create Release
         id: create_release
         uses: actions/create-release@v1
@@ -113,7 +120,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
-          prerelease: contains(github.ref, 'v*-pre*')
+          prerelease: ${{ steps.regex-match.outputs.match != '' }}
 
       - name: Upload Play APK Universal Asset
         id: upload-play-release-asset-universal-apk

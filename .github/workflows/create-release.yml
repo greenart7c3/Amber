@@ -113,7 +113,7 @@ jobs:
           tag_name: ${{ github.ref }}
           release_name: Release ${{ github.ref }}
           draft: false
-          prerelease: contains(github.ref, 'refs/tags/v*-pre*')
+          prerelease: contains(github.ref, 'v*-pre*')
 
       - name: Upload Play APK Universal Asset
         id: upload-play-release-asset-universal-apk

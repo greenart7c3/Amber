@@ -24,10 +24,15 @@ import androidx.compose.runtime.Immutable
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.asSharedFlow
+import kotlinx.coroutines.launch
 
 /**
  * RelayPool manages the connection to multiple Relays and lets consumers deal with simple events.
@@ -91,6 +96,7 @@ object RelayPool : Relay.Listener {
         return listeners.isNotEmpty()
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun sendToSelectedRelays(
         list: List<Relay>,
         signedEvent: EventInterface,
@@ -100,7 +106,23 @@ object RelayPool : Relay.Listener {
         list.forEach { relay ->
             relays.filter { it.url == relay.url }.forEach {
                 it.onLoading = onLoading
-                it.send(signedEvent, onDone)
+                if (!it.isConnected()) {
+                    it.connectAndRun {
+                        it.send(signedEvent, onDone)
+                        GlobalScope.launch(Dispatchers.IO) {
+                            delay(60000)
+                            if (relay.isConnected()) {
+                                relay.disconnect()
+
+                                if (onDone != null) {
+                                    onDone()
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    it.send(signedEvent, onDone)
+                }
             }
         }
     }

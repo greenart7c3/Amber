@@ -39,6 +39,9 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -47,6 +50,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -54,6 +58,7 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
+import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -64,8 +69,6 @@ import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -141,16 +144,13 @@ fun MultiEventHomeScreen(
                             val results = mutableListOf<Result>()
                             if (intents.any { it.bunkerRequest != null }) {
                                 RelayPool.getAll().forEach { relay ->
-                                    if (!relay.isConnected()) {
+                                    if (!relay.isConnected() && !NotificationDataSource.isActive()) {
                                         relay.connectAndRun {
-                                            if (!NotificationDataSource.isActive()) {
-                                                GlobalScope.launch(Dispatchers.IO) {
-                                                    delay(60000)
-                                                    if (relay.isConnected()) {
-                                                        relay.disconnect()
-                                                    }
-                                                }
-                                            }
+                                            val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
+                                            val inputData = Data.Builder()
+                                            inputData.putString("relay", relay.url)
+                                            builder.setInputData(inputData.build())
+                                            WorkManager.getInstance(nostrsigner.instance).enqueue(builder.build())
                                         }
                                     }
                                 }

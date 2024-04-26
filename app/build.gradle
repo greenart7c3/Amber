@@ -115,6 +115,7 @@ dependencies {
     implementation libs.material.icons.extended
 
     implementation libs.appcompat
+    implementation libs.work.runtime.ktx
 
     testImplementation libs.junit
     testImplementation libs.mockk

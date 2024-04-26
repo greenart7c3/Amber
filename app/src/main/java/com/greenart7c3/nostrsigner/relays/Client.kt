@@ -41,6 +41,17 @@ object Client : RelayPool.Listener {
     private var subscriptions = mapOf<String, List<TypedFilter>>()
 
     @Synchronized
+    fun addRelays(relays: Array<Relay>) {
+        if (isSameRelaySetConfig(relays)) return
+        RelayPool.disconnect()
+        RelayPool.unregister(this)
+        RelayPool.unloadRelays()
+        RelayPool.register(this)
+        RelayPool.loadRelays(relays.toList())
+        Client.relays = relays
+    }
+
+    @Synchronized
     fun reconnect(
         relays: Array<Relay>?,
         onlyIfChanged: Boolean = false

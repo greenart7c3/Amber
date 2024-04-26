@@ -80,6 +80,7 @@ fun AccountScreen(
                                 }
                             }
                             delay(1000)
+                            Client.addRelays(relays.toTypedArray())
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 nostrsigner.instance.applicationContext.startService(Intent(nostrsigner.instance.applicationContext, ConnectivityService::class.java))
                                 Client.reconnect(relays.toTypedArray())

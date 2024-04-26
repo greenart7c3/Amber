@@ -10,6 +10,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -23,6 +24,7 @@ import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -172,7 +174,10 @@ object IntentUtils {
                                 }
                             }
                         }
-                        Client.reconnect(savedRelays.toTypedArray())
+                        Client.addRelays(relays.toTypedArray())
+                        if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
+                            Client.reconnect(relays.toTypedArray())
+                        }
                         delay(1000)
                     }
 

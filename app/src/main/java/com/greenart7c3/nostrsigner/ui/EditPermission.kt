@@ -274,7 +274,10 @@ fun EditPermission(
                         }
                     }
                 }
-                Client.reconnect(relays.toTypedArray())
+                Client.addRelays(relays.toTypedArray())
+                if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
+                    Client.reconnect(relays.toTypedArray())
+                }
             }
 
             scope.launch(Dispatchers.Main) {
@@ -509,7 +512,10 @@ fun EditPermission(
                                 }
                             }
                         }
-                        Client.reconnect(relays.toTypedArray())
+                        Client.addRelays(relays.toTypedArray())
+                        if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
+                            Client.reconnect(relays.toTypedArray())
+                        }
 
                         scope.launch(Dispatchers.Main) {
                             navController.popBackStack()

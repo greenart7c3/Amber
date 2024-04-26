@@ -74,6 +74,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import androidx.work.Data
+import androidx.work.OneTimeWorkRequest
+import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -87,12 +90,13 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
+import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
@@ -103,7 +107,6 @@ import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -139,14 +142,11 @@ fun sendResult(
             RelayPool.getAll().forEach { relay ->
                 if (!relay.isConnected()) {
                     relay.connectAndRun {
-                        if (!NotificationDataSource.isActive()) {
-                            GlobalScope.launch(Dispatchers.IO) {
-                                delay(60000)
-                                if (relay.isConnected()) {
-                                    relay.disconnect()
-                                }
-                            }
-                        }
+                        val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
+                        val inputData = Data.Builder()
+                        inputData.putString("relay", relay.url)
+                        builder.setInputData(inputData.build())
+                        WorkManager.getInstance(nostrsigner.instance).enqueue(builder.build())
                     }
                 }
             }

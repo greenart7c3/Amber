@@ -59,7 +59,8 @@ data class BunkerRequest(
     val params: Array<String>,
     var localKey: String,
     var relays: List<String>,
-    var secret: String
+    var secret: String,
+    var currentAccount: String
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
@@ -111,7 +112,8 @@ data class BunkerRequest(
                 relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
                     it.asText().intern()
                 } ?: listOf(),
-                secret = jsonObject.get("secret")?.asText()?.intern() ?: ""
+                secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
+                currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: ""
             )
         }
 
@@ -208,6 +210,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
             val bunkerRequest = BunkerRequest.mapper.readValue(it, BunkerRequest::class.java)
             bunkerRequest.localKey = event.pubKey
+            bunkerRequest.currentAccount = acc.keyPair.pubKey.toNpub()
 
             val type = IntentUtils.getTypeFromBunker(bunkerRequest)
             val data = IntentUtils.getDataFromBunker(bunkerRequest)

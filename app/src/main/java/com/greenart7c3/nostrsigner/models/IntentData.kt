@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.models
 import androidx.compose.runtime.MutableState
 import com.greenart7c3.nostrsigner.service.BunkerRequest
 import com.vitorpamplona.quartz.encoders.HexKey
+import com.vitorpamplona.quartz.events.Event
 
 data class IntentData(
     val data: String,
@@ -18,5 +19,7 @@ data class IntentData(
     val checked: MutableState<Boolean>,
     val rememberMyChoice: MutableState<Boolean>,
     val bunkerRequest: BunkerRequest?,
-    val route: String?
+    val route: String?,
+    val event: Event?,
+    val encryptedData: String?
 )

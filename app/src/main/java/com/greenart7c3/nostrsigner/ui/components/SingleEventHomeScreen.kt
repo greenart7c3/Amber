@@ -6,8 +6,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.Button
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,7 +16,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -33,15 +30,12 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.service.AmberUtils
-import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.sendResult
-import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
-import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
@@ -121,13 +115,29 @@ fun SingleEventHomeScreen(
                 {
                     if (remember.value) {
                         coroutineScope.launch(Dispatchers.IO) {
-                            AmberUtils.acceptOrRejectPermission(key, intentData, null, false, applicationName ?: appName, account, database)
+                            AmberUtils.acceptOrRejectPermission(
+                                key,
+                                intentData,
+                                null,
+                                false,
+                                applicationName ?: appName,
+                                account,
+                                database
+                            )
                         }
                     }
 
                     if (intentData.bunkerRequest != null) {
-                        val relays = applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList()
-                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, relays, context, onLoading = onLoading)
+                        val relays =
+                            applicationEntity?.application?.relays?.map { url -> Relay(url) }
+                                ?: emptyList()
+                        AmberUtils.sendBunkerError(
+                            account,
+                            intentData.bunkerRequest,
+                            relays,
+                            context,
+                            onLoading = onLoading
+                        )
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
@@ -152,6 +162,7 @@ fun SingleEventHomeScreen(
             }
             EncryptDecryptData(
                 intentData.data,
+                intentData.encryptedData ?: "",
                 shouldRunOnAccept,
                 remember,
                 localPackageName,
@@ -159,88 +170,28 @@ fun SingleEventHomeScreen(
                 appName,
                 intentData.type,
                 {
-                    if (intentData.type == SignerType.NIP04_ENCRYPT && intentData.data.contains(
-                            "?iv=",
-                            ignoreCase = true
-                        )
-                    ) {
-                        coroutineScope.launch {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.message_already_encrypted),
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
-                        return@EncryptDecryptData
-                    } else {
-                        try {
-                            coroutineScope.launch(Dispatchers.IO) {
-                                val sig = try {
-                                    AmberUtils.encryptOrDecryptData(
-                                        intentData.data,
-                                        intentData.type,
-                                        account,
-                                        intentData.pubKey
-                                    )
-                                        ?: "Could not decrypt the message"
-                                } catch (e: Exception) {
-                                    "Could not decrypt the message"
-                                }
-
-                                if (intentData.type == SignerType.NIP04_ENCRYPT && sig == "Could not decrypt the message") {
-                                    coroutineScope.launch {
-                                        Toast.makeText(
-                                            context,
-                                            "Error encrypting content",
-                                            Toast.LENGTH_SHORT
-                                        ).show()
-                                    }
-                                    return@launch
-                                } else {
-                                    val result =
-                                        if (sig == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                                            ""
-                                        } else {
-                                            sig
-                                        }
-
-                                    sendResult(
-                                        context,
-                                        packageName,
-                                        account,
-                                        key,
-                                        remember.value,
-                                        clipboardManager,
-                                        result,
-                                        result,
-                                        intentData,
-                                        null,
-                                        database,
-                                        onLoading
-                                    )
-                                }
-                            }
-
-                            return@EncryptDecryptData
-                        } catch (e: Exception) {
-                            val message = if (intentData.type.toString().contains("ENCRYPT", true)) {
-                                context.getString(R.string.encrypt)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val result =
+                            if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                ""
                             } else {
-                                context.getString(R.string.decrypt)
+                                intentData.encryptedData ?: ""
                             }
 
-                            coroutineScope.launch {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(
-                                        R.string.error_to_data,
-                                        message
-                                    ),
-                                    Toast.LENGTH_SHORT
-                                ).show()
-                            }
-                            return@EncryptDecryptData
-                        }
+                        sendResult(
+                            context,
+                            packageName,
+                            account,
+                            key,
+                            remember.value,
+                            clipboardManager,
+                            result,
+                            result,
+                            intentData,
+                            null,
+                            database,
+                            onLoading
+                        )
                     }
                 },
                 {
@@ -259,172 +210,123 @@ fun SingleEventHomeScreen(
                     }
 
                     if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(account, intentData.bunkerRequest, applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(), context, onLoading)
+                        AmberUtils.sendBunkerError(
+                            account,
+                            intentData.bunkerRequest,
+                            applicationEntity?.application?.relays?.map { url -> Relay(url) }
+                                ?: emptyList(),
+                            context,
+                            onLoading
+                        )
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
-                    }
-                },
-                {
-                    try {
-                        AmberUtils.encryptOrDecryptData(
-                            intentData.data,
-                            intentData.type,
-                            account,
-                            intentData.pubKey
-                        )
-                            ?: "Could not decrypt the message"
-                    } catch (e: Exception) {
-                        "Could not decrypt the message"
                     }
                 }
             )
         }
 
         else -> {
-            val result = runCatching { IntentUtils.getIntent(intentData.data, account.keyPair) }
+            val event = intentData.event!!
+            val accounts = LocalPreferences.allSavedAccounts().filter {
+                it.npub.bechToBytes().toHexKey() == event.pubKey
+            }
 
-            if (result.isFailure) {
-                var showError by remember {
-                    mutableStateOf(false)
-                }
+            if (accounts.isEmpty()) {
                 Column(
                     Modifier.fillMaxSize(),
                     Arrangement.Center,
                     Alignment.CenterHorizontally
                 ) {
-                    Text("Error occurred while trying to parse event")
-                    Button(
-                        onClick = {
-                            showError = !showError
-                        },
-                        shape = ButtonBorder
-                    ) {
-                        Text(text = "Show/Hide", color = Color.White)
-                    }
-                    if (showError) {
-                        OutlinedTextField(
-                            value = result.exceptionOrNull()?.message ?: "",
-                            onValueChange = { },
-                            readOnly = true
-                        )
-                    }
+                    Text(
+                        Hex.decode(event.pubKey).toNpub().toShortenHex(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 21.sp
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text("Not logged in")
                 }
             } else {
-                val event = result.getOrNull()!!
-
-                val accounts = LocalPreferences.allSavedAccounts().filter {
-                    it.npub.bechToBytes().toHexKey() == event.pubKey
+                val permission = applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == event.kind
                 }
-
-                if (accounts.isEmpty()) {
-                    Column(
-                        Modifier.fillMaxSize(),
-                        Arrangement.Center,
-                        Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            Hex.decode(event.pubKey).toNpub().toShortenHex(),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 21.sp
-                        )
-                        Spacer(Modifier.size(8.dp))
-                        Text("Not logged in")
-                    }
+                val remember = remember {
+                    mutableStateOf(permission?.acceptable == true)
+                }
+                val shouldRunOnAccept = permission?.acceptable == true
+                val localPackageName = if (intentData.bunkerRequest != null) {
+                    intentData.bunkerRequest.localKey
                 } else {
-                    val permission = applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == intentData.type.toString() && it.kind == event.kind
-                    }
-                    val remember = remember {
-                        mutableStateOf(permission?.acceptable == true)
-                    }
-                    val shouldRunOnAccept = permission?.acceptable == true
-                    val localPackageName = if (intentData.bunkerRequest != null) {
-                        intentData.bunkerRequest.localKey
-                    } else {
-                        packageName
-                    }
-                    EventData(
-                        shouldRunOnAccept,
-                        remember,
-                        localPackageName,
-                        appName,
-                        applicationName,
-                        event,
-                        intentData.data,
-                        intentData.type,
-                        {
-                            if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
-                                coroutineScope.launch {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                        Toast.LENGTH_SHORT
-                                    ).show()
-                                }
-                                return@EventData
-                            }
-
-                            val localEvent = try {
-                                Event.fromJson(intentData.data)
-                            } catch (e: Exception) {
-                                Event.fromJson(event.toJson())
-                            }
-
-                            account.signer.sign<Event>(
-                                localEvent.createdAt,
-                                localEvent.kind,
-                                localEvent.tags,
-                                localEvent.content
-                            ) { signedEvent ->
-                                coroutineScope.launch {
-                                    sendResult(
-                                        context,
-                                        packageName,
-                                        account,
-                                        key,
-                                        remember.value,
-                                        clipboardManager,
-                                        signedEvent.toJson(),
-                                        if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig,
-                                        intentData,
-                                        localEvent.kind,
-                                        database,
-                                        onLoading
-                                    )
-                                }
-                            }
-                        },
-                        {
-                            if (remember.value) {
-                                coroutineScope.launch(Dispatchers.IO) {
-                                    AmberUtils.acceptOrRejectPermission(
-                                        key,
-                                        intentData,
-                                        event.kind,
-                                        false,
-                                        applicationName ?: appName,
-                                        account,
-                                        database
-                                    )
-                                }
-                            }
-
-                            if (intentData.bunkerRequest != null) {
-                                AmberUtils.sendBunkerError(
-                                    account,
-                                    intentData.bunkerRequest,
-                                    applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
+                    packageName
+                }
+                EventData(
+                    shouldRunOnAccept,
+                    remember,
+                    localPackageName,
+                    appName,
+                    applicationName,
+                    event,
+                    event.toJson(),
+                    intentData.type,
+                    {
+                        if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
+                            coroutineScope.launch {
+                                Toast.makeText(
                                     context,
-                                    onLoading
+                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                            return@EventData
+                        }
+
+                        val eventJson = event.toJson()
+
+                        sendResult(
+                            context,
+                            packageName,
+                            account,
+                            key,
+                            remember.value,
+                            clipboardManager,
+                            event.toJson(),
+                            if (event is LnZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) eventJson else event.sig,
+                            intentData,
+                            event.kind,
+                            database,
+                            onLoading
+                        )
+                    },
+                    {
+                        if (remember.value) {
+                            coroutineScope.launch(Dispatchers.IO) {
+                                AmberUtils.acceptOrRejectPermission(
+                                    key,
+                                    intentData,
+                                    event.kind,
+                                    false,
+                                    applicationName ?: appName,
+                                    account,
+                                    database
                                 )
-                            } else {
-                                context.getAppCompatActivity()?.intent = null
-                                context.getAppCompatActivity()?.finish()
                             }
                         }
-                    )
-                }
+
+                        if (intentData.bunkerRequest != null) {
+                            AmberUtils.sendBunkerError(
+                                account,
+                                intentData.bunkerRequest,
+                                applicationEntity?.application?.relays?.map { url -> Relay(url) }
+                                    ?: emptyList(),
+                                context,
+                                onLoading
+                            )
+                        } else {
+                            context.getAppCompatActivity()?.intent = null
+                            context.getAppCompatActivity()?.finish()
+                        }
+                    }
+                )
             }
         }
     }

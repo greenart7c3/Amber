@@ -6,11 +6,14 @@ import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -49,10 +52,29 @@ fun AccountScreen(
                     LoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    val intentData = IntentUtils.getIntentData(intent, packageName, intent.getStringExtra("route"))
+                    var intentData by remember {
+                        mutableStateOf<IntentData?>(null)
+                    }
+                    LaunchedEffect(intent, intents) {
+                        IntentUtils.getIntentData(intent, packageName, intent.getStringExtra("route"), state.account) {
+                            intentData = it
+                        }
+                        val data = intents.firstOrNull {
+                            it.currentAccount.isNotBlank()
+                        }
+
+                        data?.bunkerRequest?.let {
+                            if (it.currentAccount.isNotBlank()) {
+                                if (LocalPreferences.currentAccount() != it.currentAccount) {
+                                    accountStateViewModel.switchUser(it.currentAccount, null)
+                                }
+                            }
+                        }
+                    }
+
                     if (intentData != null) {
-                        if (intents.none { item -> item.id == intentData.id }) {
-                            flow.value = listOf(intentData)
+                        if (intents.none { item -> item.id == intentData!!.id }) {
+                            flow.value = listOf(intentData!!)
                         }
                     }
 
@@ -62,7 +84,7 @@ fun AccountScreen(
                         } else {
                             listOf(intentData)
                         }
-                    }
+                    }.mapNotNull { it }
                     val database = nostrsigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
                     val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
                     val scope = rememberCoroutineScope()
@@ -70,15 +92,19 @@ fun AccountScreen(
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
                             val relays = mutableListOf<Relay>()
-                            database.applicationDao().getAllApplications().forEach {
-                                it.application.relays.forEach { url ->
-                                    if (url.isNotBlank()) {
-                                        if (!relays.any { it.url == url }) {
-                                            relays.add(Relay(url))
+                            LocalPreferences.allSavedAccounts().forEach { acc ->
+                                val db = nostrsigner.instance.getDatabase(acc.npub)
+                                db.applicationDao().getAllApplications().forEach {
+                                    it.application.relays.forEach { url ->
+                                        if (url.isNotBlank()) {
+                                            if (!relays.any { it.url == url }) {
+                                                relays.add(Relay(url))
+                                            }
                                         }
                                     }
                                 }
                             }
+
                             delay(1000)
                             Client.addRelays(relays.toTypedArray())
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {

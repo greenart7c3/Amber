@@ -65,7 +65,6 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -175,16 +174,7 @@ fun MultiEventHomeScreen(
                                 val applicationEntity = database.applicationDao().getByKey(key)
 
                                 if (intentData.type == SignerType.SIGN_EVENT) {
-                                    val localEvent = try {
-                                        Event.fromJson(intentData.data)
-                                    } catch (e: Exception) {
-                                        Event.fromJson(
-                                            IntentUtils.getIntent(
-                                                intentData.data,
-                                                localAccount.keyPair
-                                            ).toJson()
-                                        )
-                                    }
+                                    val localEvent = intentData.event!!
 
                                     if (intentData.rememberMyChoice.value) {
                                         AmberUtils.acceptOrRejectPermission(
@@ -198,29 +188,22 @@ fun MultiEventHomeScreen(
                                         )
                                     }
 
-                                    localAccount.signer.sign<Event>(
-                                        localEvent.createdAt,
-                                        localEvent.kind,
-                                        localEvent.tags,
-                                        localEvent.content
-                                    ) { signedEvent ->
-                                        if (intentData.bunkerRequest != null) {
-                                            IntentUtils.sendBunkerResponse(
-                                                localAccount,
-                                                intentData.bunkerRequest.localKey,
-                                                BunkerResponse(intentData.bunkerRequest.id, signedEvent.toJson(), null),
-                                                applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
-                                                onLoading = {}
-                                            ) {}
-                                        } else {
-                                            results.add(
-                                                Result(
-                                                    null,
-                                                    if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig,
-                                                    intentData.id
-                                                )
+                                    if (intentData.bunkerRequest != null) {
+                                        IntentUtils.sendBunkerResponse(
+                                            localAccount,
+                                            intentData.bunkerRequest.localKey,
+                                            BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
+                                            applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
+                                            onLoading = {}
+                                        ) {}
+                                    } else {
+                                        results.add(
+                                            Result(
+                                                null,
+                                                if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) localEvent.toJson() else localEvent.sig,
+                                                intentData.id
                                             )
-                                        }
+                                        )
                                     }
                                 } else {
                                     if (intentData.rememberMyChoice.value) {
@@ -234,12 +217,7 @@ fun MultiEventHomeScreen(
                                             database
                                         )
                                     }
-                                    val signature = AmberUtils.encryptOrDecryptData(
-                                        intentData.data,
-                                        intentData.type,
-                                        localAccount,
-                                        intentData.pubKey
-                                    ) ?: continue
+                                    val signature = intentData.encryptedData ?: continue
 
                                     if (intentData.bunkerRequest != null) {
                                         IntentUtils.sendBunkerResponse(
@@ -344,7 +322,7 @@ fun ListItem(
             )
 
             val text = if (intentData.type == SignerType.SIGN_EVENT) {
-                val event = IntentUtils.getIntent(intentData.data, accountParam.keyPair)
+                val event = intentData.event!!
                 val permission = Permission("sign_event", event.kind)
                 "wants you to sign a $permission"
             } else {
@@ -381,10 +359,7 @@ fun ListItem(
                     fontWeight = FontWeight.Bold
                 )
                 val content = if (intentData.type == SignerType.SIGN_EVENT) {
-                    val event = IntentUtils.getIntent(
-                        intentData.data,
-                        accountParam.keyPair
-                    )
+                    val event = intentData.event!!
                     if (event.kind == 22242) AmberEvent.relay(event) else event.content
                 } else {
                     intentData.data

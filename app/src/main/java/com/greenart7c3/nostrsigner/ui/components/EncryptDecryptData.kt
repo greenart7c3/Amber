@@ -34,6 +34,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun EncryptDecryptData(
     content: String,
+    encryptedData: String,
     shouldRunOnAccept: Boolean,
     remember: MutableState<Boolean>,
     packageName: String?,
@@ -41,8 +42,7 @@ fun EncryptDecryptData(
     appName: String,
     type: SignerType,
     onAccept: () -> Unit,
-    onReject: () -> Unit,
-    onCopy: () -> String
+    onReject: () -> Unit
 ) {
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
@@ -105,12 +105,12 @@ fun EncryptDecryptData(
         if (showMore) {
             RawJson(
                 content,
+                encryptedData,
                 Modifier.weight(1f),
                 stringResource(R.string.encrypted_decrypted_data),
-                type,
-                onCopy
+                type
             ) {
-                clipboardManager.setText(AnnotatedString(onCopy()))
+                clipboardManager.setText(AnnotatedString(encryptedData))
 
                 coroutineScope.launch {
                     Toast.makeText(

@@ -25,10 +25,10 @@ import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.NotificationType
-import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
+import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -47,69 +47,147 @@ data class BunkerMetada(
 object IntentUtils {
     val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
-    private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?, route: String?): IntentData {
+    private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?, route: String?, account: Account, onReady: (IntentData?) -> Unit) {
         val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")
         val parameters = data.replace("nostrsigner:", "").split("?").toMutableList()
         parameters.removeFirst()
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
-            return getIntentDataFromIntent(intent, packageName, route)
-        }
+            getIntentDataFromIntent(intent, packageName, route, account, onReady)
+        } else {
+            var type = SignerType.SIGN_EVENT
+            var pubKey = ""
+            var compressionType = CompressionType.NONE
+            var callbackUrl: String? = null
+            var returnType = ReturnType.SIGNATURE
+            parameters.joinToString("?").split("&").forEach {
+                val params = it.split("=").toMutableList()
+                val parameter = params.removeFirst()
+                val parameterData = params.joinToString("=")
+                if (parameter == "type") {
+                    type = when (parameterData) {
+                        "sign_event" -> SignerType.SIGN_EVENT
+                        "get_public_key" -> SignerType.GET_PUBLIC_KEY
+                        "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+                        "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                        "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+                        "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+                        else -> SignerType.SIGN_EVENT
+                    }
+                }
+                if (parameter == "pubkey") {
+                    pubKey = parameterData
+                }
+                if (parameter == "compressionType") {
+                    if (parameterData == "gzip") {
+                        compressionType = CompressionType.GZIP
+                    }
+                }
+                if (parameter == "callbackUrl") {
+                    callbackUrl = parameterData
+                }
+                if (parameter == "returnType") {
+                    if (parameterData == "event") {
+                        returnType = ReturnType.EVENT
+                    }
+                }
+            }
 
-        var type = SignerType.SIGN_EVENT
-        var pubKey = ""
-        var compressionType = CompressionType.NONE
-        var callbackUrl: String? = null
-        var returnType = ReturnType.SIGNATURE
-        parameters.joinToString("?").split("&").forEach {
-            val params = it.split("=").toMutableList()
-            val parameter = params.removeFirst()
-            val parameterData = params.joinToString("=")
-            if (parameter == "type") {
-                type = when (parameterData) {
-                    "sign_event" -> SignerType.SIGN_EVENT
-                    "get_public_key" -> SignerType.GET_PUBLIC_KEY
-                    "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-                    "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-                    "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-                    "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-                    else -> SignerType.SIGN_EVENT
+            when (type) {
+                SignerType.SIGN_EVENT -> {
+                    val unsignedEvent = getUnsignedEvent(data, account)
+                    var localAccount = account
+                    if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                        LocalPreferences.loadFromEncryptedStorage(Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
+                            localAccount = it
+                        }
+                    }
+                    localAccount.signer.sign<Event>(
+                        unsignedEvent.createdAt,
+                        unsignedEvent.kind,
+                        unsignedEvent.tags,
+                        unsignedEvent.content
+                    ) {
+                        onReady(
+                            IntentData(
+                                localData,
+                                "",
+                                type,
+                                pubKey,
+                                "",
+                                callbackUrl,
+                                compressionType,
+                                returnType,
+                                listOf(),
+                                Hex.decode(it.pubKey).toNpub(),
+                                mutableStateOf(true),
+                                mutableStateOf(false),
+                                null,
+                                route,
+                                it,
+                                null
+                            )
+                        )
+                    }
                 }
-            }
-            if (parameter == "pubkey") {
-                pubKey = parameterData
-            }
-            if (parameter == "compressionType") {
-                if (parameterData == "gzip") {
-                    compressionType = CompressionType.GZIP
+                SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
+                    val result = try {
+                        AmberUtils.encryptOrDecryptData(
+                            data,
+                            type,
+                            account,
+                            pubKey
+                        ) ?: "Could not decrypt the message"
+                    } catch (e: Exception) {
+                        "Could not decrypt the message"
+                    }
+
+                    onReady(
+                        IntentData(
+                            localData,
+                            "",
+                            type,
+                            pubKey,
+                            "",
+                            callbackUrl,
+                            compressionType,
+                            returnType,
+                            listOf(),
+                            Hex.decode(pubKey).toNpub(),
+                            mutableStateOf(true),
+                            mutableStateOf(false),
+                            null,
+                            route,
+                            null,
+                            result
+                        )
+                    )
                 }
-            }
-            if (parameter == "callbackUrl") {
-                callbackUrl = parameterData
-            }
-            if (parameter == "returnType") {
-                if (parameterData == "event") {
-                    returnType = ReturnType.EVENT
+                SignerType.GET_PUBLIC_KEY -> {
+                    onReady(
+                        IntentData(
+                            localData,
+                            "",
+                            type,
+                            pubKey,
+                            "",
+                            callbackUrl,
+                            compressionType,
+                            returnType,
+                            listOf(),
+                            "",
+                            mutableStateOf(true),
+                            mutableStateOf(false),
+                            null,
+                            route,
+                            null,
+                            null
+                        )
+                    )
                 }
+                else -> onReady(null)
             }
         }
-
-        return IntentData(
-            localData,
-            "",
-            type,
-            pubKey,
-            "",
-            callbackUrl,
-            compressionType,
-            returnType,
-            listOf(),
-            "",
-            mutableStateOf(true),
-            mutableStateOf(false),
-            null,
-            route
-        )
     }
 
     fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType {
@@ -187,9 +265,10 @@ object IntentUtils {
         }
     }
 
-    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest, route: String?): IntentData {
+    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest, route: String?, onReady: (IntentData?) -> Unit) {
         val type = getTypeFromBunker(bunkerRequest)
         val data = getDataFromBunker(bunkerRequest)
+        val account = LocalPreferences.loadFromEncryptedStorage(bunkerRequest.currentAccount)!!
 
         val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
             bunkerRequest.params.first()
@@ -218,25 +297,118 @@ object IntentUtils {
             }
         }
 
-        return IntentData(
-            data,
-            "",
-            type,
-            pubKey,
-            id,
-            intent.extras?.getString("callbackUrl"),
-            CompressionType.NONE,
-            ReturnType.EVENT,
-            permissions,
-            intent.extras?.getString("current_user") ?: "",
-            mutableStateOf(true),
-            mutableStateOf(false),
-            bunkerRequest,
-            route
-        )
+        when (type) {
+            SignerType.CONNECT -> {
+                onReady(
+                    IntentData(
+                        data,
+                        "",
+                        type,
+                        pubKey,
+                        id,
+                        intent.extras?.getString("callbackUrl"),
+                        CompressionType.NONE,
+                        ReturnType.EVENT,
+                        permissions,
+                        bunkerRequest.currentAccount,
+                        mutableStateOf(true),
+                        mutableStateOf(false),
+                        bunkerRequest,
+                        route,
+                        null,
+                        null
+                    )
+                )
+            }
+            SignerType.SIGN_EVENT -> {
+                val unsignedEvent = getUnsignedEvent(data, account)
+                account.signer.sign<Event>(
+                    unsignedEvent.createdAt,
+                    unsignedEvent.kind,
+                    unsignedEvent.tags,
+                    unsignedEvent.content
+                ) {
+                    onReady(
+                        IntentData(
+                            data,
+                            "",
+                            type,
+                            pubKey,
+                            id,
+                            intent.extras?.getString("callbackUrl"),
+                            CompressionType.NONE,
+                            ReturnType.EVENT,
+                            permissions,
+                            bunkerRequest.currentAccount,
+                            mutableStateOf(true),
+                            mutableStateOf(false),
+                            bunkerRequest,
+                            route,
+                            it,
+                            null
+                        )
+                    )
+                }
+            }
+            SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
+                val result = try {
+                    AmberUtils.encryptOrDecryptData(
+                        data,
+                        type,
+                        account,
+                        pubKey
+                    ) ?: "Could not decrypt the message"
+                } catch (e: Exception) {
+                    "Could not decrypt the message"
+                }
+
+                onReady(
+                    IntentData(
+                        data,
+                        "",
+                        type,
+                        pubKey,
+                        id,
+                        intent.extras?.getString("callbackUrl"),
+                        CompressionType.NONE,
+                        ReturnType.EVENT,
+                        permissions,
+                        bunkerRequest.currentAccount,
+                        mutableStateOf(true),
+                        mutableStateOf(false),
+                        bunkerRequest,
+                        route,
+                        null,
+                        result
+                    )
+                )
+            }
+            SignerType.GET_PUBLIC_KEY -> {
+                onReady(
+                    IntentData(
+                        account.keyPair.pubKey.toNpub(),
+                        "",
+                        type,
+                        pubKey,
+                        id,
+                        intent.extras?.getString("callbackUrl"),
+                        CompressionType.NONE,
+                        ReturnType.EVENT,
+                        permissions,
+                        bunkerRequest.currentAccount,
+                        mutableStateOf(true),
+                        mutableStateOf(false),
+                        bunkerRequest,
+                        route,
+                        null,
+                        null
+                    )
+                )
+            }
+        }
     }
 
-    private fun getIntentDataFromIntent(intent: Intent, packageName: String?, route: String?): IntentData {
+    private fun getIntentDataFromIntent(intent: Intent, packageName: String?, route: String?, account: Account, onReady: (IntentData?) -> Unit) {
         val type = when (intent.extras?.getString("type")) {
             "sign_event" -> SignerType.SIGN_EVENT
             "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
@@ -271,22 +443,101 @@ object IntentUtils {
             it.checked = true
         }
 
-        return IntentData(
-            data,
-            name,
-            type,
-            pubKey,
-            id,
-            intent.extras?.getString("callbackUrl"),
-            compressionType,
-            returnType,
-            permissions,
-            intent.extras?.getString("current_user") ?: "",
-            mutableStateOf(true),
-            mutableStateOf(false),
-            null,
-            route
-        )
+        when (type) {
+            SignerType.SIGN_EVENT -> {
+                val unsignedEvent = getUnsignedEvent(data, account)
+                var localAccount = account
+                if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                    LocalPreferences.loadFromEncryptedStorage(Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
+                        localAccount = it
+                    }
+                }
+
+                localAccount.signer.sign<Event>(
+                    unsignedEvent.createdAt,
+                    unsignedEvent.kind,
+                    unsignedEvent.tags,
+                    unsignedEvent.content
+                ) {
+                    onReady(
+                        IntentData(
+                            data,
+                            name,
+                            type,
+                            pubKey,
+                            id,
+                            intent.extras?.getString("callbackUrl"),
+                            compressionType,
+                            returnType,
+                            permissions,
+                            intent.extras?.getString("current_user") ?: Hex.decode(it.pubKey).toNpub(),
+                            mutableStateOf(true),
+                            mutableStateOf(false),
+                            null,
+                            route,
+                            it,
+                            null
+                        )
+                    )
+                }
+            }
+            SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
+                val result = try {
+                    AmberUtils.encryptOrDecryptData(
+                        data,
+                        type,
+                        account,
+                        pubKey
+                    ) ?: "Could not decrypt the message"
+                } catch (e: Exception) {
+                    "Could not decrypt the message"
+                }
+
+                onReady(
+                    IntentData(
+                        data,
+                        name,
+                        type,
+                        pubKey,
+                        id,
+                        intent.extras?.getString("callbackUrl"),
+                        compressionType,
+                        returnType,
+                        permissions,
+                        intent.extras?.getString("current_user") ?: Hex.decode(pubKey).toNpub(),
+                        mutableStateOf(true),
+                        mutableStateOf(false),
+                        null,
+                        route,
+                        null,
+                        result
+                    )
+                )
+            }
+            SignerType.GET_PUBLIC_KEY -> {
+                onReady(
+                    IntentData(
+                        data,
+                        name,
+                        type,
+                        pubKey,
+                        id,
+                        intent.extras?.getString("callbackUrl"),
+                        compressionType,
+                        returnType,
+                        permissions,
+                        intent.extras?.getString("current_user") ?: Hex.decode(pubKey).toNpub(),
+                        mutableStateOf(true),
+                        mutableStateOf(false),
+                        null,
+                        route,
+                        null,
+                        null
+                    )
+                )
+            }
+            else -> onReady(null)
+        }
     }
 
     private fun metaDataFromJson(json: String): BunkerMetada {
@@ -296,7 +547,7 @@ object IntentUtils {
         return objectMapper.readValue(json, BunkerMetada::class.java)
     }
 
-    private fun getIntentFromNostrConnect(intent: Intent, route: String?): IntentData? {
+    private fun getIntentFromNostrConnect(intent: Intent, route: String?, account: Account, onReady: (IntentData?) -> Unit) {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
@@ -319,38 +570,46 @@ object IntentUtils {
                 }
             }
 
-            return IntentData(
-                "ack",
-                name,
-                SignerType.CONNECT,
-                pubKey,
-                "",
-                null,
-                CompressionType.NONE,
-                ReturnType.EVENT,
-                listOf(),
-                "",
-                mutableStateOf(true),
-                mutableStateOf(false),
-                BunkerRequest(
-                    UUID.randomUUID().toString().substring(0, 4),
-                    "connect",
-                    arrayOf(pubKey),
+            onReady(
+                IntentData(
+                    "ack",
+                    name,
+                    SignerType.CONNECT,
                     pubKey,
-                    relays,
-                    ""
-                ),
-                route
+                    "",
+                    null,
+                    CompressionType.NONE,
+                    ReturnType.EVENT,
+                    listOf(),
+                    "",
+                    mutableStateOf(true),
+                    mutableStateOf(false),
+                    BunkerRequest(
+                        UUID.randomUUID().toString().substring(0, 4),
+                        "connect",
+                        arrayOf(pubKey),
+                        pubKey,
+                        relays,
+                        "",
+                        account.keyPair.pubKey.toNpub()
+                    ),
+                    route,
+                    null,
+                    null
+                )
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
-            return null
+            onReady(null)
         }
     }
 
-    fun getIntentData(intent: Intent, packageName: String?, route: String?): IntentData? {
+    suspend fun getIntentData(intent: Intent, packageName: String?, route: String?, currentLoggedInAccount: Account, onReady: (IntentData?) -> Unit) {
         if (intent.data == null) {
-            return null
+            onReady(
+                null
+            )
+            return
         }
 
         val bunkerRequest = if (intent.getStringExtra("bunker") != null) {
@@ -362,20 +621,31 @@ object IntentUtils {
             null
         }
 
-        return if (intent.dataString?.startsWith("nostrconnect:") == true) {
-            return getIntentFromNostrConnect(intent, route)
+        var localAccount = currentLoggedInAccount
+        if (bunkerRequest != null) {
+            LocalPreferences.loadFromEncryptedStorage(bunkerRequest.currentAccount)?.let {
+                localAccount = it
+            }
+        } else if (intent.getStringExtra("current_user") != null) {
+            LocalPreferences.loadFromEncryptedStorage(intent.getStringExtra("current_user"))?.let {
+                localAccount = it
+            }
+        }
+
+        if (intent.dataString?.startsWith("nostrconnect:") == true) {
+            getIntentFromNostrConnect(intent, route, localAccount, onReady)
         } else if (bunkerRequest != null) {
-            getIntentDataFromBunkerRequest(intent, bunkerRequest, route)
+            getIntentDataFromBunkerRequest(intent, bunkerRequest, route, onReady)
         } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-            getIntentDataFromIntent(intent, packageName, route)
+            getIntentDataFromIntent(intent, packageName, route, localAccount, onReady)
         } else {
-            getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route)
+            getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
         }
     }
-    fun getIntent(data: String, keyPair: KeyPair): Event {
+    private fun getUnsignedEvent(data: String, account: Account): Event {
         val event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
-            event.pubKey = keyPair.pubKey.toHexKey()
+            event.pubKey = account.keyPair.pubKey.toHexKey()
         }
         if (event.id.isEmpty()) {
             event.id = Event.generateId(

@@ -25,6 +25,8 @@ import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
+import com.vitorpamplona.quartz.encoders.toNpub
+import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
@@ -63,8 +65,10 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
+                    val npub = intent.getStringExtra("current_user") ?: getAccount()
+
                     val accountStateViewModel: AccountStateViewModel = viewModel {
-                        AccountStateViewModel(intent.getStringExtra("current_user"))
+                        AccountStateViewModel(npub)
                     }
                     AccountScreen(accountStateViewModel, intent, packageName, appName, intents)
                 }
@@ -72,24 +76,42 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    fun getAccount(): String? {
+        val pubKeys = intents.value.mapNotNull {
+            it.event?.pubKey
+        }
+
+        if (pubKeys.isEmpty()) return null
+        return Hex.decode(pubKeys.first()).toNpub()
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onResume() {
         val requests = IntentUtils.bunkerRequests.map {
             it.value.copy()
         }
-        requests.forEach {
-            val contentIntent = Intent(applicationContext, MainActivity::class.java).apply {
-                data = Uri.parse("nostrsigner:")
-            }
-            contentIntent.putExtra("bunker", it.toJson())
-            contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            val intentData = IntentUtils.getIntentData(contentIntent, packageName, Route.Home.route)
-            if (intentData != null) {
-                if (intents.value.none { item -> item.id == intentData.id }) {
-                    intents.value += listOf(intentData)
+
+        GlobalScope.launch(Dispatchers.IO) {
+            val account = LocalPreferences.loadFromEncryptedStorage()
+            account?.let { acc ->
+                requests.forEach {
+                    val contentIntent = Intent(applicationContext, MainActivity::class.java).apply {
+                        data = Uri.parse("nostrsigner:")
+                    }
+                    contentIntent.putExtra("bunker", it.toJson())
+                    contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                    IntentUtils.getIntentData(contentIntent, callingPackage, Route.Home.route, acc) { intentData ->
+                        if (intentData != null) {
+                            if (intents.value.none { item -> item.id == intentData.id }) {
+                                intents.value += listOf(intentData)
+                            }
+                        }
+                    }
                 }
             }
+
+            IntentUtils.bunkerRequests.clear()
         }
-        IntentUtils.bunkerRequests.clear()
 
         if (BuildConfig.FLAVOR != "offline") {
             val connectivityManager =
@@ -103,16 +125,25 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        val intentData = IntentUtils.getIntentData(intent, callingPackage, intent.getStringExtra("route")) ?: return
 
-        if (intents.value.none { item -> item.id == intentData.id }) {
-            intents.value += listOf(intentData)
+        GlobalScope.launch(Dispatchers.IO) {
+            val account = LocalPreferences.loadFromEncryptedStorage()
+            account?.let { acc ->
+                IntentUtils.getIntentData(intent, callingPackage, intent.getStringExtra("route"), acc) { intentData ->
+                    if (intentData != null) {
+                        if (intents.value.none { item -> item.id == intentData.id }) {
+                            intents.value += listOf(intentData)
+                        }
+                        intents.value = intents.value.map {
+                            it.copy()
+                        }.toMutableList()
+                    }
+                }
+            }
         }
-        intents.value = intents.value.map {
-            it.copy()
-        }.toMutableList()
     }
 
     override fun onDestroy() {

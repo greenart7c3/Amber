@@ -92,7 +92,7 @@ fun EventData(
             if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details)
         )
         if (showMore) {
-            RawJson(rawJson, Modifier.weight(1f), type = type)
+            RawJson(rawJson, "", Modifier.weight(1f), type = type)
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }

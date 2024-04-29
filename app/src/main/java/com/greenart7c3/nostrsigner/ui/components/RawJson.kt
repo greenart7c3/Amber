@@ -27,10 +27,10 @@ import kotlinx.coroutines.launch
 @Composable
 fun RawJson(
     rawJson: String,
+    encryptedData: String,
     modifier: Modifier,
     label: String = stringResource(R.string.copy_raw_json),
     type: SignerType,
-    onDecrypt: (() -> String)? = null,
     onCopy: (() -> Unit)? = null
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -55,8 +55,10 @@ fun RawJson(
             Button(
                 shape = ButtonBorder,
                 onClick = {
-                    if (onDecrypt != null) {
-                        currentContent = onDecrypt()
+                    currentContent = if (currentContent == encryptedData) {
+                        rawJson
+                    } else {
+                        encryptedData
                     }
                 }
             ) {

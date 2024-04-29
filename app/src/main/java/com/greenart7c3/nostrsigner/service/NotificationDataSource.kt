@@ -72,7 +72,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
         relay: Relay
     ) {
         checkNotInMainThread()
-
+        NotificationUtils.getOrCreateDMChannel(nostrsigner.instance.applicationContext)
         eventNotificationConsumer.consume(event)
     }
 

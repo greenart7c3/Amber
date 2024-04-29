@@ -5,6 +5,8 @@ import android.net.Uri
 import android.provider.Browser
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toLowerCase
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
@@ -75,7 +77,7 @@ object IntentUtils {
                         else -> SignerType.SIGN_EVENT
                     }
                 }
-                if (parameter == "pubkey") {
+                if (parameter.toLowerCase(Locale.current) == "pubkey") {
                     pubKey = parameterData
                 }
                 if (parameter == "compressionType") {
@@ -133,7 +135,7 @@ object IntentUtils {
                 SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
                     val result = try {
                         AmberUtils.encryptOrDecryptData(
-                            data,
+                            localData,
                             type,
                             account,
                             pubKey

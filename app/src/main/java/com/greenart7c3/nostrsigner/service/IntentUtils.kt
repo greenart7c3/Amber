@@ -59,7 +59,7 @@ object IntentUtils {
         var type = SignerType.SIGN_EVENT
         var pubKey = ""
         var compressionType = CompressionType.NONE
-        var callbackUrl = ""
+        var callbackUrl: String? = null
         var returnType = ReturnType.SIGNATURE
         parameters.joinToString("?").split("&").forEach {
             val params = it.split("=").toMutableList()
@@ -68,7 +68,7 @@ object IntentUtils {
             if (parameter == "type") {
                 type = when (parameterData) {
                     "sign_event" -> SignerType.SIGN_EVENT
-                    "get_public_get" -> SignerType.GET_PUBLIC_KEY
+                    "get_public_key" -> SignerType.GET_PUBLIC_KEY
                     "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
                     "nip04_decrypt" -> SignerType.NIP04_DECRYPT
                     "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
@@ -116,7 +116,7 @@ object IntentUtils {
         return when (bunkerRequest.method) {
             "connect" -> SignerType.CONNECT
             "sign_event" -> SignerType.SIGN_EVENT
-            "get_public_get" -> SignerType.GET_PUBLIC_KEY
+            "get_public_key" -> SignerType.GET_PUBLIC_KEY
             "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
             "nip04_decrypt" -> SignerType.NIP04_DECRYPT
             "nip44_encrypt" -> SignerType.NIP44_ENCRYPT

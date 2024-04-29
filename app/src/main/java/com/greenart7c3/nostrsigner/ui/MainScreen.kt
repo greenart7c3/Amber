@@ -256,7 +256,7 @@ fun sendResult(
             activity?.setResult(RESULT_OK, intent)
             activity?.intent = null
             activity?.finish()
-        } else if (intentData.callBackUrl != null) {
+        } else if (!intentData.callBackUrl.isNullOrBlank()) {
             if (intentData.returnType == ReturnType.SIGNATURE) {
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(value))

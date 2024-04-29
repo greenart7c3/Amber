@@ -97,7 +97,7 @@ object IntentUtils {
 
             when (type) {
                 SignerType.SIGN_EVENT -> {
-                    val unsignedEvent = getUnsignedEvent(data, account)
+                    val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
                     if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
                         LocalPreferences.loadFromEncryptedStorage(Hex.decode(unsignedEvent.pubKey).toNpub())?.let {

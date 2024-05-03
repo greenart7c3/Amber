@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
 import android.content.Intent
+import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -70,6 +71,34 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
+fun SelectAllButton(
+    checked: Boolean,
+    onSelected: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier =
+            Modifier
+                .padding(horizontal = 8.dp)
+                .clickable {
+                    onSelected()
+                },
+    ) {
+        Text(
+            modifier = Modifier.weight(1f),
+            text = stringResource(R.string.select_deselect_all),
+        )
+        Switch(
+            checked = checked,
+            onCheckedChange = {
+                onSelected()
+            },
+        )
+    }
+}
+
+@Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,
     packageName: String?,
@@ -86,32 +115,13 @@ fun MultiEventHomeScreen(
         var selectAll by remember {
             mutableStateOf(false)
         }
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .padding(horizontal = 8.dp)
-                    .clickable {
-                        selectAll = !selectAll
-                        intents.forEach {
-                            it.checked.value = selectAll
-                        }
-                    },
+        SelectAllButton(
+            checked = selectAll,
         ) {
-            Text(
-                modifier = Modifier.weight(1f),
-                text = stringResource(R.string.select_deselect_all),
-            )
-            Switch(
-                checked = selectAll,
-                onCheckedChange = {
-                    selectAll = !selectAll
-                    intents.forEach {
-                        it.checked.value = selectAll
-                    }
-                },
-            )
+            selectAll = !selectAll
+            intents.forEach {
+                it.checked.value = selectAll
+            }
         }
         LazyColumn(
             Modifier.fillMaxHeight(0.9f),
@@ -120,7 +130,6 @@ fun MultiEventHomeScreen(
                 ListItem(
                     intents[it],
                     packageName,
-                    accountParam,
                     intents,
                 )
             }
@@ -140,24 +149,7 @@ fun MultiEventHomeScreen(
                         try {
                             val activity = context.getAppCompatActivity()
                             val results = mutableListOf<Result>()
-                            if (intents.any { it.bunkerRequest != null }) {
-                                RelayPool.getAll().forEach { relay ->
-                                    if (!relay.isConnected() && !NotificationDataSource.isActive()) {
-                                        relay.connectAndRun {
-                                            val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
-                                            val inputData = Data.Builder()
-                                            inputData.putString("relay", relay.url)
-                                            builder.setInputData(inputData.build())
-                                            WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
-                                        }
-                                    }
-                                }
-                                var count = 0
-                                while (RelayPool.getAll().any { !it.isReady() } && count < 10) {
-                                    count++
-                                    Thread.sleep(1000)
-                                }
-                            }
+                            reconnectToRelays(intents)
 
                             for (intentData in intents) {
                                 val localAccount =
@@ -248,19 +240,13 @@ fun MultiEventHomeScreen(
                             }
 
                             if (results.isNotEmpty()) {
-                                val gson = GsonBuilder().serializeNulls().create()
-                                val json = gson.toJson(results)
-                                val intent = Intent()
-                                intent.putExtra("results", json)
-                                activity?.setResult(Activity.RESULT_OK, intent)
+                                sendResultIntent(results, activity)
                             }
                             if (intents.any { it.bunkerRequest != null }) {
                                 EventNotificationConsumer(context).notificationManager().cancelAll()
-                                activity?.intent = null
-                                activity?.finish()
+                                finishActivity(activity)
                             } else {
-                                activity?.intent = null
-                                activity?.finish()
+                                finishActivity(activity)
                             }
                         } finally {
                             onLoading(false)
@@ -274,11 +260,47 @@ fun MultiEventHomeScreen(
     }
 }
 
+private fun finishActivity(activity: AppCompatActivity?) {
+    activity?.intent = null
+    activity?.finish()
+}
+
+private fun sendResultIntent(
+    results: MutableList<Result>,
+    activity: AppCompatActivity?,
+) {
+    val gson = GsonBuilder().serializeNulls().create()
+    val json = gson.toJson(results)
+    val intent = Intent()
+    intent.putExtra("results", json)
+    activity?.setResult(Activity.RESULT_OK, intent)
+}
+
+private fun reconnectToRelays(intents: List<IntentData>) {
+    if (!intents.any { it.bunkerRequest != null }) return
+
+    RelayPool.getAll().forEach { relay ->
+        if (!relay.isConnected() && !NotificationDataSource.isActive()) {
+            relay.connectAndRun {
+                val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
+                val inputData = Data.Builder()
+                inputData.putString("relay", relay.url)
+                builder.setInputData(inputData.build())
+                WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
+            }
+        }
+    }
+    var count = 0
+    while (RelayPool.getAll().any { !it.isReady() } && count < 10) {
+        count++
+        Thread.sleep(1000)
+    }
+}
+
 @Composable
 fun ListItem(
     intentData: IntentData,
     packageName: String?,
-    accountParam: Account,
     intents: List<IntentData>,
 ) {
     var isExpanded by remember { mutableStateOf(false) }

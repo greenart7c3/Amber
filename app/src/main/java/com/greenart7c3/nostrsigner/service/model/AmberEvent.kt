@@ -15,7 +15,6 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.events.Event
 import java.lang.reflect.Type
-import java.util.*
 
 @Immutable
 open class AmberEvent(
@@ -25,13 +24,13 @@ open class AmberEvent(
     val kind: Int,
     val tags: Array<Array<String>>,
     val content: String,
-    val sig: HexKey
+    val sig: HexKey,
 ) {
     private class EventDeserializer : JsonDeserializer<AmberEvent> {
         override fun deserialize(
             json: JsonElement,
             typeOfT: Type?,
-            context: JsonDeserializationContext?
+            context: JsonDeserializationContext?,
         ): AmberEvent {
             val jsonObject = json.asJsonObject
             return AmberEvent(
@@ -39,11 +38,12 @@ open class AmberEvent(
                 pubKey = jsonObject.get("pubkey")?.asString ?: "",
                 createdAt = jsonObject.get("created_at")?.asLong ?: TimeUtils.now(),
                 kind = jsonObject.get("kind").asInt,
-                tags = jsonObject.get("tags")?.asJsonArray?.map {
-                    it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }.toTypedArray()
-                }?.toTypedArray() ?: emptyArray(),
+                tags =
+                    jsonObject.get("tags")?.asJsonArray?.map {
+                        it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }.toTypedArray()
+                    }?.toTypedArray() ?: emptyArray(),
                 content = jsonObject.get("content").asString,
-                sig = jsonObject.get("sig")?.asString ?: ""
+                sig = jsonObject.get("sig")?.asString ?: "",
             )
         }
     }
@@ -52,7 +52,7 @@ open class AmberEvent(
         override fun serialize(
             src: AmberEvent,
             typeOfSrc: Type?,
-            context: JsonSerializationContext?
+            context: JsonSerializationContext?,
         ): JsonElement {
             return JsonObject().apply {
                 addProperty("id", src.id)
@@ -68,10 +68,10 @@ open class AmberEvent(
                                     tag.forEach { tagElement ->
                                         jsonTagElement.add(tagElement)
                                     }
-                                }
+                                },
                             )
                         }
-                    }
+                    },
                 )
                 addProperty("content", src.content)
                 addProperty("sig", src.sig)
@@ -80,11 +80,12 @@ open class AmberEvent(
     }
 
     companion object {
-        private val gson: Gson = GsonBuilder()
-            .disableHtmlEscaping()
-            .registerTypeAdapter(AmberEvent::class.java, EventSerializer())
-            .registerTypeAdapter(AmberEvent::class.java, EventDeserializer())
-            .create()
+        private val gson: Gson =
+            GsonBuilder()
+                .disableHtmlEscaping()
+                .registerTypeAdapter(AmberEvent::class.java, EventSerializer())
+                .registerTypeAdapter(AmberEvent::class.java, EventDeserializer())
+                .create()
 
         fun fromJson(json: String): AmberEvent = gson.fromJson(json, AmberEvent::class.java)
 
@@ -96,7 +97,7 @@ open class AmberEvent(
                 amberEvent.kind,
                 amberEvent.tags,
                 amberEvent.content,
-                amberEvent.sig
+                amberEvent.sig,
             )
         }
 

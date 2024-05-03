@@ -30,7 +30,7 @@ class JsonFilter(
     val since: Map<String, EOSETime>? = null,
     val until: Long? = null,
     val limit: Int? = null,
-    val search: String? = null
+    val search: String? = null,
 ) {
     fun toJson(forRelay: String? = null): String {
         val factory = Event.mapper.nodeFactory
@@ -39,26 +39,26 @@ class JsonFilter(
                 ids?.run {
                     put(
                         "ids",
-                        factory.arrayNode(ids.size).apply { ids.forEach { add(it) } }
+                        factory.arrayNode(ids.size).apply { ids.forEach { add(it) } },
                     )
                 }
                 authors?.run {
                     put(
                         "authors",
-                        factory.arrayNode(authors.size).apply { authors.forEach { add(it) } }
+                        factory.arrayNode(authors.size).apply { authors.forEach { add(it) } },
                     )
                 }
                 kinds?.run {
                     put(
                         "kinds",
-                        factory.arrayNode(kinds.size).apply { kinds.forEach { add(it) } }
+                        factory.arrayNode(kinds.size).apply { kinds.forEach { add(it) } },
                     )
                 }
                 tags?.run {
                     entries.forEach { kv ->
                         put(
                             "#${kv.key}",
-                            factory.arrayNode(kv.value.size).apply { kv.value.forEach { add(it) } }
+                            factory.arrayNode(kv.value.size).apply { kv.value.forEach { add(it) } },
                         )
                     }
                 }

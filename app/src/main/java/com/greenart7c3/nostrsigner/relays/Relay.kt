@@ -43,14 +43,14 @@ enum class FeedType {
     PRIVATE_DMS,
     GLOBAL,
     SEARCH,
-    WALLET_CONNECT
+    WALLET_CONNECT,
 }
 
 class Relay(
     val url: String,
     private val read: Boolean = true,
     private val write: Boolean = true,
-    private val activeTypes: Set<FeedType> = FeedType.entries.toSet()
+    private val activeTypes: Set<FeedType> = FeedType.entries.toSet(),
 ) {
     companion object {
         const val RECONNECTING_IN_SECONDS = 60
@@ -105,7 +105,10 @@ class Relay(
 
     private var connectingBlock = AtomicBoolean()
 
-    fun connectAndRun(onOk: (() -> Unit)? = null, onConnected: (Relay) -> Unit) {
+    fun connectAndRun(
+        onOk: (() -> Unit)? = null,
+        onConnected: (Relay) -> Unit,
+    ) {
         this.onOk = onOk
         Log.d("Relay", "Relay.connect $url hasProxy: ${this.httpClient.proxy != null}")
         // BRB is crashing OkHttp Deflater object :(
@@ -145,14 +148,14 @@ class Relay(
     inner class RelayListener(val onConnected: (Relay) -> Unit) : WebSocketListener() {
         override fun onOpen(
             webSocket: WebSocket,
-            response: Response
+            response: Response,
         ) {
             checkNotInMainThread()
             Log.d("Relay", "Connect onOpen $url $socket")
 
             markConnectionAsReady(
                 pingInMs = response.receivedResponseAtMillis - response.sentRequestAtMillis,
-                usingCompression = response.headers["Sec-WebSocket-Extensions"]?.contains("permessage-deflate") ?: false
+                usingCompression = response.headers["Sec-WebSocket-Extensions"]?.contains("permessage-deflate") ?: false,
             )
 
             // Log.w("Relay", "Relay OnOpen, Loading All subscriptions $url")
@@ -163,7 +166,7 @@ class Relay(
 
         override fun onMessage(
             webSocket: WebSocket,
-            text: String
+            text: String,
         ) {
             checkNotInMainThread()
 
@@ -185,7 +188,7 @@ class Relay(
         override fun onClosing(
             webSocket: WebSocket,
             code: Int,
-            reason: String
+            reason: String,
         ) {
             checkNotInMainThread()
 
@@ -195,7 +198,7 @@ class Relay(
                 it.onRelayStateChange(
                     this@Relay,
                     StateType.DISCONNECTING,
-                    null
+                    null,
                 )
             }
         }
@@ -203,7 +206,7 @@ class Relay(
         override fun onClosed(
             webSocket: WebSocket,
             code: Int,
-            reason: String
+            reason: String,
         ) {
             checkNotInMainThread()
 
@@ -217,7 +220,7 @@ class Relay(
         override fun onFailure(
             webSocket: WebSocket,
             t: Throwable,
-            response: Response?
+            response: Response?,
         ) {
             checkNotInMainThread()
 
@@ -233,7 +236,7 @@ class Relay(
                 it.onError(
                     this@Relay,
                     "",
-                    Error("WebSocket Failure. Response: $response. Exception: ${t.message}", t)
+                    Error("WebSocket Failure. Response: $response. Exception: ${t.message}", t),
                 )
             }
         }
@@ -241,7 +244,7 @@ class Relay(
 
     fun markConnectionAsReady(
         pingInMs: Long,
-        usingCompression: Boolean
+        usingCompression: Boolean,
     ) {
         this.resetEOSEStatuses()
         this.isReady = true
@@ -271,7 +274,7 @@ class Relay(
                         this@Relay,
                         subscriptionId,
                         event,
-                        afterEOSEPerSubscription[subscriptionId] == true
+                        afterEOSEPerSubscription[subscriptionId] == true,
                     )
                 }
             }
@@ -325,7 +328,7 @@ class Relay(
                     it.onError(
                         this@Relay,
                         "",
-                        Error("Unknown type $type on channel. Msg was $newMessage")
+                        Error("Unknown type $type on channel. Msg was $newMessage"),
                     )
                 }
         }
@@ -367,7 +370,7 @@ class Relay(
                                 separator = ",",
                                 limit = 20,
                                 prefix = """["REQ","$requestId",""",
-                                postfix = "]"
+                                postfix = "]",
                             ) {
                                 it.filter.toJson(url)
                             }
@@ -394,7 +397,7 @@ class Relay(
         prefix: CharSequence = "",
         postfix: CharSequence = "",
         limit: Int = -1,
-        transform: ((T) -> CharSequence)? = null
+        transform: ((T) -> CharSequence)? = null,
     ): String {
         val buffer = StringBuilder()
         buffer.append(prefix)
@@ -433,7 +436,10 @@ class Relay(
         Client.allSubscriptions().forEach { sendFilter(requestId = it) }
     }
 
-    fun send(signedEvent: EventInterface, onDone: (() -> Unit)?) {
+    fun send(
+        signedEvent: EventInterface,
+        onDone: (() -> Unit)?,
+    ) {
         checkNotInMainThread()
 
         onLoading(true)
@@ -502,7 +508,7 @@ class Relay(
         DISCONNECT,
 
         // End Of Stored Events
-        EOSE
+        EOSE,
     }
 
     interface Listener {
@@ -511,25 +517,25 @@ class Relay(
             relay: Relay,
             subscriptionId: String,
             event: Event,
-            afterEOSE: Boolean
+            afterEOSE: Boolean,
         )
 
         fun onError(
             relay: Relay,
             subscriptionId: String,
-            error: Error
+            error: Error,
         )
 
         fun onSendResponse(
             relay: Relay,
             eventId: String,
             success: Boolean,
-            message: String
+            message: String,
         )
 
         fun onAuth(
             relay: Relay,
-            challenge: String
+            challenge: String,
         )
 
         /**
@@ -540,13 +546,13 @@ class Relay(
         fun onRelayStateChange(
             relay: Relay,
             type: StateType,
-            channel: String?
+            channel: String?,
         )
 
         /** Relay sent an invoice */
         fun onNotify(
             relay: Relay,
-            description: String
+            description: String,
         )
     }
 }

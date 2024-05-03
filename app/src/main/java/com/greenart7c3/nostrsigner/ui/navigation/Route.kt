@@ -16,29 +16,29 @@ import androidx.compose.ui.graphics.vector.ImageVector
 sealed class Route(
     val route: String,
     val icon: ImageVector,
-    val selectedIcon: ImageVector
+    val selectedIcon: ImageVector,
 ) {
     data object Home : Route(
         route = "Home",
         icon = Icons.Outlined.Home,
-        selectedIcon = Icons.Default.Home
+        selectedIcon = Icons.Default.Home,
     )
 
     data object Permissions : Route(
         route = "Permissions",
         icon = Icons.AutoMirrored.Outlined.ViewList,
-        selectedIcon = Icons.AutoMirrored.Default.ViewList
+        selectedIcon = Icons.AutoMirrored.Default.ViewList,
     )
 
     data object Settings : Route(
         route = "Settings",
         icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings
+        selectedIcon = Icons.Default.Settings,
     )
 
     data object Permission : Route(
         route = "Permission/{packageName}",
         icon = Icons.AutoMirrored.Outlined.ViewList,
-        selectedIcon = Icons.AutoMirrored.Default.ViewList
+        selectedIcon = Icons.AutoMirrored.Default.ViewList,
     )
 }

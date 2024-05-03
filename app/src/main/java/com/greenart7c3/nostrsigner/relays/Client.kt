@@ -54,7 +54,7 @@ object Client : RelayPool.Listener {
     @Synchronized
     fun reconnect(
         relays: Array<Relay>?,
-        onlyIfChanged: Boolean = false
+        onlyIfChanged: Boolean = false,
     ) {
         Log.d("Relay", "Relay Pool Reconnecting to ${relays?.size} relays")
         checkNotInMainThread()
@@ -104,7 +104,7 @@ object Client : RelayPool.Listener {
 
     fun sendFilter(
         subscriptionId: String = UUID.randomUUID().toString().substring(0..10),
-        filters: List<TypedFilter> = listOf()
+        filters: List<TypedFilter> = listOf(),
     ) {
         checkNotInMainThread()
 
@@ -114,7 +114,7 @@ object Client : RelayPool.Listener {
 
     fun sendFilterOnlyIfDisconnected(
         subscriptionId: String = UUID.randomUUID().toString().substring(0..10),
-        filters: List<TypedFilter> = listOf()
+        filters: List<TypedFilter> = listOf(),
     ) {
         checkNotInMainThread()
 
@@ -128,7 +128,7 @@ object Client : RelayPool.Listener {
         relay: String? = null,
         feedTypes: Set<FeedType>? = null,
         relayList: List<Relay>? = null,
-        onDone: (() -> Unit)? = null
+        onDone: (() -> Unit)? = null,
     ) {
         checkNotInMainThread()
 
@@ -152,7 +152,7 @@ object Client : RelayPool.Listener {
                     feedTypes,
                     onConnected = { relay -> relay.send(signedEvent, null) },
                     onDone = onDone,
-                    onLoading = onLoading
+                    onLoading = onLoading,
                 )
             }
         }
@@ -164,7 +164,7 @@ object Client : RelayPool.Listener {
         feedTypes: Set<FeedType>?,
         onLoading: (Boolean) -> Unit,
         onConnected: (Relay) -> Unit,
-        onDone: (() -> Unit)?
+        onDone: (() -> Unit)?,
     ) {
         val relay = Relay(url, true, true, feedTypes ?: emptySet())
         relay.onLoading = onLoading
@@ -177,7 +177,7 @@ object Client : RelayPool.Listener {
                         onDone()
                     }
                 }
-            }
+            },
         ) {
             allSubscriptions().forEach { relay.sendFilter(requestId = it) }
 
@@ -211,7 +211,7 @@ object Client : RelayPool.Listener {
         event: Event,
         subscriptionId: String,
         relay: Relay,
-        afterEOSE: Boolean
+        afterEOSE: Boolean,
     ) {
         // Releases the Web thread for the new payload.
         // May need to add a processing queue if processing new events become too costly.
@@ -224,7 +224,7 @@ object Client : RelayPool.Listener {
     override fun onError(
         error: Error,
         subscriptionId: String,
-        relay: Relay
+        relay: Relay,
     ) {
         // Releases the Web thread for the new payload.
         // May need to add a processing queue if processing new events become too costly.
@@ -237,7 +237,7 @@ object Client : RelayPool.Listener {
     override fun onRelayStateChange(
         type: Relay.StateType,
         relay: Relay,
-        channel: String?
+        channel: String?,
     ) {
         // Releases the Web thread for the new payload.
         // May need to add a processing queue if processing new events become too costly.
@@ -251,7 +251,7 @@ object Client : RelayPool.Listener {
         eventId: String,
         success: Boolean,
         message: String,
-        relay: Relay
+        relay: Relay,
     ) {
         // Releases the Web thread for the new payload.
         // May need to add a processing queue if processing new events become too costly.
@@ -263,7 +263,7 @@ object Client : RelayPool.Listener {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onAuth(
         relay: Relay,
-        challenge: String
+        challenge: String,
     ) {
         // Releases the Web thread for the new payload.
         // May need to add a processing queue if processing new events become too costly.
@@ -273,7 +273,7 @@ object Client : RelayPool.Listener {
     @OptIn(DelicateCoroutinesApi::class)
     override fun onNotify(
         relay: Relay,
-        description: String
+        description: String,
     ) {
         // Releases the Web thread for the new payload.
         // May need to add a processing queue if processing new events become too costly.
@@ -308,21 +308,21 @@ object Client : RelayPool.Listener {
             event: Event,
             subscriptionId: String,
             relay: Relay,
-            afterEOSE: Boolean
+            afterEOSE: Boolean,
         ) = Unit
 
         /** A new or repeat message was received */
         open fun onError(
             error: Error,
             subscriptionId: String,
-            relay: Relay
+            relay: Relay,
         ) = Unit
 
         /** Connected to or disconnected from a relay */
         open fun onRelayStateChange(
             type: Relay.StateType,
             relay: Relay,
-            subscriptionId: String?
+            subscriptionId: String?,
         ) = Unit
 
         /** When an relay saves or rejects a new event. */
@@ -330,17 +330,17 @@ object Client : RelayPool.Listener {
             eventId: String,
             success: Boolean,
             message: String,
-            relay: Relay
+            relay: Relay,
         ) = Unit
 
         open fun onAuth(
             relay: Relay,
-            challenge: String
+            challenge: String,
         ) = Unit
 
         open fun onNotify(
             relay: Relay,
-            description: String
+            description: String,
         ) = Unit
     }
 }

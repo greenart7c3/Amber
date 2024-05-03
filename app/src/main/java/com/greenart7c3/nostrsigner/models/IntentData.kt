@@ -21,5 +21,5 @@ data class IntentData(
     val bunkerRequest: BunkerRequest?,
     val route: String?,
     val event: Event?,
-    val encryptedData: String?
+    val encryptedData: String?,
 )

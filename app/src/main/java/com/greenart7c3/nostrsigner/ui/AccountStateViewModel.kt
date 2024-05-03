@@ -25,7 +25,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         tryLoginExistingAccount(null, npub)
     }
 
-    private fun tryLoginExistingAccount(route: String?, npub: String?) {
+    private fun tryLoginExistingAccount(
+        route: String?,
+        npub: String?,
+    ) {
         var currentUser = npub ?: LocalPreferences.currentAccount()
         if (currentUser != null && !LocalPreferences.containsAccount(currentUser)) {
             currentUser = LocalPreferences.currentAccount()
@@ -55,35 +58,52 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         tryLoginExistingAccount(null, null)
     }
 
-    fun switchUser(npub: String, route: String?) {
+    fun switchUser(
+        npub: String,
+        route: String?,
+    ) {
         prepareLogoutOrSwitch()
         LocalPreferences.switchToAccount(npub)
         tryLoginExistingAccount(route, npub)
     }
 
-    fun startUI(key: String, password: String, route: String?, useProxy: Boolean, proxyPort: Int) {
-        val account = if (key.startsWith("ncryptsec")) {
-            val newKey = CryptoUtils.decryptNIP49(key, password)
-                ?: throw Exception("Could not decrypt key with provided password")
-            Account(KeyPair(Hex.decode(newKey)), name = "", useProxy = useProxy, proxyPort = proxyPort)
-        } else if (key.startsWith("nsec")) {
-            Account(KeyPair(privKey = key.bechToBytes()), name = "", useProxy = useProxy, proxyPort = proxyPort)
-        } else {
-            Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort)
-        }
+    fun startUI(
+        key: String,
+        password: String,
+        route: String?,
+        useProxy: Boolean,
+        proxyPort: Int,
+    ) {
+        val account =
+            if (key.startsWith("ncryptsec")) {
+                val newKey =
+                    CryptoUtils.decryptNIP49(key, password)
+                        ?: throw Exception("Could not decrypt key with provided password")
+                Account(KeyPair(Hex.decode(newKey)), name = "", useProxy = useProxy, proxyPort = proxyPort)
+            } else if (key.startsWith("nsec")) {
+                Account(KeyPair(privKey = key.bechToBytes()), name = "", useProxy = useProxy, proxyPort = proxyPort)
+            } else {
+                Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort)
+            }
 
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account, route)
     }
 
-    fun newKey(useProxy: Boolean, proxyPort: Int) {
+    fun newKey(
+        useProxy: Boolean,
+        proxyPort: Int,
+    ) {
         val account = Account(KeyPair(), name = "", useProxy = useProxy, proxyPort = proxyPort)
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account, null)
     }
 
     @OptIn(DelicateCoroutinesApi::class)
-    fun startUI(account: Account, route: String?) {
+    fun startUI(
+        account: Account,
+        route: String?,
+    ) {
         _accountContent.update { AccountState.LoggedIn(account, route) }
 
         GlobalScope.launch(Dispatchers.Main) {

@@ -27,7 +27,7 @@ import android.net.Uri
 object PackageUtils {
     private fun isPackageInstalled(
         context: Context,
-        target: String
+        target: String,
     ): Boolean {
         return context.packageManager.getInstalledApplications(0).find { info ->
             info.packageName == target

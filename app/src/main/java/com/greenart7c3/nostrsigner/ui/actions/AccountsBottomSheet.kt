@@ -59,14 +59,14 @@ fun AccountsBottomSheet(
     sheetState: SheetState,
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    onClose: () -> Unit
+    onClose: () -> Unit,
 ) {
     ModalBottomSheet(
         windowInsets = WindowInsets.navigationBars,
         sheetState = sheetState,
         onDismissRequest = {
             onClose()
-        }
+        },
     ) {
         val accounts = LocalPreferences.allSavedAccounts()
         var popupExpanded by remember { mutableStateOf(false) }
@@ -76,32 +76,34 @@ fun AccountsBottomSheet(
 
         Column(modifier = Modifier.verticalScroll(scrollState)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
             }
             accounts.forEach { acc ->
                 val name = LocalPreferences.getAccountName(acc.npub)
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            accountStateViewModel.switchUser(acc.npub, null)
-                        }
-                        .padding(16.dp, 16.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                accountStateViewModel.switchUser(acc.npub, null)
+                            }
+                            .padding(16.dp, 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
                         modifier = Modifier.weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
                             modifier = Modifier.weight(1f),
-                            verticalAlignment = Alignment.CenterVertically
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Column(modifier = Modifier.weight(1f)) {
                                 if (name.isNotBlank()) {
@@ -124,7 +126,7 @@ fun AccountsBottomSheet(
                                 showNameDialog = false
                                 currentNpub = ""
                                 accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Settings.route)
-                            }
+                            },
                         )
                     }
 
@@ -132,23 +134,24 @@ fun AccountsBottomSheet(
                         onClick = {
                             showNameDialog = true
                             currentNpub = acc.npub
-                        }
+                        },
                     ) {
                         Icon(
                             imageVector = Icons.Default.Edit,
                             contentDescription = stringResource(R.string.edit_name),
-                            tint = MaterialTheme.colorScheme.onSurface
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
                     LogoutButton(acc, accountStateViewModel)
                 }
             }
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
                 horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 TextButton(onClick = { popupExpanded = true }) {
                     Text(stringResource(R.string.add_new_account))
@@ -159,7 +162,7 @@ fun AccountsBottomSheet(
         if (popupExpanded) {
             Dialog(
                 onDismissRequest = { popupExpanded = false },
-                properties = DialogProperties(usePlatformDefaultWidth = false)
+                properties = DialogProperties(usePlatformDefaultWidth = false),
             ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     Box {
@@ -170,10 +173,10 @@ fun AccountsBottomSheet(
                                 IconButton(onClick = { popupExpanded = false }) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Default.ArrowBack,
-                                        contentDescription = "Back"
+                                        contentDescription = "Back",
                                     )
                                 }
-                            }
+                            },
                         )
                     }
                 }
@@ -183,7 +186,11 @@ fun AccountsBottomSheet(
 }
 
 @Composable
-fun EditAccountDialog(npub: String, onClose: () -> Unit, onPost: (String) -> Unit) {
+fun EditAccountDialog(
+    npub: String,
+    onClose: () -> Unit,
+    onPost: (String) -> Unit,
+) {
     val name = LocalPreferences.getAccountName(npub)
     var textFieldvalue by remember {
         mutableStateOf(TextFieldValue(name))
@@ -191,40 +198,43 @@ fun EditAccountDialog(npub: String, onClose: () -> Unit, onPost: (String) -> Uni
     Dialog(
         onDismissRequest = {
             onClose()
-        }
+        },
     ) {
         Surface {
             Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxWidth()
-                    .padding(8.dp)
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxWidth()
+                        .padding(8.dp),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CloseButton(
                         onCancel = {
                             onClose()
-                        }
+                        },
                     )
                     PostButton(
                         isActive = true,
                         onPost = {
                             onPost(textFieldvalue.text)
-                        }
+                        },
                     )
                 }
 
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = 30.dp),
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 30.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     OutlinedTextField(
                         value = textFieldvalue.text,
@@ -233,7 +243,7 @@ fun EditAccountDialog(npub: String, onClose: () -> Unit, onPost: (String) -> Uni
                         },
                         label = {
                             Text("Name")
-                        }
+                        },
                     )
                 }
             }

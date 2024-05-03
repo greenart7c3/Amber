@@ -44,13 +44,13 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -77,13 +77,13 @@ fun MultiEventHomeScreen(
     packageName: String?,
     accountParam: Account,
     database: AppDatabase,
-    onLoading: (Boolean) -> Unit
+    onLoading: (Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
 
     Column(
-        Modifier.fillMaxSize()
+        Modifier.fillMaxSize(),
     ) {
         var selectAll by remember {
             mutableStateOf(false)
@@ -91,18 +91,19 @@ fun MultiEventHomeScreen(
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .padding(horizontal = 8.dp)
-                .clickable {
-                    selectAll = !selectAll
-                    intents.forEach {
-                        it.checked.value = selectAll
-                    }
-                }
+            modifier =
+                Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable {
+                        selectAll = !selectAll
+                        intents.forEach {
+                            it.checked.value = selectAll
+                        }
+                    },
         ) {
             Text(
                 modifier = Modifier.weight(1f),
-                text = stringResource(R.string.select_deselect_all)
+                text = stringResource(R.string.select_deselect_all),
             )
             Switch(
                 checked = selectAll,
@@ -111,18 +112,18 @@ fun MultiEventHomeScreen(
                     intents.forEach {
                         it.checked.value = selectAll
                     }
-                }
+                },
             )
         }
         LazyColumn(
-            Modifier.fillMaxHeight(0.9f)
+            Modifier.fillMaxHeight(0.9f),
         ) {
             items(intents.size) {
                 ListItem(
                     intents[it],
                     packageName,
                     accountParam,
-                    intents
+                    intents,
                 )
             }
         }
@@ -130,7 +131,7 @@ fun MultiEventHomeScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(10.dp),
-            Arrangement.Center
+            Arrangement.Center,
         ) {
             Button(
                 modifier = Modifier.fillMaxWidth(),
@@ -149,7 +150,7 @@ fun MultiEventHomeScreen(
                                             val inputData = Data.Builder()
                                             inputData.putString("relay", relay.url)
                                             builder.setInputData(inputData.build())
-                                            WorkManager.getInstance(nostrsigner.instance).enqueue(builder.build())
+                                            WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
                                         }
                                     }
                                 }
@@ -164,7 +165,7 @@ fun MultiEventHomeScreen(
                                 val localAccount =
                                     if (intentData.currentAccount.isNotBlank()) {
                                         LocalPreferences.loadFromEncryptedStorage(
-                                            intentData.currentAccount
+                                            intentData.currentAccount,
                                         )
                                     } else {
                                         accountParam
@@ -184,7 +185,7 @@ fun MultiEventHomeScreen(
                                             intentData.rememberMyChoice.value,
                                             applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
                                             localAccount,
-                                            database
+                                            database,
                                         )
                                     }
 
@@ -194,15 +195,24 @@ fun MultiEventHomeScreen(
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
                                             applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
-                                            onLoading = {}
+                                            onLoading = {},
                                         ) {}
                                     } else {
                                         results.add(
                                             Result(
                                                 null,
-                                                if (localEvent is LnZapRequestEvent && localEvent.tags.any { tag -> tag.any { t -> t == "anon" } }) localEvent.toJson() else localEvent.sig,
-                                                intentData.id
-                                            )
+                                                if (localEvent is LnZapRequestEvent &&
+                                                    localEvent.tags.any {
+                                                            tag ->
+                                                        tag.any { t -> t == "anon" }
+                                                    }
+                                                ) {
+                                                    localEvent.toJson()
+                                                } else {
+                                                    localEvent.sig
+                                                },
+                                                intentData.id,
+                                            ),
                                         )
                                     }
                                 } else {
@@ -214,7 +224,7 @@ fun MultiEventHomeScreen(
                                             intentData.rememberMyChoice.value,
                                             applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
                                             localAccount,
-                                            database
+                                            database,
                                         )
                                     }
                                     val signature = intentData.encryptedData ?: continue
@@ -225,15 +235,15 @@ fun MultiEventHomeScreen(
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
                                             applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
-                                            onLoading = {}
+                                            onLoading = {},
                                         ) { }
                                     } else {
                                         results.add(
                                             Result(
                                                 null,
                                                 signature,
-                                                intentData.id
-                                            )
+                                                intentData.id,
+                                            ),
                                         )
                                     }
                                 }
@@ -258,7 +268,7 @@ fun MultiEventHomeScreen(
                             onLoading(false)
                         }
                     }
-                }
+                },
             ) {
                 Text("Confirm")
             }
@@ -271,15 +281,16 @@ fun ListItem(
     intentData: IntentData,
     packageName: String?,
     accountParam: Account,
-    intents: List<IntentData>
+    intents: List<IntentData>,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
 
-    val key = if (intentData.bunkerRequest != null) {
-        intentData.bunkerRequest.localKey
-    } else {
-        "$packageName"
-    }
+    val key =
+        if (intentData.bunkerRequest != null) {
+            intentData.bunkerRequest.localKey
+        } else {
+            "$packageName"
+        }
 
     val appName = ApplicationNameCache.names[key] ?: key.toShortenHex()
 
@@ -288,26 +299,27 @@ fun ListItem(
             .padding(4.dp)
             .clickable {
                 isExpanded = !isExpanded
-            }
+            },
     ) {
         val name = LocalPreferences.getAccountName(intentData.currentAccount)
         Row(
             Modifier
                 .fillMaxWidth(),
             Arrangement.Center,
-            Alignment.CenterVertically
+            Alignment.CenterVertically,
         ) {
             Text(
                 name.ifBlank { intentData.currentAccount.toShortenHex() },
-                fontWeight = FontWeight.Bold
+                fontWeight = FontWeight.Bold,
             )
         }
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(4.dp)
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
         ) {
             Icon(
                 Icons.Default.run {
@@ -318,33 +330,35 @@ fun ListItem(
                     }
                 },
                 contentDescription = "",
-                tint = Color.LightGray
+                tint = Color.LightGray,
             )
 
-            val text = if (intentData.type == SignerType.SIGN_EVENT) {
-                val event = intentData.event!!
-                val permission = Permission("sign_event", event.kind)
-                "wants you to sign a $permission"
-            } else {
-                val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
-                "wants you to $permission"
-            }
+            val text =
+                if (intentData.type == SignerType.SIGN_EVENT) {
+                    val event = intentData.event!!
+                    val permission = Permission("sign_event", event.kind)
+                    "wants you to sign a $permission"
+                } else {
+                    val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
+                    "wants you to $permission"
+                }
             Text(
                 modifier = Modifier.weight(1f),
-                text = buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(appName)
-                    }
-                    append(" $text")
-                },
-                fontSize = 18.sp
+                text =
+                    buildAnnotatedString {
+                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                            append(appName)
+                        }
+                        append(" $text")
+                    },
+                fontSize = 18.sp,
             )
 
             Switch(
                 checked = intentData.checked.value,
                 onCheckedChange = { _ ->
                     intentData.checked.value = !intentData.checked.value
-                }
+                },
             )
         }
 
@@ -352,32 +366,34 @@ fun ListItem(
             Column(
                 Modifier
                     .fillMaxSize()
-                    .padding(10.dp)
+                    .padding(10.dp),
             ) {
                 Text(
                     "Event content",
-                    fontWeight = FontWeight.Bold
+                    fontWeight = FontWeight.Bold,
                 )
-                val content = if (intentData.type == SignerType.SIGN_EVENT) {
-                    val event = intentData.event!!
-                    if (event.kind == 22242) AmberEvent.relay(event) else event.content
-                } else {
-                    intentData.data
-                }
+                val content =
+                    if (intentData.type == SignerType.SIGN_EVENT) {
+                        val event = intentData.event!!
+                        if (event.kind == 22242) AmberEvent.relay(event) else event.content
+                    } else {
+                        intentData.data
+                    }
 
                 Text(
                     content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
                 )
                 RememberMyChoice(
                     shouldRunOnAccept = false,
                     intentData.rememberMyChoice.value,
                     appName,
-                    { }
+                    { },
                 ) {
                     intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
                     intents.filter { item ->

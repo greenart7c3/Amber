@@ -12,20 +12,20 @@ import androidx.room.PrimaryKey
             entity = ApplicationEntity::class,
             childColumns = ["pkKey"],
             parentColumns = ["key"],
-            onDelete = ForeignKey.CASCADE
-        )
+            onDelete = ForeignKey.CASCADE,
+        ),
     ],
     indices = [
         Index(
             value = ["pkKey"],
-            name = "permissions_by_pk_key"
+            name = "permissions_by_pk_key",
         ),
         Index(
             value = ["pkKey", "type", "kind"],
             name = "permissions_unique",
-            unique = true
-        )
-    ]
+            unique = true,
+        ),
+    ],
 )
 data class ApplicationPermissionsEntity(
     @PrimaryKey
@@ -33,5 +33,5 @@ data class ApplicationPermissionsEntity(
     var pkKey: String,
     val type: String,
     val kind: Int?,
-    var acceptable: Boolean
+    var acceptable: Boolean,
 )

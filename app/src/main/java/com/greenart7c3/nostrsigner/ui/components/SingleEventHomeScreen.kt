@@ -48,24 +48,26 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account,
     database: AppDatabase,
-    onLoading: (Boolean) -> Unit
+    onLoading: (Boolean) -> Unit,
 ) {
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
     }
-    val key = if (intentData.bunkerRequest != null) {
-        intentData.bunkerRequest.localKey
-    } else {
-        "$packageName"
-    }
+    val key =
+        if (intentData.bunkerRequest != null) {
+            intentData.bunkerRequest.localKey
+        } else {
+            "$packageName"
+        }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            applicationEntity = if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
-            } else {
-                database.applicationDao().getByKey(key)
-            }
+            applicationEntity =
+                if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
+                    database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                } else {
+                    database.applicationDao().getByKey(key)
+                }
         }
     }
 
@@ -76,22 +78,25 @@ fun SingleEventHomeScreen(
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
-            val permission = applicationEntity?.permissions?.firstOrNull {
-                it.pkKey == key && it.type == intentData.type.toString()
-            }
-            val remember = remember {
-                mutableStateOf(permission?.acceptable == true)
-            }
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString()
+                }
+            val remember =
+                remember {
+                    mutableStateOf(permission?.acceptable == true)
+                }
             LoginWithPubKey(
                 appName,
                 applicationName,
                 intentData.permissions,
                 { permissions ->
-                    val sig = if (intentData.type == SignerType.CONNECT) {
-                        "ack"
-                    } else {
-                        account.keyPair.pubKey.toNpub()
-                    }
+                    val sig =
+                        if (intentData.type == SignerType.CONNECT) {
+                            "ack"
+                        } else {
+                            account.keyPair.pubKey.toNpub()
+                        }
                     coroutineScope.launch {
                         sendResult(
                             context,
@@ -107,7 +112,7 @@ fun SingleEventHomeScreen(
                             permissions = permissions,
                             appName = applicationName ?: appName,
                             database = database,
-                            onLoading = onLoading
+                            onLoading = onLoading,
                         )
                     }
                     return@LoginWithPubKey
@@ -122,7 +127,7 @@ fun SingleEventHomeScreen(
                                 false,
                                 applicationName ?: appName,
                                 account,
-                                database
+                                database,
                             )
                         }
                     }
@@ -136,30 +141,33 @@ fun SingleEventHomeScreen(
                             intentData.bunkerRequest,
                             relays,
                             context,
-                            onLoading = onLoading
+                            onLoading = onLoading,
                         )
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
-                }
+                },
             )
         }
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-            val permission = applicationEntity?.permissions?.firstOrNull {
-                it.pkKey == key && it.type == intentData.type.toString()
-            }
-            val remember = remember {
-                mutableStateOf(permission?.acceptable == true)
-            }
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString()
+                }
+            val remember =
+                remember {
+                    mutableStateOf(permission?.acceptable == true)
+                }
 
             val shouldRunOnAccept = permission?.acceptable == true
-            val localPackageName = if (intentData.bunkerRequest != null) {
-                intentData.bunkerRequest.localKey
-            } else {
-                packageName
-            }
+            val localPackageName =
+                if (intentData.bunkerRequest != null) {
+                    intentData.bunkerRequest.localKey
+                } else {
+                    packageName
+                }
             EncryptDecryptData(
                 intentData.data,
                 intentData.encryptedData ?: "",
@@ -190,7 +198,7 @@ fun SingleEventHomeScreen(
                             intentData,
                             null,
                             database,
-                            onLoading
+                            onLoading,
                         )
                     }
                 },
@@ -204,7 +212,7 @@ fun SingleEventHomeScreen(
                                 false,
                                 applicationName ?: appName,
                                 account,
-                                database
+                                database,
                             )
                         }
                     }
@@ -216,49 +224,53 @@ fun SingleEventHomeScreen(
                             applicationEntity?.application?.relays?.map { url -> Relay(url) }
                                 ?: emptyList(),
                             context,
-                            onLoading
+                            onLoading,
                         )
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
-                }
+                },
             )
         }
 
         else -> {
             val event = intentData.event!!
-            val accounts = LocalPreferences.allSavedAccounts().filter {
-                it.npub.bechToBytes().toHexKey() == event.pubKey
-            }
+            val accounts =
+                LocalPreferences.allSavedAccounts().filter {
+                    it.npub.bechToBytes().toHexKey() == event.pubKey
+                }
 
             if (accounts.isEmpty()) {
                 Column(
                     Modifier.fillMaxSize(),
                     Arrangement.Center,
-                    Alignment.CenterHorizontally
+                    Alignment.CenterHorizontally,
                 ) {
                     Text(
                         Hex.decode(event.pubKey).toNpub().toShortenHex(),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 21.sp
+                        fontSize = 21.sp,
                     )
                     Spacer(Modifier.size(8.dp))
                     Text("Not logged in")
                 }
             } else {
-                val permission = applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == event.kind
-                }
-                val remember = remember {
-                    mutableStateOf(permission?.acceptable == true)
-                }
+                val permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == intentData.type.toString() && it.kind == event.kind
+                    }
+                val remember =
+                    remember {
+                        mutableStateOf(permission?.acceptable == true)
+                    }
                 val shouldRunOnAccept = permission?.acceptable == true
-                val localPackageName = if (intentData.bunkerRequest != null) {
-                    intentData.bunkerRequest.localKey
-                } else {
-                    packageName
-                }
+                val localPackageName =
+                    if (intentData.bunkerRequest != null) {
+                        intentData.bunkerRequest.localKey
+                    } else {
+                        packageName
+                    }
                 EventData(
                     shouldRunOnAccept,
                     remember,
@@ -274,7 +286,7 @@ fun SingleEventHomeScreen(
                                 Toast.makeText(
                                     context,
                                     context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                    Toast.LENGTH_SHORT
+                                    Toast.LENGTH_SHORT,
                                 ).show()
                             }
                             return@EventData
@@ -290,11 +302,20 @@ fun SingleEventHomeScreen(
                             remember.value,
                             clipboardManager,
                             event.toJson(),
-                            if (event is LnZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) eventJson else event.sig,
+                            if (event is LnZapRequestEvent &&
+                                event.tags.any {
+                                        tag ->
+                                    tag.any { t -> t == "anon" }
+                                }
+                            ) {
+                                eventJson
+                            } else {
+                                event.sig
+                            },
                             intentData,
                             event.kind,
                             database,
-                            onLoading
+                            onLoading,
                         )
                     },
                     {
@@ -307,7 +328,7 @@ fun SingleEventHomeScreen(
                                     false,
                                     applicationName ?: appName,
                                     account,
-                                    database
+                                    database,
                                 )
                             }
                         }
@@ -319,13 +340,13 @@ fun SingleEventHomeScreen(
                                 applicationEntity?.application?.relays?.map { url -> Relay(url) }
                                     ?: emptyList(),
                                 context,
-                                onLoading
+                                onLoading,
                             )
                         } else {
                             context.getAppCompatActivity()?.intent = null
                             context.getAppCompatActivity()?.finish()
                         }
-                    }
+                    },
                 )
             }
         }

@@ -44,7 +44,7 @@ object NotificationUtils {
             NotificationChannel(
                 "BunkerID",
                 "Bunker Notifications",
-                NotificationManager.IMPORTANCE_HIGH
+                NotificationManager.IMPORTANCE_HIGH,
             )
                 .apply {
                     description = "Notifications for Approving or Rejecting Bunker requests."
@@ -67,7 +67,7 @@ object NotificationUtils {
         channelId: String,
         notificationGroupKey: String,
         applicationContext: Context,
-        bunkerRequest: BunkerRequest
+        bunkerRequest: BunkerRequest,
     ) {
         sendNotification(
             id = id,
@@ -78,7 +78,7 @@ object NotificationUtils {
             channelId,
             notificationGroupKey,
             applicationContext = applicationContext,
-            bunkerRequest
+            bunkerRequest,
         )
     }
 
@@ -91,7 +91,7 @@ object NotificationUtils {
         channelId: String,
         notificationGroupKey: String,
         applicationContext: Context,
-        bunkerRequest: BunkerRequest
+        bunkerRequest: BunkerRequest,
     ) {
         val notId = id.hashCode()
         val notifications: Array<StatusBarNotification> = getActiveNotifications()
@@ -105,59 +105,62 @@ object NotificationUtils {
         contentIntent.putExtra("bunker", bunkerRequest.toJson())
         contentIntent.putExtra("route", Route.Home.route)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-        val contentPendingIntent = PendingIntent.getActivity(
-            applicationContext,
-            notId,
-            contentIntent,
-            PendingIntent.FLAG_MUTABLE
-        )
+        val contentPendingIntent =
+            PendingIntent.getActivity(
+                applicationContext,
+                notId,
+                contentIntent,
+                PendingIntent.FLAG_MUTABLE,
+            )
 
         IntentUtils.bunkerRequests[notId.toString()] = bunkerRequest
 
         // Build the notification
-        val builderPublic = NotificationCompat.Builder(
-            applicationContext,
-            channelId
-        )
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
-            .setColor(0xFFBF00)
-            .setContentTitle(messageTitle)
-            .setContentText("new event to sign")
-            .setLargeIcon(picture?.bitmap)
-            // .setGroup(messageTitle)
-            // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
-            // activate this
-            .setContentIntent(contentPendingIntent)
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setExtras(
-                Bundle().apply {
-                    putString("route", Route.Home.route)
-                }
+        val builderPublic =
+            NotificationCompat.Builder(
+                applicationContext,
+                channelId,
             )
+                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setColor(0xFFBF00)
+                .setContentTitle(messageTitle)
+                .setContentText("new event to sign")
+                .setLargeIcon(picture?.bitmap)
+                // .setGroup(messageTitle)
+                // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
+                // activate this
+                .setContentIntent(contentPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setExtras(
+                    Bundle().apply {
+                        putString("route", Route.Home.route)
+                    },
+                )
 
         // Build the notification
-        val builder = NotificationCompat.Builder(
-            applicationContext,
-            channelId
-        )
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
-            .setColor(0xFFBF00)
-            .setContentTitle(messageTitle)
-            .setContentText(messageBody)
-            .setLargeIcon(picture?.bitmap)
-            // .setGroup(messageTitle)
-            // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
-            // activate this
-            .setContentIntent(contentPendingIntent)
-            .setPublicVersion(builderPublic.build())
-            .setPriority(NotificationCompat.PRIORITY_HIGH)
-            .setAutoCancel(true)
-            .setExtras(
-                Bundle().apply {
-                    putString("route", Route.Home.route)
-                }
+        val builder =
+            NotificationCompat.Builder(
+                applicationContext,
+                channelId,
             )
+                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setColor(0xFFBF00)
+                .setContentTitle(messageTitle)
+                .setContentText(messageBody)
+                .setLargeIcon(picture?.bitmap)
+                // .setGroup(messageTitle)
+                // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
+                // activate this
+                .setContentIntent(contentPendingIntent)
+                .setPublicVersion(builderPublic.build())
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setExtras(
+                    Bundle().apply {
+                        putString("route", Route.Home.route)
+                    },
+                )
 
         notify(notId, builder.build())
     }

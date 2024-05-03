@@ -27,7 +27,7 @@ import android.util.Log
 import android.util.LruCache
 import androidx.core.content.ContextCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
 import kotlinx.coroutines.CancellationException
@@ -43,7 +43,7 @@ class PushMessageReceiver : MessagingReceiver() {
         private val TAG = "Amber-OSSPushReceiver"
     }
 
-    private val appContext = nostrsigner.instance.applicationContext
+    private val appContext = NostrSigner.instance.applicationContext
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val eventCache = LruCache<String, String>(100)
     private val pushHandler = PushDistributorHandler
@@ -51,7 +51,7 @@ class PushMessageReceiver : MessagingReceiver() {
     override fun onMessage(
         context: Context,
         message: ByteArray,
-        instance: String
+        instance: String,
     ) {
         val messageStr = String(message)
         Log.d(TAG, "New message ${message.decodeToString()} for Instance: $instance")
@@ -82,7 +82,7 @@ class PushMessageReceiver : MessagingReceiver() {
     override fun onNewEndpoint(
         context: Context,
         endpoint: String,
-        instance: String
+        instance: String,
     ) {
         Log.d(TAG, "New endpoint provided:- $endpoint for Instance: $instance")
         val sanitizedEndpoint = endpoint.dropLast(5)
@@ -95,7 +95,7 @@ class PushMessageReceiver : MessagingReceiver() {
 
     override fun onReceive(
         context: Context,
-        intent: Intent
+        intent: Intent,
     ) {
         val intentData = intent.dataString
         val intentAction = intent.action.toString()
@@ -105,7 +105,7 @@ class PushMessageReceiver : MessagingReceiver() {
 
     override fun onRegistrationFailed(
         context: Context,
-        instance: String
+        instance: String,
     ) {
         Log.d(TAG, "Registration failed for Instance: $instance")
         scope.cancel()
@@ -114,7 +114,7 @@ class PushMessageReceiver : MessagingReceiver() {
 
     override fun onUnregistered(
         context: Context,
-        instance: String
+        instance: String,
     ) {
         val removedEndpoint = PushDistributorHandler.endpoint
         Log.d(TAG, "Endpoint: $removedEndpoint removed for Instance: $instance")

@@ -18,7 +18,7 @@ object Biometrics {
         context: Context,
         keyguardLauncher: ManagedActivityResultLauncher<Intent, ActivityResult>,
         onApproved: () -> Unit,
-        onError: (String, String) -> Unit
+        onError: (String, String) -> Unit,
     ) {
         val fragmentContext = context.getAppCompatActivity()!!
         val keyguardManager =
@@ -34,7 +34,7 @@ object Biometrics {
             val intent =
                 keyguardManager.createConfirmDeviceCredentialIntent(
                     context.getString(R.string.app_name_release),
-                    title
+                    title,
                 )
 
             keyguardLauncher.launch(intent)
@@ -61,7 +61,7 @@ object Biometrics {
                 object : BiometricPrompt.AuthenticationCallback() {
                     override fun onAuthenticationError(
                         errorCode: Int,
-                        errString: CharSequence
+                        errString: CharSequence,
                     ) {
                         super.onAuthenticationError(errorCode, errString)
 
@@ -73,8 +73,8 @@ object Biometrics {
                                     context.getString(R.string.biometric_authentication_failed),
                                     context.getString(
                                         R.string.biometric_authentication_failed_explainer_with_error,
-                                        errString
-                                    )
+                                        errString,
+                                    ),
                                 )
                         }
                     }
@@ -83,7 +83,7 @@ object Biometrics {
                         super.onAuthenticationFailed()
                         onError(
                             context.getString(R.string.biometric_authentication_failed),
-                            context.getString(R.string.biometric_authentication_failed_explainer)
+                            context.getString(R.string.biometric_authentication_failed_explainer),
                         )
                     }
 
@@ -91,7 +91,7 @@ object Biometrics {
                         super.onAuthenticationSucceeded(result)
                         onApproved()
                     }
-                }
+                },
             )
 
         when (biometricManager.canAuthenticate(authenticators)) {

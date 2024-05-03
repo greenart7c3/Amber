@@ -24,7 +24,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.util.Log
-import com.greenart7c3.nostrsigner.nostrsigner
+import com.greenart7c3.nostrsigner.NostrSigner
 import org.unifiedpush.android.connector.UnifiedPush
 
 interface PushDistributorActions {
@@ -38,7 +38,7 @@ interface PushDistributorActions {
 }
 
 object PushDistributorHandler : PushDistributorActions {
-    private val appContext = nostrsigner.instance.applicationContext
+    private val appContext = NostrSigner.instance.applicationContext
     private val unifiedPush: UnifiedPush = UnifiedPush
 
     private var endpointInternal = ""
@@ -76,8 +76,8 @@ object PushDistributorHandler : PushDistributorActions {
                                 appContext.packageManager.getApplicationInfo(
                                     it,
                                     PackageManager.ApplicationInfoFlags.of(
-                                        PackageManager.GET_META_DATA.toLong()
-                                    )
+                                        PackageManager.GET_META_DATA.toLong(),
+                                    ),
                                 )
                             } else {
                                 appContext.packageManager.getApplicationInfo(it, 0)

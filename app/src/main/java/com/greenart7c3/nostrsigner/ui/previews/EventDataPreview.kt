@@ -19,14 +19,23 @@ import com.vitorpamplona.quartz.events.Event
 @Preview(device = "id:Nexus S")
 @Composable
 fun EventDataPreview() {
-    val event = Event("123", "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19", TimeUtils.now(), 1, arrayOf(), "This is a test 123 123 123 123 123 123", "")
+    val event =
+        Event(
+            "123",
+            "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19",
+            TimeUtils.now(),
+            1,
+            arrayOf(),
+            "This is a test 123 123 123 123 123 123",
+            "",
+        )
     val data = event.toJson()
     val remember = remember { mutableStateOf(false) }
 
     NostrSignerTheme(darkTheme = true) {
         Scaffold {
             Box(
-                Modifier.padding(it)
+                Modifier.padding(it),
             ) {
                 EventData(
                     false,
@@ -38,7 +47,7 @@ fun EventDataPreview() {
                     data,
                     SignerType.SIGN_EVENT,
                     { },
-                    { }
+                    { },
                 )
             }
         }

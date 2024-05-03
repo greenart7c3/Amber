@@ -12,7 +12,11 @@ import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 
 class SignerProvider : ContentProvider() {
-    override fun delete(uri: Uri, selection: String?, selectionArgs: Array<String>?): Int {
+    override fun delete(
+        uri: Uri,
+        selection: String?,
+        selectionArgs: Array<String>?,
+    ): Int {
         return 0
     }
 
@@ -20,7 +24,10 @@ class SignerProvider : ContentProvider() {
         return null
     }
 
-    override fun insert(uri: Uri, values: ContentValues?): Uri? {
+    override fun insert(
+        uri: Uri,
+        values: ContentValues?,
+    ): Uri? {
         return null
     }
 
@@ -33,7 +40,7 @@ class SignerProvider : ContentProvider() {
         projection: Array<String>?,
         selection: String?,
         selectionArgs: Array<String>?,
-        sortOrder: String?
+        sortOrder: String?,
     ): Cursor? {
         val appId = BuildConfig.APPLICATION_ID
         return when (uri.toString()) {
@@ -44,19 +51,21 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
-                val permission = nostrsigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
-                    .applicationDao()
-                    .getPermission(
-                        sortOrder ?: packageName,
-                        "SIGN_EVENT",
-                        event.kind
-                    )
+                val permission =
+                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        .applicationDao()
+                        .getPermission(
+                            sortOrder ?: packageName,
+                            "SIGN_EVENT",
+                            event.kind,
+                        )
                 if (currentSelection == "1") {
                     val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
-                        val cursor = MatrixCursor(arrayOf("rejected")).also {
-                            it.addRow(arrayOf("true"))
-                        }
+                        val cursor =
+                            MatrixCursor(arrayOf("rejected")).also {
+                                it.addRow(arrayOf("true"))
+                            }
                         return cursor
                     }
                 } else {
@@ -67,10 +76,21 @@ class SignerProvider : ContentProvider() {
                 var cursor: MatrixCursor? = null
 
                 account.signer.sign<Event>(event.createdAt, event.kind, event.tags, event.content) { signedEvent ->
-                    val localCursor = MatrixCursor(arrayOf("signature", "event")).also {
-                        val signature = if (event is LnZapRequestEvent && event.tags.any { tag -> tag.any { t -> t == "anon" } }) signedEvent.toJson() else signedEvent.sig
-                        it.addRow(arrayOf(signature, signedEvent.toJson()))
-                    }
+                    val localCursor =
+                        MatrixCursor(arrayOf("signature", "event")).also {
+                            val signature =
+                                if (event is LnZapRequestEvent &&
+                                    event.tags.any {
+                                            tag ->
+                                        tag.any { t -> t == "anon" }
+                                    }
+                                ) {
+                                    signedEvent.toJson()
+                                } else {
+                                    signedEvent.sig
+                                }
+                            it.addRow(arrayOf(signature, signedEvent.toJson()))
+                        }
                     cursor = localCursor
                 }
 
@@ -84,7 +104,8 @@ class SignerProvider : ContentProvider() {
             "content://$appId.NIP44_DECRYPT",
             "content://$appId.NIP04_ENCRYPT",
             "content://$appId.NIP44_ENCRYPT",
-            "content://$appId.DECRYPT_ZAP_EVENT" -> {
+            "content://$appId.DECRYPT_ZAP_EVENT",
+            -> {
                 val packageName = callingPackage ?: return null
                 val content = projection?.first() ?: return null
                 if (!LocalPreferences.containsAccount(projection[2])) return null
@@ -93,19 +114,21 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
 
-                val permission = nostrsigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
-                    .applicationDao()
-                    .getPermission(
-                        sortOrder ?: packageName,
-                        uri.toString().replace("content://$appId.", "")
-                    )
+                val permission =
+                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        .applicationDao()
+                        .getPermission(
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                        )
 
                 if (currentSelection == "1") {
                     val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
-                        val cursor = MatrixCursor(arrayOf("rejected")).also {
-                            it.addRow(arrayOf("true"))
-                        }
+                        val cursor =
+                            MatrixCursor(arrayOf("rejected")).also {
+                                it.addRow(arrayOf("true"))
+                            }
                         return cursor
                     }
                 } else {
@@ -113,25 +136,27 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) return null
                 }
 
-                val type = when (stringType) {
-                    "NIP04_DECRYPT" -> SignerType.NIP04_DECRYPT
-                    "NIP44_DECRYPT" -> SignerType.NIP44_DECRYPT
-                    "NIP04_ENCRYPT" -> SignerType.NIP04_ENCRYPT
-                    "NIP44_ENCRYPT" -> SignerType.NIP44_ENCRYPT
-                    "DECRYPT_ZAP_EVENT" -> SignerType.DECRYPT_ZAP_EVENT
-                    else -> null
-                } ?: return null
+                val type =
+                    when (stringType) {
+                        "NIP04_DECRYPT" -> SignerType.NIP04_DECRYPT
+                        "NIP44_DECRYPT" -> SignerType.NIP44_DECRYPT
+                        "NIP04_ENCRYPT" -> SignerType.NIP04_ENCRYPT
+                        "NIP44_ENCRYPT" -> SignerType.NIP44_ENCRYPT
+                        "DECRYPT_ZAP_EVENT" -> SignerType.DECRYPT_ZAP_EVENT
+                        else -> null
+                    } ?: return null
 
-                val result = try {
-                    AmberUtils.encryptOrDecryptData(
-                        content,
-                        type,
-                        account,
-                        pubkey
-                    ) ?: "Could not decrypt the message"
-                } catch (e: Exception) {
-                    "Could not decrypt the message"
-                }
+                val result =
+                    try {
+                        AmberUtils.encryptOrDecryptData(
+                            content,
+                            type,
+                            account,
+                            pubkey,
+                        ) ?: "Could not decrypt the message"
+                    } catch (e: Exception) {
+                        "Could not decrypt the message"
+                    }
 
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
                     return null
@@ -147,19 +172,21 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val currentSelection = selection ?: "0"
 
-                val permission = nostrsigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
-                    .applicationDao()
-                    .getPermission(
-                        sortOrder ?: packageName,
-                        "GET_PUBLIC_KEY"
-                    )
+                val permission =
+                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        .applicationDao()
+                        .getPermission(
+                            sortOrder ?: packageName,
+                            "GET_PUBLIC_KEY",
+                        )
 
                 if (currentSelection == "1") {
                     val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
-                        val cursor = MatrixCursor(arrayOf("rejected")).also {
-                            it.addRow(arrayOf("true"))
-                        }
+                        val cursor =
+                            MatrixCursor(arrayOf("rejected")).also {
+                                it.addRow(arrayOf("true"))
+                            }
                         return cursor
                     }
                 } else {
@@ -180,7 +207,7 @@ class SignerProvider : ContentProvider() {
         uri: Uri,
         values: ContentValues?,
         selection: String?,
-        selectionArgs: Array<String>?
+        selectionArgs: Array<String>?,
     ): Int {
         return 0
     }

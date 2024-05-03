@@ -20,31 +20,32 @@ import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 @Composable
 fun AcceptRejectButtons(
     onAccept: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
 ) {
     Row(
         Modifier
             .fillMaxWidth()
             .padding(10.dp),
-        Arrangement.Center
+        Arrangement.Center,
     ) {
         Button(
             shape = ButtonBorder,
             onClick = onReject,
-            colors = ButtonDefaults.buttonColors(
-                containerColor = Color(0xFF5A5554)
-            )
+            colors =
+                ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF5A5554),
+                ),
         ) {
             Text(stringResource(R.string.reject))
         }
         Spacer(modifier = Modifier.width(8.dp))
         Row(
-            Modifier.weight(0.8f)
+            Modifier.weight(0.8f),
         ) {
             Button(
                 modifier = Modifier.fillMaxWidth(),
                 shape = ButtonBorder,
-                onClick = onAccept
+                onClick = onAccept,
             ) {
                 Text(stringResource(R.string.accept))
             }

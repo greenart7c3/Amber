@@ -62,20 +62,20 @@ fun TextSpinner(
     placeholder: String,
     options: ImmutableList<TitleExplainer>,
     onSelect: (Int) -> Unit,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     TextSpinner(
         placeholder,
         options,
         onSelect,
-        modifier
+        modifier,
     ) { currentOption, modifier ->
         OutlinedTextField(
             value = currentOption,
             onValueChange = {},
             readOnly = true,
             label = { label?.let { Text(it) } },
-            modifier = modifier
+            modifier = modifier,
         )
     }
 }
@@ -86,7 +86,7 @@ fun TextSpinner(
     options: ImmutableList<TitleExplainer>,
     onSelect: (Int) -> Unit,
     modifier: Modifier = Modifier,
-    mainElement: @Composable (currentOption: String, modifier: Modifier) -> Unit
+    mainElement: @Composable (currentOption: String, modifier: Modifier) -> Unit,
 ) {
     val focusRequester = remember { FocusRequester() }
     val interactionSource = remember { MutableInteractionSource() }
@@ -95,21 +95,21 @@ fun TextSpinner(
 
     Box(
         modifier = modifier,
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         mainElement(
             currentText,
-            remember { Modifier.fillMaxWidth().focusRequester(focusRequester) }
+            remember { Modifier.fillMaxWidth().focusRequester(focusRequester) },
         )
         Box(
             modifier =
-            Modifier.matchParentSize().clickable(
-                interactionSource = interactionSource,
-                indication = null
-            ) {
-                optionsShowing = true
-                focusRequester.requestFocus()
-            }
+                Modifier.matchParentSize().clickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                ) {
+                    optionsShowing = true
+                    focusRequester.requestFocus()
+                },
         )
     }
 
@@ -129,17 +129,17 @@ fun SpinnerSelectionDialog(
     title: String? = null,
     options: ImmutableList<TitleExplainer>,
     onDismiss: () -> Unit,
-    onSelect: (Int) -> Unit
+    onSelect: (Int) -> Unit,
 ) {
     SpinnerSelectionDialog(
         title = title,
         options = options,
         onSelect = onSelect,
-        onDismiss = onDismiss
+        onDismiss = onDismiss,
     ) { item ->
         Row(
             horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth()
+            modifier = Modifier.fillMaxWidth(),
         ) {
             Text(text = item.title, color = MaterialTheme.colorScheme.onSurface)
         }
@@ -147,7 +147,7 @@ fun SpinnerSelectionDialog(
             Spacer(modifier = Modifier.height(5.dp))
             Row(
                 horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth()
+                modifier = Modifier.fillMaxWidth(),
             ) {
                 Text(text = it, color = Color.Gray, fontSize = 14.sp)
             }
@@ -161,24 +161,24 @@ fun <T> SpinnerSelectionDialog(
     options: ImmutableList<T>,
     onSelect: (Int) -> Unit,
     onDismiss: () -> Unit,
-    onRenderItem: @Composable (T) -> Unit
+    onRenderItem: @Composable (T) -> Unit,
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
             border = BorderStroke(0.25.dp, Color.LightGray),
-            shape = RoundedCornerShape(5.dp)
+            shape = RoundedCornerShape(5.dp),
         ) {
             LazyColumn {
                 title?.let {
                     item {
                         Row(
                             modifier = Modifier.fillMaxWidth().padding(16.dp, 16.dp),
-                            horizontalArrangement = Arrangement.Center
+                            horizontalArrangement = Arrangement.Center,
                         ) {
                             Text(
                                 text = title,
                                 color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold
+                                fontWeight = FontWeight.Bold,
                             )
                         }
                         HorizontalDivider(color = Color.LightGray, thickness = 0.25.dp)
@@ -186,7 +186,7 @@ fun <T> SpinnerSelectionDialog(
                 }
                 itemsIndexed(options) { index, item ->
                     Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onSelect(index) }.padding(16.dp, 16.dp)
+                        modifier = Modifier.fillMaxWidth().clickable { onSelect(index) }.padding(16.dp, 16.dp),
                     ) {
                         Column { onRenderItem(item) }
                     }

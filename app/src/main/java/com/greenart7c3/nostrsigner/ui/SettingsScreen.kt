@@ -46,9 +46,9 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -73,7 +73,7 @@ import kotlinx.coroutines.launch
 fun SettingsScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
-    account: Account
+    account: Account,
 ) {
     var backupDialogOpen by remember { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
@@ -84,15 +84,17 @@ fun SettingsScreen(
     var conectOrbotDialogOpen by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
 
-    val sheetState = rememberModalBottomSheetState(
-        confirmValueChange = { it != SheetValue.PartiallyExpanded },
-        skipPartiallyExpanded = true
-    )
+    val sheetState =
+        rememberModalBottomSheetState(
+            confirmValueChange = { it != SheetValue.PartiallyExpanded },
+            skipPartiallyExpanded = true,
+        )
     val scope = rememberCoroutineScope()
-    val notificationItems = persistentListOf(
-        TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
-        TitleExplainer(stringResource(NotificationType.DIRECT.resourceId))
-    )
+    val notificationItems =
+        persistentListOf(
+            TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
+            TitleExplainer(stringResource(NotificationType.DIRECT.resourceId)),
+        )
     var notificationTypeDialog by remember { mutableStateOf(false) }
 
     if (shouldShowBottomSheet) {
@@ -105,7 +107,7 @@ fun SettingsScreen(
                     shouldShowBottomSheet = false
                     sheetState.hide()
                 }
-            }
+            },
         )
     }
 
@@ -117,16 +119,16 @@ fun SettingsScreen(
             onDismissRequest = {
                 notificationTypeDialog = false
             },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
             Surface(Modifier.fillMaxSize()) {
                 Column(
-                    modifier = Modifier.padding(10.dp)
+                    modifier = Modifier.padding(10.dp),
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth()
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         CloseButton {
                             notificationTypeDialog = false
@@ -137,20 +139,20 @@ fun SettingsScreen(
                             scope.launch(Dispatchers.IO) {
                                 LocalPreferences.updateNotificationType(parseNotificationType(notificationItemsIndex))
                                 if (notificationItemsIndex == 0) {
-                                    nostrsigner.instance.applicationContext.stopService(
+                                    NostrSigner.instance.applicationContext.stopService(
                                         Intent(
-                                            nostrsigner.instance.applicationContext,
-                                            ConnectivityService::class.java
-                                        )
+                                            NostrSigner.instance.applicationContext,
+                                            ConnectivityService::class.java,
+                                        ),
                                     )
                                     NotificationDataSource.stopSync()
                                     RelayPool.disconnect()
                                 } else {
-                                    nostrsigner.instance.applicationContext.startService(
+                                    NostrSigner.instance.applicationContext.startService(
                                         Intent(
-                                            nostrsigner.instance.applicationContext,
-                                            ConnectivityService::class.java
-                                        )
+                                            NostrSigner.instance.applicationContext,
+                                            ConnectivityService::class.java,
+                                        ),
                                     )
                                     NotificationDataSource.start()
                                 }
@@ -161,13 +163,13 @@ fun SettingsScreen(
                     Column {
                         Box(
                             Modifier
-                                .padding(8.dp)
+                                .padding(8.dp),
                         ) {
-                            SettingsRow(
+                            settingsRow(
                                 R.string.notification_type,
                                 R.string.select_the_type_of_notification_you_want_to_receive,
                                 notificationItems,
-                                notificationItemsIndex
+                                notificationItemsIndex,
                             ) {
                                 notificationItemsIndex = it
                             }
@@ -186,16 +188,16 @@ fun SettingsScreen(
             onConfirm = {
                 logoutDialog = false
                 accountStateViewModel.logOff(account.keyPair.pubKey.toNpub())
-            }
+            },
         )
     }
 
     Column(
-        modifier
+        modifier,
     ) {
         Box(
             Modifier
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             IconRow(
                 title = "Accounts",
@@ -206,12 +208,12 @@ fun SettingsScreen(
                         sheetState.show()
                         shouldShowBottomSheet = true
                     }
-                }
+                },
             )
         }
         Box(
             Modifier
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.backup_keys),
@@ -219,21 +221,21 @@ fun SettingsScreen(
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
                     backupDialogOpen = true
-                }
+                },
             )
         }
         if (BuildConfig.FLAVOR != "offline") {
             Box(
                 Modifier
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 IconRow(
                     title =
-                    if (checked) {
-                        stringResource(R.string.disconnect_from_your_orbot_setup)
-                    } else {
-                        stringResource(R.string.connect_via_tor_short)
-                    },
+                        if (checked) {
+                            stringResource(R.string.disconnect_from_your_orbot_setup)
+                        } else {
+                            stringResource(R.string.connect_via_tor_short)
+                        },
                     icon = R.drawable.ic_tor,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onLongClick = {
@@ -245,13 +247,13 @@ fun SettingsScreen(
                         } else {
                             conectOrbotDialogOpen = true
                         }
-                    }
+                    },
                 )
             }
 
             Box(
                 Modifier
-                    .padding(16.dp)
+                    .padding(16.dp),
             ) {
                 IconRow(
                     title = stringResource(R.string.notification_type),
@@ -259,7 +261,7 @@ fun SettingsScreen(
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
                         notificationTypeDialog = true
-                    }
+                    },
                 )
             }
         }
@@ -270,18 +272,22 @@ fun SettingsScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
-            fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(R.string.support_development)}\n\n${context.getString(R.string.source_code)}",
-            hyperLinks = mutableMapOf(
-                stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
-                stringResource(R.string.support_development) to stringResource(R.string.support_development_uri)
-            ),
-            textStyle = TextStyle(
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.inverseSurface
-            ),
+            fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(
+                R.string.support_development,
+            )}\n\n${context.getString(R.string.source_code)}",
+            hyperLinks =
+                mutableMapOf(
+                    stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
+                    stringResource(R.string.support_development) to stringResource(R.string.support_development_uri),
+                ),
+            textStyle =
+                TextStyle(
+                    textAlign = TextAlign.Center,
+                    color = MaterialTheme.colorScheme.inverseSurface,
+                ),
             linkTextColor = MaterialTheme.colorScheme.primary,
             linkTextDecoration = TextDecoration.Underline,
-            fontSize = 18.sp
+            fontSize = 18.sp,
         )
     }
 
@@ -299,11 +305,11 @@ fun SettingsScreen(
                     Toast.makeText(
                         context,
                         context.getString(R.string.could_not_connect_to_tor),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     ).show()
                 }
             },
-            proxyPort
+            proxyPort,
         )
     }
 
@@ -318,18 +324,18 @@ fun SettingsScreen(
                         disconnectTorDialog = false
                         checked = false
                         LocalPreferences.updateProxy(false, proxyPort.value.toInt())
-                    }
+                    },
                 ) {
                     Text(text = stringResource(R.string.yes))
                 }
             },
             dismissButton = {
                 TextButton(
-                    onClick = { disconnectTorDialog = false }
+                    onClick = { disconnectTorDialog = false },
                 ) {
                     Text(text = stringResource(R.string.no))
                 }
-            }
+            },
         )
     }
 
@@ -339,32 +345,32 @@ fun SettingsScreen(
 }
 
 @Composable
-fun SettingsRow(
+fun settingsRow(
     name: Int,
     description: Int,
     selectedItens: ImmutableList<TitleExplainer>,
     selectedIndex: Int,
-    onSelect: (Int) -> Unit
+    onSelect: (Int) -> Unit,
 ) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier.fillMaxWidth()
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column(
             modifier = Modifier.weight(2.0f),
-            verticalArrangement = Arrangement.spacedBy(3.dp)
+            verticalArrangement = Arrangement.spacedBy(3.dp),
         ) {
             Text(
                 text = stringResource(name),
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
             Text(
                 text = stringResource(description),
                 style = MaterialTheme.typography.bodySmall,
                 color = Color.Gray,
                 maxLines = 2,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
 
@@ -373,16 +379,17 @@ fun SettingsRow(
             placeholder = selectedItens[selectedIndex].title,
             options = selectedItens,
             onSelect = onSelect,
-            modifier = Modifier
-                .windowInsetsPadding(WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
-                .weight(1f)
+            modifier =
+                Modifier
+                    .windowInsetsPadding(WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
+                    .weight(1f),
         )
     }
 }
 
 enum class NotificationType(val screenCode: Int, val resourceId: Int) {
     PUSH(0, R.string.push_notifications),
-    DIRECT(1, R.string.direct_connection)
+    DIRECT(1, R.string.direct_connection),
 }
 
 fun parseNotificationType(screenCode: Int): NotificationType {

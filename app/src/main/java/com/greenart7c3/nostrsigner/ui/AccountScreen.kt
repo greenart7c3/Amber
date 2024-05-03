@@ -16,8 +16,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.service.ConnectivityService
@@ -36,7 +36,7 @@ fun AccountScreen(
     intent: Intent,
     packageName: String?,
     appName: String?,
-    flow: MutableStateFlow<List<IntentData>>
+    flow: MutableStateFlow<List<IntentData>>,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val intents by flow.collectAsState(initial = emptyList())
@@ -45,7 +45,7 @@ fun AccountScreen(
         Crossfade(
             targetState = accountState,
             animationSpec = tween(durationMillis = 100),
-            label = "AccountScreen"
+            label = "AccountScreen",
         ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {
@@ -59,9 +59,10 @@ fun AccountScreen(
                         IntentUtils.getIntentData(intent, packageName, intent.getStringExtra("route"), state.account) {
                             intentData = it
                         }
-                        val data = intents.firstOrNull {
-                            it.currentAccount.isNotBlank()
-                        }
+                        val data =
+                            intents.firstOrNull {
+                                it.currentAccount.isNotBlank()
+                            }
 
                         data?.bunkerRequest?.let {
                             if (it.currentAccount.isNotBlank()) {
@@ -78,14 +79,15 @@ fun AccountScreen(
                         }
                     }
 
-                    val newIntents = intents.ifEmpty {
-                        if (intentData == null) {
-                            listOf()
-                        } else {
-                            listOf(intentData)
-                        }
-                    }.mapNotNull { it }
-                    val database = nostrsigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
+                    val newIntents =
+                        intents.ifEmpty {
+                            if (intentData == null) {
+                                listOf()
+                            } else {
+                                listOf(intentData)
+                            }
+                        }.mapNotNull { it }
+                    val database = NostrSigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
                     val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
                     val scope = rememberCoroutineScope()
 
@@ -93,7 +95,7 @@ fun AccountScreen(
                         scope.launch(Dispatchers.IO) {
                             val relays = mutableListOf<Relay>()
                             LocalPreferences.allSavedAccounts().forEach { acc ->
-                                val db = nostrsigner.instance.getDatabase(acc.npub)
+                                val db = NostrSigner.instance.getDatabase(acc.npub)
                                 db.applicationDao().getAllApplications().forEach {
                                     it.application.relays.forEach { url ->
                                         if (url.isNotBlank()) {
@@ -108,7 +110,9 @@ fun AccountScreen(
                             delay(1000)
                             Client.addRelays(relays.toTypedArray())
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
-                                nostrsigner.instance.applicationContext.startService(Intent(nostrsigner.instance.applicationContext, ConnectivityService::class.java))
+                                NostrSigner.instance.applicationContext.startService(
+                                    Intent(NostrSigner.instance.applicationContext, ConnectivityService::class.java),
+                                )
                                 Client.reconnect(relays.toTypedArray())
                                 NotificationDataSource.start()
                             }

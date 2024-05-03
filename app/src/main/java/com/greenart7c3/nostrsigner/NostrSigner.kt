@@ -4,8 +4,9 @@ import android.app.Application
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import java.util.concurrent.ConcurrentHashMap
 
-class nostrsigner : Application() {
+class NostrSigner : Application() {
     private var databases = ConcurrentHashMap<String, AppDatabase>()
+
     override fun onCreate() {
         super.onCreate()
         instance = this
@@ -23,7 +24,7 @@ class nostrsigner : Application() {
     }
 
     companion object {
-        lateinit var instance: nostrsigner
+        lateinit var instance: NostrSigner
             private set
     }
 }

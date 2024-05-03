@@ -5,20 +5,20 @@ appcompat = "1.6.1"
 biometricKtx = "1.2.0-alpha05"
 converterGson = "2.9.0"
 core = "3.5.3"
-coreKtx = "1.13.0"
+coreKtx = "1.13.1"
 coreSplashscreen = "1.0.1"
 espressoCore = "3.5.1"
-firebaseBom = "32.8.1"
-firebaseMessaging = "23.4.1"
+firebaseBom = "33.0.0"
+firebaseMessaging = "24.0.0"
 jna = "5.14.0"
 junit = "4.13.2"
-junitVersion = "1.2.0-alpha03"
+junitVersion = "1.2.0-alpha04"
 lifecycle_version = "2.7.0"
 material3 = "1.2.1"
 mockk = "1.13.10"
 nav_version = "2.7.7"
 quartz = "0.86.5"
-compose_ui = "1.6.6"
+compose_ui = "1.6.7"
 richtextUi = "077a2cde64"
 roomKtx = "2.6.1"
 securityCryptoKtx = "1.1.0-alpha06"
@@ -26,6 +26,10 @@ zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.0.0-alpha.14"
 kotlin = "1.9.23"
 workRuntimeKtx = "2.9.0"
+agp = "8.4.0"
+ktlint = "12.1.0"
+gms = "4.4.1"
+ksp = "1.9.23-1.0.20"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -68,3 +72,9 @@ work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version
 
 [plugins]
 jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+androidLibrary = { id = "com.android.library", version.ref = "agp" }
+androidApplication = { id = "com.android.application", version.ref = "agp" }
+gradle_ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "ktlint" }
+google_gms = { id = "com.google.gms.google-services", version = "gms" }
+serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
+kotlin_ksp = { id = "com.google.devtools.ksp", version = "ksp" }

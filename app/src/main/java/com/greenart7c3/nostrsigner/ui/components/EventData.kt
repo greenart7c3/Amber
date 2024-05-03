@@ -39,7 +39,7 @@ fun EventData(
     rawJson: String,
     type: SignerType,
     onAccept: () -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
 ) {
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
@@ -48,7 +48,7 @@ fun EventData(
     Column(
         Modifier
             .fillMaxSize()
-            .padding(8.dp)
+            .padding(8.dp),
     ) {
         val permission = Permission("sign_event", event.kind)
         val text = "wants you to sign a $permission"
@@ -59,28 +59,30 @@ fun EventData(
                 }
                 append(" $text")
             },
-            fontSize = 18.sp
+            fontSize = 18.sp,
         )
         Spacer(Modifier.size(4.dp))
 
         val content = if (event.kind == 22242) AmberEvent.relay(event) else event.content
         if (content.isNotBlank()) {
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
+                modifier =
+                    Modifier
+                        .fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Text(
                         "Event content",
-                        fontWeight = FontWeight.Bold
+                        fontWeight = FontWeight.Bold,
                     )
                     Text(
                         content,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                     )
                 }
             }
@@ -89,7 +91,7 @@ fun EventData(
             onCLick = {
                 showMore = !showMore
             },
-            if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details)
+            if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details),
         )
         if (showMore) {
             RawJson(rawJson, "", Modifier.weight(1f), type = type)
@@ -101,14 +103,14 @@ fun EventData(
             shouldRunOnAccept,
             remember.value,
             packageName,
-            onAccept
+            onAccept,
         ) {
             remember.value = !remember.value
         }
 
         AcceptRejectButtons(
             onAccept,
-            onReject
+            onReject,
         )
     }
 }

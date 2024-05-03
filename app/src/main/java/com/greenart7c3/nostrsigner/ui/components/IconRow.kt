@@ -20,33 +20,41 @@ import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun IconRow(title: String, icon: ImageVector, tint: Color, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
+fun IconRow(
+    title: String,
+    icon: ImageVector,
+    tint: Color,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 25.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 15.dp, horizontal = 25.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 icon,
                 null,
                 modifier = Modifier.size(22.dp),
-                tint = tint
+                tint = tint,
             )
             Text(
                 modifier = Modifier.padding(start = 16.dp),
                 text = title,
                 fontSize = 18.sp,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }
@@ -54,33 +62,41 @@ fun IconRow(title: String, icon: ImageVector, tint: Color, onClick: () -> Unit, 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun IconRow(title: String, icon: Int, tint: Color, onClick: () -> Unit, onLongClick: (() -> Unit)? = null) {
+fun IconRow(
+    title: String,
+    icon: Int,
+    tint: Color,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .combinedClickable(
-                onClick = onClick,
-                onLongClick = onLongClick
-            )
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .combinedClickable(
+                    onClick = onClick,
+                    onLongClick = onLongClick,
+                ),
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 25.dp),
-            verticalAlignment = Alignment.CenterVertically
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 15.dp, horizontal = 25.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
                 painterResource(icon),
                 null,
                 modifier = Modifier.size(22.dp),
-                tint = tint
+                tint = tint,
             )
             Text(
                 modifier = Modifier.padding(start = 16.dp),
                 text = title,
                 fontSize = 18.sp,
                 maxLines = 1,
-                overflow = TextOverflow.Ellipsis
+                overflow = TextOverflow.Ellipsis,
             )
         }
     }

@@ -18,7 +18,7 @@ fun RememberMyChoice(
     remember: Boolean,
     packageName: String?,
     onAccept: () -> Unit,
-    onChanged: () -> Unit
+    onChanged: () -> Unit,
 ) {
     if (shouldRunOnAccept) {
         LaunchedEffect(Unit) {
@@ -29,20 +29,21 @@ fun RememberMyChoice(
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .clickable {
-                    onChanged()
-                }
+            modifier =
+                Modifier
+                    .clickable {
+                        onChanged()
+                    },
         ) {
             Text(
                 modifier = Modifier.weight(1f),
-                text = stringResource(R.string.remember_my_choice_and_don_t_ask_again)
+                text = stringResource(R.string.remember_my_choice_and_don_t_ask_again),
             )
             Switch(
                 checked = remember,
                 onCheckedChange = {
                     onChanged()
-                }
+                },
             )
         }
     }

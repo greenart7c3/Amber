@@ -15,7 +15,10 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.encoders.toNpub
 
 @Composable
-fun ActiveMarker(acc: AccountInfo, account: Account) {
+fun ActiveMarker(
+    acc: AccountInfo,
+    account: Account,
+) {
     val isCurrentUser by remember(account) {
         derivedStateOf {
             account.keyPair.pubKey.toNpub() == acc.npub
@@ -26,7 +29,7 @@ fun ActiveMarker(acc: AccountInfo, account: Account) {
         Icon(
             imageVector = Icons.Default.RadioButtonChecked,
             contentDescription = stringResource(R.string.active_account),
-            tint = MaterialTheme.colorScheme.secondary
+            tint = MaterialTheme.colorScheme.secondary,
         )
     }
 }

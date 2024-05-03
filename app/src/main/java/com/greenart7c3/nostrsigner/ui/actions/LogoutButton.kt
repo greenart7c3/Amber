@@ -14,8 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -25,7 +25,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun LogoutButton(
     acc: AccountInfo,
-    accountStateViewModel: AccountStateViewModel
+    accountStateViewModel: AccountStateViewModel,
 ) {
     val scope = rememberCoroutineScope()
     var logoutDialog by remember { mutableStateOf(false) }
@@ -38,7 +38,7 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(acc.npub)
                     account?.let {
-                        val database = nostrsigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
                         val permissions = database.applicationDao().getAll(it.keyPair.pubKey.toHexKey())
                         permissions.forEach { app ->
                             database.applicationDao().delete(app)
@@ -48,17 +48,17 @@ fun LogoutButton(
                     logoutDialog = false
                     accountStateViewModel.logOff(acc.npub)
                 }
-            }
+            },
         )
     }
 
     IconButton(
-        onClick = { logoutDialog = true }
+        onClick = { logoutDialog = true },
     ) {
         Icon(
             imageVector = Icons.AutoMirrored.Default.Logout,
             contentDescription = stringResource(R.string.logout),
-            tint = MaterialTheme.colorScheme.onSurface
+            tint = MaterialTheme.colorScheme.onSurface,
         )
     }
 }

@@ -10,7 +10,11 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 
 @Composable
-fun PostButton(modifier: Modifier = Modifier, isActive: Boolean, onPost: () -> Unit = {}) {
+fun PostButton(
+    modifier: Modifier = Modifier,
+    isActive: Boolean,
+    onPost: () -> Unit = {},
+) {
     Button(
         enabled = isActive,
         modifier = modifier,
@@ -20,7 +24,7 @@ fun PostButton(modifier: Modifier = Modifier, isActive: Boolean, onPost: () -> U
             }
         },
         shape = ButtonBorder,
-        contentPadding = PaddingValues(0.dp)
+        contentPadding = PaddingValues(0.dp),
     ) {
         Text(text = "Save", color = Color.White)
     }

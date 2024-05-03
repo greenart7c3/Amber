@@ -33,7 +33,7 @@ data class RelaySetupInfo(
     val uploadCountInBytes: Int = 0,
     val spamCount: Int = 0,
     val feedTypes: Set<FeedType>,
-    val paidRelay: Boolean = false
+    val paidRelay: Boolean = false,
 ) {
     val briefInfo: RelayBriefInfoCache.RelayBriefInfo = RelayBriefInfoCache.RelayBriefInfo(url)
 }
@@ -46,7 +46,7 @@ object RelayBriefInfoCache {
         val url: String,
         val displayUrl: String =
             url.trim().removePrefix("wss://").removePrefix("ws://").removeSuffix("/").intern(),
-        val favIcon: String = "https://$displayUrl/favicon.ico".intern()
+        val favIcon: String = "https://$displayUrl/favicon.ico".intern(),
     )
 
     fun get(url: String): RelayBriefInfo {

@@ -65,20 +65,20 @@ fun ConnectOrbotDialog(
     onClose: () -> Unit,
     onPost: () -> Unit,
     onError: (String) -> Unit,
-    portNumber: MutableState<String>
+    portNumber: MutableState<String>,
 ) {
     Dialog(
         onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
         Surface {
             Column(
-                modifier = Modifier.padding(10.dp)
+                modifier = Modifier.padding(10.dp),
             ) {
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth()
+                    modifier = Modifier.fillMaxWidth(),
                 ) {
                     CloseButton {
                         onClose()
@@ -98,23 +98,23 @@ fun ConnectOrbotDialog(
 
                             onPost()
                         },
-                        isActive = true
+                        isActive = true,
                     )
                 }
 
                 Column(
-                    modifier = Modifier.padding(30.dp)
+                    modifier = Modifier.padding(30.dp),
                 ) {
                     val myMarkDownStyle =
                         RichTextDefaults.copy(
                             stringStyle =
-                            RichTextDefaults.stringStyle?.copy(
-                                linkStyle =
-                                SpanStyle(
-                                    textDecoration = TextDecoration.Underline,
-                                    color = MaterialTheme.colorScheme.primary
-                                )
-                            )
+                                RichTextDefaults.stringStyle?.copy(
+                                    linkStyle =
+                                        SpanStyle(
+                                            textDecoration = TextDecoration.Underline,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        ),
+                                ),
                         )
 
                     Row {
@@ -127,7 +127,7 @@ fun ConnectOrbotDialog(
 
                         RichText(
                             style = myMarkDownStyle,
-                            renderer = null
+                            renderer = null,
                         ) {
                             BasicMarkdown(astNode1)
                         }
@@ -137,22 +137,22 @@ fun ConnectOrbotDialog(
 
                     Row(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center
+                        horizontalArrangement = Arrangement.Center,
                     ) {
                         OutlinedTextField(
                             value = portNumber.value,
                             onValueChange = { portNumber.value = it },
                             keyboardOptions =
-                            KeyboardOptions.Default.copy(
-                                capitalization = KeyboardCapitalization.None,
-                                keyboardType = KeyboardType.Number
-                            ),
+                                KeyboardOptions.Default.copy(
+                                    capitalization = KeyboardCapitalization.None,
+                                    keyboardType = KeyboardType.Number,
+                                ),
                             label = { Text(text = stringResource(R.string.orbot_socks_port)) },
                             placeholder = {
                                 Text(
-                                    text = "9050"
+                                    text = "9050",
                                 )
-                            }
+                            },
                         )
                     }
                 }
@@ -165,7 +165,7 @@ fun ConnectOrbotDialog(
 fun UseOrbotButton(
     onPost: () -> Unit = {},
     isActive: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     Button(
         modifier = modifier,
@@ -176,9 +176,9 @@ fun UseOrbotButton(
         },
         shape = ButtonBorder,
         colors =
-        ButtonDefaults.buttonColors(
-            containerColor = if (isActive) MaterialTheme.colorScheme.primary else Color.Gray
-        )
+            ButtonDefaults.buttonColors(
+                containerColor = if (isActive) MaterialTheme.colorScheme.primary else Color.Gray,
+            ),
     ) {
         Text(text = stringResource(R.string.use_orbot), color = Color.White)
     }

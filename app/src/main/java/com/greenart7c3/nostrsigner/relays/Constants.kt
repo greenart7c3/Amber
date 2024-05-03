@@ -40,25 +40,25 @@ object Constants {
                 "wss://nostr.bitcoiner.social",
                 read = true,
                 write = true,
-                feedTypes = activeTypesChats
+                feedTypes = activeTypesChats,
             ),
             RelaySetupInfo(
                 "wss://relay.nostr.bg",
                 read = true,
                 write = true,
-                feedTypes = activeTypesChats
+                feedTypes = activeTypesChats,
             ),
             RelaySetupInfo(
                 "wss://nostr.oxtr.dev",
                 read = true,
                 write = true,
-                feedTypes = activeTypesChats
+                feedTypes = activeTypesChats,
             ),
             RelaySetupInfo(
                 "wss://nostr-pub.wellorder.net",
                 read = true,
                 write = true,
-                feedTypes = activeTypesChats
+                feedTypes = activeTypesChats,
             ),
             RelaySetupInfo("wss://nostr.mom", read = true, write = true, feedTypes = activeTypesGlobalChats),
             RelaySetupInfo("wss://nos.lol", read = true, write = true, feedTypes = activeTypesGlobalChats),
@@ -84,76 +84,76 @@ object Constants {
                 "wss://relay.snort.social",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://relay.nostr.com.au",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://eden.nostr.land",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://nostr.milou.lol",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://puravida.nostr.land",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://nostr.wine",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://nostr.inosta.cc",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://atlas.nostr.land",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://relay.orangepill.dev",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             RelaySetupInfo(
                 "wss://relay.nostrati.com",
                 read = true,
                 write = false,
-                feedTypes = activeTypesGlobalChats
+                feedTypes = activeTypesGlobalChats,
             ),
             // Supporting NIP-50
             RelaySetupInfo(
                 "wss://relay.nostr.band",
                 read = true,
                 write = false,
-                feedTypes = activeTypesSearch
+                feedTypes = activeTypesSearch,
             ),
             RelaySetupInfo("wss://nostr.wine", read = true, write = false, feedTypes = activeTypesSearch),
             RelaySetupInfo(
                 "wss://relay.noswhere.com",
                 read = true,
                 write = false,
-                feedTypes = activeTypesSearch
-            )
+                feedTypes = activeTypesSearch,
+            ),
         )
 
     val forcedRelayForSearch =
@@ -162,15 +162,15 @@ object Constants {
                 "wss://relay.nostr.band",
                 read = true,
                 write = false,
-                feedTypes = activeTypesSearch
+                feedTypes = activeTypesSearch,
             ),
             RelaySetupInfo("wss://nostr.wine", read = true, write = false, feedTypes = activeTypesSearch),
             RelaySetupInfo(
                 "wss://relay.noswhere.com",
                 read = true,
                 write = false,
-                feedTypes = activeTypesSearch
-            )
+                feedTypes = activeTypesSearch,
+            ),
         )
     val forcedRelaysForSearchSet = forcedRelayForSearch.map { it.url }
 }

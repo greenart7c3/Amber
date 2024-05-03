@@ -45,7 +45,7 @@ private object PrefKeys {
 @Immutable
 data class AccountInfo(
     val npub: String,
-    val hasPrivKey: Boolean
+    val hasPrivKey: Boolean,
 )
 
 object LocalPreferences {
@@ -57,7 +57,7 @@ object LocalPreferences {
         return savedAccounts().map { npub ->
             AccountInfo(
                 npub,
-                true
+                true,
             )
         }.toSet().toList()
     }
@@ -113,7 +113,7 @@ object LocalPreferences {
     }
 
     private val prefsDirPath: String
-        get() = "${nostrsigner.instance.filesDir.parent}/shared_prefs/"
+        get() = "${NostrSigner.instance.filesDir.parent}/shared_prefs/"
 
     private fun addAccount(npub: String) {
         val accounts = savedAccounts().toMutableList()
@@ -162,7 +162,7 @@ object LocalPreferences {
     private fun encryptedPreferences(npub: String? = null): SharedPreferences {
         return if (BuildConfig.DEBUG && DEBUG_PLAINTEXT_PREFERENCES) {
             val preferenceFile = if (npub == null) DEBUG_PREFERENCES_NAME else "${DEBUG_PREFERENCES_NAME}_$npub"
-            nostrsigner.instance.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
+            NostrSigner.instance.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
         } else {
             return EncryptedStorage.preferences(npub)
         }
@@ -197,7 +197,10 @@ object LocalPreferences {
         saveToEncryptedStorage(account)
     }
 
-    suspend fun deleteSavedApps(applications: List<ApplicationEntity>, database: AppDatabase) = withContext(Dispatchers.IO) {
+    suspend fun deleteSavedApps(
+        applications: List<ApplicationEntity>,
+        database: AppDatabase,
+    ) = withContext(Dispatchers.IO) {
         applications.forEach {
             database.applicationDao().delete(it)
         }
@@ -218,7 +221,10 @@ object LocalPreferences {
         return loadFromEncryptedStorage(currentAccount())
     }
 
-    fun setAccountName(npub: String, value: String) {
+    fun setAccountName(
+        npub: String,
+        value: String,
+    ) {
         encryptedPreferences(npub).edit().apply {
             putString(PrefKeys.ACCOUNT_NAME, value)
         }.apply()
@@ -233,7 +239,10 @@ object LocalPreferences {
         }
     }
 
-    fun updateProxy(useProxy: Boolean, port: Int) {
+    fun updateProxy(
+        useProxy: Boolean,
+        port: Int,
+    ) {
         val npub = currentAccount() ?: return
         encryptedPreferences(npub).edit().apply {
             putBoolean(PrefKeys.USE_PROXY, useProxy)
@@ -259,7 +268,11 @@ object LocalPreferences {
         }
     }
 
-    private suspend fun convertToDatabase(map: MutableMap<String, Boolean>, pubKey: String, database: AppDatabase) = withContext(Dispatchers.IO) {
+    private suspend fun convertToDatabase(
+        map: MutableMap<String, Boolean>,
+        pubKey: String,
+        database: AppDatabase,
+    ) = withContext(Dispatchers.IO) {
         map.forEach {
             val splitData = it.key.split("-")
             database.applicationDao().deletePermissions(splitData.first())
@@ -277,8 +290,8 @@ object LocalPreferences {
                     pubKey,
                     true,
                     "",
-                    false
-                )
+                    false,
+                ),
             )
             database.applicationDao().insertPermissions(
                 listOf(
@@ -287,9 +300,9 @@ object LocalPreferences {
                         pkKey = splitData.first(),
                         type = splitData[1],
                         kind = runCatching { splitData[2].toInt() }.getOrNull(),
-                        acceptable = it.value
-                    )
-                )
+                        acceptable = it.value,
+                    ),
+                ),
             )
         }
     }
@@ -314,7 +327,7 @@ object LocalPreferences {
                 }
             }
             val localNpub = pubKey.hexToByteArray().toNpub()
-            runBlocking { convertToDatabase(outputMap, pubKey, nostrsigner.instance.getDatabase(localNpub)) }
+            runBlocking { convertToDatabase(outputMap, pubKey, NostrSigner.instance.getDatabase(localNpub)) }
             this.edit().apply {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()
@@ -323,12 +336,13 @@ object LocalPreferences {
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
             val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
             HttpClientManager.setDefaultProxy(proxy)
-            val account = Account(
-                keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
-                name = name,
-                useProxy = useProxy,
-                proxyPort = proxyPort
-            )
+            val account =
+                Account(
+                    keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
+                    name = name,
+                    useProxy = useProxy,
+                    proxyPort = proxyPort,
+                )
             accountCache.put(npub, account)
             return account
         }

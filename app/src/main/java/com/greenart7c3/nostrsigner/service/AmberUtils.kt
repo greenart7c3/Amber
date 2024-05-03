@@ -20,7 +20,12 @@ import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import fr.acinq.secp256k1.Hex
 
 object AmberUtils {
-    fun encryptOrDecryptData(data: String, type: SignerType, account: Account, pubKey: HexKey): String? {
+    fun encryptOrDecryptData(
+        data: String,
+        type: SignerType,
+        account: Account,
+        pubKey: HexKey,
+    ): String? {
         return when (type) {
             SignerType.DECRYPT_ZAP_EVENT -> {
                 decryptZapEvent(data, account)
@@ -29,33 +34,37 @@ object AmberUtils {
                 CryptoUtils.decryptNIP04(
                     data,
                     account.keyPair.privKey!!,
-                    Hex.decode(pubKey)
+                    Hex.decode(pubKey),
                 )
             }
             SignerType.NIP04_ENCRYPT -> {
                 CryptoUtils.encryptNIP04(
                     data,
                     account.keyPair.privKey!!,
-                    Hex.decode(pubKey)
+                    Hex.decode(pubKey),
                 )
             }
             SignerType.NIP44_ENCRYPT -> {
                 CryptoUtils.encryptNIP44v2(
                     data,
                     account.keyPair.privKey!!,
-                    pubKey.hexToByteArray()
+                    pubKey.hexToByteArray(),
                 ).encodePayload()
             }
             else -> {
                 CryptoUtils.decryptNIP44(
                     data,
                     account.keyPair.privKey!!,
-                    pubKey.hexToByteArray()
+                    pubKey.hexToByteArray(),
                 )
             }
         }
     }
-    private fun decryptZapEvent(data: String, account: Account): String? {
+
+    private fun decryptZapEvent(
+        data: String,
+        account: Account,
+    ): String? {
         val event = Event.fromJson(data) as LnZapRequestEvent
 
         val loggedInPrivateKey = account.keyPair.privKey
@@ -70,21 +79,22 @@ object AmberUtils {
                 event.getPrivateZapEvent(loggedInPrivateKey!!, pubkeyToUse)?.toJson() ?: ""
             } else {
                 // if the sender is logged in, these are the params
-                val altPrivateKeyToUse = if (recipientPost != null) {
-                    LnZapRequestEvent.createEncryptionPrivateKey(
-                        loggedInPrivateKey!!.toHexKey(),
-                        recipientPost,
-                        event.createdAt
-                    )
-                } else if (recipientPK != null) {
-                    LnZapRequestEvent.createEncryptionPrivateKey(
-                        loggedInPrivateKey!!.toHexKey(),
-                        recipientPK,
-                        event.createdAt
-                    )
-                } else {
-                    null
-                }
+                val altPrivateKeyToUse =
+                    if (recipientPost != null) {
+                        LnZapRequestEvent.createEncryptionPrivateKey(
+                            loggedInPrivateKey!!.toHexKey(),
+                            recipientPost,
+                            event.createdAt,
+                        )
+                    } else if (recipientPK != null) {
+                        LnZapRequestEvent.createEncryptionPrivateKey(
+                            loggedInPrivateKey!!.toHexKey(),
+                            recipientPK,
+                            event.createdAt,
+                        )
+                    } else {
+                        null
+                    }
 
                 try {
                     if (altPrivateKeyToUse != null && recipientPK != null) {
@@ -114,14 +124,14 @@ object AmberUtils {
         bunkerRequest: BunkerRequest,
         relays: List<Relay>,
         context: Context,
-        onLoading: (Boolean) -> Unit
+        onLoading: (Boolean) -> Unit,
     ) {
         IntentUtils.sendBunkerResponse(
             account,
             bunkerRequest.localKey,
             BunkerResponse(bunkerRequest.id, "", "user rejected"),
             relays,
-            onLoading = onLoading
+            onLoading = onLoading,
         ) {
             context.getAppCompatActivity()?.intent = null
             context.getAppCompatActivity()?.finish()
@@ -135,25 +145,27 @@ object AmberUtils {
         value: Boolean,
         appName: String,
         account: Account,
-        database: AppDatabase
+        database: AppDatabase,
     ) {
-        val application = database
-            .applicationDao()
-            .getByKey(key) ?: ApplicationWithPermissions(
-            application = ApplicationEntity(
-                key,
-                appName,
-                listOf(),
-                "",
-                "",
-                "",
-                account.keyPair.pubKey.toHexKey(),
-                true,
-                intentData.bunkerRequest?.secret ?: "",
-                intentData.bunkerRequest?.secret != null
-            ),
-            permissions = mutableListOf()
-        )
+        val application =
+            database
+                .applicationDao()
+                .getByKey(key) ?: ApplicationWithPermissions(
+                application =
+                    ApplicationEntity(
+                        key,
+                        appName,
+                        listOf(),
+                        "",
+                        "",
+                        "",
+                        account.keyPair.pubKey.toHexKey(),
+                        true,
+                        intentData.bunkerRequest?.secret ?: "",
+                        intentData.bunkerRequest?.secret != null,
+                    ),
+                permissions = mutableListOf(),
+            )
 
         if (application.permissions.none { it.type == intentData.type.toString() && it.kind == kind }) {
             application.permissions.add(
@@ -162,8 +174,8 @@ object AmberUtils {
                     key,
                     intentData.type.toString(),
                     kind,
-                    value
-                )
+                    value,
+                ),
             )
 
             database

@@ -29,7 +29,7 @@ class EOSETime(var time: Long) {
 class EOSERelayList(var relayList: Map<String, EOSETime> = emptyMap()) {
     fun addOrUpdate(
         relayUrl: String,
-        time: Long
+        time: Long,
     ) {
         val eose = relayList[relayUrl]
         if (eose == null) {
@@ -44,7 +44,7 @@ class EOSEFollowList(var followList: Map<String, EOSERelayList> = emptyMap()) {
     fun addOrUpdate(
         listCode: String,
         relayUrl: String,
-        time: Long
+        time: Long,
     ) {
         val relayList = followList[listCode]
         if (relayList == null) {

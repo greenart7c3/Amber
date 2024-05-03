@@ -37,16 +37,26 @@ interface ApplicationDao {
     fun getAllApplications(): List<ApplicationWithPermissions>
 
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND  kind = :kind")
-    fun getPermission(key: String, type: String, kind: Int?): ApplicationPermissionsEntity?
+    fun getPermission(
+        key: String,
+        type: String,
+        kind: Int?,
+    ): ApplicationPermissionsEntity?
 
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type")
-    fun getPermission(key: String, type: String): ApplicationPermissionsEntity?
+    fun getPermission(
+        key: String,
+        type: String,
+    ): ApplicationPermissionsEntity?
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     fun insertApplication(event: ApplicationEntity): Long?
 
     @Query("UPDATE application SET name = :name WHERE `key` = :key")
-    fun changeApplicationName(key: String, name: String)
+    fun changeApplicationName(
+        key: String,
+        name: String,
+    )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
@@ -71,11 +81,18 @@ interface ApplicationDao {
 
     @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type")
     @Transaction
-    fun deletePermissions(key: String, type: String)
+    fun deletePermissions(
+        key: String,
+        type: String,
+    )
 
     @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type and kind = :kind")
     @Transaction
-    fun deletePermissions(key: String, type: String, kind: Int)
+    fun deletePermissions(
+        key: String,
+        type: String,
+        kind: Int,
+    )
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction

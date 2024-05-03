@@ -45,7 +45,7 @@ fun LoginWithPubKey(
     applicationName: String?,
     permissions: List<Permission>?,
     onAccept: (List<Permission>?) -> Unit,
-    onReject: () -> Unit
+    onReject: () -> Unit,
 ) {
     var localPermissions by remember {
         mutableStateOf(permissions)
@@ -60,11 +60,12 @@ fun LoginWithPubKey(
             localPermissions ?: emptyList(),
             onClose = {
                 showAdjustDialog = false
-            }
+            },
         ) { dialogPermissions ->
-            localPermissions = dialogPermissions.map {
-                it.copy()
-            }
+            localPermissions =
+                dialogPermissions.map {
+                    it.copy()
+                }
             showAdjustDialog = false
         }
     }
@@ -72,7 +73,7 @@ fun LoginWithPubKey(
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp)
+            .padding(16.dp),
     ) {
         Text(
             buildAnnotatedString {
@@ -81,7 +82,7 @@ fun LoginWithPubKey(
                 }
                 append(stringResource(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf))
             },
-            fontSize = 18.sp
+            fontSize = 18.sp,
         )
 
         Spacer(Modifier.size(4.dp))
@@ -91,18 +92,18 @@ fun LoginWithPubKey(
                 Modifier
                     .fillMaxWidth()
                     .padding(top = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 itemsIndexed(it.take(3)) { _, item ->
                     Row(
                         Modifier
                             .fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Start
+                        horizontalArrangement = Arrangement.Start,
                     ) {
                         Icon(
                             if (item.checked) Icons.Default.Done else Icons.Default.Close,
                             item.toString(),
-                            tint = if (item.checked) Color.Green else Color.Red
+                            tint = if (item.checked) Color.Green else Color.Red,
                         )
                         Text(text = item.toString())
                     }
@@ -112,13 +113,13 @@ fun LoginWithPubKey(
                 Row(
                     Modifier
                         .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Start
+                    horizontalArrangement = Arrangement.Start,
                 ) {
                     val isAnyChecked = it.take(3).any { permission -> permission.checked }
                     Icon(
                         if (isAnyChecked) Icons.Default.Done else Icons.Default.Close,
                         stringResource(R.string.and_more),
-                        tint = if (isAnyChecked) Color.Green else Color.Red
+                        tint = if (isAnyChecked) Color.Green else Color.Red,
                     )
                     Text(text = stringResource(R.string.more, it.size - 3))
                 }
@@ -132,7 +133,7 @@ fun LoginWithPubKey(
                 .fillMaxWidth()
                 .padding(10.dp),
             Arrangement.Center,
-            Alignment.CenterHorizontally
+            Alignment.CenterHorizontally,
         ) {
             localPermissions?.let {
                 if (it.isNotEmpty()) {
@@ -140,8 +141,9 @@ fun LoginWithPubKey(
                         onClick = {
                             showAdjustDialog = true
                         },
-                        modifier = Modifier
-                            .padding(8.dp)
+                        modifier =
+                            Modifier
+                                .padding(8.dp),
                     ) {
                         Text(text = stringResource(R.string.adjust))
                     }
@@ -149,25 +151,28 @@ fun LoginWithPubKey(
             }
 
             Button(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(8.dp),
+                modifier =
+                    Modifier
+                        .fillMaxWidth(0.8f)
+                        .padding(8.dp),
                 shape = ButtonBorder,
                 onClick = {
                     onAccept(localPermissions)
-                }
+                },
             ) {
                 Text(stringResource(R.string.grant_permissions))
             }
             Spacer(modifier = Modifier.width(8.dp))
             Button(
-                modifier = Modifier
-                    .padding(8.dp),
+                modifier =
+                    Modifier
+                        .padding(8.dp),
                 shape = ButtonBorder,
                 onClick = onReject,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5A5554)
-                )
+                colors =
+                    ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFF5A5554),
+                    ),
             ) {
                 Text(stringResource(R.string.reject))
             }

@@ -13,14 +13,14 @@ import androidx.room.TypeConverter
         Index(
             value = ["key"],
             name = "index_key",
-            unique = true
+            unique = true,
         ),
         Index(
             value = ["name"],
             name = "index_name",
-            unique = false
-        )
-    ]
+            unique = false,
+        ),
+    ],
 )
 data class ApplicationEntity(
     @PrimaryKey(autoGenerate = false)
@@ -33,16 +33,16 @@ data class ApplicationEntity(
     val pubKey: String,
     var isConnected: Boolean,
     val secret: String,
-    val useSecret: Boolean
+    val useSecret: Boolean,
 )
 
 data class ApplicationWithPermissions(
     @Embedded val application: ApplicationEntity,
     @Relation(
         parentColumn = "key",
-        entityColumn = "pkKey"
+        entityColumn = "pkKey",
     )
-    val permissions: MutableList<ApplicationPermissionsEntity>
+    val permissions: MutableList<ApplicationPermissionsEntity>,
 )
 
 class Converters {

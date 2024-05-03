@@ -1,9 +1,9 @@
 plugins {
-    id 'com.android.application'
-    id 'org.jetbrains.kotlin.android'
-    id 'org.jlleitschuh.gradle.ktlint' version "11.5.0"
-    id 'com.google.gms.google-services'
-    id 'com.google.devtools.ksp'
+    alias(libs.plugins.androidApplication)
+    alias(libs.plugins.jetbrainsKotlinAndroid)
+    alias(libs.plugins.gradle.ktlint) version(libs.versions.ktlint)
+    alias(libs.plugins.google.gms) version(libs.versions.gms)
+    alias(libs.plugins.kotlin.ksp) version(libs.versions.ksp)
 }
 
 android {

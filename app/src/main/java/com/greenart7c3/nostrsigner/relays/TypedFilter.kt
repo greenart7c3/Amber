@@ -26,7 +26,7 @@ import com.vitorpamplona.quartz.events.Event
 
 class TypedFilter(
     val types: Set<FeedType>,
-    val filter: JsonFilter
+    val filter: JsonFilter,
 ) {
     fun toJson(): String {
         return Event.mapper.writeValueAsString(toJsonObject())
@@ -52,26 +52,26 @@ class TypedFilter(
             filter.ids?.run {
                 put(
                     "ids",
-                    factory.arrayNode(filter.ids.size).apply { filter.ids.forEach { add(it) } }
+                    factory.arrayNode(filter.ids.size).apply { filter.ids.forEach { add(it) } },
                 )
             }
             filter.authors?.run {
                 put(
                     "authors",
-                    factory.arrayNode(filter.authors.size).apply { filter.authors.forEach { add(it) } }
+                    factory.arrayNode(filter.authors.size).apply { filter.authors.forEach { add(it) } },
                 )
             }
             filter.kinds?.run {
                 put(
                     "kinds",
-                    factory.arrayNode(filter.kinds.size).apply { filter.kinds.forEach { add(it) } }
+                    factory.arrayNode(filter.kinds.size).apply { filter.kinds.forEach { add(it) } },
                 )
             }
             filter.tags?.run {
                 entries.forEach { kv ->
                     put(
                         "#${kv.key}",
-                        factory.arrayNode(kv.value.size).apply { kv.value.forEach { add(it) } }
+                        factory.arrayNode(kv.value.size).apply { kv.value.forEach { add(it) } },
                     )
                 }
             }

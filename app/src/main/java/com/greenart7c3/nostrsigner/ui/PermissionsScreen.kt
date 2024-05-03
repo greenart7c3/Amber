@@ -46,13 +46,14 @@ fun PermissionsScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
     navController: NavController,
-    database: AppDatabase
+    database: AppDatabase,
 ) {
     val lifecycleEvent = rememberLifecycleEvent()
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
-    val applications = remember {
-        mutableListOf<ApplicationEntity>()
-    }
+    val applications =
+        remember {
+            mutableListOf<ApplicationEntity>()
+        }
     var resetPermissions by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
@@ -83,7 +84,7 @@ fun PermissionsScreen(
                             LocalPreferences.deleteSavedApps(applications, database)
                             accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
                         }
-                    }
+                    },
                 ) {
                     Text(text = stringResource(R.string.confirm))
                 }
@@ -92,20 +93,20 @@ fun PermissionsScreen(
                 TextButton(
                     onClick = {
                         resetPermissions = false
-                    }
+                    },
                 ) {
                     Text(text = stringResource(R.string.cancel))
                 }
-            }
+            },
         )
     }
 
     Column(
-        modifier
+        modifier,
     ) {
         Box(
             Modifier
-                .padding(16.dp)
+                .padding(16.dp),
         ) {
             IconRow(
                 title = stringResource(id = R.string.reset_permissions),
@@ -113,7 +114,7 @@ fun PermissionsScreen(
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
                     resetPermissions = true
-                }
+                },
             )
         }
 
@@ -123,23 +124,23 @@ fun PermissionsScreen(
             Column(
                 Modifier.fillMaxSize(),
                 Arrangement.Center,
-                Alignment.CenterHorizontally
+                Alignment.CenterHorizontally,
             ) {
                 Text(stringResource(R.string.no_permissions_granted))
             }
         } else {
             LazyColumn(
                 Modifier
-                    .fillMaxSize()
+                    .fillMaxSize(),
             ) {
                 items(applications.size) {
                     Row(
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Box(
                             Modifier
                                 .padding(16.dp)
-                                .weight(0.9f)
+                                .weight(0.9f),
                         ) {
                             val localPermission = applications.elementAt(it)
                             IconRow(
@@ -148,7 +149,7 @@ fun PermissionsScreen(
                                 tint = MaterialTheme.colorScheme.onBackground,
                                 onClick = {
                                     navController.navigate("Permission/${applications.elementAt(it).key}")
-                                }
+                                },
                             )
                         }
                     }

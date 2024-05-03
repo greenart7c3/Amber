@@ -15,16 +15,17 @@ class RelayDisconnectService(ctx: Context, params: WorkerParameters) : Worker(ct
     private val ioScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun doWork(): Result {
-        val job = ioScope.launch {
-            val url = inputData.getString("relay")
-            delay(60000)
-            url?.let {
-                val relay = RelayPool.getRelay(it)
-                if (relay != null && relay.isConnected()) {
-                    relay.disconnect()
+        val job =
+            ioScope.launch {
+                val url = inputData.getString("relay")
+                delay(60000)
+                url?.let {
+                    val relay = RelayPool.getRelay(it)
+                    if (relay != null && relay.isConnected()) {
+                        relay.disconnect()
+                    }
                 }
             }
-        }
         runBlocking { job.join() }
         return Result.success()
     }

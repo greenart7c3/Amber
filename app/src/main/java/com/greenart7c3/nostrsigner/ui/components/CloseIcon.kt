@@ -11,6 +11,6 @@ fun CloseIcon() {
     Icon(
         Icons.Outlined.Close,
         contentDescription = "Cancel",
-        modifier = Size20Modifier
+        modifier = Size20Modifier,
     )
 }

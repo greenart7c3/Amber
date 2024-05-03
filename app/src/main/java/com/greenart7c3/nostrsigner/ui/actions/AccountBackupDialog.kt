@@ -83,35 +83,42 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
+fun AccountBackupDialog(
+    account: Account,
+    onClose: () -> Unit,
+) {
     Dialog(
         onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
-            modifier = Modifier
-                .fillMaxSize()
+            modifier =
+                Modifier
+                    .fillMaxSize(),
         ) {
             Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize(),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CloseButton(onCancel = onClose)
                 }
 
                 Column(
-                    modifier = Modifier
-                        .padding(horizontal = 30.dp)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 30.dp)
+                            .verticalScroll(rememberScrollState()),
+                    horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val content = stringResource(R.string.account_backup_tips_md)
 
@@ -121,7 +128,7 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                         }
 
                     RichText(
-                        style = RichTextStyle().resolveDefaults()
+                        style = RichTextStyle().resolveDefaults(),
                     ) {
                         BasicMarkdown(astNode)
                     }
@@ -141,7 +148,7 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                         }
 
                     RichText(
-                        style = RichTextStyle().resolveDefaults()
+                        style = RichTextStyle().resolveDefaults(),
                     ) {
                         BasicMarkdown(astNode1)
                     }
@@ -155,26 +162,26 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                     val autofillNode =
                         AutofillNode(
                             autofillTypes = listOf(AutofillType.Password),
-                            onFill = { password.value = TextFieldValue(it) }
+                            onFill = { password.value = TextFieldValue(it) },
                         )
                     val autofill = LocalAutofill.current
                     LocalAutofillTree.current += autofillNode
 
                     OutlinedTextField(
                         modifier =
-                        Modifier
-                            .onGloballyPositioned { coordinates ->
-                                autofillNode.boundingBox = coordinates.boundsInWindow()
-                            }
-                            .onFocusChanged { focusState ->
-                                autofill?.run {
-                                    if (focusState.isFocused) {
-                                        requestAutofillForNode(autofillNode)
-                                    } else {
-                                        cancelAutofillForNode(autofillNode)
-                                    }
+                            Modifier
+                                .onGloballyPositioned { coordinates ->
+                                    autofillNode.boundingBox = coordinates.boundsInWindow()
                                 }
-                            },
+                                .onFocusChanged { focusState ->
+                                    autofill?.run {
+                                        if (focusState.isFocused) {
+                                            requestAutofillForNode(autofillNode)
+                                        } else {
+                                            cancelAutofillForNode(autofillNode)
+                                        }
+                                    }
+                                },
                         value = password.value,
                         onValueChange = {
                             password.value = it
@@ -183,14 +190,14 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                             }
                         },
                         keyboardOptions =
-                        KeyboardOptions(
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Go
-                        ),
+                            KeyboardOptions(
+                                autoCorrect = false,
+                                keyboardType = KeyboardType.Password,
+                                imeAction = ImeAction.Go,
+                            ),
                         placeholder = {
                             Text(
-                                text = stringResource(R.string.ncryptsec_password)
+                                text = stringResource(R.string.ncryptsec_password),
                             )
                         },
                         trailingIcon = {
@@ -198,28 +205,28 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
                                 IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
                                     Icon(
                                         imageVector =
-                                        if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                            if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
                                         contentDescription =
-                                        if (showCharsPassword) {
-                                            stringResource(R.string.show_password)
-                                        } else {
-                                            stringResource(
-                                                R.string.hide_password
-                                            )
-                                        }
+                                            if (showCharsPassword) {
+                                                stringResource(R.string.show_password)
+                                            } else {
+                                                stringResource(
+                                                    R.string.hide_password,
+                                                )
+                                            },
                                     )
                                 }
                             }
                         },
                         visualTransformation =
-                        if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation()
+                            if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     )
 
                     if (errorMessage.isNotBlank()) {
                         Text(
                             text = errorMessage,
                             color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall
+                            style = MaterialTheme.typography.bodySmall,
                         )
                     }
 
@@ -234,9 +241,7 @@ fun AccountBackupDialog(account: Account, onClose: () -> Unit) {
 }
 
 @Composable
-private fun NSecQrButton(
-    account: Account
-) {
+private fun NSecQrButton(account: Account) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showDialog by remember {
@@ -245,7 +250,7 @@ private fun NSecQrButton(
 
     if (showDialog) {
         QrCodeDialog(
-            content = account.keyPair.privKey!!.toNsec()
+            content = account.keyPair.privKey!!.toNsec(),
         ) {
             showDialog = false
         }
@@ -273,62 +278,69 @@ private fun NSecQrButton(
                         Toast.makeText(
                             context,
                             message,
-                            Toast.LENGTH_SHORT
+                            Toast.LENGTH_SHORT,
                         ).show()
                     }
-                }
+                },
             )
         },
         shape = ButtonBorder,
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp)
+        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
     ) {
         Icon(
             tint = MaterialTheme.colorScheme.onPrimary,
             imageVector = Icons.Default.QrCode,
             contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
-            modifier = Modifier.padding(end = 5.dp)
+            modifier = Modifier.padding(end = 5.dp),
         )
         Text(
             stringResource(id = R.string.show_qr_code),
-            color = MaterialTheme.colorScheme.onPrimary
+            color = MaterialTheme.colorScheme.onPrimary,
         )
     }
 }
 
 @Composable
-fun QrCodeDialog(content: String, onClose: () -> Unit) {
+fun QrCodeDialog(
+    content: String,
+    onClose: () -> Unit,
+) {
     Dialog(
         onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize(),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CloseButton(onCancel = onClose)
                 }
 
                 Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 30.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(horizontal = 30.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center
+                    verticalArrangement = Arrangement.Center,
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Size35dp)
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = Size35dp),
                     ) {
                         QrCodeDrawer(content)
                     }
@@ -339,9 +351,7 @@ fun QrCodeDialog(content: String, onClose: () -> Unit) {
 }
 
 @Composable
-private fun NSecCopyButton(
-    account: Account
-) {
+private fun NSecCopyButton(account: Account) {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -368,20 +378,20 @@ private fun NSecCopyButton(
                         Toast.makeText(
                             context,
                             message,
-                            Toast.LENGTH_SHORT
+                            Toast.LENGTH_SHORT,
                         ).show()
                     }
-                }
+                },
             )
         },
         shape = ButtonBorder,
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp)
+        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
     ) {
         Icon(
             tint = MaterialTheme.colorScheme.onPrimary,
             imageVector = Icons.Default.Key,
             contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            modifier = Modifier.padding(end = 5.dp)
+            modifier = Modifier.padding(end = 5.dp),
         )
         Text(stringResource(id = R.string.copy_my_secret_key), color = MaterialTheme.colorScheme.onPrimary)
     }
@@ -391,7 +401,7 @@ private fun copyNSec(
     context: Context,
     scope: CoroutineScope,
     account: Account,
-    clipboardManager: ClipboardManager
+    clipboardManager: ClipboardManager,
 ) {
     account.keyPair.privKey?.let {
         clipboardManager.setText(AnnotatedString(it.toNsec()))
@@ -399,7 +409,7 @@ private fun copyNSec(
             Toast.makeText(
                 context,
                 context.getString(R.string.secret_key_copied_to_clipboard),
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             ).show()
         }
     }
@@ -408,7 +418,7 @@ private fun copyNSec(
 @Composable
 private fun EncryptNSecCopyButton(
     account: Account,
-    password: MutableState<TextFieldValue>
+    password: MutableState<TextFieldValue>,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -435,30 +445,30 @@ private fun EncryptNSecCopyButton(
                         Toast.makeText(
                             context,
                             message,
-                            Toast.LENGTH_SHORT
+                            Toast.LENGTH_SHORT,
                         ).show()
                     }
-                }
+                },
             )
         },
         shape = ButtonBorder,
         colors =
-        ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        ),
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+            ),
         contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
-        enabled = password.value.text.isNotBlank()
+        enabled = password.value.text.isNotBlank(),
     ) {
         Icon(
             tint = MaterialTheme.colorScheme.onPrimary,
             imageVector = Icons.Default.Key,
             contentDescription =
-            stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            modifier = Modifier.padding(end = 5.dp)
+                stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
+            modifier = Modifier.padding(end = 5.dp),
         )
         Text(
             stringResource(id = R.string.encrypt_and_copy_my_secret_key),
-            color = MaterialTheme.colorScheme.onPrimary
+            color = MaterialTheme.colorScheme.onPrimary,
         )
     }
 }
@@ -466,7 +476,7 @@ private fun EncryptNSecCopyButton(
 @Composable
 private fun EncryptNSecQRButton(
     account: Account,
-    password: MutableState<TextFieldValue>
+    password: MutableState<TextFieldValue>,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -477,7 +487,7 @@ private fun EncryptNSecQRButton(
 
     if (showDialog) {
         QrCodeDialog(
-            content = CryptoUtils.encryptNIP49(account.keyPair.privKey!!.toHexKey(), password.value.text) ?: ""
+            content = CryptoUtils.encryptNIP49(account.keyPair.privKey!!.toHexKey(), password.value.text) ?: "",
         ) {
             showDialog = false
         }
@@ -504,30 +514,30 @@ private fun EncryptNSecQRButton(
                         Toast.makeText(
                             context,
                             message,
-                            Toast.LENGTH_SHORT
+                            Toast.LENGTH_SHORT,
                         ).show()
                     }
-                }
+                },
             )
         },
         shape = ButtonBorder,
         colors =
-        ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary
-        ),
+            ButtonDefaults.buttonColors(
+                containerColor = MaterialTheme.colorScheme.primary,
+            ),
         contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
-        enabled = password.value.text.isNotBlank()
+        enabled = password.value.text.isNotBlank(),
     ) {
         Icon(
             tint = MaterialTheme.colorScheme.onPrimary,
             imageVector = Icons.Default.QrCode,
             contentDescription =
-            stringResource(R.string.shows_qr_code_with_you_private_key),
-            modifier = Modifier.padding(end = 5.dp)
+                stringResource(R.string.shows_qr_code_with_you_private_key),
+            modifier = Modifier.padding(end = 5.dp),
         )
         Text(
             stringResource(id = R.string.show_qr_code),
-            color = MaterialTheme.colorScheme.onPrimary
+            color = MaterialTheme.colorScheme.onPrimary,
         )
     }
 }
@@ -537,14 +547,14 @@ private fun encryptCopyNSec(
     context: Context,
     scope: CoroutineScope,
     account: Account,
-    clipboardManager: ClipboardManager
+    clipboardManager: ClipboardManager,
 ) {
     if (password.value.text.isBlank()) {
         scope.launch {
             Toast.makeText(
                 context,
                 context.getString(R.string.password_is_required),
-                Toast.LENGTH_SHORT
+                Toast.LENGTH_SHORT,
             )
                 .show()
         }
@@ -557,7 +567,7 @@ private fun encryptCopyNSec(
                     Toast.makeText(
                         context,
                         context.getString(R.string.secret_key_copied_to_clipboard),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     )
                         .show()
                 }
@@ -566,7 +576,7 @@ private fun encryptCopyNSec(
                     Toast.makeText(
                         context,
                         context.getString(R.string.failed_to_encrypt_key),
-                        Toast.LENGTH_SHORT
+                        Toast.LENGTH_SHORT,
                     )
                         .show()
                 }

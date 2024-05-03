@@ -37,12 +37,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -60,7 +60,7 @@ data class BunkerRequest(
     var localKey: String,
     var relays: List<String>,
     var secret: String,
-    var currentAccount: String
+    var currentAccount: String,
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
@@ -98,29 +98,31 @@ data class BunkerRequest(
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .registerModule(
                     SimpleModule()
-                        .addDeserializer(BunkerRequest::class.java, BunkerRequestDeserializer())
+                        .addDeserializer(BunkerRequest::class.java, BunkerRequestDeserializer()),
                 )
 
         fun fromJson(jsonObject: JsonNode): BunkerRequest {
             return BunkerRequest(
                 id = jsonObject.get("id").asText().intern(),
                 method = jsonObject.get("method").asText().intern(),
-                params = jsonObject.get("params").asIterable().toList().map {
-                    it.asText().intern()
-                }.toTypedArray(),
+                params =
+                    jsonObject.get("params").asIterable().toList().map {
+                        it.asText().intern()
+                    }.toTypedArray(),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
-                relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
-                    it.asText().intern()
-                } ?: listOf(),
+                relays =
+                    jsonObject.get("relays")?.asIterable()?.toList()?.map {
+                        it.asText().intern()
+                    } ?: listOf(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
-                currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: ""
+                currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
             )
         }
 
         private class BunkerRequestDeserializer : StdDeserializer<BunkerRequest>(BunkerRequest::class.java) {
             override fun deserialize(
                 jp: JsonParser,
-                ctxt: DeserializationContext
+                ctxt: DeserializationContext,
             ): BunkerRequest {
                 return fromJson(jp.codec.readTree(jp))
             }
@@ -164,7 +166,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
     private suspend fun consumeIfMatchesAccount(
         pushWrappedEvent: GiftWrapEvent,
-        account: Account
+        account: Account,
     ) {
         pushWrappedEvent.cachedGift(account.signer) { notificationEvent ->
             unwrapAndConsume(notificationEvent, account) { innerEvent ->
@@ -178,7 +180,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     private fun unwrapAndConsume(
         event: Event,
         account: Account,
-        onReady: (Event) -> Unit
+        onReady: (Event) -> Unit,
     ) {
         when (event) {
             is GiftWrapEvent -> {
@@ -197,13 +199,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
     private fun notify(
         event: Event,
-        acc: Account
+        acc: Account,
     ) {
         acc.signer.nip04Decrypt(event.content, event.pubKey) {
             Log.d("bunker", event.toJson())
             Log.d("bunker", it)
 
-            val dao = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
+            val dao = NostrSigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
             val notification = dao.getNotification(event.id)
             if (notification != null) return@nip04Decrypt
             dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
@@ -217,16 +219,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
             var amberEvent: AmberEvent? = null
 
-            val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
-                bunkerRequest.params.first()
-            } else if (bunkerRequest.method == "sign_event") {
-                amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-                amberEvent.pubKey
-            } else {
-                ""
-            }
+            val pubKey =
+                if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
+                    bunkerRequest.params.first()
+                } else if (bunkerRequest.method == "sign_event") {
+                    amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
+                    amberEvent.pubKey
+                } else {
+                    ""
+                }
 
-            val database = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub())
+            val database = NostrSigner.instance.getDatabase(acc.keyPair.pubKey.toNpub())
 
             val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
             if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
@@ -235,18 +238,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "ack", null),
                     permission.application.relays.map { url -> Relay(url) },
-                    onLoading = {}
+                    onLoading = {},
                 ) { }
                 return@nip04Decrypt
             }
 
             var applicationWithSecret: ApplicationWithPermissions? = null
             if (type == SignerType.CONNECT) {
-                val secret = try {
-                    bunkerRequest.params[1]
-                } catch (_: Exception) {
-                    ""
-                }
+                val secret =
+                    try {
+                        bunkerRequest.params[1]
+                    } catch (_: Exception) {
+                        ""
+                    }
                 // TODO: make secret not optional when more applications start using it
                 if (secret.isNotBlank()) {
                     bunkerRequest.secret = secret
@@ -257,14 +261,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             bunkerRequest.localKey,
                             BunkerResponse(bunkerRequest.id, "", "invalid secret"),
                             applicationWithSecret?.application?.relays?.map { url -> Relay(url) } ?: listOf(),
-                            onLoading = { }
+                            onLoading = { },
                         ) { }
                         return@nip04Decrypt
                     }
                 } else {
-                    applicationWithSecret = database.applicationDao().getAllApplications().firstOrNull { localApp ->
-                        !localApp.application.useSecret && localApp.application.secret == localApp.application.key
-                    }
+                    applicationWithSecret =
+                        database.applicationDao().getAllApplications().firstOrNull { localApp ->
+                            !localApp.application.useSecret && localApp.application.secret == localApp.application.key
+                        }
 
                     bunkerRequest.secret = applicationWithSecret?.application?.secret ?: ""
                     bunkerRequest.relays = applicationWithSecret?.application?.relays ?: bunkerRequest.relays
@@ -277,18 +282,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "", "no permission"),
                     listOf(),
-                    onLoading = { }
+                    onLoading = { },
                 ) { }
                 return@nip04Decrypt
             }
 
-            val cursor = applicationContext.contentResolver.query(
-                Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
-                arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
-                "1",
-                null,
-                bunkerRequest.localKey
-            )
+            val cursor =
+                applicationContext.contentResolver.query(
+                    Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
+                    arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
+                    "1",
+                    null,
+                    bunkerRequest.localKey,
+                )
 
             var name = event.pubKey.toShortenHex()
             if (permission != null && permission.application.name.isNotBlank()) {
@@ -319,7 +325,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             "BunkerID",
                             groupKey,
                             applicationContext,
-                            bunkerRequest
+                            bunkerRequest,
                         )
                 } else {
                     if (localCursor.moveToFirst()) {
@@ -329,7 +335,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 bunkerRequest.localKey,
                                 BunkerResponse(bunkerRequest.id, "", "user rejected"),
                                 relays,
-                                onLoading = { }
+                                onLoading = { },
                             ) { }
                         } else {
                             val index = localCursor.getColumnIndex("event")
@@ -340,7 +346,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 bunkerRequest.localKey,
                                 BunkerResponse(bunkerRequest.id, result, null),
                                 relays,
-                                onLoading = { }
+                                onLoading = { },
                             ) { }
                         }
                     } else {
@@ -353,7 +359,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 "BunkerID",
                                 groupKey,
                                 applicationContext,
-                                bunkerRequest
+                                bunkerRequest,
                             )
                     }
                 }

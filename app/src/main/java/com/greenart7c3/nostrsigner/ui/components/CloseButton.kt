@@ -10,7 +10,7 @@ fun CloseButton(onCancel: () -> Unit) {
         onClick = {
             onCancel()
         },
-        shape = ButtonBorder
+        shape = ButtonBorder,
     ) {
         CloseIcon()
     }

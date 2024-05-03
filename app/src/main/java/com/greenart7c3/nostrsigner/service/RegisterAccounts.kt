@@ -24,8 +24,8 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.RelayAuthEvent
@@ -37,13 +37,13 @@ import okhttp3.Request
 import okhttp3.RequestBody.Companion.toRequestBody
 
 class RegisterAccounts(
-    private val accounts: List<AccountInfo>
+    private val accounts: List<AccountInfo>,
 ) {
     private fun recursiveAuthCreation(
         notificationToken: String,
         remainingTos: List<Pair<Account, String>>,
         output: MutableList<RelayAuthEvent>,
-        onReady: (List<RelayAuthEvent>) -> Unit
+        onReady: (List<RelayAuthEvent>) -> Unit,
     ) {
         if (remainingTos.isEmpty()) {
             onReady(output)
@@ -62,18 +62,21 @@ class RegisterAccounts(
     private suspend fun signEventsToProveControlOfAccounts(
         accounts: List<AccountInfo>,
         notificationToken: String,
-        onReady: (List<RelayAuthEvent>) -> Unit
+        onReady: (List<RelayAuthEvent>) -> Unit,
     ) {
         val readyToSend: MutableList<Pair<Account, String>> = mutableListOf()
         accounts.forEach {
             val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
             if (acc != null) {
-                val permissions = nostrsigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
+                val permissions =
+                    NostrSigner.instance.getDatabase(
+                        acc.keyPair.pubKey.toNpub(),
+                    ).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
                         if (relay.isNotBlank()) {
                             readyToSend.add(
-                                Pair(acc, relay)
+                                Pair(acc, relay),
                             )
                         }
                     }
@@ -86,7 +89,7 @@ class RegisterAccounts(
             notificationToken,
             readyToSend,
             listOfAuthEvents,
-            onReady
+            onReady,
         )
     }
 

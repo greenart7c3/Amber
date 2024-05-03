@@ -43,11 +43,11 @@ object HttpClientManager {
 
     // fires off every time value of the property changes
     private var internalProxy: Proxy? by
-    Delegates.observable(null) { _, oldValue, newValue ->
-        if (oldValue != newValue) {
-            proxyChangeListeners.forEach { it() }
+        Delegates.observable(null) { _, oldValue, newValue ->
+            if (oldValue != newValue) {
+                proxyChangeListeners.forEach { it() }
+            }
         }
-    }
 
     fun setDefaultProxy(proxy: Proxy?) {
         if (internalProxy != proxy) {
@@ -71,7 +71,7 @@ object HttpClientManager {
 
     private fun buildHttpClient(
         proxy: Proxy?,
-        timeout: Duration
+        timeout: Duration,
     ): OkHttpClient {
         Log.d("HttpClient", "Building client with proxy: ${proxy != null}")
         val seconds = if (proxy != null) timeout.seconds * 3 else timeout.seconds
@@ -117,7 +117,7 @@ object HttpClientManager {
     fun initProxy(
         useProxy: Boolean,
         hostname: String,
-        port: Int
+        port: Int,
     ): Proxy? {
         return if (useProxy) Proxy(Proxy.Type.SOCKS, InetSocketAddress(hostname, port)) else null
     }

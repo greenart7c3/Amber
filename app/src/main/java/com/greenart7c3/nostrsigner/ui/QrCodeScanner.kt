@@ -9,7 +9,7 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
 @Composable
-fun SimpleQrCodeScanner(onScan: (String?) -> Unit) {
+fun simpleQrCodeScanner(onScan: (String?) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val qrLauncher =
@@ -21,13 +21,14 @@ fun SimpleQrCodeScanner(onScan: (String?) -> Unit) {
             }
         }
 
-    val scanOptions = ScanOptions().apply {
-        setDesiredBarcodeFormats(ScanOptions.QR_CODE)
-        setPrompt("Point to the QR Code")
-        setBeepEnabled(false)
-        setOrientationLocked(false)
-        addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.MIXED_SCAN)
-    }
+    val scanOptions =
+        ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            setPrompt("Point to the QR Code")
+            setBeepEnabled(false)
+            setOrientationLocked(false)
+            addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.MIXED_SCAN)
+        }
 
     DisposableEffect(lifecycleOwner) {
         qrLauncher.launch(scanOptions)

@@ -82,13 +82,14 @@ fun EditPermission(
     accountStateViewModel: AccountStateViewModel,
     selectedPackage: String,
     navController: NavController,
-    database: AppDatabase
+    database: AppDatabase,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
-    val permissions = remember {
-        mutableStateListOf<ApplicationPermissionsEntity>()
-    }
+    val permissions =
+        remember {
+            mutableStateListOf<ApplicationPermissionsEntity>()
+        }
     var applicationData by remember {
         mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false))
     }
@@ -125,34 +126,38 @@ fun EditPermission(
         var textFieldRelay by remember {
             mutableStateOf(TextFieldValue(""))
         }
-        val relays2 = remember {
-            val localRelays = mutableStateListOf<String>()
-            applicationData.relays.forEach {
-                localRelays.add(it)
+        val relays2 =
+            remember {
+                val localRelays = mutableStateListOf<String>()
+                applicationData.relays.forEach {
+                    localRelays.add(it)
+                }
+                localRelays
             }
-            localRelays
-        }
         Dialog(
             onDismissRequest = {
                 editRelaysDialog = false
             },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
+            properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
             Surface(
-                modifier = Modifier
-                    .fillMaxSize()
+                modifier =
+                    Modifier
+                        .fillMaxSize(),
             ) {
                 Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize()
+                    modifier =
+                        Modifier
+                            .background(MaterialTheme.colorScheme.background)
+                            .fillMaxSize(),
                 ) {
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
+                        modifier =
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         CloseButton {
                             editRelaysDialog = false
@@ -160,23 +165,24 @@ fun EditPermission(
                         PostButton(
                             isActive = !applicationData.isConnected,
                             onPost = {
-                                applicationData = applicationData.copy(
-                                    relays = relays2.map { it }
-                                )
+                                applicationData =
+                                    applicationData.copy(
+                                        relays = relays2.map { it },
+                                    )
                                 val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
                                 bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$secret"
                                 editRelaysDialog = false
-                            }
+                            },
                         )
                     }
                     LazyColumn(
                         Modifier
                             .fillMaxHeight(0.9f)
-                            .fillMaxWidth()
+                            .fillMaxWidth(),
                     ) {
                         items(relays2.size) {
                             Row(
-                                verticalAlignment = Alignment.CenterVertically
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 Text(
                                     relays2[it],
@@ -186,16 +192,16 @@ fun EditPermission(
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                     maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis
+                                    overflow = TextOverflow.Ellipsis,
                                 )
                                 IconButton(
                                     onClick = {
                                         relays2.removeAt(it)
-                                    }
+                                    },
                                 ) {
                                     Icon(
                                         Icons.Default.Delete,
-                                        stringResource(R.string.delete)
+                                        stringResource(R.string.delete),
                                     )
                                 }
                             }
@@ -203,23 +209,25 @@ fun EditPermission(
                     }
                     Row(
                         Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         OutlinedTextField(
                             enabled = !applicationData.isConnected,
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .padding(horizontal = 16.dp),
+                            modifier =
+                                Modifier
+                                    .fillMaxWidth(0.9f)
+                                    .padding(horizontal = 16.dp),
                             value = textFieldRelay.text,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done
-                            ),
+                            keyboardOptions =
+                                KeyboardOptions(
+                                    imeAction = ImeAction.Done,
+                                ),
                             onValueChange = {
                                 textFieldRelay = TextFieldValue(it)
                             },
                             label = {
                                 Text("Relay")
-                            }
+                            },
                         )
                         IconButton(
                             onClick = {
@@ -240,11 +248,11 @@ fun EditPermission(
                                     relays2.add(addedWSS)
                                     textFieldRelay = TextFieldValue("")
                                 }
-                            }
+                            },
                         ) {
                             Icon(
                                 Icons.Default.Add,
-                                null
+                                null,
                             )
                         }
                     }
@@ -257,7 +265,7 @@ fun EditPermission(
         DeleteDialog(
             onCancel = {
                 wantsToDelete = false
-            }
+            },
         ) {
             scope.launch(Dispatchers.IO) {
                 database
@@ -293,14 +301,14 @@ fun EditPermission(
 
     if (showDialog) {
         QrCodeDialog(
-            content = bunkerUri
+            content = bunkerUri,
         ) {
             showDialog = false
         }
     }
 
     Column(
-        modifier = modifier
+        modifier = modifier,
     ) {
         Text(
             stringResource(R.string.permissions),
@@ -309,12 +317,12 @@ fun EditPermission(
                 .padding(8.dp),
             fontWeight = FontWeight.Bold,
             textAlign = TextAlign.Center,
-            fontSize = 18.sp
+            fontSize = 18.sp,
         )
 
         if (!applicationData.isConnected) {
             Row(
-                verticalAlignment = Alignment.CenterVertically
+                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     bunkerUri,
@@ -325,19 +333,19 @@ fun EditPermission(
                     textAlign = TextAlign.Center,
                     fontSize = 18.sp,
                     maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
+                    overflow = TextOverflow.Ellipsis,
                 )
                 IconButton(
                     onClick = {
                         clipboardManager.setText(AnnotatedString(bunkerUri))
-                    }
+                    },
                 ) {
                     Icon(Icons.Default.ContentPaste, stringResource(R.string.copy_to_clipboard))
                 }
                 IconButton(
                     onClick = {
                         showDialog = true
-                    }
+                    },
                 ) {
                     Icon(Icons.Default.QrCode, stringResource(R.string.show_qr_code))
                 }
@@ -346,53 +354,56 @@ fun EditPermission(
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clickable {
-                        checked = !checked
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
-                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                    }
+                modifier =
+                    Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            checked = !checked
+                            val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
+                            val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
+                            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+                        },
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = "Use secret to connect to the application"
+                    text = "Use secret to connect to the application",
                 )
                 Switch(
                     checked = checked,
                     onCheckedChange = {
                         checked = !checked
-                    }
+                    },
                 )
             }
         }
         OutlinedTextField(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp),
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
             value = textFieldvalue.text,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done
-            ),
+            keyboardOptions =
+                KeyboardOptions(
+                    imeAction = ImeAction.Done,
+                ),
             onValueChange = {
                 textFieldvalue = TextFieldValue(it)
             },
             label = {
                 Text("Name")
-            }
+            },
         )
 
         if (applicationData.secret.isNotEmpty()) {
             Row(
                 Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
+                horizontalArrangement = Arrangement.Center,
             ) {
                 Button(
                     onClick = {
                         editRelaysDialog = true
                     },
-                    Modifier.padding(6.dp)
+                    Modifier.padding(6.dp),
                 ) {
                     Text(stringResource(R.string.relays))
                 }
@@ -400,62 +411,69 @@ fun EditPermission(
         }
 
         LazyColumn(
-            Modifier.weight(1f)
+            Modifier.weight(1f),
         ) {
             itemsIndexed(permissions, { index, _ -> index }) { _, permission ->
-                val localPermission = Permission(
-                    permission.type.toLowerCase(Locale.current),
-                    permission.kind
-                )
+                val localPermission =
+                    Permission(
+                        permission.type.toLowerCase(Locale.current),
+                        permission.kind,
+                    )
 
-                val message = if (permission.type == "SIGN_EVENT") {
-                    "Sign $localPermission"
-                } else {
-                    localPermission.toString()
-                }
+                val message =
+                    if (permission.type == "SIGN_EVENT") {
+                        "Sign $localPermission"
+                    } else {
+                        localPermission.toString()
+                    }
                 Row(
-                    modifier = Modifier
-                        .padding(vertical = 15.dp, horizontal = 25.dp)
-                        .fillMaxWidth()
+                    modifier =
+                        Modifier
+                            .padding(vertical = 15.dp, horizontal = 25.dp)
+                            .fillMaxWidth(),
                 ) {
                     Icon(
                         if (permission.acceptable) Icons.Default.Check else Icons.Default.Close,
                         null,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .padding(end = 4.dp)
-                            .clickable {
-                                val localPermissions = permissions.map {
-                                    if (it.id == permission.id) {
-                                        it.copy(acceptable = !permission.acceptable)
-                                    } else {
-                                        it.copy()
-                                    }
-                                }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
-                            },
-                        tint = if (permission.acceptable) Color.Green else Color.Red
+                        modifier =
+                            Modifier
+                                .size(22.dp)
+                                .padding(end = 4.dp)
+                                .clickable {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
+                                        }
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                },
+                        tint = if (permission.acceptable) Color.Green else Color.Red,
                     )
                     Row(
-                        modifier = Modifier
-                            .weight(1f),
-                        verticalAlignment = Alignment.CenterVertically
+                        modifier =
+                            Modifier
+                                .weight(1f),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = message,
-                            fontSize = 18.sp
+                            fontSize = 18.sp,
                         )
                     }
                     Icon(
                         Icons.Default.Delete,
                         null,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clickable {
-                                permissions.remove(permission)
-                            },
-                        tint = Color.Red
+                        modifier =
+                            Modifier
+                                .size(22.dp)
+                                .clickable {
+                                    permissions.remove(permission)
+                                },
+                        tint = Color.Red,
                     )
                 }
             }
@@ -463,13 +481,13 @@ fun EditPermission(
         Row(
             Modifier
                 .fillMaxWidth(),
-            Arrangement.Center
+            Arrangement.Center,
         ) {
             Button(
                 onClick = {
                     wantsToDelete = true
                 },
-                Modifier.padding(6.dp)
+                Modifier.padding(6.dp),
             ) {
                 Text(stringResource(R.string.delete_application))
             }
@@ -478,29 +496,30 @@ fun EditPermission(
         Row(
             Modifier
                 .fillMaxWidth(),
-            Arrangement.Center
+            Arrangement.Center,
         ) {
             Button(
                 onClick = {
                     navController.popBackStack()
                 },
-                Modifier.padding(6.dp)
+                Modifier.padding(6.dp),
             ) {
                 Text(stringResource(id = R.string.cancel))
             }
             Button(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        val localApplicationData = applicationData.copy(
-                            name = textFieldvalue.text,
-                            useSecret = checked
-                        )
+                        val localApplicationData =
+                            applicationData.copy(
+                                name = textFieldvalue.text,
+                                useSecret = checked,
+                            )
                         database.applicationDao().delete(applicationData)
                         database.applicationDao().insertApplicationWithPermissions(
                             ApplicationWithPermissions(
                                 localApplicationData,
-                                permissions
-                            )
+                                permissions,
+                            ),
                         )
                         val relays = mutableListOf<Relay>()
                         database.applicationDao().getAllApplications().forEach {
@@ -523,7 +542,7 @@ fun EditPermission(
                         }
                     }
                 },
-                Modifier.padding(6.dp)
+                Modifier.padding(6.dp),
             ) {
                 Text(stringResource(id = R.string.confirm))
             }
@@ -534,7 +553,7 @@ fun EditPermission(
 @Composable
 fun DeleteDialog(
     onCancel: () -> Unit,
-    onConfirm: () -> Unit
+    onConfirm: () -> Unit,
 ) {
     AlertDialog(
         title = {
@@ -550,7 +569,7 @@ fun DeleteDialog(
             TextButton(
                 onClick = {
                     onConfirm()
-                }
+                },
             ) {
                 Text(text = stringResource(R.string.delete))
             }
@@ -559,10 +578,10 @@ fun DeleteDialog(
             TextButton(
                 onClick = {
                     onCancel()
-                }
+                },
             ) {
                 Text(text = stringResource(R.string.cancel))
             }
-        }
+        },
     )
 }

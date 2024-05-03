@@ -31,7 +31,7 @@ fun RawJson(
     modifier: Modifier,
     label: String = stringResource(R.string.copy_raw_json),
     type: SignerType,
-    onCopy: (() -> Unit)? = null
+    onCopy: (() -> Unit)? = null,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -41,26 +41,28 @@ fun RawJson(
     }
 
     OutlinedTextField(
-        modifier = modifier
-            .fillMaxWidth(),
+        modifier =
+            modifier
+                .fillMaxWidth(),
         value = TextFieldValue(currentContent),
         onValueChange = { },
-        readOnly = true
+        readOnly = true,
     )
     if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT) {
         Row(
             Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
+            horizontalArrangement = Arrangement.Center,
         ) {
             Button(
                 shape = ButtonBorder,
                 onClick = {
-                    currentContent = if (currentContent == encryptedData) {
-                        rawJson
-                    } else {
-                        encryptedData
-                    }
-                }
+                    currentContent =
+                        if (currentContent == encryptedData) {
+                            rawJson
+                        } else {
+                            encryptedData
+                        }
+                },
             ) {
                 Text(stringResource(R.string.decrypt_content))
             }
@@ -68,7 +70,7 @@ fun RawJson(
     }
     Row(
         Modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.Center
+        horizontalArrangement = Arrangement.Center,
     ) {
         Button(
             shape = ButtonBorder,
@@ -82,11 +84,11 @@ fun RawJson(
                         Toast.makeText(
                             context,
                             context.getString(R.string.data_copied_to_the_clipboard),
-                            Toast.LENGTH_SHORT
+                            Toast.LENGTH_SHORT,
                         ).show()
                     }
                 }
-            }
+            },
         ) {
             Text(stringResource(R.string.copy) + label)
         }

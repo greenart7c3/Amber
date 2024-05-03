@@ -21,9 +21,9 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.EOSETime
 import com.greenart7c3.nostrsigner.relays.FeedType
@@ -35,44 +35,46 @@ import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 
 object NotificationDataSource : NostrDataSource("AccountData") {
-    private val eventNotificationConsumer = EventNotificationConsumer(nostrsigner.instance)
+    private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.instance)
 
     fun createNotificationsFilter(): TypedFilter {
         var since = TimeUtils.now()
         val accounts = LocalPreferences.allSavedAccounts()
         accounts.forEach {
-            val latest = nostrsigner.instance.getDatabase(it.npub).applicationDao().getLatestNotification()
+            val latest = NostrSigner.instance.getDatabase(it.npub).applicationDao().getLatestNotification()
             if (latest != null) {
                 since = latest
             }
         }
 
-        val pubKeys = accounts.mapNotNull {
-            LocalPreferences.loadFromEncryptedStorage(it.npub)?.keyPair?.pubKey?.toHexKey()
-        }
+        val pubKeys =
+            accounts.mapNotNull {
+                LocalPreferences.loadFromEncryptedStorage(it.npub)?.keyPair?.pubKey?.toHexKey()
+            }
 
-        val eoses = RelayPool.getAll().associate {
-            Pair(it.url, EOSETime(since))
-        }
+        val eoses =
+            RelayPool.getAll().associate {
+                Pair(it.url, EOSETime(since))
+            }
 
         return TypedFilter(
             types = setOf(FeedType.FOLLOWS),
             filter =
-            JsonFilter(
-                kinds = listOf(24133),
-                tags = mapOf("p" to pubKeys),
-                limit = 1,
-                since = eoses
-            )
+                JsonFilter(
+                    kinds = listOf(24133),
+                    tags = mapOf("p" to pubKeys),
+                    limit = 1,
+                    since = eoses,
+                ),
         )
     }
 
     override fun consume(
         event: Event,
-        relay: Relay
+        relay: Relay,
     ) {
         checkNotInMainThread()
-        NotificationUtils.getOrCreateDMChannel(nostrsigner.instance.applicationContext)
+        NotificationUtils.getOrCreateDMChannel(NostrSigner.instance.applicationContext)
         eventNotificationConsumer.consume(event)
     }
 
@@ -87,7 +89,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
 
     override fun auth(
         relay: Relay,
-        challenge: String
+        challenge: String,
     ) {
         super.auth(relay, challenge)
 
@@ -97,7 +99,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 Client.send(
                     authEvent,
                     { },
-                    relay.url
+                    relay.url,
                 )
             }
         }

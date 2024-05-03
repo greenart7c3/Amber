@@ -34,7 +34,8 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
+fun Intent.isLaunchFromHistory(): Boolean =
+    this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
 class MainActivity : AppCompatActivity() {
     private val intents = MutableStateFlow<List<IntentData>>(listOf())
@@ -53,23 +54,25 @@ class MainActivity : AppCompatActivity() {
             }
 
             val packageName = callingPackage
-            val appName = if (packageName != null) {
-                val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                applicationContext.packageManager.getApplicationLabel(info).toString()
-            } else {
-                null
-            }
+            val appName =
+                if (packageName != null) {
+                    val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
+                    applicationContext.packageManager.getApplicationLabel(info).toString()
+                } else {
+                    null
+                }
 
             NostrSignerTheme {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
+                    color = MaterialTheme.colorScheme.background,
                 ) {
                     val npub = intent.getStringExtra("current_user") ?: getAccount()
 
-                    val accountStateViewModel: AccountStateViewModel = viewModel {
-                        AccountStateViewModel(npub)
-                    }
+                    val accountStateViewModel: AccountStateViewModel =
+                        viewModel {
+                            AccountStateViewModel(npub)
+                        }
                     AccountScreen(accountStateViewModel, intent, packageName, appName, intents)
                 }
             }
@@ -77,9 +80,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     fun getAccount(): String? {
-        val pubKeys = intents.value.mapNotNull {
-            it.event?.pubKey
-        }
+        val pubKeys =
+            intents.value.mapNotNull {
+                it.event?.pubKey
+            }
 
         if (pubKeys.isEmpty()) return null
         return Hex.decode(pubKeys.first()).toNpub()
@@ -87,17 +91,19 @@ class MainActivity : AppCompatActivity() {
 
     @OptIn(DelicateCoroutinesApi::class)
     override fun onResume() {
-        val requests = IntentUtils.bunkerRequests.map {
-            it.value.copy()
-        }
+        val requests =
+            IntentUtils.bunkerRequests.map {
+                it.value.copy()
+            }
 
         GlobalScope.launch(Dispatchers.IO) {
             val account = LocalPreferences.loadFromEncryptedStorage()
             account?.let { acc ->
                 requests.forEach {
-                    val contentIntent = Intent(applicationContext, MainActivity::class.java).apply {
-                        data = Uri.parse("nostrsigner:")
-                    }
+                    val contentIntent =
+                        Intent(applicationContext, MainActivity::class.java).apply {
+                            data = Uri.parse("nostrsigner:")
+                        }
                     contentIntent.putExtra("bunker", it.toJson())
                     contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                     IntentUtils.getIntentData(contentIntent, callingPackage, Route.Home.route, acc) { intentData ->
@@ -137,9 +143,10 @@ class MainActivity : AppCompatActivity() {
                         if (intents.value.none { item -> item.id == intentData.id }) {
                             intents.value += listOf(intentData)
                         }
-                        intents.value = intents.value.map {
-                            it.copy()
-                        }.toMutableList()
+                        intents.value =
+                            intents.value.map {
+                                it.copy()
+                            }.toMutableList()
                     }
                 }
             }
@@ -204,7 +211,7 @@ class MainActivity : AppCompatActivity() {
             // Network capabilities have changed for the network
             override fun onCapabilitiesChanged(
                 network: Network,
-                networkCapabilities: NetworkCapabilities
+                networkCapabilities: NetworkCapabilities,
             ) {
                 super.onCapabilitiesChanged(network, networkCapabilities)
 
@@ -213,7 +220,7 @@ class MainActivity : AppCompatActivity() {
                 GlobalScope.launch(Dispatchers.IO) {
                     Log.d(
                         "ServiceManager NetworkCallback",
-                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${isOnMobileDataState.value} hasWifi ${isOnWifiDataState.value}"
+                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${isOnMobileDataState.value} hasWifi ${isOnWifiDataState.value}",
                     )
                     if (updateNetworkCapabilities(networkCapabilities)) {
                         NotificationDataSource.stopSync()

@@ -36,7 +36,7 @@ fun HomeScreen(
     packageName: String?,
     applicationName: String?,
     account: Account,
-    database: AppDatabase
+    database: AppDatabase,
 ) {
     var loading by remember { mutableStateOf(false) }
 
@@ -57,18 +57,18 @@ fun HomeScreen(
         CenterCircularProgressIndicator(modifier)
     } else {
         Box(
-            modifier
+            modifier,
         ) {
             if (intents.isEmpty()) {
                 Column(
                     Modifier.fillMaxSize(),
                     Arrangement.Center,
-                    Alignment.CenterHorizontally
+                    Alignment.CenterHorizontally,
                 ) {
                     Text(
                         stringResource(R.string.nothing_to_approve_yet),
                         fontWeight = FontWeight.Bold,
-                        fontSize = 21.sp
+                        fontSize = 21.sp,
                     )
                     Spacer(Modifier.size(8.dp))
                     Text(stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit))
@@ -79,7 +79,7 @@ fun HomeScreen(
                     applicationName,
                     intents.first(),
                     account,
-                    database
+                    database,
                 ) {
                     loading = it
                 }
@@ -88,7 +88,7 @@ fun HomeScreen(
                     intents,
                     packageName,
                     account,
-                    database
+                    database,
                 ) {
                     loading = it
                 }
@@ -100,5 +100,5 @@ fun HomeScreen(
 class Result(
     val `package`: String?,
     val signature: String?,
-    val id: String?
+    val id: String?,
 )

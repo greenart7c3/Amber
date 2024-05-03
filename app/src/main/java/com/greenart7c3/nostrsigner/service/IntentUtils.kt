@@ -13,6 +13,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -20,7 +21,6 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
@@ -43,13 +43,20 @@ import java.util.concurrent.ConcurrentHashMap
 data class BunkerMetada(
     val name: String,
     val url: String,
-    val description: String
+    val description: String,
 )
 
 object IntentUtils {
     val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
-    private fun getIntentDataWithoutExtras(data: String, intent: Intent, packageName: String?, route: String?, account: Account, onReady: (IntentData?) -> Unit) {
+    private fun getIntentDataWithoutExtras(
+        data: String,
+        intent: Intent,
+        packageName: String?,
+        route: String?,
+        account: Account,
+        onReady: (IntentData?) -> Unit,
+    ) {
         val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")
         val parameters = data.replace("nostrsigner:", "").split("?").toMutableList()
         parameters.removeFirst()
@@ -67,15 +74,16 @@ object IntentUtils {
                 val parameter = params.removeFirst()
                 val parameterData = params.joinToString("=")
                 if (parameter == "type") {
-                    type = when (parameterData) {
-                        "sign_event" -> SignerType.SIGN_EVENT
-                        "get_public_key" -> SignerType.GET_PUBLIC_KEY
-                        "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-                        "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-                        "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-                        "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-                        else -> SignerType.SIGN_EVENT
-                    }
+                    type =
+                        when (parameterData) {
+                            "sign_event" -> SignerType.SIGN_EVENT
+                            "get_public_key" -> SignerType.GET_PUBLIC_KEY
+                            "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+                            "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+                            "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+                            else -> SignerType.SIGN_EVENT
+                        }
                 }
                 if (parameter.toLowerCase(Locale.current) == "pubkey") {
                     pubKey = parameterData
@@ -108,7 +116,7 @@ object IntentUtils {
                         unsignedEvent.createdAt,
                         unsignedEvent.kind,
                         unsignedEvent.tags,
-                        unsignedEvent.content
+                        unsignedEvent.content,
                     ) {
                         onReady(
                             IntentData(
@@ -127,22 +135,23 @@ object IntentUtils {
                                 null,
                                 route,
                                 it,
-                                null
-                            )
+                                null,
+                            ),
                         )
                     }
                 }
                 SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
-                    val result = try {
-                        AmberUtils.encryptOrDecryptData(
-                            localData,
-                            type,
-                            account,
-                            pubKey
-                        ) ?: "Could not decrypt the message"
-                    } catch (e: Exception) {
-                        "Could not decrypt the message"
-                    }
+                    val result =
+                        try {
+                            AmberUtils.encryptOrDecryptData(
+                                localData,
+                                type,
+                                account,
+                                pubKey,
+                            ) ?: "Could not decrypt the message"
+                        } catch (e: Exception) {
+                            "Could not decrypt the message"
+                        }
 
                     onReady(
                         IntentData(
@@ -161,8 +170,8 @@ object IntentUtils {
                             null,
                             route,
                             null,
-                            result
-                        )
+                            result,
+                        ),
                     )
                 }
                 SignerType.GET_PUBLIC_KEY -> {
@@ -183,8 +192,8 @@ object IntentUtils {
                             null,
                             route,
                             null,
-                            null
-                        )
+                            null,
+                        ),
                     )
                 }
                 else -> onReady(null)
@@ -225,17 +234,17 @@ object IntentUtils {
         relays: List<Relay>,
         onLoading: (Boolean) -> Unit,
         onSign: (() -> Unit)? = null,
-        onDone: () -> Unit
+        onDone: () -> Unit,
     ) {
         account.signer.nip04Encrypt(
             ObjectMapper().writeValueAsString(bunkerResponse),
-            localKey
+            localKey,
         ) { encryptedContent ->
             account.signer.sign<Event>(
                 TimeUtils.now(),
                 24133,
                 arrayOf(arrayOf("p", localKey)),
-                encryptedContent
+                encryptedContent,
             ) {
                 if (onSign != null) {
                     onSign()
@@ -243,7 +252,7 @@ object IntentUtils {
 
                 GlobalScope.launch(Dispatchers.IO) {
                     if (RelayPool.getAll().isEmpty()) {
-                        val database = nostrsigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
                         val savedRelays = mutableListOf<Relay>()
                         database.applicationDao().getAllApplications().forEach {
                             it.application.relays.forEach { url ->
@@ -267,16 +276,22 @@ object IntentUtils {
         }
     }
 
-    private fun getIntentDataFromBunkerRequest(intent: Intent, bunkerRequest: BunkerRequest, route: String?, onReady: (IntentData?) -> Unit) {
+    private fun getIntentDataFromBunkerRequest(
+        intent: Intent,
+        bunkerRequest: BunkerRequest,
+        route: String?,
+        onReady: (IntentData?) -> Unit,
+    ) {
         val type = getTypeFromBunker(bunkerRequest)
         val data = getDataFromBunker(bunkerRequest)
         val account = LocalPreferences.loadFromEncryptedStorage(bunkerRequest.currentAccount)!!
 
-        val pubKey = if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
-            bunkerRequest.params.first()
-        } else {
-            ""
-        }
+        val pubKey =
+            if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
+                bunkerRequest.params.first()
+            } else {
+                ""
+            }
         val id = bunkerRequest.id
         val permissions = mutableListOf<Permission>()
         if (type == SignerType.CONNECT && bunkerRequest.params.size > 2) {
@@ -284,17 +299,18 @@ object IntentUtils {
             split.forEach {
                 val split2 = it.split(":")
                 val permissionType = split2.first()
-                val kind = try {
-                    split2[1].toInt()
-                } catch (_: Exception) {
-                    null
-                }
+                val kind =
+                    try {
+                        split2[1].toInt()
+                    } catch (_: Exception) {
+                        null
+                    }
 
                 permissions.add(
                     Permission(
                         permissionType,
-                        kind
-                    )
+                        kind,
+                    ),
                 )
             }
         }
@@ -318,8 +334,8 @@ object IntentUtils {
                         bunkerRequest,
                         route,
                         null,
-                        null
-                    )
+                        null,
+                    ),
                 )
             }
             SignerType.SIGN_EVENT -> {
@@ -328,7 +344,7 @@ object IntentUtils {
                     unsignedEvent.createdAt,
                     unsignedEvent.kind,
                     unsignedEvent.tags,
-                    unsignedEvent.content
+                    unsignedEvent.content,
                 ) {
                     onReady(
                         IntentData(
@@ -347,22 +363,23 @@ object IntentUtils {
                             bunkerRequest,
                             route,
                             it,
-                            null
-                        )
+                            null,
+                        ),
                     )
                 }
             }
             SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-                val result = try {
-                    AmberUtils.encryptOrDecryptData(
-                        data,
-                        type,
-                        account,
-                        pubKey
-                    ) ?: "Could not decrypt the message"
-                } catch (e: Exception) {
-                    "Could not decrypt the message"
-                }
+                val result =
+                    try {
+                        AmberUtils.encryptOrDecryptData(
+                            data,
+                            type,
+                            account,
+                            pubKey,
+                        ) ?: "Could not decrypt the message"
+                    } catch (e: Exception) {
+                        "Could not decrypt the message"
+                    }
 
                 onReady(
                     IntentData(
@@ -381,8 +398,8 @@ object IntentUtils {
                         bunkerRequest,
                         route,
                         null,
-                        result
-                    )
+                        result,
+                    ),
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
@@ -403,34 +420,42 @@ object IntentUtils {
                         bunkerRequest,
                         route,
                         null,
-                        null
-                    )
+                        null,
+                    ),
                 )
             }
         }
     }
 
-    private fun getIntentDataFromIntent(intent: Intent, packageName: String?, route: String?, account: Account, onReady: (IntentData?) -> Unit) {
-        val type = when (intent.extras?.getString("type")) {
-            "sign_event" -> SignerType.SIGN_EVENT
-            "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-            "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-            "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-            "get_public_key" -> SignerType.GET_PUBLIC_KEY
-            "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-            else -> SignerType.SIGN_EVENT
-        }
+    private fun getIntentDataFromIntent(
+        intent: Intent,
+        packageName: String?,
+        route: String?,
+        account: Account,
+        onReady: (IntentData?) -> Unit,
+    ) {
+        val type =
+            when (intent.extras?.getString("type")) {
+                "sign_event" -> SignerType.SIGN_EVENT
+                "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+                "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+                "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+                "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+                "get_public_key" -> SignerType.GET_PUBLIC_KEY
+                "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
+                else -> SignerType.SIGN_EVENT
+            }
 
-        val data = try {
-            if (packageName == null) {
-                URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
-            } else {
+        val data =
+            try {
+                if (packageName == null) {
+                    URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
+                } else {
+                    intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
+                }
+            } catch (e: Exception) {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
             }
-        } catch (e: Exception) {
-            intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
-        }
 
         val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
         val name = if (callbackUrl.isNotBlank()) Uri.parse(callbackUrl).host ?: "" else ""
@@ -459,7 +484,7 @@ object IntentUtils {
                     unsignedEvent.createdAt,
                     unsignedEvent.kind,
                     unsignedEvent.tags,
-                    unsignedEvent.content
+                    unsignedEvent.content,
                 ) {
                     onReady(
                         IntentData(
@@ -478,22 +503,23 @@ object IntentUtils {
                             null,
                             route,
                             it,
-                            null
-                        )
+                            null,
+                        ),
                     )
                 }
             }
             SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-                val result = try {
-                    AmberUtils.encryptOrDecryptData(
-                        data,
-                        type,
-                        account,
-                        pubKey
-                    ) ?: "Could not decrypt the message"
-                } catch (e: Exception) {
-                    "Could not decrypt the message"
-                }
+                val result =
+                    try {
+                        AmberUtils.encryptOrDecryptData(
+                            data,
+                            type,
+                            account,
+                            pubKey,
+                        ) ?: "Could not decrypt the message"
+                    } catch (e: Exception) {
+                        "Could not decrypt the message"
+                    }
 
                 onReady(
                     IntentData(
@@ -512,8 +538,8 @@ object IntentUtils {
                         null,
                         route,
                         null,
-                        result
-                    )
+                        result,
+                    ),
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
@@ -534,8 +560,8 @@ object IntentUtils {
                         null,
                         route,
                         null,
-                        null
-                    )
+                        null,
+                    ),
                 )
             }
             else -> onReady(null)
@@ -543,13 +569,19 @@ object IntentUtils {
     }
 
     private fun metaDataFromJson(json: String): BunkerMetada {
-        val objectMapper = jacksonObjectMapper()
-            .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+        val objectMapper =
+            jacksonObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
         return objectMapper.readValue(json, BunkerMetada::class.java)
     }
 
-    private fun getIntentFromNostrConnect(intent: Intent, route: String?, account: Account, onReady: (IntentData?) -> Unit) {
+    private fun getIntentFromNostrConnect(
+        intent: Intent,
+        route: String?,
+        account: Account,
+        onReady: (IntentData?) -> Unit,
+    ) {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
@@ -593,12 +625,12 @@ object IntentUtils {
                         pubKey,
                         relays,
                         "",
-                        account.keyPair.pubKey.toNpub()
+                        account.keyPair.pubKey.toNpub(),
                     ),
                     route,
                     null,
-                    null
-                )
+                    null,
+                ),
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
@@ -606,22 +638,29 @@ object IntentUtils {
         }
     }
 
-    suspend fun getIntentData(intent: Intent, packageName: String?, route: String?, currentLoggedInAccount: Account, onReady: (IntentData?) -> Unit) {
+    suspend fun getIntentData(
+        intent: Intent,
+        packageName: String?,
+        route: String?,
+        currentLoggedInAccount: Account,
+        onReady: (IntentData?) -> Unit,
+    ) {
         if (intent.data == null) {
             onReady(
-                null
+                null,
             )
             return
         }
 
-        val bunkerRequest = if (intent.getStringExtra("bunker") != null) {
-            BunkerRequest.mapper.readValue(
-                intent.getStringExtra("bunker"),
-                BunkerRequest::class.java
-            )
-        } else {
-            null
-        }
+        val bunkerRequest =
+            if (intent.getStringExtra("bunker") != null) {
+                BunkerRequest.mapper.readValue(
+                    intent.getStringExtra("bunker"),
+                    BunkerRequest::class.java,
+                )
+            } else {
+                null
+            }
 
         var localAccount = currentLoggedInAccount
         if (bunkerRequest != null) {
@@ -644,19 +683,24 @@ object IntentUtils {
             getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
         }
     }
-    private fun getUnsignedEvent(data: String, account: Account): Event {
+
+    private fun getUnsignedEvent(
+        data: String,
+        account: Account,
+    ): Event {
         val event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
             event.pubKey = account.keyPair.pubKey.toHexKey()
         }
         if (event.id.isEmpty()) {
-            event.id = Event.generateId(
-                event.pubKey,
-                event.createdAt,
-                event.kind,
-                event.tags,
-                event.content
-            ).toHexKey()
+            event.id =
+                Event.generateId(
+                    event.pubKey,
+                    event.createdAt,
+                    event.kind,
+                    event.tags,
+                    event.content,
+                ).toHexKey()
         }
 
         return AmberEvent.toEvent(event)

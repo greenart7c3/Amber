@@ -79,6 +79,7 @@ import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
@@ -90,7 +91,6 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.nostrsigner
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
@@ -116,7 +116,7 @@ import java.util.zip.GZIPOutputStream
 data class BunkerResponse(
     val id: String,
     val result: String,
-    val error: String?
+    val error: String?,
 )
 
 @OptIn(DelicateCoroutinesApi::class)
@@ -134,7 +134,7 @@ fun sendResult(
     database: AppDatabase,
     onLoading: (Boolean) -> Unit,
     permissions: List<Permission>? = null,
-    appName: String? = null
+    appName: String? = null,
 ) {
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
@@ -146,7 +146,7 @@ fun sendResult(
                         val inputData = Data.Builder()
                         inputData.putString("relay", relay.url)
                         builder.setInputData(inputData.build())
-                        WorkManager.getInstance(nostrsigner.instance).enqueue(builder.build())
+                        WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
                     }
                 }
             }
@@ -172,21 +172,23 @@ fun sendResult(
         val relays = intentData.bunkerRequest?.relays ?: listOf()
         val savedApplication = database.applicationDao().getByKey(key)
 
-        val application = savedApplication ?: ApplicationWithPermissions(
-            application = ApplicationEntity(
-                key,
-                appName ?: "",
-                relays,
-                "",
-                "",
-                "",
-                account.keyPair.pubKey.toHexKey(),
-                true,
-                intentData.bunkerRequest?.secret ?: "",
-                intentData.bunkerRequest?.secret != null
-            ),
-            permissions = mutableListOf()
-        )
+        val application =
+            savedApplication ?: ApplicationWithPermissions(
+                application =
+                    ApplicationEntity(
+                        key,
+                        appName ?: "",
+                        relays,
+                        "",
+                        "",
+                        "",
+                        account.keyPair.pubKey.toHexKey(),
+                        true,
+                        intentData.bunkerRequest?.secret ?: "",
+                        intentData.bunkerRequest?.secret != null,
+                    ),
+                permissions = mutableListOf(),
+            )
         application.application.isConnected = true
 
         permissions?.filter { it.checked }?.forEach {
@@ -196,8 +198,8 @@ fun sendResult(
                     key,
                     it.type.toUpperCase(Locale.current),
                     it.kind,
-                    true
-                )
+                    true,
+                ),
             )
         }
         if (rememberChoice) {
@@ -207,8 +209,8 @@ fun sendResult(
                     key,
                     intentData.type.toString(),
                     kind,
-                    true
-                )
+                    true,
+                ),
             )
         }
 
@@ -219,8 +221,8 @@ fun sendResult(
                     key,
                     SignerType.GET_PUBLIC_KEY.toString(),
                     null,
-                    true
-                )
+                    true,
+                ),
             )
         }
 
@@ -237,7 +239,7 @@ fun sendResult(
                     GlobalScope.launch(Dispatchers.IO) {
                         PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
                     }
-                }
+                },
             ) {
                 EventNotificationConsumer(context).notificationManager().cancelAll()
                 activity?.intent = null
@@ -284,16 +286,18 @@ fun sendResult(
             activity?.intent = null
             activity?.finish()
         } else {
-            val result = if (intentData.returnType == ReturnType.SIGNATURE) {
-                value
-            } else {
-                event
-            }
-            val message = if (intentData.returnType == ReturnType.SIGNATURE) {
-                context.getString(R.string.signature_copied_to_the_clipboard)
-            } else {
-                context.getString(R.string.event_copied_to_the_clipboard)
-            }
+            val result =
+                if (intentData.returnType == ReturnType.SIGNATURE) {
+                    value
+                } else {
+                    event
+                }
+            val message =
+                if (intentData.returnType == ReturnType.SIGNATURE) {
+                    context.getString(R.string.signature_copied_to_the_clipboard)
+                } else {
+                    context.getString(R.string.event_copied_to_the_clipboard)
+                }
 
             clipboardManager.setText(AnnotatedString(result))
 
@@ -301,7 +305,7 @@ fun sendResult(
                 Toast.makeText(
                     context,
                     message,
-                    Toast.LENGTH_SHORT
+                    Toast.LENGTH_SHORT,
                 ).show()
             }
             activity?.intent = null
@@ -315,14 +319,14 @@ fun sendResult(
 fun PermissionsFloatingActionButton(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
-    goToTop: () -> Unit
+    goToTop: () -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     var dialogOpen by remember { mutableStateOf(false) }
     val context = LocalContext.current
 
     if (dialogOpen) {
-        SimpleQrCodeScanner {
+        simpleQrCodeScanner {
             dialogOpen = false
             if (!it.isNullOrEmpty()) {
                 val intent = Intent(Intent.ACTION_VIEW)
@@ -335,11 +339,11 @@ fun PermissionsFloatingActionButton(
     }
 
     Column(
-        horizontalAlignment = Alignment.End
+        horizontalAlignment = Alignment.End,
     ) {
         AnimatedVisibility(visible = expanded) {
             Column(
-                horizontalAlignment = Alignment.End
+                horizontalAlignment = Alignment.End,
             ) {
                 Row(
                     Modifier
@@ -348,7 +352,7 @@ fun PermissionsFloatingActionButton(
                             dialogOpen = true
                             expanded = false
                         },
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RichTooltip {
                         Text(stringResource(R.string.connect_app))
@@ -360,12 +364,12 @@ fun PermissionsFloatingActionButton(
                             expanded = false
                         },
                         modifier = Modifier.size(35.dp),
-                        shape = CircleShape
+                        shape = CircleShape,
                     ) {
                         Icon(
                             Icons.Default.QrCode,
                             contentDescription = stringResource(R.string.connect_app),
-                            tint = Color.White
+                            tint = Color.White,
                         )
                     }
                 }
@@ -379,7 +383,7 @@ fun PermissionsFloatingActionButton(
                             goToTop()
                             expanded = false
                         },
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     RichTooltip {
                         Text(stringResource(R.string.new_app))
@@ -391,12 +395,12 @@ fun PermissionsFloatingActionButton(
                             expanded = false
                         },
                         modifier = Modifier.size(35.dp),
-                        shape = CircleShape
+                        shape = CircleShape,
                     ) {
                         Icon(
                             Icons.Default.Add,
                             contentDescription = stringResource(R.string.new_app),
-                            tint = Color.White
+                            tint = Color.White,
                         )
                     }
                 }
@@ -407,23 +411,24 @@ fun PermissionsFloatingActionButton(
 
         val rotation by animateFloatAsState(
             targetValue = if (expanded) 0f else 180f,
-            animationSpec = tween(
-                durationMillis = 150,
-                easing = LinearEasing
-            ),
-            label = "rotation"
+            animationSpec =
+                tween(
+                    durationMillis = 150,
+                    easing = LinearEasing,
+                ),
+            label = "rotation",
         )
 
         FloatingActionButton(
             onClick = {
                 expanded = !expanded
             },
-            shape = CircleShape
+            shape = CircleShape,
         ) {
             Icon(
                 if (expanded) Icons.Default.Close else Icons.Default.Add,
                 contentDescription = stringResource(R.string.connect_app),
-                modifier = Modifier.rotate(rotation)
+                modifier = Modifier.rotate(rotation),
             )
         }
     }
@@ -432,7 +437,7 @@ fun PermissionsFloatingActionButton(
 private suspend fun askNotificationPermission(
     context: Context,
     requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
-    onShouldShowRequestPermissionRationale: () -> Unit
+    onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
         initNotifications()
@@ -470,7 +475,7 @@ fun MainScreen(
     packageName: String?,
     appName: String?,
     route: MutableState<String?>,
-    database: AppDatabase
+    database: AppDatabase,
 ) {
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -478,27 +483,29 @@ fun MainScreen(
     val items = listOf(Route.Home, Route.Permissions, Route.Settings)
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
 
-    val sheetState = rememberModalBottomSheetState(
-        confirmValueChange = { it != SheetValue.PartiallyExpanded },
-        skipPartiallyExpanded = true
-    )
+    val sheetState =
+        rememberModalBottomSheetState(
+            confirmValueChange = { it != SheetValue.PartiallyExpanded },
+            skipPartiallyExpanded = true,
+        )
     val scope = rememberCoroutineScope()
     val interactionSource = remember { MutableInteractionSource() }
     val clipboardManager = LocalClipboardManager.current
 
-    val requestPermissionLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        if (isGranted) {
-            scope.launch(Dispatchers.IO) {
-                initNotifications()
-            }
-        } else {
-            if (LocalPreferences.shouldShowRationale() == null) {
-                LocalPreferences.updateShoulShowRationale(true)
+    val requestPermissionLauncher =
+        rememberLauncherForActivityResult(
+            ActivityResultContracts.RequestPermission(),
+        ) { isGranted: Boolean ->
+            if (isGranted) {
+                scope.launch(Dispatchers.IO) {
+                    initNotifications()
+                }
+            } else {
+                if (LocalPreferences.shouldShowRationale() == null) {
+                    LocalPreferences.updateShoulShowRationale(true)
+                }
             }
         }
-    }
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
 
@@ -507,7 +514,7 @@ fun MainScreen(
             launch(Dispatchers.IO) {
                 askNotificationPermission(
                     context,
-                    requestPermissionLauncher
+                    requestPermissionLauncher,
                 ) {
                     showDialog = true
                 }
@@ -531,7 +538,7 @@ fun MainScreen(
                     onClick = {
                         showDialog = false
                         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
-                    }
+                    },
                 ) {
                     Text(text = "Allow")
                 }
@@ -541,11 +548,11 @@ fun MainScreen(
                     onClick = {
                         showDialog = false
                         LocalPreferences.updateShoulShowRationale(false)
-                    }
+                    },
                 ) {
                     Text(text = "Deny")
                 }
-            }
+            },
         )
     }
 
@@ -554,25 +561,26 @@ fun MainScreen(
             if (destinationRoute == "Permissions" && BuildConfig.FLAVOR != "offline") {
                 PermissionsFloatingActionButton(
                     accountStateViewModel,
-                    account
+                    account,
                 ) {
                     val secret = UUID.randomUUID().toString().substring(0, 6)
                     scope.launch(Dispatchers.IO) {
-                        val application = ApplicationEntity(
-                            secret,
-                            "",
-                            listOf("wss://relay.nsec.app"),
-                            "",
-                            "",
-                            "",
-                            account.keyPair.pubKey.toHexKey(),
-                            false,
-                            secret,
-                            false
-                        )
+                        val application =
+                            ApplicationEntity(
+                                secret,
+                                "",
+                                listOf("wss://relay.nsec.app"),
+                                "",
+                                "",
+                                "",
+                                account.keyPair.pubKey.toHexKey(),
+                                false,
+                                secret,
+                                false,
+                            )
 
                         database.applicationDao().insertApplication(
-                            application
+                            application,
                         )
                         val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
                         clipboardManager.setText(AnnotatedString(bunkerUrl))
@@ -594,7 +602,7 @@ fun MainScreen(
                             shouldShowBottomSheet = false
                             sheetState.hide()
                         }
-                    }
+                    },
                 )
             }
 
@@ -605,29 +613,29 @@ fun MainScreen(
                         Modifier
                             .border(
                                 border = ButtonDefaults.outlinedButtonBorder,
-                                shape = ButtonBorder
+                                shape = ButtonBorder,
                             )
                             .padding(8.dp)
                             .clickable(
                                 interactionSource = interactionSource,
-                                indication = null
+                                indication = null,
                             ) {
                                 scope.launch {
                                     sheetState.show()
                                     shouldShowBottomSheet = true
                                 }
                             },
-                        verticalAlignment = Alignment.CenterVertically
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(name.ifBlank { account.keyPair.pubKey.toNpub().toShortenHex() })
                         Icon(
                             imageVector = Icons.Default.ExpandMore,
                             null,
                             modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f)
+                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f),
                         )
                     }
-                }
+                },
             )
         },
         bottomBar = {
@@ -645,17 +653,17 @@ fun MainScreen(
                             icon = {
                                 Icon(
                                     if (selected) it.selectedIcon else it.icon,
-                                    it.route
+                                    it.route,
                                 )
                             },
                             label = {
                                 Text(it.route)
-                            }
+                            },
                         )
                     }
                 }
             }
-        }
+        },
     ) { padding ->
         var localRoute by remember { mutableStateOf(route.value ?: Route.Home.route) }
 
@@ -674,7 +682,7 @@ fun MainScreen(
             navController,
             startDestination = localRoute,
             enterTransition = { fadeIn(animationSpec = tween(200)) },
-            exitTransition = { fadeOut(animationSpec = tween(200)) }
+            exitTransition = { fadeOut(animationSpec = tween(200)) },
         ) {
             composable(
                 Route.Home.route,
@@ -687,24 +695,25 @@ fun MainScreen(
                         packageName,
                         appName,
                         account,
-                        database
+                        database,
                     )
-                }
+                },
             )
 
             composable(
                 Route.Permissions.route,
                 content = {
                     PermissionsScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
                         navController = navController,
-                        database = database
+                        database = database,
                     )
-                }
+                },
             )
 
             composable(
@@ -715,9 +724,9 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(padding),
                         accountStateViewModel,
-                        account
+                        account,
                     )
-                }
+                },
             )
 
             composable(
@@ -725,16 +734,17 @@ fun MainScreen(
                 arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
                 content = {
                     EditPermission(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding),
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
                         selectedPackage = it.arguments?.getString("packageName")!!,
                         navController = navController,
-                        database = database
+                        database = database,
                     )
-                }
+                },
             )
         }
     }

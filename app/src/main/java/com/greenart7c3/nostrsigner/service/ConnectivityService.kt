@@ -20,6 +20,7 @@ import java.util.TimerTask
 class ConnectivityService : Service() {
     private val timer = Timer()
     private val binder = MyBinder()
+
     override fun onBind(intent: Intent): IBinder {
         return null!!
     }
@@ -35,11 +36,12 @@ class ConnectivityService : Service() {
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
-        val notificationBuilder = NotificationCompat.Builder(this, channelId)
-            .setContentTitle("Amber is running in background")
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-            .setSmallIcon(R.mipmap.ic_launcher_foreground)
-            .setColor(0xFFBF00)
+        val notificationBuilder =
+            NotificationCompat.Builder(this, channelId)
+                .setContentTitle("Amber is running in background")
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setColor(0xFFBF00)
 
         return notificationBuilder.build()
     }
@@ -57,7 +59,7 @@ class ConnectivityService : Service() {
                         if (!it.isConnected()) {
                             Log.d(
                                 "ConnectivityService",
-                                "Relay ${it.url} is not connected, reconnecting..."
+                                "Relay ${it.url} is not connected, reconnecting...",
                             )
                             it.connectAndSendFiltersIfDisconnected()
                         }
@@ -65,7 +67,7 @@ class ConnectivityService : Service() {
                 }
             },
             0,
-            61000
+            61000,
         )
         super.onCreate()
     }

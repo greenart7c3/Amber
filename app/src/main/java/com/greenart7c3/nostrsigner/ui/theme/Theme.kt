@@ -19,11 +19,12 @@ import androidx.core.view.WindowCompat
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.resolveDefaults
 
-val Shapes = Shapes(
-    small = RoundedCornerShape(4.dp),
-    medium = RoundedCornerShape(4.dp),
-    large = RoundedCornerShape(0.dp)
-)
+val Shapes =
+    Shapes(
+        small = RoundedCornerShape(4.dp),
+        medium = RoundedCornerShape(4.dp),
+        large = RoundedCornerShape(0.dp),
+    )
 
 val Size35dp = 35.dp
 
@@ -36,27 +37,29 @@ val secondaryColor = Color(0xFFFF8E4C)
 
 val RichTextDefaults = RichTextStyle().resolveDefaults()
 
-private val DarkColorPalette = darkColorScheme(
-    primary = primaryColor,
-    onPrimary = Color.White,
-    secondary = primaryVariant,
-    tertiary = secondaryColor,
-    primaryContainer = secondaryColor,
-    secondaryContainer = secondaryColor
-)
+private val DarkColorPalette =
+    darkColorScheme(
+        primary = primaryColor,
+        onPrimary = Color.White,
+        secondary = primaryVariant,
+        tertiary = secondaryColor,
+        primaryContainer = secondaryColor,
+        secondaryContainer = secondaryColor,
+    )
 
-private val LightColorPalette = lightColorScheme(
-    primary = primaryColor,
-    secondary = primaryVariant,
-    tertiary = secondaryColor,
-    primaryContainer = secondaryColor,
-    secondaryContainer = secondaryColor
-)
+private val LightColorPalette =
+    lightColorScheme(
+        primary = primaryColor,
+        secondary = primaryVariant,
+        tertiary = secondaryColor,
+        primaryContainer = secondaryColor,
+        secondaryContainer = secondaryColor,
+    )
 
 @Composable
 fun NostrSignerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    content: @Composable () -> Unit
+    content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColorPalette else LightColorPalette
 
@@ -64,7 +67,7 @@ fun NostrSignerTheme(
         colorScheme = colors,
         typography = Typography,
         shapes = Shapes,
-        content = content
+        content = content,
     )
 
     val view = LocalView.current

@@ -33,7 +33,7 @@ import com.greenart7c3.nostrsigner.ui.components.PostButton
 fun AdjustPermissionsDialog(
     localPermissions: List<Permission>,
     onClose: () -> Unit,
-    onPost: (List<Permission>) -> Unit
+    onPost: (List<Permission>) -> Unit,
 ) {
     var dialogPermissions by remember {
         mutableStateOf(localPermissions.map { it.copy() })
@@ -43,94 +43,102 @@ fun AdjustPermissionsDialog(
     }
     Dialog(
         onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false)
+        properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize()
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize(),
             ) {
                 Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
                     CloseButton(
-                        onCancel = onClose
+                        onCancel = onClose,
                     )
 
                     PostButton(
                         isActive = true,
                         onPost = {
                             onPost(dialogPermissions)
-                        }
+                        },
                     )
                 }
 
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(horizontal = 8.dp)
-                        .clickable {
-                            selectAll = !selectAll
-                            dialogPermissions = dialogPermissions.map { item ->
-                                item.copy(checked = selectAll)
-                            }
-                        }
+                    modifier =
+                        Modifier
+                            .padding(horizontal = 8.dp)
+                            .clickable {
+                                selectAll = !selectAll
+                                dialogPermissions =
+                                    dialogPermissions.map { item ->
+                                        item.copy(checked = selectAll)
+                                    }
+                            },
                 ) {
                     Text(
                         modifier = Modifier.weight(1f),
-                        text = stringResource(R.string.select_deselect_all)
+                        text = stringResource(R.string.select_deselect_all),
                     )
                     Switch(
                         checked = selectAll,
                         onCheckedChange = {
                             selectAll = !selectAll
-                            dialogPermissions = dialogPermissions.map { item ->
-                                item.copy(checked = selectAll)
-                            }
-                        }
+                            dialogPermissions =
+                                dialogPermissions.map { item ->
+                                    item.copy(checked = selectAll)
+                                }
+                        },
                     )
                 }
 
                 LazyColumn(
-                    Modifier.padding(16.dp)
+                    Modifier.padding(16.dp),
                 ) {
                     items(dialogPermissions.size) {
                         val permission = dialogPermissions[it]
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .clickable {
-                                    dialogPermissions = dialogPermissions.mapIndexed { j, item ->
-                                        if (it == j) {
-                                            item.copy(checked = !item.checked)
-                                        } else {
-                                            item
-                                        }
-                                    }
-                                }
+                            modifier =
+                                Modifier
+                                    .clickable {
+                                        dialogPermissions =
+                                            dialogPermissions.mapIndexed { j, item ->
+                                                if (it == j) {
+                                                    item.copy(checked = !item.checked)
+                                                } else {
+                                                    item
+                                                }
+                                            }
+                                    },
                         ) {
                             Text(
                                 modifier = Modifier.weight(1f),
-                                text = permission.toString()
+                                text = permission.toString(),
                             )
                             Switch(
                                 checked = permission.checked,
                                 onCheckedChange = { _ ->
-                                    dialogPermissions = dialogPermissions.mapIndexed { j, item ->
-                                        if (it == j) {
-                                            item.copy(checked = !item.checked)
-                                        } else {
-                                            item
+                                    dialogPermissions =
+                                        dialogPermissions.mapIndexed { j, item ->
+                                            if (it == j) {
+                                                item.copy(checked = !item.checked)
+                                            } else {
+                                                item
+                                            }
                                         }
-                                    }
-                                }
+                                },
                             )
                         }
                     }

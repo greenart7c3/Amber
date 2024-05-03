@@ -14,14 +14,14 @@ class Account(
     val signer: NostrSigner = NostrSignerInternal(keyPair),
     var name: String,
     var useProxy: Boolean,
-    var proxyPort: Int
+    var proxyPort: Int,
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
 
     fun createAuthEvent(
         relayUrl: String,
         challenge: String,
-        onReady: (RelayAuthEvent) -> Unit
+        onReady: (RelayAuthEvent) -> Unit,
     ) {
         RelayAuthEvent.create(relayUrl, challenge, signer, onReady = onReady)
     }

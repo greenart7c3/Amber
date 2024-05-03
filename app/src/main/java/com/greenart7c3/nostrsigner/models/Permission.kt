@@ -3,7 +3,7 @@ package com.greenart7c3.nostrsigner.models
 data class Permission(
     val type: String,
     val kind: Int?,
-    var checked: Boolean = true
+    var checked: Boolean = true,
 ) {
     override fun toString(): String {
         return when (type) {

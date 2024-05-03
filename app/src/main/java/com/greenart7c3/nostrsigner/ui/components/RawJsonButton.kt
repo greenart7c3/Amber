@@ -14,17 +14,17 @@ import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 @Composable
 fun RawJsonButton(
     onCLick: () -> Unit,
-    text: String
+    text: String,
 ) {
     Box(
         Modifier
             .fillMaxWidth()
             .padding(horizontal = 4.dp),
-        contentAlignment = Alignment.Center
+        contentAlignment = Alignment.Center,
     ) {
         TextButton(
             shape = ButtonBorder,
-            onClick = onCLick
+            onClick = onCLick,
         ) {
             Text(text)
         }

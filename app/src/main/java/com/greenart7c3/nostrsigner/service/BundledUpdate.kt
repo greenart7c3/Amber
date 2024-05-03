@@ -38,7 +38,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 @Stable
 class BundledUpdate(
     val delay: Long,
-    val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     val scope = CoroutineScope(dispatcher + SupervisorJob())
 
@@ -47,7 +47,7 @@ class BundledUpdate(
 
     fun invalidate(
         ignoreIfDoing: Boolean = false,
-        onUpdate: suspend () -> Unit
+        onUpdate: suspend () -> Unit,
     ) {
         if (onlyOneInBlock.getAndSet(true)) {
             if (!ignoreIfDoing) {
@@ -81,7 +81,7 @@ class BundledUpdate(
 @Stable
 class BundledInsert<T>(
     val delay: Long,
-    val dispatcher: CoroutineDispatcher = Dispatchers.Default
+    val dispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) {
     val scope = CoroutineScope(dispatcher + SupervisorJob())
 
@@ -90,7 +90,7 @@ class BundledInsert<T>(
 
     fun invalidateList(
         newObject: T,
-        onUpdate: suspend (Set<T>) -> Unit
+        onUpdate: suspend (Set<T>) -> Unit,
     ) {
         checkNotInMainThread()
 

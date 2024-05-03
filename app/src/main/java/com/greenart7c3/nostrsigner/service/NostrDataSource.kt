@@ -53,7 +53,7 @@ abstract class NostrDataSource(val debugName: String) {
         eventCounter.forEach {
             Log.d(
                 "STATE DUMP ${this.javaClass.simpleName}",
-                "Received Events ${it.key}: ${it.value.counter}"
+                "Received Events ${it.key}: ${it.value.counter}",
             )
         }
     }
@@ -68,7 +68,7 @@ abstract class NostrDataSource(val debugName: String) {
                 event: Event,
                 subscriptionId: String,
                 relay: Relay,
-                afterEOSE: Boolean
+                afterEOSE: Boolean,
             ) {
                 if (subscriptions.containsKey(subscriptionId)) {
                     val key = "$debugName $subscriptionId ${event.kind}"
@@ -91,7 +91,7 @@ abstract class NostrDataSource(val debugName: String) {
             override fun onError(
                 error: Error,
                 subscriptionId: String,
-                relay: Relay
+                relay: Relay,
             ) {
                 // if (subscriptions.containsKey(subscriptionId)) {
                 // Log.e(
@@ -104,7 +104,7 @@ abstract class NostrDataSource(val debugName: String) {
             override fun onRelayStateChange(
                 type: Relay.StateType,
                 relay: Relay,
-                subscriptionId: String?
+                subscriptionId: String?,
             ) {
                 // if (subscriptions.containsKey(subscriptionId)) {
                 //    Log.d(this@NostrDataSource.javaClass.simpleName, "Relay ${relay.url} ${subscriptionId}
@@ -124,20 +124,20 @@ abstract class NostrDataSource(val debugName: String) {
                 eventId: String,
                 success: Boolean,
                 message: String,
-                relay: Relay
+                relay: Relay,
             ) {
             }
 
             override fun onAuth(
                 relay: Relay,
-                challenge: String
+                challenge: String,
             ) {
                 auth(relay, challenge)
             }
 
             override fun onNotify(
                 relay: Relay,
-                description: String
+                description: String,
             ) {
                 notify(relay, description)
             }
@@ -257,7 +257,7 @@ abstract class NostrDataSource(val debugName: String) {
                             if (active) {
                                 Client.sendFilterOnlyIfDisconnected(
                                     updatedSubscription.id,
-                                    updatedSubscriptionNewFilters
+                                    updatedSubscriptionNewFilters,
                                 )
                             }
                         }
@@ -271,7 +271,7 @@ abstract class NostrDataSource(val debugName: String) {
                             if (active) {
                                 Log.d(
                                     this@NostrDataSource.javaClass.simpleName,
-                                    "Update Filter 3 ${updatedSubscription.id} ${Client.isSubscribed(clientListener)}"
+                                    "Update Filter 3 ${updatedSubscription.id} ${Client.isSubscribed(clientListener)}",
                                 )
                                 Client.sendFilter(updatedSubscription.id, updatedSubscriptionNewFilters)
                             }
@@ -286,19 +286,19 @@ abstract class NostrDataSource(val debugName: String) {
 
     open fun consume(
         event: Event,
-        relay: Relay
+        relay: Relay,
     ) {
 //        LocalCache.verifyAndConsume(event, relay)
     }
 
     open fun markAsEOSE(
         subscriptionId: String,
-        relay: Relay
+        relay: Relay,
     ) {
         subscriptions[subscriptionId]?.updateEOSE(
             // in case people's clock is slighly off.
             TimeUtils.oneMinuteAgo(),
-            relay.url
+            relay.url,
         )
     }
 
@@ -306,11 +306,11 @@ abstract class NostrDataSource(val debugName: String) {
 
     open fun auth(
         relay: Relay,
-        challenge: String
+        challenge: String,
     ) = Unit
 
     open fun notify(
         relay: Relay,
-        description: String
+        description: String,
     ) = Unit
 }

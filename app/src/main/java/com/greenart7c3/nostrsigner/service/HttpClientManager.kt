@@ -36,7 +36,7 @@ object HttpClientManager {
     val DEFAULT_TIMEOUT_ON_WIFI: Duration = Duration.ofSeconds(10L)
     val DEFAULT_TIMEOUT_ON_MOBILE: Duration = Duration.ofSeconds(30L)
 
-    var proxyChangeListeners = ArrayList<() -> Unit>()
+    private var proxyChangeListeners = ArrayList<() -> Unit>()
     private var defaultTimeout = DEFAULT_TIMEOUT_ON_WIFI
     private var defaultHttpClient: OkHttpClient? = null
     private var defaultHttpClientWithoutProxy: OkHttpClient? = null

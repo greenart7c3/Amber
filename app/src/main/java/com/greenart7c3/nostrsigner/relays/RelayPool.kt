@@ -30,8 +30,6 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.SharedFlow
-import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.launch
 
 /**
@@ -45,9 +43,8 @@ object RelayPool : Relay.Listener {
     private var lastStatus = RelayPoolStatus(0, 0)
     private val _statusFlow =
         MutableSharedFlow<RelayPoolStatus>(1, 1, onBufferOverflow = BufferOverflow.DROP_OLDEST)
-    val statusFlow: SharedFlow<RelayPoolStatus> = _statusFlow.asSharedFlow()
 
-    fun availableRelays(): Int {
+    private fun availableRelays(): Int {
         return relays.size
     }
 
@@ -55,7 +52,7 @@ object RelayPool : Relay.Listener {
         return relays
     }
 
-    fun connectedRelays(): Int {
+    private fun connectedRelays(): Int {
         return relays.count { it.isConnected() }
     }
 
@@ -92,10 +89,6 @@ object RelayPool : Relay.Listener {
         relays.forEach { it.connectAndSendFiltersIfDisconnected() }
     }
 
-    fun hasListeners(): Boolean {
-        return listeners.isNotEmpty()
-    }
-
     @OptIn(DelicateCoroutinesApi::class)
     fun sendToSelectedRelays(
         list: List<Relay>,
@@ -107,8 +100,8 @@ object RelayPool : Relay.Listener {
             relays.filter { it.url == relay.url }.forEach {
                 it.onLoading = onLoading
                 if (!it.isConnected()) {
-                    it.connectAndRun {
-                        it.send(signedEvent, onDone)
+                    it.connectAndRun { relay ->
+                        relay.send(signedEvent, onDone)
                         GlobalScope.launch(Dispatchers.IO) {
                             delay(60000)
                             if (relay.isConnected()) {

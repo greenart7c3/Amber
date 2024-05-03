@@ -41,7 +41,7 @@ data class Subscription(
         return Event.mapper.writeValueAsString(toJsonObject())
     }
 
-    fun toJsonObject(): JsonNode {
+    private fun toJsonObject(): JsonNode {
         val factory = Event.mapper.nodeFactory
 
         return factory.objectNode().apply {

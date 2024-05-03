@@ -20,41 +20,8 @@
  */
 package com.greenart7c3.nostrsigner.relays
 
-import android.util.LruCache
-import androidx.compose.runtime.Immutable
-
-@Immutable
-data class RelaySetupInfo(
-    val url: String,
-    val read: Boolean,
-    val write: Boolean,
-    val errorCount: Int = 0,
-    val downloadCountInBytes: Int = 0,
-    val uploadCountInBytes: Int = 0,
-    val spamCount: Int = 0,
-    val feedTypes: Set<FeedType>,
-    val paidRelay: Boolean = false,
-) {
-    val briefInfo: RelayBriefInfoCache.RelayBriefInfo = RelayBriefInfoCache.RelayBriefInfo(url)
-}
-
-object RelayBriefInfoCache {
-    val cache = LruCache<String, RelayBriefInfo?>(50)
-
-    @Immutable
-    data class RelayBriefInfo(
-        val url: String,
-        val displayUrl: String =
-            url.trim().removePrefix("wss://").removePrefix("ws://").removeSuffix("/").intern(),
-        val favIcon: String = "https://$displayUrl/favicon.ico".intern(),
-    )
-
-    fun get(url: String): RelayBriefInfo {
-        val info = cache[url]
-        if (info != null) return info
-
-        val newInfo = RelayBriefInfo(url)
-        cache.put(url, newInfo)
-        return newInfo
+class EOSETime(var time: Long) {
+    override fun toString(): String {
+        return time.toString()
     }
 }

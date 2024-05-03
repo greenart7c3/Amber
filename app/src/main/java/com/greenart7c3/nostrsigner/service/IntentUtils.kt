@@ -41,7 +41,7 @@ import java.net.URLDecoder
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 
-data class BunkerMetada(
+data class BunkerMetadata(
     val name: String,
     val url: String,
     val description: String,
@@ -258,7 +258,7 @@ object IntentUtils {
                         database.applicationDao().getAllApplications().forEach {
                             it.application.relays.forEach { url ->
                                 if (url.isNotBlank()) {
-                                    if (!savedRelays.any { it.url == url }) {
+                                    if (!savedRelays.any { relay -> relay.url == url }) {
                                         savedRelays.add(Relay(url))
                                     }
                                 }
@@ -569,12 +569,12 @@ object IntentUtils {
         }
     }
 
-    private fun metaDataFromJson(json: String): BunkerMetada {
+    private fun metaDataFromJson(json: String): BunkerMetadata {
         val objectMapper =
             jacksonObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
-        return objectMapper.readValue(json, BunkerMetada::class.java)
+        return objectMapper.readValue(json, BunkerMetadata::class.java)
     }
 
     private fun getIntentFromNostrConnect(
@@ -639,7 +639,7 @@ object IntentUtils {
         }
     }
 
-    suspend fun getIntentData(
+    fun getIntentData(
         intent: Intent,
         packageName: String?,
         route: String?,

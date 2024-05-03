@@ -90,7 +90,7 @@ object Client : RelayPool.Listener {
         }
     }
 
-    fun isSameRelaySetConfig(newRelayConfig: Array<Relay>?): Boolean {
+    private fun isSameRelaySetConfig(newRelayConfig: Array<Relay>?): Boolean {
         if (relays.size != newRelayConfig?.size) return false
 
         relays.forEach { oldRelayInfo ->
@@ -150,7 +150,7 @@ object Client : RelayPool.Listener {
                 newSporadicRelay(
                     relay,
                     feedTypes,
-                    onConnected = { relay -> relay.send(signedEvent, null) },
+                    onConnected = { mRelay -> mRelay.send(signedEvent, null) },
                     onDone = onDone,
                     onLoading = onLoading,
                 )
@@ -166,7 +166,7 @@ object Client : RelayPool.Listener {
         onConnected: (Relay) -> Unit,
         onDone: (() -> Unit)?,
     ) {
-        val relay = Relay(url, true, true, feedTypes ?: emptySet())
+        val relay = Relay(url, activeTypes = feedTypes ?: emptySet())
         relay.onLoading = onLoading
         RelayPool.addRelay(relay)
 
@@ -288,10 +288,6 @@ object Client : RelayPool.Listener {
 
     fun isSubscribed(listener: Listener): Boolean {
         return listeners.contains(listener)
-    }
-
-    fun unsubscribe(listener: Listener) {
-        listeners = listeners.minus(listener)
     }
 
     fun allSubscriptions(): Set<String> {

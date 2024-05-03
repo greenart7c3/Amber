@@ -97,7 +97,7 @@ fun HomeScreen(
     }
 }
 
-class Result(
+data class Result(
     val `package`: String?,
     val signature: String?,
     val id: String?,

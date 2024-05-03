@@ -66,11 +66,9 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@OptIn(DelicateCoroutinesApi::class)
 @Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,

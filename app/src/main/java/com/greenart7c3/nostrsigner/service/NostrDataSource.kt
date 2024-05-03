@@ -28,11 +28,8 @@ import com.greenart7c3.nostrsigner.relays.Subscription
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.cancel
 import kotlinx.coroutines.launch
 import java.util.UUID
 import java.util.concurrent.atomic.AtomicBoolean
@@ -45,18 +42,9 @@ abstract class NostrDataSource(val debugName: String) {
     data class Counter(var counter: Int)
 
     private var eventCounter = mapOf<String, Counter>()
-    var changingFilters = AtomicBoolean()
+    private var changingFilters = AtomicBoolean()
 
     private var active: Boolean = false
-
-    fun printCounter() {
-        eventCounter.forEach {
-            Log.d(
-                "STATE DUMP ${this.javaClass.simpleName}",
-                "Received Events ${it.key}: ${it.value.counter}",
-            )
-        }
-    }
 
     fun isActive(): Boolean {
         return active
@@ -72,7 +60,7 @@ abstract class NostrDataSource(val debugName: String) {
             ) {
                 if (subscriptions.containsKey(subscriptionId)) {
                     val key = "$debugName $subscriptionId ${event.kind}"
-                    val keyValue = eventCounter.get(key)
+                    val keyValue = eventCounter[key]
                     if (keyValue != null) {
                         keyValue.counter++
                     } else {
@@ -148,32 +136,10 @@ abstract class NostrDataSource(val debugName: String) {
         Client.subscribe(clientListener)
     }
 
-    fun destroy() {
-        // makes sure to run
-        Log.d(this.javaClass.simpleName, "${this.javaClass.simpleName} Unsubscribe")
-        stop()
-        Client.unsubscribe(clientListener)
-        scope.cancel()
-        bundler.cancel()
-    }
-
     open fun start() {
         println("DataSource: ${this.javaClass.simpleName} Start")
         active = true
         resetFilters()
-    }
-
-    @OptIn(DelicateCoroutinesApi::class)
-    open fun stop() {
-        active = false
-        println("DataSource: ${this.javaClass.simpleName} Stop")
-
-        GlobalScope.launch(Dispatchers.IO) {
-            subscriptions.values.forEach { subscription ->
-                Client.close(subscription.id)
-                subscription.typedFilters = null
-            }
-        }
     }
 
     open fun stopSync() {
@@ -192,11 +158,6 @@ abstract class NostrDataSource(val debugName: String) {
         return newSubscription
     }
 
-    fun dismissChannel(subscription: Subscription) {
-        Client.close(subscription.id)
-        subscriptions = subscriptions.minus(subscription.id)
-    }
-
     // Refreshes observers in batches.
     private val bundler = BundledUpdate(300, Dispatchers.IO)
 
@@ -212,11 +173,11 @@ abstract class NostrDataSource(val debugName: String) {
         }
     }
 
-    fun resetFilters() {
+    private fun resetFilters() {
         scope.launch(Dispatchers.IO) { resetFiltersSuspend() }
     }
 
-    fun resetFiltersSuspend() {
+    private fun resetFiltersSuspend() {
         println("DataSource: ${this.javaClass.simpleName} resetFiltersSuspend $active")
         checkNotInMainThread()
 

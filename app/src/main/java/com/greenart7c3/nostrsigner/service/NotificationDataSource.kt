@@ -37,7 +37,7 @@ import com.vitorpamplona.quartz.events.Event
 object NotificationDataSource : NostrDataSource("AccountData") {
     private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.instance)
 
-    fun createNotificationsFilter(): TypedFilter {
+    private fun createNotificationsFilter(): TypedFilter {
         var since = TimeUtils.now()
         val accounts = LocalPreferences.allSavedAccounts()
         accounts.forEach {

@@ -63,7 +63,7 @@ class JsonFilter(
                     }
                 }
                 since?.run {
-                    if (!isEmpty()) {
+                    if (isNotEmpty()) {
                         if (forRelay != null) {
                             val relaySince = get(forRelay)
                             if (relaySince != null) {

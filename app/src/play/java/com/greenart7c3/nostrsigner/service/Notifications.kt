@@ -38,7 +38,7 @@ class Notifications : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
     }
 
-    private suspend fun parseMessage(params: Map<String, String>): GiftWrapEvent? {
+    private fun parseMessage(params: Map<String, String>): GiftWrapEvent? {
         params["encryptedEvent"]?.let { eventStr ->
             (Event.fromJson(eventStr) as? GiftWrapEvent)?.let {
                 return it

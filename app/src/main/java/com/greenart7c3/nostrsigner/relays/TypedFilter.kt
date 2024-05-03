@@ -36,40 +36,40 @@ class TypedFilter(
         val factory = Event.mapper.nodeFactory
 
         return factory.objectNode().apply {
-            put("types", typesToJson(types))
-            put("filter", filterToJson(filter))
+            putIfAbsent("types", typesToJson(types))
+            putIfAbsent("filter", filterToJson(filter))
         }
     }
 
-    fun typesToJson(types: Set<FeedType>): ArrayNode {
+    private fun typesToJson(types: Set<FeedType>): ArrayNode {
         val factory = Event.mapper.nodeFactory
         return factory.arrayNode(types.size).apply { types.forEach { add(it.name.lowercase()) } }
     }
 
-    fun filterToJson(filter: JsonFilter): JsonNode {
+    private fun filterToJson(filter: JsonFilter): JsonNode {
         val factory = Event.mapper.nodeFactory
         return factory.objectNode().apply {
             filter.ids?.run {
-                put(
+                putIfAbsent(
                     "ids",
                     factory.arrayNode(filter.ids.size).apply { filter.ids.forEach { add(it) } },
                 )
             }
             filter.authors?.run {
-                put(
+                putIfAbsent(
                     "authors",
                     factory.arrayNode(filter.authors.size).apply { filter.authors.forEach { add(it) } },
                 )
             }
             filter.kinds?.run {
-                put(
+                putIfAbsent(
                     "kinds",
                     factory.arrayNode(filter.kinds.size).apply { filter.kinds.forEach { add(it) } },
                 )
             }
             filter.tags?.run {
                 entries.forEach { kv ->
-                    put(
+                    putIfAbsent(
                         "#${kv.key}",
                         factory.arrayNode(kv.value.size).apply { kv.value.forEach { add(it) } },
                     )

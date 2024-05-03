@@ -20,31 +20,20 @@
  */
 package com.greenart7c3.nostrsigner.service
 
+import android.annotation.SuppressLint
 import android.content.Context
-import android.content.Intent
-import android.net.Uri
 
 object PackageUtils {
+    @SuppressLint("QueryPermissionsNeeded")
     private fun isPackageInstalled(
         context: Context,
-        target: String,
     ): Boolean {
         return context.packageManager.getInstalledApplications(0).find { info ->
-            info.packageName == target
+            info.packageName == "org.torproject.android"
         } != null
     }
 
     fun isOrbotInstalled(context: Context): Boolean {
-        return isPackageInstalled(context, "org.torproject.android")
-    }
-
-    fun isExternalSignerInstalled(context: Context): Boolean {
-        val intent =
-            Intent().apply {
-                action = Intent.ACTION_VIEW
-                data = Uri.parse("nostrsigner:")
-            }
-        val infos = context.packageManager.queryIntentActivities(intent, 0)
-        return infos.size > 0
+        return isPackageInstalled(context)
     }
 }

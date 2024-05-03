@@ -321,7 +321,7 @@ fun PermissionsFloatingActionButton(
     val context = LocalContext.current
 
     if (dialogOpen) {
-        simpleQrCodeScanner {
+        SimpleQrCodeScanner {
             dialogOpen = false
             if (!it.isNullOrEmpty()) {
                 val intent = Intent(Intent.ACTION_VIEW)
@@ -504,6 +504,7 @@ fun MainScreen(
     val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
 
+    @Suppress("KotlinConstantConditions")
     if (BuildConfig.FLAVOR != "offline") {
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
@@ -553,6 +554,7 @@ fun MainScreen(
 
     Scaffold(
         floatingActionButton = {
+            @Suppress("KotlinConstantConditions")
             if (destinationRoute == "Permissions" && BuildConfig.FLAVOR != "offline") {
                 PermissionsFloatingActionButton(
                     accountStateViewModel,
@@ -662,6 +664,7 @@ fun MainScreen(
     ) { padding ->
         var localRoute by remember { mutableStateOf(route.value ?: Route.Home.route) }
 
+        @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
             LaunchedEffect(Unit, route.value) {
                 launch(Dispatchers.Main) {

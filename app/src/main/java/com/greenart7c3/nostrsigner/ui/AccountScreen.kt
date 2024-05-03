@@ -99,7 +99,7 @@ fun AccountScreen(
                                 db.applicationDao().getAllApplications().forEach {
                                     it.application.relays.forEach { url ->
                                         if (url.isNotBlank()) {
-                                            if (!relays.any { it.url == url }) {
+                                            if (!relays.any { relay -> relay.url == url }) {
                                                 relays.add(Relay(url))
                                             }
                                         }
@@ -109,6 +109,7 @@ fun AccountScreen(
 
                             delay(1000)
                             Client.addRelays(relays.toTypedArray())
+                            @Suppress("KotlinConstantConditions")
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 NostrSigner.instance.applicationContext.startService(
                                     Intent(NostrSigner.instance.applicationContext, ConnectivityService::class.java),

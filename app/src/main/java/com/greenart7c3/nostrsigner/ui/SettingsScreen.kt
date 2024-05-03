@@ -165,7 +165,7 @@ fun SettingsScreen(
                             Modifier
                                 .padding(8.dp),
                         ) {
-                            settingsRow(
+                            SettingsRow(
                                 R.string.notification_type,
                                 R.string.select_the_type_of_notification_you_want_to_receive,
                                 notificationItems,
@@ -224,6 +224,8 @@ fun SettingsScreen(
                 },
             )
         }
+
+        @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
             Box(
                 Modifier
@@ -345,10 +347,10 @@ fun SettingsScreen(
 }
 
 @Composable
-fun settingsRow(
+fun SettingsRow(
     name: Int,
     description: Int,
-    selectedItens: ImmutableList<TitleExplainer>,
+    selectedItems: ImmutableList<TitleExplainer>,
     selectedIndex: Int,
     onSelect: (Int) -> Unit,
 ) {
@@ -376,8 +378,8 @@ fun settingsRow(
 
         TextSpinner(
             label = "",
-            placeholder = selectedItens[selectedIndex].title,
-            options = selectedItens,
+            placeholder = selectedItems[selectedIndex].title,
+            options = selectedItems,
             onSelect = onSelect,
             modifier =
                 Modifier

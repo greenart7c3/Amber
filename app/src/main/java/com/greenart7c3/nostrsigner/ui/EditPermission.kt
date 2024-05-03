@@ -276,7 +276,7 @@ fun EditPermission(
                 database.applicationDao().getAllApplications().forEach {
                     it.application.relays.forEach { url ->
                         if (url.isNotBlank()) {
-                            if (!relays.any { it.url == url }) {
+                            if (!relays.any { relay -> relay.url == url }) {
                                 relays.add(Relay(url))
                             }
                         }
@@ -525,7 +525,7 @@ fun EditPermission(
                         database.applicationDao().getAllApplications().forEach {
                             it.application.relays.forEach { url ->
                                 if (url.isNotBlank()) {
-                                    if (!relays.any { it.url == url }) {
+                                    if (!relays.any { relay -> relay.url == url }) {
                                         relays.add(Relay(url))
                                     }
                                 }

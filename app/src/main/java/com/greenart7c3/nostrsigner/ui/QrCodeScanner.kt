@@ -9,7 +9,7 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanOptions
 
 @Composable
-fun simpleQrCodeScanner(onScan: (String?) -> Unit) {
+fun SimpleQrCodeScanner(onScan: (String?) -> Unit) {
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val qrLauncher =

@@ -80,7 +80,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    private suspend fun consumeIfMatchesAccount(
+    private fun consumeIfMatchesAccount(
         pushWrappedEvent: GiftWrapEvent,
         account: Account,
     ) {

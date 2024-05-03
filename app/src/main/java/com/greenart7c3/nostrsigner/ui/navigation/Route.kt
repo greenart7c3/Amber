@@ -5,10 +5,8 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.filled.ViewList
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Settings
-import androidx.compose.material.icons.outlined.ViewList
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
 

@@ -172,7 +172,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                 },
                 leadingIcon = {
                     if (dialogOpen) {
-                        simpleQrCodeScanner {
+                        SimpleQrCodeScanner {
                             dialogOpen = false
                             if (!it.isNullOrEmpty()) {
                                 key.value = TextFieldValue(it)
@@ -313,6 +313,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
 
             Spacer(modifier = Modifier.height(10.dp))
 
+            @Suppress("KotlinConstantConditions")
             if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Checkbox(

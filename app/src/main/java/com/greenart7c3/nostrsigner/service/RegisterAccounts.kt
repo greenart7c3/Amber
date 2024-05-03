@@ -54,12 +54,12 @@ class RegisterAccounts(
 
         next.first.createAuthEvent(next.second, notificationToken) {
             output.add(it)
-            recursiveAuthCreation(notificationToken, remainingTos.filter { next != it }, output, onReady)
+            recursiveAuthCreation(notificationToken, remainingTos.filter { remainingTo -> next != remainingTo }, output, onReady)
         }
     }
 
     // creates proof that it controls all accounts
-    private suspend fun signEventsToProveControlOfAccounts(
+    private fun signEventsToProveControlOfAccounts(
         accounts: List<AccountInfo>,
         notificationToken: String,
         onReady: (List<RelayAuthEvent>) -> Unit,

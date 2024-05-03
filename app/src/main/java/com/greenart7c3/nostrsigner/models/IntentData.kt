@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.models
 
 import androidx.compose.runtime.MutableState
-import com.greenart7c3.nostrsigner.service.BunkerRequest
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.events.Event
 

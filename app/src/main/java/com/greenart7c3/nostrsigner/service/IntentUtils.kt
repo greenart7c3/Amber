@@ -15,6 +15,8 @@ import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerRequest
+import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
@@ -25,7 +27,6 @@ import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub

@@ -49,7 +49,7 @@ class ConnectivityService : Service() {
     override fun onCreate() {
         startForeground(1, createNotification())
 
-        timer.scheduleAtFixedRate(
+        timer.schedule(
             object : TimerTask() {
                 override fun run() {
                     if (LocalPreferences.getNotificationType() == NotificationType.PUSH) return

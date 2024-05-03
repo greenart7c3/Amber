@@ -32,6 +32,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 object NotificationUtils {

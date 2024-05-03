@@ -33,6 +33,11 @@
 # JNA For Libsodium
 -keep class com.goterl.lazysodium.** { *; }
 
+# libscrypt
+-keep class com.lambdaworks.codec.** { *; }
+-keep class com.lambdaworks.crypto.** { *; }
+-keep class com.lambdaworks.jni.** { *; }
+
 # JNA also requires AWT, which Android does not have. So the classes are broken down to filter AWT out
 -keep class com.sun.jna.ToNativeConverter { *; }
 -keep class com.sun.jna.NativeMapped { *; }
@@ -58,3 +63,11 @@
 -keep class com.vitorpamplona.quartz.events.** { *; }
 -keep class com.vitorpamplona.amethyst.model.** { *; }
 -keep class com.vitorpamplona.amethyst.service.** { *; }
+-keep class com.greenart7c3.nostrsigner.models.** { *; }
+-keep class com.greenart7c3.nostrsigner.service.** { *; }
+
+-dontwarn edu.umd.cs.findbugs.annotations.NonNull
+-dontwarn edu.umd.cs.findbugs.annotations.Nullable
+-dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
+-dontwarn java.lang.instrument.ClassDefinition
+-dontwarn java.lang.instrument.UnmodifiableClassException

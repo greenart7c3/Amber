@@ -86,6 +86,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
@@ -112,12 +113,6 @@ import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.UUID
 import java.util.zip.GZIPOutputStream
-
-data class BunkerResponse(
-    val id: String,
-    val result: String,
-    val error: String?,
-)
 
 @OptIn(DelicateCoroutinesApi::class)
 fun sendResult(

@@ -7,10 +7,11 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerRequest
+import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.relays.Relay
-import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray

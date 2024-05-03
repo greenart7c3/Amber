@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -62,7 +63,6 @@ import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.BunkerResponse
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.events.LnZapRequestEvent

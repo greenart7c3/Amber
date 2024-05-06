@@ -121,11 +121,10 @@ fun getLanguageIndex(
     languageEntries: ImmutableMap<String, String>,
     selectedLanguage: String?,
 ): Int {
-    val language = selectedLanguage
-    var languageIndex = -1
+    var languageIndex: Int
     languageIndex =
-        if (language != null) {
-            languageEntries.values.toTypedArray().indexOf(language)
+        if (selectedLanguage != null) {
+            languageEntries.values.toTypedArray().indexOf(selectedLanguage)
         } else {
             languageEntries.values.toTypedArray().indexOf(Locale.current.toLanguageTag())
         }

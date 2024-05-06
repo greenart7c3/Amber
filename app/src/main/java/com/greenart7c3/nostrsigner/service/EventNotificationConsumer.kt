@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
@@ -149,6 +150,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
             val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
             if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
+                database.applicationDao()
+                    .addHistory(
+                        HistoryEntity(
+                            0,
+                            permission.application.key,
+                            type.toString().toLowerCase(Locale.current),
+                            amberEvent?.kind,
+                            System.currentTimeMillis(),
+                            true,
+                        ),
+                    )
                 IntentUtils.sendBunkerResponse(
                     acc,
                     bunkerRequest.localKey,

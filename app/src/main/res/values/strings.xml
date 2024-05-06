@@ -120,4 +120,6 @@
     <string name="notification_type">Notification Type</string>
     <string name="select_the_type_of_notification_you_want_to_receive">Select the type of notification you want to receive</string>
     <string name="activity">Activity</string>
+    <string name="accepted">Accepted</string>
+    <string name="rejected">Rejected</string>
 </resources>

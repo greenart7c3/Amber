@@ -83,14 +83,12 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 
 fun convertLongToDateTime(longValue: Long): String {
-    // Convert the Long timestamp to LocalDateTime
     val dateTime =
         LocalDateTime.ofInstant(
             Instant.ofEpochMilli(longValue),
             ZoneId.systemDefault(),
         )
 
-    // Format the LocalDateTime with local format
     val formatter =
         DateTimeFormatter.ofLocalizedDateTime(
             FormatStyle.SHORT,
@@ -102,7 +100,6 @@ fun convertLongToDateTime(longValue: Long): String {
 
 @Composable
 fun ActivityDialog(
-    account: Account,
     database: AppDatabase,
     key: String,
     onClose: () -> Unit,
@@ -150,7 +147,7 @@ fun ActivityDialog(
                 }
                 LazyColumn(
                     Modifier
-                        .fillMaxHeight(0.9f)
+                        .fillMaxHeight()
                         .fillMaxWidth(),
                 ) {
                     items(activities.size) {
@@ -169,7 +166,7 @@ fun ActivityDialog(
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                             ) {
                                 Text(
-                                    permission.toString(),
+                                    if (permission.type == "connect") "Connect" else permission.toString(),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                     maxLines = 1,
@@ -185,7 +182,7 @@ fun ActivityDialog(
                             IconButton(onClick = { }) {
                                 Icon(
                                     if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
-                                    contentDescription = null,
+                                    contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
                                     tint = if (activity.accepted) Color.Green else Color.Red,
                                 )
                             }
@@ -427,7 +424,6 @@ fun EditPermission(
 
     if (showActivityDialog) {
         ActivityDialog(
-            account = account,
             database = database,
             key = selectedPackage,
             onClose = {
@@ -531,33 +527,36 @@ fun EditPermission(
             },
         )
 
-        if (applicationData.secret.isNotEmpty()) {
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        editRelaysDialog = true
-                    },
-                    Modifier.padding(6.dp),
-                ) {
-                    Text(stringResource(R.string.relays))
-                }
-            }
-        }
-
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
-            Button(
-                onClick = {
-                    showActivityDialog = true
-                },
-                Modifier.padding(6.dp),
+            if (applicationData.secret.isNotEmpty()) {
+                Row(
+                    horizontalArrangement = Arrangement.Center,
+                ) {
+                    Button(
+                        onClick = {
+                            editRelaysDialog = true
+                        },
+                        Modifier.padding(6.dp),
+                    ) {
+                        Text(stringResource(R.string.relays))
+                    }
+                }
+            }
+
+            Row(
+                horizontalArrangement = Arrangement.Center,
             ) {
-                Text(stringResource(R.string.activity))
+                Button(
+                    onClick = {
+                        showActivityDialog = true
+                    },
+                    Modifier.padding(6.dp),
+                ) {
+                    Text(stringResource(R.string.activity))
+                }
             }
         }
 

@@ -48,11 +48,15 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -66,6 +70,7 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -179,6 +184,39 @@ fun MultiEventHomeScreen(
                                         )
                                     }
 
+                                    val application =
+                                        database
+                                            .applicationDao()
+                                            .getByKey(key) ?: ApplicationWithPermissions(
+                                            application =
+                                                ApplicationEntity(
+                                                    key,
+                                                    applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                                    listOf(),
+                                                    "",
+                                                    "",
+                                                    "",
+                                                    localAccount.keyPair.pubKey.toHexKey(),
+                                                    true,
+                                                    intentData.bunkerRequest?.secret ?: "",
+                                                    intentData.bunkerRequest?.secret != null,
+                                                ),
+                                            permissions = mutableListOf(),
+                                        )
+
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            localEvent.kind,
+                                            TimeUtils.now(),
+                                            true,
+                                        ),
+                                    )
+
                                     if (intentData.bunkerRequest != null) {
                                         IntentUtils.sendBunkerResponse(
                                             localAccount,
@@ -217,6 +255,40 @@ fun MultiEventHomeScreen(
                                             database,
                                         )
                                     }
+
+                                    val application =
+                                        database
+                                            .applicationDao()
+                                            .getByKey(key) ?: ApplicationWithPermissions(
+                                            application =
+                                                ApplicationEntity(
+                                                    key,
+                                                    applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                                    listOf(),
+                                                    "",
+                                                    "",
+                                                    "",
+                                                    localAccount.keyPair.pubKey.toHexKey(),
+                                                    true,
+                                                    intentData.bunkerRequest?.secret ?: "",
+                                                    intentData.bunkerRequest?.secret != null,
+                                                ),
+                                            permissions = mutableListOf(),
+                                        )
+
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            null,
+                                            TimeUtils.now(),
+                                            true,
+                                        ),
+                                    )
+
                                     val signature = intentData.encryptedData ?: continue
 
                                     if (intentData.bunkerRequest != null) {

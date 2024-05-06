@@ -119,4 +119,5 @@
     <string name="direct_connection">Direct Connection</string>
     <string name="notification_type">Notification Type</string>
     <string name="select_the_type_of_notification_you_want_to_receive">Select the type of notification you want to receive</string>
+    <string name="activity">Activity</string>
 </resources>

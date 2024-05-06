@@ -17,9 +17,18 @@ val MIGRATION_1_2 =
         }
     }
 
+val MIGRATION_2_3 =
+    object : Migration(2, 3) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `history` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pkKey` TEXT NOT NULL, `type` TEXT NOT NULL, `kind` INTEGER, `time` INTEGER NOT NULL, `accepted` INTEGER NOT NULL, FOREIGN KEY(`pkKey`) REFERENCES `application`(`key`) ON UPDATE NO ACTION ON DELETE CASCADE )")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_pk_key` ON `history` (`pkKey`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_id` ON `history` (`id`)")
+        }
+    }
+
 @Database(
-    entities = [ApplicationEntity::class, ApplicationPermissionsEntity::class, NotificationEntity::class],
-    version = 2,
+    entities = [ApplicationEntity::class, ApplicationPermissionsEntity::class, NotificationEntity::class, HistoryEntity::class],
+    version = 3,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -38,6 +47,7 @@ abstract class AppDatabase : RoomDatabase() {
                         "amber_db_$npub",
                     )
                         .addMigrations(MIGRATION_1_2)
+                        .addMigrations(MIGRATION_2_3)
                         .build()
                 instance
             }

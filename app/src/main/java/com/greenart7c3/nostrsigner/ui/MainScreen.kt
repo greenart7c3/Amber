@@ -85,6 +85,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.CompressionType
@@ -92,6 +93,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
@@ -167,12 +169,20 @@ fun sendResult(
         val relays = intentData.bunkerRequest?.relays ?: listOf()
         val savedApplication = database.applicationDao().getByKey(key)
 
+        val localAppName =
+            if (packageName != null) {
+                val info = context.packageManager.getApplicationInfo(packageName, 0)
+                context.packageManager.getApplicationLabel(info).toString()
+            } else {
+                appName
+            }
+
         val application =
             savedApplication ?: ApplicationWithPermissions(
                 application =
                     ApplicationEntity(
                         key,
-                        appName ?: "",
+                        appName ?: localAppName ?: "",
                         relays,
                         "",
                         "",
@@ -230,6 +240,16 @@ fun sendResult(
                 onLoading,
                 onSign = {
                     database.applicationDao().insertApplicationWithPermissions(application)
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            key,
+                            intentData.type.toString(),
+                            kind,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
                     PushNotificationUtils.hasInit = false
                     GlobalScope.launch(Dispatchers.IO) {
                         PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
@@ -242,6 +262,16 @@ fun sendResult(
             }
         } else if (packageName != null) {
             database.applicationDao().insertApplicationWithPermissions(application)
+            database.applicationDao().addHistory(
+                HistoryEntity(
+                    0,
+                    key,
+                    intentData.type.toString(),
+                    kind,
+                    TimeUtils.now(),
+                    true,
+                ),
+            )
 
             val intent = Intent()
             intent.putExtra("signature", value)

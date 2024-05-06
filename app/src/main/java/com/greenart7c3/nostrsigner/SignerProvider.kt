@@ -5,7 +5,9 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
@@ -51,8 +53,9 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
+                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
-                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                    database
                         .applicationDao()
                         .getPermission(
                             sortOrder ?: packageName,
@@ -66,16 +69,49 @@ class SignerProvider : ContentProvider() {
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                event.kind,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
                         return cursor
                     }
                 } else {
                     val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) return null
+                    if (!isRemembered) {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                event.kind,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                        return null
+                    }
                 }
 
                 var cursor: MatrixCursor? = null
 
                 account.signer.sign<Event>(event.createdAt, event.kind, event.tags, event.content) { signedEvent ->
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            "SIGN_EVENT",
+                            event.kind,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
+
                     val localCursor =
                         MatrixCursor(arrayOf("signature", "event")).also {
                             val signature =
@@ -113,9 +149,9 @@ class SignerProvider : ContentProvider() {
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
-
+                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
-                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                    database
                         .applicationDao()
                         .getPermission(
                             sortOrder ?: packageName,
@@ -129,11 +165,33 @@ class SignerProvider : ContentProvider() {
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
                         return cursor
                     }
                 } else {
                     val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) return null
+                    if (!isRemembered) {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                        return null
+                    }
                 }
 
                 val type =
@@ -158,6 +216,17 @@ class SignerProvider : ContentProvider() {
                         "Could not decrypt the message"
                     }
 
+                database.applicationDao().addHistory(
+                    HistoryEntity(
+                        0,
+                        sortOrder ?: packageName,
+                        uri.toString().replace("content://$appId.", ""),
+                        null,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                )
+
                 if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
                     return null
                 } else {
@@ -171,9 +240,9 @@ class SignerProvider : ContentProvider() {
                 val packageName = callingPackage ?: return null
                 val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
                 val currentSelection = selection ?: "0"
-
+                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
-                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                    database
                         .applicationDao()
                         .getPermission(
                             sortOrder ?: packageName,
@@ -187,12 +256,45 @@ class SignerProvider : ContentProvider() {
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
                         return cursor
                     }
                 } else {
                     val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) return null
+                    if (!isRemembered) {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                        return null
+                    }
                 }
+
+                database.applicationDao().addHistory(
+                    HistoryEntity(
+                        0,
+                        sortOrder ?: packageName,
+                        uri.toString().replace("content://$appId.", ""),
+                        null,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                )
 
                 val cursor = MatrixCursor(arrayOf("signature"))
                 cursor.addRow(arrayOf<Any>(account.keyPair.pubKey.toNpub()))

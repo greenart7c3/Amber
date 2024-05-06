@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.database
 
+import android.util.Log
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -109,4 +110,20 @@ interface ApplicationDao {
 
     @Delete
     fun delete(entity: ApplicationEntity)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun innerAddHistory(entity: HistoryEntity)
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Transaction
+    fun addHistory(entity: HistoryEntity) {
+        try {
+            innerAddHistory(entity)
+        } catch (e: Exception) {
+            Log.e("ApplicationDao", "Error adding history", e)
+        }
+    }
+
+    @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
+    fun getAllHistory(pk: String): List<HistoryEntity>
 }

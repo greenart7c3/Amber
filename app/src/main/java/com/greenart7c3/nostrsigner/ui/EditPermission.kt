@@ -38,6 +38,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -62,6 +63,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.relays.Client
@@ -74,6 +76,126 @@ import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.Instant
+import java.time.LocalDateTime
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.format.FormatStyle
+
+fun convertLongToDateTime(longValue: Long): String {
+    // Convert the Long timestamp to LocalDateTime
+    val dateTime =
+        LocalDateTime.ofInstant(
+            Instant.ofEpochMilli(longValue),
+            ZoneId.systemDefault(),
+        )
+
+    // Format the LocalDateTime with local format
+    val formatter =
+        DateTimeFormatter.ofLocalizedDateTime(
+            FormatStyle.SHORT,
+            FormatStyle.MEDIUM,
+        )
+
+    return dateTime.format(formatter)
+}
+
+@Composable
+fun ActivityDialog(
+    account: Account,
+    database: AppDatabase,
+    key: String,
+    onClose: () -> Unit,
+) {
+    val activities =
+        remember {
+            mutableStateListOf<HistoryEntity>()
+        }
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            activities.clear()
+            activities.addAll(
+                database.applicationDao().getAllHistory(key).toMutableStateList(),
+            )
+        }
+    }
+
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier =
+                Modifier
+                    .fillMaxSize(),
+        ) {
+            Column(
+                modifier =
+                    Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize(),
+            ) {
+                Row(
+                    modifier =
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CloseButton {
+                        onClose()
+                    }
+                }
+                LazyColumn(
+                    Modifier
+                        .fillMaxHeight(0.9f)
+                        .fillMaxWidth(),
+                ) {
+                    items(activities.size) {
+                        val activity = activities[it]
+                        val permission =
+                            Permission(
+                                activity.type.toLowerCase(Locale.current),
+                                activity.kind,
+                            )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(
+                                Modifier
+                                    .weight(0.9f)
+                                    .padding(horizontal = 16.dp, vertical = 8.dp),
+                            ) {
+                                Text(
+                                    permission.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    convertLongToDateTime(activity.time * 1000),
+                                    fontSize = 14.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            IconButton(onClick = { }) {
+                                Icon(
+                                    if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
+                                    contentDescription = null,
+                                    tint = if (activity.accepted) Color.Green else Color.Red,
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun EditPermission(
@@ -299,6 +421,21 @@ fun EditPermission(
         mutableStateOf(false)
     }
 
+    var showActivityDialog by remember {
+        mutableStateOf(false)
+    }
+
+    if (showActivityDialog) {
+        ActivityDialog(
+            account = account,
+            database = database,
+            key = selectedPackage,
+            onClose = {
+                showActivityDialog = false
+            },
+        )
+    }
+
     if (showDialog) {
         QrCodeDialog(
             content = bunkerUri,
@@ -407,6 +544,20 @@ fun EditPermission(
                 ) {
                     Text(stringResource(R.string.relays))
                 }
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(
+                onClick = {
+                    showActivityDialog = true
+                },
+                Modifier.padding(6.dp),
+            ) {
+                Text(stringResource(R.string.activity))
             }
         }
 

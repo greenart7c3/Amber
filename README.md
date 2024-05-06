@@ -2,15 +2,30 @@
 
 Amber is a nostr event signer for Android. It allows users to keep their nsec segregated in a single, dedicated app. The goal of Amber is to have your smartphone act as a NIP-46 signing device without any need for servers or additional hardware. "Private keys should be exposed to as few systems as possible as each system adds to the attack surface," as the rationale of said NIP states. In addition to native apps, Amber aims to support all current nostr web applications without requiring any extensions or web servers.
 
+[![GitHub downloads](https://img.shields.io/github/downloads/greenart7c3/Amber/total?label=Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/greenart7c3/Amber/releases)
+[![Last Version](https://img.shields.io/github/release/greenart7c3/Amber.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/greenart7c3/Amber)
+[![CI](https://img.shields.io/github/actions/workflow/status/greenart7c3/Amber/build.yml?labelColor=27303D)](https://github.com/greenart7c3/Amber/actions/workflows/build.yml)
+[![License: Apache-2.0](https://img.shields.io/github/license/greenart7c3/Amber?labelColor=27303D&color=0877d2)](/LICENSE)
+
 # Current Features
 
 - [x] Offline
-- [ ] Use nip-46 or make an addendum in nip-46
+- [x] Use nip-46 or make an addendum in nip-46
 - [x] Improve the ui (currently its showing a text with the raw json of the event)
 - [x] Check if we can use Amber to sign the events of web applications
 - [x] Change the sign button to just copy the signature of the event
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
 - [x] Support for multiple accounts
+
+# Contributing
+
+Issues can be logged on: [https://gitworkshop.dev/repo/Amber](https://gitworkshop.dev/repo/Amber)
+
+[GitHub issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) here are also welcome. Translations can be provided via [Crowdin](https://crowdin.com/project/amber-nostr-signer)
+
+You can also send patches through Nostr using [GitStr](https://github.com/fiatjaf/gitstr) to [this nostr address](https://patch34.pages.dev/naddr1qvzqqqrhnypzqateqake4lc2fn77lflzq30jfpk8uhvtccalc66989er8cdmljceqqz5zmtzv4eqsrpqjs)
+
+By contributing to this repository, you agree to license your work under the MIT license. Any work contributed where you are not the original author must contain its license header with the original author(s) and source.
 
 # Usage for Android applications
 
@@ -66,7 +81,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     ```kotlin
     val intent = Intent(Intent.ACTION_VIEW, Uri.parse("nostrsigner:"))
     intent.`package` = "com.greenart7c3.nostrsigner"
-    
+
     // You can send some default permissions for the user authorize for ever
     val permissions = listOf(
       Permission(
@@ -90,7 +105,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
       ),
     )
     intent.putExtra("permissions", permissions.toJson())
-     
+
     intent.putExtra("type", "get_public_key")
     context.startActivity(intent)
     ```
@@ -114,10 +129,10 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     intent.putExtra("id", event.id)
     // Send the current logged in user npub
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
-    
+
     // If you are sending multiple intents without awaiting you can add some intent flags to sign all events without opening multiple screens
     intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-    
+
     context.startActivity(intent)
     ```
   - result:
@@ -130,7 +145,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
         {"package":null,"signature":"event_signature","id":"event_id"},
         {"package":null,"signature":"event_signature","id":"event_id"}
       ]
-      
+
       // if you sent only 1 event or did not used the flags (Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP) Amber will return the fields signature, id and event
       val signature = intent.data?.getStringExtra("signature")
       // the id you sent
@@ -151,7 +166,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
     // Send the hex pubKey that will be used for encrypting the data
     intent.putExtra("pubKey", pubKey)
-    
+
     context.startActivity(intent)
     ```
   - result:
@@ -176,7 +191,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
     // Send the hex pubKey that will be used for encrypting the data
     intent.putExtra("pubKey", pubKey)
-    
+
     context.startActivity(intent)
     ```
   - result:
@@ -186,7 +201,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
       val encryptedText = intent.data?.getStringExtra("signature")
       // the id you sent
       val id = intent.data?.getStringExtra("id")
-      ```      
+      ```
 
 - **nip04_decrypt**
   - params:
@@ -201,7 +216,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
     // Send the hex pubKey that will be used for decrypting the data
     intent.putExtra("pubKey", pubKey)
-    
+
     context.startActivity(intent)
     ```
   - result:
@@ -211,7 +226,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
       val plainText = intent.data?.getStringExtra("signature")
       // the id you sent
       val id = intent.data?.getStringExtra("id")
-      ```      
+      ```
 
 - **nip44_decrypt**
   - params:
@@ -226,7 +241,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
     intent.putExtra("current_user", account.keyPair.pubKey.toNpub())
     // Send the hex pubKey that will be used for decrypting the data
     intent.putExtra("pubKey", pubKey)
-    
+
     context.startActivity(intent)
     ```
   - result:
@@ -236,7 +251,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
       val plainText = intent.data?.getStringExtra("signature")
       // the id you sent
       val id = intent.data?.getStringExtra("id")
-      ```        
+      ```
 
 - **decrypt_zap_event**
   - params:
@@ -258,7 +273,7 @@ intent.`package` = "com.greenart7c3.nostrsigner"
       val eventJson = intent.data?.getStringExtra("signature")
       // the id you sent
       val id = intent.data?.getStringExtra("id")
-      ```         
+      ```
 
 ## Using Content Resolver
 
@@ -371,7 +386,7 @@ If the user chose to always reject the event Amber will return the column "rejec
             val index = it.getColumnIndex("signature")
             val encryptedText = it.getString(index)
         }
-      ```    
+      ```
 
 - **nip04_decrypt**
   - params:
@@ -395,7 +410,7 @@ If the user chose to always reject the event Amber will return the column "rejec
             val index = it.getColumnIndex("signature")
             val encryptedText = it.getString(index)
         }
-      ```    
+      ```
 
 - **nip44_decrypt**
   - params:
@@ -419,7 +434,7 @@ If the user chose to always reject the event Amber will return the column "rejec
             val index = it.getColumnIndex("signature")
             val encryptedText = it.getString(index)
         }
-      ```      
+      ```
 
 - **decrypt_zap_event**
   - params:
@@ -443,7 +458,7 @@ If the user chose to always reject the event Amber will return the column "rejec
             val index = it.getColumnIndex("signature")
             val eventJson = it.getString(index)
         }
-      ```    
+      ```
 
 # Usage for Web Applications
 
@@ -475,7 +490,7 @@ Android intents and browsers url has limitations, so if you are using the return
     const intent = `intent:${eventJson}#Intent;scheme=nostrsigner;S.compressionType=none;S.returnType=signature;S.type=sign_event;S.callbackUrl=https://example.com/?event=;end`;
 
     window.href = intent;
-    ``` 
+    ```
 
 - **nip04_encrypt**
   - params:
@@ -484,7 +499,7 @@ Android intents and browsers url has limitations, so if you are using the return
     const intent = `intent:${plainText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip04_encrypt;S.callbackUrl=https://example.com/?event=;end`;
 
     window.href = intent;
-    ``` 
+    ```
 
 - **nip44_encrypt**
   - params:
@@ -493,7 +508,7 @@ Android intents and browsers url has limitations, so if you are using the return
     const intent = `intent:${plainText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip44_encrypt;S.callbackUrl=https://example.com/?event=;end`;
 
     window.href = intent;
-    ```   
+    ```
 
 - **nip04_decrypt**
   - params:
@@ -502,7 +517,7 @@ Android intents and browsers url has limitations, so if you are using the return
     const intent = `intent:${encryptedText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip04_decrypt;S.callbackUrl=https://example.com/?event=;end`;
 
     window.href = intent;
-    ```     
+    ```
 
 - **nip44_decrypt**
   - params:
@@ -511,7 +526,7 @@ Android intents and browsers url has limitations, so if you are using the return
     const intent = `intent:${encryptedText}#Intent;scheme=nostrsigner;S.pubKey=${hex_pub_key};S.compressionType=none;S.returnType=signature;S.type=nip44_decrypt;S.callbackUrl=https://example.com/?event=;end`;
 
     window.href = intent;
-    ```     
+    ```
 
 - **decrypt_zap_event**
   - params:
@@ -520,7 +535,7 @@ Android intents and browsers url has limitations, so if you are using the return
     const intent = `intent:${eventJson}#Intent;scheme=nostrsigner;S.compressionType=none;S.returnType=signature;S.type=decrypt_zap_event;S.callbackUrl=https://example.com/?event=;end`;
 
     window.href = intent;
-    ```          
+    ```
 
 ## Example
 
@@ -534,7 +549,7 @@ Android intents and browsers url has limitations, so if you are using the return
 </head>
 <body>
     <h1>Test</h1>
-       
+
     <script>
         window.onload = function() {
             var url = new URL(window.location.href);
@@ -557,10 +572,6 @@ Android intents and browsers url has limitations, so if you are using the return
 </body>
 </html>
 ```
-
-# Contributing
-
-[Issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) are very welcome.
 
 # Contributors
 

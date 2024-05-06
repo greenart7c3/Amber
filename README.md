@@ -2,10 +2,14 @@
 
 Amber is a nostr event signer for Android. It allows users to keep their nsec segregated in a single, dedicated app. The goal of Amber is to have your smartphone act as a NIP-46 signing device without any need for servers or additional hardware. "Private keys should be exposed to as few systems as possible as each system adds to the attack surface," as the rationale of said NIP states. In addition to native apps, Amber aims to support all current nostr web applications without requiring any extensions or web servers.
 
+<div align="center">
+  
 [![GitHub downloads](https://img.shields.io/github/downloads/greenart7c3/Amber/total?label=Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/greenart7c3/Amber/releases)
 [![Last Version](https://img.shields.io/github/release/greenart7c3/Amber.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/greenart7c3/Amber)
 [![CI](https://img.shields.io/github/actions/workflow/status/greenart7c3/Amber/build.yml?labelColor=27303D)](https://github.com/greenart7c3/Amber/actions/workflows/build.yml)
 [![License: Apache-2.0](https://img.shields.io/github/license/greenart7c3/Amber?labelColor=27303D&color=0877d2)](/LICENSE)
+
+</div>
 
 # Current Features
 

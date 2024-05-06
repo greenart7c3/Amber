@@ -122,4 +122,6 @@
     <string name="activity">Activity</string>
     <string name="accepted">Accepted</string>
     <string name="rejected">Rejected</string>
+    <string name="language">Language</string>
+    <string name="language_description">For the App\'s Interface</string>
 </resources>

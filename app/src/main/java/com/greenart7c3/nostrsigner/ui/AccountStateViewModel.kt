@@ -79,11 +79,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 val newKey =
                     CryptoUtils.decryptNIP49(key, password)
                         ?: throw Exception("Could not decrypt key with provided password")
-                Account(KeyPair(Hex.decode(newKey)), name = "", useProxy = useProxy, proxyPort = proxyPort)
+                Account(KeyPair(Hex.decode(newKey)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             } else if (key.startsWith("nsec")) {
-                Account(KeyPair(privKey = key.bechToBytes()), name = "", useProxy = useProxy, proxyPort = proxyPort)
+                Account(KeyPair(privKey = key.bechToBytes()), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             } else {
-                Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort)
+                Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             }
 
         LocalPreferences.updatePrefsForLogin(account)
@@ -94,7 +94,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         useProxy: Boolean,
         proxyPort: Int,
     ) {
-        val account = Account(KeyPair(), name = "", useProxy = useProxy, proxyPort = proxyPort)
+        val account = Account(KeyPair(), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
         LocalPreferences.updatePrefsForLogin(account)
         startUI(account, null)
     }

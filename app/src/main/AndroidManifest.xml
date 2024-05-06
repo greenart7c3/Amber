@@ -16,6 +16,7 @@
         android:theme="@style/Theme.SignerSplash"
         android:usesCleartextTraffic="true"
         android:windowSoftInputMode="adjustResize"
+        android:localeConfig="@xml/locales_config"
         tools:targetApi="33">
 
         <provider

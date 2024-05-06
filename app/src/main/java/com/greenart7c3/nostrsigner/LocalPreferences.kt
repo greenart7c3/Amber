@@ -40,6 +40,7 @@ private object PrefKeys {
     const val USE_PROXY = "use_proxy"
     const val PROXY_PORT = "proxy_port"
     const val NOTIFICATION_TYPE = "notification_type"
+    const val LANGUAGE_PREFS = "languagePreferences"
 }
 
 @Immutable
@@ -214,6 +215,7 @@ object LocalPreferences {
             putBoolean(PrefKeys.USE_PROXY, account.useProxy)
             putInt(PrefKeys.PROXY_PORT, account.proxyPort)
             putString(PrefKeys.ACCOUNT_NAME, account.name)
+            putString(PrefKeys.LANGUAGE_PREFS, account.language)
         }.apply()
     }
 
@@ -335,6 +337,7 @@ object LocalPreferences {
             val useProxy = getBoolean(PrefKeys.USE_PROXY, false)
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
             val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
+            val language = getString(PrefKeys.LANGUAGE_PREFS, null)
             HttpClientManager.setDefaultProxy(proxy)
             val account =
                 Account(
@@ -342,6 +345,7 @@ object LocalPreferences {
                     name = name,
                     useProxy = useProxy,
                     proxyPort = proxyPort,
+                    language = language,
                 )
             accountCache.put(npub, account)
             return account

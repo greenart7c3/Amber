@@ -1,7 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -14,6 +16,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
@@ -37,6 +40,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,6 +48,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -64,9 +69,70 @@ import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toImmutableList
+import kotlinx.collections.immutable.toImmutableMap
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import org.xmlpull.v1.XmlPullParser
+import org.xmlpull.v1.XmlPullParserException
+import java.io.IOException
+
+fun Context.getLocaleListFromXml(): LocaleListCompat {
+    val tagsList = mutableListOf<CharSequence>()
+    try {
+        val xpp: XmlPullParser = resources.getXml(R.xml.locales_config)
+        while (xpp.eventType != XmlPullParser.END_DOCUMENT) {
+            if (xpp.eventType == XmlPullParser.START_TAG) {
+                if (xpp.name == "locale") {
+                    tagsList.add(xpp.getAttributeValue(0))
+                }
+            }
+            xpp.next()
+        }
+    } catch (e: XmlPullParserException) {
+        e.printStackTrace()
+    } catch (e: IOException) {
+        e.printStackTrace()
+    }
+
+    return LocaleListCompat.forLanguageTags(tagsList.joinToString(","))
+}
+
+fun Context.getLangPreferenceDropdownEntries(): ImmutableMap<String, String> {
+    val localeList = getLocaleListFromXml()
+    val map = mutableMapOf<String, String>()
+
+    for (a in 0 until localeList.size()) {
+        localeList[a].let {
+            map.put(
+                it!!.getDisplayName(it).replaceFirstChar { char -> char.uppercase() },
+                it.toLanguageTag(),
+            )
+        }
+    }
+    return map.toImmutableMap()
+}
+
+fun getLanguageIndex(
+    languageEntries: ImmutableMap<String, String>,
+    selectedLanguage: String?,
+): Int {
+    val language = selectedLanguage
+    var languageIndex = -1
+    languageIndex =
+        if (language != null) {
+            languageEntries.values.toTypedArray().indexOf(language)
+        } else {
+            languageEntries.values.toTypedArray().indexOf(Locale.current.toLanguageTag())
+        }
+    if (languageIndex == -1) {
+        languageIndex = languageEntries.values.toTypedArray().indexOf(Locale.current.language)
+    }
+    if (languageIndex == -1) languageIndex = languageEntries.values.toTypedArray().indexOf("en")
+    return languageIndex
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -83,6 +149,10 @@ fun SettingsScreen(
     var disconnectTorDialog by remember { mutableStateOf(false) }
     var conectOrbotDialogOpen by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
+    val languageEntries = remember { context.getLangPreferenceDropdownEntries() }
+    val languageList = remember { languageEntries.keys.map { TitleExplainer(it) }.toImmutableList() }
+    val languageIndex = getLanguageIndex(languageEntries, account.language)
+    var languageDialog by remember { mutableStateOf(false) }
 
     val sheetState =
         rememberModalBottomSheetState(
@@ -180,6 +250,51 @@ fun SettingsScreen(
         }
     }
 
+    if (languageDialog) {
+        Dialog(
+            onDismissRequest = {
+                languageDialog = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        CloseButton {
+                            languageDialog = false
+                        }
+                    }
+
+                    Column {
+                        Box(
+                            Modifier
+                                .padding(8.dp),
+                        ) {
+                            SettingsRow(
+                                R.string.language,
+                                R.string.language_description,
+                                languageList,
+                                languageIndex,
+                            ) {
+                                account.language = languageEntries[languageList[it].title]
+                                LocalPreferences.saveToEncryptedStorage(account)
+                                AppCompatDelegate.setApplicationLocales(
+                                    LocaleListCompat.forLanguageTags(account.language),
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (logoutDialog) {
         LogoutDialog(
             onCancel = {
@@ -225,8 +340,36 @@ fun SettingsScreen(
             )
         }
 
+        Box(
+            Modifier
+                .padding(16.dp),
+        ) {
+            IconRow(
+                title = "Language",
+                icon = Icons.Default.Language,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    languageDialog = true
+                },
+            )
+        }
+
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
+            Box(
+                Modifier
+                    .padding(16.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.notification_type),
+                    icon = Icons.Default.Notifications,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        notificationTypeDialog = true
+                    },
+                )
+            }
+
             Box(
                 Modifier
                     .padding(16.dp),
@@ -249,20 +392,6 @@ fun SettingsScreen(
                         } else {
                             conectOrbotDialogOpen = true
                         }
-                    },
-                )
-            }
-
-            Box(
-                Modifier
-                    .padding(16.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.notification_type),
-                    icon = Icons.Default.Notifications,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        notificationTypeDialog = true
                     },
                 )
             }

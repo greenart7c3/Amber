@@ -1,12 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -14,22 +11,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -38,7 +30,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -54,8 +45,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -63,147 +52,19 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
+import com.greenart7c3.nostrsigner.ui.actions.ActivityDialog
+import com.greenart7c3.nostrsigner.ui.actions.DeleteDialog
+import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
-import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
-import java.time.Instant
-import java.time.LocalDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-fun convertLongToDateTime(longValue: Long): String {
-    val dateTime =
-        LocalDateTime.ofInstant(
-            Instant.ofEpochMilli(longValue),
-            ZoneId.systemDefault(),
-        )
-
-    val formatter =
-        DateTimeFormatter.ofLocalizedDateTime(
-            FormatStyle.SHORT,
-            FormatStyle.MEDIUM,
-        )
-
-    return dateTime.format(formatter)
-}
-
-@Composable
-fun ActivityDialog(
-    database: AppDatabase,
-    key: String,
-    onClose: () -> Unit,
-) {
-    val activities =
-        remember {
-            mutableStateListOf<HistoryEntity>()
-        }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            activities.clear()
-            activities.addAll(
-                database.applicationDao().getAllHistory(key).toMutableStateList(),
-            )
-        }
-    }
-
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            modifier =
-            Modifier
-                .fillMaxSize(),
-        ) {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize(),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CloseButton {
-                        onClose()
-                    }
-                }
-
-                if (activities.isEmpty()) {
-                    Text(
-                        stringResource(R.string.no_activities_found),
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center,
-                        fontSize = 18.sp,
-                    )
-                }
-
-                LazyColumn(
-                    Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(),
-                ) {
-                    items(activities.size) {
-                        val activity = activities[it]
-                        val permission =
-                            Permission(
-                                activity.type.toLowerCase(Locale.current),
-                                activity.kind,
-                            )
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(
-                                Modifier
-                                    .weight(0.9f)
-                                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                            ) {
-                                Text(
-                                    if (permission.type == "connect") "Connect" else permission.toString(),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    convertLongToDateTime(activity.time * 1000),
-                                    fontSize = 14.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-                            IconButton(onClick = { }) {
-                                Icon(
-                                    if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
-                                    contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
-                                    tint = if (activity.accepted) Color.Green else Color.Red,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun EditPermission(
@@ -216,10 +77,9 @@ fun EditPermission(
 ) {
     val clipboardManager = LocalClipboardManager.current
     val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
-    val permissions =
-        remember {
-            mutableStateListOf<ApplicationPermissionsEntity>()
-        }
+    val permissions = remember {
+        mutableStateListOf<ApplicationPermissionsEntity>()
+    }
     var applicationData by remember {
         mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false))
     }
@@ -253,136 +113,19 @@ fun EditPermission(
     }
 
     if (editRelaysDialog) {
-        var textFieldRelay by remember {
-            mutableStateOf(TextFieldValue(""))
-        }
-        val relays2 =
-            remember {
-                val localRelays = mutableStateListOf<String>()
-                applicationData.relays.forEach {
-                    localRelays.add(it)
-                }
-                localRelays
-            }
-        Dialog(
-            onDismissRequest = {
+        EditRelaysDialog(
+            applicationData = applicationData,
+            onClose = {
                 editRelaysDialog = false
             },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(
-                modifier = Modifier
-                    .fillMaxSize(),
-            ) {
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        CloseButton {
-                            editRelaysDialog = false
-                        }
-                        PostButton(
-                            isActive = !applicationData.isConnected,
-                            onPost = {
-                                applicationData =
-                                    applicationData.copy(
-                                        relays = relays2.map { it },
-                                    )
-                                val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
-                                bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$secret"
-                                editRelaysDialog = false
-                            },
-                        )
-                    }
-                    LazyColumn(
-                        Modifier
-                            .fillMaxHeight(0.9f)
-                            .fillMaxWidth(),
-                    ) {
-                        items(relays2.size) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    relays2[it],
-                                    Modifier
-                                        .weight(0.9f)
-                                        .padding(8.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                IconButton(
-                                    onClick = {
-                                        relays2.removeAt(it)
-                                    },
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        stringResource(R.string.delete),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        OutlinedTextField(
-                            enabled = !applicationData.isConnected,
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .padding(horizontal = 16.dp),
-                            value = textFieldRelay.text,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done,
-                            ),
-                            onValueChange = {
-                                textFieldRelay = TextFieldValue(it)
-                            },
-                            label = {
-                                Text("Relay")
-                            },
-                        )
-                        IconButton(
-                            onClick = {
-                                if (applicationData.isConnected) return@IconButton
-                                val url = textFieldRelay.text
-                                if (url.isNotBlank() && url != "/") {
-                                    var addedWSS =
-                                        if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
-                                            if (url.endsWith(".onion") || url.endsWith(".onion/")) {
-                                                "ws://$url"
-                                            } else {
-                                                "wss://$url"
-                                            }
-                                        } else {
-                                            url
-                                        }
-                                    if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
-                                    relays2.add(addedWSS)
-                                    textFieldRelay = TextFieldValue("")
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                null,
-                            )
-                        }
-                    }
-                }
-            }
+        ) { relays2 ->
+            applicationData =
+                applicationData.copy(
+                    relays = relays2.map { it },
+                )
+            val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
+            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$secret"
+            editRelaysDialog = false
         }
     }
 
@@ -697,40 +440,4 @@ fun EditPermission(
             }
         }
     }
-}
-
-@Composable
-fun DeleteDialog(
-    onCancel: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    AlertDialog(
-        title = {
-            Text(text = stringResource(R.string.delete))
-        },
-        text = {
-            Text(text = "Are you sure you want to remove this application?")
-        },
-        onDismissRequest = {
-            onCancel()
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    onConfirm()
-                },
-            ) {
-                Text(text = stringResource(R.string.delete))
-            }
-        },
-        dismissButton = {
-            TextButton(
-                onClick = {
-                    onCancel()
-                },
-            ) {
-                Text(text = stringResource(R.string.cancel))
-            }
-        },
-    )
 }

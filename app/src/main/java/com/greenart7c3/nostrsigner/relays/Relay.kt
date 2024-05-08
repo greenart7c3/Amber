@@ -30,12 +30,12 @@ import com.vitorpamplona.quartz.events.EventInterface
 import com.vitorpamplona.quartz.events.RelayAuthEvent
 import com.vitorpamplona.quartz.events.bytesUsedInMemory
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
 import okhttp3.WebSocketListener
-import java.util.concurrent.atomic.AtomicBoolean
 
 enum class FeedType {
     FOLLOWS,

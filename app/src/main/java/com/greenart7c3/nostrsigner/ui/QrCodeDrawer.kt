@@ -40,11 +40,10 @@ fun QrCodeDrawer(
     val foregroundColor = Color.Black
 
     Box(
-        modifier =
-            modifier
-                .defaultMinSize(48.dp, 48.dp)
-                .aspectRatio(1f)
-                .background(Color.White),
+        modifier = modifier
+            .defaultMinSize(48.dp, 48.dp)
+            .aspectRatio(1f)
+            .background(Color.White),
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
             // Calculate the height and width of each column/row
@@ -55,22 +54,20 @@ fun QrCodeDrawer(
             // of the number of rows/columns to the width and height
             drawQrCodeFinders(
                 sideLength = size.width,
-                finderPatternSize =
-                    Size(
-                        width = columnWidth * FINDER_PATTERN_ROW_COUNT,
-                        height = rowHeight * FINDER_PATTERN_ROW_COUNT,
-                    ),
+                finderPatternSize = Size(
+                    width = columnWidth * FINDER_PATTERN_ROW_COUNT,
+                    height = rowHeight * FINDER_PATTERN_ROW_COUNT,
+                ),
                 color = foregroundColor,
             )
 
             // Draw data bits (encoded data part)
             drawAllQrCodeDataBits(
                 bytes = qrCode.matrix,
-                size =
-                    Size(
-                        width = columnWidth,
-                        height = rowHeight,
-                    ),
+                size = Size(
+                    width = columnWidth,
+                    height = rowHeight,
+                ),
                 color = foregroundColor,
             )
         }
@@ -108,33 +105,29 @@ fun DrawScope.drawAllQrCodeDataBits(
         // data bits between top left finder pattern and top right finder pattern.
         Pair(
             first = Coordinate(first = FINDER_PATTERN_ROW_COUNT, second = 0),
-            second =
-                Coordinate(
-                    first = (bytes.width - FINDER_PATTERN_ROW_COUNT),
-                    second = FINDER_PATTERN_ROW_COUNT,
-                ),
+            second = Coordinate(
+                first = (bytes.width - FINDER_PATTERN_ROW_COUNT),
+                second = FINDER_PATTERN_ROW_COUNT,
+            ),
         ),
         // data bits below top left finder pattern and above bottom left finder pattern.
         Pair(
             first = Coordinate(first = 0, second = FINDER_PATTERN_ROW_COUNT),
-            second =
-                Coordinate(
-                    first = bytes.width,
-                    second = bytes.height - FINDER_PATTERN_ROW_COUNT,
-                ),
+            second = Coordinate(
+                first = bytes.width,
+                second = bytes.height - FINDER_PATTERN_ROW_COUNT,
+            ),
         ),
         // data bits to the right of the bottom left finder pattern.
         Pair(
-            first =
-                Coordinate(
-                    first = FINDER_PATTERN_ROW_COUNT,
-                    second = (bytes.height - FINDER_PATTERN_ROW_COUNT),
-                ),
-            second =
-                Coordinate(
-                    first = bytes.width,
-                    second = bytes.height,
-                ),
+            first = Coordinate(
+                first = FINDER_PATTERN_ROW_COUNT,
+                second = (bytes.height - FINDER_PATTERN_ROW_COUNT),
+            ),
+            second = Coordinate(
+                first = bytes.width,
+                second = bytes.height,
+            ),
         ),
     ).forEach { section ->
         for (y in section.first.second until section.second.second) {
@@ -142,20 +135,19 @@ fun DrawScope.drawAllQrCodeDataBits(
                 if (bytes[x, y] == 1.toByte()) {
                     drawPath(
                         color = color,
-                        path =
-                            newPath {
-                                addRect(
-                                    rect =
-                                        Rect(
-                                            offset =
-                                                Offset(
-                                                    x = QR_MARGIN_PX + x * size.width,
-                                                    y = QR_MARGIN_PX + y * size.height,
-                                                ),
-                                            size = size,
-                                        ),
-                                )
-                            },
+                        path = newPath {
+                            addRect(
+                                rect =
+                                Rect(
+                                    offset =
+                                    Offset(
+                                        x = QR_MARGIN_PX + x * size.width,
+                                        y = QR_MARGIN_PX + y * size.height,
+                                    ),
+                                    size = size,
+                                ),
+                            )
+                        },
                     )
                 }
             }
@@ -210,56 +202,55 @@ private fun DrawScope.drawQrCodeFinder(
 ) {
     drawPath(
         color = color,
-        path =
-            newPath {
-                // Draw the outer rectangle for the finder pattern.
-                addRoundRect(
-                    roundRect =
-                        RoundRect(
-                            rect =
-                                Rect(
-                                    offset = topLeft,
-                                    size = finderPatternSize,
-                                ),
-                            cornerRadius = cornerRadius,
-                        ),
-                )
+        path = newPath {
+            // Draw the outer rectangle for the finder pattern.
+            addRoundRect(
+                roundRect =
+                RoundRect(
+                    rect =
+                    Rect(
+                        offset = topLeft,
+                        size = finderPatternSize,
+                    ),
+                    cornerRadius = cornerRadius,
+                ),
+            )
 
-                // Draw background for the finder pattern interior (this keeps the arc ratio consistent).
-                val innerBackgroundOffset =
-                    Offset(
-                        x = finderPatternSize.width * INTERIOR_BACKGROUND_EXTERIOR_OFFSET_RATIO,
-                        y = finderPatternSize.height * INTERIOR_BACKGROUND_EXTERIOR_OFFSET_RATIO,
-                    )
-                addRoundRect(
-                    roundRect =
-                        RoundRect(
-                            rect =
-                                Rect(
-                                    offset = topLeft + innerBackgroundOffset,
-                                    size = finderPatternSize * INTERIOR_BACKGROUND_EXTERIOR_SHAPE_RATIO,
-                                ),
-                            cornerRadius = cornerRadius * INTERIOR_BACKGROUND_EXTERIOR_SHAPE_CORNER_RADIUS,
-                        ),
+            // Draw background for the finder pattern interior (this keeps the arc ratio consistent).
+            val innerBackgroundOffset =
+                Offset(
+                    x = finderPatternSize.width * INTERIOR_BACKGROUND_EXTERIOR_OFFSET_RATIO,
+                    y = finderPatternSize.height * INTERIOR_BACKGROUND_EXTERIOR_OFFSET_RATIO,
                 )
+            addRoundRect(
+                roundRect =
+                RoundRect(
+                    rect =
+                    Rect(
+                        offset = topLeft + innerBackgroundOffset,
+                        size = finderPatternSize * INTERIOR_BACKGROUND_EXTERIOR_SHAPE_RATIO,
+                    ),
+                    cornerRadius = cornerRadius * INTERIOR_BACKGROUND_EXTERIOR_SHAPE_CORNER_RADIUS,
+                ),
+            )
 
-                // Draw the inner rectangle for the finder pattern.
-                val innerRectOffset =
-                    Offset(
-                        x = finderPatternSize.width * INTERIOR_EXTERIOR_OFFSET_RATIO,
-                        y = finderPatternSize.height * INTERIOR_EXTERIOR_OFFSET_RATIO,
-                    )
-                addRoundRect(
-                    roundRect =
-                        RoundRect(
-                            rect =
-                                Rect(
-                                    offset = topLeft + innerRectOffset,
-                                    size = finderPatternSize * INTERIOR_EXTERIOR_SHAPE_RATIO,
-                                ),
-                            cornerRadius = cornerRadius * INTERIOR_EXTERIOR_SHAPE_CORNER_RADIUS,
-                        ),
+            // Draw the inner rectangle for the finder pattern.
+            val innerRectOffset =
+                Offset(
+                    x = finderPatternSize.width * INTERIOR_EXTERIOR_OFFSET_RATIO,
+                    y = finderPatternSize.height * INTERIOR_EXTERIOR_OFFSET_RATIO,
                 )
-            },
+            addRoundRect(
+                roundRect =
+                RoundRect(
+                    rect =
+                    Rect(
+                        offset = topLeft + innerRectOffset,
+                        size = finderPatternSize * INTERIOR_EXTERIOR_SHAPE_RATIO,
+                    ),
+                    cornerRadius = cornerRadius * INTERIOR_EXTERIOR_SHAPE_CORNER_RADIUS,
+                ),
+            )
+        },
     )
 }

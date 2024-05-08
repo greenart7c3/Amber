@@ -152,19 +152,18 @@ object AmberUtils {
             database
                 .applicationDao()
                 .getByKey(key) ?: ApplicationWithPermissions(
-                application =
-                    ApplicationEntity(
-                        key,
-                        appName,
-                        listOf(),
-                        "",
-                        "",
-                        "",
-                        account.keyPair.pubKey.toHexKey(),
-                        true,
-                        intentData.bunkerRequest?.secret ?: "",
-                        intentData.bunkerRequest?.secret != null,
-                    ),
+                application = ApplicationEntity(
+                    key,
+                    appName,
+                    listOf(),
+                    "",
+                    "",
+                    "",
+                    account.keyPair.pubKey.toHexKey(),
+                    true,
+                    intentData.bunkerRequest?.secret ?: "",
+                    intentData.bunkerRequest?.secret != null,
+                ),
                 permissions = mutableListOf(),
             )
 

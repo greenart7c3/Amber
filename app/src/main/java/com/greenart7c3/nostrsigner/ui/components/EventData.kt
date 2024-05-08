@@ -66,9 +66,8 @@ fun EventData(
         val content = if (event.kind == 22242) AmberEvent.relay(event) else event.content
         if (content.isNotBlank()) {
             Card(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp)) {
                     Text(
@@ -79,10 +78,9 @@ fun EventData(
                         content,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
                     )
                 }
             }

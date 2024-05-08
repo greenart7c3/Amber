@@ -47,16 +47,14 @@ fun AdjustPermissionsDialog(
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
             ) {
                 Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -75,16 +73,15 @@ fun AdjustPermissionsDialog(
                 Row(
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
-                    modifier =
-                        Modifier
-                            .padding(horizontal = 8.dp)
-                            .clickable {
-                                selectAll = !selectAll
-                                dialogPermissions =
-                                    dialogPermissions.map { item ->
-                                        item.copy(checked = selectAll)
-                                    }
-                            },
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            selectAll = !selectAll
+                            dialogPermissions =
+                                dialogPermissions.map { item ->
+                                    item.copy(checked = selectAll)
+                                }
+                        },
                 ) {
                     Text(
                         modifier = Modifier.weight(1f),
@@ -110,18 +107,17 @@ fun AdjustPermissionsDialog(
                         Row(
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
-                            modifier =
-                                Modifier
-                                    .clickable {
-                                        dialogPermissions =
-                                            dialogPermissions.mapIndexed { j, item ->
-                                                if (it == j) {
-                                                    item.copy(checked = !item.checked)
-                                                } else {
-                                                    item
-                                                }
+                            modifier = Modifier
+                                .clickable {
+                                    dialogPermissions =
+                                        dialogPermissions.mapIndexed { j, item ->
+                                            if (it == j) {
+                                                item.copy(checked = !item.checked)
+                                            } else {
+                                                item
                                             }
-                                    },
+                                        }
+                                },
                         ) {
                             Text(
                                 modifier = Modifier.weight(1f),

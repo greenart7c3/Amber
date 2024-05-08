@@ -74,13 +74,13 @@ import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 import java.time.Instant
 import java.time.LocalDateTime
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 fun convertLongToDateTime(longValue: Long): String {
     val dateTime =
@@ -124,20 +124,18 @@ fun ActivityDialog(
     ) {
         Surface(
             modifier =
-                Modifier
-                    .fillMaxSize(),
+            Modifier
+                .fillMaxSize(),
         ) {
             Column(
-                modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
             ) {
                 Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -273,21 +271,18 @@ fun EditPermission(
             properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
             Surface(
-                modifier =
-                    Modifier
-                        .fillMaxSize(),
+                modifier = Modifier
+                    .fillMaxSize(),
             ) {
                 Column(
-                    modifier =
-                        Modifier
-                            .background(MaterialTheme.colorScheme.background)
-                            .fillMaxSize(),
+                    modifier = Modifier
+                        .background(MaterialTheme.colorScheme.background)
+                        .fillMaxSize(),
                 ) {
                     Row(
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(10.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -345,15 +340,13 @@ fun EditPermission(
                     ) {
                         OutlinedTextField(
                             enabled = !applicationData.isConnected,
-                            modifier =
-                                Modifier
-                                    .fillMaxWidth(0.9f)
-                                    .padding(horizontal = 16.dp),
+                            modifier = Modifier
+                                .fillMaxWidth(0.9f)
+                                .padding(horizontal = 16.dp),
                             value = textFieldRelay.text,
-                            keyboardOptions =
-                                KeyboardOptions(
-                                    imeAction = ImeAction.Done,
-                                ),
+                            keyboardOptions = KeyboardOptions(
+                                imeAction = ImeAction.Done,
+                            ),
                             onValueChange = {
                                 textFieldRelay = TextFieldValue(it)
                             },
@@ -500,15 +493,14 @@ fun EditPermission(
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
-                modifier =
-                    Modifier
-                        .padding(horizontal = 8.dp)
-                        .clickable {
-                            checked = !checked
-                            val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
-                            val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-                            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                        },
+                modifier = Modifier
+                    .padding(horizontal = 8.dp)
+                    .clickable {
+                        checked = !checked
+                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
+                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
+                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+                    },
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
@@ -523,15 +515,13 @@ fun EditPermission(
             }
         }
         OutlinedTextField(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
             value = textFieldvalue.text,
-            keyboardOptions =
-                KeyboardOptions(
-                    imeAction = ImeAction.Done,
-                ),
+            keyboardOptions = KeyboardOptions(
+                imeAction = ImeAction.Done,
+            ),
             onValueChange = {
                 textFieldvalue = TextFieldValue(it)
             },
@@ -590,36 +580,33 @@ fun EditPermission(
                         localPermission.toString()
                     }
                 Row(
-                    modifier =
-                        Modifier
-                            .padding(vertical = 15.dp, horizontal = 25.dp)
-                            .fillMaxWidth(),
+                    modifier = Modifier
+                        .padding(vertical = 15.dp, horizontal = 25.dp)
+                        .fillMaxWidth(),
                 ) {
                     Icon(
                         if (permission.acceptable) Icons.Default.Check else Icons.Default.Close,
                         null,
-                        modifier =
-                            Modifier
-                                .size(22.dp)
-                                .padding(end = 4.dp)
-                                .clickable {
-                                    val localPermissions =
-                                        permissions.map {
-                                            if (it.id == permission.id) {
-                                                it.copy(acceptable = !permission.acceptable)
-                                            } else {
-                                                it.copy()
-                                            }
+                        modifier = Modifier
+                            .size(22.dp)
+                            .padding(end = 4.dp)
+                            .clickable {
+                                val localPermissions =
+                                    permissions.map {
+                                        if (it.id == permission.id) {
+                                            it.copy(acceptable = !permission.acceptable)
+                                        } else {
+                                            it.copy()
                                         }
-                                    permissions.clear()
-                                    permissions.addAll(localPermissions)
-                                },
+                                    }
+                                permissions.clear()
+                                permissions.addAll(localPermissions)
+                            },
                         tint = if (permission.acceptable) Color.Green else Color.Red,
                     )
                     Row(
-                        modifier =
-                            Modifier
-                                .weight(1f),
+                        modifier = Modifier
+                            .weight(1f),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
@@ -630,12 +617,11 @@ fun EditPermission(
                     Icon(
                         Icons.Default.Delete,
                         null,
-                        modifier =
-                            Modifier
-                                .size(22.dp)
-                                .clickable {
-                                    permissions.remove(permission)
-                                },
+                        modifier = Modifier
+                            .size(22.dp)
+                            .clickable {
+                                permissions.remove(permission)
+                            },
                         tint = Color.Red,
                     )
                 }

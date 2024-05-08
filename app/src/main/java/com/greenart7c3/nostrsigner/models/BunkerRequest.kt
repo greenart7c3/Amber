@@ -61,15 +61,13 @@ data class BunkerRequest(
             return BunkerRequest(
                 id = jsonObject.get("id").asText().intern(),
                 method = jsonObject.get("method").asText().intern(),
-                params =
-                    jsonObject.get("params").asIterable().toList().map {
-                        it.asText().intern()
-                    }.toTypedArray(),
+                params = jsonObject.get("params").asIterable().toList().map {
+                    it.asText().intern()
+                }.toTypedArray(),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
-                relays =
-                    jsonObject.get("relays")?.asIterable()?.toList()?.map {
-                        it.asText().intern()
-                    } ?: listOf(),
+                relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
+                    it.asText().intern()
+                } ?: listOf(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
             )

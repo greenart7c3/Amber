@@ -107,14 +107,14 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.UUID
 import java.util.zip.GZIPOutputStream
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 @OptIn(DelicateCoroutinesApi::class)
 fun sendResult(
@@ -179,19 +179,18 @@ fun sendResult(
 
         val application =
             savedApplication ?: ApplicationWithPermissions(
-                application =
-                    ApplicationEntity(
-                        key,
-                        appName ?: localAppName ?: "",
-                        relays,
-                        "",
-                        "",
-                        "",
-                        account.keyPair.pubKey.toHexKey(),
-                        true,
-                        intentData.bunkerRequest?.secret ?: "",
-                        intentData.bunkerRequest?.secret != null,
-                    ),
+                application = ApplicationEntity(
+                    key,
+                    appName ?: localAppName ?: "",
+                    relays,
+                    "",
+                    "",
+                    "",
+                    account.keyPair.pubKey.toHexKey(),
+                    true,
+                    intentData.bunkerRequest?.secret ?: "",
+                    intentData.bunkerRequest?.secret != null,
+                ),
                 permissions = mutableListOf(),
             )
         application.application.isConnected = true
@@ -436,11 +435,10 @@ fun PermissionsFloatingActionButton(
 
         val rotation by animateFloatAsState(
             targetValue = if (expanded) 0f else 180f,
-            animationSpec =
-                tween(
-                    durationMillis = 150,
-                    easing = LinearEasing,
-                ),
+            animationSpec = tween(
+                durationMillis = 150,
+                easing = LinearEasing,
+            ),
             label = "rotation",
         )
 
@@ -732,10 +730,9 @@ fun MainScreen(
                 Route.Permissions.route,
                 content = {
                     PermissionsScreen(
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(padding),
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
                         navController = navController,
@@ -763,9 +760,9 @@ fun MainScreen(
                 content = {
                     EditPermission(
                         modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(padding),
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
                         selectedPackage = it.arguments?.getString("packageName")!!,

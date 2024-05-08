@@ -12,7 +12,9 @@ ij_kotlin_name_count_to_use_star_import = 999
 ij_kotlin_name_count_to_use_star_import_for_members = 999
 max_line_length = off
 ktlint_function_naming_ignore_when_annotated_with = Composable
-ktlint_code_style = ktlint_official
+ktlint_code_style = android_studio
+ij_kotlin_allow_trailing_comma_on_call_site = true
+ij_kotlin_allow_trailing_comma = true
 
 [*.{yml,yaml}]
 indent_size = 2

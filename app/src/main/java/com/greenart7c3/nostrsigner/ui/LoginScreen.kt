@@ -84,11 +84,10 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
     val scope = rememberCoroutineScope()
 
     Column(
-        modifier =
-            Modifier
-                .fillMaxSize()
-                .navigationBarsPadding()
-                .verticalScroll(rememberScrollState()),
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
         verticalArrangement = Arrangement.Center,
     ) {
         // The first child is glued to the top.
@@ -97,10 +96,9 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
 
         // The second child, this column, is centered vertically.
         Column(
-            modifier =
-                Modifier
-                    .padding(20.dp)
-                    .fillMaxSize(),
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Spacer(modifier = Modifier.height(40.dp))
@@ -128,28 +126,26 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
             LocalAutofillTree.current += autofillNodePassword
 
             OutlinedTextField(
-                modifier =
-                    Modifier
-                        .onGloballyPositioned { coordinates ->
-                            autofillNodeKey.boundingBox = coordinates.boundsInWindow()
-                        }
-                        .onFocusChanged { focusState ->
-                            autofill?.run {
-                                if (focusState.isFocused) {
-                                    requestAutofillForNode(autofillNodeKey)
-                                } else {
-                                    cancelAutofillForNode(autofillNodeKey)
-                                }
+                modifier = Modifier
+                    .onGloballyPositioned { coordinates ->
+                        autofillNodeKey.boundingBox = coordinates.boundsInWindow()
+                    }
+                    .onFocusChanged { focusState ->
+                        autofill?.run {
+                            if (focusState.isFocused) {
+                                requestAutofillForNode(autofillNodeKey)
+                            } else {
+                                cancelAutofillForNode(autofillNodeKey)
                             }
-                        },
+                        }
+                    },
                 value = key.value,
                 onValueChange = { key.value = it },
-                keyboardOptions =
-                    KeyboardOptions(
-                        autoCorrect = false,
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Go,
-                    ),
+                keyboardOptions = KeyboardOptions(
+                    autoCorrect = false,
+                    keyboardType = KeyboardType.Password,
+                    imeAction = ImeAction.Go,
+                ),
                 placeholder = {
                     Text(
                         text = stringResource(R.string.nsec),
@@ -160,12 +156,11 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                         IconButton(onClick = { showPassword = !showPassword }) {
                             Icon(
                                 imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                contentDescription =
-                                    if (showPassword) {
-                                        stringResource(R.string.show_password)
-                                    } else {
-                                        stringResource(R.string.hide_password)
-                                    },
+                                contentDescription = if (showPassword) {
+                                    stringResource(R.string.show_password)
+                                } else {
+                                    stringResource(R.string.hide_password)
+                                },
                             )
                         }
                     }
@@ -189,8 +184,93 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                     }
                 },
                 visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                keyboardActions =
-                    KeyboardActions(
+                keyboardActions = KeyboardActions(
+                    onGo = {
+                        if (key.value.text.isBlank()) {
+                            errorMessage = context.getString(R.string.key_is_required)
+                        }
+
+                        if (needsPassword.value && password.value.text.isBlank()) {
+                            errorMessage = context.getString(R.string.password_is_required)
+                        }
+
+                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                            try {
+                                accountViewModel.startUI(
+                                    key.value.text,
+                                    password.value.text,
+                                    null,
+                                    useProxy = useProxy.value,
+                                    proxyPort = proxyPort.value.toInt(),
+                                )
+                            } catch (e: Exception) {
+                                Log.e("Login", "Could not sign in", e)
+                                errorMessage = context.getString(R.string.invalid_key)
+                            }
+                        }
+                    },
+                ),
+            )
+            if (errorMessage.isNotBlank()) {
+                Text(
+                    text = errorMessage,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+
+            if (needsPassword.value) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .onGloballyPositioned { coordinates ->
+                            autofillNodePassword.boundingBox = coordinates.boundsInWindow()
+                        }
+                        .onFocusChanged { focusState ->
+                            autofill?.run {
+                                if (focusState.isFocused) {
+                                    requestAutofillForNode(autofillNodePassword)
+                                } else {
+                                    cancelAutofillForNode(autofillNodePassword)
+                                }
+                            }
+                        },
+                    value = password.value,
+                    onValueChange = {
+                        password.value = it
+                        if (errorMessage.isNotEmpty()) {
+                            errorMessage = ""
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Go,
+                    ),
+                    placeholder = {
+                        Text(
+                            text = stringResource(R.string.ncryptsec_password),
+                        )
+                    },
+                    trailingIcon = {
+                        Row {
+                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                Icon(
+                                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    contentDescription = if (showCharsPassword) {
+                                        stringResource(R.string.show_password)
+                                    } else {
+                                        stringResource(
+                                            R.string.hide_password,
+                                        )
+                                    },
+                                )
+                            }
+                        }
+                    },
+                    visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    keyboardActions = KeyboardActions(
                         onGo = {
                             if (key.value.text.isBlank()) {
                                 errorMessage = context.getString(R.string.key_is_required)
@@ -216,98 +296,6 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                             }
                         },
                     ),
-            )
-            if (errorMessage.isNotBlank()) {
-                Text(
-                    text = errorMessage,
-                    color = MaterialTheme.colorScheme.error,
-                    style = MaterialTheme.typography.bodySmall,
-                )
-            }
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            if (needsPassword.value) {
-                OutlinedTextField(
-                    modifier =
-                        Modifier
-                            .onGloballyPositioned { coordinates ->
-                                autofillNodePassword.boundingBox = coordinates.boundsInWindow()
-                            }
-                            .onFocusChanged { focusState ->
-                                autofill?.run {
-                                    if (focusState.isFocused) {
-                                        requestAutofillForNode(autofillNodePassword)
-                                    } else {
-                                        cancelAutofillForNode(autofillNodePassword)
-                                    }
-                                }
-                            },
-                    value = password.value,
-                    onValueChange = {
-                        password.value = it
-                        if (errorMessage.isNotEmpty()) {
-                            errorMessage = ""
-                        }
-                    },
-                    keyboardOptions =
-                        KeyboardOptions(
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Go,
-                        ),
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.ncryptsec_password),
-                        )
-                    },
-                    trailingIcon = {
-                        Row {
-                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
-                                Icon(
-                                    imageVector =
-                                        if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription =
-                                        if (showCharsPassword) {
-                                            stringResource(R.string.show_password)
-                                        } else {
-                                            stringResource(
-                                                R.string.hide_password,
-                                            )
-                                        },
-                                )
-                            }
-                        }
-                    },
-                    visualTransformation =
-                        if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    keyboardActions =
-                        KeyboardActions(
-                            onGo = {
-                                if (key.value.text.isBlank()) {
-                                    errorMessage = context.getString(R.string.key_is_required)
-                                }
-
-                                if (needsPassword.value && password.value.text.isBlank()) {
-                                    errorMessage = context.getString(R.string.password_is_required)
-                                }
-
-                                if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                    try {
-                                        accountViewModel.startUI(
-                                            key.value.text,
-                                            password.value.text,
-                                            null,
-                                            useProxy = useProxy.value,
-                                            proxyPort = proxyPort.value.toInt(),
-                                        )
-                                    } catch (e: Exception) {
-                                        Log.e("Login", "Could not sign in", e)
-                                        errorMessage = context.getString(R.string.invalid_key)
-                                    }
-                                }
-                            },
-                        ),
                 )
             }
 
@@ -381,10 +369,9 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                         }
                     },
                     shape = RoundedCornerShape(Size35dp),
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .height(50.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(50.dp),
                 ) {
                     Text(text = stringResource(R.string.login))
                 }
@@ -393,10 +380,9 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
             Spacer(modifier = Modifier.height(10.dp))
 
             TextButton(
-                modifier =
-                    Modifier
-                        .padding(30.dp)
-                        .fillMaxWidth(),
+                modifier = Modifier
+                    .padding(30.dp)
+                    .fillMaxWidth(),
                 onClick = {
                     accountViewModel.newKey(useProxy.value, proxyPort.value.toInt())
                 },

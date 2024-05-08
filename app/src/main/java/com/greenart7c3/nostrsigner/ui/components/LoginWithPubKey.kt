@@ -141,9 +141,8 @@ fun LoginWithPubKey(
                         onClick = {
                             showAdjustDialog = true
                         },
-                        modifier =
-                            Modifier
-                                .padding(8.dp),
+                        modifier = Modifier
+                            .padding(8.dp),
                     ) {
                         Text(text = stringResource(R.string.adjust))
                     }
@@ -151,10 +150,9 @@ fun LoginWithPubKey(
             }
 
             Button(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(0.8f)
-                        .padding(8.dp),
+                modifier = Modifier
+                    .fillMaxWidth(0.8f)
+                    .padding(8.dp),
                 shape = ButtonBorder,
                 onClick = {
                     onAccept(localPermissions)
@@ -165,14 +163,13 @@ fun LoginWithPubKey(
             Spacer(modifier = Modifier.width(8.dp))
             Button(
                 modifier =
-                    Modifier
-                        .padding(8.dp),
+                Modifier
+                    .padding(8.dp),
                 shape = ButtonBorder,
                 onClick = onReject,
-                colors =
-                    ButtonDefaults.buttonColors(
-                        containerColor = Color(0xFF5A5554),
-                    ),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Color(0xFF5A5554),
+                ),
             ) {
                 Text(stringResource(R.string.reject))
             }

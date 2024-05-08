@@ -31,10 +31,9 @@ fun AcceptRejectButtons(
         Button(
             shape = ButtonBorder,
             onClick = onReject,
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5A5554),
-                ),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Color(0xFF5A5554),
+            ),
         ) {
             Text(stringResource(R.string.reject))
         }

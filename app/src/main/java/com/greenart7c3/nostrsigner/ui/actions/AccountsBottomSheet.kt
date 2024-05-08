@@ -76,10 +76,9 @@ fun AccountsBottomSheet(
 
         Column(modifier = Modifier.verticalScroll(scrollState)) {
             Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -88,13 +87,12 @@ fun AccountsBottomSheet(
             accounts.forEach { acc ->
                 val name = LocalPreferences.getAccountName(acc.npub)
                 Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                accountStateViewModel.switchUser(acc.npub, null)
-                            }
-                            .padding(16.dp, 16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            accountStateViewModel.switchUser(acc.npub, null)
+                        }
+                        .padding(16.dp, 16.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Row(
@@ -146,10 +144,9 @@ fun AccountsBottomSheet(
                 }
             }
             Row(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
@@ -202,17 +199,15 @@ fun EditAccountDialog(
     ) {
         Surface {
             Column(
-                modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxWidth()
-                        .padding(8.dp),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxWidth()
+                    .padding(8.dp),
             ) {
                 Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -230,9 +225,8 @@ fun EditAccountDialog(
                 }
 
                 Column(
-                    modifier =
-                        Modifier
-                            .padding(horizontal = 30.dp),
+                    modifier = Modifier
+                        .padding(horizontal = 30.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {

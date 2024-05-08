@@ -38,10 +38,9 @@ open class AmberEvent(
                 pubKey = jsonObject.get("pubkey")?.asString ?: "",
                 createdAt = jsonObject.get("created_at")?.asLong ?: TimeUtils.now(),
                 kind = jsonObject.get("kind").asInt,
-                tags =
-                    jsonObject.get("tags")?.asJsonArray?.map {
-                        it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }.toTypedArray()
-                    }?.toTypedArray() ?: emptyArray(),
+                tags = jsonObject.get("tags")?.asJsonArray?.map {
+                    it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }.toTypedArray()
+                }?.toTypedArray() ?: emptyArray(),
                 content = jsonObject.get("content").asString,
                 sig = jsonObject.get("sig")?.asString ?: "",
             )

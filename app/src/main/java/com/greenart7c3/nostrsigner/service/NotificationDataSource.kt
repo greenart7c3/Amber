@@ -59,13 +59,12 @@ object NotificationDataSource : NostrDataSource("AccountData") {
 
         return TypedFilter(
             types = setOf(FeedType.FOLLOWS),
-            filter =
-                JsonFilter(
-                    kinds = listOf(24133),
-                    tags = mapOf("p" to pubKeys),
-                    limit = 1,
-                    since = eoses,
-                ),
+            filter = JsonFilter(
+                kinds = listOf(24133),
+                tags = mapOf("p" to pubKeys),
+                limit = 1,
+                since = eoses,
+            ),
         )
     }
 

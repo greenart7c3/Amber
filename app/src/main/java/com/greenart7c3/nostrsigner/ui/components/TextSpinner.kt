@@ -102,14 +102,13 @@ fun TextSpinner(
             remember { Modifier.fillMaxWidth().focusRequester(focusRequester) },
         )
         Box(
-            modifier =
-                Modifier.matchParentSize().clickable(
-                    interactionSource = interactionSource,
-                    indication = null,
-                ) {
-                    optionsShowing = true
-                    focusRequester.requestFocus()
-                },
+            modifier = Modifier.matchParentSize().clickable(
+                interactionSource = interactionSource,
+                indication = null,
+            ) {
+                optionsShowing = true
+                focusRequester.requestFocus()
+            },
         )
     }
 

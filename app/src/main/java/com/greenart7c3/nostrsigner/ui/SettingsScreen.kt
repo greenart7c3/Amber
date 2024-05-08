@@ -70,6 +70,7 @@ import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.encoders.toNpub
+import java.io.IOException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.persistentListOf
@@ -79,7 +80,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
-import java.io.IOException
 
 fun Context.getLocaleListFromXml(): LocaleListCompat {
     val tagsList = mutableListOf<CharSequence>()
@@ -377,12 +377,11 @@ fun SettingsScreen(
                     .padding(16.dp),
             ) {
                 IconRow(
-                    title =
-                        if (checked) {
-                            stringResource(R.string.disconnect_from_your_orbot_setup)
-                        } else {
-                            stringResource(R.string.connect_via_tor_short)
-                        },
+                    title = if (checked) {
+                        stringResource(R.string.disconnect_from_your_orbot_setup)
+                    } else {
+                        stringResource(R.string.connect_via_tor_short)
+                    },
                     icon = R.drawable.ic_tor,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onLongClick = {
@@ -408,16 +407,14 @@ fun SettingsScreen(
             fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(
                 R.string.support_development,
             )}\n\n${context.getString(R.string.source_code)}",
-            hyperLinks =
-                mutableMapOf(
-                    stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
-                    stringResource(R.string.support_development) to stringResource(R.string.support_development_uri),
-                ),
-            textStyle =
-                TextStyle(
-                    textAlign = TextAlign.Center,
-                    color = MaterialTheme.colorScheme.inverseSurface,
-                ),
+            hyperLinks = mutableMapOf(
+                stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
+                stringResource(R.string.support_development) to stringResource(R.string.support_development_uri),
+            ),
+            textStyle = TextStyle(
+                textAlign = TextAlign.Center,
+                color = MaterialTheme.colorScheme.inverseSurface,
+            ),
             linkTextColor = MaterialTheme.colorScheme.primary,
             linkTextDecoration = TextDecoration.Underline,
             fontSize = 18.sp,
@@ -512,10 +509,9 @@ fun SettingsRow(
             placeholder = selectedItems[selectedIndex].title,
             options = selectedItems,
             onSelect = onSelect,
-            modifier =
-                Modifier
-                    .windowInsetsPadding(WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
-                    .weight(1f),
+            modifier = Modifier
+                .windowInsetsPadding(WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
+                .weight(1f),
         )
     }
 }

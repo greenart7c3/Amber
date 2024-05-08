@@ -22,15 +22,15 @@ package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.BuildConfig
-import okhttp3.Interceptor
-import okhttp3.OkHttpClient
-import okhttp3.Request
-import okhttp3.Response
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
 import kotlin.properties.Delegates
+import okhttp3.Interceptor
+import okhttp3.OkHttpClient
+import okhttp3.Request
+import okhttp3.Response
 
 object HttpClientManager {
     val DEFAULT_TIMEOUT_ON_WIFI: Duration = Duration.ofSeconds(10L)

@@ -30,13 +30,12 @@ fun HyperlinkText(
                 val startIndex = fullText.indexOf(key)
                 val endIndex = startIndex + key.length
                 addStyle(
-                    style =
-                        SpanStyle(
-                            color = linkTextColor,
-                            fontSize = fontSize,
-                            fontWeight = linkTextFontWeight,
-                            textDecoration = linkTextDecoration,
-                        ),
+                    style = SpanStyle(
+                        color = linkTextColor,
+                        fontSize = fontSize,
+                        fontWeight = linkTextFontWeight,
+                        textDecoration = linkTextDecoration,
+                    ),
                     start = startIndex,
                     end = endIndex,
                 )
@@ -48,10 +47,9 @@ fun HyperlinkText(
                 )
             }
             addStyle(
-                style =
-                    SpanStyle(
-                        fontSize = fontSize,
-                    ),
+                style = SpanStyle(
+                    fontSize = fontSize,
+                ),
                 start = 0,
                 end = fullText.length,
             )

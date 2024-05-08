@@ -41,9 +41,8 @@ fun RawJson(
     }
 
     OutlinedTextField(
-        modifier =
-            modifier
-                .fillMaxWidth(),
+        modifier = modifier
+            .fillMaxWidth(),
         value = TextFieldValue(currentContent),
         onValueChange = { },
         readOnly = true,

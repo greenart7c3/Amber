@@ -142,19 +142,18 @@ fun SingleEventHomeScreen(
                         val relays = intentData.bunkerRequest?.relays ?: listOf()
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
-                                application =
-                                    ApplicationEntity(
-                                        key,
-                                        appName,
-                                        relays,
-                                        "",
-                                        "",
-                                        "",
-                                        account.keyPair.pubKey.toHexKey(),
-                                        true,
-                                        intentData.bunkerRequest?.secret ?: "",
-                                        intentData.bunkerRequest?.secret != null,
-                                    ),
+                                application = ApplicationEntity(
+                                    key,
+                                    appName,
+                                    relays,
+                                    "",
+                                    "",
+                                    "",
+                                    account.keyPair.pubKey.toHexKey(),
+                                    true,
+                                    intentData.bunkerRequest?.secret ?: "",
+                                    intentData.bunkerRequest?.secret != null,
+                                ),
                                 permissions = mutableListOf(),
                             )
 
@@ -264,19 +263,18 @@ fun SingleEventHomeScreen(
                         val relays = intentData.bunkerRequest?.relays ?: listOf()
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
-                                application =
-                                    ApplicationEntity(
-                                        key,
-                                        appName,
-                                        relays,
-                                        "",
-                                        "",
-                                        "",
-                                        account.keyPair.pubKey.toHexKey(),
-                                        true,
-                                        intentData.bunkerRequest?.secret ?: "",
-                                        intentData.bunkerRequest?.secret != null,
-                                    ),
+                                application = ApplicationEntity(
+                                    key,
+                                    appName,
+                                    relays,
+                                    "",
+                                    "",
+                                    "",
+                                    account.keyPair.pubKey.toHexKey(),
+                                    true,
+                                    intentData.bunkerRequest?.secret ?: "",
+                                    intentData.bunkerRequest?.secret != null,
+                                ),
                                 permissions = mutableListOf(),
                             )
 
@@ -417,19 +415,18 @@ fun SingleEventHomeScreen(
                             val relays = intentData.bunkerRequest?.relays ?: listOf()
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
-                                    application =
-                                        ApplicationEntity(
-                                            key,
-                                            appName,
-                                            relays,
-                                            "",
-                                            "",
-                                            "",
-                                            account.keyPair.pubKey.toHexKey(),
-                                            true,
-                                            intentData.bunkerRequest?.secret ?: "",
-                                            intentData.bunkerRequest?.secret != null,
-                                        ),
+                                    application = ApplicationEntity(
+                                        key,
+                                        appName,
+                                        relays,
+                                        "",
+                                        "",
+                                        "",
+                                        account.keyPair.pubKey.toHexKey(),
+                                        true,
+                                        intentData.bunkerRequest?.secret ?: "",
+                                        intentData.bunkerRequest?.secret != null,
+                                    ),
                                     permissions = mutableListOf(),
                                 )
 

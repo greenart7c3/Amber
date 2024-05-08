@@ -28,19 +28,17 @@ fun IconRow(
     onLongClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 15.dp, horizontal = 25.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 15.dp, horizontal = 25.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(
@@ -70,19 +68,17 @@ fun IconRow(
     onLongClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier =
-            Modifier
-                .fillMaxWidth()
-                .combinedClickable(
-                    onClick = onClick,
-                    onLongClick = onLongClick,
-                ),
+        modifier = Modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            ),
     ) {
         Row(
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 15.dp, horizontal = 25.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 15.dp, horizontal = 25.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(

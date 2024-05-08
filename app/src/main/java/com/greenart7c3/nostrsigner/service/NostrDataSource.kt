@@ -27,12 +27,12 @@ import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.Subscription
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.UUID
+import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import java.util.UUID
-import java.util.concurrent.atomic.AtomicBoolean
 
 abstract class NostrDataSource(val debugName: String) {
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())

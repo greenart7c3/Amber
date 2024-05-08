@@ -29,11 +29,10 @@ fun RememberMyChoice(
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .clickable {
-                        onChanged()
-                    },
+            modifier = Modifier
+                .clickable {
+                    onChanged()
+                },
         ) {
             Text(
                 modifier = Modifier.weight(1f),

@@ -93,20 +93,20 @@ fun AccountBackupDialog(
     ) {
         Surface(
             modifier =
-                Modifier
-                    .fillMaxSize(),
+            Modifier
+                .fillMaxSize(),
         ) {
             Column(
                 modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
+                Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
             ) {
                 Row(
                     modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -115,9 +115,9 @@ fun AccountBackupDialog(
 
                 Column(
                     modifier =
-                        Modifier
-                            .padding(horizontal = 30.dp)
-                            .verticalScroll(rememberScrollState()),
+                    Modifier
+                        .padding(horizontal = 30.dp)
+                        .verticalScroll(rememberScrollState()),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     val content = stringResource(R.string.account_backup_tips_md)
@@ -168,20 +168,19 @@ fun AccountBackupDialog(
                     LocalAutofillTree.current += autofillNode
 
                     OutlinedTextField(
-                        modifier =
-                            Modifier
-                                .onGloballyPositioned { coordinates ->
-                                    autofillNode.boundingBox = coordinates.boundsInWindow()
-                                }
-                                .onFocusChanged { focusState ->
-                                    autofill?.run {
-                                        if (focusState.isFocused) {
-                                            requestAutofillForNode(autofillNode)
-                                        } else {
-                                            cancelAutofillForNode(autofillNode)
-                                        }
+                        modifier = Modifier
+                            .onGloballyPositioned { coordinates ->
+                                autofillNode.boundingBox = coordinates.boundsInWindow()
+                            }
+                            .onFocusChanged { focusState ->
+                                autofill?.run {
+                                    if (focusState.isFocused) {
+                                        requestAutofillForNode(autofillNode)
+                                    } else {
+                                        cancelAutofillForNode(autofillNode)
                                     }
-                                },
+                                }
+                            },
                         value = password.value,
                         onValueChange = {
                             password.value = it
@@ -189,12 +188,11 @@ fun AccountBackupDialog(
                                 errorMessage = ""
                             }
                         },
-                        keyboardOptions =
-                            KeyboardOptions(
-                                autoCorrect = false,
-                                keyboardType = KeyboardType.Password,
-                                imeAction = ImeAction.Go,
-                            ),
+                        keyboardOptions = KeyboardOptions(
+                            autoCorrect = false,
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Go,
+                        ),
                         placeholder = {
                             Text(
                                 text = stringResource(R.string.ncryptsec_password),
@@ -204,22 +202,19 @@ fun AccountBackupDialog(
                             Row {
                                 IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
                                     Icon(
-                                        imageVector =
-                                            if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                        contentDescription =
-                                            if (showCharsPassword) {
-                                                stringResource(R.string.show_password)
-                                            } else {
-                                                stringResource(
-                                                    R.string.hide_password,
-                                                )
-                                            },
+                                        imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                        contentDescription = if (showCharsPassword) {
+                                            stringResource(R.string.show_password)
+                                        } else {
+                                            stringResource(
+                                                R.string.hide_password,
+                                            )
+                                        },
                                     )
                                 }
                             }
                         },
-                        visualTransformation =
-                            if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     )
 
                     if (errorMessage.isNotBlank()) {
@@ -311,16 +306,14 @@ fun QrCodeDialog(
     ) {
         Surface(modifier = Modifier.fillMaxSize()) {
             Column(
-                modifier =
-                    Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
             ) {
                 Row(
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -328,19 +321,17 @@ fun QrCodeDialog(
                 }
 
                 Column(
-                    modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 30.dp),
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 30.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                     verticalArrangement = Arrangement.Center,
                 ) {
                     Row(
                         horizontalArrangement = Arrangement.Center,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = Size35dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = Size35dp),
                     ) {
                         QrCodeDrawer(content)
                     }
@@ -452,18 +443,16 @@ private fun EncryptNSecCopyButton(
             )
         },
         shape = ButtonBorder,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+        ),
         contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
         enabled = password.value.text.isNotBlank(),
     ) {
         Icon(
             tint = MaterialTheme.colorScheme.onPrimary,
             imageVector = Icons.Default.Key,
-            contentDescription =
-                stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
+            contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
             modifier = Modifier.padding(end = 5.dp),
         )
         Text(
@@ -521,18 +510,16 @@ private fun EncryptNSecQRButton(
             )
         },
         shape = ButtonBorder,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = MaterialTheme.colorScheme.primary,
-            ),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = MaterialTheme.colorScheme.primary,
+        ),
         contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
         enabled = password.value.text.isNotBlank(),
     ) {
         Icon(
             tint = MaterialTheme.colorScheme.onPrimary,
             imageVector = Icons.Default.QrCode,
-            contentDescription =
-                stringResource(R.string.shows_qr_code_with_you_private_key),
+            contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
             modifier = Modifier.padding(end = 5.dp),
         )
         Text(

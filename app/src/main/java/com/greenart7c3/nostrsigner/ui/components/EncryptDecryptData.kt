@@ -77,9 +77,8 @@ fun EncryptDecryptData(
         Spacer(Modifier.size(4.dp))
         if (!type.toString().contains("DECRYPT")) {
             Card(
-                modifier =
-                    Modifier
-                        .fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
             ) {
                 Column(Modifier.padding(6.dp)) {
                     Text(
@@ -91,10 +90,9 @@ fun EncryptDecryptData(
                         content,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        modifier =
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
                     )
                 }
             }

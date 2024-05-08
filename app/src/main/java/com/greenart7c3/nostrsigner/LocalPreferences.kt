@@ -17,11 +17,11 @@ import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import fr.acinq.secp256k1.jni.BuildConfig
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.json.JSONObject
-import java.io.File
 
 // Release mode (!BuildConfig.DEBUG) always uses encrypted preferences
 // To use plaintext SharedPreferences for debugging, set this to true

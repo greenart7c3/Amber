@@ -18,10 +18,9 @@ fun LogoutDialog(
         },
         text = {
             Text(
-                text =
-                    stringResource(
-                        R.string.logging_out_deletes_all_your_local_information_make_sure_to_have_your_private_keys_backed_up_to_avoid_losing_your_account_do_you_want_to_continue,
-                    ),
+                text = stringResource(
+                    R.string.logging_out_deletes_all_your_local_information_make_sure_to_have_your_private_keys_backed_up_to_avoid_losing_your_account_do_you_want_to_continue,
+                ),
             )
         },
         onDismissRequest = {

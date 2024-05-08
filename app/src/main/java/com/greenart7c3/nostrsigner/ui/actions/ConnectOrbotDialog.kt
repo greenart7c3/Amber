@@ -107,14 +107,13 @@ fun ConnectOrbotDialog(
                 ) {
                     val myMarkDownStyle =
                         RichTextDefaults.copy(
-                            stringStyle =
-                                RichTextDefaults.stringStyle?.copy(
-                                    linkStyle =
-                                        SpanStyle(
-                                            textDecoration = TextDecoration.Underline,
-                                            color = MaterialTheme.colorScheme.primary,
-                                        ),
+                            stringStyle = RichTextDefaults.stringStyle?.copy(
+                                linkStyle =
+                                SpanStyle(
+                                    textDecoration = TextDecoration.Underline,
+                                    color = MaterialTheme.colorScheme.primary,
                                 ),
+                            ),
                         )
 
                     Row {
@@ -142,11 +141,10 @@ fun ConnectOrbotDialog(
                         OutlinedTextField(
                             value = portNumber.value,
                             onValueChange = { portNumber.value = it },
-                            keyboardOptions =
-                                KeyboardOptions.Default.copy(
-                                    capitalization = KeyboardCapitalization.None,
-                                    keyboardType = KeyboardType.Number,
-                                ),
+                            keyboardOptions = KeyboardOptions.Default.copy(
+                                capitalization = KeyboardCapitalization.None,
+                                keyboardType = KeyboardType.Number,
+                            ),
                             label = { Text(text = stringResource(R.string.orbot_socks_port)) },
                             placeholder = {
                                 Text(
@@ -175,10 +173,9 @@ fun UseOrbotButton(
             }
         },
         shape = ButtonBorder,
-        colors =
-            ButtonDefaults.buttonColors(
-                containerColor = if (isActive) MaterialTheme.colorScheme.primary else Color.Gray,
-            ),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (isActive) MaterialTheme.colorScheme.primary else Color.Gray,
+        ),
     ) {
         Text(text = stringResource(R.string.use_orbot), color = Color.White)
     }

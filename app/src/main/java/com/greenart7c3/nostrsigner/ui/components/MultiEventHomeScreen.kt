@@ -83,12 +83,11 @@ fun SelectAllButton(
     Row(
         horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically,
-        modifier =
-            Modifier
-                .padding(horizontal = 8.dp)
-                .clickable {
-                    onSelected()
-                },
+        modifier = Modifier
+            .padding(horizontal = 8.dp)
+            .clickable {
+                onSelected()
+            },
     ) {
         Text(
             modifier = Modifier.weight(1f),
@@ -188,19 +187,18 @@ fun MultiEventHomeScreen(
                                         database
                                             .applicationDao()
                                             .getByKey(key) ?: ApplicationWithPermissions(
-                                            application =
-                                                ApplicationEntity(
-                                                    key,
-                                                    applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                                    listOf(),
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    localAccount.keyPair.pubKey.toHexKey(),
-                                                    true,
-                                                    intentData.bunkerRequest?.secret ?: "",
-                                                    intentData.bunkerRequest?.secret != null,
-                                                ),
+                                            application = ApplicationEntity(
+                                                key,
+                                                applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                                listOf(),
+                                                "",
+                                                "",
+                                                "",
+                                                localAccount.keyPair.pubKey.toHexKey(),
+                                                true,
+                                                intentData.bunkerRequest?.secret ?: "",
+                                                intentData.bunkerRequest?.secret != null,
+                                            ),
                                             permissions = mutableListOf(),
                                         )
 
@@ -260,19 +258,18 @@ fun MultiEventHomeScreen(
                                         database
                                             .applicationDao()
                                             .getByKey(key) ?: ApplicationWithPermissions(
-                                            application =
-                                                ApplicationEntity(
-                                                    key,
-                                                    applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                                    listOf(),
-                                                    "",
-                                                    "",
-                                                    "",
-                                                    localAccount.keyPair.pubKey.toHexKey(),
-                                                    true,
-                                                    intentData.bunkerRequest?.secret ?: "",
-                                                    intentData.bunkerRequest?.secret != null,
-                                                ),
+                                            application = ApplicationEntity(
+                                                key,
+                                                applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                                listOf(),
+                                                "",
+                                                "",
+                                                "",
+                                                localAccount.keyPair.pubKey.toHexKey(),
+                                                true,
+                                                intentData.bunkerRequest?.secret ?: "",
+                                                intentData.bunkerRequest?.secret != null,
+                                            ),
                                             permissions = mutableListOf(),
                                         )
 
@@ -408,10 +405,9 @@ fun ListItem(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
-            modifier =
-                Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp),
         ) {
             Icon(
                 Icons.Default.run {
@@ -436,13 +432,12 @@ fun ListItem(
                 }
             Text(
                 modifier = Modifier.weight(1f),
-                text =
-                    buildAnnotatedString {
-                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                            append(appName)
-                        }
-                        append(" $text")
-                    },
+                text = buildAnnotatedString {
+                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                        append(appName)
+                    }
+                    append(" $text")
+                },
                 fontSize = 18.sp,
             )
 
@@ -476,10 +471,9 @@ fun ListItem(
                     content,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    modifier =
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp),
                 )
                 RememberMyChoice(
                     shouldRunOnAccept = false,

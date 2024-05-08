@@ -24,12 +24,12 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
+import java.util.UUID
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 /**
  * The Nostr Client manages multiple personae the user may switch between. Events are received and

@@ -121,4 +121,6 @@
     <string name="language">Linguagem</string>
     <string name="language_description">Para a interface do aplicativo</string>
     <string name="no_activities_found">No activities found</string>
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
 </resources>

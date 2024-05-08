@@ -145,6 +145,19 @@ fun ActivityDialog(
                         onClose()
                     }
                 }
+
+                if (activities.isEmpty()) {
+                    Text(
+                        stringResource(R.string.no_activities_found),
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center,
+                        fontSize = 18.sp,
+                    )
+                }
+
                 LazyColumn(
                     Modifier
                         .fillMaxHeight()

@@ -124,4 +124,5 @@
     <string name="rejected">Rejected</string>
     <string name="language">Language</string>
     <string name="language_description">For the App\'s Interface</string>
+    <string name="no_activities_found">No activities found</string>
 </resources>

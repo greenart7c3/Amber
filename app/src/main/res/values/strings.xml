@@ -125,4 +125,6 @@
     <string name="language">Language</string>
     <string name="language_description">For the App\'s Interface</string>
     <string name="no_activities_found">No activities found</string>
+    <string name="home">Home</string>
+    <string name="settings">Settings</string>
 </resources>

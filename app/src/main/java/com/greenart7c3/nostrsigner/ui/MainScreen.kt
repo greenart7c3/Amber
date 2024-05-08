@@ -682,7 +682,7 @@ fun MainScreen(
                                 )
                             },
                             label = {
-                                Text(it.route)
+                                Text(it.title)
                             },
                         )
                     }

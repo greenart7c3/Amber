@@ -277,7 +277,7 @@ fun EditPermission(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
         ) {
-            if (applicationData.secret.isNotEmpty()) {
+            if (applicationData.secret.isNotEmpty() || applicationData.relays.isNotEmpty()) {
                 Row(
                     horizontalArrangement = Arrangement.Center,
                 ) {

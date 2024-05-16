@@ -50,6 +50,7 @@
     <locale android:name="sr-SP"/>
     <locale android:name="ss-ZA"/>
     <locale android:name="sv-SE"/>
+    <locale android:name="sw"/>
     <locale android:name="sw-KE"/>
     <locale android:name="sw-TZ"/>
     <locale android:name="ta"/>

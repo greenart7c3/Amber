@@ -2,7 +2,7 @@ project_id_env: CROWDIN_PROJECT_ID
 api_token_env: CROWDIN_PERSONAL_TOKEN
 base_path: .
 base_url: 'https://api.crowdin.com'
-preserve_hierarchy: 1
+preserve_hierarchy: true
 files:
   - source: app/src/main/res/values/strings.xml
     translation: app/src/main/res/values-%android_code%/%original_file_name%
@@ -26,3 +26,4 @@ files:
         tr: tr
         uk: uk
         zh: zh
+        sw: sw

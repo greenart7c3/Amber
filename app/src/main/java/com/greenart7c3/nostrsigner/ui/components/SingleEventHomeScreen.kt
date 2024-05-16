@@ -468,6 +468,5 @@ fun isPrivateEvent(
     kind: Int,
     tags: Array<Array<String>>,
 ): Boolean {
-    return kind == LnZapRequestEvent.KIND &&
-        tags.any { t -> t.size > 1 && t[0] == "anon" }
+    return kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
 }

@@ -316,7 +316,7 @@ fun SingleEventHomeScreen(
                     it.npub.bechToBytes().toHexKey() == event.pubKey
                 }
 
-            if (accounts.isEmpty()) {
+            if (accounts.isEmpty() && !isPrivateEvent(event.kind, event.tags)) {
                 Column(
                     Modifier.fillMaxSize(),
                     Arrangement.Center,
@@ -356,7 +356,7 @@ fun SingleEventHomeScreen(
                     event.toJson(),
                     intentData.type,
                     {
-                        if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
+                        if (event.pubKey != account.keyPair.pubKey.toHexKey() && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
@@ -462,4 +462,12 @@ fun SingleEventHomeScreen(
             }
         }
     }
+}
+
+fun isPrivateEvent(
+    kind: Int,
+    tags: Array<Array<String>>,
+): Boolean {
+    return kind == LnZapRequestEvent.KIND &&
+        tags.any { t -> t.size > 1 && t[0] == "anon" }
 }

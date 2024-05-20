@@ -22,6 +22,7 @@ package com.greenart7c3.nostrsigner.relays
 
 import androidx.compose.runtime.Immutable
 import com.greenart7c3.nostrsigner.checkNotInMainThread
+import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -36,6 +37,7 @@ import kotlinx.coroutines.launch
  * RelayPool manages the connection to multiple Relays and lets consumers deal with simple events.
  */
 object RelayPool : Relay.Listener {
+    var accountStateViewModel: AccountStateViewModel? = null
     private var relays = listOf<Relay>()
     private var listeners = setOf<Listener>()
 

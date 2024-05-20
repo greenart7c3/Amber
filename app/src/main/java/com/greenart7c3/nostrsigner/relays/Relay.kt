@@ -309,7 +309,11 @@ class Relay(
 
                     Log.w("Relay", "Relay on OK $url, $eventId, $success, $message")
                     it.onSendResponse(this@Relay, eventId, success, message)
-                    onOk?.let { it() }
+                    if (success) {
+                        onOk?.let { it() }
+                    } else if (message.isNotEmpty()) {
+                        RelayPool.accountStateViewModel?.toast("Relay", message)
+                    }
                 }
             "AUTH" ->
                 listeners.forEach {

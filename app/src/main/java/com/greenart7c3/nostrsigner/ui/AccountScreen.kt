@@ -5,6 +5,19 @@ import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonColors
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.SideEffect
@@ -14,12 +27,20 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
+import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -120,9 +141,79 @@ fun AccountScreen(
                         }
                     }
 
+                    RelayPool.accountStateViewModel = accountStateViewModel
+
+                    DisplayErrorMessages(accountStateViewModel)
                     MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
                 }
             }
         }
     }
+}
+
+@Composable
+private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
+    val context = LocalContext.current
+    val openDialogMsg = accountViewModel.toasts.collectAsStateWithLifecycle(null)
+
+    openDialogMsg.value?.let { obj ->
+        when (obj) {
+            is ResourceToastMsg ->
+                if (obj.params != null) {
+                    InformationDialog(
+                        context.getString(obj.titleResId),
+                        context.getString(obj.resourceId, *obj.params),
+                    ) {
+                        accountViewModel.clearToasts()
+                    }
+                } else {
+                    InformationDialog(
+                        context.getString(obj.titleResId),
+                        context.getString(obj.resourceId),
+                    ) {
+                        accountViewModel.clearToasts()
+                    }
+                }
+
+            is StringToastMsg ->
+                InformationDialog(
+                    obj.title,
+                    obj.msg,
+                ) {
+                    accountViewModel.clearToasts()
+                }
+        }
+    }
+}
+
+@Composable
+fun InformationDialog(
+    title: String,
+    textContent: String,
+    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(title) },
+        text = { SelectionContainer { Text(textContent) } },
+        confirmButton = {
+            Button(
+                onClick = onDismiss,
+                colors = buttonColors,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Done,
+                        contentDescription = null,
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(R.string.ok))
+                }
+            }
+        },
+    )
 }

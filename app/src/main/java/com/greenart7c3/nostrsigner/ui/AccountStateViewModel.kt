@@ -1,7 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.crypto.CryptoUtils
@@ -11,18 +13,45 @@ import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+@Immutable
+open class ToastMsg()
+
+@Immutable
+class StringToastMsg(val title: String, val msg: String) : ToastMsg()
+
+@Immutable
+class ResourceToastMsg(
+    val titleResId: Int,
+    val resourceId: Int,
+    val params: Array<out String>? = null,
+) : ToastMsg()
+
 @Stable
 class AccountStateViewModel(npub: String?) : ViewModel() {
     private val _accountContent = MutableStateFlow<AccountState>(AccountState.LoggedOff)
     val accountContent = _accountContent.asStateFlow()
+    val toasts = MutableSharedFlow<ToastMsg?>(0, 3, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     init {
         tryLoginExistingAccount(null, npub)
+    }
+
+    fun clearToasts() {
+        viewModelScope.launch { toasts.emit(null) }
+    }
+
+    fun toast(
+        title: String,
+        message: String,
+    ) {
+        viewModelScope.launch { toasts.emit(StringToastMsg(title, message)) }
     }
 
     private fun tryLoginExistingAccount(

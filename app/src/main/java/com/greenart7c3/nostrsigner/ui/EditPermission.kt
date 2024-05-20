@@ -34,6 +34,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -166,6 +167,7 @@ fun EditPermission(
     var showDialog by remember {
         mutableStateOf(false)
     }
+    val context = LocalContext.current
 
     var showActivityDialog by remember {
         mutableStateOf(false)
@@ -318,9 +320,9 @@ fun EditPermission(
 
                 val message =
                     if (permission.type == "SIGN_EVENT") {
-                        "Sign $localPermission"
+                        stringResource(R.string.sign, localPermission.toLocalizedString(context))
                     } else {
-                        localPermission.toString()
+                        localPermission.toLocalizedString(context)
                     }
                 Row(
                     modifier = Modifier

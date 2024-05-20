@@ -14,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -44,6 +45,7 @@ fun EventData(
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
     }
+    val context = LocalContext.current
 
     Column(
         Modifier
@@ -51,7 +53,7 @@ fun EventData(
             .padding(8.dp),
     ) {
         val permission = Permission("sign_event", event.kind)
-        val text = "wants you to sign a $permission"
+        val text = stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

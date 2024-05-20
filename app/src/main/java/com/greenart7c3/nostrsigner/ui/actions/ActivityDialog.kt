@@ -25,6 +25,7 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
@@ -54,6 +55,7 @@ fun ActivityDialog(
         remember {
             mutableStateListOf<HistoryEntity>()
         }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -123,7 +125,7 @@ fun ActivityDialog(
                                     .padding(horizontal = 16.dp, vertical = 8.dp),
                             ) {
                                 Text(
-                                    if (permission.type == "connect") "Connect" else permission.toString(),
+                                    if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                     maxLines = 1,

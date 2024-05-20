@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -41,6 +42,7 @@ fun AdjustPermissionsDialog(
     var selectAll by remember {
         mutableStateOf(true)
     }
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -121,7 +123,7 @@ fun AdjustPermissionsDialog(
                         ) {
                             Text(
                                 modifier = Modifier.weight(1f),
-                                text = permission.toString(),
+                                text = permission.toLocalizedString(context),
                             )
                             Switch(
                                 checked = permission.checked,

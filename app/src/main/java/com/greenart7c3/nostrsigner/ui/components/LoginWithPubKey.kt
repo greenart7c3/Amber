@@ -27,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -50,6 +51,7 @@ fun LoginWithPubKey(
     var localPermissions by remember {
         mutableStateOf(permissions)
     }
+    val context = LocalContext.current
 
     var showAdjustDialog by remember {
         mutableStateOf(false)
@@ -102,10 +104,10 @@ fun LoginWithPubKey(
                     ) {
                         Icon(
                             if (item.checked) Icons.Default.Done else Icons.Default.Close,
-                            item.toString(),
+                            item.toLocalizedString(context),
                             tint = if (item.checked) Color.Green else Color.Red,
                         )
-                        Text(text = item.toString())
+                        Text(text = item.toLocalizedString(context))
                     }
                 }
             }

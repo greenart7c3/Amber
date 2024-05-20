@@ -382,6 +382,7 @@ fun ListItem(
         }
 
     val appName = ApplicationNameCache.names[key] ?: key.toShortenHex()
+    val context = LocalContext.current
 
     Card(
         Modifier
@@ -420,15 +421,14 @@ fun ListItem(
                 contentDescription = "",
                 tint = Color.LightGray,
             )
-
             val text =
                 if (intentData.type == SignerType.SIGN_EVENT) {
                     val event = intentData.event!!
                     val permission = Permission("sign_event", event.kind)
-                    "wants you to sign a $permission"
+                    stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
                 } else {
                     val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
-                    "wants you to $permission"
+                    stringResource(R.string.wants_you_to, permission.toLocalizedString(context))
                 }
             Text(
                 modifier = Modifier.weight(1f),

@@ -123,4 +123,5 @@
     <string name="no_activities_found">Pas d\'activités trouvées</string>
     <string name="home">Accueil</string>
     <string name="settings">Paramètres</string>
+    <string name="ok">OK</string>
 </resources>

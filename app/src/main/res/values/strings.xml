@@ -224,4 +224,7 @@
     <string name="wants_you_to_sign_a">wants you to sign a %1$s</string>
     <string name="wants_you_to">wants you to %1$s</string>
     <string name="sign">Sign %1$s</string>
+    <string name="sign_message">sign message</string>
+    <string name="content">content</string>
+    <string name="signature">signature</string>
 </resources>

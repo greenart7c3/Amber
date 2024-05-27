@@ -36,6 +36,7 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.sendResult
+import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -181,6 +182,119 @@ fun SingleEventHomeScreen(
                             relays,
                             context,
                             onLoading = onLoading,
+                        )
+                    } else {
+                        context.getAppCompatActivity()?.intent = null
+                        context.getAppCompatActivity()?.finish()
+                    }
+                },
+            )
+        }
+
+        SignerType.SIGN -> {
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString()
+                }
+            val remember =
+                remember {
+                    mutableStateOf(permission?.acceptable == true)
+                }
+
+            val shouldRunOnAccept = permission?.acceptable == true
+            val localPackageName =
+                if (intentData.bunkerRequest != null) {
+                    intentData.bunkerRequest.localKey
+                } else {
+                    packageName
+                }
+            SignMessage(
+                intentData.data,
+                shouldRunOnAccept,
+                remember,
+                localPackageName,
+                applicationName,
+                appName,
+                intentData.type,
+                {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        val result = CryptoUtils.signString(intentData.data, account.keyPair.privKey!!).toHexKey()
+
+                        sendResult(
+                            context,
+                            packageName,
+                            account,
+                            key,
+                            remember.value,
+                            clipboardManager,
+                            result,
+                            result,
+                            intentData,
+                            null,
+                            database,
+                            onLoading,
+                        )
+                    }
+                },
+                {
+                    coroutineScope.launch(Dispatchers.IO) {
+                        if (key == "null") {
+                            return@launch
+                        }
+
+                        if (remember.value) {
+                            AmberUtils.acceptOrRejectPermission(
+                                key,
+                                intentData,
+                                null,
+                                false,
+                                applicationName ?: appName,
+                                account,
+                                database,
+                            )
+                        }
+
+                        val savedApplication = database.applicationDao().getByKey(key)
+                        val relays = intentData.bunkerRequest?.relays ?: listOf()
+                        val application =
+                            savedApplication ?: ApplicationWithPermissions(
+                                application = ApplicationEntity(
+                                    key,
+                                    appName,
+                                    relays,
+                                    "",
+                                    "",
+                                    "",
+                                    account.keyPair.pubKey.toHexKey(),
+                                    true,
+                                    intentData.bunkerRequest?.secret ?: "",
+                                    intentData.bunkerRequest?.secret != null,
+                                ),
+                                permissions = mutableListOf(),
+                            )
+
+                        database.applicationDao().insertApplicationWithPermissions(application)
+
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                key,
+                                intentData.type.toString(),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                    }
+
+                    if (intentData.bunkerRequest != null) {
+                        AmberUtils.sendBunkerError(
+                            account,
+                            intentData.bunkerRequest,
+                            applicationEntity?.application?.relays?.map { url -> Relay(url) }
+                                ?: emptyList(),
+                            context,
+                            onLoading,
                         )
                     } else {
                         context.getAppCompatActivity()?.intent = null

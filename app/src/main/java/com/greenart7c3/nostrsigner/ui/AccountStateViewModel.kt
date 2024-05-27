@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.KeyPair
+import com.vitorpamplona.quartz.crypto.nip06.Nip06
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -111,6 +112,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Account(KeyPair(Hex.decode(newKey)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             } else if (key.startsWith("nsec")) {
                 Account(KeyPair(privKey = key.bechToBytes()), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
+            } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
+                val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
+                Account(keyPair, name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             } else {
                 Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             }

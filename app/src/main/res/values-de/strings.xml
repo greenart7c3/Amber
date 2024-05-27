@@ -220,4 +220,7 @@
     <string name="wants_you_to_sign_a">möchte ein %1$s signieren</string>
     <string name="wants_you_to">möchte, dass du %1$s</string>
     <string name="sign">%1$s signieren</string>
+    <string name="sign_message">sign message</string>
+    <string name="content">content</string>
+    <string name="signature">signature</string>
 </resources>

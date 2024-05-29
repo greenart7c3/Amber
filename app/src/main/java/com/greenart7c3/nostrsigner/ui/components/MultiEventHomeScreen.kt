@@ -70,6 +70,7 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.Dispatchers
@@ -237,6 +238,70 @@ fun MultiEventHomeScreen(
                                                 } else {
                                                     localEvent.sig
                                                 },
+                                                intentData.id,
+                                            ),
+                                        )
+                                    }
+                                } else if (intentData.type == SignerType.SIGN) {
+                                    if (intentData.rememberMyChoice.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            key,
+                                            intentData,
+                                            null,
+                                            intentData.rememberMyChoice.value,
+                                            applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                            localAccount,
+                                            database,
+                                        )
+                                    }
+
+                                    val application =
+                                        database
+                                            .applicationDao()
+                                            .getByKey(key) ?: ApplicationWithPermissions(
+                                            application = ApplicationEntity(
+                                                key,
+                                                applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
+                                                listOf(),
+                                                "",
+                                                "",
+                                                "",
+                                                localAccount.keyPair.pubKey.toHexKey(),
+                                                true,
+                                                intentData.bunkerRequest?.secret ?: "",
+                                                intentData.bunkerRequest?.secret != null,
+                                            ),
+                                            permissions = mutableListOf(),
+                                        )
+
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            null,
+                                            TimeUtils.now(),
+                                            true,
+                                        ),
+                                    )
+
+                                    val signedMessage = CryptoUtils.signString(intentData.data, localAccount.keyPair.privKey!!).toHexKey()
+
+                                    if (intentData.bunkerRequest != null) {
+                                        IntentUtils.sendBunkerResponse(
+                                            localAccount,
+                                            intentData.bunkerRequest.localKey,
+                                            BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
+                                            applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
+                                            onLoading = {},
+                                        ) { }
+                                    } else {
+                                        results.add(
+                                            Result(
+                                                null,
+                                                signedMessage,
                                                 intentData.id,
                                             ),
                                         )

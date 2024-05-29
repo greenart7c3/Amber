@@ -9,6 +9,8 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.vitorpamplona.quartz.crypto.CryptoUtils
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
@@ -46,6 +48,75 @@ class SignerProvider : ContentProvider() {
     ): Cursor? {
         val appId = BuildConfig.APPLICATION_ID
         return when (uri.toString()) {
+            "content://$appId.SIGN" -> {
+                val packageName = callingPackage ?: return null
+                val message = projection?.first() ?: return null
+                if (!LocalPreferences.containsAccount(projection[2])) return null
+                val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
+                val currentSelection = selection ?: "0"
+                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                val permission =
+                    database
+                        .applicationDao()
+                        .getPermission(
+                            sortOrder ?: packageName,
+                            "SIGN",
+                            null,
+                        )
+                if (currentSelection == "1") {
+                    val isRemembered = permission?.acceptable ?: return null
+                    if (!isRemembered) {
+                        val cursor =
+                            MatrixCursor(arrayOf("rejected")).also {
+                                it.addRow(arrayOf("true"))
+                            }
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                        return cursor
+                    }
+                } else {
+                    val isRemembered = permission?.acceptable ?: false
+                    if (!isRemembered) {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                        return null
+                    }
+                }
+
+                val result = CryptoUtils.signString(message, account.keyPair.privKey!!).toHexKey()
+                database.applicationDao().addHistory(
+                    HistoryEntity(
+                        0,
+                        sortOrder ?: packageName,
+                        "SIGN",
+                        null,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                )
+
+                val localCursor = MatrixCursor(arrayOf("signature", "event")).also {
+                    it.addRow(arrayOf(result, result))
+                }
+
+                return localCursor
+            }
             "content://$appId.SIGN_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val json = projection?.first() ?: return null

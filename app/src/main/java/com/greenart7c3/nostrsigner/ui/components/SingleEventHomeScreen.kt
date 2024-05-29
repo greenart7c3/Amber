@@ -98,6 +98,8 @@ fun SingleEventHomeScreen(
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
                             "ack"
+                        } else if (intentData.bunkerRequest != null) {
+                            account.keyPair.pubKey.toHexKey()
                         } else {
                             account.keyPair.pubKey.toNpub()
                         }

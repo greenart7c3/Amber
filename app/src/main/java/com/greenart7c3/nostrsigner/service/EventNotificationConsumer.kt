@@ -232,12 +232,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             }
 
             val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
-            var message = "$name requests $bunkerPermission"
+            var message = "$name requests ${bunkerPermission.toLocalizedString(applicationContext)}"
             if (type == SignerType.SIGN_EVENT) {
-                message = "$name wants you to sign a $bunkerPermission"
+                message = "$name wants you to sign a ${bunkerPermission.toLocalizedString(applicationContext)}"
             }
             if (type == SignerType.CONNECT) {
-                message = "$name $bunkerPermission"
+                message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
             }
             val relaysUrl = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
             val relays = relaysUrl.map { url -> Relay(url) }

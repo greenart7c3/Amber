@@ -44,11 +44,11 @@ object NotificationUtils {
         dmChannel =
             NotificationChannel(
                 "BunkerID",
-                "Bunker Notifications",
+                applicationContext.getString(R.string.bunker_notifications),
                 NotificationManager.IMPORTANCE_HIGH,
             )
                 .apply {
-                    description = "Notifications for Approving or Rejecting Bunker requests."
+                    description = applicationContext.getString(R.string.notifications_for_approving_or_rejecting_bunker_requests)
                 }
 
         // Register the channel with the system
@@ -125,7 +125,7 @@ object NotificationUtils {
                 .setSmallIcon(R.mipmap.ic_launcher_foreground)
                 .setColor(0xFFBF00)
                 .setContentTitle(messageTitle)
-                .setContentText("new event to sign")
+                .setContentText(applicationContext.getString(R.string.new_event_to_sign))
                 .setLargeIcon(picture?.bitmap)
                 // .setGroup(messageTitle)
                 // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we

@@ -25,14 +25,14 @@ class ConnectivityService : Service() {
 
     private fun createNotification(): Notification {
         val channelId = "ServiceChannel"
-        val channel = NotificationChannel(channelId, "Checking Connectivity", NotificationManager.IMPORTANCE_DEFAULT)
+        val channel = NotificationChannel(channelId, getString(R.string.checking_connectivity), NotificationManager.IMPORTANCE_DEFAULT)
         channel.setSound(null, null)
         val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
         notificationManager.createNotificationChannel(channel)
 
         val notificationBuilder =
             NotificationCompat.Builder(this, channelId)
-                .setContentTitle("Amber is running in background")
+                .setContentTitle(getString(R.string.amber_is_running_in_background))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.mipmap.ic_launcher_foreground)
                 .setColor(0xFFBF00)

@@ -223,4 +223,9 @@
     <string name="sign_message">signer le message</string>
     <string name="content">contenu</string>
     <string name="signature">signature</string>
+    <string name="checking_connectivity">Checking Connectivity</string>
+    <string name="amber_is_running_in_background">Amber is running in background</string>
+    <string name="bunker_notifications">Bunker Notifications</string>
+    <string name="notifications_for_approving_or_rejecting_bunker_requests">Notifications for Approving or Rejecting Bunker requests.</string>
+    <string name="new_event_to_sign">new event to sign</string>
 </resources>

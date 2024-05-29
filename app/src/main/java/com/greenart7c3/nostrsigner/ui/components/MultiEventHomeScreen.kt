@@ -242,7 +242,7 @@ fun MultiEventHomeScreen(
                                             ),
                                         )
                                     }
-                                } else if (intentData.type == SignerType.SIGN) {
+                                } else if (intentData.type == SignerType.SIGN_MESSAGE) {
                                     if (intentData.rememberMyChoice.value) {
                                         AmberUtils.acceptOrRejectPermission(
                                             key,

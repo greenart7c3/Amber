@@ -193,7 +193,7 @@ fun SingleEventHomeScreen(
             )
         }
 
-        SignerType.SIGN -> {
+        SignerType.SIGN_MESSAGE -> {
             val permission =
                 applicationEntity?.permissions?.firstOrNull {
                     it.pkKey == key && it.type == intentData.type.toString()

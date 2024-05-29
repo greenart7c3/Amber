@@ -2,7 +2,7 @@ package com.greenart7c3.nostrsigner.models
 
 enum class SignerType {
     CONNECT,
-    SIGN,
+    SIGN_MESSAGE,
     SIGN_EVENT,
     NIP04_ENCRYPT,
     NIP04_DECRYPT,

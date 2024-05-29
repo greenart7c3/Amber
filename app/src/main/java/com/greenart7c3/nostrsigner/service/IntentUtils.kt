@@ -77,7 +77,7 @@ object IntentUtils {
                 if (parameter == "type") {
                     type =
                         when (parameterData) {
-                            "sign" -> SignerType.SIGN
+                            "sign_message" -> SignerType.SIGN_MESSAGE
                             "sign_event" -> SignerType.SIGN_EVENT
                             "get_public_key" -> SignerType.GET_PUBLIC_KEY
                             "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
@@ -198,7 +198,7 @@ object IntentUtils {
                         ),
                     )
                 }
-                SignerType.SIGN -> {
+                SignerType.SIGN_MESSAGE -> {
                     onReady(
                         IntentData(
                             localData,
@@ -227,7 +227,7 @@ object IntentUtils {
 
     fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType {
         return when (bunkerRequest.method) {
-            "sign" -> SignerType.SIGN
+            "sign_message" -> SignerType.SIGN_MESSAGE
             "connect" -> SignerType.CONNECT
             "sign_event" -> SignerType.SIGN_EVENT
             "get_public_key" -> SignerType.GET_PUBLIC_KEY
@@ -241,7 +241,7 @@ object IntentUtils {
 
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String {
         return when (bunkerRequest.method) {
-            "sign" -> bunkerRequest.params.first()
+            "sign_message" -> bunkerRequest.params.first()
             "connect" -> "ack"
             "sign_event" -> {
                 val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
@@ -450,7 +450,7 @@ object IntentUtils {
                     ),
                 )
             }
-            SignerType.SIGN -> {
+            SignerType.SIGN_MESSAGE -> {
                 onReady(
                     IntentData(
                         data,
@@ -484,7 +484,7 @@ object IntentUtils {
     ) {
         val type =
             when (intent.extras?.getString("type")) {
-                "sign" -> SignerType.SIGN
+                "sign_message" -> SignerType.SIGN_MESSAGE
                 "sign_event" -> SignerType.SIGN_EVENT
                 "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
                 "nip04_decrypt" -> SignerType.NIP04_DECRYPT
@@ -592,6 +592,28 @@ object IntentUtils {
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
+                onReady(
+                    IntentData(
+                        data,
+                        name,
+                        type,
+                        pubKey,
+                        id,
+                        intent.extras?.getString("callbackUrl"),
+                        compressionType,
+                        returnType,
+                        permissions,
+                        intent.extras?.getString("current_user") ?: Hex.decode(pubKey).toNpub(),
+                        mutableStateOf(true),
+                        mutableStateOf(false),
+                        null,
+                        route,
+                        null,
+                        null,
+                    ),
+                )
+            }
+            SignerType.SIGN_MESSAGE -> {
                 onReady(
                     IntentData(
                         data,

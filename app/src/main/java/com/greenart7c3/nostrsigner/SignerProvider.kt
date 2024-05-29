@@ -48,7 +48,7 @@ class SignerProvider : ContentProvider() {
     ): Cursor? {
         val appId = BuildConfig.APPLICATION_ID
         return when (uri.toString()) {
-            "content://$appId.SIGN" -> {
+            "content://$appId.SIGN_MESSAGE" -> {
                 val packageName = callingPackage ?: return null
                 val message = projection?.first() ?: return null
                 if (!LocalPreferences.containsAccount(projection[2])) return null
@@ -60,8 +60,7 @@ class SignerProvider : ContentProvider() {
                         .applicationDao()
                         .getPermission(
                             sortOrder ?: packageName,
-                            "SIGN",
-                            null,
+                            "SIGN_MESSAGE",
                         )
                 if (currentSelection == "1") {
                     val isRemembered = permission?.acceptable ?: return null
@@ -104,7 +103,7 @@ class SignerProvider : ContentProvider() {
                     HistoryEntity(
                         0,
                         sortOrder ?: packageName,
-                        "SIGN",
+                        "SIGN_MESSAGE",
                         null,
                         TimeUtils.now(),
                         true,

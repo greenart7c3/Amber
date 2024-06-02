@@ -225,4 +225,5 @@
     <string name="bunker_notifications">Bunker Notifications</string>
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Notifications for Approving or Rejecting Bunker requests.</string>
     <string name="new_event_to_sign">new event to sign</string>
+    <string name="event_kind_10013">Private outbox relay list</string>
 </resources>

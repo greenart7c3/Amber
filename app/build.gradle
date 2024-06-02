@@ -147,7 +147,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.12"
+        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     packagingOptions {
@@ -217,7 +217,7 @@ dependencies {
 
     playImplementation platform(libs.firebase.bom)
     playImplementation(libs.firebase.messaging)
-    freeImplementation(libs.android.connector)
+    freeImplementation(libs.unfiedpush)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 

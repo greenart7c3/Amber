@@ -1,21 +1,21 @@
 [versions]
 activityCompose = "1.9.0"
-androidConnector = "2.2.0"
-appcompat = "1.6.1"
+unfiedpush = "2.2.0"
+appcompat = "1.7.0"
 biometricKtx = "1.2.0-alpha05"
 converterGson = "2.9.0"
 core = "3.5.3"
 coreKtx = "1.13.1"
 coreSplashscreen = "1.0.1"
 espressoCore = "3.5.1"
-firebaseBom = "33.0.0"
+firebaseBom = "33.1.0"
 firebaseMessaging = "24.0.0"
 jna = "5.14.0"
 junit = "4.13.2"
-junitVersion = "1.2.0-alpha04"
+junitVersion = "1.2.0-rc01"
 lifecycle_version = "2.7.0"
 material3 = "1.2.1"
-mockk = "1.13.10"
+mockk = "1.13.11"
 nav_version = "2.7.7"
 quartz = "0.87.1"
 compose_ui = "1.6.7"
@@ -24,16 +24,16 @@ roomKtx = "2.6.1"
 securityCryptoKtx = "1.1.0-alpha06"
 zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.0.0-alpha.14"
-kotlin = "1.9.23"
+kotlin = "1.9.24"
 workRuntimeKtx = "2.9.0"
 agp = "8.4.1"
 ktlint = "12.1.0"
 gms = "4.4.1"
-ksp = "1.9.23-1.0.20"
+ksp = "1.9.24-1.0.20"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
-android-connector = { module = "com.github.UnifiedPush:android-connector", version.ref = "androidConnector" }
+unfiedpush = { module = "com.github.UnifiedPush:android-connector", version.ref = "unfiedpush" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 biometric-ktx = { module = "androidx.biometric:biometric-ktx", version.ref = "biometricKtx" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }

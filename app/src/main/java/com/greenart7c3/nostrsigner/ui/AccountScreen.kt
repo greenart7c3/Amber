@@ -96,7 +96,9 @@ fun AccountScreen(
 
                     if (intentData != null) {
                         if (intents.none { item -> item.id == intentData!!.id }) {
-                            flow.value = listOf(intentData!!)
+                            val oldIntents = intents.toMutableList()
+                            oldIntents.add(intentData!!)
+                            flow.value = oldIntents
                         }
                     }
 

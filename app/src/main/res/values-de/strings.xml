@@ -223,9 +223,10 @@
     <string name="sign_message">Nachricht signieren</string>
     <string name="content">Inhalt</string>
     <string name="signature">Signatur</string>
-    <string name="checking_connectivity">Checking Connectivity</string>
-    <string name="amber_is_running_in_background">Amber is running in background</string>
-    <string name="bunker_notifications">Bunker Notifications</string>
-    <string name="notifications_for_approving_or_rejecting_bunker_requests">Notifications for Approving or Rejecting Bunker requests.</string>
-    <string name="new_event_to_sign">new event to sign</string>
+    <string name="checking_connectivity">Verbindung wird überprüft</string>
+    <string name="amber_is_running_in_background">Amber läuft im Hintergrund</string>
+    <string name="bunker_notifications">Bunker-Benachrichtigungen</string>
+    <string name="notifications_for_approving_or_rejecting_bunker_requests">Benachrichtigungen zur Genehmigung oder Ablehnung von Bunker-Anfragen.</string>
+    <string name="new_event_to_sign">neues Event zum signieren</string>
+    <string name="event_kind_10013">Private outbox relay list</string>
 </resources>

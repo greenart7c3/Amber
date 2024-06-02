@@ -1,6 +1,6 @@
 [versions]
 activityCompose = "1.9.0"
-unfiedpush = "2.2.0"
+unfiedpush = "2.3.1"
 appcompat = "1.7.0"
 biometricKtx = "1.2.0-alpha05"
 converterGson = "2.9.0"

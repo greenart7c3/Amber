@@ -174,14 +174,14 @@ class Relay(
 
             try {
                 processNewRelayMessage(text)
-                onLoading(false)
             } catch (e: Throwable) {
                 if (e is CancellationException) throw e
-                onLoading(false)
                 e.printStackTrace()
                 text.chunked(2000) { chunked ->
                     listeners.forEach { it.onError(this@Relay, "", Error("Problem with $chunked")) }
                 }
+            } finally {
+                onLoading(false)
             }
         }
 
@@ -294,6 +294,7 @@ class Relay(
                     Log.w("Relay", "Relay onNotice $url, $message")
 
                     it.onError(this@Relay, message, Error("Relay sent notice: $message"))
+                    RelayPool.accountStateViewModel?.toast("Relay", message)
                 }
             "OK" ->
                 listeners.forEach {

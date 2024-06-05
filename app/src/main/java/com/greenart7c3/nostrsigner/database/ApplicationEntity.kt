@@ -48,7 +48,10 @@ data class ApplicationWithPermissions(
 class Converters {
     @TypeConverter
     fun fromString(stringListString: String): List<String> {
-        return stringListString.split(",").map { it }
+        if (stringListString.isBlank()) {
+            return emptyList()
+        }
+        return stringListString.split(",")
     }
 
     @TypeConverter

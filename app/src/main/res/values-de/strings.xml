@@ -228,5 +228,5 @@
     <string name="bunker_notifications">Bunker-Benachrichtigungen</string>
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Benachrichtigungen zur Genehmigung oder Ablehnung von Bunker-Anfragen.</string>
     <string name="new_event_to_sign">neues Event zum signieren</string>
-    <string name="event_kind_10013">Private outbox relay list</string>
+    <string name="event_kind_10013">Private Outbox-Relais-Liste</string>
 </resources>

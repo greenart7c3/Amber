@@ -227,18 +227,20 @@ class Relay(
             errorCounter++
 
             socket?.cancel() // 1000, "Normal close"
-            // Failures disconnect the relay.
-            markConnectionAsClosed()
 
-            Log.w("Relay", "Relay onFailure $url, ${response?.message} $response")
-            t.printStackTrace()
-            listeners.forEach {
-                it.onError(
-                    this@Relay,
-                    "",
-                    Error("WebSocket Failure. Response: $response. Exception: ${t.message}", t),
-                )
+            // checks if this is an actual failure. Closing the socket generates an onFailure as well.
+            if (!(socket == null && (t.message == "Socket is closed" || t.message == "Socket closed"))) {
+                Log.w("Relay", "Relay onFailure $url, ${response?.message} $response")
+                t.printStackTrace()
+                listeners.forEach {
+                    it.onError(
+                        this@Relay,
+                        "",
+                        Error("WebSocket Failure. Response: $response. Exception: ${t.message}", t),
+                    )
+                }
             }
+            markConnectionAsClosed()
         }
     }
 

@@ -228,5 +228,5 @@
     <string name="bunker_notifications">Bunker 通知</string>
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Bunker 请求核查通知</string>
     <string name="new_event_to_sign">签署新事件</string>
-    <string name="event_kind_10013">Private outbox relay list</string>
+    <string name="event_kind_10013">私人发件箱中继列表</string>
 </resources>

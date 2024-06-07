@@ -32,6 +32,10 @@ import com.vitorpamplona.quartz.events.bytesUsedInMemory
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
@@ -443,6 +447,7 @@ class Relay(
         Client.allSubscriptions().forEach { sendFilter(requestId = it) }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
     fun send(
         signedEvent: EventInterface,
         onDone: (() -> Unit)?,
@@ -450,6 +455,11 @@ class Relay(
         checkNotInMainThread()
 
         onLoading(true)
+
+        GlobalScope.launch {
+            delay(10000)
+            onLoading(false)
+        }
 
         if (onDone != null) {
             onOk = onDone

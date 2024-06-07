@@ -209,7 +209,7 @@
     <string name="event_kind_30315">状态</string>
     <string name="event_kind_30402">分类列表</string>
     <string name="event_kind_30403">分类列表草稿</string>
-    <string name="event_kind_31234">通用事件草稿</string>
+    <string name="event_kind_31234">通用草稿事件</string>
     <string name="event_kind_31922">日期基底日历事件</string>
     <string name="event_kind_31923">时间基底日历事件</string>
     <string name="event_kind_31924"> 日历</string>
@@ -229,4 +229,5 @@
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Bunker 请求核查通知</string>
     <string name="new_event_to_sign">签署新事件</string>
     <string name="event_kind_10013">私人发件箱中继列表</string>
+    <string name="remove_permission">Remove permission</string>
 </resources>

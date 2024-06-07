@@ -4,15 +4,13 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.QrCode
@@ -325,16 +323,17 @@ fun EditPermission(
                         localPermission.toLocalizedString(context)
                     }
                 Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .padding(vertical = 15.dp, horizontal = 25.dp)
                         .fillMaxWidth(),
                 ) {
-                    Icon(
-                        if (permission.acceptable) Icons.Default.Check else Icons.Default.Close,
-                        null,
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .size(22.dp)
-                            .padding(end = 4.dp)
+                            .weight(1f)
+                            .padding(end = 8.dp)
                             .clickable {
                                 val localPermissions =
                                     permissions.map {
@@ -347,27 +346,40 @@ fun EditPermission(
                                 permissions.clear()
                                 permissions.addAll(localPermissions)
                             },
-                        tint = if (permission.acceptable) Color.Green else Color.Red,
-                    )
-                    Row(
-                        modifier = Modifier
-                            .weight(1f),
-                        verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
                             text = message,
                             fontSize = 18.sp,
                         )
-                    }
-                    Icon(
-                        Icons.Default.Delete,
-                        null,
-                        modifier = Modifier
-                            .size(22.dp)
-                            .clickable {
-                                permissions.remove(permission)
+                        Switch(
+                            checked = permission.acceptable,
+                            onCheckedChange = {
+                                val localPermissions =
+                                    permissions.map {
+                                        if (it.id == permission.id) {
+                                            it.copy(acceptable = !permission.acceptable)
+                                        } else {
+                                            it.copy()
+                                        }
+                                    }
+                                permissions.clear()
+                                permissions.addAll(localPermissions)
                             },
-                        tint = Color.Red,
+                        )
+                    }
+                    IconButton(
+                        content = {
+                            Icon(
+                                Icons.Default.Delete,
+                                stringResource(R.string.remove_permission),
+                                modifier = Modifier
+                                    .fillMaxHeight(),
+                                tint = Color.Red,
+                            )
+                        },
+                        onClick = {
+                            permissions.remove(permission)
+                        },
                     )
                 }
             }

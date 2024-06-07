@@ -325,7 +325,7 @@ fun EditPermission(
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .padding(vertical = 15.dp, horizontal = 25.dp)
+                        .padding(vertical = 8.dp, horizontal = 25.dp)
                         .fillMaxWidth(),
                 ) {
                     Row(

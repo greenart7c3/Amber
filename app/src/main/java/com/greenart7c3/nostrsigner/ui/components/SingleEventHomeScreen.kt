@@ -124,56 +124,6 @@ fun SingleEventHomeScreen(
                     return@LoginWithPubKey
                 },
                 {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        if (key == "null") {
-                            return@launch
-                        }
-
-                        if (remember.value) {
-                            AmberUtils.acceptOrRejectPermission(
-                                key,
-                                intentData,
-                                null,
-                                false,
-                                applicationName ?: appName,
-                                account,
-                                database,
-                            )
-                        }
-
-                        val savedApplication = database.applicationDao().getByKey(key)
-                        val relays = intentData.bunkerRequest?.relays ?: listOf()
-                        val application =
-                            savedApplication ?: ApplicationWithPermissions(
-                                application = ApplicationEntity(
-                                    key,
-                                    appName,
-                                    relays,
-                                    "",
-                                    "",
-                                    "",
-                                    account.keyPair.pubKey.toHexKey(),
-                                    true,
-                                    intentData.bunkerRequest?.secret ?: "",
-                                    intentData.bunkerRequest?.secret != null,
-                                ),
-                                permissions = mutableListOf(),
-                            )
-
-                        database.applicationDao().insertApplicationWithPermissions(application)
-
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                key,
-                                intentData.type.toString(),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
-                    }
-
                     if (intentData.bunkerRequest != null) {
                         val relays =
                             applicationEntity?.application?.relays?.map { url -> Relay(url) }

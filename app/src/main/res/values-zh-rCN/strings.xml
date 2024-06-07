@@ -229,5 +229,5 @@
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Bunker 请求核查通知</string>
     <string name="new_event_to_sign">签署新事件</string>
     <string name="event_kind_10013">私人发件箱中继列表</string>
-    <string name="remove_permission">Remove permission</string>
+    <string name="remove_permission">移除权限</string>
 </resources>

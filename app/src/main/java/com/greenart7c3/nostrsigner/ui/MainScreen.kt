@@ -154,15 +154,8 @@ fun sendResult(
             }
         }
 
-        if (intentData.bunkerRequest != null && intentData.bunkerRequest.secret.isNotBlank()) {
-            val application = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
-            application?.let {
-                database.applicationDao().delete(it.application)
-            }
-        }
-
         val activity = context.getAppCompatActivity()
-        if (intentData.type == SignerType.CONNECT || (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY)) {
+        if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
             database.applicationDao().deletePermissions(key)
         }
 
@@ -237,24 +230,32 @@ fun sendResult(
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
                 application.application.relays.map { url -> Relay(url) },
                 onLoading,
-                onSign = {
-                    database.applicationDao().insertApplicationWithPermissions(application)
-                    database.applicationDao().addHistory(
-                        HistoryEntity(
-                            0,
-                            key,
-                            intentData.type.toString(),
-                            kind,
-                            TimeUtils.now(),
-                            true,
-                        ),
-                    )
-                    PushNotificationUtils.hasInit = false
-                    GlobalScope.launch(Dispatchers.IO) {
-                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
-                    }
-                },
             ) {
+                if (intentData.bunkerRequest.secret.isNotBlank()) {
+                    val secretApplication = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                    secretApplication?.let {
+                        database.applicationDao().delete(it.application)
+                    }
+                }
+                if (intentData.type == SignerType.CONNECT) {
+                    database.applicationDao().deletePermissions(key)
+                }
+                database.applicationDao().insertApplicationWithPermissions(application)
+                database.applicationDao().addHistory(
+                    HistoryEntity(
+                        0,
+                        key,
+                        intentData.type.toString(),
+                        kind,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                )
+                PushNotificationUtils.hasInit = false
+                GlobalScope.launch(Dispatchers.IO) {
+                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
+                }
+
                 EventNotificationConsumer(context).notificationManager().cancelAll()
                 activity?.intent = null
                 activity?.finish()

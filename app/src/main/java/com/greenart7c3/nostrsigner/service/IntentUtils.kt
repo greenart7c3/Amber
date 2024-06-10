@@ -259,7 +259,6 @@ object IntentUtils {
         bunkerResponse: BunkerResponse,
         relays: List<Relay>,
         onLoading: (Boolean) -> Unit,
-        onSign: (() -> Unit)? = null,
         onDone: () -> Unit,
     ) {
         account.signer.nip04Encrypt(
@@ -272,10 +271,6 @@ object IntentUtils {
                 arrayOf(arrayOf("p", localKey)),
                 encryptedContent,
             ) {
-                if (onSign != null) {
-                    onSign()
-                }
-
                 GlobalScope.launch(Dispatchers.IO) {
                     if (RelayPool.getAll().isEmpty()) {
                         val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())

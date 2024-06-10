@@ -476,11 +476,22 @@ class Relay(
             }
             eventUploadCounterInBytes += event.bytesUsedInMemory()
         } else {
+            val maxTries = 3
             if (write) {
                 val event = """["EVENT",${signedEvent.toJson()}]"""
                 if (isConnected()) {
                     if (isReady) {
-                        socket?.send(event)
+                        var result = socket?.send(event)
+                        var tryCount = 0
+                        while (tryCount < maxTries && (result == false || result == null)) {
+                            tryCount++
+                            Log.d("Relay", "Relay.send failed trying again $url $event")
+                            result = socket?.send(event)
+                        }
+                        if (result == false || result == null) {
+                            onLoading(false)
+                            RelayPool.accountStateViewModel?.toast("Relay", "Failed to send event to $url")
+                        }
                         eventUploadCounterInBytes += event.bytesUsedInMemory()
                     }
                 } else {
@@ -488,7 +499,17 @@ class Relay(
                     connectAndRun {
                         checkNotInMainThread()
 
-                        socket?.send(event)
+                        var result = socket?.send(event)
+                        var tryCount = 0
+                        while (tryCount < maxTries && (result == false || result == null)) {
+                            tryCount++
+                            Log.d("Relay", "Relay.send failed trying again $url $event")
+                            result = socket?.send(event)
+                        }
+                        if (result == false || result == null) {
+                            onLoading(false)
+                            RelayPool.accountStateViewModel?.toast("Relay", "Failed to send event to $url")
+                        }
                         eventUploadCounterInBytes += event.bytesUsedInMemory()
 
                         // Sends everything.

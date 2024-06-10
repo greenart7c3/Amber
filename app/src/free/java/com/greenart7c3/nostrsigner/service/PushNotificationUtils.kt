@@ -22,6 +22,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.LocalPreferences
 import kotlinx.coroutines.CancellationException
 
 object PushNotificationUtils {
@@ -32,15 +33,25 @@ object PushNotificationUtils {
         if (hasInit) {
             return
         }
+
         val distributions = pushHandler.getInstalledDistributors()
-        if (distributions.isNotEmpty()) pushHandler.saveDistributor(distributions.first())
+        if (distributions.isNotEmpty()) {
+            distributions.firstOrNull { it.isNotBlank() }?.let {
+                pushHandler.saveDistributor(it)
+            }
+        }
         try {
             if (pushHandler.savedDistributorExists()) {
-                RegisterAccounts(accounts).go(pushHandler.getSavedEndpoint())
+                val token = pushHandler.getSavedEndpoint()
+                if (token != LocalPreferences.getToken() && token.isNotBlank()) {
+                    Log.d("Amber-OSSPushUtils", "getting token")
+                    LocalPreferences.setToken(token)
+                    RegisterAccounts(accounts).go(token)
+                }
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.d("Amethyst-OSSPushUtils", "Failed to get endpoint.")
+            Log.d("Amber-OSSPushUtils", "Failed to get endpoint.")
         }
     }
 }

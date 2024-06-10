@@ -57,7 +57,11 @@ class Notifications : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         scope.launch(Dispatchers.IO) {
-            RegisterAccounts(LocalPreferences.allSavedAccounts()).go(token)
+            if (token != LocalPreferences.getToken() && token.isNotBlank()) {
+                Log.d("Firebase token", "getting firebase token")
+                LocalPreferences.setToken(token)
+                RegisterAccounts(LocalPreferences.allSavedAccounts()).go(token)
+            }
         }
         super.onNewToken(token)
     }

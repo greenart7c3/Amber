@@ -147,7 +147,7 @@ fun EditPermission(
             }
 
             scope.launch(Dispatchers.Main) {
-                navController.popBackStack()
+                navController.navigateUp()
                 accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
             }
         }
@@ -397,7 +397,7 @@ fun EditPermission(
         ) {
             Button(
                 onClick = {
-                    navController.popBackStack()
+                    navController.navigateUp()
                 },
                 Modifier.padding(6.dp),
             ) {
@@ -424,7 +424,7 @@ fun EditPermission(
                         }
 
                         scope.launch(Dispatchers.Main) {
-                            navController.popBackStack()
+                            navController.navigateUp()
                             accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
                         }
                     }

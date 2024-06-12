@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 @Immutable
-open class ToastMsg()
+open class ToastMsg
 
 @Immutable
 class StringToastMsg(val title: String, val msg: String) : ToastMsg()

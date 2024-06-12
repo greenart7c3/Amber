@@ -161,9 +161,9 @@ fun ConnectOrbotDialog(
 
 @Composable
 fun UseOrbotButton(
+    modifier: Modifier = Modifier,
     onPost: () -> Unit = {},
     isActive: Boolean,
-    modifier: Modifier = Modifier,
 ) {
     Button(
         modifier = modifier,

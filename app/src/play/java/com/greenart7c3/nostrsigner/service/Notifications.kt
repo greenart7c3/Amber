@@ -31,7 +31,7 @@ class Notifications : FirebaseMessagingService() {
 
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         scope.launch(Dispatchers.IO) {
-            val (value, elapsed) =
+            val (_, elapsed) =
                 measureTimedValue { parseMessage(remoteMessage.data)?.let { receiveIfNew(it) } }
             Log.d("Time", "Notification processed in $elapsed")
         }

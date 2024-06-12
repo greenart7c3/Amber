@@ -69,13 +69,13 @@ fun TextSpinner(
         options,
         onSelect,
         modifier,
-    ) { currentOption, modifier ->
+    ) { currentOption, mainModifier ->
         OutlinedTextField(
             value = currentOption,
             onValueChange = {},
             readOnly = true,
             label = { label?.let { Text(it) } },
-            modifier = modifier,
+            modifier = mainModifier,
         )
     }
 }

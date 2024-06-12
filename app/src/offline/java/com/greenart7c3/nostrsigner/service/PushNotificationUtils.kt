@@ -26,7 +26,7 @@ import kotlinx.coroutines.Dispatchers
 object PushNotificationUtils {
     var hasInit: Boolean = false
 
-    suspend fun init(accounts: List<AccountInfo>) =
+    suspend fun init(@Suppress("UNUSED_PARAMETER") accounts: List<AccountInfo>) =
         with(Dispatchers.IO) {
             return@with
         }

@@ -20,6 +20,7 @@
  */
 package com.greenart7c3.nostrsigner.relays
 
+import com.fasterxml.jackson.databind.JsonNode
 import com.vitorpamplona.quartz.events.Event
 
 class JsonFilter(
@@ -37,26 +38,26 @@ class JsonFilter(
         val filter =
             factory.objectNode().apply {
                 ids?.run {
-                    put(
+                    set<JsonNode>(
                         "ids",
                         factory.arrayNode(ids.size).apply { ids.forEach { add(it) } },
                     )
                 }
                 authors?.run {
-                    put(
+                    set<JsonNode>(
                         "authors",
                         factory.arrayNode(authors.size).apply { authors.forEach { add(it) } },
                     )
                 }
                 kinds?.run {
-                    put(
+                    set<JsonNode>(
                         "kinds",
                         factory.arrayNode(kinds.size).apply { kinds.forEach { add(it) } },
                     )
                 }
                 tags?.run {
                     entries.forEach { kv ->
-                        put(
+                        set<JsonNode>(
                             "#${kv.key}",
                             factory.arrayNode(kv.value.size).apply { kv.value.forEach { add(it) } },
                         )
@@ -74,7 +75,7 @@ class JsonFilter(
                             entries.forEach { sincePairs ->
                                 jsonObjectSince.put(sincePairs.key, "${sincePairs.value}")
                             }
-                            put("since", jsonObjectSince)
+                            set<JsonNode>("since", jsonObjectSince)
                         }
                     }
                 }

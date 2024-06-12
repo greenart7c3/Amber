@@ -66,7 +66,6 @@ object NotificationUtils {
         messageTitle: String,
         uri: String,
         channelId: String,
-        notificationGroupKey: String,
         applicationContext: Context,
         bunkerRequest: BunkerRequest,
     ) {
@@ -77,7 +76,6 @@ object NotificationUtils {
             picture = null,
             uri = uri,
             channelId,
-            notificationGroupKey,
             applicationContext = applicationContext,
             bunkerRequest,
         )
@@ -90,7 +88,6 @@ object NotificationUtils {
         picture: BitmapDrawable?,
         uri: String,
         channelId: String,
-        notificationGroupKey: String,
         applicationContext: Context,
         bunkerRequest: BunkerRequest,
     ) {

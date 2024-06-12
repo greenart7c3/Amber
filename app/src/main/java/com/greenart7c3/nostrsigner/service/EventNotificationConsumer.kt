@@ -48,7 +48,6 @@ import com.vitorpamplona.quartz.events.GiftWrapEvent
 import com.vitorpamplona.quartz.events.SealedGossipEvent
 
 class EventNotificationConsumer(private val applicationContext: Context) {
-    private val groupKey = "com.greenart7c3.nostrsigner.DM_NOTIFICATION"
 
     fun consume(event: Event) {
         if (!notificationManager().areNotificationsEnabled()) return
@@ -251,7 +250,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             "Bunker",
                             "nostrsigner:",
                             "BunkerID",
-                            groupKey,
                             applicationContext,
                             bunkerRequest,
                         )
@@ -285,7 +283,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 "Bunker",
                                 "nostrsigner:",
                                 "BunkerID",
-                                groupKey,
                                 applicationContext,
                                 bunkerRequest,
                             )

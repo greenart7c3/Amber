@@ -43,6 +43,7 @@ object Client : RelayPool.Listener {
     @Synchronized
     fun addRelays(relays: Array<Relay>) {
         if (isSameRelaySetConfig(relays)) return
+        Log.d("Relay", "Relay Pool changed")
         RelayPool.disconnect()
         RelayPool.unregister(this)
         RelayPool.unloadRelays()
@@ -54,13 +55,13 @@ object Client : RelayPool.Listener {
     @Synchronized
     fun reconnect(
         relays: Array<Relay>?,
-        onlyIfChanged: Boolean = false,
+        onlyIfChanged: Boolean = true,
     ) {
-        Log.d("Relay", "Relay Pool Reconnecting to ${relays?.size} relays")
         checkNotInMainThread()
 
         if (onlyIfChanged) {
             if (!isSameRelaySetConfig(relays)) {
+                Log.d("Relay", "Relay Pool Reconnecting to ${relays?.size} relays")
                 if (Client.relays.isNotEmpty()) {
                     RelayPool.disconnect()
                     RelayPool.unregister(this)
@@ -75,6 +76,7 @@ object Client : RelayPool.Listener {
                 }
             }
         } else {
+            Log.d("Relay", "Relay Pool Reconnecting to ${relays?.size} relays")
             if (Client.relays.isNotEmpty()) {
                 RelayPool.disconnect()
                 RelayPool.unregister(this)

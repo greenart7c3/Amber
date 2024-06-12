@@ -39,14 +39,12 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.relays.Client
-import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -116,28 +114,13 @@ fun AccountScreen(
 
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
-                            val relays = mutableListOf<Relay>()
-                            LocalPreferences.allSavedAccounts().forEach { acc ->
-                                val db = NostrSigner.instance.getDatabase(acc.npub)
-                                db.applicationDao().getAllApplications().forEach {
-                                    it.application.relays.forEach { url ->
-                                        if (url.isNotBlank()) {
-                                            if (!relays.any { relay -> relay.url == url }) {
-                                                relays.add(Relay(url))
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-
-                            delay(1000)
-                            Client.addRelays(relays.toTypedArray())
+                            NostrSigner.instance.checkForNewRelays()
                             @Suppress("KotlinConstantConditions")
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 NostrSigner.instance.applicationContext.startService(
                                     Intent(NostrSigner.instance.applicationContext, ConnectivityService::class.java),
                                 )
-                                Client.reconnect(relays.toTypedArray())
+                                Client.reconnect(RelayPool.getAll().toTypedArray())
                                 NotificationDataSource.start()
                             }
                         }

@@ -108,7 +108,7 @@ object HttpClientManager {
             defaultHttpClient!!
         } else {
             if (this.defaultHttpClientWithoutProxy == null) {
-                this.defaultHttpClientWithoutProxy = buildHttpClient(null, defaultTimeout)
+                this.defaultHttpClientWithoutProxy = buildHttpClient(null, DEFAULT_TIMEOUT_ON_WIFI)
             }
             defaultHttpClientWithoutProxy!!
         }

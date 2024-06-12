@@ -46,6 +46,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
@@ -54,7 +55,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.relays.Client
-import com.greenart7c3.nostrsigner.relays.Relay
+import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.ui.actions.ActivityDialog
 import com.greenart7c3.nostrsigner.ui.actions.DeleteDialog
 import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
@@ -139,19 +140,9 @@ fun EditPermission(
                     .applicationDao()
                     .delete(applicationData)
 
-                val relays = mutableListOf<Relay>()
-                database.applicationDao().getAllApplications().forEach {
-                    it.application.relays.forEach { url ->
-                        if (url.isNotBlank()) {
-                            if (!relays.any { relay -> relay.url == url }) {
-                                relays.add(Relay(url))
-                            }
-                        }
-                    }
-                }
-                Client.addRelays(relays.toTypedArray())
+                NostrSigner.instance.checkForNewRelays()
                 if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                    Client.reconnect(relays.toTypedArray())
+                    Client.reconnect(RelayPool.getAll().toTypedArray())
                 }
             }
 
@@ -427,19 +418,9 @@ fun EditPermission(
                                 permissions,
                             ),
                         )
-                        val relays = mutableListOf<Relay>()
-                        database.applicationDao().getAllApplications().forEach {
-                            it.application.relays.forEach { url ->
-                                if (url.isNotBlank()) {
-                                    if (!relays.any { relay -> relay.url == url }) {
-                                        relays.add(Relay(url))
-                                    }
-                                }
-                            }
-                        }
-                        Client.addRelays(relays.toTypedArray())
+                        NostrSigner.instance.checkForNewRelays()
                         if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                            Client.reconnect(relays.toTypedArray())
+                            Client.reconnect(RelayPool.getAll().toTypedArray())
                         }
 
                         scope.launch(Dispatchers.Main) {

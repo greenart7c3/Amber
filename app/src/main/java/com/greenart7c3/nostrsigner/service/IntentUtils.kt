@@ -272,22 +272,9 @@ object IntentUtils {
                 encryptedContent,
             ) {
                 GlobalScope.launch(Dispatchers.IO) {
-                    if (RelayPool.getAll().isEmpty()) {
-                        val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
-                        val savedRelays = mutableListOf<Relay>()
-                        database.applicationDao().getAllApplications().forEach {
-                            it.application.relays.forEach { url ->
-                                if (url.isNotBlank()) {
-                                    if (!savedRelays.any { relay -> relay.url == url }) {
-                                        savedRelays.add(Relay(url))
-                                    }
-                                }
-                            }
-                        }
-                        Client.addRelays(relays.toTypedArray())
-                        if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                            Client.reconnect(relays.toTypedArray())
-                        }
+                    NostrSigner.instance.checkForNewRelays()
+                    if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
+                        Client.reconnect(RelayPool.getAll().toTypedArray())
                         delay(1000)
                     }
 

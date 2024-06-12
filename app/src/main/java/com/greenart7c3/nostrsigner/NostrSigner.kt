@@ -2,6 +2,8 @@ package com.greenart7c3.nostrsigner
 
 import android.app.Application
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.relays.Client
+import com.greenart7c3.nostrsigner.relays.Relay
 import java.util.concurrent.ConcurrentHashMap
 
 class NostrSigner : Application() {
@@ -21,6 +23,21 @@ class NostrSigner : Application() {
             databases[npub] = AppDatabase.getDatabase(this, npub)
         }
         return databases[npub]!!
+    }
+
+    fun checkForNewRelays() {
+        val savedRelays = mutableSetOf<String>()
+        LocalPreferences.allSavedAccounts().forEach { accountInfo ->
+            val database = getDatabase(accountInfo.npub)
+            database.applicationDao().getAllApplications().forEach {
+                it.application.relays.forEach { url ->
+                    if (url.isNotBlank()) {
+                        savedRelays.add(url)
+                    }
+                }
+            }
+        }
+        Client.addRelays(savedRelays.map { Relay(it) }.toTypedArray())
     }
 
     companion object {

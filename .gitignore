@@ -8,6 +8,7 @@
 /.idea/androidTestResultsUserPreferences.xml
 /.idea/deploymentTargetDropDown.xml
 /.idea/deploymentTargetSelector.xml
+/.idea/other.xml
 .DS_Store
 /build
 /captures
@@ -127,3 +128,4 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 quartz/
+/.idea/other.xml

@@ -8,11 +8,7 @@
     <string name="secret_key_copied_to_clipboard">Chave secreta (nsec) copiada para área de transferência</string>
     <string name="copy_my_secret_key">Copiar minha chave secreta</string>
     <string name="biometric_authentication_failed">A autenticação falhou</string>
-    <string name="biometric_error">Erro</string>
     <string name="copies_the_nsec_id_your_password_to_the_clipboard_for_backup">Copia a Nsec (sua senha) para a área de transferência para backup</string>
-    <string name="public_key_npub_copied_to_clipboard">Chave pública (npub) copiada para a área de transferência</string>
-    <string name="copies_the_npub_id_your_user_to_the_clipboard_for_backup">Copia o Npub (seu usuário) para a área de transferência para backup</string>
-    <string name="copy_my_public_key">Copiar minha chave pública</string>
     <string name="event_pubkey_is_not_equal_to_current_logged_in_user">A chave pública do evento não é igual a do usuário logado</string>
     <string name="signature_copied_to_the_clipboard">Assinatura copiada para área de transferência</string>
     <string name="reset_permissions">Redefinir as permissões</string>
@@ -29,14 +25,8 @@
     <string name="login">Entrar</string>
     <string name="generate_a_new_key">Gerar uma nova chave</string>
     <string name="backup_keys">Backup das chaves</string>
-    <string name="decrypt_nip_04_data">Descriptografar dados nip 04</string>
-    <string name="decrypt_nip_44_data">Descriptografar dados nip 44</string>
-    <string name="encrypt_nip_44_data">Criptografar dados com nip 44</string>
-    <string name="encrypt_nip_04_data">Criptografar dados com nip 04</string>
-    <string name="decrypt_zap_data">Descriptografar dados do zap</string>
     <string name="read_your_public_key">Ler sua chave pública</string>
     <string name="no_permissions_granted">Nenhuma permissão concedida</string>
-    <string name="no_event_to_sign">Nenhum evento para assinar</string>
     <string name="remember_my_choice_and_don_t_ask_again">Lembrar minha escolha e não perguntar novamente</string>
     <string name="reject">Rejeitar</string>
     <string name="accept">Aceitar</string>
@@ -46,9 +36,6 @@
     <string name="decrypt_nip04">descriptografar nip04</string>
     <string name="decrypt_zap_event">descriptografar evento zap</string>
     <string name="encrypt_decrypt">criptografar/descriptografar</string>
-    <string name="encrypt">criptografar</string>
-    <string name="decrypt">descriptografar</string>
-    <string name="error_to_data">Error to %1$s data</string>
     <string name="show_details">Mostrar detalhes</string>
     <string name="hide_details">Ocultar detalhes</string>
     <string name="copy_raw_json">Mostrar json</string>
@@ -59,7 +46,6 @@
     <string name="copy">"Copiar"</string>
     <string name="encrypted_decrypted_data">Dados criptografados/descriptografados</string>
     <string name="data_copied_to_the_clipboard">Dados copiados para a área de transferência</string>
-    <string name="message_already_encrypted">Mensagem já criptografada</string>
     <string name="connect_app">Conectar aplicativo</string>
     <string name="event_copied_to_the_clipboard">Evento copiado para área de transferência</string>
     <string name="select_deselect_all">Marcar/Desmarcar todos</string>
@@ -218,7 +204,6 @@
     <string name="sign">Assinar %1$s</string>
     <string name="sign_message">Assinar a mensagem</string>
     <string name="content">conteúdo</string>
-    <string name="signature">assinatura</string>
     <string name="checking_connectivity">Verificando a conectividade...</string>
     <string name="amber_is_running_in_background">Amber está rodando em segundo plano</string>
     <string name="bunker_notifications">Notificações do Bunker</string>

@@ -211,7 +211,7 @@
     <string name="new_event_to_sign">novo evento para assinar</string>
     <string name="event_kind_10013">Lista de relay privada</string>
     <string name="remove_permission">Remover permissão</string>
-    <string name="accounts">Accounts</string>
-    <string name="connect_through_your_orbot_setup">Connect through your Orbot setup</string>
-    <string name="save">Save</string>
+    <string name="accounts">Contas</string>
+    <string name="connect_through_your_orbot_setup">Conecte-se através da configuração do Orbot</string>
+    <string name="save">Salvar</string>
 </resources>

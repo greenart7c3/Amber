@@ -213,4 +213,7 @@
     <string name="new_event_to_sign">new event to sign</string>
     <string name="event_kind_10013">Private outbox relay list</string>
     <string name="remove_permission">Remove permission</string>
+    <string name="accounts">Accounts</string>
+    <string name="connect_through_your_orbot_setup">Connect through your Orbot setup</string>
+    <string name="save">Save</string>
 </resources>

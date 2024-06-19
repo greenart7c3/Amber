@@ -213,4 +213,7 @@
     <string name="new_event_to_sign">neues Event zum signieren</string>
     <string name="event_kind_10013">Private Outbox-Relais-Liste</string>
     <string name="remove_permission">Berechtigung entfernen</string>
+    <string name="accounts">Accounts</string>
+    <string name="connect_through_your_orbot_setup">Connect through your Orbot setup</string>
+    <string name="save">Save</string>
 </resources>

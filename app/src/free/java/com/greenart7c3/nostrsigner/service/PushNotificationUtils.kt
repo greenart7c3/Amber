@@ -43,9 +43,15 @@ object PushNotificationUtils {
         try {
             if (pushHandler.savedDistributorExists()) {
                 val token = pushHandler.getSavedEndpoint()
-                if (token != LocalPreferences.getToken() && token.isNotBlank()) {
-                    Log.d("Amber-OSSPushUtils", "getting token")
-                    LocalPreferences.setToken(token)
+                var shouldRegister = false
+                LocalPreferences.allSavedAccounts().forEach {
+                    if (token != LocalPreferences.getToken(it.npub) && token.isNotBlank()) {
+                        shouldRegister = true
+                        Log.d("Amber-OSSPushUtils", "getting token")
+                        LocalPreferences.setToken(token, it.npub)
+                    }
+                }
+                if (shouldRegister) {
                     RegisterAccounts(accounts).go(token)
                 }
             }

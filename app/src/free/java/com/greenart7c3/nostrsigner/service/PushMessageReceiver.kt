@@ -88,11 +88,18 @@ class PushMessageReceiver : MessagingReceiver() {
         val sanitizedEndpoint = endpoint.dropLast(5)
         PushDistributorHandler.setEndpoint(sanitizedEndpoint)
         scope.launch(Dispatchers.IO) {
-            if (sanitizedEndpoint != LocalPreferences.getToken() && sanitizedEndpoint.isNotBlank()) {
-                Log.d("Amber-OSSPushUtils", "getting token")
-                LocalPreferences.setToken(sanitizedEndpoint)
+            var shouldRegister = false
+            LocalPreferences.allSavedAccounts().forEach {
+                if (sanitizedEndpoint != LocalPreferences.getToken(it.npub) && sanitizedEndpoint.isNotBlank()) {
+                    shouldRegister = true
+                    Log.d("Amber-OSSPushUtils", "getting token")
+                    LocalPreferences.setToken(sanitizedEndpoint, it.npub)
+                }
+            }
+            if (shouldRegister) {
                 RegisterAccounts(LocalPreferences.allSavedAccounts()).go(sanitizedEndpoint)
             }
+
             NotificationUtils.getOrCreateDMChannel(appContext)
         }
     }

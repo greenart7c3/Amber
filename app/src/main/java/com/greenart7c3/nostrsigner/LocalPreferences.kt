@@ -64,12 +64,12 @@ object LocalPreferences {
         }.toSet().toList()
     }
 
-    fun getToken(): String? {
-        return encryptedPreferences().getString(PrefKeys.PUSH_TOKEN, null)
+    fun getToken(npub: String): String? {
+        return encryptedPreferences(npub).getString(PrefKeys.PUSH_TOKEN, null)
     }
 
-    fun setToken(token: String) {
-        encryptedPreferences().edit().apply {
+    fun setToken(token: String, npub: String) {
+        encryptedPreferences(npub).edit().apply {
             putString(PrefKeys.PUSH_TOKEN, token)
         }.apply()
     }

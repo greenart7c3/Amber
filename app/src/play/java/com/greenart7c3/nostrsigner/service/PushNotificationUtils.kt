@@ -39,9 +39,15 @@ object PushNotificationUtils {
             // get user notification token provided by firebase
             try {
                 val token = FirebaseMessaging.getInstance().token.await()
-                if (token != LocalPreferences.getToken() && token.isNotBlank()) {
-                    Log.d("Firebase token", "getting firebase token")
-                    LocalPreferences.setToken(token)
+                var shouldRegister = false
+                LocalPreferences.allSavedAccounts().forEach {
+                    if (token != LocalPreferences.getToken(it.npub) && token.isNotBlank()) {
+                        shouldRegister = true
+                        Log.d("Firebase token", "getting firebase token for ${it.npub}")
+                        LocalPreferences.setToken(token, it.npub)
+                    }
+                }
+                if (shouldRegister) {
                     RegisterAccounts(accounts).go(token)
                 }
             } catch (e: Exception) {

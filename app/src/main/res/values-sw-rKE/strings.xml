@@ -64,10 +64,8 @@
     <string name="event_copied_to_the_clipboard">Tukio limenakiliwa kwenye ubao wa kunakili</string>
     <string name="select_deselect_all">Chagua/Ondoa Uteuzi wote</string>
     <string name="decrypt_content">Simbua yaliyomo</string>
-    <string name="support_development_uri">https://greenart7c3.com</string>
     <string name="support_development">Msaada wa maendeleo</string>
     <string name="source_code">Msimbo wa chanzo</string>
-    <string name="amber_github_uri">https://github.com/greenart7c3/amber</string>
     <string name="show_qr_code">Onyesha Msimbo wa QR</string>
     <string name="shows_qr_code_with_you_private_key">Inaonyesha Msimbo wa QR na ufunguo wako wa faragha</string>
     <string name="account_backup_tips3_md" tools:ignore="Typos">Kwa usalama zaidi, unaweza kusimba ufunguo wako kwa nenosiri. Ufunguo huu unaanza na **ncryptsec1** na hauwezi kutumika bila nenosiri lako.

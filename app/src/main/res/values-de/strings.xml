@@ -65,10 +65,8 @@
     <string name="event_copied_to_the_clipboard">Event in die Zwischenablage kopiert</string>
     <string name="select_deselect_all">Alle auswählen/abwählen</string>
     <string name="decrypt_content">Inhalt entschlüsseln</string>
-    <string name="support_development_uri">https://greenart7c3.com</string>
     <string name="support_development">Unterstütze die Entwicklung</string>
     <string name="source_code">Quellcode</string>
-    <string name="amber_github_uri">https://github.com/greenart7c3/amber</string>
     <string name="show_qr_code">QR-Code anzeigen</string>
     <string name="shows_qr_code_with_you_private_key">Zeigt QR-Code mit deinem privaten Schlüssel</string>
     <string name="account_backup_tips3_md" tools:ignore="Typos">        Für zusätzliche Sicherheit kannst du deinen Schlüssel mit einem Passwort verschlüsseln. Dieser Schlüssel beginnt dann mit **ncryptsec1** und kann ohne dein Passwort nicht verwendet werden.

@@ -315,7 +315,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                         },
                     )
 
-                    Text("Connect through your Orbot setup")
+                    Text(stringResource(R.string.connect_through_your_orbot_setup))
                 }
 
                 if (connectOrbotDialogOpen) {

@@ -6,7 +6,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 
 @Composable
@@ -26,6 +28,6 @@ fun PostButton(
         shape = ButtonBorder,
         contentPadding = PaddingValues(0.dp),
     ) {
-        Text(text = "Save", color = Color.White)
+        Text(text = stringResource(R.string.save), color = Color.White)
     }
 }

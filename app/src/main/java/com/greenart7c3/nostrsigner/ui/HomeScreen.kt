@@ -17,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
@@ -71,7 +72,10 @@ fun HomeScreen(
                         fontSize = 21.sp,
                     )
                     Spacer(Modifier.size(8.dp))
-                    Text(stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit))
+                    Text(
+                        stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
+                        textAlign = TextAlign.Center,
+                    )
                 }
             } else if (intents.size == 1) {
                 SingleEventHomeScreen(

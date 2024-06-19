@@ -317,7 +317,7 @@ fun SettingsScreen(
                 .padding(16.dp),
         ) {
             IconRow(
-                title = "Accounts",
+                title = stringResource(R.string.accounts),
                 icon = Icons.Default.Person,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
@@ -347,7 +347,7 @@ fun SettingsScreen(
                 .padding(16.dp),
         ) {
             IconRow(
-                title = "Language",
+                title = stringResource(R.string.language),
                 icon = Icons.Default.Language,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {

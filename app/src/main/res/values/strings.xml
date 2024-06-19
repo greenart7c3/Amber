@@ -219,4 +219,5 @@
     <string name="new_event_to_sign">new event to sign</string>
     <string name="event_kind_10013">Private outbox relay list</string>
     <string name="remove_permission">Remove permission</string>
+    <string name="accounts">Accounts</string>
 </resources>

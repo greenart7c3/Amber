@@ -9,11 +9,7 @@
     <string name="secret_key_copied_to_clipboard">私钥 (nsec) 已复制到剪贴板</string>
     <string name="copy_my_secret_key">复制我的私钥</string>
     <string name="biometric_authentication_failed">身份验证失败</string>
-    <string name="biometric_error">错误</string>
     <string name="copies_the_nsec_id_your_password_to_the_clipboard_for_backup">将 Nsec ID (您的密码) 复制到剪贴板进行备份</string>
-    <string name="public_key_npub_copied_to_clipboard">公钥 (npub) 已复制到剪贴板</string>
-    <string name="copies_the_npub_id_your_user_to_the_clipboard_for_backup">将 Npub ID (您的用户名) 复制到剪贴板进行备份</string>
-    <string name="copy_my_public_key">复制我的公钥</string>
     <string name="event_pubkey_is_not_equal_to_current_logged_in_user">事件的 pubkey 与当前登录用户不符</string>
     <string name="signature_copied_to_the_clipboard">签名已复制到剪贴板</string>
     <string name="reset_permissions">重置权限</string>
@@ -30,14 +26,8 @@
     <string name="login">登录</string>
     <string name="generate_a_new_key">生成新密钥</string>
     <string name="backup_keys">备份密钥</string>
-    <string name="decrypt_nip_04_data">解密 NIP-04 数据</string>
-    <string name="decrypt_nip_44_data">解密 NIP-44 数据</string>
-    <string name="encrypt_nip_44_data">加密 NIP-44 数据</string>
-    <string name="encrypt_nip_04_data">加密 NIP-04 数据</string>
-    <string name="decrypt_zap_data">解密打闪数据</string>
     <string name="read_your_public_key">读取公钥</string>
     <string name="no_permissions_granted">未授予任何权限</string>
-    <string name="no_event_to_sign">没有要签名的事件</string>
     <string name="remember_my_choice_and_don_t_ask_again">记住我的选择且不再询问</string>
     <string name="reject">拒绝</string>
     <string name="accept">接受</string>
@@ -47,9 +37,6 @@
     <string name="decrypt_nip04">解密 NIP-04</string>
     <string name="decrypt_zap_event">解密打闪事件</string>
     <string name="encrypt_decrypt">加密 / 解密</string>
-    <string name="encrypt">加密</string>
-    <string name="decrypt">解密</string>
-    <string name="error_to_data">%1$s 数据错误</string>
     <string name="show_details">显示详情</string>
     <string name="hide_details">隐藏详情</string>
     <string name="copy_raw_json">原始 JSON</string>
@@ -60,7 +47,6 @@
     <string name="copy">"复制"</string>
     <string name="encrypted_decrypted_data">加解密数据</string>
     <string name="data_copied_to_the_clipboard">数据已复制到剪贴版</string>
-    <string name="message_already_encrypted">消息已加密</string>
     <string name="connect_app">连接应用</string>
     <string name="event_copied_to_the_clipboard">事件已复制到剪贴板</string>
     <string name="select_deselect_all">全选 / 反选全部</string>
@@ -220,7 +206,6 @@
     <string name="sign">签署 %1$s</string>
     <string name="sign_message">签署消息</string>
     <string name="content">内容</string>
-    <string name="signature">签名</string>
     <string name="checking_connectivity">正在检查网络连通性...</string>
     <string name="amber_is_running_in_background">Amber 正在后台运行</string>
     <string name="bunker_notifications">Bunker 通知</string>

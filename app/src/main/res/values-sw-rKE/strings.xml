@@ -8,11 +8,7 @@
     <string name="secret_key_copied_to_clipboard">Ufunguo wa siri (nsec) umenakiliwa kwenye ubao wa kunakili</string>
     <string name="copy_my_secret_key">Nakili ufunguo wangu wa siri</string>
     <string name="biometric_authentication_failed">Uthibitishaji umeshindwa</string>
-    <string name="biometric_error">Hitilafu</string>
     <string name="copies_the_nsec_id_your_password_to_the_clipboard_for_backup">Hunakili Kitambulisho cha Nsec (nenosiri lako) kwenye ubao wa kunakili ili kuhifadhi nakala</string>
-    <string name="public_key_npub_copied_to_clipboard">Ufunguo wa umma (npub) umenakiliwa kwenye ubao wa kunakili</string>
-    <string name="copies_the_npub_id_your_user_to_the_clipboard_for_backup">Hunakili Kitambulisho cha Npub (mtumiaji wako) kwenye ubao wa kunakili ili kuhifadhi nakala</string>
-    <string name="copy_my_public_key">Nakili ufunguo wangu wa umma</string>
     <string name="event_pubkey_is_not_equal_to_current_logged_in_user">Tukio pubkey si sawa na mtumiaji wa sasa aliyeingia</string>
     <string name="signature_copied_to_the_clipboard">Sahihi imenakiliwa kwenye ubao wa kunakili</string>
     <string name="reset_permissions">Weka upya ruhusa</string>
@@ -29,14 +25,8 @@
     <string name="login">Ingia</string>
     <string name="generate_a_new_key">Tengeneza ufunguo mpya</string>
     <string name="backup_keys">Vifunguo vya Hifadhi Nakala</string>
-    <string name="decrypt_nip_04_data">Sita data ya nip 04</string>
-    <string name="decrypt_nip_44_data">Simbua nip 44 data</string>
-    <string name="encrypt_nip_44_data">Simba data ya nip 44</string>
-    <string name="encrypt_nip_04_data">Simba data ya nip 04</string>
-    <string name="decrypt_zap_data">Simbua data ya zap</string>
     <string name="read_your_public_key">Soma ufunguo wako wa umma</string>
     <string name="no_permissions_granted">Hakuna ruhusa iliyotolewa</string>
-    <string name="no_event_to_sign">Hakuna tukio la kusaini</string>
     <string name="remember_my_choice_and_don_t_ask_again">Kumbuka chaguo langu na usiulize tena</string>
     <string name="reject">Kataa</string>
     <string name="accept">Kubali</string>
@@ -46,9 +36,6 @@
     <string name="decrypt_nip04">simbua nip04</string>
     <string name="decrypt_zap_event">decrypt tukio la zap</string>
     <string name="encrypt_decrypt">simba/simbua</string>
-    <string name="encrypt">simba</string>
-    <string name="decrypt">simbua</string>
-    <string name="error_to_data">Hitilafu kwa data ya %1$s</string>
     <string name="show_details">Onyesha maelezo</string>
     <string name="hide_details">Ficha Maelezo</string>
     <string name="copy_raw_json">json ghafi</string>
@@ -59,7 +46,6 @@
     <string name="copy">"Nakili"</string>
     <string name="encrypted_decrypted_data">Data iliyosimbwa/Iliyosimbwa</string>
     <string name="data_copied_to_the_clipboard">Data imenakiliwa kwenye ubao wa kunakili</string>
-    <string name="message_already_encrypted">Ujumbe tayari umesimbwa kwa njia fiche</string>
     <string name="connect_app">Unganisha programu</string>
     <string name="event_copied_to_the_clipboard">Tukio limenakiliwa kwenye ubao wa kunakili</string>
     <string name="select_deselect_all">Chagua/Ondoa Uteuzi wote</string>
@@ -217,7 +203,6 @@
     <string name="sign">Sign %1$s</string>
     <string name="sign_message">sign message</string>
     <string name="content">content</string>
-    <string name="signature">signature</string>
     <string name="checking_connectivity">Checking Connectivity</string>
     <string name="amber_is_running_in_background">Amber is running in background</string>
     <string name="bunker_notifications">Bunker Notifications</string>

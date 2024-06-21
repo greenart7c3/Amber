@@ -41,7 +41,7 @@ private object PrefKeys {
     const val PROXY_PORT = "proxy_port"
     const val NOTIFICATION_TYPE = "notification_type"
     const val LANGUAGE_PREFS = "languagePreferences"
-    const val PUSH_TOKEN = "push_token"
+    const val PUSH_TOKEN = "push_notification_token"
 }
 
 @Immutable

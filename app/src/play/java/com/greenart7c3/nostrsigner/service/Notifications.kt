@@ -61,8 +61,6 @@ class Notifications : FirebaseMessagingService() {
             LocalPreferences.allSavedAccounts().forEach {
                 if (token != LocalPreferences.getToken(it.npub) && token.isNotBlank()) {
                     shouldRegister = true
-                    Log.d("Firebase token", "getting firebase token for ${it.npub}")
-                    LocalPreferences.setToken(token, it.npub)
                 }
             }
             if (shouldRegister) {

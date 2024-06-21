@@ -92,8 +92,6 @@ class PushMessageReceiver : MessagingReceiver() {
             LocalPreferences.allSavedAccounts().forEach {
                 if (sanitizedEndpoint != LocalPreferences.getToken(it.npub) && sanitizedEndpoint.isNotBlank()) {
                     shouldRegister = true
-                    Log.d("Amber-OSSPushUtils", "getting token")
-                    LocalPreferences.setToken(sanitizedEndpoint, it.npub)
                 }
             }
             if (shouldRegister) {

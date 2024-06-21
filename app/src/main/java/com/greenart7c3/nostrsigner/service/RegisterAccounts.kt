@@ -93,7 +93,7 @@ class RegisterAccounts(
         )
     }
 
-    private fun postRegistrationEvent(events: List<RelayAuthEvent>) {
+    private fun postRegistrationEvent(events: List<RelayAuthEvent>, notificationToken: String) {
         try {
             val jsonObject =
                 """{
@@ -112,8 +112,16 @@ class RegisterAccounts(
                     .build()
 
             val client = HttpClientManager.getHttpClient()
-
-            client.newCall(request).execute().use { it.isSuccessful }
+            client.newCall(request).execute().use {
+                if (it.isSuccessful) {
+                    accounts.forEach { account ->
+                        LocalPreferences.setToken(notificationToken, account.npub)
+                    }
+                    Log.d("FirebaseMsgService", "Successfully registered with push server")
+                } else {
+                    Log.e("FirebaseMsgService", "Failed to register with push server")
+                }
+            }
         } catch (e: java.lang.Exception) {
             if (e is CancellationException) throw e
             val tag = "FirebaseMsgService"
@@ -124,7 +132,7 @@ class RegisterAccounts(
 
     suspend fun go(notificationToken: String) =
         withContext(Dispatchers.IO) {
-            signEventsToProveControlOfAccounts(accounts, notificationToken) { postRegistrationEvent(it) }
+            signEventsToProveControlOfAccounts(accounts, notificationToken) { postRegistrationEvent(it, notificationToken) }
 
             PushNotificationUtils.hasInit = true
         }

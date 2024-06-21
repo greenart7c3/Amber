@@ -206,14 +206,14 @@
     <string name="sign">Signer %1$s</string>
     <string name="sign_message">signer le message</string>
     <string name="content">contenu</string>
-    <string name="checking_connectivity">Checking Connectivity</string>
-    <string name="amber_is_running_in_background">Amber is running in background</string>
-    <string name="bunker_notifications">Bunker Notifications</string>
-    <string name="notifications_for_approving_or_rejecting_bunker_requests">Notifications for Approving or Rejecting Bunker requests.</string>
-    <string name="new_event_to_sign">new event to sign</string>
-    <string name="event_kind_10013">Private outbox relay list</string>
-    <string name="remove_permission">Remove permission</string>
-    <string name="accounts">Accounts</string>
-    <string name="connect_through_your_orbot_setup">Connect through your Orbot setup</string>
-    <string name="save">Save</string>
+    <string name="checking_connectivity">Vérification de la connectivité</string>
+    <string name="amber_is_running_in_background">Amber fonctionne en arrière-plan</string>
+    <string name="bunker_notifications">Notifications Bunker</string>
+    <string name="notifications_for_approving_or_rejecting_bunker_requests">Notifications pour approuver ou rejeter les requêtes Bunker.</string>
+    <string name="new_event_to_sign">nouvel événement à signer</string>
+    <string name="event_kind_10013">Liste des relais de messagerie privés</string>
+    <string name="remove_permission">Supprimer la permission</string>
+    <string name="accounts">Comptes</string>
+    <string name="connect_through_your_orbot_setup">Connectez-vous via votre configuration Orbot</string>
+    <string name="save">Enregistrer</string>
 </resources>

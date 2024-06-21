@@ -57,15 +57,7 @@ class Notifications : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         scope.launch(Dispatchers.IO) {
-            var shouldRegister = false
-            LocalPreferences.allSavedAccounts().forEach {
-                if (token != LocalPreferences.getToken(it.npub) && token.isNotBlank()) {
-                    shouldRegister = true
-                }
-            }
-            if (shouldRegister) {
-                RegisterAccounts(LocalPreferences.allSavedAccounts()).go(token)
-            }
+            RegisterAccounts(LocalPreferences.allSavedAccounts()).go(token)
         }
         super.onNewToken(token)
     }

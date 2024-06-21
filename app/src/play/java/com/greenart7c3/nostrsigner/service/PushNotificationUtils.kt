@@ -23,7 +23,6 @@ package com.greenart7c3.nostrsigner.service
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.LocalPreferences
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -38,16 +37,7 @@ object PushNotificationUtils {
             }
             // get user notification token provided by firebase
             try {
-                val token = FirebaseMessaging.getInstance().token.await()
-                var shouldRegister = false
-                LocalPreferences.allSavedAccounts().forEach {
-                    if (token != LocalPreferences.getToken(it.npub) && token.isNotBlank()) {
-                        shouldRegister = true
-                    }
-                }
-                if (shouldRegister) {
-                    RegisterAccounts(accounts).go(token)
-                }
+                RegisterAccounts(accounts).go(FirebaseMessaging.getInstance().token.await())
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("Firebase token", "failed to get firebase token", e)

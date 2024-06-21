@@ -22,7 +22,6 @@ package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
-import com.greenart7c3.nostrsigner.LocalPreferences
 import kotlinx.coroutines.CancellationException
 
 object PushNotificationUtils {
@@ -42,16 +41,7 @@ object PushNotificationUtils {
         }
         try {
             if (pushHandler.savedDistributorExists()) {
-                val token = pushHandler.getSavedEndpoint()
-                var shouldRegister = false
-                LocalPreferences.allSavedAccounts().forEach {
-                    if (token != LocalPreferences.getToken(it.npub) && token.isNotBlank()) {
-                        shouldRegister = true
-                    }
-                }
-                if (shouldRegister) {
-                    RegisterAccounts(accounts).go(token)
-                }
+                RegisterAccounts(accounts).go(pushHandler.getSavedEndpoint())
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e

@@ -94,6 +94,10 @@ class RegisterAccounts(
     }
 
     private fun postRegistrationEvent(events: List<RelayAuthEvent>, notificationToken: String) {
+        if (notificationToken.isBlank()) {
+            Log.d("FirebaseMsgService", "No notification token to register with push server")
+            return
+        }
         try {
             val jsonObject =
                 """{
@@ -114,12 +118,9 @@ class RegisterAccounts(
             val client = HttpClientManager.getHttpClient()
             client.newCall(request).execute().use {
                 if (it.isSuccessful) {
-                    accounts.forEach { account ->
-                        LocalPreferences.setToken(notificationToken, account.npub)
-                    }
                     Log.d("FirebaseMsgService", "Successfully registered with push server")
                 } else {
-                    Log.e("FirebaseMsgService", "Failed to register with push server")
+                    Log.d("FirebaseMsgService", "Failed to register with push server")
                 }
             }
         } catch (e: java.lang.Exception) {

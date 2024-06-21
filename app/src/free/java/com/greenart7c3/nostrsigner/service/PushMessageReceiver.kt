@@ -88,15 +88,7 @@ class PushMessageReceiver : MessagingReceiver() {
         val sanitizedEndpoint = endpoint.dropLast(5)
         PushDistributorHandler.setEndpoint(sanitizedEndpoint)
         scope.launch(Dispatchers.IO) {
-            var shouldRegister = false
-            LocalPreferences.allSavedAccounts().forEach {
-                if (sanitizedEndpoint != LocalPreferences.getToken(it.npub) && sanitizedEndpoint.isNotBlank()) {
-                    shouldRegister = true
-                }
-            }
-            if (shouldRegister) {
-                RegisterAccounts(LocalPreferences.allSavedAccounts()).go(sanitizedEndpoint)
-            }
+            RegisterAccounts(LocalPreferences.allSavedAccounts()).go(sanitizedEndpoint)
 
             NotificationUtils.getOrCreateDMChannel(appContext)
         }

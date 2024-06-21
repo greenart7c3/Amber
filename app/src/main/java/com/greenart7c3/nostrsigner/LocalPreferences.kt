@@ -41,7 +41,6 @@ private object PrefKeys {
     const val PROXY_PORT = "proxy_port"
     const val NOTIFICATION_TYPE = "notification_type"
     const val LANGUAGE_PREFS = "languagePreferences"
-    const val PUSH_TOKEN = "push_notification_token"
 }
 
 @Immutable
@@ -62,16 +61,6 @@ object LocalPreferences {
                 true,
             )
         }.toSet().toList()
-    }
-
-    fun getToken(npub: String): String? {
-        return encryptedPreferences(npub).getString(PrefKeys.PUSH_TOKEN, null)
-    }
-
-    fun setToken(token: String, npub: String) {
-        encryptedPreferences(npub).edit().apply {
-            putString(PrefKeys.PUSH_TOKEN, token)
-        }.apply()
     }
 
     fun currentAccount(): String? {

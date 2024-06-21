@@ -23,6 +23,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.Relay
 import com.greenart7c3.nostrsigner.relays.RelayPool
@@ -261,6 +262,20 @@ object IntentUtils {
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
     ) {
+        AmberListenerSingleton.getListener()?.let {
+            Client.unsubscribe(it)
+        }
+
+        AmberListenerSingleton.setListener(
+            onDone,
+            onLoading,
+            AmberListenerSingleton.accountStateViewModel,
+        )
+
+        Client.subscribe(
+            AmberListenerSingleton.getListener()!!,
+        )
+
         account.signer.nip04Encrypt(
             ObjectMapper().writeValueAsString(bunkerResponse),
             localKey,
@@ -278,7 +293,7 @@ object IntentUtils {
                         delay(1000)
                     }
 
-                    Client.send(it, relayList = relays, onDone = onDone, onLoading = onLoading)
+                    Client.send(it, relayList = relays)
                 }
             }
         }

@@ -32,10 +32,6 @@ import com.vitorpamplona.quartz.events.bytesUsedInMemory
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.atomic.AtomicBoolean
 import kotlinx.coroutines.CancellationException
-import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import okhttp3.Request
 import okhttp3.Response
 import okhttp3.WebSocket
@@ -71,8 +67,6 @@ class Relay(
     private var socket: WebSocket? = null
     private var isReady: Boolean = false
     private var usingCompression: Boolean = false
-    private var onOk: (() -> Unit)? = null
-    var onLoading: (Boolean) -> Unit = {}
 
     var eventDownloadCounterInBytes = 0
     private var eventUploadCounterInBytes = 0
@@ -110,10 +104,8 @@ class Relay(
     private var connectingBlock = AtomicBoolean()
 
     fun connectAndRun(
-        onOk: (() -> Unit)? = null,
         onConnected: (Relay) -> Unit,
     ) {
-        this.onOk = onOk
         Log.d("Relay", "Relay.connect $url hasProxy: ${this.httpClient.proxy != null}")
         // BRB is crashing OkHttp Deflater object :(
         if (url.contains("brb.io")) return
@@ -184,8 +176,6 @@ class Relay(
                 text.chunked(2000) { chunked ->
                     listeners.forEach { it.onError(this@Relay, "", Error("Problem with $chunked")) }
                 }
-            } finally {
-                onLoading(false)
             }
         }
 
@@ -259,7 +249,6 @@ class Relay(
     }
 
     fun markConnectionAsClosed() {
-        onLoading(false)
         this.socket = null
         this.isReady = false
         this.usingCompression = false
@@ -298,7 +287,6 @@ class Relay(
                     Log.w("Relay", "Relay onNotice $url, $message")
 
                     it.onError(this@Relay, message, Error("Relay sent notice: $message"))
-                    RelayPool.accountStateViewModel?.toast("Relay", message)
                 }
             "OK" ->
                 listeners.forEach {
@@ -316,11 +304,6 @@ class Relay(
 
                     Log.w("Relay", "Relay on OK $url, $eventId, $success, $message")
                     it.onSendResponse(this@Relay, eventId, success, message)
-                    if (success) {
-                        onOk?.let { it() }
-                    } else if (message.isNotEmpty()) {
-                        RelayPool.accountStateViewModel?.toast("Relay", message)
-                    }
                 }
             "AUTH" ->
                 listeners.forEach {
@@ -447,22 +430,13 @@ class Relay(
         Client.allSubscriptions().forEach { sendFilter(requestId = it) }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     fun send(
         signedEvent: EventInterface,
-        onDone: (() -> Unit)?,
     ) {
         checkNotInMainThread()
 
-        onLoading(true)
-
-        GlobalScope.launch {
-            delay(10000)
-            onLoading(false)
-        }
-
-        if (onDone != null) {
-            onOk = onDone
+        listeners.forEach {
+            it.onBeforeSend(this@Relay, signedEvent)
         }
 
         if (signedEvent is RelayAuthEvent) {
@@ -473,6 +447,9 @@ class Relay(
             while (result == false || result == null) {
                 Log.d("Relay", "Relay.send failed trying again $url $event")
                 result = socket?.send(event)
+            }
+            listeners.forEach {
+                it.onSend(this@Relay, signedEvent, result == true)
             }
             eventUploadCounterInBytes += event.bytesUsedInMemory()
         } else {
@@ -488,9 +465,9 @@ class Relay(
                             Log.d("Relay", "Relay.send failed trying again $url $event")
                             result = socket?.send(event)
                         }
-                        if (result == false || result == null) {
-                            onLoading(false)
-                            RelayPool.accountStateViewModel?.toast("Relay", "Failed to send event to $url")
+                        listeners.forEach {
+                            // Log.w("Relay", "Relay onNotify $url, ${msg[1].asString}")
+                            it.onSend(this@Relay, signedEvent, result == true)
                         }
                         eventUploadCounterInBytes += event.bytesUsedInMemory()
                     }
@@ -505,10 +482,6 @@ class Relay(
                             tryCount++
                             Log.d("Relay", "Relay.send failed trying again $url $event")
                             result = socket?.send(event)
-                        }
-                        if (result == false || result == null) {
-                            onLoading(false)
-                            RelayPool.accountStateViewModel?.toast("Relay", "Failed to send event to $url")
                         }
                         eventUploadCounterInBytes += event.bytesUsedInMemory()
 
@@ -591,6 +564,17 @@ class Relay(
         fun onNotify(
             relay: Relay,
             description: String,
+        )
+
+        fun onSend(
+            relay: Relay,
+            event: EventInterface,
+            success: Boolean,
+        )
+
+        fun onBeforeSend(
+            relay: Relay,
+            event: EventInterface,
         )
     }
 }

@@ -126,35 +126,29 @@ object Client : RelayPool.Listener {
 
     fun send(
         signedEvent: EventInterface,
-        onLoading: (Boolean) -> Unit,
         relay: String? = null,
         feedTypes: Set<FeedType>? = null,
         relayList: List<Relay>? = null,
-        onDone: (() -> Unit)? = null,
     ) {
         checkNotInMainThread()
 
         if (relayList != null) {
-            RelayPool.sendToSelectedRelays(relayList, signedEvent, onLoading, onDone)
+            RelayPool.sendToSelectedRelays(relayList, signedEvent)
         } else if (relay == null) {
-            RelayPool.send(signedEvent, onLoading, onDone)
+            RelayPool.send(signedEvent)
         } else {
             val useConnectedRelayIfPresent = RelayPool.getRelays(relay)
 
             if (useConnectedRelayIfPresent.isNotEmpty()) {
                 useConnectedRelayIfPresent.forEach {
-                    it.onLoading = onLoading
-
-                    it.send(signedEvent, onDone)
+                    it.send(signedEvent)
                 }
             } else {
                 /** temporary connection */
                 newSporadicRelay(
                     relay,
                     feedTypes,
-                    onConnected = { mRelay -> mRelay.send(signedEvent, null) },
-                    onDone = onDone,
-                    onLoading = onLoading,
+                    onConnected = { mRelay -> mRelay.send(signedEvent) },
                 )
             }
         }
@@ -164,23 +158,12 @@ object Client : RelayPool.Listener {
     private fun newSporadicRelay(
         url: String,
         feedTypes: Set<FeedType>?,
-        onLoading: (Boolean) -> Unit,
         onConnected: (Relay) -> Unit,
-        onDone: (() -> Unit)?,
     ) {
         val relay = Relay(url, activeTypes = feedTypes ?: emptySet())
-        relay.onLoading = onLoading
         RelayPool.addRelay(relay)
 
-        relay.connectAndRun(
-            onOk = {
-                GlobalScope.launch(Dispatchers.IO) {
-                    if (onDone != null) {
-                        onDone()
-                    }
-                }
-            },
-        ) {
+        relay.connectAndRun {
             allSubscriptions().forEach { relay.sendFilter(requestId = it) }
 
             onConnected(relay)
@@ -190,10 +173,6 @@ object Client : RelayPool.Listener {
                 if (relay.isConnected()) {
                     relay.disconnect()
                     RelayPool.removeRelay(relay)
-
-                    if (onDone != null) {
-                        onDone()
-                    }
                 }
             }
         }
@@ -284,6 +263,24 @@ object Client : RelayPool.Listener {
         }
     }
 
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onSend(relay: Relay, event: EventInterface, success: Boolean) {
+        GlobalScope.launch(Dispatchers.Default) {
+            listeners.forEach { it.onSend(relay, event, success) }
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    override fun onBeforeSend(relay: Relay, event: EventInterface) {
+        GlobalScope.launch(Dispatchers.Default) {
+            listeners.forEach { it.onBeforeSend(relay, event) }
+        }
+    }
+
+    fun unsubscribe(listener: Listener) {
+        listeners = listeners.minus(listener)
+    }
+
     fun subscribe(listener: Listener) {
         listeners = listeners.plus(listener)
     }
@@ -339,6 +336,17 @@ object Client : RelayPool.Listener {
         open fun onNotify(
             relay: Relay,
             description: String,
+        ) = Unit
+
+        open fun onSend(
+            relay: Relay,
+            event: EventInterface,
+            success: Boolean,
+        ) = Unit
+
+        open fun onBeforeSend(
+            relay: Relay,
+            event: EventInterface,
         ) = Unit
     }
 }

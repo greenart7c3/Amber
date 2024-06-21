@@ -22,7 +22,6 @@ package com.greenart7c3.nostrsigner.relays
 
 import androidx.compose.runtime.Immutable
 import com.greenart7c3.nostrsigner.checkNotInMainThread
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -37,7 +36,6 @@ import kotlinx.coroutines.launch
  * RelayPool manages the connection to multiple Relays and lets consumers deal with simple events.
  */
 object RelayPool : Relay.Listener {
-    var accountStateViewModel: AccountStateViewModel? = null
     private var relays = listOf<Relay>()
     private var listeners = setOf<Listener>()
 
@@ -95,28 +93,21 @@ object RelayPool : Relay.Listener {
     fun sendToSelectedRelays(
         list: List<Relay>,
         signedEvent: EventInterface,
-        onLoading: (Boolean) -> Unit,
-        onDone: (() -> Unit)? = null,
     ) {
         list.forEach { relay ->
             relays.filter { it.url == relay.url }.forEach {
-                it.onLoading = onLoading
                 if (!it.isConnected()) {
                     it.connectAndRun { relay ->
-                        relay.send(signedEvent, onDone)
+                        relay.send(signedEvent)
                         GlobalScope.launch(Dispatchers.IO) {
                             delay(60000)
                             if (relay.isConnected()) {
                                 relay.disconnect()
-
-                                if (onDone != null) {
-                                    onDone()
-                                }
                             }
                         }
                     }
                 } else {
-                    it.send(signedEvent, onDone)
+                    it.send(signedEvent)
                 }
             }
         }
@@ -124,12 +115,9 @@ object RelayPool : Relay.Listener {
 
     fun send(
         signedEvent: EventInterface,
-        onLoading: (Boolean) -> Unit,
-        onDone: (() -> Unit)? = null,
     ) {
         relays.forEach {
-            it.onLoading = onLoading
-            it.send(signedEvent, onDone)
+            it.send(signedEvent)
         }
     }
 
@@ -197,6 +185,16 @@ object RelayPool : Relay.Listener {
             relay: Relay,
             description: String,
         )
+        fun onSend(
+            relay: Relay,
+            event: EventInterface,
+            success: Boolean,
+        )
+
+        fun onBeforeSend(
+            relay: Relay,
+            event: EventInterface,
+        )
     }
 
     override fun onEvent(
@@ -249,6 +247,21 @@ object RelayPool : Relay.Listener {
         description: String,
     ) {
         listeners.forEach { it.onNotify(relay, description) }
+    }
+
+    override fun onSend(
+        relay: Relay,
+        event: EventInterface,
+        success: Boolean,
+    ) {
+        listeners.forEach { it.onSend(relay, event, success) }
+    }
+
+    override fun onBeforeSend(
+        relay: Relay,
+        event: EventInterface,
+    ) {
+        listeners.forEach { it.onBeforeSend(relay, event) }
     }
 
     private fun updateStatus() {

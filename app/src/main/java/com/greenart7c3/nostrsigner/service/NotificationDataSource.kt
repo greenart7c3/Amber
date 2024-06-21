@@ -97,7 +97,6 @@ object NotificationDataSource : NostrDataSource("AccountData") {
             account.createAuthEvent(relay.url, challenge) { authEvent ->
                 Client.send(
                     authEvent,
-                    { },
                     relay.url,
                 )
             }

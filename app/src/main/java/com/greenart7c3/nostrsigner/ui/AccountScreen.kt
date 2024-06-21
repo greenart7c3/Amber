@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.relays.Client
 import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.ConnectivityService
@@ -126,7 +127,7 @@ fun AccountScreen(
                         }
                     }
 
-                    RelayPool.accountStateViewModel = accountStateViewModel
+                    AmberListenerSingleton.accountStateViewModel = accountStateViewModel
 
                     DisplayErrorMessages(accountStateViewModel)
                     MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)

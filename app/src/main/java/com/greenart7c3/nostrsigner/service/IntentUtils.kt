@@ -13,7 +13,6 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
@@ -24,11 +23,12 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
-import com.greenart7c3.nostrsigner.relays.Client
-import com.greenart7c3.nostrsigner.relays.Relay
-import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.Client
+import com.vitorpamplona.ammolite.relays.Relay
+import com.vitorpamplona.ammolite.relays.RelayPool
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
@@ -39,7 +39,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 data class BunkerMetadata(
@@ -263,7 +262,7 @@ object IntentUtils {
         onDone: () -> Unit,
     ) {
         AmberListenerSingleton.getListener()?.let {
-            Client.unsubscribe(it)
+            RelayPool.unregister(it)
         }
 
         AmberListenerSingleton.setListener(
@@ -272,7 +271,7 @@ object IntentUtils {
             AmberListenerSingleton.accountStateViewModel,
         )
 
-        Client.subscribe(
+        RelayPool.register(
             AmberListenerSingleton.getListener()!!,
         )
 
@@ -287,13 +286,7 @@ object IntentUtils {
                 encryptedContent,
             ) {
                 GlobalScope.launch(Dispatchers.IO) {
-                    NostrSigner.instance.checkForNewRelays()
-                    if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                        Client.reconnect(RelayPool.getAll().toTypedArray())
-                        delay(1000)
-                    }
-
-                    Client.send(it, relayList = relays)
+                    Client.send(it, relayList = relays.map { RelaySetupInfo(it.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES) })
                 }
             }
         }

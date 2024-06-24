@@ -74,9 +74,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -94,17 +91,15 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.relays.Relay
-import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
-import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.ByteArrayOutputStream
@@ -136,21 +131,9 @@ fun sendResult(
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
         if (intentData.bunkerRequest != null) {
-            RelayPool.getAll().forEach { relay ->
-                if (!relay.isConnected()) {
-                    relay.connectAndRun {
-                        val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
-                        val inputData = Data.Builder()
-                        inputData.putString("relay", relay.url)
-                        builder.setInputData(inputData.build())
-                        WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
-                    }
-                }
-            }
-            var count = 0
-            while (RelayPool.getAll().any { !it.isReady() } && count < 10) {
-                count++
-                Thread.sleep(1000)
+            NostrSigner.instance.checkForNewRelays()
+            if (LocalPreferences.getNotificationType() != NotificationType.DIRECT) {
+                NostrSigner.instance.checkIfRelaysAreConnected()
             }
         }
 

@@ -40,9 +40,6 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.work.Data
-import androidx.work.OneTimeWorkRequest
-import androidx.work.WorkManager
 import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -57,19 +54,16 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.relays.Relay
-import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
@@ -413,22 +407,7 @@ private fun sendResultIntent(
 private fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    RelayPool.getAll().forEach { relay ->
-        if (!relay.isConnected() && !NotificationDataSource.isActive()) {
-            relay.connectAndRun {
-                val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
-                val inputData = Data.Builder()
-                inputData.putString("relay", relay.url)
-                builder.setInputData(inputData.build())
-                WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
-            }
-        }
-    }
-    var count = 0
-    while (RelayPool.getAll().any { !it.isReady() } && count < 10) {
-        count++
-        Thread.sleep(1000)
-    }
+    NostrSigner.instance.checkIfRelaysAreConnected()
 }
 
 @Composable

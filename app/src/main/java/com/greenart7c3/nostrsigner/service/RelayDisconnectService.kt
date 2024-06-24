@@ -3,7 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
-import com.greenart7c3.nostrsigner.relays.RelayPool
+import com.vitorpamplona.ammolite.relays.RelayPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

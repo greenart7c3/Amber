@@ -10,11 +10,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.service.HttpClientManager
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toNpub
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers

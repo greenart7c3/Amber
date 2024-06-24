@@ -11,8 +11,8 @@ import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.vitorpamplona.ammolite.relays.RelayPool
 import java.util.Timer
 import java.util.TimerTask
 

@@ -24,13 +24,14 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.relays.Client
-import com.greenart7c3.nostrsigner.relays.EOSETime
-import com.greenart7c3.nostrsigner.relays.FeedType
-import com.greenart7c3.nostrsigner.relays.JsonFilter
-import com.greenart7c3.nostrsigner.relays.Relay
-import com.greenart7c3.nostrsigner.relays.RelayPool
-import com.greenart7c3.nostrsigner.relays.TypedFilter
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.Client
+import com.vitorpamplona.ammolite.relays.EOSETime
+import com.vitorpamplona.ammolite.relays.JsonFilter
+import com.vitorpamplona.ammolite.relays.NostrDataSource
+import com.vitorpamplona.ammolite.relays.Relay
+import com.vitorpamplona.ammolite.relays.RelayPool
+import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 
@@ -58,7 +59,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
             }
 
         return TypedFilter(
-            types = setOf(FeedType.FOLLOWS),
+            types = COMMON_FEED_TYPES,
             filter = JsonFilter(
                 kinds = listOf(24133),
                 tags = mapOf("p" to pubKeys),

@@ -1,7 +1,12 @@
+@file:OptIn(DelicateCoroutinesApi::class)
+
 package com.greenart7c3.nostrsigner.relays
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.vitorpamplona.ammolite.relays.Relay
+import com.vitorpamplona.ammolite.relays.RelayPool
+import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -30,30 +35,30 @@ class AmberClientListener(
     val onDone: () -> Unit,
     val onLoading: (Boolean) -> Unit,
     val accountStateViewModel: AccountStateViewModel?,
-) : Client.Listener() {
-    @OptIn(DelicateCoroutinesApi::class)
+) : RelayPool.Listener {
+    override fun onAuth(relay: Relay, challenge: String) {
+        Log.d("AmberClientListener", "onAuth: $challenge ${relay.url}")
+    }
+
     override fun onBeforeSend(relay: Relay, event: EventInterface) {
-        super.onBeforeSend(relay, event)
         Log.d("AmberClientListener", "onBeforeSend: ${event.toJson()} ${relay.url}")
         GlobalScope.launch(Dispatchers.Default) {
             delay(10000)
             onLoading(false)
-            Client.unsubscribe(this@AmberClientListener)
+            RelayPool.unregister(this@AmberClientListener)
         }
     }
 
-    override fun onSend(relay: Relay, event: EventInterface, success: Boolean) {
-        super.onSend(relay, event, success)
-        Log.d("AmberClientListener", "onSend: $success ${event.toJson()} ${relay.url}")
+    override fun onSend(relay: Relay, msg: String, success: Boolean) {
+        Log.d("AmberClientListener", "onSend: $success $msg ${relay.url}")
         if (!success) {
             onLoading(false)
             accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
-            Client.unsubscribe(this@AmberClientListener)
+            RelayPool.unregister(this@AmberClientListener)
         }
     }
 
     override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
-        super.onSendResponse(eventId, success, message, relay)
         Log.d("AmberClientListener", "onSendResponse: $success $message ${relay.url}")
         onLoading(false)
         if (success) {
@@ -61,14 +66,25 @@ class AmberClientListener(
             accountStateViewModel?.toast("Success", "Event sent successfully")
         } else {
             accountStateViewModel?.toast("Error", message)
-            Client.unsubscribe(this@AmberClientListener)
+            RelayPool.unregister(this@AmberClientListener)
         }
     }
 
     override fun onError(error: Error, subscriptionId: String, relay: Relay) {
-        super.onError(error, subscriptionId, relay)
         onLoading(false)
         accountStateViewModel?.toast("Error", error.message ?: "Unknown error")
-        Client.unsubscribe(this@AmberClientListener)
+        RelayPool.unregister(this@AmberClientListener)
+    }
+
+    override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
+        Log.d("AmberClientListener", "onEvent: ${event.toJson()} ${relay.url}")
+    }
+
+    override fun onNotify(relay: Relay, description: String) {
+        Log.d("AmberClientListener", "onNotify: $description ${relay.url}")
+    }
+
+    override fun onRelayStateChange(type: Relay.StateType, relay: Relay, channel: String?) {
+        Log.d("AmberClientListener", "onRelayStateChange: $type ${relay.url}")
     }
 }

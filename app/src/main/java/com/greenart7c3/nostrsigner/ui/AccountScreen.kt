@@ -39,8 +39,6 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
-import com.greenart7c3.nostrsigner.relays.Client
-import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -115,13 +113,12 @@ fun AccountScreen(
 
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
-                            NostrSigner.instance.checkForNewRelays()
                             @Suppress("KotlinConstantConditions")
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 NostrSigner.instance.applicationContext.startService(
                                     Intent(NostrSigner.instance.applicationContext, ConnectivityService::class.java),
                                 )
-                                Client.reconnect(RelayPool.getAll().toTypedArray())
+                                NostrSigner.instance.checkForNewRelays()
                                 NotificationDataSource.start()
                             }
                         }

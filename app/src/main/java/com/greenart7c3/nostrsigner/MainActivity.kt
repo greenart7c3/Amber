@@ -16,6 +16,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
+import com.vitorpamplona.ammolite.service.HttpClientManager
 
 fun Intent.isLaunchFromHistory(): Boolean =
     this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         installSplashScreen()
+
+        HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
         setContent {
             if (intent.isLaunchFromHistory()) {

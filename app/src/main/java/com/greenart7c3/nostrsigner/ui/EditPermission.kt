@@ -54,8 +54,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.relays.Client
-import com.greenart7c3.nostrsigner.relays.RelayPool
 import com.greenart7c3.nostrsigner.ui.actions.ActivityDialog
 import com.greenart7c3.nostrsigner.ui.actions.DeleteDialog
 import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
@@ -140,9 +138,8 @@ fun EditPermission(
                     .applicationDao()
                     .delete(applicationData)
 
-                NostrSigner.instance.checkForNewRelays()
                 if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                    Client.reconnect(RelayPool.getAll().toTypedArray())
+                    NostrSigner.instance.checkForNewRelays()
                 }
             }
 
@@ -418,9 +415,8 @@ fun EditPermission(
                                 permissions,
                             ),
                         )
-                        NostrSigner.instance.checkForNewRelays()
                         if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                            Client.reconnect(RelayPool.getAll().toTypedArray())
+                            NostrSigner.instance.checkForNewRelays()
                         }
 
                         scope.launch(Dispatchers.Main) {

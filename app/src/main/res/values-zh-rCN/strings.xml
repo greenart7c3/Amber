@@ -213,7 +213,7 @@
     <string name="new_event_to_sign">签署新事件</string>
     <string name="event_kind_10013">私人发件箱中继列表</string>
     <string name="remove_permission">移除权限</string>
-    <string name="accounts">Accounts</string>
-    <string name="connect_through_your_orbot_setup">Connect through your Orbot setup</string>
-    <string name="save">Save</string>
+    <string name="accounts">账户</string>
+    <string name="connect_through_your_orbot_setup">通过您的 Orbot 设置进行连接</string>
+    <string name="save">保存</string>
 </resources>

@@ -20,9 +20,11 @@
  */
 package com.greenart7c3.nostrsigner.service
 
+import android.util.Log
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.checkNotInMainThread
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
@@ -37,6 +39,111 @@ import com.vitorpamplona.quartz.events.Event
 
 object NotificationDataSource : NostrDataSource("AccountData") {
     private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.instance)
+
+    private val clientListener =
+        object : Client.Listener() {
+            override fun onEvent(
+                event: Event,
+                subscriptionId: String,
+                relay: Relay,
+                afterEOSE: Boolean,
+            ) {
+                LocalPreferences.currentAccount()?.let { account ->
+                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = relay.url,
+                            type = "onEvent",
+                            message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+            }
+
+            override fun onRelayStateChange(
+                type: Relay.StateType,
+                relay: Relay,
+                subscriptionId: String?,
+            ) {
+                LocalPreferences.currentAccount()?.let { account ->
+                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = relay.url,
+                            type = "onRelayStateChange",
+                            message = type.name,
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+            }
+
+            override fun onSendResponse(
+                eventId: String,
+                success: Boolean,
+                message: String,
+                relay: Relay,
+            ) {
+                LocalPreferences.currentAccount()?.let { account ->
+                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = relay.url,
+                            type = "onSendResponse",
+                            message = "Success: $success Message: $message",
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+            }
+
+            override fun onAuth(
+                relay: Relay,
+                challenge: String,
+            ) {
+                LocalPreferences.currentAccount()?.let { account ->
+                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = relay.url,
+                            type = "onAuth",
+                            message = "Authenticating",
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                auth(relay, challenge)
+            }
+
+            override fun onNotify(
+                relay: Relay,
+                description: String,
+            ) {
+                LocalPreferences.currentAccount()?.let { account ->
+                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = relay.url,
+                            type = "onNotify",
+                            message = description,
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                notify(relay, description)
+            }
+        }
+
+    init {
+        Log.d(this.javaClass.simpleName, "${this.javaClass.simpleName} Subscribe")
+        Client.subscribe(clientListener)
+    }
+
+    override fun stop() {
+        super.stop()
+        Client.unsubscribe(clientListener)
+    }
 
     private fun createNotificationsFilter(): TypedFilter {
         var since = TimeUtils.now()

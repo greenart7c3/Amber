@@ -3,6 +3,9 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.vitorpamplona.ammolite.relays.RelayPool
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -22,6 +25,17 @@ class RelayDisconnectService(ctx: Context, params: WorkerParameters) : Worker(ct
                 url?.let {
                     val relay = RelayPool.getRelay(it)
                     if (relay != null && relay.isConnected()) {
+                        LocalPreferences.currentAccount()?.let { npub ->
+                            NostrSigner.instance.getDatabase(npub).applicationDao().insertLog(
+                                LogEntity(
+                                    id = 0,
+                                    url = relay.url,
+                                    type = "onRelayStateChange",
+                                    message = "DISCONNECT",
+                                    time = System.currentTimeMillis(),
+                                ),
+                            )
+                        }
                         relay.disconnect()
                     }
                 }

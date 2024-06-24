@@ -14,14 +14,19 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
@@ -41,21 +46,27 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.os.LocaleListCompat
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
@@ -154,6 +165,7 @@ fun SettingsScreen(
     val languageList = remember { languageEntries.keys.map { TitleExplainer(it) }.toImmutableList() }
     val languageIndex = getLanguageIndex(languageEntries, account.language)
     var languageDialog by remember { mutableStateOf(false) }
+    var logDialog by remember { mutableStateOf(false) }
 
     val sheetState =
         rememberModalBottomSheetState(
@@ -180,6 +192,96 @@ fun SettingsScreen(
                 }
             },
         )
+    }
+
+    if (logDialog) {
+        Dialog(
+            onDismissRequest = {
+                logDialog = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        CloseButton {
+                            logDialog = false
+                        }
+                    }
+
+                    val logsFlow = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
+                    val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+
+                    LazyColumn(
+                        Modifier.weight(1f),
+                    ) {
+                        items(logs.value.size) { index ->
+                            Card(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(6.dp),
+                            ) {
+                                Column(Modifier.padding(6.dp)) {
+                                    val log = logs.value[index]
+                                    Text(
+                                        buildAnnotatedString {
+                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                                append("Date: ")
+                                            }
+                                            append(TimeUtils.convertLongToDateTime(log.time))
+                                        },
+                                    )
+                                    Text(
+                                        buildAnnotatedString {
+                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                                append("URL: ")
+                                            }
+                                            append(log.url)
+                                        },
+                                    )
+                                    Text(
+                                        buildAnnotatedString {
+                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                                append("Type: ")
+                                            }
+                                            append(log.type)
+                                        },
+                                    )
+                                    Text(
+                                        buildAnnotatedString {
+                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                                append("Message: ")
+                                            }
+                                            append(log.message)
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Box(
+                        Modifier.fillMaxWidth(),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Button(
+                            onClick = {
+                                scope.launch(Dispatchers.IO) {
+                                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
+                                }
+                            },
+                        ) {
+                            Text(text = stringResource(R.string.clear_logs))
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (notificationTypeDialog) {
@@ -396,6 +498,20 @@ fun SettingsScreen(
                     },
                 )
             }
+        }
+
+        Box(
+            Modifier
+                .padding(16.dp),
+        ) {
+            IconRow(
+                title = stringResource(R.string.logs),
+                icon = Icons.Default.FilterList,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    logDialog = true
+                },
+            )
         }
 
         Spacer(modifier = Modifier.weight(1f))

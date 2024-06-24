@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 3,
-    "identityHash": "17989499097a33f9ced7b6a11816fced",
+    "version": 4,
+    "identityHash": "5074b7c061015dc0f49005f018955d21",
     "entities": [
       {
         "tableName": "application",
@@ -289,7 +289,7 @@
       },
       {
         "tableName": "amber_log",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `url` TEXT NOT NULL, `message` TEXT NOT NULL, `time` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `url` TEXT NOT NULL, `type` TEXT NOT NULL, `message` TEXT NOT NULL, `time` INTEGER NOT NULL)",
         "fields": [
           {
             "fieldPath": "id",
@@ -300,6 +300,12 @@
           {
             "fieldPath": "url",
             "columnName": "url",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
             "affinity": "TEXT",
             "notNull": true
           },
@@ -329,7 +335,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '17989499097a33f9ced7b6a11816fced')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '5074b7c061015dc0f49005f018955d21')"
     ]
   }
 }

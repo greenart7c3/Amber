@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner
 
 import android.app.Application
+import android.util.Log
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -77,6 +78,7 @@ class NostrSigner : Application() {
     }
 
     fun checkIfRelaysAreConnected() {
+        Log.d("NostrSigner", "Checking if relays are connected")
         RelayPool.getAll().forEach { relay ->
             if (!relay.isConnected()) {
                 relay.connectAndRun {

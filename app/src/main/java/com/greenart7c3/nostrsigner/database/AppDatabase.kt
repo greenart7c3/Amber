@@ -26,9 +26,22 @@ val MIGRATION_2_3 =
         }
     }
 
+val MIGRATION_3_4 =
+    object : Migration(3, 4) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `amber_log` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `url` TEXT NOT NULL, `type` TEXT NOT NULL, `message` TEXT NOT NULL, `time` INTEGER NOT NULL)")
+        }
+    }
+
 @Database(
-    entities = [ApplicationEntity::class, ApplicationPermissionsEntity::class, NotificationEntity::class, HistoryEntity::class],
-    version = 3,
+    entities = [
+        ApplicationEntity::class,
+        ApplicationPermissionsEntity::class,
+        NotificationEntity::class,
+        HistoryEntity::class,
+        LogEntity::class,
+    ],
+    version = 4,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -48,6 +61,7 @@ abstract class AppDatabase : RoomDatabase() {
                     )
                         .addMigrations(MIGRATION_1_2)
                         .addMigrations(MIGRATION_2_3)
+                        .addMigrations(MIGRATION_3_4)
                         .build()
                 instance
             }

@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ApplicationDao {
@@ -126,4 +127,13 @@ interface ApplicationDao {
 
     @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
     fun getAllHistory(pk: String): List<HistoryEntity>
+
+    @Insert
+    fun insertLog(logEntity: LogEntity)
+
+    @Query("SELECT * FROM amber_log ORDER BY time DESC")
+    fun getLogs(): Flow<List<LogEntity>>
+
+    @Query("DELETE FROM amber_log")
+    fun clearLogs()
 }

@@ -11,11 +11,7 @@
     <string name="secret_key_copied_to_clipboard">Secret key (nsec) copied to clipboard</string>
     <string name="copy_my_secret_key">Copy my secret key</string>
     <string name="biometric_authentication_failed">Authentication failed</string>
-    <string name="biometric_error">Error</string>
     <string name="copies_the_nsec_id_your_password_to_the_clipboard_for_backup">Copies the Nsec ID (your password) to the clipboard for backup</string>
-    <string name="public_key_npub_copied_to_clipboard">Public key (npub) copied to clipboard</string>
-    <string name="copies_the_npub_id_your_user_to_the_clipboard_for_backup">Copies the Npub ID (your user) to the clipboard for backup</string>
-    <string name="copy_my_public_key">Copy my public key</string>
     <string name="event_pubkey_is_not_equal_to_current_logged_in_user">Event pubkey is not equal to current logged in user</string>
     <string name="signature_copied_to_the_clipboard">Signature copied to the clipboard</string>
     <string name="reset_permissions">Reset permissions</string>
@@ -32,14 +28,8 @@
     <string name="login">Login</string>
     <string name="generate_a_new_key">Generate a new key</string>
     <string name="backup_keys">Backup Keys</string>
-    <string name="decrypt_nip_04_data">Decrypt nip 04 data</string>
-    <string name="decrypt_nip_44_data">Decrypt nip 44 data</string>
-    <string name="encrypt_nip_44_data">Encrypt nip 44 data</string>
-    <string name="encrypt_nip_04_data">Encrypt nip 04 data</string>
-    <string name="decrypt_zap_data">Decrypt zap data</string>
     <string name="read_your_public_key">Read your public key</string>
     <string name="no_permissions_granted">No permissions granted</string>
-    <string name="no_event_to_sign">No event to sign</string>
     <string name="remember_my_choice_and_don_t_ask_again">Remember my choice and don\'t ask again</string>
     <string name="reject">Reject</string>
     <string name="accept">Accept</string>
@@ -49,9 +39,6 @@
     <string name="decrypt_nip04">decrypt nip04</string>
     <string name="decrypt_zap_event">decrypt zap event</string>
     <string name="encrypt_decrypt">encrypt/decrypt</string>
-    <string name="encrypt">encrypt</string>
-    <string name="decrypt">decrypt</string>
-    <string name="error_to_data">Error to %1$s data</string>
     <string name="show_details">Show Details</string>
     <string name="hide_details">Hide Details</string>
     <string name="copy_raw_json">Raw json</string>
@@ -62,7 +49,6 @@
     <string name="copy">"Copy "</string>
     <string name="encrypted_decrypted_data">Encrypted/Decrypted data</string>
     <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
-    <string name="message_already_encrypted">Message already encrypted</string>
     <string name="connect_app">Connect app</string>
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
     <string name="select_deselect_all">Select/Deselect all</string>

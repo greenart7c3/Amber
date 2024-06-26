@@ -521,7 +521,7 @@ fun SettingsScreen(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
-            fullText = "v${BuildConfig.VERSION_NAME}\n\n${context.getString(
+            fullText = "v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n${context.getString(
                 R.string.support_development,
             )}\n\n${context.getString(R.string.source_code)}",
             hyperLinks = mutableMapOf(

@@ -216,4 +216,6 @@
     <string name="accounts">账户</string>
     <string name="connect_through_your_orbot_setup">通过您的 Orbot 设置进行连接</string>
     <string name="save">保存</string>
+    <string name="logs">Logs</string>
+    <string name="clear_logs">Clear logs</string>
 </resources>

@@ -216,4 +216,6 @@
     <string name="accounts">Accounts</string>
     <string name="connect_through_your_orbot_setup">Connect through your Orbot setup</string>
     <string name="save">Save</string>
+    <string name="logs">Logs</string>
+    <string name="clear_logs">Clear logs</string>
 </resources>

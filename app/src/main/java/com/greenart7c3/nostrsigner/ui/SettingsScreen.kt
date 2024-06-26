@@ -321,13 +321,14 @@ fun SettingsScreen(
                                     NotificationDataSource.stopSync()
                                     RelayPool.disconnect()
                                 } else {
+                                    NostrSigner.instance.checkForNewRelays()
+                                    NotificationDataSource.start()
                                     NostrSigner.instance.applicationContext.startService(
                                         Intent(
                                             NostrSigner.instance.applicationContext,
                                             ConnectivityService::class.java,
                                         ),
                                     )
-                                    NotificationDataSource.start()
                                 }
                             }
                         }

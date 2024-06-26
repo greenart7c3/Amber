@@ -25,7 +25,9 @@ import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -117,12 +119,32 @@ class RegisterAccounts(
                     .build()
 
             val client = HttpClientManager.getHttpClient()
-            client.newCall(request).execute().use {
-                if (it.isSuccessful) {
-                    Log.d("FirebaseMsgService", "Successfully registered with push server")
-                } else {
-                    Log.d("FirebaseMsgService", "Failed to register with push server")
+            var isSuccess = client.newCall(request).execute().use {
+                it.isSuccessful
+            }
+            var tries = 0
+            while (!isSuccess && tries < 3) {
+                Log.d("FirebaseMsgService", "Failed to register with push server, retrying...")
+                isSuccess = client.newCall(request).execute().use {
+                    it.isSuccessful
                 }
+                tries++
+            }
+            if (isSuccess) {
+                Log.d("FirebaseMsgService", "Successfully registered with push server")
+            } else {
+                accounts.forEach {
+                    NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                        LogEntity(
+                            0,
+                            "Push server",
+                            "Push server",
+                            "Failed to register with push server",
+                            System.currentTimeMillis(),
+                        ),
+                    )
+                }
+                AmberListenerSingleton.accountStateViewModel?.toast("Push server", "Failed to register with push server")
             }
         } catch (e: java.lang.Exception) {
             if (e is CancellationException) throw e

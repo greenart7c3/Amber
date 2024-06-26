@@ -217,5 +217,5 @@
     <string name="connect_through_your_orbot_setup">Verbinde dich über dein Orbot-Setup</string>
     <string name="save">Speichern</string>
     <string name="logs">Logs</string>
-    <string name="clear_logs">Clear logs</string>
+    <string name="clear_logs">Logs löschen</string>
 </resources>

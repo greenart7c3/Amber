@@ -241,6 +241,9 @@ fun EditPermission(
                     checked = checked,
                     onCheckedChange = {
                         checked = !checked
+                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
+                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
+                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
                     },
                 )
             }
@@ -317,7 +320,7 @@ fun EditPermission(
                         .fillMaxWidth(),
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
                             .weight(1f)
@@ -336,6 +339,7 @@ fun EditPermission(
                             },
                     ) {
                         Text(
+                            modifier = Modifier.weight(1f),
                             text = message,
                             fontSize = 18.sp,
                         )

@@ -60,7 +60,7 @@ class ConnectivityService : Service() {
                     }
                 }
             },
-            0,
+            5000,
             61000,
         )
         super.onCreate()

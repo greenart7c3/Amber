@@ -11,7 +11,7 @@ import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.vitorpamplona.ammolite.relays.Relay
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
@@ -46,7 +46,7 @@ object AmberUtils {
                 )
             }
             SignerType.NIP44_ENCRYPT -> {
-                CryptoUtils.encryptNIP44v2(
+                CryptoUtils.encryptNIP44(
                     data,
                     account.keyPair.privKey!!,
                     pubKey.hexToByteArray(),
@@ -123,7 +123,7 @@ object AmberUtils {
     fun sendBunkerError(
         account: Account,
         bunkerRequest: BunkerRequest,
-        relays: List<Relay>,
+        relays: List<RelaySetupInfo>,
         context: Context,
         onLoading: (Boolean) -> Unit,
     ) {

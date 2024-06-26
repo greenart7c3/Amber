@@ -41,21 +41,25 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 
 @Composable
 fun EditRelaysDialog(
     applicationData: ApplicationEntity,
     onClose: () -> Unit,
-    onPost: (SnapshotStateList<String>) -> Unit,
+    onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
 ) {
     var textFieldRelay by remember {
         mutableStateOf(TextFieldValue(""))
     }
     val relays2 =
         remember {
-            val localRelays = mutableStateListOf<String>()
+            val localRelays = mutableStateListOf<RelaySetupInfo>()
             applicationData.relays.forEach {
-                localRelays.add(it)
+                localRelays.add(
+                    it.copy(),
+                )
             }
             localRelays
         }
@@ -99,7 +103,7 @@ fun EditRelaysDialog(
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
                             Text(
-                                relays2[it],
+                                relays2[it].url,
                                 Modifier
                                     .weight(0.9f)
                                     .padding(8.dp),
@@ -157,7 +161,14 @@ fun EditRelaysDialog(
                                         url
                                     }
                                 if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
-                                relays2.add(addedWSS)
+                                relays2.add(
+                                    RelaySetupInfo(
+                                        addedWSS,
+                                        read = true,
+                                        write = true,
+                                        feedTypes = COMMON_FEED_TYPES,
+                                    ),
+                                )
                                 textFieldRelay = TextFieldValue("")
                             }
                         },

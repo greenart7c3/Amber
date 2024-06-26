@@ -6,6 +6,8 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import androidx.room.TypeConverter
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 
 @Entity(
     tableName = "application",
@@ -26,7 +28,7 @@ data class ApplicationEntity(
     @PrimaryKey(autoGenerate = false)
     val key: String,
     val name: String,
-    val relays: List<String>,
+    val relays: List<RelaySetupInfo>,
     val url: String,
     val icon: String,
     val description: String,
@@ -47,15 +49,19 @@ data class ApplicationWithPermissions(
 
 class Converters {
     @TypeConverter
-    fun fromString(stringListString: String): List<String> {
+    fun fromString(stringListString: String): List<RelaySetupInfo> {
         if (stringListString.isBlank()) {
             return emptyList()
         }
-        return stringListString.split(",")
+        return stringListString.split(",").map {
+            RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
+        }
     }
 
     @TypeConverter
-    fun toString(stringList: List<String>): String {
-        return stringList.joinToString(separator = ",")
+    fun toString(relays: List<RelaySetupInfo>): String {
+        return relays.joinToString(separator = ",") {
+            it.url
+        }
     }
 }

@@ -26,7 +26,6 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
-import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -257,10 +256,16 @@ object IntentUtils {
         account: Account,
         localKey: String,
         bunkerResponse: BunkerResponse,
-        relays: List<Relay>,
+        relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
     ) {
+        if (relays.isEmpty()) {
+            onLoading(false)
+            AmberListenerSingleton.accountStateViewModel?.toast("Relays", "No relays found")
+            return
+        }
+
         AmberListenerSingleton.getListener()?.let {
             RelayPool.unregister(it)
         }
@@ -286,7 +291,7 @@ object IntentUtils {
                 encryptedContent,
             ) {
                 GlobalScope.launch(Dispatchers.IO) {
-                    Client.send(it, relayList = relays.map { RelaySetupInfo(it.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES) })
+                    Client.send(it, relayList = relays)
                 }
             }
         }
@@ -646,7 +651,7 @@ object IntentUtils {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
-            val relays: MutableList<String> = mutableListOf()
+            val relays: MutableList<RelaySetupInfo> = mutableListOf()
             var name = ""
             val pubKey = split.first()
             val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
@@ -654,7 +659,9 @@ object IntentUtils {
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
                 if (internalSplit.first() == "relay") {
-                    relays.add(internalSplit[1])
+                    relays.add(
+                        RelaySetupInfo(internalSplit[1], read = true, write = true, feedTypes = COMMON_FEED_TYPES),
+                    )
                 }
                 if (internalSplit.first() == "name") {
                     name = internalSplit[1]

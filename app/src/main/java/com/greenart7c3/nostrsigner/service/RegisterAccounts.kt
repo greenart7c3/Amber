@@ -75,9 +75,9 @@ class RegisterAccounts(
                     ).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
-                        if (relay.isNotBlank()) {
+                        if (relay.url.isNotBlank()) {
                             readyToSend.add(
-                                Pair(acc, relay),
+                                Pair(acc, relay.url),
                             )
                         }
                     }

@@ -61,9 +61,9 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
@@ -215,7 +215,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
-                                            applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
+                                            applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
                                         ) {}
                                     } else {
@@ -288,7 +288,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
-                                            applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
+                                            applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
                                         ) { }
                                     } else {
@@ -352,7 +352,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
-                                            applicationEntity?.application?.relays?.map { url -> Relay(url) } ?: emptyList(),
+                                            applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
                                         ) { }
                                     } else {
@@ -404,10 +404,10 @@ private fun sendResultIntent(
     activity?.setResult(Activity.RESULT_OK, intent)
 }
 
-private fun reconnectToRelays(intents: List<IntentData>) {
+private suspend fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    NostrSigner.instance.checkIfRelaysAreConnected()
+    NostrSigner.instance.checkForNewRelays(LocalPreferences.getNotificationType() != NotificationType.DIRECT)
 }
 
 @Composable

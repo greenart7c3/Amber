@@ -99,7 +99,8 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.vitorpamplona.ammolite.relays.Relay
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.ByteArrayOutputStream
@@ -131,10 +132,7 @@ fun sendResult(
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
         if (intentData.bunkerRequest != null) {
-            NostrSigner.instance.checkForNewRelays()
-            if (LocalPreferences.getNotificationType() != NotificationType.DIRECT) {
-                NostrSigner.instance.checkIfRelaysAreConnected()
-            }
+            NostrSigner.instance.checkForNewRelays(LocalPreferences.getNotificationType() != NotificationType.DIRECT)
         }
 
         val activity = context.getAppCompatActivity()
@@ -211,7 +209,7 @@ fun sendResult(
                 account,
                 intentData.bunkerRequest.localKey,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
-                application.application.relays.map { url -> Relay(url) },
+                application.application.relays,
                 onLoading,
             ) {
                 if (intentData.bunkerRequest.secret.isNotBlank()) {
@@ -578,7 +576,9 @@ fun MainScreen(
                             ApplicationEntity(
                                 secret,
                                 "",
-                                listOf("wss://relay.nsec.app"),
+                                listOf(
+                                    RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES),
+                                ),
                                 "",
                                 "",
                                 "",

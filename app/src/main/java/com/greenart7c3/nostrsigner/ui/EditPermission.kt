@@ -104,7 +104,7 @@ fun EditPermission(
             permissions.addAll(database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
             applicationData = database.applicationDao().getByKey(selectedPackage)!!.application
             checked = applicationData.useSecret
-            val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
+            val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
             bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
         }
@@ -121,7 +121,7 @@ fun EditPermission(
                 applicationData.copy(
                     relays = relays2.map { it },
                 )
-            val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
+            val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$secret"
             editRelaysDialog = false
         }
@@ -228,7 +228,7 @@ fun EditPermission(
                     .padding(horizontal = 8.dp)
                     .clickable {
                         checked = !checked
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=$it" }
+                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
                         val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
                         bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
                     },

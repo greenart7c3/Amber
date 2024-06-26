@@ -44,6 +44,7 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -115,11 +116,12 @@ fun AccountScreen(
                         scope.launch(Dispatchers.IO) {
                             @Suppress("KotlinConstantConditions")
                             if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                NostrSigner.instance.checkForNewRelays()
+                                NotificationDataSource.start()
+                                delay(5000)
                                 NostrSigner.instance.applicationContext.startService(
                                     Intent(NostrSigner.instance.applicationContext, ConnectivityService::class.java),
                                 )
-                                NostrSigner.instance.checkForNewRelays()
-                                NotificationDataSource.start()
                             }
                         }
                     }

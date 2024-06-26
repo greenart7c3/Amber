@@ -8,7 +8,6 @@ import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.ui.NotificationType
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
@@ -36,48 +35,48 @@ class NostrSigner : Application() {
         return databases[npub]!!
     }
 
-    fun checkForNewRelays() {
-        val savedRelays = mutableSetOf<String>()
+    fun getSavedRelays(): Set<RelaySetupInfo> {
+        val savedRelays = mutableSetOf<RelaySetupInfo>()
         LocalPreferences.allSavedAccounts().forEach { accountInfo ->
             val database = getDatabase(accountInfo.npub)
             database.applicationDao().getAllApplications().forEach {
-                it.application.relays.forEach { url ->
-                    if (url.isNotBlank()) {
-                        savedRelays.add(url)
-                    }
+                it.application.relays.forEach { setupInfo ->
+                    savedRelays.add(setupInfo)
                 }
             }
         }
-        savedRelays.forEach {
-            if (RelayPool.getRelay(it) == null) {
+        return savedRelays
+    }
+
+    suspend fun checkForNewRelays(shouldReconnect: Boolean = false) {
+        val savedRelays = getSavedRelays()
+
+        if (LocalPreferences.getNotificationType() != NotificationType.DIRECT) {
+            savedRelays.forEach { setupInfo ->
                 RelayPool.addRelay(
                     Relay(
-                        it,
-                        read = true,
-                        write = true,
-                        activeTypes = COMMON_FEED_TYPES,
+                        setupInfo.url,
+                        setupInfo.read,
+                        setupInfo.write,
+                        setupInfo.feedTypes,
                     ),
                 )
             }
         }
 
-        RelayPool.getAll().forEach { relay ->
-            savedRelays.any { relay.url == it }.let {
-                if (!it) {
-                    relay.disconnect()
-                    RelayPool.removeRelay(relay)
-                }
-            }
+        if (shouldReconnect) {
+            checkIfRelaysAreConnected()
         }
+
         if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
             Client.reconnect(
-                RelayPool.getAll().map { RelaySetupInfo(it.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES) }.toTypedArray(),
+                savedRelays.toTypedArray(),
                 true,
             )
         }
     }
 
-    fun checkIfRelaysAreConnected() {
+    private fun checkIfRelaysAreConnected() {
         Log.d("NostrSigner", "Checking if relays are connected")
         RelayPool.getAll().forEach { relay ->
             if (!relay.isConnected()) {
@@ -86,7 +85,7 @@ class NostrSigner : Application() {
                     val inputData = Data.Builder()
                     inputData.putString("relay", relay.url)
                     builder.setInputData(inputData.build())
-                    WorkManager.getInstance(NostrSigner.instance).enqueue(builder.build())
+                    WorkManager.getInstance(instance).enqueue(builder.build())
                 }
             }
         }

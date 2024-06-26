@@ -35,7 +35,6 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.sendResult
-import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -125,13 +124,10 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (intentData.bunkerRequest != null) {
-                        val relays =
-                            applicationEntity?.application?.relays?.map { url -> Relay(url) }
-                                ?: emptyList()
                         AmberUtils.sendBunkerError(
                             account,
                             intentData.bunkerRequest,
-                            relays,
+                            applicationEntity?.application?.relays ?: emptyList(),
                             context,
                             onLoading = onLoading,
                         )
@@ -243,8 +239,7 @@ fun SingleEventHomeScreen(
                         AmberUtils.sendBunkerError(
                             account,
                             intentData.bunkerRequest,
-                            applicationEntity?.application?.relays?.map { url -> Relay(url) }
-                                ?: emptyList(),
+                            applicationEntity?.application?.relays ?: emptyList(),
                             context,
                             onLoading,
                         )
@@ -362,8 +357,7 @@ fun SingleEventHomeScreen(
                         AmberUtils.sendBunkerError(
                             account,
                             intentData.bunkerRequest,
-                            applicationEntity?.application?.relays?.map { url -> Relay(url) }
-                                ?: emptyList(),
+                            applicationEntity?.application?.relays ?: emptyList(),
                             context,
                             onLoading,
                         )
@@ -514,8 +508,7 @@ fun SingleEventHomeScreen(
                             AmberUtils.sendBunkerError(
                                 account,
                                 intentData.bunkerRequest,
-                                applicationEntity?.application?.relays?.map { url -> Relay(url) }
-                                    ?: emptyList(),
+                                applicationEntity?.application?.relays ?: emptyList(),
                                 context,
                                 onLoading,
                             )

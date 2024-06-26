@@ -11,14 +11,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toNpub
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -36,11 +34,11 @@ class MainViewModel : ViewModel() {
                 if (BuildConfig.FLAVOR == "offline") return
 
                 if (lastNetwork != null && lastNetwork != network && LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                    viewModelScope.launch(Dispatchers.IO) {
-                        NotificationDataSource.stopSync()
-                        delay(1000)
-                        NotificationDataSource.start()
-                    }
+//                    viewModelScope.launch(Dispatchers.IO) {
+//                        NotificationDataSource.stopSync()
+//                        delay(1000)
+//                        NotificationDataSource.start()
+//                    }
                 }
 
                 lastNetwork = network
@@ -61,9 +59,9 @@ class MainViewModel : ViewModel() {
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${isOnMobileDataState.value} hasWifi ${isOnWifiDataState.value}",
                     )
                     if (updateNetworkCapabilities(networkCapabilities) && LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                        NotificationDataSource.stopSync()
-                        delay(1000)
-                        NotificationDataSource.start()
+//                        NotificationDataSource.stopSync()
+//                        delay(1000)
+//                        NotificationDataSource.start()
                     }
                 }
             }

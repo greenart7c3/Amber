@@ -41,7 +41,6 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.NotificationType
-import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
@@ -164,7 +163,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "ack", null),
-                    permission.application.relays.map { url -> Relay(url) },
+                    permission.application.relays,
                     onLoading = {},
                 ) { }
                 return@nip04Decrypt
@@ -187,7 +186,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             acc,
                             bunkerRequest.localKey,
                             BunkerResponse(bunkerRequest.id, "", "invalid secret"),
-                            applicationWithSecret?.application?.relays?.map { url -> Relay(url) } ?: listOf(),
+                            applicationWithSecret?.application?.relays ?: listOf(),
                             onLoading = { },
                         ) { }
                         return@nip04Decrypt
@@ -238,8 +237,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             if (type == SignerType.CONNECT) {
                 message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
             }
-            val relaysUrl = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
-            val relays = relaysUrl.map { url -> Relay(url) }
+            val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
 
             cursor.use { localCursor ->
                 if (localCursor == null) {

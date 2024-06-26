@@ -476,7 +476,7 @@ private fun EncryptNSecQRButton(
 
     if (showDialog) {
         QrCodeDialog(
-            content = CryptoUtils.encryptNIP49(account.keyPair.privKey!!.toHexKey(), password.value.text) ?: "",
+            content = CryptoUtils.encryptNIP49(account.keyPair.privKey!!.toHexKey(), password.value.text),
         ) {
             showDialog = false
         }
@@ -547,25 +547,23 @@ private fun encryptCopyNSec(
         }
     } else {
         account.keyPair.privKey?.let {
-            val key = CryptoUtils.encryptNIP49(it.toHexKey(), password.value.text)
-            if (key != null) {
+            try {
+                val key = CryptoUtils.encryptNIP49(it.toHexKey(), password.value.text)
                 clipboardManager.setText(AnnotatedString(key))
                 scope.launch {
                     Toast.makeText(
                         context,
                         context.getString(R.string.secret_key_copied_to_clipboard),
                         Toast.LENGTH_SHORT,
-                    )
-                        .show()
+                    ).show()
                 }
-            } else {
+            } catch (e: Exception) {
                 scope.launch {
                     Toast.makeText(
                         context,
                         context.getString(R.string.failed_to_encrypt_key),
                         Toast.LENGTH_SHORT,
-                    )
-                        .show()
+                    ).show()
                 }
             }
         }

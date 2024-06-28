@@ -216,4 +216,5 @@
     <string name="save">Salvar</string>
     <string name="logs">Logs</string>
     <string name="clear_logs">Clear logs</string>
+    <string name="default_relays">Default relays</string>
 </resources>

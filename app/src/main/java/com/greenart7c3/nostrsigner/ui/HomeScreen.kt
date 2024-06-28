@@ -20,11 +20,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.SingleEventHomeScreen
 import kotlinx.coroutines.Dispatchers
@@ -45,8 +48,12 @@ fun HomeScreen(
         launch(Dispatchers.IO) {
             loading = true
             try {
-                database.applicationDao().getAllApplications().forEach {
-                    ApplicationNameCache.names[it.application.key] = it.application.name
+                LocalPreferences.allSavedAccounts().forEach { account ->
+                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllApplications().forEach {
+                        if (it.application.name.isNotBlank()) {
+                            ApplicationNameCache.names["${account.npub.toShortenHex()}-${it.application.key}"] = it.application.name
+                        }
+                    }
                 }
             } finally {
                 loading = false
@@ -92,7 +99,6 @@ fun HomeScreen(
                     intents,
                     packageName,
                     account,
-                    database,
                 ) {
                     loading = it
                 }

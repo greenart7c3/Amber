@@ -44,7 +44,6 @@ import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -66,6 +65,7 @@ import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -102,7 +102,6 @@ fun MultiEventHomeScreen(
     intents: List<IntentData>,
     packageName: String?,
     accountParam: Account,
-    database: AppDatabase,
     onLoading: (Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -161,6 +160,9 @@ fun MultiEventHomeScreen(
                                     } ?: continue
 
                                 val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+
+                                val database = NostrSigner.instance.getDatabase(localAccount.keyPair.pubKey.toNpub())
+
                                 val applicationEntity = database.applicationDao().getByKey(key)
 
                                 if (intentData.type == SignerType.SIGN_EVENT) {
@@ -421,14 +423,17 @@ fun ListItem(
 ) {
     var isExpanded by remember { mutableStateOf(false) }
 
-    val key =
-        if (intentData.bunkerRequest != null) {
-            intentData.bunkerRequest.localKey
-        } else {
-            "$packageName"
-        }
+    val key = if (intentData.bunkerRequest != null) {
+        intentData.bunkerRequest.localKey
+    } else {
+        "$packageName"
+    }
 
-    val appName = ApplicationNameCache.names[key] ?: key.toShortenHex()
+    val localAccount = LocalPreferences.loadFromEncryptedStorage(
+        intentData.currentAccount,
+    )?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
+
+    val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
     val context = LocalContext.current
 
     Card(

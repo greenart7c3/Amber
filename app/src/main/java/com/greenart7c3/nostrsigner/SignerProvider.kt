@@ -281,9 +281,9 @@ class SignerProvider : ContentProvider() {
                             type,
                             account,
                             pubkey,
-                        )
+                        ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
-                        null
+                        "Could not decrypt the message"
                     }
 
                 database.applicationDao().addHistory(

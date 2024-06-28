@@ -7,8 +7,13 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
@@ -44,7 +49,34 @@ data class BunkerMetadata(
     val name: String,
     val url: String,
     val description: String,
-)
+) {
+    companion object {
+        val mapper: ObjectMapper =
+            jacksonObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .registerModule(
+                    SimpleModule()
+                        .addDeserializer(BunkerMetadata::class.java, BunkerMetadataDeserializer()),
+                )
+
+        fun fromJson(jsonObject: JsonNode): BunkerMetadata {
+            return BunkerMetadata(
+                name = jsonObject.get("name")?.asText()?.intern() ?: "",
+                url = jsonObject.get("url")?.asText()?.intern() ?: "",
+                description = jsonObject.get("description")?.asText()?.intern() ?: "",
+            )
+        }
+
+        private class BunkerMetadataDeserializer : StdDeserializer<BunkerMetadata>(BunkerMetadata::class.java) {
+            override fun deserialize(
+                jp: JsonParser,
+                ctxt: DeserializationContext,
+            ): BunkerMetadata {
+                return fromJson(jp.codec.readTree(jp))
+            }
+        }
+    }
+}
 
 object IntentUtils {
     val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
@@ -635,11 +667,7 @@ object IntentUtils {
     }
 
     private fun metaDataFromJson(json: String): BunkerMetadata {
-        val objectMapper =
-            jacksonObjectMapper()
-                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-
-        return objectMapper.readValue(json, BunkerMetadata::class.java)
+        return BunkerMetadata.mapper.readValue(json, BunkerMetadata::class.java)
     }
 
     private fun getIntentFromNostrConnect(

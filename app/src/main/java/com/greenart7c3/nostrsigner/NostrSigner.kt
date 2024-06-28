@@ -48,8 +48,11 @@ class NostrSigner : Application() {
         return savedRelays
     }
 
-    suspend fun checkForNewRelays(shouldReconnect: Boolean = false) {
-        val savedRelays = getSavedRelays()
+    suspend fun checkForNewRelays(
+        shouldReconnect: Boolean = false,
+        newRelays: Set<RelaySetupInfo> = emptySet(),
+    ) {
+        val savedRelays = getSavedRelays() + newRelays
 
         if (LocalPreferences.getNotificationType() != NotificationType.DIRECT) {
             savedRelays.forEach { setupInfo ->

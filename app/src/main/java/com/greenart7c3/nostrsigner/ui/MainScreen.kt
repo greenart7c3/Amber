@@ -132,7 +132,10 @@ fun sendResult(
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
         if (intentData.bunkerRequest != null) {
-            NostrSigner.instance.checkForNewRelays(LocalPreferences.getNotificationType() != NotificationType.DIRECT)
+            NostrSigner.instance.checkForNewRelays(
+                LocalPreferences.getNotificationType() != NotificationType.DIRECT,
+                intentData.bunkerRequest.relays.toSet(),
+            )
         }
 
         val activity = context.getAppCompatActivity()

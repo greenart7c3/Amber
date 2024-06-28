@@ -134,6 +134,9 @@ interface ApplicationDao {
     @Query("SELECT * FROM amber_log ORDER BY time DESC")
     fun getLogs(): Flow<List<LogEntity>>
 
+    @Query("SELECT * FROM amber_log where url = :url ORDER BY time DESC")
+    fun getLogsByUrl(url: String): Flow<List<LogEntity>>
+
     @Query("DELETE FROM amber_log")
     fun clearLogs()
 }

@@ -281,9 +281,9 @@ class SignerProvider : ContentProvider() {
                             type,
                             account,
                             pubkey,
-                        ) ?: "Could not decrypt the message"
+                        )
                     } catch (e: Exception) {
-                        "Could not decrypt the message"
+                        null
                     }
 
                 database.applicationDao().addHistory(
@@ -297,13 +297,11 @@ class SignerProvider : ContentProvider() {
                     ),
                 )
 
-                if (type == SignerType.NIP04_ENCRYPT && result == "Could not decrypt the message") {
-                    return null
-                } else {
-                    val cursor = MatrixCursor(arrayOf("signature", "event"))
-                    cursor.addRow(arrayOf<Any>(result, result))
-                    return cursor
-                }
+                if (result == null) return null
+
+                val cursor = MatrixCursor(arrayOf("signature", "event"))
+                cursor.addRow(arrayOf<Any>(result, result))
+                return cursor
             }
 
             "content://$appId.GET_PUBLIC_KEY" -> {

@@ -99,8 +99,6 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.ByteArrayOutputStream
@@ -580,9 +578,7 @@ fun MainScreen(
                             ApplicationEntity(
                                 secret,
                                 "",
-                                listOf(
-                                    RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES),
-                                ),
+                                LocalPreferences.getDefaultRelays(),
                                 "",
                                 "",
                                 "",
@@ -595,7 +591,8 @@ fun MainScreen(
                         database.applicationDao().insertApplication(
                             application,
                         )
-                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app"
+                        val relayString = LocalPreferences.getDefaultRelays().joinToString(separator = "&") { "relay=${it.url}" }
+                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?$relayString"
                         clipboardManager.setText(AnnotatedString(bunkerUrl))
                         scope.launch(Dispatchers.Main) {
                             navController.navigate("Permission/$secret")

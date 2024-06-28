@@ -93,7 +93,8 @@ fun EditPermission(
     }
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
-        mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?relay=wss://relay.nsec.app$secret")
+        val relayString = LocalPreferences.getDefaultRelays().joinToString(separator = "&") { "relay=${it.url}" }
+        mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?$relayString$secret")
     }
     var editRelaysDialog by remember {
         mutableStateOf(false)

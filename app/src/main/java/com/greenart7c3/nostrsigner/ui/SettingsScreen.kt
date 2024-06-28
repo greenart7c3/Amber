@@ -19,6 +19,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
@@ -71,6 +72,7 @@ import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
+import com.greenart7c3.nostrsigner.ui.actions.EditDefaultRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
@@ -165,6 +167,7 @@ fun SettingsScreen(
     val languageIndex = getLanguageIndex(languageEntries, account.language)
     var languageDialog by remember { mutableStateOf(false) }
     var logDialog by remember { mutableStateOf(false) }
+    var relayDialog by remember { mutableStateOf(false) }
 
     val sheetState =
         rememberModalBottomSheetState(
@@ -189,6 +192,20 @@ fun SettingsScreen(
                     shouldShowBottomSheet = false
                     sheetState.hide()
                 }
+            },
+        )
+    }
+
+    if (relayDialog) {
+        EditDefaultRelaysDialog(
+            onClose = {
+                relayDialog = false
+            },
+            onPost = {
+                if (it.isNotEmpty()) {
+                    LocalPreferences.setDefaultRelays(it)
+                }
+                relayDialog = false
             },
         )
     }
@@ -498,6 +515,20 @@ fun SettingsScreen(
                     },
                 )
             }
+        }
+
+        Box(
+            Modifier
+                .padding(16.dp),
+        ) {
+            IconRow(
+                title = stringResource(R.string.default_relays),
+                icon = Icons.Default.Hub,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    relayDialog = true
+                },
+            )
         }
 
         Box(

@@ -11,6 +11,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.parseNotificationType
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
@@ -41,6 +43,7 @@ private object PrefKeys {
     const val PROXY_PORT = "proxy_port"
     const val NOTIFICATION_TYPE = "notification_type"
     const val LANGUAGE_PREFS = "languagePreferences"
+    const val DEFAULT_RELAYS = "default_relays"
 }
 
 @Immutable
@@ -61,6 +64,18 @@ object LocalPreferences {
                 true,
             )
         }.toSet().toList()
+    }
+
+    fun getDefaultRelays(): List<RelaySetupInfo> {
+        return encryptedPreferences().getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
+            RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
+        } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES))
+    }
+
+    fun setDefaultRelays(relays: List<RelaySetupInfo>) {
+        encryptedPreferences().edit().apply {
+            putStringSet(PrefKeys.DEFAULT_RELAYS, relays.map { it.url }.toSet())
+        }.apply()
     }
 
     fun currentAccount(): String? {

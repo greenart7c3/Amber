@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
@@ -153,6 +154,145 @@ fun EditRelaysDialog(
                                 var addedWSS =
                                     if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                                         if (url.endsWith(".onion") || url.endsWith(".onion/")) {
+                                            "ws://$url"
+                                        } else {
+                                            "wss://$url"
+                                        }
+                                    } else {
+                                        url
+                                    }
+                                if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
+                                relays2.add(
+                                    RelaySetupInfo(
+                                        addedWSS,
+                                        read = true,
+                                        write = true,
+                                        feedTypes = COMMON_FEED_TYPES,
+                                    ),
+                                )
+                                textFieldRelay = TextFieldValue("")
+                            }
+                        },
+                    ) {
+                        Icon(
+                            Icons.Default.Add,
+                            null,
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun EditDefaultRelaysDialog(
+    onClose: () -> Unit,
+    onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
+) {
+    var textFieldRelay by remember {
+        mutableStateOf(TextFieldValue(""))
+    }
+    val relays2 =
+        remember {
+            val localRelays = mutableStateListOf<RelaySetupInfo>()
+            LocalPreferences.getDefaultRelays().forEach {
+                localRelays.add(
+                    it.copy(),
+                )
+            }
+            localRelays
+        }
+    Dialog(
+        onDismissRequest = onClose,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
+        Surface(
+            modifier = Modifier
+                .fillMaxSize(),
+        ) {
+            Column(
+                modifier = Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CloseButton {
+                        onClose()
+                    }
+                    PostButton(
+                        isActive = relays2.isNotEmpty(),
+                        onPost = {
+                            onPost(relays2)
+                        },
+                    )
+                }
+                LazyColumn(
+                    Modifier
+                        .fillMaxHeight(0.9f)
+                        .fillMaxWidth(),
+                ) {
+                    items(relays2.size) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Text(
+                                relays2[it].url,
+                                Modifier
+                                    .weight(0.9f)
+                                    .padding(8.dp),
+                                fontWeight = FontWeight.Bold,
+                                fontSize = 18.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            IconButton(
+                                onClick = {
+                                    relays2.removeAt(it)
+                                },
+                            ) {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    stringResource(R.string.delete),
+                                )
+                            }
+                        }
+                    }
+                }
+                Row(
+                    Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth(0.9f)
+                            .padding(horizontal = 16.dp),
+                        value = textFieldRelay.text,
+                        keyboardOptions = KeyboardOptions(
+                            imeAction = ImeAction.Done,
+                        ),
+                        onValueChange = {
+                            textFieldRelay = TextFieldValue(it)
+                        },
+                        label = {
+                            Text("Relay")
+                        },
+                    )
+                    IconButton(
+                        onClick = {
+                            val url = textFieldRelay.text
+                            if (url.isNotBlank() && url != "/") {
+                                var addedWSS =
+                                    if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
+                                        // TODO: How to identify relays on the local network?
+                                        val isLocalHost = url.contains("127.0.0.1") || url.contains("localhost")
+                                        if (url.endsWith(".onion") || url.endsWith(".onion/") || isLocalHost) {
                                             "ws://$url"
                                         } else {
                                             "wss://$url"

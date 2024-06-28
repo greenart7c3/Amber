@@ -117,8 +117,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         acc: Account,
     ) {
         acc.signer.nip04Decrypt(event.content, event.pubKey) {
-            Log.d("bunker", event.toJson())
-            Log.d("bunker", it)
+            if (BuildConfig.DEBUG) {
+                Log.d("bunker", event.toJson())
+                Log.d("bunker", it)
+            }
 
             val dao = NostrSigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
             val notification = dao.getNotification(event.id)

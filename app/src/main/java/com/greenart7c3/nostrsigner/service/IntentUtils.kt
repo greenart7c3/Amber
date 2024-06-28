@@ -18,6 +18,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
@@ -29,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.RelayPool
@@ -324,6 +326,12 @@ object IntentUtils {
                 encryptedContent,
             ) {
                 GlobalScope.launch(Dispatchers.IO) {
+                    if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
+                        NostrSigner.instance.checkForNewRelays(
+                            LocalPreferences.getNotificationType() != NotificationType.DIRECT,
+                            newRelays = relays.toSet(),
+                        )
+                    }
                     Client.send(it, relayList = relays)
                 }
             }

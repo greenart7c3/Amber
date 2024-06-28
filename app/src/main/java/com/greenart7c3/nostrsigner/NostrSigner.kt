@@ -56,14 +56,16 @@ class NostrSigner : Application() {
 
         if (LocalPreferences.getNotificationType() != NotificationType.DIRECT) {
             savedRelays.forEach { setupInfo ->
-                RelayPool.addRelay(
-                    Relay(
-                        setupInfo.url,
-                        setupInfo.read,
-                        setupInfo.write,
-                        setupInfo.feedTypes,
-                    ),
-                )
+                if (RelayPool.getRelay(setupInfo.url) == null) {
+                    RelayPool.addRelay(
+                        Relay(
+                            setupInfo.url,
+                            setupInfo.read,
+                            setupInfo.write,
+                            setupInfo.feedTypes,
+                        ),
+                    )
+                }
             }
         }
 

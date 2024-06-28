@@ -165,7 +165,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     BunkerResponse(bunkerRequest.id, "ack", null),
                     permission.application.relays,
                     onLoading = {},
-                ) { }
+                    onDone = {},
+                    checkForEmptyRelays = false,
+                )
                 return@nip04Decrypt
             }
 
@@ -188,7 +190,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             BunkerResponse(bunkerRequest.id, "", "invalid secret"),
                             applicationWithSecret?.application?.relays ?: listOf(),
                             onLoading = { },
-                        ) { }
+                            onDone = { },
+                            checkForEmptyRelays = false,
+                        )
                         return@nip04Decrypt
                     }
                 } else {
@@ -209,7 +213,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     BunkerResponse(bunkerRequest.id, "", "no permission"),
                     listOf(),
                     onLoading = { },
-                ) { }
+                    onDone = {},
+                    checkForEmptyRelays = false,
+                )
                 return@nip04Decrypt
             }
 
@@ -260,7 +266,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 BunkerResponse(bunkerRequest.id, "", "user rejected"),
                                 relays,
                                 onLoading = { },
-                            ) { }
+                                onDone = { },
+                                checkForEmptyRelays = false,
+                            )
                         } else {
                             val index = localCursor.getColumnIndex("event")
                             val result = localCursor.getString(index)
@@ -271,7 +279,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                 BunkerResponse(bunkerRequest.id, result, null),
                                 relays,
                                 onLoading = { },
-                            ) { }
+                                onDone = { },
+                                checkForEmptyRelays = false,
+                            )
                         }
                     } else {
                         notificationManager()

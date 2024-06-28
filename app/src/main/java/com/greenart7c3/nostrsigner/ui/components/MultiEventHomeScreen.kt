@@ -217,7 +217,8 @@ fun MultiEventHomeScreen(
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
                                             applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
-                                        ) {}
+                                            onDone = {},
+                                        )
                                     } else {
                                         results.add(
                                             Result(
@@ -290,7 +291,8 @@ fun MultiEventHomeScreen(
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
                                             applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
-                                        ) { }
+                                            onDone = {},
+                                        )
                                     } else {
                                         results.add(
                                             Result(
@@ -354,7 +356,8 @@ fun MultiEventHomeScreen(
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
                                             applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
-                                        ) { }
+                                            onDone = {},
+                                        )
                                     } else {
                                         results.add(
                                             Result(

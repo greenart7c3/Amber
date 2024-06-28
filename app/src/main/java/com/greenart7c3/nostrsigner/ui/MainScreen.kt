@@ -214,36 +214,37 @@ fun sendResult(
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
                 application.application.relays,
                 onLoading,
-            ) {
-                if (intentData.bunkerRequest.secret.isNotBlank()) {
-                    val secretApplication = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
-                    secretApplication?.let {
-                        database.applicationDao().delete(it.application)
+                onDone = {
+                    if (intentData.bunkerRequest.secret.isNotBlank()) {
+                        val secretApplication = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                        secretApplication?.let {
+                            database.applicationDao().delete(it.application)
+                        }
                     }
-                }
-                if (intentData.type == SignerType.CONNECT) {
-                    database.applicationDao().deletePermissions(key)
-                }
-                database.applicationDao().insertApplicationWithPermissions(application)
-                database.applicationDao().addHistory(
-                    HistoryEntity(
-                        0,
-                        key,
-                        intentData.type.toString(),
-                        kind,
-                        TimeUtils.now(),
-                        true,
-                    ),
-                )
-                PushNotificationUtils.hasInit = false
-                GlobalScope.launch(Dispatchers.IO) {
-                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
-                }
+                    if (intentData.type == SignerType.CONNECT) {
+                        database.applicationDao().deletePermissions(key)
+                    }
+                    database.applicationDao().insertApplicationWithPermissions(application)
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            key,
+                            intentData.type.toString(),
+                            kind,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
+                    PushNotificationUtils.hasInit = false
+                    GlobalScope.launch(Dispatchers.IO) {
+                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
+                    }
 
-                EventNotificationConsumer(context).notificationManager().cancelAll()
-                activity?.intent = null
-                activity?.finish()
-            }
+                    EventNotificationConsumer(context).notificationManager().cancelAll()
+                    activity?.intent = null
+                    activity?.finish()
+                },
+            )
         } else if (packageName != null) {
             database.applicationDao().insertApplicationWithPermissions(application)
             database.applicationDao().addHistory(

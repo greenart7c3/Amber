@@ -291,8 +291,9 @@ object IntentUtils {
         relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
+        checkForEmptyRelays: Boolean = true,
     ) {
-        if (relays.isEmpty()) {
+        if (relays.isEmpty() && checkForEmptyRelays) {
             onLoading(false)
             AmberListenerSingleton.accountStateViewModel?.toast("Relays", "No relays found")
             return

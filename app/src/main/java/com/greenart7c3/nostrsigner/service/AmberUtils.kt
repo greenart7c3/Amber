@@ -133,10 +133,11 @@ object AmberUtils {
             BunkerResponse(bunkerRequest.id, "", "user rejected"),
             relays,
             onLoading = onLoading,
-        ) {
-            context.getAppCompatActivity()?.intent = null
-            context.getAppCompatActivity()?.finish()
-        }
+            onDone = {
+                context.getAppCompatActivity()?.intent = null
+                context.getAppCompatActivity()?.finish()
+            },
+        )
     }
 
     fun acceptOrRejectPermission(

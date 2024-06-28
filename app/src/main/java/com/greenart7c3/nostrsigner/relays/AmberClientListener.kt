@@ -106,7 +106,6 @@ class AmberClientListener(
         onLoading(false)
         if (success) {
             onDone()
-            accountStateViewModel?.toast("Success", "Event sent successfully")
         } else {
             accountStateViewModel?.toast("Error", message)
             RelayPool.unregister(this@AmberClientListener)

@@ -218,5 +218,5 @@
     <string name="save">Speichern</string>
     <string name="logs">Logs</string>
     <string name="clear_logs">Logs löschen</string>
-    <string name="default_relays">Default relays</string>
+    <string name="default_relays">Standard Relais</string>
 </resources>

@@ -44,6 +44,7 @@ private object PrefKeys {
     const val NOTIFICATION_TYPE = "notification_type"
     const val LANGUAGE_PREFS = "languagePreferences"
     const val DEFAULT_RELAYS = "default_relays"
+    const val ENDPOINT = "endpoint"
 }
 
 @Immutable
@@ -64,6 +65,16 @@ object LocalPreferences {
                 true,
             )
         }.toSet().toList()
+    }
+
+    fun getEndpoint(): String {
+        return encryptedPreferences().getString(PrefKeys.ENDPOINT, "") ?: ""
+    }
+
+    fun setEndpoint(endpoint: String) {
+        encryptedPreferences().edit().apply {
+            putString(PrefKeys.ENDPOINT, endpoint)
+        }.apply()
     }
 
     fun getDefaultRelays(): List<RelaySetupInfo> {

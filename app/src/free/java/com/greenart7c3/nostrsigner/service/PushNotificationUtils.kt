@@ -22,6 +22,8 @@ package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import kotlinx.coroutines.CancellationException
 
 object PushNotificationUtils {
@@ -38,6 +40,18 @@ object PushNotificationUtils {
             distributions.firstOrNull { it.isNotBlank() }?.let {
                 pushHandler.saveDistributor(it)
             }
+        } else {
+            accounts.forEach {
+                NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                    LogEntity(
+                        0,
+                        "Push server",
+                        "Push server",
+                        "No distributors found for push notifications",
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
         try {
             if (pushHandler.savedDistributorExists()) {
@@ -46,6 +60,17 @@ object PushNotificationUtils {
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Log.d("Amber-OSSPushUtils", "Failed to get endpoint.")
+            accounts.forEach {
+                NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                    LogEntity(
+                        0,
+                        "Push server",
+                        "Push server",
+                        "Failed to get endpoint. ${e.message}",
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 }

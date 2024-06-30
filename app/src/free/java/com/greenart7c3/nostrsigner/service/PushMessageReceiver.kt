@@ -28,6 +28,7 @@ import android.util.LruCache
 import androidx.core.content.ContextCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
 import kotlinx.coroutines.CancellationException
@@ -86,10 +87,13 @@ class PushMessageReceiver : MessagingReceiver() {
     ) {
         Log.d(TAG, "New endpoint provided:- $endpoint for Instance: $instance")
         val sanitizedEndpoint = endpoint.dropLast(5)
-        PushDistributorHandler.setEndpoint(sanitizedEndpoint)
+        if (pushHandler.getSavedEndpoint() == sanitizedEndpoint) {
+            Log.d(TAG, "Endpoint already saved. ")
+            return
+        }
+        pushHandler.setEndpoint(sanitizedEndpoint)
         scope.launch(Dispatchers.IO) {
             RegisterAccounts(LocalPreferences.allSavedAccounts()).go(sanitizedEndpoint)
-
             NotificationUtils.getOrCreateDMChannel(appContext)
         }
     }
@@ -109,19 +113,32 @@ class PushMessageReceiver : MessagingReceiver() {
         instance: String,
     ) {
         Log.d(TAG, "Registration failed for Instance: $instance")
+
+        LocalPreferences.allSavedAccounts().forEach {
+            NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                LogEntity(
+                    0,
+                    "Push server",
+                    "Push server",
+                    "Registration failed for Instance: $instance",
+                    System.currentTimeMillis(),
+                ),
+            )
+        }
+
         scope.cancel()
-        PushDistributorHandler.forceRemoveDistributor(context)
+        pushHandler.forceRemoveDistributor(context)
     }
 
     override fun onUnregistered(
         context: Context,
         instance: String,
     ) {
-        val removedEndpoint = PushDistributorHandler.endpoint
+        val removedEndpoint = pushHandler.getSavedEndpoint()
         Log.d(TAG, "Endpoint: $removedEndpoint removed for Instance: $instance")
         Log.d(TAG, "App is unregistered. ")
-        PushDistributorHandler.forceRemoveDistributor(context)
-        PushDistributorHandler.removeEndpoint()
+        pushHandler.forceRemoveDistributor(context)
+        pushHandler.removeEndpoint()
     }
 
     fun notificationManager(): NotificationManager {

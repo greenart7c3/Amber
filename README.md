@@ -3,7 +3,7 @@
 Amber is a nostr event signer for Android. It allows users to keep their nsec segregated in a single, dedicated app. The goal of Amber is to have your smartphone act as a NIP-46 signing device without any need for servers or additional hardware. "Private keys should be exposed to as few systems as possible as each system adds to the attack surface," as the rationale of said NIP states. In addition to native apps, Amber aims to support all current nostr web applications without requiring any extensions or web servers.
 
 <div align="center">
-  
+
 [![GitHub downloads](https://img.shields.io/github/downloads/greenart7c3/Amber/total?label=Downloads&labelColor=27303D&color=0D1117&logo=github&logoColor=FFFFFF&style=flat)](https://github.com/greenart7c3/Amber/releases)
 [![Last Version](https://img.shields.io/github/release/greenart7c3/Amber.svg?maxAge=3600&label=Stable&labelColor=06599d&color=043b69)](https://github.com/greenart7c3/Amber)
 [![CI](https://img.shields.io/github/actions/workflow/status/greenart7c3/Amber/build.yml?labelColor=27303D)](https://github.com/greenart7c3/Amber/actions/workflows/build.yml)
@@ -21,13 +21,16 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
 - [x] Support for multiple accounts
 
-# Download
+## Download and Install
 
+[<img src="./docs/design/obtainium.png"
+alt="Get it on Obtaininum"
+height="70">](https://github.com/ImranR98/Obtainium)
+[<img src="https://github.com/machiav3lli/oandbackupx/raw/034b226cea5c1b30eb4f6a6f313e4dadcbb0ece4/badge_github.png" alt="Get it on GitHub"
+height="70">](https://github.com/greenart7c3/Amber/releases)
 [<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
-     alt="Get it on F-Droid"
-     height="80">](https://f-droid.org/packages/com.greenart7c3.nostrsigner/)
-
-Or download the latest APK that suits your needs from the [Releases Section](https://github.com/greenart7c3/Amber/releases/latest).
+alt="Get it on F-Droid"
+height="70">](https://f-droid.org/packages/com.greenart7c3.nostrsigner/)
 
 # Contributing
 

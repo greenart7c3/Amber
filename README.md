@@ -21,6 +21,14 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 - [x] Use content provider to sign events in background when you checked the remember my choice option on android
 - [x] Support for multiple accounts
 
+# Download
+
+[<img src="https://fdroid.gitlab.io/artwork/badge/get-it-on.png"
+     alt="Get it on F-Droid"
+     height="80">](https://f-droid.org/packages/com.greenart7c3.nostrsigner/)
+
+Or download the latest APK that suits your needs from the [Releases Section](https://github.com/greenart7c3/Amber/releases/latest).
+
 # Contributing
 
 Issues can be logged on: [https://gitworkshop.dev/repo/Amber](https://gitworkshop.dev/repo/Amber)

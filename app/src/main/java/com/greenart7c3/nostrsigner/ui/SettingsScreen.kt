@@ -69,6 +69,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
+import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
@@ -323,7 +324,9 @@ fun SettingsScreen(
                             notificationTypeDialog = false
                         }
 
-                        PostButton(isActive = true) {
+                        PostButton(
+                            isActive = true,
+                        ) {
                             notificationTypeDialog = false
                             scope.launch(Dispatchers.IO) {
                                 LocalPreferences.updateNotificationType(parseNotificationType(notificationItemsIndex))
@@ -337,6 +340,8 @@ fun SettingsScreen(
                                     NotificationDataSource.stopSync()
                                     RelayPool.disconnect()
                                 } else {
+                                    PushNotificationUtils.hasInit = false
+                                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
                                     NostrSigner.instance.checkForNewRelays()
                                     NotificationDataSource.start()
                                     NostrSigner.instance.applicationContext.startService(
@@ -362,6 +367,16 @@ fun SettingsScreen(
                                 notificationItemsIndex,
                             ) {
                                 notificationItemsIndex = it
+                            }
+                        }
+
+                        @Suppress("KotlinConstantConditions")
+                        if (BuildConfig.FLAVOR == "free") {
+                            Box(
+                                Modifier
+                                    .padding(8.dp),
+                            ) {
+                                PushNotificationSettingsRow()
                             }
                         }
                     }

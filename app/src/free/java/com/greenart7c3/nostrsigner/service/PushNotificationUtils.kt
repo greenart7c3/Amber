@@ -35,22 +35,25 @@ object PushNotificationUtils {
             return
         }
 
-        val distributions = pushHandler.getInstalledDistributors()
-        if (distributions.isNotEmpty()) {
-            distributions.firstOrNull { it.isNotBlank() }?.let {
-                pushHandler.saveDistributor(it)
-            }
-        } else {
-            accounts.forEach {
-                NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
-                    LogEntity(
-                        0,
-                        "Push server",
-                        "Push server",
-                        "No distributors found for push notifications",
-                        System.currentTimeMillis(),
-                    ),
-                )
+        val savedDistributor = pushHandler.getSavedDistributor()
+        if (savedDistributor.isBlank()) {
+            val distributions = pushHandler.getInstalledDistributors()
+            if (distributions.isNotEmpty()) {
+                distributions.firstOrNull { it.isNotBlank() }?.let {
+                    pushHandler.saveDistributor(it)
+                }
+            } else {
+                accounts.forEach {
+                    NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                        LogEntity(
+                            0,
+                            "Push server",
+                            "Push server",
+                            "No distributors found for push notifications",
+                            System.currentTimeMillis(),
+                        ),
+                    )
+                }
             }
         }
         try {

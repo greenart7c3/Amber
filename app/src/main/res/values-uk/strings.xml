@@ -219,4 +219,18 @@
     <string name="logs">Logs</string>
     <string name="clear_logs">Clear logs</string>
     <string name="default_relays">Default relays</string>
+    <string name="distributors">Distributors</string>
+    <string name="select_distributor">Select the push notification distributor</string>
+    <string name="select_push_server">Select a UnifiedPush App</string>
+    <string name="push_server_install_app">Push Notification Setup</string>
+    <string name="push_server_install_app_description">        To receive push notifications, install any app that supports [Unified Push](https://unifiedpush.org/), such as [Nfty](https://ntfy.sh/).
+        After installing, select the app you want to use in the Settings.
+    </string>
+    <string name="push_server_uses_app_explainer">Uses app %1$s</string>
+    <string name="push_server_title">Push Notification</string>
+    <string name="push_server_explainer">From installed UnifiedPush apps</string>
+    <string name="quick_action_dont_show_again_button">Don\'t show again</string>
+    <string name="error_dialog_button_ok">OK</string>
+    <string name="push_server_none">None</string>
+    <string name="push_server_none_explainer">Disables Push Notifications</string>
 </resources>

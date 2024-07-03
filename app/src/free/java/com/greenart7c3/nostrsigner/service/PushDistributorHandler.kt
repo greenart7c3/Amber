@@ -42,19 +42,19 @@ object PushDistributorHandler : PushDistributorActions {
     private val appContext = NostrSigner.getInstance().applicationContext
     private val unifiedPush: UnifiedPush = UnifiedPush
 
-    private var endpointInternal = LocalPreferences.getEndpoint()
+    private var endpointInternal = LocalPreferences.getEndpoint(NostrSigner.getInstance())
 
     fun getSavedEndpoint() = endpointInternal
 
-    fun setEndpoint(newEndpoint: String) {
+    fun setEndpoint(context: Context, newEndpoint: String) {
         endpointInternal = newEndpoint
-        LocalPreferences.setEndpoint(newEndpoint)
+        LocalPreferences.setEndpoint(context, newEndpoint)
         Log.d("PushHandler", "New endpoint saved : $endpointInternal")
     }
 
-    fun removeEndpoint() {
+    fun removeEndpoint(context: Context) {
         endpointInternal = ""
-        LocalPreferences.setEndpoint("")
+        LocalPreferences.setEndpoint(context, "")
     }
 
     override fun getSavedDistributor(): String {

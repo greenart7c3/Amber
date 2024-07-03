@@ -58,6 +58,11 @@ object PushNotificationUtils {
         }
         try {
             if (pushHandler.savedDistributorExists()) {
+                val endpoint = pushHandler.getSavedEndpoint()
+                if (endpoint.isBlank()) {
+                    pushHandler.saveDistributor(pushHandler.getSavedDistributor())
+                }
+
                 RegisterAccounts(accounts).go(pushHandler.getSavedEndpoint())
             }
         } catch (e: Exception) {

@@ -91,9 +91,9 @@ class PushMessageReceiver : MessagingReceiver() {
             Log.d(TAG, "Endpoint already saved. ")
             return
         }
-        pushHandler.setEndpoint(sanitizedEndpoint)
+        pushHandler.setEndpoint(context, sanitizedEndpoint)
         scope.launch(Dispatchers.IO) {
-            RegisterAccounts(LocalPreferences.allSavedAccounts()).go(sanitizedEndpoint)
+            RegisterAccounts(LocalPreferences.allSavedAccounts(context)).go(sanitizedEndpoint)
             NotificationUtils.getOrCreateDMChannel(appContext)
         }
     }
@@ -114,7 +114,7 @@ class PushMessageReceiver : MessagingReceiver() {
     ) {
         Log.d(TAG, "Registration failed for Instance: $instance")
 
-        LocalPreferences.allSavedAccounts().forEach {
+        LocalPreferences.allSavedAccounts(context).forEach {
             NostrSigner.getInstance().getDatabase(it.npub).applicationDao().insertLog(
                 LogEntity(
                     0,
@@ -138,7 +138,7 @@ class PushMessageReceiver : MessagingReceiver() {
         Log.d(TAG, "Endpoint: $removedEndpoint removed for Instance: $instance")
         Log.d(TAG, "App is unregistered. ")
         pushHandler.forceRemoveDistributor(context)
-        pushHandler.removeEndpoint()
+        pushHandler.removeEndpoint(context)
     }
 
     fun notificationManager(): NotificationManager {

@@ -1,11 +1,13 @@
 package com.greenart7c3.nostrsigner
 
 import android.app.Application
+import android.content.Intent
 import android.util.Log
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.Client
@@ -26,6 +28,13 @@ class NostrSigner : Application() {
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
         }
+
+        this.startForegroundService(
+            Intent(
+                this,
+                ConnectivityService::class.java,
+            ),
+        )
     }
 
     fun getDatabase(npub: String): AppDatabase {

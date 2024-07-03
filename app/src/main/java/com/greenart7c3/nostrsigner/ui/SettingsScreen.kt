@@ -330,27 +330,21 @@ fun SettingsScreen(
                             notificationTypeDialog = false
                             scope.launch(Dispatchers.IO) {
                                 LocalPreferences.updateNotificationType(context, parseNotificationType(notificationItemsIndex))
+                                PushNotificationUtils.hasInit = false
+                                PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
                                 if (notificationItemsIndex == 0) {
-                                    NostrSigner.getInstance().applicationContext.stopService(
-                                        Intent(
-                                            NostrSigner.getInstance().applicationContext,
-                                            ConnectivityService::class.java,
-                                        ),
-                                    )
                                     NotificationDataSource.stopSync()
                                     RelayPool.disconnect()
                                 } else {
-                                    PushNotificationUtils.hasInit = false
-                                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
                                     NostrSigner.getInstance().checkForNewRelays()
                                     NotificationDataSource.start()
-                                    NostrSigner.getInstance().applicationContext.startService(
-                                        Intent(
-                                            NostrSigner.getInstance().applicationContext,
-                                            ConnectivityService::class.java,
-                                        ),
-                                    )
                                 }
+                                NostrSigner.getInstance().applicationContext.startForegroundService(
+                                    Intent(
+                                        NostrSigner.getInstance().applicationContext,
+                                        ConnectivityService::class.java,
+                                    ),
+                                )
                             }
                         }
                     }

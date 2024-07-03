@@ -17,6 +17,7 @@ import java.util.Timer
 import java.util.TimerTask
 
 class ConnectivityService : Service() {
+    private var isStarted = false
     private val timer = Timer()
 
     override fun onBind(intent: Intent): IBinder {
@@ -41,6 +42,9 @@ class ConnectivityService : Service() {
     }
 
     override fun onCreate() {
+        if (isStarted) return
+
+        isStarted = true
         startForeground(1, createNotification())
 
         timer.schedule(
@@ -67,6 +71,7 @@ class ConnectivityService : Service() {
     }
 
     override fun onDestroy() {
+        isStarted = false
         timer.cancel()
         super.onDestroy()
     }

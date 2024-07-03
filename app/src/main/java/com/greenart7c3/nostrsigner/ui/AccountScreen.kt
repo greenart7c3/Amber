@@ -120,7 +120,7 @@ fun AccountScreen(
                                 NostrSigner.getInstance().checkForNewRelays()
                                 NotificationDataSource.start()
                                 delay(5000)
-                                NostrSigner.getInstance().applicationContext.startService(
+                                NostrSigner.getInstance().applicationContext.startForegroundService(
                                     Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
                                 )
                             }

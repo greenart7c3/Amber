@@ -204,7 +204,7 @@ fun SettingsScreen(
             },
             onPost = {
                 if (it.isNotEmpty()) {
-                    LocalPreferences.setDefaultRelays(it)
+                    LocalPreferences.setDefaultRelays(context, it)
                 }
                 relayDialog = false
             },
@@ -232,7 +232,7 @@ fun SettingsScreen(
                         }
                     }
 
-                    val logsFlow = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
+                    val logsFlow = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
                     val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
                     LazyColumn(
@@ -289,7 +289,7 @@ fun SettingsScreen(
                         Button(
                             onClick = {
                                 scope.launch(Dispatchers.IO) {
-                                    NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
+                                    NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
                                 }
                             },
                         ) {
@@ -303,7 +303,7 @@ fun SettingsScreen(
 
     if (notificationTypeDialog) {
         var notificationItemsIndex by remember {
-            mutableIntStateOf(LocalPreferences.getNotificationType().screenCode)
+            mutableIntStateOf(LocalPreferences.getNotificationType(context).screenCode)
         }
         Dialog(
             onDismissRequest = {
@@ -329,11 +329,11 @@ fun SettingsScreen(
                         ) {
                             notificationTypeDialog = false
                             scope.launch(Dispatchers.IO) {
-                                LocalPreferences.updateNotificationType(parseNotificationType(notificationItemsIndex))
+                                LocalPreferences.updateNotificationType(context, parseNotificationType(notificationItemsIndex))
                                 if (notificationItemsIndex == 0) {
-                                    NostrSigner.instance.applicationContext.stopService(
+                                    NostrSigner.getInstance().applicationContext.stopService(
                                         Intent(
-                                            NostrSigner.instance.applicationContext,
+                                            NostrSigner.getInstance().applicationContext,
                                             ConnectivityService::class.java,
                                         ),
                                     )
@@ -341,12 +341,12 @@ fun SettingsScreen(
                                     RelayPool.disconnect()
                                 } else {
                                     PushNotificationUtils.hasInit = false
-                                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
-                                    NostrSigner.instance.checkForNewRelays()
+                                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
+                                    NostrSigner.getInstance().checkForNewRelays()
                                     NotificationDataSource.start()
-                                    NostrSigner.instance.applicationContext.startService(
+                                    NostrSigner.getInstance().applicationContext.startService(
                                         Intent(
-                                            NostrSigner.instance.applicationContext,
+                                            NostrSigner.getInstance().applicationContext,
                                             ConnectivityService::class.java,
                                         ),
                                     )
@@ -418,7 +418,7 @@ fun SettingsScreen(
                                 languageIndex,
                             ) {
                                 account.language = languageEntries[languageList[it].title]
-                                LocalPreferences.saveToEncryptedStorage(account)
+                                LocalPreferences.saveToEncryptedStorage(context, account)
                                 AppCompatDelegate.setApplicationLocales(
                                     LocaleListCompat.forLanguageTags(account.language),
                                 )
@@ -590,7 +590,7 @@ fun SettingsScreen(
                 conectOrbotDialogOpen = false
                 disconnectTorDialog = false
                 checked = true
-                LocalPreferences.updateProxy(true, proxyPort.value.toInt())
+                LocalPreferences.updateProxy(context, true, proxyPort.value.toInt())
             },
             onError = {
                 scope.launch {
@@ -615,7 +615,7 @@ fun SettingsScreen(
                     onClick = {
                         disconnectTorDialog = false
                         checked = false
-                        LocalPreferences.updateProxy(false, proxyPort.value.toInt())
+                        LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                     },
                 ) {
                     Text(text = stringResource(R.string.yes))

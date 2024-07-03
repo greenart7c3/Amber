@@ -59,6 +59,7 @@ fun AccountScreen(
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val intents by flow.collectAsState(initial = emptyList())
+    val context = LocalContext.current
 
     Column {
         Crossfade(
@@ -75,7 +76,7 @@ fun AccountScreen(
                         mutableStateOf<IntentData?>(null)
                     }
                     LaunchedEffect(intent, intents) {
-                        IntentUtils.getIntentData(intent, packageName, intent.getStringExtra("route"), state.account) {
+                        IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
                             intentData = it
                         }
                         val data =
@@ -85,7 +86,7 @@ fun AccountScreen(
 
                         data?.bunkerRequest?.let {
                             if (it.currentAccount.isNotBlank()) {
-                                if (LocalPreferences.currentAccount() != it.currentAccount) {
+                                if (LocalPreferences.currentAccount(context) != it.currentAccount) {
                                     accountStateViewModel.switchUser(it.currentAccount, null)
                                 }
                             }
@@ -108,19 +109,19 @@ fun AccountScreen(
                                 listOf(intentData)
                             }
                         }.mapNotNull { it }
-                    val database = NostrSigner.instance.getDatabase(state.account.keyPair.pubKey.toNpub())
+                    val database = NostrSigner.getInstance().getDatabase(state.account.keyPair.pubKey.toNpub())
                     val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
                     val scope = rememberCoroutineScope()
 
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
                             @Suppress("KotlinConstantConditions")
-                            if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
-                                NostrSigner.instance.checkForNewRelays()
+                            if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                NostrSigner.getInstance().checkForNewRelays()
                                 NotificationDataSource.start()
                                 delay(5000)
-                                NostrSigner.instance.applicationContext.startService(
-                                    Intent(NostrSigner.instance.applicationContext, ConnectivityService::class.java),
+                                NostrSigner.getInstance().applicationContext.startService(
+                                    Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
                                 )
                             }
                         }

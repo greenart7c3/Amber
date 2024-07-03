@@ -46,7 +46,7 @@ class ConnectivityService : Service() {
         timer.schedule(
             object : TimerTask() {
                 override fun run() {
-                    if (LocalPreferences.getNotificationType() == NotificationType.PUSH) return
+                    if (LocalPreferences.getNotificationType(applicationContext) == NotificationType.PUSH) return
 
                     Log.d("ConnectivityService", "Checking connectivity...")
                     RelayPool.getAll().forEach {

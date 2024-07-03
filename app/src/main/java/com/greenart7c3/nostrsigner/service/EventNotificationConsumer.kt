@@ -54,9 +54,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         // PushNotification Wraps don't include a receiver.
         // Test with all logged in accounts
-        LocalPreferences.allSavedAccounts().forEach {
+        LocalPreferences.allSavedAccounts(applicationContext).forEach {
             if (it.hasPrivKey) {
-                LocalPreferences.loadFromEncryptedStorage(it.npub)?.let { acc ->
+                LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
                     notify(event, acc)
                 }
             }
@@ -68,10 +68,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         // PushNotification Wraps don't include a receiver.
         // Test with all logged in accounts
-        LocalPreferences.allSavedAccounts().forEach {
+        LocalPreferences.allSavedAccounts(applicationContext).forEach {
             if (it.hasPrivKey) {
-                LocalPreferences.loadFromEncryptedStorage(it.npub)?.let { acc ->
-                    if (LocalPreferences.getNotificationType() == NotificationType.PUSH) {
+                LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
+                    if (LocalPreferences.getNotificationType(applicationContext) == NotificationType.PUSH) {
                         consumeIfMatchesAccount(event, acc)
                     }
                 }
@@ -122,7 +122,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 Log.d("bunker", it)
             }
 
-            val dao = NostrSigner.instance.getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
+            val dao = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
             val notification = dao.getNotification(event.id)
             if (notification != null) return@nip04Decrypt
             dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
@@ -146,7 +146,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     ""
                 }
 
-            val database = NostrSigner.instance.getDatabase(acc.keyPair.pubKey.toNpub())
+            val database = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub())
 
             val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
             if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
@@ -162,6 +162,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         ),
                     )
                 IntentUtils.sendBunkerResponse(
+                    applicationContext,
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "ack", null),
@@ -187,6 +188,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     applicationWithSecret = database.applicationDao().getBySecret(secret)
                     if (applicationWithSecret == null || secret.isBlank()) {
                         IntentUtils.sendBunkerResponse(
+                            applicationContext,
                             acc,
                             bunkerRequest.localKey,
                             BunkerResponse(bunkerRequest.id, "", "invalid secret"),
@@ -210,6 +212,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
             if (permission == null && applicationWithSecret == null) {
                 IntentUtils.sendBunkerResponse(
+                    applicationContext,
                     acc,
                     bunkerRequest.localKey,
                     BunkerResponse(bunkerRequest.id, "", "no permission"),
@@ -263,6 +266,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     if (localCursor.moveToFirst()) {
                         if (localCursor.getColumnIndex("rejected") > -1) {
                             IntentUtils.sendBunkerResponse(
+                                applicationContext,
                                 acc,
                                 bunkerRequest.localKey,
                                 BunkerResponse(bunkerRequest.id, "", "user rejected"),
@@ -276,6 +280,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             val result = localCursor.getString(index)
 
                             IntentUtils.sendBunkerResponse(
+                                applicationContext,
                                 acc,
                                 bunkerRequest.localKey,
                                 BunkerResponse(bunkerRequest.id, result, null),

@@ -57,7 +57,7 @@ class Notifications : FirebaseMessagingService() {
 
     override fun onNewToken(token: String) {
         scope.launch(Dispatchers.IO) {
-            RegisterAccounts(LocalPreferences.allSavedAccounts()).go(token)
+            RegisterAccounts(LocalPreferences.allSavedAccounts(applicationContext)).go(token)
         }
         super.onNewToken(token)
     }

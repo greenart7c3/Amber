@@ -74,7 +74,8 @@ fun EditPermission(
     database: AppDatabase,
 ) {
     val clipboardManager = LocalClipboardManager.current
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
+    val context = LocalContext.current
+    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.keyPair.pubKey.toNpub())!!
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
@@ -93,7 +94,7 @@ fun EditPermission(
     }
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
-        val relayString = LocalPreferences.getDefaultRelays().joinToString(separator = "&") { "relay=${it.url}" }
+        val relayString = LocalPreferences.getDefaultRelays(context).joinToString(separator = "&") { "relay=${it.url}" }
         mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?$relayString$secret")
     }
     var editRelaysDialog by remember {
@@ -139,8 +140,8 @@ fun EditPermission(
                     .applicationDao()
                     .delete(applicationData)
 
-                if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                    NostrSigner.instance.checkForNewRelays()
+                if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT) {
+                    NostrSigner.getInstance().checkForNewRelays()
                 }
             }
 
@@ -154,7 +155,6 @@ fun EditPermission(
     var showDialog by remember {
         mutableStateOf(false)
     }
-    val context = LocalContext.current
 
     var showActivityDialog by remember {
         mutableStateOf(false)
@@ -420,8 +420,8 @@ fun EditPermission(
                                 permissions,
                             ),
                         )
-                        if (LocalPreferences.getNotificationType() == NotificationType.DIRECT) {
-                            NostrSigner.instance.checkForNewRelays()
+                        if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT) {
+                            NostrSigner.getInstance().checkForNewRelays()
                         }
 
                         scope.launch(Dispatchers.Main) {

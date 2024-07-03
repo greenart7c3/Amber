@@ -20,7 +20,7 @@ sealed class Route(
     val selectedIcon: ImageVector,
 ) {
     data object Home : Route(
-        title = NostrSigner.instance.getString(R.string.home),
+        title = NostrSigner.getInstance().getString(R.string.home),
         route = "Home",
         icon = Icons.Outlined.Home,
         selectedIcon = Icons.Default.Home,
@@ -28,20 +28,20 @@ sealed class Route(
 
     data object Permissions : Route(
         route = "Permissions",
-        title = NostrSigner.instance.getString(R.string.permissions),
+        title = NostrSigner.getInstance().getString(R.string.permissions),
         icon = Icons.AutoMirrored.Outlined.ViewList,
         selectedIcon = Icons.AutoMirrored.Default.ViewList,
     )
 
     data object Settings : Route(
-        title = NostrSigner.instance.getString(R.string.settings),
+        title = NostrSigner.getInstance().getString(R.string.settings),
         route = "Settings",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object Permission : Route(
-        title = NostrSigner.instance.getString(R.string.permissions),
+        title = NostrSigner.getInstance().getString(R.string.permissions),
         route = "Permission/{packageName}",
         icon = Icons.AutoMirrored.Outlined.ViewList,
         selectedIcon = Icons.AutoMirrored.Default.ViewList,

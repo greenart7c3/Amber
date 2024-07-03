@@ -44,7 +44,7 @@ object PushNotificationUtils {
                 }
             } else {
                 accounts.forEach {
-                    NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                    NostrSigner.getInstance().getDatabase(it.npub).applicationDao().insertLog(
                         LogEntity(
                             0,
                             "Push server",
@@ -64,7 +64,7 @@ object PushNotificationUtils {
             if (e is CancellationException) throw e
             Log.d("Amber-OSSPushUtils", "Failed to get endpoint.")
             accounts.forEach {
-                NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                NostrSigner.getInstance().getDatabase(it.npub).applicationDao().insertLog(
                     LogEntity(
                         0,
                         "Push server",

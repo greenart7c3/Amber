@@ -24,6 +24,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -49,7 +50,8 @@ fun PermissionsScreen(
     database: AppDatabase,
 ) {
     val lifecycleEvent = rememberLifecycleEvent()
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(account.keyPair.pubKey.toNpub())!!
+    val context = LocalContext.current
+    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.keyPair.pubKey.toNpub())!!
     val applications =
         remember {
             mutableListOf<ApplicationEntity>()

@@ -372,7 +372,7 @@ fun SingleEventHomeScreen(
         else -> {
             val event = intentData.event!!
             val accounts =
-                LocalPreferences.allSavedAccounts().filter {
+                LocalPreferences.allSavedAccounts(context).filter {
                     it.npub.bechToBytes().toHexKey() == event.pubKey
                 }
 

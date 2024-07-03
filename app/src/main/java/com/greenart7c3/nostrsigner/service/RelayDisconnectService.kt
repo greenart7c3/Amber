@@ -25,8 +25,8 @@ class RelayDisconnectService(ctx: Context, params: WorkerParameters) : Worker(ct
                 url?.let {
                     val relay = RelayPool.getRelay(it)
                     if (relay != null && relay.isConnected()) {
-                        LocalPreferences.currentAccount()?.let { npub ->
-                            NostrSigner.instance.getDatabase(npub).applicationDao().insertLog(
+                        LocalPreferences.currentAccount(applicationContext)?.let { npub ->
+                            NostrSigner.getInstance().getDatabase(npub).applicationDao().insertLog(
                                 LogEntity(
                                     id = 0,
                                     url = relay.url,

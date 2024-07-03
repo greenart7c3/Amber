@@ -51,10 +51,10 @@ class SignerProvider : ContentProvider() {
             "content://$appId.SIGN_MESSAGE" -> {
                 val packageName = callingPackage ?: return null
                 val message = projection?.first() ?: return null
-                if (!LocalPreferences.containsAccount(projection[2])) return null
-                val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
+                if (!LocalPreferences.containsAccount(context!!, projection[2])) return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!, projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
-                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
                     database
                         .applicationDao()
@@ -119,11 +119,11 @@ class SignerProvider : ContentProvider() {
             "content://$appId.SIGN_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val json = projection?.first() ?: return null
-                if (!LocalPreferences.containsAccount(projection[2])) return null
-                val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
+                if (!LocalPreferences.containsAccount(context!!, projection[2])) return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!, projection[2]) ?: return null
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
-                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
                     database
                         .applicationDao()
@@ -214,12 +214,12 @@ class SignerProvider : ContentProvider() {
             -> {
                 val packageName = callingPackage ?: return null
                 val content = projection?.first() ?: return null
-                if (!LocalPreferences.containsAccount(projection[2])) return null
+                if (!LocalPreferences.containsAccount(context!!, projection[2])) return null
                 val stringType = uri.toString().replace("content://$appId.", "")
                 val pubkey = projection[1]
-                val account = LocalPreferences.loadFromEncryptedStorage(projection[2]) ?: return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!, projection[2]) ?: return null
                 val currentSelection = selection ?: "0"
-                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
                     database
                         .applicationDao()
@@ -297,8 +297,6 @@ class SignerProvider : ContentProvider() {
                     ),
                 )
 
-                if (result == null) return null
-
                 val cursor = MatrixCursor(arrayOf("signature", "event"))
                 cursor.addRow(arrayOf<Any>(result, result))
                 return cursor
@@ -306,9 +304,9 @@ class SignerProvider : ContentProvider() {
 
             "content://$appId.GET_PUBLIC_KEY" -> {
                 val packageName = callingPackage ?: return null
-                val account = LocalPreferences.loadFromEncryptedStorage() ?: return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!) ?: return null
                 val currentSelection = selection ?: "0"
-                val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
                     database
                         .applicationDao()

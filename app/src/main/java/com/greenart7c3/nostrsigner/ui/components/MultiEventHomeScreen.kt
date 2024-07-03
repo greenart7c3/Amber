@@ -153,6 +153,7 @@ fun MultiEventHomeScreen(
                                 val localAccount =
                                     if (intentData.currentAccount.isNotBlank()) {
                                         LocalPreferences.loadFromEncryptedStorage(
+                                            context,
                                             intentData.currentAccount,
                                         )
                                     } else {
@@ -161,7 +162,7 @@ fun MultiEventHomeScreen(
 
                                 val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                                val database = NostrSigner.instance.getDatabase(localAccount.keyPair.pubKey.toNpub())
+                                val database = NostrSigner.getInstance().getDatabase(localAccount.keyPair.pubKey.toNpub())
 
                                 val applicationEntity = database.applicationDao().getByKey(key)
 
@@ -214,6 +215,7 @@ fun MultiEventHomeScreen(
 
                                     if (intentData.bunkerRequest != null) {
                                         IntentUtils.sendBunkerResponse(
+                                            context,
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
@@ -288,6 +290,7 @@ fun MultiEventHomeScreen(
 
                                     if (intentData.bunkerRequest != null) {
                                         IntentUtils.sendBunkerResponse(
+                                            context,
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
@@ -353,6 +356,7 @@ fun MultiEventHomeScreen(
 
                                     if (intentData.bunkerRequest != null) {
                                         IntentUtils.sendBunkerResponse(
+                                            context,
                                             localAccount,
                                             intentData.bunkerRequest.localKey,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
@@ -412,7 +416,7 @@ private fun sendResultIntent(
 private suspend fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    NostrSigner.instance.checkForNewRelays(LocalPreferences.getNotificationType() != NotificationType.DIRECT)
+    NostrSigner.getInstance().checkForNewRelays(LocalPreferences.getNotificationType(NostrSigner.getInstance()) != NotificationType.DIRECT)
 }
 
 @Composable
@@ -422,6 +426,7 @@ fun ListItem(
     intents: List<IntentData>,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     val key = if (intentData.bunkerRequest != null) {
         intentData.bunkerRequest.localKey
@@ -430,11 +435,11 @@ fun ListItem(
     }
 
     val localAccount = LocalPreferences.loadFromEncryptedStorage(
+        context,
         intentData.currentAccount,
     )?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
 
     val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
-    val context = LocalContext.current
 
     Card(
         Modifier
@@ -443,7 +448,7 @@ fun ListItem(
                 isExpanded = !isExpanded
             },
     ) {
-        val name = LocalPreferences.getAccountName(intentData.currentAccount)
+        val name = LocalPreferences.getAccountName(context, intentData.currentAccount)
         Row(
             Modifier
                 .fillMaxWidth(),

@@ -35,6 +35,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -68,7 +69,8 @@ fun AccountsBottomSheet(
             onClose()
         },
     ) {
-        val accounts = LocalPreferences.allSavedAccounts()
+        val context = LocalContext.current
+        val accounts = LocalPreferences.allSavedAccounts(context)
         var popupExpanded by remember { mutableStateOf(false) }
         val scrollState = rememberScrollState()
         var showNameDialog by remember { mutableStateOf(false) }
@@ -85,7 +87,7 @@ fun AccountsBottomSheet(
                 Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
             }
             accounts.forEach { acc ->
-                val name = LocalPreferences.getAccountName(acc.npub)
+                val name = LocalPreferences.getAccountName(context, acc.npub)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -120,7 +122,7 @@ fun AccountsBottomSheet(
                             npub = currentNpub,
                             onClose = { showNameDialog = false },
                             onPost = {
-                                LocalPreferences.setAccountName(currentNpub, it)
+                                LocalPreferences.setAccountName(context, currentNpub, it)
                                 showNameDialog = false
                                 currentNpub = ""
                                 accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Settings.route)
@@ -188,7 +190,8 @@ fun EditAccountDialog(
     onClose: () -> Unit,
     onPost: (String) -> Unit,
 ) {
-    val name = LocalPreferences.getAccountName(npub)
+    val context = LocalContext.current
+    val name = LocalPreferences.getAccountName(context, npub)
     var textFieldvalue by remember {
         mutableStateOf(TextFieldValue(name))
     }

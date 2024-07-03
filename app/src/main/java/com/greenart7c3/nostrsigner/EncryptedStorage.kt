@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner
 
+import android.content.Context
 import androidx.security.crypto.EncryptedSharedPreferences
 import androidx.security.crypto.MasterKey
 
@@ -10,8 +11,7 @@ object EncryptedStorage {
         return if (npub == null) PREFERENCES_NAME else "${PREFERENCES_NAME}_$npub"
     }
 
-    fun preferences(npub: String? = null): EncryptedSharedPreferences {
-        val context = NostrSigner.instance
+    fun preferences(npub: String? = null, context: Context): EncryptedSharedPreferences {
         val masterKey: MasterKey =
             MasterKey.Builder(context, MasterKey.DEFAULT_MASTER_KEY_ALIAS)
                 .setKeyScheme(MasterKey.KeyScheme.AES256_GCM)

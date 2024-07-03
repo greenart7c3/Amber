@@ -2,6 +2,8 @@
 
 package com.greenart7c3.nostrsigner.relays
 
+import android.annotation.SuppressLint
+import android.content.Context
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -16,16 +18,18 @@ import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
+@SuppressLint("StaticFieldLeak")
 object AmberListenerSingleton {
     var accountStateViewModel: AccountStateViewModel? = null
     private var listener: AmberClientListener? = null
 
     fun setListener(
+        context: Context,
         onDone: () -> Unit,
         onLoading: (Boolean) -> Unit,
         accountStateViewModel: AccountStateViewModel?,
     ) {
-        listener = AmberClientListener(onDone, onLoading, accountStateViewModel)
+        listener = AmberClientListener(context, onDone, onLoading, accountStateViewModel)
     }
 
     fun getListener(): AmberClientListener? {
@@ -34,13 +38,14 @@ object AmberListenerSingleton {
 }
 
 class AmberClientListener(
+    val context: Context,
     val onDone: () -> Unit,
     val onLoading: (Boolean) -> Unit,
     val accountStateViewModel: AccountStateViewModel?,
 ) : RelayPool.Listener {
     override fun onAuth(relay: Relay, challenge: String) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -53,8 +58,8 @@ class AmberClientListener(
     }
 
     override fun onBeforeSend(relay: Relay, event: EventInterface) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -73,8 +78,8 @@ class AmberClientListener(
     }
 
     override fun onSend(relay: Relay, msg: String, success: Boolean) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -92,8 +97,8 @@ class AmberClientListener(
     }
 
     override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -113,8 +118,8 @@ class AmberClientListener(
     }
 
     override fun onError(error: Error, subscriptionId: String, relay: Relay) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -131,8 +136,8 @@ class AmberClientListener(
     }
 
     override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -145,8 +150,8 @@ class AmberClientListener(
     }
 
     override fun onNotify(relay: Relay, description: String) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,
@@ -159,8 +164,8 @@ class AmberClientListener(
     }
 
     override fun onRelayStateChange(type: Relay.StateType, relay: Relay, channel: String?) {
-        LocalPreferences.currentAccount()?.let { account ->
-            NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+        LocalPreferences.currentAccount(context)?.let { account ->
+            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = relay.url,

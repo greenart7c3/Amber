@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Browser
@@ -84,6 +85,7 @@ object IntentUtils {
     val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
     private fun getIntentDataWithoutExtras(
+        context: Context,
         data: String,
         intent: Intent,
         packageName: String?,
@@ -96,7 +98,7 @@ object IntentUtils {
         parameters.removeFirst()
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
-            getIntentDataFromIntent(intent, packageName, route, account, onReady)
+            getIntentDataFromIntent(context, intent, packageName, route, account, onReady)
         } else {
             var type = SignerType.SIGN_EVENT
             var pubKey = ""
@@ -143,7 +145,7 @@ object IntentUtils {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
                     if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
-                        LocalPreferences.loadFromEncryptedStorage(Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
+                        LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                             localAccount = it
                         }
                     }
@@ -287,6 +289,7 @@ object IntentUtils {
 
     @OptIn(DelicateCoroutinesApi::class)
     fun sendBunkerResponse(
+        context: Context,
         account: Account,
         localKey: String,
         bunkerResponse: BunkerResponse,
@@ -306,6 +309,7 @@ object IntentUtils {
         }
 
         AmberListenerSingleton.setListener(
+            context,
             onDone,
             onLoading,
             AmberListenerSingleton.accountStateViewModel,
@@ -327,8 +331,8 @@ object IntentUtils {
             ) {
                 GlobalScope.launch(Dispatchers.IO) {
                     if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
-                        NostrSigner.instance.checkForNewRelays(
-                            LocalPreferences.getNotificationType() != NotificationType.DIRECT,
+                        NostrSigner.getInstance().checkForNewRelays(
+                            LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
                             newRelays = relays.toSet(),
                         )
                     }
@@ -339,6 +343,7 @@ object IntentUtils {
     }
 
     private fun getIntentDataFromBunkerRequest(
+        context: Context,
         intent: Intent,
         bunkerRequest: BunkerRequest,
         route: String?,
@@ -346,7 +351,7 @@ object IntentUtils {
     ) {
         val type = getTypeFromBunker(bunkerRequest)
         val data = getDataFromBunker(bunkerRequest)
-        val account = LocalPreferences.loadFromEncryptedStorage(bunkerRequest.currentAccount)!!
+        val account = LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)!!
 
         val pubKey =
             if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
@@ -512,6 +517,7 @@ object IntentUtils {
     }
 
     private fun getIntentDataFromIntent(
+        context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
@@ -560,7 +566,7 @@ object IntentUtils {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
                 if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
-                    LocalPreferences.loadFromEncryptedStorage(Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
+                    LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                         localAccount = it
                     }
                 }
@@ -744,6 +750,7 @@ object IntentUtils {
     }
 
     fun getIntentData(
+        context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
@@ -769,11 +776,11 @@ object IntentUtils {
 
         var localAccount = currentLoggedInAccount
         if (bunkerRequest != null) {
-            LocalPreferences.loadFromEncryptedStorage(bunkerRequest.currentAccount)?.let {
+            LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)?.let {
                 localAccount = it
             }
         } else if (intent.getStringExtra("current_user") != null) {
-            LocalPreferences.loadFromEncryptedStorage(intent.getStringExtra("current_user"))?.let {
+            LocalPreferences.loadFromEncryptedStorage(context, intent.getStringExtra("current_user"))?.let {
                 localAccount = it
             }
         }
@@ -781,11 +788,11 @@ object IntentUtils {
         if (intent.dataString?.startsWith("nostrconnect:") == true) {
             getIntentFromNostrConnect(intent, route, localAccount, onReady)
         } else if (bunkerRequest != null) {
-            getIntentDataFromBunkerRequest(intent, bunkerRequest, route, onReady)
+            getIntentDataFromBunkerRequest(context, intent, bunkerRequest, route, onReady)
         } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-            getIntentDataFromIntent(intent, packageName, route, localAccount, onReady)
+            getIntentDataFromIntent(context, intent, packageName, route, localAccount, onReady)
         } else {
-            getIntentDataWithoutExtras(intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
+            getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
         }
     }
 

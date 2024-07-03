@@ -56,10 +56,10 @@ data class AccountInfo(
 object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
-    private var accountCache = LruCache<String, Account>(10)
+    var accountCache = LruCache<String, Account>(10)
 
-    fun allSavedAccounts(): List<AccountInfo> {
-        return savedAccounts().map { npub ->
+    fun allSavedAccounts(context: Context): List<AccountInfo> {
+        return savedAccounts(context).map { npub ->
             AccountInfo(
                 npub,
                 true,
@@ -67,118 +67,119 @@ object LocalPreferences {
         }.toSet().toList()
     }
 
-    fun getEndpoint(): String {
-        return encryptedPreferences().getString(PrefKeys.ENDPOINT, "") ?: ""
+    fun getEndpoint(context: Context): String {
+        return encryptedPreferences(context).getString(PrefKeys.ENDPOINT, "") ?: ""
     }
 
-    fun setEndpoint(endpoint: String) {
-        encryptedPreferences().edit().apply {
+    fun setEndpoint(context: Context, endpoint: String) {
+        encryptedPreferences(context).edit().apply {
             putString(PrefKeys.ENDPOINT, endpoint)
         }.apply()
     }
 
-    fun getDefaultRelays(): List<RelaySetupInfo> {
-        return encryptedPreferences().getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
+    fun getDefaultRelays(context: Context): List<RelaySetupInfo> {
+        return encryptedPreferences(context).getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
             RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
         } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES))
     }
 
-    fun setDefaultRelays(relays: List<RelaySetupInfo>) {
-        encryptedPreferences().edit().apply {
+    fun setDefaultRelays(context: Context, relays: List<RelaySetupInfo>) {
+        encryptedPreferences(context).edit().apply {
             putStringSet(PrefKeys.DEFAULT_RELAYS, relays.map { it.url }.toSet())
         }.apply()
     }
 
-    fun currentAccount(): String? {
+    fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
-            currentAccount = encryptedPreferences().getString(PrefKeys.CURRENT_ACCOUNT, null)
+            currentAccount = encryptedPreferences(context).getString(PrefKeys.CURRENT_ACCOUNT, null)
         }
         return currentAccount
     }
 
-    private fun updateCurrentAccount(npub: String) {
+    private fun updateCurrentAccount(context: Context, npub: String) {
         if (currentAccount != npub) {
             currentAccount = npub
 
-            encryptedPreferences().edit().apply {
+            encryptedPreferences(context).edit().apply {
                 putString(PrefKeys.CURRENT_ACCOUNT, npub)
             }.apply()
         }
     }
 
-    fun shouldShowRationale(): Boolean? {
-        if (!encryptedPreferences().contains(PrefKeys.RATIONALE)) {
+    fun shouldShowRationale(context: Context): Boolean? {
+        if (!encryptedPreferences(context).contains(PrefKeys.RATIONALE)) {
             return null
         }
-        return encryptedPreferences().getBoolean(PrefKeys.RATIONALE, true)
+        return encryptedPreferences(context).getBoolean(PrefKeys.RATIONALE, true)
     }
 
-    fun updateShoulShowRationale(value: Boolean) {
-        encryptedPreferences().edit().apply {
+    fun updateShoulShowRationale(context: Context, value: Boolean) {
+        encryptedPreferences(context).edit().apply {
             putBoolean(PrefKeys.RATIONALE, value)
         }.apply()
     }
 
     private var savedAccounts: List<String>? = null
 
-    private fun savedAccounts(): List<String> {
+    private fun savedAccounts(context: Context): List<String> {
         if (savedAccounts == null) {
-            savedAccounts = encryptedPreferences()
+            savedAccounts = encryptedPreferences(context)
                 .getString(PrefKeys.SAVED_ACCOUNTS, null)?.split(COMMA) ?: listOf()
         }
         return savedAccounts!!
     }
 
-    private fun updateSavedAccounts(accounts: List<String>) {
+    private fun updateSavedAccounts(context: Context, accounts: List<String>) {
         if (savedAccounts != accounts) {
             savedAccounts = accounts
 
-            encryptedPreferences().edit().apply {
+            encryptedPreferences(context).edit().apply {
                 putString(PrefKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
             }.apply()
         }
     }
 
-    private val prefsDirPath: String
-        get() = "${NostrSigner.instance.filesDir.parent}/shared_prefs/"
+    private fun getDirPath(context: Context): String {
+        return "${context.filesDir.parent}/shared_prefs/"
+    }
 
-    private fun addAccount(npub: String) {
-        val accounts = savedAccounts().toMutableList()
+    private fun addAccount(context: Context, npub: String) {
+        val accounts = savedAccounts(context).toMutableList()
         if (npub !in accounts) {
             accounts.add(npub)
-            updateSavedAccounts(accounts)
+            updateSavedAccounts(context, accounts)
         }
     }
 
-    private fun setCurrentAccount(account: Account) {
+    private fun setCurrentAccount(context: Context, account: Account) {
         val npub = account.keyPair.pubKey.toNpub()
-        updateCurrentAccount(npub)
-        addAccount(npub)
+        updateCurrentAccount(context, npub)
+        addAccount(context, npub)
     }
 
-    fun switchToAccount(npub: String) {
-        updateCurrentAccount(npub)
+    fun switchToAccount(context: Context, npub: String) {
+        updateCurrentAccount(context, npub)
     }
 
-    fun containsAccount(npub: String): Boolean {
-        return savedAccounts().contains(npub)
+    fun containsAccount(context: Context, npub: String): Boolean {
+        return savedAccounts(context).contains(npub)
     }
 
     /**
      * Removes the account from the app level shared preferences
      */
-    private fun removeAccount(npub: String) {
-        val accounts = savedAccounts().toMutableList()
+    private fun removeAccount(context: Context, npub: String) {
+        val accounts = savedAccounts(context).toMutableList()
         if (accounts.remove(npub)) {
-            updateSavedAccounts(accounts)
+            updateSavedAccounts(context, accounts)
         }
     }
 
     /**
      * Deletes the npub-specific shared preference file
      */
-    private fun deleteUserPreferenceFile(npub: String) {
-        val prefsDir = File(prefsDirPath)
+    private fun deleteUserPreferenceFile(context: Context, npub: String) {
+        val prefsDir = File(getDirPath(context))
         prefsDir.list()?.forEach {
             if (it.contains(npub)) {
                 File(prefsDir, it).delete()
@@ -186,12 +187,15 @@ object LocalPreferences {
         }
     }
 
-    private fun encryptedPreferences(npub: String? = null): SharedPreferences {
+    private fun encryptedPreferences(
+        context: Context,
+        npub: String? = null,
+    ): SharedPreferences {
         return if (BuildConfig.DEBUG && DEBUG_PLAINTEXT_PREFERENCES) {
             val preferenceFile = if (npub == null) DEBUG_PREFERENCES_NAME else "${DEBUG_PREFERENCES_NAME}_$npub"
-            NostrSigner.instance.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
+            context.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
         } else {
-            return EncryptedStorage.preferences(npub)
+            return EncryptedStorage.preferences(npub, context)
         }
     }
 
@@ -204,24 +208,24 @@ object LocalPreferences {
      * condition and the file will probably not be deleted
      */
     @SuppressLint("ApplySharedPref")
-    fun updatePrefsForLogout(npub: String) {
+    fun updatePrefsForLogout(npub: String, context: Context) {
         accountCache.remove(npub)
-        val userPrefs = encryptedPreferences(npub)
+        val userPrefs = encryptedPreferences(context, npub)
         userPrefs.edit().clear().commit()
-        removeAccount(npub)
-        deleteUserPreferenceFile(npub)
+        removeAccount(context, npub)
+        deleteUserPreferenceFile(context, npub)
 
-        if (savedAccounts().isEmpty()) {
-            val appPrefs = encryptedPreferences()
+        if (savedAccounts(context).isEmpty()) {
+            val appPrefs = encryptedPreferences(context)
             appPrefs.edit().clear().apply()
-        } else if (currentAccount() == npub) {
-            updateCurrentAccount(savedAccounts().elementAt(0))
+        } else if (currentAccount(context) == npub) {
+            updateCurrentAccount(context, savedAccounts(context).elementAt(0))
         }
     }
 
-    fun updatePrefsForLogin(account: Account) {
-        setCurrentAccount(account)
-        saveToEncryptedStorage(account)
+    fun updatePrefsForLogin(context: Context, account: Account) {
+        setCurrentAccount(context, account)
+        saveToEncryptedStorage(context, account)
     }
 
     suspend fun deleteSavedApps(
@@ -233,8 +237,8 @@ object LocalPreferences {
         }
     }
 
-    fun saveToEncryptedStorage(account: Account) {
-        val prefs = encryptedPreferences(account.keyPair.pubKey.toNpub())
+    fun saveToEncryptedStorage(context: Context, account: Account) {
+        val prefs = encryptedPreferences(context = context, account.keyPair.pubKey.toNpub())
         prefs.edit().apply {
             account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
             account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
@@ -245,15 +249,16 @@ object LocalPreferences {
         }.apply()
     }
 
-    fun loadFromEncryptedStorage(): Account? {
-        return loadFromEncryptedStorage(currentAccount())
+    fun loadFromEncryptedStorage(context: Context): Account? {
+        return loadFromEncryptedStorage(context, currentAccount(context))
     }
 
     fun setAccountName(
+        context: Context,
         npub: String,
         value: String,
     ) {
-        encryptedPreferences(npub).edit().apply {
+        encryptedPreferences(context, npub).edit().apply {
             putString(PrefKeys.ACCOUNT_NAME, value)
         }.apply()
         accountCache.get(npub)?.let {
@@ -261,18 +266,19 @@ object LocalPreferences {
         }
     }
 
-    fun getAccountName(npub: String): String {
-        encryptedPreferences(npub).apply {
+    fun getAccountName(context: Context, npub: String): String {
+        encryptedPreferences(context, npub).apply {
             return getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
         }
     }
 
     fun updateProxy(
+        context: Context,
         useProxy: Boolean,
         port: Int,
     ) {
-        val npub = currentAccount() ?: return
-        encryptedPreferences(npub).edit().apply {
+        val npub = currentAccount(context) ?: return
+        encryptedPreferences(context, npub).edit().apply {
             putBoolean(PrefKeys.USE_PROXY, useProxy)
             putInt(PrefKeys.PROXY_PORT, port)
         }.apply()
@@ -284,14 +290,14 @@ object LocalPreferences {
         HttpClientManager.setDefaultProxy(proxy)
     }
 
-    fun updateNotificationType(notificationType: NotificationType) {
-        encryptedPreferences().edit().apply {
+    fun updateNotificationType(context: Context, notificationType: NotificationType) {
+        encryptedPreferences(context).edit().apply {
             putInt(PrefKeys.NOTIFICATION_TYPE, notificationType.screenCode)
         }.apply()
     }
 
-    fun getNotificationType(): NotificationType {
-        encryptedPreferences().apply {
+    fun getNotificationType(context: Context): NotificationType {
+        encryptedPreferences(context).apply {
             return parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0))
         }
     }
@@ -335,11 +341,11 @@ object LocalPreferences {
         }
     }
 
-    fun loadFromEncryptedStorage(npub: String?): Account? {
+    fun loadFromEncryptedStorage(context: Context, npub: String?): Account? {
         if (npub != null && accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }
-        encryptedPreferences(npub).apply {
+        encryptedPreferences(context, npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
 
@@ -355,7 +361,7 @@ object LocalPreferences {
                 }
             }
             val localNpub = pubKey.hexToByteArray().toNpub()
-            runBlocking { convertToDatabase(outputMap, pubKey, NostrSigner.instance.getDatabase(localNpub)) }
+            runBlocking { convertToDatabase(outputMap, pubKey, NostrSigner.getInstance().getDatabase(localNpub)) }
             this.edit().apply {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()

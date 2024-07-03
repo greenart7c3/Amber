@@ -5,6 +5,7 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.KeyPair
@@ -58,11 +59,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         route: String?,
         npub: String?,
     ) {
-        var currentUser = npub ?: LocalPreferences.currentAccount()
-        if (currentUser != null && !LocalPreferences.containsAccount(currentUser)) {
-            currentUser = LocalPreferences.currentAccount()
+        var currentUser = npub ?: LocalPreferences.currentAccount(NostrSigner.getInstance())
+        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.getInstance(), currentUser)) {
+            currentUser = LocalPreferences.currentAccount(NostrSigner.getInstance())
         }
-        LocalPreferences.loadFromEncryptedStorage(currentUser)?.let {
+        LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), currentUser)?.let {
             startUI(it, route)
         }
     }
@@ -83,7 +84,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        LocalPreferences.updatePrefsForLogout(npub)
+        LocalPreferences.updatePrefsForLogout(npub, NostrSigner.getInstance())
         tryLoginExistingAccount(null, null)
     }
 
@@ -92,7 +93,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         route: String?,
     ) {
         prepareLogoutOrSwitch()
-        LocalPreferences.switchToAccount(npub)
+        LocalPreferences.switchToAccount(NostrSigner.getInstance(), npub)
         tryLoginExistingAccount(route, npub)
     }
 
@@ -118,7 +119,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
             }
 
-        LocalPreferences.updatePrefsForLogin(account)
+        LocalPreferences.updatePrefsForLogin(NostrSigner.getInstance(), account)
         startUI(account, route)
     }
 
@@ -127,7 +128,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         proxyPort: Int,
     ) {
         val account = Account(KeyPair(), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null)
-        LocalPreferences.updatePrefsForLogin(account)
+        LocalPreferences.updatePrefsForLogin(NostrSigner.getInstance(), account)
         startUI(account, null)
     }
 
@@ -146,7 +147,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     @OptIn(DelicateCoroutinesApi::class)
     private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
         GlobalScope.launch(Dispatchers.IO) {
-            LocalPreferences.saveToEncryptedStorage(it.account)
+            LocalPreferences.saveToEncryptedStorage(NostrSigner.getInstance(), it.account)
         }
     }
 }

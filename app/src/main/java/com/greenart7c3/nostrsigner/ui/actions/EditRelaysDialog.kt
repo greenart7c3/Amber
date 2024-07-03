@@ -34,6 +34,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -206,13 +207,14 @@ fun EditDefaultRelaysDialog(
     onClose: () -> Unit,
     onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
 ) {
+    val context = LocalContext.current
     var textFieldRelay by remember {
         mutableStateOf(TextFieldValue(""))
     }
     val relays2 =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            LocalPreferences.getDefaultRelays().forEach {
+            LocalPreferences.getDefaultRelays(context).forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -345,6 +347,7 @@ fun RelayLogDialog(
     url: String,
     onClose: () -> Unit,
 ) {
+    val context = LocalContext.current
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -363,8 +366,8 @@ fun RelayLogDialog(
                     )
                 }
 
-                val flows = LocalPreferences.allSavedAccounts().map {
-                    NostrSigner.instance.getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+                val flows = LocalPreferences.allSavedAccounts(context).map {
+                    NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
                 }.merge()
 
                 val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -435,7 +438,7 @@ fun ActiveRelaysDialog(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            relays2.addAll(NostrSigner.instance.getSavedRelays())
+            relays2.addAll(NostrSigner.getInstance().getSavedRelays())
         }
     }
 

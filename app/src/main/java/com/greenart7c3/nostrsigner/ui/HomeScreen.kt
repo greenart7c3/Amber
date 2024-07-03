@@ -15,6 +15,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -43,13 +44,14 @@ fun HomeScreen(
     database: AppDatabase,
 ) {
     var loading by remember { mutableStateOf(false) }
+    val context = LocalContext.current
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             loading = true
             try {
-                LocalPreferences.allSavedAccounts().forEach { account ->
-                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllApplications().forEach {
+                LocalPreferences.allSavedAccounts(context).forEach { account ->
+                    NostrSigner.getInstance().getDatabase(account.npub).applicationDao().getAllApplications().forEach {
                         if (it.application.name.isNotBlank()) {
                             ApplicationNameCache.names["${account.npub.toShortenHex()}-${it.application.key}"] = it.application.name
                         }

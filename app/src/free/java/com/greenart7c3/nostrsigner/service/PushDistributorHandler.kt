@@ -39,7 +39,7 @@ interface PushDistributorActions {
 }
 
 object PushDistributorHandler : PushDistributorActions {
-    private val appContext = NostrSigner.instance.applicationContext
+    private val appContext = NostrSigner.getInstance().applicationContext
     private val unifiedPush: UnifiedPush = UnifiedPush
 
     private var endpointInternal = LocalPreferences.getEndpoint()

@@ -44,7 +44,7 @@ class PushMessageReceiver : MessagingReceiver() {
         private val TAG = "Amber-OSSPushReceiver"
     }
 
-    private val appContext = NostrSigner.instance.applicationContext
+    private val appContext = NostrSigner.getInstance().applicationContext
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private val eventCache = LruCache<String, String>(100)
     private val pushHandler = PushDistributorHandler
@@ -115,7 +115,7 @@ class PushMessageReceiver : MessagingReceiver() {
         Log.d(TAG, "Registration failed for Instance: $instance")
 
         LocalPreferences.allSavedAccounts().forEach {
-            NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+            NostrSigner.getInstance().getDatabase(it.npub).applicationDao().insertLog(
                 LogEntity(
                     0,
                     "Push server",

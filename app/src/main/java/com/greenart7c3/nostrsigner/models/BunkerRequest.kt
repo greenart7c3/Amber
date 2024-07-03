@@ -74,7 +74,7 @@ data class BunkerRequest(
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
                 relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
                     RelaySetupInfo(it.asText().intern(), read = true, write = true, feedTypes = COMMON_FEED_TYPES)
-                } ?: NostrSigner.instance.getSavedRelays().toList(),
+                } ?: NostrSigner.getInstance().getSavedRelays().toList(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
             )

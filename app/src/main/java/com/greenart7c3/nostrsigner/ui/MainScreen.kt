@@ -134,8 +134,8 @@ fun sendResult(
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
         if (intentData.bunkerRequest != null) {
-            NostrSigner.instance.checkForNewRelays(
-                LocalPreferences.getNotificationType() != NotificationType.DIRECT,
+            NostrSigner.getInstance().checkForNewRelays(
+                LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
                 intentData.bunkerRequest.relays.toSet(),
             )
         }
@@ -211,6 +211,7 @@ fun sendResult(
 
         if (intentData.bunkerRequest != null) {
             IntentUtils.sendBunkerResponse(
+                context,
                 account,
                 intentData.bunkerRequest.localKey,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
@@ -239,7 +240,7 @@ fun sendResult(
                     )
                     PushNotificationUtils.hasInit = false
                     GlobalScope.launch(Dispatchers.IO) {
-                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
+                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
                     }
 
                     EventNotificationConsumer(context).notificationManager().cancelAll()
@@ -451,12 +452,12 @@ private suspend fun askNotificationPermission(
     onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
-        initNotifications()
+        initNotifications(context)
         return
     }
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        val shouldShowRationale = LocalPreferences.shouldShowRationale()
+        val shouldShowRationale = LocalPreferences.shouldShowRationale(context)
         if (shouldShowRationale == null) {
             requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
             return
@@ -472,9 +473,9 @@ private suspend fun askNotificationPermission(
     }
 }
 
-private suspend fun initNotifications() {
+private suspend fun initNotifications(context: Context) {
     PushNotificationUtils.hasInit = false
-    PushNotificationUtils.init(LocalPreferences.allSavedAccounts())
+    PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -502,6 +503,7 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val interactionSource = remember { MutableInteractionSource() }
     val clipboardManager = LocalClipboardManager.current
+    val context = LocalContext.current
 
     val requestPermissionLauncher =
         rememberLauncherForActivityResult(
@@ -509,15 +511,14 @@ fun MainScreen(
         ) { isGranted: Boolean ->
             if (isGranted) {
                 scope.launch(Dispatchers.IO) {
-                    initNotifications()
+                    initNotifications(context)
                 }
             } else {
-                if (LocalPreferences.shouldShowRationale() == null) {
-                    LocalPreferences.updateShoulShowRationale(true)
+                if (LocalPreferences.shouldShowRationale(context) == null) {
+                    LocalPreferences.updateShoulShowRationale(context, true)
                 }
             }
         }
-    val context = LocalContext.current
     var showDialog by remember { mutableStateOf(false) }
 
     @Suppress("KotlinConstantConditions")
@@ -559,7 +560,7 @@ fun MainScreen(
                 Button(
                     onClick = {
                         showDialog = false
-                        LocalPreferences.updateShoulShowRationale(false)
+                        LocalPreferences.updateShoulShowRationale(context, false)
                     },
                 ) {
                     Text(text = "Deny")
@@ -582,7 +583,7 @@ fun MainScreen(
                             ApplicationEntity(
                                 secret,
                                 "",
-                                LocalPreferences.getDefaultRelays(),
+                                LocalPreferences.getDefaultRelays(context),
                                 "",
                                 "",
                                 "",
@@ -595,7 +596,7 @@ fun MainScreen(
                         database.applicationDao().insertApplication(
                             application,
                         )
-                        val relayString = LocalPreferences.getDefaultRelays().joinToString(separator = "&") { "relay=${it.url}" }
+                        val relayString = LocalPreferences.getDefaultRelays(context).joinToString(separator = "&") { "relay=${it.url}" }
                         val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?$relayString"
                         clipboardManager.setText(AnnotatedString(bunkerUrl))
                         scope.launch(Dispatchers.Main) {
@@ -654,7 +655,7 @@ fun MainScreen(
                     }
                 },
                 title = {
-                    val name = LocalPreferences.getAccountName(account.keyPair.pubKey.toNpub())
+                    val name = LocalPreferences.getAccountName(context, account.keyPair.pubKey.toNpub())
                     Row(
                         Modifier
                             .border(

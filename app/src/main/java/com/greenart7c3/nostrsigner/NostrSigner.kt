@@ -23,7 +23,7 @@ class NostrSigner : Application() {
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         instance = this
 
-        LocalPreferences.allSavedAccounts().forEach {
+        LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
         }
     }
@@ -37,7 +37,7 @@ class NostrSigner : Application() {
 
     fun getSavedRelays(): Set<RelaySetupInfo> {
         val savedRelays = mutableSetOf<RelaySetupInfo>()
-        LocalPreferences.allSavedAccounts().forEach { accountInfo ->
+        LocalPreferences.allSavedAccounts(this).forEach { accountInfo ->
             val database = getDatabase(accountInfo.npub)
             database.applicationDao().getAllApplications().forEach {
                 it.application.relays.forEach { setupInfo ->
@@ -54,7 +54,7 @@ class NostrSigner : Application() {
     ) {
         val savedRelays = getSavedRelays() + newRelays
 
-        if (LocalPreferences.getNotificationType() != NotificationType.DIRECT) {
+        if (LocalPreferences.getNotificationType(this) != NotificationType.DIRECT) {
             savedRelays.forEach { setupInfo ->
                 if (RelayPool.getRelay(setupInfo.url) == null) {
                     RelayPool.addRelay(
@@ -72,8 +72,8 @@ class NostrSigner : Application() {
         if (shouldReconnect) {
             checkIfRelaysAreConnected()
         }
-
-        if (LocalPreferences.getNotificationType() == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+        @Suppress("KotlinConstantConditions")
+        if (LocalPreferences.getNotificationType(this) == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
             Client.reconnect(
                 savedRelays.toTypedArray(),
                 true,
@@ -90,7 +90,7 @@ class NostrSigner : Application() {
                     val inputData = Data.Builder()
                     inputData.putString("relay", relay.url)
                     builder.setInputData(inputData.build())
-                    WorkManager.getInstance(instance).enqueue(builder.build())
+                    WorkManager.getInstance(getInstance()).enqueue(builder.build())
                 }
             }
         }
@@ -102,7 +102,12 @@ class NostrSigner : Application() {
     }
 
     companion object {
-        lateinit var instance: NostrSigner
-            private set
+        @Volatile
+        private var instance: NostrSigner? = null
+
+        fun getInstance(): NostrSigner =
+            instance ?: synchronized(this) {
+                instance ?: NostrSigner().also { instance = it }
+            }
     }
 }

@@ -69,10 +69,10 @@ class RegisterAccounts(
     ) {
         val readyToSend: MutableList<Pair<Account, String>> = mutableListOf()
         accounts.forEach {
-            val acc = LocalPreferences.loadFromEncryptedStorage(it.npub)
+            val acc = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub)
             if (acc != null) {
                 val permissions =
-                    NostrSigner.instance.getDatabase(
+                    NostrSigner.getInstance().getDatabase(
                         acc.keyPair.pubKey.toNpub(),
                     ).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
@@ -134,7 +134,7 @@ class RegisterAccounts(
                 Log.d("FirebaseMsgService", "Successfully registered with push server")
             } else {
                 accounts.forEach {
-                    NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                    NostrSigner.getInstance().getDatabase(it.npub).applicationDao().insertLog(
                         LogEntity(
                             0,
                             "Push server",

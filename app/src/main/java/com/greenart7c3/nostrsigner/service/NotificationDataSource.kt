@@ -38,7 +38,7 @@ import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 
 object NotificationDataSource : NostrDataSource("AccountData") {
-    private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.instance)
+    private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.getInstance())
 
     private val clientListener =
         object : Client.Listener() {
@@ -48,8 +48,8 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 afterEOSE: Boolean,
             ) {
-                LocalPreferences.currentAccount()?.let { account ->
-                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = relay.url,
@@ -66,8 +66,8 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 subscriptionId: String?,
             ) {
-                LocalPreferences.currentAccount()?.let { account ->
-                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = relay.url,
@@ -85,8 +85,8 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 message: String,
                 relay: Relay,
             ) {
-                LocalPreferences.currentAccount()?.let { account ->
-                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = relay.url,
@@ -102,8 +102,8 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 challenge: String,
             ) {
-                LocalPreferences.currentAccount()?.let { account ->
-                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = relay.url,
@@ -120,8 +120,8 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 description: String,
             ) {
-                LocalPreferences.currentAccount()?.let { account ->
-                    NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
+                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = relay.url,
@@ -147,9 +147,9 @@ object NotificationDataSource : NostrDataSource("AccountData") {
 
     private fun createNotificationsFilter(): TypedFilter {
         var since = TimeUtils.now()
-        val accounts = LocalPreferences.allSavedAccounts()
+        val accounts = LocalPreferences.allSavedAccounts(NostrSigner.getInstance())
         accounts.forEach {
-            val latest = NostrSigner.instance.getDatabase(it.npub).applicationDao().getLatestNotification()
+            val latest = NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLatestNotification()
             if (latest != null) {
                 since = latest
             }
@@ -157,7 +157,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
 
         val pubKeys =
             accounts.mapNotNull {
-                LocalPreferences.loadFromEncryptedStorage(it.npub)?.keyPair?.pubKey?.toHexKey()
+                LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub)?.keyPair?.pubKey?.toHexKey()
             }
 
         val eoses =
@@ -181,7 +181,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
         relay: Relay,
     ) {
         checkNotInMainThread()
-        NotificationUtils.getOrCreateDMChannel(NostrSigner.instance.applicationContext)
+        NotificationUtils.getOrCreateDMChannel(NostrSigner.getInstance().applicationContext)
         eventNotificationConsumer.consume(event)
     }
 
@@ -200,8 +200,8 @@ object NotificationDataSource : NostrDataSource("AccountData") {
     ) {
         super.auth(relay, challenge)
 
-        LocalPreferences.allSavedAccounts().forEach {
-            val account = LocalPreferences.loadFromEncryptedStorage(it.npub) ?: return@forEach
+        LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
+            val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub) ?: return@forEach
             account.createAuthEvent(relay.url, challenge) { authEvent ->
                 Client.send(
                     authEvent,

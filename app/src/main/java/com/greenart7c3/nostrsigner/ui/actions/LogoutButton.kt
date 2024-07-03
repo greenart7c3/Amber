@@ -11,6 +11,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -28,6 +29,7 @@ fun LogoutButton(
     accountStateViewModel: AccountStateViewModel,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     var logoutDialog by remember { mutableStateOf(false) }
     if (logoutDialog) {
         LogoutDialog(
@@ -36,9 +38,9 @@ fun LogoutButton(
             },
             onConfirm = {
                 scope.launch(Dispatchers.IO) {
-                    val account = LocalPreferences.loadFromEncryptedStorage(acc.npub)
+                    val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                     account?.let {
-                        val database = NostrSigner.instance.getDatabase(account.keyPair.pubKey.toNpub())
+                        val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                         val permissions = database.applicationDao().getAll(it.keyPair.pubKey.toHexKey())
                         permissions.forEach { app ->
                             database.applicationDao().delete(app)

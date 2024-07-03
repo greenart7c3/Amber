@@ -233,4 +233,6 @@
     <string name="error_dialog_button_ok">确认</string>
     <string name="push_server_none">无</string>
     <string name="push_server_none_explainer">禁用通知推送</string>
+    <string name="push_server">Push Server</string>
+    <string name="no_distributors_found">No distributors found for push notifications.\nPlease install a distributor like ntfy.</string>
 </resources>

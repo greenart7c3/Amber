@@ -45,6 +45,7 @@ private object PrefKeys {
     const val LANGUAGE_PREFS = "languagePreferences"
     const val DEFAULT_RELAYS = "default_relays"
     const val ENDPOINT = "endpoint"
+    const val PUSH_SERVER_MESSAGE = "push_server_message"
 }
 
 @Immutable
@@ -56,7 +57,7 @@ data class AccountInfo(
 object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
-    var accountCache = LruCache<String, Account>(10)
+    private var accountCache = LruCache<String, Account>(10)
 
     fun allSavedAccounts(context: Context): List<AccountInfo> {
         return savedAccounts(context).map { npub ->
@@ -74,6 +75,16 @@ object LocalPreferences {
     fun setEndpoint(context: Context, endpoint: String) {
         encryptedPreferences(context).edit().apply {
             putString(PrefKeys.ENDPOINT, endpoint)
+        }.apply()
+    }
+
+    fun getPushServerMessage(context: Context): Boolean {
+        return encryptedPreferences(context).getBoolean(PrefKeys.PUSH_SERVER_MESSAGE, false)
+    }
+
+    fun setPushServerMessage(context: Context, value: Boolean) {
+        encryptedPreferences(context).edit().apply {
+            putBoolean(PrefKeys.PUSH_SERVER_MESSAGE, value)
         }.apply()
     }
 

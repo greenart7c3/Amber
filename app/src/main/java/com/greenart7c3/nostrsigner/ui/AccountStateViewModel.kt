@@ -28,6 +28,9 @@ open class ToastMsg
 class StringToastMsg(val title: String, val msg: String) : ToastMsg()
 
 @Immutable
+class ConfirmationToastMsg(val title: String, val msg: String, val onOk: () -> Unit) : ToastMsg()
+
+@Immutable
 class ResourceToastMsg(
     val titleResId: Int,
     val resourceId: Int,
@@ -53,6 +56,14 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         message: String,
     ) {
         viewModelScope.launch { toasts.emit(StringToastMsg(title, message)) }
+    }
+
+    fun toast(
+        title: String,
+        message: String,
+        onOk: () -> Unit,
+    ) {
+        viewModelScope.launch { toasts.emit(ConfirmationToastMsg(title, message, onOk)) }
     }
 
     private fun tryLoginExistingAccount(

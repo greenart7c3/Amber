@@ -23,12 +23,14 @@ package com.greenart7c3.nostrsigner.service
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
 
 object PushNotificationUtils {
     var hasInit: Boolean = false
+    var accountState: AccountStateViewModel? = null
 
     suspend fun init(accounts: List<AccountInfo>) =
         with(Dispatchers.IO) {

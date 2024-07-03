@@ -42,6 +42,7 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
+import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -115,6 +116,8 @@ fun AccountScreen(
 
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
+                            PushNotificationUtils.accountState = accountStateViewModel
+
                             @Suppress("KotlinConstantConditions")
                             if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 NostrSigner.getInstance().checkForNewRelays()
@@ -166,6 +169,14 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                     obj.title,
                     obj.msg,
                 ) {
+                    accountViewModel.clearToasts()
+                }
+            is ConfirmationToastMsg ->
+                InformationDialog(
+                    obj.title,
+                    obj.msg,
+                ) {
+                    obj.onOk()
                     accountViewModel.clearToasts()
                 }
         }

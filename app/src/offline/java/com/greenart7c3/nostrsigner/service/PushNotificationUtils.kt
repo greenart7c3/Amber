@@ -21,10 +21,12 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.Dispatchers
 
 object PushNotificationUtils {
     var hasInit: Boolean = false
+    var accountState: AccountStateViewModel? = null
 
     suspend fun init(@Suppress("UNUSED_PARAMETER") accounts: List<AccountInfo>) =
         with(Dispatchers.IO) {

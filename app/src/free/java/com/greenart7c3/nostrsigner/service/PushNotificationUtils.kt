@@ -20,15 +20,22 @@
  */
 package com.greenart7c3.nostrsigner.service
 
+import android.content.Intent
+import android.content.Intent.FLAG_ACTIVITY_NEW_TASK
+import android.net.Uri
 import android.util.Log
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.CancellationException
 
 object PushNotificationUtils {
     var hasInit: Boolean = false
     private val pushHandler = PushDistributorHandler
+    var accountState: AccountStateViewModel? = null
 
     suspend fun init(accounts: List<AccountInfo>) {
         if (hasInit) {
@@ -52,6 +59,19 @@ object PushNotificationUtils {
                             "No distributors found for push notifications",
                             System.currentTimeMillis(),
                         ),
+                    )
+                }
+                if (!LocalPreferences.getPushServerMessage(NostrSigner.getInstance())) {
+                    accountState?.toast(
+                        title = NostrSigner.getInstance().getString(R.string.push_server),
+                        message = NostrSigner.getInstance().getString(R.string.no_distributors_found),
+                        onOk = {
+                            LocalPreferences.setPushServerMessage(NostrSigner.getInstance(), true)
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = Uri.parse("https://ntfy.sh/")
+                            intent.flags = FLAG_ACTIVITY_NEW_TASK
+                            NostrSigner.getInstance().startActivity(intent)
+                        },
                     )
                 }
             }

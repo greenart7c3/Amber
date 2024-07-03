@@ -232,4 +232,5 @@
     <string name="push_server_none_explainer">Disables Push Notifications</string>
     <string name="push_server">Push Server</string>
     <string name="no_distributors_found">No distributors found for push notifications.\nPlease install a distributor like ntfy.</string>
+    <string name="requests">requests</string>
 </resources>

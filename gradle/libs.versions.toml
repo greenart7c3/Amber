@@ -24,12 +24,12 @@ roomKtx = "2.6.1"
 securityCryptoKtx = "1.1.0-alpha06"
 zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.0.0-alpha.14"
-kotlin = "1.9.24"
+kotlin = "2.0.0"
 workRuntimeKtx = "2.9.0"
 agp = "8.5.0"
 ktlint = "12.1.1"
 gms = "4.4.2"
-ksp = "1.9.24-1.0.20"
+ksp = "2.0.0-1.0.22"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
@@ -79,3 +79,4 @@ gradle_ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "ktlint" }
 google_gms = { id = "com.google.gms.google-services", version = "gms" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin_ksp = { id = "com.google.devtools.ksp", version = "ksp" }
+jetbrainsComposeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

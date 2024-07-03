@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.gradle.ktlint) version(libs.versions.ktlint)
     alias(libs.plugins.google.gms) version(libs.versions.gms)
     alias(libs.plugins.kotlin.ksp) version(libs.versions.ksp)
+    alias(libs.plugins.jetbrainsComposeCompiler)
 }
 
 android {
@@ -137,17 +138,9 @@ android {
         targetCompatibility JavaVersion.VERSION_17
     }
 
-    kotlinOptions {
-        jvmTarget = '17'
-    }
-
     buildFeatures {
         compose true
         buildConfig true
-    }
-
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
     }
 
     packagingOptions {
@@ -156,6 +149,17 @@ android {
         }
     }
 }
+
+kotlin {
+    compilerOptions {
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+composeCompiler {
+    reportsDestination = layout.buildDirectory.dir("compose_compiler")
+}
+
 
 dependencies {
     implementation(libs.quartz) {
@@ -234,6 +238,7 @@ dependencies {
 import com.android.tools.profgen.ArtProfileKt
 import com.android.tools.profgen.ArtProfileSerializer
 import com.android.tools.profgen.DexFile
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 project.afterEvaluate {
     tasks.each { task ->

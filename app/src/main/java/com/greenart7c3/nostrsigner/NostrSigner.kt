@@ -29,12 +29,16 @@ class NostrSigner : Application() {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
         }
 
-        this.startForegroundService(
-            Intent(
-                this,
-                ConnectivityService::class.java,
-            ),
-        )
+        try {
+            this.startForegroundService(
+                Intent(
+                    this,
+                    ConnectivityService::class.java,
+                ),
+            )
+        } catch (e: Exception) {
+            Log.e("NostrSigner", "Failed to start ConnectivityService", e)
+        }
     }
 
     fun getDatabase(npub: String): AppDatabase {
@@ -90,7 +94,7 @@ class NostrSigner : Application() {
         }
     }
 
-    private fun checkIfRelaysAreConnected() {
+    private fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {
         Log.d("NostrSigner", "Checking if relays are connected")
         RelayPool.getAll().forEach { relay ->
             if (!relay.isConnected()) {
@@ -107,6 +111,9 @@ class NostrSigner : Application() {
         while (RelayPool.getAll().any { !it.isConnected() } && count < 10) {
             count++
             Thread.sleep(1000)
+        }
+        if (RelayPool.getAll().any { !it.isConnected() } && tryAgain) {
+            checkIfRelaysAreConnected(false)
         }
     }
 

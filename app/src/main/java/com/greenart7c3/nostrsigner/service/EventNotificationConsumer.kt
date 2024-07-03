@@ -30,6 +30,7 @@ import androidx.core.content.ContextCompat
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.NotificationEntity
@@ -241,9 +242,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             }
 
             val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
-            var message = "$name requests ${bunkerPermission.toLocalizedString(applicationContext)}"
+            var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
             if (type == SignerType.SIGN_EVENT) {
-                message = "$name wants you to sign a ${bunkerPermission.toLocalizedString(applicationContext)}"
+                message = "$name ${applicationContext.getString(R.string.wants_you_to_sign_a, bunkerPermission.toLocalizedString(applicationContext))}"
             }
             if (type == SignerType.CONNECT) {
                 message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"

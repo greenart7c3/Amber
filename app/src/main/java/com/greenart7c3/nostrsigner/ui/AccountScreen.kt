@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
+import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
@@ -117,15 +118,19 @@ fun AccountScreen(
                     SideEffect {
                         scope.launch(Dispatchers.IO) {
                             PushNotificationUtils.accountState = accountStateViewModel
+                            try {
+                                NostrSigner.getInstance().applicationContext.startForegroundService(
+                                    Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
+                                )
+                            } catch (e: Exception) {
+                                Log.d("NostrSigner", "Failed to start ConnectivityService", e)
+                            }
 
                             @Suppress("KotlinConstantConditions")
                             if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 NostrSigner.getInstance().checkForNewRelays()
                                 NotificationDataSource.start()
                                 delay(5000)
-                                NostrSigner.getInstance().applicationContext.startForegroundService(
-                                    Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
-                                )
                             }
                         }
                     }

@@ -151,6 +151,17 @@ class RegisterAccounts(
             val tag = "FirebaseMsgService"
 
             Log.e(tag, "Unable to register with push server", e)
+            accounts.forEach {
+                NostrSigner.getInstance().getDatabase(it.npub).applicationDao().insertLog(
+                    LogEntity(
+                        0,
+                        "Push server",
+                        "Push server",
+                        "Unable to register with push server: ${e.message}",
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 

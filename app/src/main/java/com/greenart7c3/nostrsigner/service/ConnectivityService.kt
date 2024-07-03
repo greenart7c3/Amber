@@ -15,10 +15,15 @@ import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.RelayPool
 import java.util.Timer
 import java.util.TimerTask
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
     private var isStarted = false
     private val timer = Timer()
+    private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
     override fun onBind(intent: Intent): IBinder {
         return null!!
@@ -46,6 +51,11 @@ class ConnectivityService : Service() {
 
         isStarted = true
         startForeground(1, createNotification())
+
+        scope.launch(Dispatchers.IO) {
+            PushNotificationUtils.hasInit = false
+            PushNotificationUtils.init(LocalPreferences.allSavedAccounts(this@ConnectivityService))
+        }
 
         timer.schedule(
             object : TimerTask() {

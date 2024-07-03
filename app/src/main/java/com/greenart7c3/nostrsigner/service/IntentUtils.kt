@@ -550,7 +550,7 @@ object IntentUtils {
 
         val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
         val name = if (callbackUrl.isNotBlank()) Uri.parse(callbackUrl).host ?: "" else ""
-        val pubKey = intent.extras?.getString("pubKey") ?: ""
+        val pubKey = intent.extras?.getString("pubKey") ?: intent.extras?.getString("pubkey") ?: ""
         val id = intent.extras?.getString("id") ?: ""
 
         val compressionType = if (intent.extras?.getString("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE
@@ -577,6 +577,11 @@ object IntentUtils {
                     unsignedEvent.tags,
                     unsignedEvent.content,
                 ) {
+                    var npub = intent.getStringExtra("current_user")
+                    if (npub != null) {
+                        npub = parsePubKey(npub!!)
+                    }
+
                     onReady(
                         IntentData(
                             data,
@@ -588,7 +593,7 @@ object IntentUtils {
                             compressionType,
                             returnType,
                             permissions,
-                            intent.extras?.getString("current_user") ?: Hex.decode(it.pubKey).toNpub(),
+                            npub ?: Hex.decode(it.pubKey).toNpub(),
                             mutableStateOf(true),
                             mutableStateOf(false),
                             null,
@@ -612,6 +617,11 @@ object IntentUtils {
                         "Could not decrypt the message"
                     }
 
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub!!)
+                }
+
                 onReady(
                     IntentData(
                         data,
@@ -623,7 +633,7 @@ object IntentUtils {
                         compressionType,
                         returnType,
                         permissions,
-                        intent.extras?.getString("current_user") ?: Hex.decode(pubKey).toNpub(),
+                        npub ?: Hex.decode(pubKey).toNpub(),
                         mutableStateOf(true),
                         mutableStateOf(false),
                         null,
@@ -634,6 +644,11 @@ object IntentUtils {
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub!!)
+                }
+
                 onReady(
                     IntentData(
                         data,
@@ -645,7 +660,7 @@ object IntentUtils {
                         compressionType,
                         returnType,
                         permissions,
-                        intent.extras?.getString("current_user") ?: Hex.decode(pubKey).toNpub(),
+                        npub ?: Hex.decode(pubKey).toNpub(),
                         mutableStateOf(true),
                         mutableStateOf(false),
                         null,
@@ -656,6 +671,11 @@ object IntentUtils {
                 )
             }
             SignerType.SIGN_MESSAGE -> {
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub!!)
+                }
+
                 onReady(
                     IntentData(
                         data,
@@ -667,7 +687,7 @@ object IntentUtils {
                         compressionType,
                         returnType,
                         permissions,
-                        intent.extras?.getString("current_user") ?: Hex.decode(pubKey).toNpub(),
+                        npub ?: Hex.decode(pubKey).toNpub(),
                         mutableStateOf(true),
                         mutableStateOf(false),
                         null,
@@ -678,6 +698,17 @@ object IntentUtils {
                 )
             }
             else -> onReady(null)
+        }
+    }
+
+    fun parsePubKey(key: String): String? {
+        if (key.startsWith("npub1")) {
+            return key
+        }
+        return try {
+            Hex.decode(key).toNpub()
+        } catch (e: Exception) {
+            null
         }
     }
 
@@ -780,7 +811,11 @@ object IntentUtils {
                 localAccount = it
             }
         } else if (intent.getStringExtra("current_user") != null) {
-            LocalPreferences.loadFromEncryptedStorage(context, intent.getStringExtra("current_user"))?.let {
+            var npub = intent.getStringExtra("current_user")
+            if (npub != null) {
+                npub = parsePubKey(npub)
+            }
+            LocalPreferences.loadFromEncryptedStorage(context, npub)?.let {
                 localAccount = it
             }
         }

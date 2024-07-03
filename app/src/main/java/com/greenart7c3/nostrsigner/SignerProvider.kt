@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -51,8 +52,9 @@ class SignerProvider : ContentProvider() {
             "content://$appId.SIGN_MESSAGE" -> {
                 val packageName = callingPackage ?: return null
                 val message = projection?.first() ?: return null
-                if (!LocalPreferences.containsAccount(context!!, projection[2])) return null
-                val account = LocalPreferences.loadFromEncryptedStorage(context!!, projection[2]) ?: return null
+                val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
+                if (!LocalPreferences.containsAccount(context!!, npub)) return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
@@ -119,8 +121,9 @@ class SignerProvider : ContentProvider() {
             "content://$appId.SIGN_EVENT" -> {
                 val packageName = callingPackage ?: return null
                 val json = projection?.first() ?: return null
-                if (!LocalPreferences.containsAccount(context!!, projection[2])) return null
-                val account = LocalPreferences.loadFromEncryptedStorage(context!!, projection[2]) ?: return null
+                val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
+                if (!LocalPreferences.containsAccount(context!!, npub)) return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
@@ -214,10 +217,11 @@ class SignerProvider : ContentProvider() {
             -> {
                 val packageName = callingPackage ?: return null
                 val content = projection?.first() ?: return null
-                if (!LocalPreferences.containsAccount(context!!, projection[2])) return null
+                val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
+                if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val stringType = uri.toString().replace("content://$appId.", "")
                 val pubkey = projection[1]
-                val account = LocalPreferences.loadFromEncryptedStorage(context!!, projection[2]) ?: return null
+                val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =

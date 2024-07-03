@@ -20,5 +20,15 @@ class BootReceiver : BroadcastReceiver() {
                 ),
             )
         }
+
+        if (intent.action == Intent.ACTION_MY_PACKAGE_REPLACED) {
+            val packageManager = context.packageManager
+            val intent2 = packageManager.getLaunchIntentForPackage("com.greenart7c3.nostrsigner.debug")
+            if (intent2 != null) {
+                intent2.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                context.startActivity(intent2)
+                Runtime.getRuntime().exit(0)
+            }
+        }
     }
 }

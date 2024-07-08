@@ -218,22 +218,22 @@
     <string name="save">Enregistrer</string>
     <string name="logs">Logs</string>
     <string name="clear_logs">Effacer les logs</string>
-    <string name="default_relays">Default relays</string>
-    <string name="distributors">Distributors</string>
-    <string name="select_distributor">Select the push notification distributor</string>
-    <string name="select_push_server">Select a UnifiedPush App</string>
-    <string name="push_server_install_app">Push Notification Setup</string>
+    <string name="default_relays">Relais par défaut</string>
+    <string name="distributors">Distributeurs</string>
+    <string name="select_distributor">Sélectionnez le distributeur de notification push</string>
+    <string name="select_push_server">Sélectionnez une application UnifiedPush</string>
+    <string name="push_server_install_app">Configuration des notifications push</string>
     <string name="push_server_install_app_description">        To receive push notifications, install any app that supports [Unified Push](https://unifiedpush.org/), such as [Nfty](https://ntfy.sh/).
         After installing, select the app you want to use in the Settings.
     </string>
-    <string name="push_server_uses_app_explainer">Uses app %1$s</string>
-    <string name="push_server_title">Push Notification</string>
-    <string name="push_server_explainer">From installed UnifiedPush apps</string>
-    <string name="quick_action_dont_show_again_button">Don\'t show again</string>
+    <string name="push_server_uses_app_explainer">Utilise l\'application %1$s</string>
+    <string name="push_server_title">Notification push</string>
+    <string name="push_server_explainer">Depuis les applications UnifiedPush installées</string>
+    <string name="quick_action_dont_show_again_button">Ne plus afficher</string>
     <string name="error_dialog_button_ok">OK</string>
-    <string name="push_server_none">None</string>
-    <string name="push_server_none_explainer">Disables Push Notifications</string>
-    <string name="push_server">Push Server</string>
-    <string name="no_distributors_found">No distributors found for push notifications.\nPlease install a distributor like ntfy.</string>
-    <string name="requests">requests</string>
+    <string name="push_server_none">Aucun</string>
+    <string name="push_server_none_explainer">Désactive les notifications push</string>
+    <string name="push_server">Serveur Push</string>
+    <string name="no_distributors_found">Aucun distributeur n\'a été trouvé pour les notifications push.\nVeuillez installer un distributeur comme ntfy.</string>
+    <string name="requests">requêtes</string>
 </resources>

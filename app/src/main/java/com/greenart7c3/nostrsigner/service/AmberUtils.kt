@@ -130,7 +130,7 @@ object AmberUtils {
         IntentUtils.sendBunkerResponse(
             context,
             account,
-            bunkerRequest.localKey,
+            bunkerRequest,
             BunkerResponse(bunkerRequest.id, "", "user rejected"),
             relays,
             onLoading = onLoading,

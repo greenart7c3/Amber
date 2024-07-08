@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
+import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
@@ -117,142 +118,199 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         acc: Account,
     ) {
-        acc.signer.nip04Decrypt(event.content, event.pubKey) {
-            if (BuildConfig.DEBUG) {
-                Log.d("bunker", event.toJson())
-                Log.d("bunker", it)
+        if (event.content.isEmpty()) return
+        if (IntentUtils.isNip04(event.content)) {
+            acc.signer.nip04Decrypt(event.content, event.pubKey) {
+                notify(event, acc, it, EncryptionType.NIP04)
+            }
+        } else {
+            acc.signer.nip44Decrypt(event.content, event.pubKey) {
+                notify(event, acc, it, EncryptionType.NIP44)
+            }
+        }
+    }
+
+    private fun notify(
+        event: Event,
+        acc: Account,
+        request: String,
+        encryptionType: EncryptionType,
+    ) {
+        if (BuildConfig.DEBUG) {
+            Log.d("bunker", event.toJson())
+            Log.d("bunker", request)
+        }
+
+        val dao = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
+        val notification = dao.getNotification(event.id)
+        if (notification != null) return
+        dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+
+        val bunkerRequest = BunkerRequest.mapper.readValue(request, BunkerRequest::class.java)
+        bunkerRequest.localKey = event.pubKey
+        bunkerRequest.currentAccount = acc.keyPair.pubKey.toNpub()
+        bunkerRequest.encryptionType = encryptionType
+
+        val type = IntentUtils.getTypeFromBunker(bunkerRequest)
+        val data = IntentUtils.getDataFromBunker(bunkerRequest)
+
+        var amberEvent: AmberEvent? = null
+
+        val pubKey =
+            if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
+                bunkerRequest.params.first()
+            } else if (bunkerRequest.method == "sign_event") {
+                amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
+                amberEvent.pubKey
+            } else {
+                ""
             }
 
-            val dao = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
-            val notification = dao.getNotification(event.id)
-            if (notification != null) return@nip04Decrypt
-            dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+        val database = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub())
 
-            val bunkerRequest = BunkerRequest.mapper.readValue(it, BunkerRequest::class.java)
-            bunkerRequest.localKey = event.pubKey
-            bunkerRequest.currentAccount = acc.keyPair.pubKey.toNpub()
+        val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
+        if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
+            database.applicationDao()
+                .addHistory(
+                    HistoryEntity(
+                        0,
+                        permission.application.key,
+                        type.toString().toLowerCase(Locale.current),
+                        amberEvent?.kind,
+                        System.currentTimeMillis(),
+                        true,
+                    ),
+                )
+            IntentUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                bunkerRequest,
+                BunkerResponse(bunkerRequest.id, "ack", null),
+                permission.application.relays,
+                onLoading = {},
+                onDone = {},
+                checkForEmptyRelays = false,
+            )
+            return
+        }
 
-            val type = IntentUtils.getTypeFromBunker(bunkerRequest)
-            val data = IntentUtils.getDataFromBunker(bunkerRequest)
-
-            var amberEvent: AmberEvent? = null
-
-            val pubKey =
-                if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
-                    bunkerRequest.params.first()
-                } else if (bunkerRequest.method == "sign_event") {
-                    amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-                    amberEvent.pubKey
-                } else {
+        var applicationWithSecret: ApplicationWithPermissions? = null
+        if (type == SignerType.CONNECT) {
+            val secret =
+                try {
+                    bunkerRequest.params[1]
+                } catch (_: Exception) {
                     ""
                 }
-
-            val database = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub())
-
-            val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
-            if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
-                database.applicationDao()
-                    .addHistory(
-                        HistoryEntity(
-                            0,
-                            permission.application.key,
-                            type.toString().toLowerCase(Locale.current),
-                            amberEvent?.kind,
-                            System.currentTimeMillis(),
-                            true,
-                        ),
+            // TODO: make secret not optional when more applications start using it
+            if (secret.isNotBlank()) {
+                bunkerRequest.secret = secret
+                applicationWithSecret = database.applicationDao().getBySecret(secret)
+                if (applicationWithSecret == null || secret.isBlank()) {
+                    IntentUtils.sendBunkerResponse(
+                        applicationContext,
+                        acc,
+                        bunkerRequest,
+                        BunkerResponse(bunkerRequest.id, "", "invalid secret"),
+                        applicationWithSecret?.application?.relays ?: listOf(),
+                        onLoading = { },
+                        onDone = { },
+                        checkForEmptyRelays = false,
                     )
-                IntentUtils.sendBunkerResponse(
-                    applicationContext,
-                    acc,
-                    bunkerRequest.localKey,
-                    BunkerResponse(bunkerRequest.id, "ack", null),
-                    permission.application.relays,
-                    onLoading = {},
-                    onDone = {},
-                    checkForEmptyRelays = false,
-                )
-                return@nip04Decrypt
-            }
-
-            var applicationWithSecret: ApplicationWithPermissions? = null
-            if (type == SignerType.CONNECT) {
-                val secret =
-                    try {
-                        bunkerRequest.params[1]
-                    } catch (_: Exception) {
-                        ""
+                    return
+                }
+            } else {
+                applicationWithSecret =
+                    database.applicationDao().getAllApplications().firstOrNull { localApp ->
+                        !localApp.application.useSecret && localApp.application.secret == localApp.application.key
                     }
-                // TODO: make secret not optional when more applications start using it
-                if (secret.isNotBlank()) {
-                    bunkerRequest.secret = secret
-                    applicationWithSecret = database.applicationDao().getBySecret(secret)
-                    if (applicationWithSecret == null || secret.isBlank()) {
+
+                bunkerRequest.secret = applicationWithSecret?.application?.secret ?: ""
+                bunkerRequest.relays = applicationWithSecret?.application?.relays ?: bunkerRequest.relays
+            }
+        }
+
+        if (permission == null && applicationWithSecret == null) {
+            IntentUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                bunkerRequest,
+                BunkerResponse(bunkerRequest.id, "", "no permission"),
+                listOf(),
+                onLoading = { },
+                onDone = {},
+                checkForEmptyRelays = false,
+            )
+            return
+        }
+
+        val cursor =
+            applicationContext.contentResolver.query(
+                Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
+                arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
+                "1",
+                null,
+                bunkerRequest.localKey,
+            )
+
+        var name = event.pubKey.toShortenHex()
+        if (permission != null && permission.application.name.isNotBlank()) {
+            name = permission.application.name
+        } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
+            name = applicationWithSecret.application.name
+        }
+
+        val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
+        var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
+        if (type == SignerType.SIGN_EVENT) {
+            message = "$name ${applicationContext.getString(R.string.wants_you_to_sign_a, bunkerPermission.toLocalizedString(applicationContext))}"
+        }
+        if (type == SignerType.CONNECT) {
+            message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
+        }
+        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
+
+        cursor.use { localCursor ->
+            if (localCursor == null) {
+                notificationManager()
+                    .sendNotification(
+                        bunkerRequest.id,
+                        message,
+                        "Bunker",
+                        "nostrsigner:",
+                        "BunkerID",
+                        applicationContext,
+                        bunkerRequest,
+                    )
+            } else {
+                if (localCursor.moveToFirst()) {
+                    if (localCursor.getColumnIndex("rejected") > -1) {
                         IntentUtils.sendBunkerResponse(
                             applicationContext,
                             acc,
-                            bunkerRequest.localKey,
-                            BunkerResponse(bunkerRequest.id, "", "invalid secret"),
-                            applicationWithSecret?.application?.relays ?: listOf(),
+                            bunkerRequest,
+                            BunkerResponse(bunkerRequest.id, "", "user rejected"),
+                            relays,
                             onLoading = { },
                             onDone = { },
                             checkForEmptyRelays = false,
                         )
-                        return@nip04Decrypt
+                    } else {
+                        val index = localCursor.getColumnIndex("event")
+                        val result = localCursor.getString(index)
+
+                        IntentUtils.sendBunkerResponse(
+                            applicationContext,
+                            acc,
+                            bunkerRequest,
+                            BunkerResponse(bunkerRequest.id, result, null),
+                            relays,
+                            onLoading = { },
+                            onDone = { },
+                            checkForEmptyRelays = false,
+                        )
                     }
                 } else {
-                    applicationWithSecret =
-                        database.applicationDao().getAllApplications().firstOrNull { localApp ->
-                            !localApp.application.useSecret && localApp.application.secret == localApp.application.key
-                        }
-
-                    bunkerRequest.secret = applicationWithSecret?.application?.secret ?: ""
-                    bunkerRequest.relays = applicationWithSecret?.application?.relays ?: bunkerRequest.relays
-                }
-            }
-
-            if (permission == null && applicationWithSecret == null) {
-                IntentUtils.sendBunkerResponse(
-                    applicationContext,
-                    acc,
-                    bunkerRequest.localKey,
-                    BunkerResponse(bunkerRequest.id, "", "no permission"),
-                    listOf(),
-                    onLoading = { },
-                    onDone = {},
-                    checkForEmptyRelays = false,
-                )
-                return@nip04Decrypt
-            }
-
-            val cursor =
-                applicationContext.contentResolver.query(
-                    Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
-                    arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
-                    "1",
-                    null,
-                    bunkerRequest.localKey,
-                )
-
-            var name = event.pubKey.toShortenHex()
-            if (permission != null && permission.application.name.isNotBlank()) {
-                name = permission.application.name
-            } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
-                name = applicationWithSecret.application.name
-            }
-
-            val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
-            var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
-            if (type == SignerType.SIGN_EVENT) {
-                message = "$name ${applicationContext.getString(R.string.wants_you_to_sign_a, bunkerPermission.toLocalizedString(applicationContext))}"
-            }
-            if (type == SignerType.CONNECT) {
-                message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
-            }
-            val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
-
-            cursor.use { localCursor ->
-                if (localCursor == null) {
                     notificationManager()
                         .sendNotification(
                             bunkerRequest.id,
@@ -263,46 +321,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             applicationContext,
                             bunkerRequest,
                         )
-                } else {
-                    if (localCursor.moveToFirst()) {
-                        if (localCursor.getColumnIndex("rejected") > -1) {
-                            IntentUtils.sendBunkerResponse(
-                                applicationContext,
-                                acc,
-                                bunkerRequest.localKey,
-                                BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                                relays,
-                                onLoading = { },
-                                onDone = { },
-                                checkForEmptyRelays = false,
-                            )
-                        } else {
-                            val index = localCursor.getColumnIndex("event")
-                            val result = localCursor.getString(index)
-
-                            IntentUtils.sendBunkerResponse(
-                                applicationContext,
-                                acc,
-                                bunkerRequest.localKey,
-                                BunkerResponse(bunkerRequest.id, result, null),
-                                relays,
-                                onLoading = { },
-                                onDone = { },
-                                checkForEmptyRelays = false,
-                            )
-                        }
-                    } else {
-                        notificationManager()
-                            .sendNotification(
-                                bunkerRequest.id,
-                                message,
-                                "Bunker",
-                                "nostrsigner:",
-                                "BunkerID",
-                                applicationContext,
-                                bunkerRequest,
-                            )
-                    }
                 }
             }
         }

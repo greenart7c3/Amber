@@ -217,7 +217,7 @@ fun MultiEventHomeScreen(
                                         IntentUtils.sendBunkerResponse(
                                             context,
                                             localAccount,
-                                            intentData.bunkerRequest.localKey,
+                                            intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
                                             applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
@@ -292,7 +292,7 @@ fun MultiEventHomeScreen(
                                         IntentUtils.sendBunkerResponse(
                                             context,
                                             localAccount,
-                                            intentData.bunkerRequest.localKey,
+                                            intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
                                             applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},
@@ -358,7 +358,7 @@ fun MultiEventHomeScreen(
                                         IntentUtils.sendBunkerResponse(
                                             context,
                                             localAccount,
-                                            intentData.bunkerRequest.localKey,
+                                            intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
                                             applicationEntity?.application?.relays ?: emptyList(),
                                             onLoading = {},

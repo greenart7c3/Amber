@@ -213,7 +213,7 @@ fun sendResult(
             IntentUtils.sendBunkerResponse(
                 context,
                 account,
-                intentData.bunkerRequest.localKey,
+                intentData.bunkerRequest,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
                 application.application.relays,
                 onLoading,

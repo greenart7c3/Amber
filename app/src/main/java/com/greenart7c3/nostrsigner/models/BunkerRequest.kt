@@ -23,6 +23,7 @@ data class BunkerRequest(
     var relays: List<RelaySetupInfo>,
     var secret: String,
     var currentAccount: String,
+    var encryptionType: EncryptionType,
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
@@ -40,6 +41,8 @@ data class BunkerRequest(
         if (localKey != other.localKey) return false
         if (relays != other.relays) return false
         if (secret != other.secret) return false
+        if (currentAccount != other.currentAccount) return false
+        if (encryptionType != other.encryptionType) return false
 
         return true
     }
@@ -51,6 +54,8 @@ data class BunkerRequest(
         result = 31 * result + localKey.hashCode()
         result = 31 * result + relays.hashCode()
         result = 31 * result + secret.hashCode()
+        result = 31 * result + currentAccount.hashCode()
+        result = 31 * result + encryptionType.hashCode()
         return result
     }
 
@@ -65,6 +70,13 @@ data class BunkerRequest(
                 )
 
         fun fromJson(jsonObject: JsonNode): BunkerRequest {
+            val encryptionTypeString = jsonObject.get("encryptionType")?.asText()?.intern() ?: ""
+            val encryptionType = when (encryptionTypeString) {
+                "NIP44" -> EncryptionType.NIP44
+                "NIP04" -> EncryptionType.NIP04
+                else -> EncryptionType.NIP04
+            }
+
             return BunkerRequest(
                 id = jsonObject.get("id").asText().intern(),
                 method = jsonObject.get("method").asText().intern(),
@@ -77,6 +89,7 @@ data class BunkerRequest(
                 } ?: NostrSigner.getInstance().getSavedRelays().toList(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
+                encryptionType = encryptionType,
             )
         }
 
@@ -111,6 +124,7 @@ data class BunkerRequest(
                 gen.writeEndArray()
                 gen.writeStringField("secret", value.secret)
                 gen.writeStringField("currentAccount", value.currentAccount)
+                gen.writeStringField("encryptionType", value.encryptionType.toString())
                 gen.writeEndObject()
             }
         }

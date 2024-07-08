@@ -24,6 +24,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.CompressionType
+import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
@@ -287,11 +288,10 @@ object IntentUtils {
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     fun sendBunkerResponse(
         context: Context,
         account: Account,
-        localKey: String,
+        bunkerRequest: BunkerRequest,
         bunkerResponse: BunkerResponse,
         relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
@@ -319,25 +319,63 @@ object IntentUtils {
             AmberListenerSingleton.getListener()!!,
         )
 
-        account.signer.nip04Encrypt(
-            ObjectMapper().writeValueAsString(bunkerResponse),
-            localKey,
-        ) { encryptedContent ->
-            account.signer.sign<Event>(
-                TimeUtils.now(),
-                24133,
-                arrayOf(arrayOf("p", localKey)),
-                encryptedContent,
-            ) {
-                GlobalScope.launch(Dispatchers.IO) {
-                    if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
-                        NostrSigner.getInstance().checkForNewRelays(
-                            LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
-                            newRelays = relays.toSet(),
-                        )
-                    }
-                    Client.send(it, relayList = relays)
+        when (bunkerRequest.encryptionType) {
+            EncryptionType.NIP04 -> {
+                account.signer.nip04Encrypt(
+                    ObjectMapper().writeValueAsString(bunkerResponse),
+                    bunkerRequest.localKey,
+                ) { encryptedContent ->
+                    sendBunkerResponse(
+                        account,
+                        bunkerRequest.localKey,
+                        encryptedContent,
+                        relays,
+                        checkForEmptyRelays,
+                        context,
+                    )
                 }
+            }
+            EncryptionType.NIP44 -> {
+                account.signer.nip44Encrypt(
+                    ObjectMapper().writeValueAsString(bunkerResponse),
+                    bunkerRequest.localKey,
+                ) { encryptedContent ->
+                    sendBunkerResponse(
+                        account,
+                        bunkerRequest.localKey,
+                        encryptedContent,
+                        relays,
+                        checkForEmptyRelays,
+                        context,
+                    )
+                }
+            }
+        }
+    }
+
+    @OptIn(DelicateCoroutinesApi::class)
+    private fun sendBunkerResponse(
+        account: Account,
+        localKey: String,
+        encryptedContent: String,
+        relays: List<RelaySetupInfo>,
+        checkForEmptyRelays: Boolean,
+        context: Context,
+    ) {
+        account.signer.sign<Event>(
+            TimeUtils.now(),
+            24133,
+            arrayOf(arrayOf("p", localKey)),
+            encryptedContent,
+        ) {
+            GlobalScope.launch(Dispatchers.IO) {
+                if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
+                    NostrSigner.getInstance().checkForNewRelays(
+                        LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
+                        newRelays = relays.toSet(),
+                    )
+                }
+                Client.send(it, relayList = relays)
             }
         }
     }
@@ -768,6 +806,7 @@ object IntentUtils {
                         relays,
                         "",
                         account.keyPair.pubKey.toNpub(),
+                        EncryptionType.NIP04,
                     ),
                     route,
                     null,
@@ -851,5 +890,11 @@ object IntentUtils {
         }
 
         return AmberEvent.toEvent(event)
+    }
+
+    fun isNip04(content: String): Boolean {
+        if (!content.contains("?iv=")) return false
+        if (content.length < 28) return false
+        return content[content.length - 28] == '?' && content[content.length - 27] == 'i' && content[content.length - 26] == 'v' && content[content.length - 25] == '='
     }
 }

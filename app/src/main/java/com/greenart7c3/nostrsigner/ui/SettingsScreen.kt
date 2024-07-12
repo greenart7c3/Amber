@@ -77,7 +77,6 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.IOException
@@ -164,6 +163,7 @@ fun SettingsScreen(
     var languageDialog by remember { mutableStateOf(false) }
     var logDialog by remember { mutableStateOf(false) }
     var relayDialog by remember { mutableStateOf(false) }
+    var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
 
     val scope = rememberCoroutineScope()
     val notificationItems =
@@ -505,13 +505,13 @@ fun SettingsScreen(
                 .padding(8.dp),
         ) {
             IconRow(
-                title = if (account.allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
+                title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
                 icon = Icons.Default.SurroundSound,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    account.allowNewConnections = !account.allowNewConnections
+                    allowNewConnections = !allowNewConnections
+                    account.allowNewConnections = allowNewConnections
                     LocalPreferences.saveToEncryptedStorage(context, account)
-                    accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Settings.route)
                 },
             )
         }

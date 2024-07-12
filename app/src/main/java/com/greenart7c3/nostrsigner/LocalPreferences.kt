@@ -383,7 +383,7 @@ object LocalPreferences {
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
             val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
-            val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, true)
+            val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
             HttpClientManager.setDefaultProxy(proxy)
             val account =
                 Account(

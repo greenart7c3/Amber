@@ -141,10 +141,6 @@ fun sendResult(
         }
 
         val activity = context.getAppCompatActivity()
-        if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
-            database.applicationDao().deletePermissions(key)
-        }
-
         val relays = intentData.bunkerRequest?.relays ?: listOf()
         val savedApplication = database.applicationDao().getByKey(key)
 
@@ -175,6 +171,9 @@ fun sendResult(
         application.application.isConnected = true
 
         permissions?.filter { it.checked }?.forEach {
+            if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
+                return@forEach
+            }
             application.permissions.add(
                 ApplicationPermissionsEntity(
                     null,

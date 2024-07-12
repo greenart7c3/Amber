@@ -23,17 +23,13 @@ import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
-import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -71,7 +67,6 @@ import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
-import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.EditDefaultRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
@@ -148,7 +143,6 @@ fun getLanguageIndex(
     return languageIndex
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier,
@@ -157,7 +151,6 @@ fun SettingsScreen(
 ) {
     var backupDialogOpen by remember { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
-    var shouldShowBottomSheet by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var checked by remember { mutableStateOf(account.useProxy) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
@@ -170,11 +163,6 @@ fun SettingsScreen(
     var logDialog by remember { mutableStateOf(false) }
     var relayDialog by remember { mutableStateOf(false) }
 
-    val sheetState =
-        rememberModalBottomSheetState(
-            confirmValueChange = { it != SheetValue.PartiallyExpanded },
-            skipPartiallyExpanded = true,
-        )
     val scope = rememberCoroutineScope()
     val notificationItems =
         persistentListOf(
@@ -182,20 +170,6 @@ fun SettingsScreen(
             TitleExplainer(stringResource(NotificationType.DIRECT.resourceId)),
         )
     var notificationTypeDialog by remember { mutableStateOf(false) }
-
-    if (shouldShowBottomSheet) {
-        AccountsBottomSheet(
-            sheetState = sheetState,
-            account = account,
-            accountStateViewModel = accountStateViewModel,
-            onClose = {
-                scope.launch {
-                    shouldShowBottomSheet = false
-                    sheetState.hide()
-                }
-            },
-        )
-    }
 
     if (relayDialog) {
         EditDefaultRelaysDialog(
@@ -442,23 +416,7 @@ fun SettingsScreen(
     ) {
         Box(
             Modifier
-                .padding(16.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.accounts),
-                icon = Icons.Default.Person,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    scope.launch {
-                        sheetState.show()
-                        shouldShowBottomSheet = true
-                    }
-                },
-            )
-        }
-        Box(
-            Modifier
-                .padding(16.dp),
+                .padding(8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.backup_keys),
@@ -472,7 +430,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(16.dp),
+                .padding(8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.language),
@@ -488,7 +446,7 @@ fun SettingsScreen(
         if (BuildConfig.FLAVOR != "offline") {
             Box(
                 Modifier
-                    .padding(16.dp),
+                    .padding(8.dp),
             ) {
                 IconRow(
                     title = stringResource(R.string.notification_type),
@@ -502,7 +460,7 @@ fun SettingsScreen(
 
             Box(
                 Modifier
-                    .padding(16.dp),
+                    .padding(8.dp),
             ) {
                 IconRow(
                     title = if (checked) {
@@ -528,7 +486,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(16.dp),
+                .padding(8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.default_relays),
@@ -542,7 +500,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(16.dp),
+                .padding(8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.logs),

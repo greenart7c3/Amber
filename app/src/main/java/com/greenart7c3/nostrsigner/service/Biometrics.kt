@@ -13,6 +13,13 @@ import androidx.biometric.BiometricPrompt
 import com.greenart7c3.nostrsigner.R
 
 object Biometrics {
+    fun isFingerprintAvailable(context: Context): Boolean {
+        val fragmentContext = context.getAppCompatActivity()!!
+        val keyguardManager =
+            fragmentContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
+        return keyguardManager.isDeviceSecure
+    }
+
     fun authenticate(
         title: String,
         context: Context,

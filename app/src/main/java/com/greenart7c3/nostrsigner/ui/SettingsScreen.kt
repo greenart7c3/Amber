@@ -23,6 +23,7 @@ import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -76,6 +77,7 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.IOException
@@ -494,6 +496,22 @@ fun SettingsScreen(
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
                     relayDialog = true
+                },
+            )
+        }
+
+        Box(
+            Modifier
+                .padding(8.dp),
+        ) {
+            IconRow(
+                title = if (account.allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
+                icon = Icons.Default.SurroundSound,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    account.allowNewConnections = !account.allowNewConnections
+                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Settings.route)
                 },
             )
         }

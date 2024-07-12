@@ -74,7 +74,8 @@ fun SingleEventHomeScreen(
         }
     }
 
-    val appName = applicationEntity?.application?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
+    var appName = applicationEntity?.application?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
+    appName = appName.ifBlank { key.toShortenHex() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val clipboardManager = LocalClipboardManager.current

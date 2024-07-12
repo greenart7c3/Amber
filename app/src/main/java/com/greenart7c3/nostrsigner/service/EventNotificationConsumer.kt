@@ -230,20 +230,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             }
         }
 
-        if (permission == null && applicationWithSecret == null) {
-            IntentUtils.sendBunkerResponse(
-                applicationContext,
-                acc,
-                bunkerRequest,
-                BunkerResponse(bunkerRequest.id, "", "no permission"),
-                listOf(),
-                onLoading = { },
-                onDone = {},
-                checkForEmptyRelays = false,
-            )
-            return
-        }
-
         val cursor =
             applicationContext.contentResolver.query(
                 Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
@@ -269,6 +255,20 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
+
+        if (permission == null && applicationWithSecret == null && !acc.allowNewConnections) {
+            IntentUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                bunkerRequest,
+                BunkerResponse(bunkerRequest.id, "", "no permission"),
+                listOf(),
+                onLoading = { },
+                onDone = {},
+                checkForEmptyRelays = false,
+            )
+            return
+        }
 
         cursor.use { localCursor ->
             if (localCursor == null) {

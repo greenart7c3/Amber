@@ -16,6 +16,7 @@ class Account(
     var useProxy: Boolean,
     var proxyPort: Int,
     var language: String?,
+    var allowNewConnections: Boolean,
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
 

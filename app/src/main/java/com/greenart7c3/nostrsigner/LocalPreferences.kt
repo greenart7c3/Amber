@@ -46,6 +46,7 @@ private object PrefKeys {
     const val DEFAULT_RELAYS = "default_relays"
     const val ENDPOINT = "endpoint"
     const val PUSH_SERVER_MESSAGE = "push_server_message"
+    const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
 }
 
 @Immutable
@@ -257,6 +258,7 @@ object LocalPreferences {
             putInt(PrefKeys.PROXY_PORT, account.proxyPort)
             putString(PrefKeys.ACCOUNT_NAME, account.name)
             putString(PrefKeys.LANGUAGE_PREFS, account.language)
+            putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
         }.apply()
     }
 
@@ -381,6 +383,7 @@ object LocalPreferences {
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
             val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
+            val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, true)
             HttpClientManager.setDefaultProxy(proxy)
             val account =
                 Account(
@@ -389,6 +392,7 @@ object LocalPreferences {
                     useProxy = useProxy,
                     proxyPort = proxyPort,
                     language = language,
+                    allowNewConnections = allowNewConnections,
                 )
             accountCache.put(npub, account)
             return account

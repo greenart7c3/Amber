@@ -238,4 +238,12 @@
     <string name="requests">requests</string>
     <string name="disable_listening_for_new_connections">Disable listening for new connections</string>
     <string name="enable_listening_for_new_connections">Enable listening for new connections</string>
+    <string name="authenticate">Authentication needed to use the app</string>
+    <string name="security">Security</string>
+    <string name="enable_biometrics">Enable biometrics</string>
+    <string name="when_to_ask">When to ask</string>
+    <string name="every_time">Every time</string>
+    <string name="one_minute">One minute</string>
+    <string name="five_minutes">Five minutes</string>
+    <string name="ten_minutes">Ten Minutes</string>
 </resources>

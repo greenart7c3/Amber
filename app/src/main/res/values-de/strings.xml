@@ -236,4 +236,6 @@
     <string name="push_server">Push-Server</string>
     <string name="no_distributors_found">Keine Distributoren für Push-Benachrichtigungen gefunden.\nBitte installiere einen Distributor wie ntfy.</string>
     <string name="requests">beantragt</string>
+    <string name="disable_listening_for_new_connections">Disable listening for new connections</string>
+    <string name="enable_listening_for_new_connections">Enable listening for new connections</string>
 </resources>

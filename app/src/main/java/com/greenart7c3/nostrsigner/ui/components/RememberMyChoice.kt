@@ -14,15 +14,20 @@ import com.greenart7c3.nostrsigner.R
 
 @Composable
 fun RememberMyChoice(
-    shouldRunOnAccept: Boolean,
+    shouldRunAcceptOrReject: Boolean?,
     remember: Boolean,
     packageName: String?,
     onAccept: () -> Unit,
+    onReject: () -> Unit,
     onChanged: () -> Unit,
 ) {
-    if (shouldRunOnAccept) {
+    if (shouldRunAcceptOrReject != null) {
         LaunchedEffect(Unit) {
-            onAccept()
+            if (shouldRunAcceptOrReject) {
+                onAccept()
+            } else {
+                onReject()
+            }
         }
     }
     if (packageName != null) {

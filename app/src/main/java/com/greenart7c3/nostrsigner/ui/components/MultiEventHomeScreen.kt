@@ -533,9 +533,10 @@ fun ListItem(
                         .padding(top = 8.dp),
                 )
                 RememberMyChoice(
-                    shouldRunOnAccept = false,
+                    shouldRunAcceptOrReject = null,
                     intentData.rememberMyChoice.value,
                     appName,
+                    { },
                     { },
                 ) {
                     intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value

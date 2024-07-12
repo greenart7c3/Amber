@@ -34,7 +34,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun SignMessage(
     content: String,
-    shouldRunOnAccept: Boolean,
+    shouldRunOnAccept: Boolean?,
     remember: MutableState<Boolean>,
     packageName: String?,
     applicationName: String?,
@@ -121,6 +121,7 @@ fun SignMessage(
             remember.value,
             packageName,
             onAccept,
+            onReject,
         ) {
             remember.value = !remember.value
         }

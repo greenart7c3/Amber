@@ -35,7 +35,7 @@ import kotlinx.coroutines.launch
 fun EncryptDecryptData(
     content: String,
     encryptedData: String,
-    shouldRunOnAccept: Boolean,
+    shouldRunOnAccept: Boolean?,
     remember: MutableState<Boolean>,
     packageName: String?,
     applicationName: String?,
@@ -130,6 +130,7 @@ fun EncryptDecryptData(
             remember.value,
             packageName,
             onAccept,
+            onReject,
         ) {
             remember.value = !remember.value
         }

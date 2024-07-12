@@ -87,8 +87,9 @@ fun SingleEventHomeScreen(
                 }
             val remember =
                 remember {
-                    mutableStateOf(permission?.acceptable == true)
+                    mutableStateOf(permission?.acceptable != null)
                 }
+
             LoginWithPubKey(
                 appName,
                 applicationName,
@@ -146,10 +147,9 @@ fun SingleEventHomeScreen(
                 }
             val remember =
                 remember {
-                    mutableStateOf(permission?.acceptable == true)
+                    mutableStateOf(permission?.acceptable != null)
                 }
 
-            val shouldRunOnAccept = permission?.acceptable == true
             val localPackageName =
                 if (intentData.bunkerRequest != null) {
                     intentData.bunkerRequest.localKey
@@ -158,7 +158,7 @@ fun SingleEventHomeScreen(
                 }
             SignMessage(
                 intentData.data,
-                shouldRunOnAccept,
+                permission?.acceptable,
                 remember,
                 localPackageName,
                 applicationName,
@@ -258,10 +258,9 @@ fun SingleEventHomeScreen(
                 }
             val remember =
                 remember {
-                    mutableStateOf(permission?.acceptable == true)
+                    mutableStateOf(permission?.acceptable != null)
                 }
 
-            val shouldRunOnAccept = permission?.acceptable == true
             val localPackageName =
                 if (intentData.bunkerRequest != null) {
                     intentData.bunkerRequest.localKey
@@ -271,7 +270,7 @@ fun SingleEventHomeScreen(
             EncryptDecryptData(
                 intentData.data,
                 intentData.encryptedData ?: "",
-                shouldRunOnAccept,
+                permission?.acceptable,
                 remember,
                 localPackageName,
                 applicationName,
@@ -397,9 +396,8 @@ fun SingleEventHomeScreen(
                     }
                 val remember =
                     remember {
-                        mutableStateOf(permission?.acceptable == true)
+                        mutableStateOf(permission?.acceptable != null)
                     }
-                val shouldRunOnAccept = permission?.acceptable == true
                 val localPackageName =
                     if (intentData.bunkerRequest != null) {
                         intentData.bunkerRequest.localKey
@@ -407,7 +405,7 @@ fun SingleEventHomeScreen(
                         packageName
                     }
                 EventData(
-                    shouldRunOnAccept,
+                    permission?.acceptable,
                     remember,
                     localPackageName,
                     appName,

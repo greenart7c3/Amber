@@ -31,7 +31,7 @@ import com.vitorpamplona.quartz.events.Event
 
 @Composable
 fun EventData(
-    shouldRunOnAccept: Boolean,
+    shouldAcceptOrReject: Boolean?,
     remember: MutableState<Boolean>,
     packageName: String?,
     appName: String,
@@ -100,10 +100,11 @@ fun EventData(
         }
 
         RememberMyChoice(
-            shouldRunOnAccept,
+            shouldAcceptOrReject,
             remember.value,
             packageName,
             onAccept,
+            onReject,
         ) {
             remember.value = !remember.value
         }

@@ -593,11 +593,12 @@ object IntentUtils {
 
         val compressionType = if (intent.extras?.getString("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE
         val returnType = if (intent.extras?.getString("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE
-        val listType = object : TypeToken<List<Permission>>() {}.type
-        val permissions = Gson().fromJson<List<Permission>?>(intent.extras?.getString("permissions"), listType)
+        val listType = object : TypeToken<MutableList<Permission>>() {}.type
+        val permissions = Gson().fromJson<MutableList<Permission>?>(intent.extras?.getString("permissions"), listType)
         permissions?.forEach {
             it.checked = true
         }
+        permissions?.removeIf { it.kind == null && it.type == "sign_event" }
 
         when (type) {
             SignerType.SIGN_EVENT -> {

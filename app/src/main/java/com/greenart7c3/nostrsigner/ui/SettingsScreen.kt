@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,12 +24,14 @@ import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -171,7 +174,17 @@ fun SettingsScreen(
             TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
             TitleExplainer(stringResource(NotificationType.DIRECT.resourceId)),
         )
+
+    val biometricItems =
+        persistentListOf(
+            TitleExplainer(stringResource(BiometricsTimeType.EVERY_TIME.resourceId)),
+            TitleExplainer(stringResource(BiometricsTimeType.ONE_MINUTE.resourceId)),
+            TitleExplainer(stringResource(BiometricsTimeType.FIVE_MINUTES.resourceId)),
+            TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
+        )
+
     var notificationTypeDialog by remember { mutableStateOf(false) }
+    var securityDialog by remember { mutableStateOf(false) }
 
     if (relayDialog) {
         EditDefaultRelaysDialog(
@@ -400,6 +413,80 @@ fun SettingsScreen(
         }
     }
 
+    if (securityDialog) {
+        var biometricsIndex by remember {
+            mutableIntStateOf(LocalPreferences.getBiometricsTimeType(context).screenCode)
+        }
+
+        Dialog(
+            onDismissRequest = {
+                securityDialog = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            var enableBiometrics by remember { mutableStateOf(LocalPreferences.useAuth(context)) }
+
+            Surface(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        CloseButton {
+                            securityDialog = false
+                        }
+                        PostButton(isActive = true) {
+                            securityDialog = false
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.setUseAuth(context, enableBiometrics)
+                                LocalPreferences.updateBiometricsTimeType(context, parseBiometricsTimeType(biometricsIndex))
+                            }
+                        }
+                    }
+
+                    Column {
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .padding(horizontal = 8.dp)
+                                .clickable {
+                                    enableBiometrics = !enableBiometrics
+                                },
+                        ) {
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = stringResource(R.string.enable_biometrics),
+                            )
+                            Switch(
+                                checked = enableBiometrics,
+                                onCheckedChange = {
+                                    enableBiometrics = !enableBiometrics
+                                },
+                            )
+                        }
+                        Box(
+                            Modifier
+                                .padding(8.dp),
+                        ) {
+                            SettingsRow(
+                                R.string.when_to_ask,
+                                R.string.when_to_ask,
+                                biometricItems,
+                                biometricsIndex,
+                            ) {
+                                biometricsIndex = it
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     if (logoutDialog) {
         LogoutDialog(
             onCancel = {
@@ -416,6 +503,20 @@ fun SettingsScreen(
         modifier
             .verticalScroll(rememberScrollState()),
     ) {
+        Box(
+            Modifier
+                .padding(8.dp),
+        ) {
+            IconRow(
+                title = stringResource(R.string.security),
+                icon = Icons.Default.Security,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    securityDialog = true
+                },
+            )
+        }
+
         Box(
             Modifier
                 .padding(8.dp),
@@ -651,6 +752,24 @@ fun SettingsRow(
 enum class NotificationType(val screenCode: Int, val resourceId: Int) {
     PUSH(0, R.string.push_notifications),
     DIRECT(1, R.string.direct_connection),
+}
+
+enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {
+    EVERY_TIME(0, R.string.every_time),
+    ONE_MINUTE(1, R.string.one_minute),
+    FIVE_MINUTES(2, R.string.five_minutes),
+    TEN_MINUTES(3, R.string.ten_minutes),
+}
+
+fun parseBiometricsTimeType(screenCode: Int): BiometricsTimeType {
+    return when (screenCode) {
+        BiometricsTimeType.ONE_MINUTE.screenCode -> BiometricsTimeType.ONE_MINUTE
+        BiometricsTimeType.FIVE_MINUTES.screenCode -> BiometricsTimeType.FIVE_MINUTES
+        BiometricsTimeType.TEN_MINUTES.screenCode -> BiometricsTimeType.TEN_MINUTES
+        else -> {
+            BiometricsTimeType.EVERY_TIME
+        }
+    }
 }
 
 fun parseNotificationType(screenCode: Int): NotificationType {

@@ -9,7 +9,9 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.parseNotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
@@ -47,6 +49,9 @@ private object PrefKeys {
     const val ENDPOINT = "endpoint"
     const val PUSH_SERVER_MESSAGE = "push_server_message"
     const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
+    const val USE_AUTH = "use_auth"
+    const val BIOMETRICS_TYPE = "biometrics_type"
+    const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
 }
 
 @Immutable
@@ -93,6 +98,26 @@ object LocalPreferences {
         return encryptedPreferences(context).getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
             RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
         } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES))
+    }
+
+    fun getLastBiometricsTime(context: Context): Long {
+        return encryptedPreferences(context).getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0)
+    }
+
+    fun setLastBiometricsTime(context: Context, time: Long) {
+        encryptedPreferences(context).edit().apply {
+            putLong(PrefKeys.LAST_BIOMETRICS_TIME, time)
+        }.apply()
+    }
+
+    fun useAuth(context: Context): Boolean {
+        return encryptedPreferences(context).getBoolean(PrefKeys.USE_AUTH, false)
+    }
+
+    fun setUseAuth(context: Context, value: Boolean) {
+        encryptedPreferences(context).edit().apply {
+            putBoolean(PrefKeys.USE_AUTH, value)
+        }.apply()
     }
 
     fun setDefaultRelays(context: Context, relays: List<RelaySetupInfo>) {
@@ -312,6 +337,18 @@ object LocalPreferences {
     fun getNotificationType(context: Context): NotificationType {
         encryptedPreferences(context).apply {
             return parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0))
+        }
+    }
+
+    fun updateBiometricsTimeType(context: Context, biometricsTimeType: BiometricsTimeType) {
+        encryptedPreferences(context).edit().apply {
+            putInt(PrefKeys.BIOMETRICS_TYPE, biometricsTimeType.screenCode)
+        }.apply()
+    }
+
+    fun getBiometricsTimeType(context: Context): BiometricsTimeType {
+        encryptedPreferences(context).apply {
+            return parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0))
         }
     }
 

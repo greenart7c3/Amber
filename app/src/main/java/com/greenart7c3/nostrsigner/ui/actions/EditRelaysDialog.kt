@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -113,7 +114,6 @@ fun EditRelaysDialog(
                 }
                 LazyColumn(
                     Modifier
-                        .fillMaxHeight(0.9f)
                         .fillMaxWidth(),
                 ) {
                     items(relays2.size) {
@@ -159,6 +159,38 @@ fun EditRelaysDialog(
                         onValueChange = {
                             textFieldRelay = TextFieldValue(it)
                         },
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (applicationData.isConnected) return@KeyboardActions
+                                val url = textFieldRelay.text
+                                if (url.isNotBlank() && url != "/") {
+                                    var addedWSS =
+                                        if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
+                                            if (url.endsWith(".onion") || url.endsWith(".onion/")) {
+                                                "ws://$url"
+                                            } else {
+                                                "wss://$url"
+                                            }
+                                        } else {
+                                            url
+                                        }
+                                    if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
+                                    if (relays2.any { it.url == addedWSS }) {
+                                        textFieldRelay = TextFieldValue("")
+                                        return@KeyboardActions
+                                    }
+                                    relays2.add(
+                                        RelaySetupInfo(
+                                            addedWSS,
+                                            read = true,
+                                            write = true,
+                                            feedTypes = COMMON_FEED_TYPES,
+                                        ),
+                                    )
+                                    textFieldRelay = TextFieldValue("")
+                                }
+                            },
+                        ),
                         label = {
                             Text("Relay")
                         },
@@ -179,6 +211,10 @@ fun EditRelaysDialog(
                                         url
                                     }
                                 if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
+                                if (relays2.any { it.url == addedWSS }) {
+                                    textFieldRelay = TextFieldValue("")
+                                    return@IconButton
+                                }
                                 relays2.add(
                                     RelaySetupInfo(
                                         addedWSS,
@@ -253,7 +289,6 @@ fun EditDefaultRelaysDialog(
                 }
                 LazyColumn(
                     Modifier
-                        .fillMaxHeight(0.9f)
                         .fillMaxWidth(),
                 ) {
                     items(relays2.size) {
@@ -298,6 +333,37 @@ fun EditDefaultRelaysDialog(
                         onValueChange = {
                             textFieldRelay = TextFieldValue(it)
                         },
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                val url = textFieldRelay.text
+                                if (url.isNotBlank() && url != "/") {
+                                    var addedWSS =
+                                        if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
+                                            if (url.endsWith(".onion") || url.endsWith(".onion/")) {
+                                                "ws://$url"
+                                            } else {
+                                                "wss://$url"
+                                            }
+                                        } else {
+                                            url
+                                        }
+                                    if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
+                                    if (relays2.any { it.url == addedWSS }) {
+                                        textFieldRelay = TextFieldValue("")
+                                        return@KeyboardActions
+                                    }
+                                    relays2.add(
+                                        RelaySetupInfo(
+                                            addedWSS,
+                                            read = true,
+                                            write = true,
+                                            feedTypes = COMMON_FEED_TYPES,
+                                        ),
+                                    )
+                                    textFieldRelay = TextFieldValue("")
+                                }
+                            },
+                        ),
                         label = {
                             Text("Relay")
                         },
@@ -319,6 +385,10 @@ fun EditDefaultRelaysDialog(
                                         url
                                     }
                                 if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
+                                if (relays2.any { it.url == addedWSS }) {
+                                    textFieldRelay = TextFieldValue("")
+                                    return@IconButton
+                                }
                                 relays2.add(
                                     RelaySetupInfo(
                                         addedWSS,

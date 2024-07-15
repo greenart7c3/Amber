@@ -133,17 +133,20 @@ fun sendResult(
 ) {
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
+        val savedApplication = database.applicationDao().getByKey(key)
+        val relays = if (savedApplication != null) {
+            savedApplication.application.relays.ifEmpty { LocalPreferences.getDefaultRelays(context) }
+        } else {
+            intentData.bunkerRequest?.relays?.ifEmpty { LocalPreferences.getDefaultRelays(context) } ?: LocalPreferences.getDefaultRelays(context)
+        }
         if (intentData.bunkerRequest != null) {
             NostrSigner.getInstance().checkForNewRelays(
                 LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
-                intentData.bunkerRequest.relays.toSet(),
+                relays.toSet(),
             )
         }
 
         val activity = context.getAppCompatActivity()
-        val relays = intentData.bunkerRequest?.relays ?: listOf()
-        val savedApplication = database.applicationDao().getByKey(key)
-
         val localAppName =
             if (packageName != null) {
                 val info = context.packageManager.getApplicationInfo(packageName, 0)
@@ -214,7 +217,7 @@ fun sendResult(
                 account,
                 intentData.bunkerRequest,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
-                application.application.relays,
+                relays,
                 onLoading,
                 onDone = {
                     if (intentData.bunkerRequest.secret.isNotBlank()) {

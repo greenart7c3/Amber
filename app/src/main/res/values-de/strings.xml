@@ -236,14 +236,14 @@
     <string name="push_server">Push-Server</string>
     <string name="no_distributors_found">Keine Distributoren für Push-Benachrichtigungen gefunden.\nBitte installiere einen Distributor wie ntfy.</string>
     <string name="requests">beantragt</string>
-    <string name="disable_listening_for_new_connections">Disable listening for new connections</string>
-    <string name="enable_listening_for_new_connections">Enable listening for new connections</string>
-    <string name="authenticate">Authentication needed to use the app</string>
-    <string name="security">Security</string>
-    <string name="enable_biometrics">Enable biometrics</string>
-    <string name="when_to_ask">When to ask</string>
-    <string name="every_time">Every time</string>
-    <string name="one_minute">One minute</string>
-    <string name="five_minutes">Five minutes</string>
-    <string name="ten_minutes">Ten Minutes</string>
+    <string name="disable_listening_for_new_connections">Warten auf neue Verbindungen deaktivieren</string>
+    <string name="enable_listening_for_new_connections">Warten auf neue Verbindungen aktivieren</string>
+    <string name="authenticate">Authentifizierung benötigt, um die App zu nutzen</string>
+    <string name="security">Sicherheit</string>
+    <string name="enable_biometrics">Biometrische Daten aktivieren</string>
+    <string name="when_to_ask">Wer soll gefragt werden</string>
+    <string name="every_time">Jedes Mal</string>
+    <string name="one_minute">Eine Minute</string>
+    <string name="five_minutes">Fünf Minuten</string>
+    <string name="ten_minutes">Zehn Minuten</string>
 </resources>

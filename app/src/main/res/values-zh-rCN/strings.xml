@@ -246,4 +246,16 @@
     <string name="one_minute">一分钟</string>
     <string name="five_minutes">五分钟</string>
     <string name="ten_minutes">十分钟</string>
+    <string name="event_kind_9000">Add user to group</string>
+    <string name="event_kind_9001">Remove user from group</string>
+    <string name="event_kind_9002">Edit group metadata</string>
+    <string name="event_kind_9003">Add permission</string>
+    <string name="event_kind_9004">Remove permission</string>
+    <string name="event_kind_9005">Delete event from group</string>
+    <string name="event_kind_9006">Edit group status</string>
+    <string name="event_kind_9007">Create group</string>
+    <string name="event_kind_9021">Join group</string>
+    <string name="event_kind_39000">Group metadata</string>
+    <string name="event_kind_39001">Group admins</string>
+    <string name="event_kind_39002">Group members</string>
 </resources>

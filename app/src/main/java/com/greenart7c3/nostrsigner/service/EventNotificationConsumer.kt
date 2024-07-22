@@ -206,12 +206,21 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             if (secret.isNotBlank()) {
                 bunkerRequest.secret = secret
                 applicationWithSecret = database.applicationDao().getBySecret(secret)
-                if (applicationWithSecret == null || secret.isBlank()) {
+                if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret) {
+                    val message = if (applicationWithSecret == null) {
+                        "invalid secret"
+                    } else if (secret.isBlank()) {
+                        "no secret"
+                    } else if (applicationWithSecret.application.isConnected) {
+                        "already connected"
+                    } else {
+                        "secret not in use"
+                    }
                     IntentUtils.sendBunkerResponse(
                         applicationContext,
                         acc,
                         bunkerRequest,
-                        BunkerResponse(bunkerRequest.id, "", "invalid secret"),
+                        BunkerResponse(bunkerRequest.id, "", message),
                         applicationWithSecret?.application?.relays ?: listOf(),
                         onLoading = { },
                         onDone = { },

@@ -8,15 +8,11 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak")
 object AmberListenerSingleton {
@@ -25,11 +21,9 @@ object AmberListenerSingleton {
 
     fun setListener(
         context: Context,
-        onDone: () -> Unit,
-        onLoading: (Boolean) -> Unit,
         accountStateViewModel: AccountStateViewModel?,
     ) {
-        listener = AmberClientListener(context, onDone, onLoading, accountStateViewModel)
+        listener = AmberClientListener(context, accountStateViewModel)
     }
 
     fun getListener(): AmberClientListener? {
@@ -39,10 +33,8 @@ object AmberListenerSingleton {
 
 class AmberClientListener(
     val context: Context,
-    val onDone: () -> Unit,
-    val onLoading: (Boolean) -> Unit,
     val accountStateViewModel: AccountStateViewModel?,
-) : RelayPool.Listener {
+) : Client.Listener {
     override fun onAuth(relay: Relay, challenge: String) {
         LocalPreferences.currentAccount(context)?.let { account ->
             NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
@@ -69,12 +61,6 @@ class AmberClientListener(
                 ),
             )
         }
-
-        GlobalScope.launch(Dispatchers.Default) {
-            delay(10000)
-            onLoading(false)
-            RelayPool.unregister(this@AmberClientListener)
-        }
     }
 
     override fun onSend(relay: Relay, msg: String, success: Boolean) {
@@ -90,9 +76,7 @@ class AmberClientListener(
             )
         }
         if (!success) {
-            onLoading(false)
             accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
-            RelayPool.unregister(this@AmberClientListener)
         }
     }
 
@@ -108,12 +92,9 @@ class AmberClientListener(
                 ),
             )
         }
-        onLoading(false)
-        if (success) {
-            onDone()
-        } else {
+
+        if (!success) {
             accountStateViewModel?.toast("Error", message)
-            RelayPool.unregister(this@AmberClientListener)
         }
     }
 
@@ -130,9 +111,7 @@ class AmberClientListener(
             )
         }
 
-        onLoading(false)
         accountStateViewModel?.toast("Error", error.message ?: "Unknown error")
-        RelayPool.unregister(this@AmberClientListener)
     }
 
     override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
@@ -163,7 +142,7 @@ class AmberClientListener(
         }
     }
 
-    override fun onRelayStateChange(type: Relay.StateType, relay: Relay, channel: String?) {
+    override fun onRelayStateChange(type: Relay.StateType, relay: Relay, subscriptionId: String?) {
         LocalPreferences.currentAccount(context)?.let { account ->
             NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(

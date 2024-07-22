@@ -64,6 +64,7 @@ object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
     private var accountCache = LruCache<String, Account>(10)
+    private var notificationTypeCache: NotificationType? = null
 
     fun allSavedAccounts(context: Context): List<AccountInfo> {
         return savedAccounts(context).map { npub ->
@@ -329,14 +330,20 @@ object LocalPreferences {
     }
 
     fun updateNotificationType(context: Context, notificationType: NotificationType) {
+        notificationTypeCache = notificationType
         encryptedPreferences(context).edit().apply {
             putInt(PrefKeys.NOTIFICATION_TYPE, notificationType.screenCode)
         }.apply()
     }
 
     fun getNotificationType(context: Context): NotificationType {
+        notificationTypeCache?.let {
+            return it
+        }
         encryptedPreferences(context).apply {
-            return parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0))
+            val notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0))
+            notificationTypeCache = notificationType
+            return notificationType
         }
     }
 

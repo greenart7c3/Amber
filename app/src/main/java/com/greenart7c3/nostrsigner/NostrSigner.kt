@@ -16,6 +16,7 @@ import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.delay
 
 class NostrSigner : Application() {
     private var databases = ConcurrentHashMap<String, AppDatabase>()
@@ -68,6 +69,7 @@ class NostrSigner : Application() {
         val savedRelays = getSavedRelays() + newRelays
 
         if (LocalPreferences.getNotificationType(this) != NotificationType.DIRECT) {
+            RelayPool.register(Client)
             savedRelays.forEach { setupInfo ->
                 if (RelayPool.getRelay(setupInfo.url) == null) {
                     RelayPool.addRelay(
@@ -94,7 +96,7 @@ class NostrSigner : Application() {
         }
     }
 
-    private fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {
+    private suspend fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {
         Log.d("NostrSigner", "Checking if relays are connected")
         RelayPool.getAll().forEach { relay ->
             if (!relay.isConnected()) {
@@ -110,7 +112,7 @@ class NostrSigner : Application() {
         var count = 0
         while (RelayPool.getAll().any { !it.isConnected() } && count < 10) {
             count++
-            Thread.sleep(1000)
+            delay(1000)
         }
         if (RelayPool.getAll().any { !it.isConnected() } && tryAgain) {
             checkIfRelaysAreConnected(false)

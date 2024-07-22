@@ -305,17 +305,13 @@ object IntentUtils {
         }
 
         AmberListenerSingleton.getListener()?.let {
-            RelayPool.unregister(it)
+            Client.unsubscribe(it)
         }
-
         AmberListenerSingleton.setListener(
             context,
-            onDone,
-            onLoading,
             AmberListenerSingleton.accountStateViewModel,
         )
-
-        RelayPool.register(
+        Client.subscribe(
             AmberListenerSingleton.getListener()!!,
         )
 
@@ -332,6 +328,8 @@ object IntentUtils {
                         relays,
                         checkForEmptyRelays,
                         context,
+                        onLoading,
+                        onDone,
                     )
                 }
             }
@@ -347,6 +345,8 @@ object IntentUtils {
                         relays,
                         checkForEmptyRelays,
                         context,
+                        onLoading,
+                        onDone,
                     )
                 }
             }
@@ -361,6 +361,8 @@ object IntentUtils {
         relays: List<RelaySetupInfo>,
         checkForEmptyRelays: Boolean,
         context: Context,
+        onLoading: (Boolean) -> Unit,
+        onDone: () -> Unit,
     ) {
         account.signer.sign<Event>(
             TimeUtils.now(),
@@ -375,7 +377,18 @@ object IntentUtils {
                         newRelays = relays.toSet(),
                     )
                 }
-                Client.send(it, relayList = relays)
+
+                val success = Client.sendAndWaitForResponse(it, relayList = relays)
+                if (LocalPreferences.getNotificationType(context) != NotificationType.DIRECT) {
+                    RelayPool.unregister(Client)
+                }
+                if (success) {
+                    onDone()
+                }
+                AmberListenerSingleton.getListener()?.let {
+                    Client.unsubscribe(it)
+                }
+                onLoading(false)
             }
         }
     }

@@ -41,7 +41,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
     private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.getInstance())
 
     private val clientListener =
-        object : Client.Listener() {
+        object : Client.Listener {
             override fun onEvent(
                 event: Event,
                 subscriptionId: String,

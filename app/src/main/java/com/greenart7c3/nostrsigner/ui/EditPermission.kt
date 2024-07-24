@@ -268,7 +268,7 @@ fun EditPermission(
                 textFieldvalue = TextFieldValue(it)
             },
             label = {
-                Text(stringResource(R.string.name))
+                Text("Name")
             },
         )
 

@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.kindToNip
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
@@ -169,7 +170,11 @@ object AmberUtils {
                 permissions = mutableListOf(),
             )
 
-        if (application.permissions.none { it.type == intentData.type.toString() && it.kind == kind }) {
+        val noPermission = application.permissions.none {
+            val nip = it.kind?.kindToNip()?.toIntOrNull()
+            (it.type == intentData.type.toString() && it.kind == kind) || (nip != null && it.type == "NIP" && it.kind == nip)
+        }
+        if (noPermission) {
             application.permissions.add(
                 ApplicationPermissionsEntity(
                     null,

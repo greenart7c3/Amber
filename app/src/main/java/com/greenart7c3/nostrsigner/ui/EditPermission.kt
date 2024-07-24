@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -13,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
@@ -33,6 +35,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +45,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
+import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -54,6 +58,8 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.models.kindToNipUrl
+import com.greenart7c3.nostrsigner.models.nipToUrl
 import com.greenart7c3.nostrsigner.ui.actions.ActivityDialog
 import com.greenart7c3.nostrsigner.ui.actions.DeleteDialog
 import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
@@ -73,6 +79,7 @@ fun EditPermission(
     navController: NavController,
     database: AppDatabase,
 ) {
+    val uriHandler = LocalUriHandler.current
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.keyPair.pubKey.toNpub())!!
@@ -309,7 +316,7 @@ fun EditPermission(
                     )
 
                 val message =
-                    if (permission.type == "SIGN_EVENT") {
+                    if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
                         stringResource(R.string.sign, localPermission.toLocalizedString(context))
                     } else {
                         localPermission.toLocalizedString(context)
@@ -372,6 +379,53 @@ fun EditPermission(
                         },
                         onClick = {
                             permissions.remove(permission)
+                        },
+                    )
+                    IconButton(
+                        content = {
+                            Icon(
+                                Icons.Default.Info,
+                                stringResource(R.string.more_info),
+                                modifier = Modifier
+                                    .fillMaxHeight(),
+                            )
+                        },
+                        onClick = {
+                            if (permission.type.toLowerCase(Locale.current) == "sign_event") {
+                                val nip = permission.kind?.kindToNipUrl()
+                                if (nip == null) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.nip_not_found_for_the_event_kind, permission.kind.toString()),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@IconButton
+                                }
+                                uriHandler.openUri(nip)
+                            } else if (permission.type.toLowerCase(Locale.current) == "nip") {
+                                val nip = permission.kind?.nipToUrl()
+                                if (nip == null) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.nip_not_found, permission.kind.toString()),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@IconButton
+                                }
+                                uriHandler.openUri(nip)
+                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP04_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP04_DECRYPT")) {
+                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/04.md")
+                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP44_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP44_DECRYPT")) {
+                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/44.md")
+                            } else if (permission.type.toLowerCase(Locale.current) == "decrypt_zap_event") {
+                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/57.md")
+                            } else {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.no_information_available_for, localPermission.toLocalizedString(context)),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
                         },
                     )
                 }

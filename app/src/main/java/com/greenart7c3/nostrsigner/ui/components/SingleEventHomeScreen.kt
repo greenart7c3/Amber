@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -253,10 +254,22 @@ fun SingleEventHomeScreen(
         }
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-            val permission =
+            val nip = when (intentData.type) {
+                SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
+                SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
+                SignerType.DECRYPT_ZAP_EVENT -> null
+                else -> null
+            }
+            var permission =
                 applicationEntity?.permissions?.firstOrNull {
                     it.pkKey == key && it.type == intentData.type.toString()
                 }
+            if (permission == null && nip != null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == "NIP" && it.kind == nip
+                    }
+            }
             val remember =
                 remember {
                     mutableStateOf(permission?.acceptable != null)
@@ -393,7 +406,8 @@ fun SingleEventHomeScreen(
             } else {
                 val permission =
                     applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == intentData.type.toString() && it.kind == event.kind
+                        val nip = event.kind.kindToNip()?.toIntOrNull()
+                        it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
                     }
                 val remember =
                     remember {

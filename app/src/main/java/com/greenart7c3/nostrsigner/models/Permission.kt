@@ -131,7 +131,159 @@ data class Permission(
                 }
             }
             "connect" -> context.getString(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf)
+            "nip" -> {
+                when (kind) {
+                    1 -> context.getString(R.string.nip_01)
+                    2 -> context.getString(R.string.nip_02)
+                    3 -> context.getString(R.string.nip_03)
+                    4 -> context.getString(R.string.nip_04)
+                    5 -> context.getString(R.string.nip_05)
+                    6 -> context.getString(R.string.nip_06)
+                    7 -> context.getString(R.string.nip_07)
+                    8 -> context.getString(R.string.nip_08)
+                    9 -> context.getString(R.string.nip_09)
+                    10 -> context.getString(R.string.nip_10)
+                    11 -> context.getString(R.string.nip_11)
+                    13 -> context.getString(R.string.nip_13)
+                    14 -> context.getString(R.string.nip_14)
+                    15 -> context.getString(R.string.nip_15)
+                    17 -> context.getString(R.string.nip_17)
+                    18 -> context.getString(R.string.nip_18)
+                    19 -> context.getString(R.string.nip_19)
+                    21 -> context.getString(R.string.nip_21)
+                    23 -> context.getString(R.string.nip_23)
+                    24 -> context.getString(R.string.nip_24)
+                    25 -> context.getString(R.string.nip_25)
+                    26 -> context.getString(R.string.nip_26)
+                    27 -> context.getString(R.string.nip_27)
+                    28 -> context.getString(R.string.nip_28)
+                    29 -> context.getString(R.string.nip_29)
+                    30 -> context.getString(R.string.nip_30)
+                    31 -> context.getString(R.string.nip_31)
+                    32 -> context.getString(R.string.nip_32)
+                    34 -> context.getString(R.string.nip_34)
+                    35 -> context.getString(R.string.nip_35)
+                    36 -> context.getString(R.string.nip_36)
+                    38 -> context.getString(R.string.nip_38)
+                    39 -> context.getString(R.string.nip_39)
+                    40 -> context.getString(R.string.nip_40)
+                    42 -> context.getString(R.string.nip_42)
+                    44 -> context.getString(R.string.nip_44)
+                    45 -> context.getString(R.string.nip_45)
+                    46 -> context.getString(R.string.nip_46)
+                    47 -> context.getString(R.string.nip_47)
+                    48 -> context.getString(R.string.nip_48)
+                    49 -> context.getString(R.string.nip_49)
+                    50 -> context.getString(R.string.nip_50)
+                    51 -> context.getString(R.string.nip_51)
+                    52 -> context.getString(R.string.nip_52)
+                    53 -> context.getString(R.string.nip_53)
+                    54 -> context.getString(R.string.nip_54)
+                    55 -> context.getString(R.string.nip_55)
+                    56 -> context.getString(R.string.nip_56)
+                    57 -> context.getString(R.string.nip_57)
+                    58 -> context.getString(R.string.nip_58)
+                    59 -> context.getString(R.string.nip_59)
+                    65 -> context.getString(R.string.nip_65)
+                    70 -> context.getString(R.string.nip_70)
+                    71 -> context.getString(R.string.nip_71)
+                    72 -> context.getString(R.string.nip_72)
+                    75 -> context.getString(R.string.nip_75)
+                    78 -> context.getString(R.string.nip_78)
+                    84 -> context.getString(R.string.nip_84)
+                    89 -> context.getString(R.string.nip_89)
+                    90 -> context.getString(R.string.nip_90)
+                    92 -> context.getString(R.string.nip_92)
+                    94 -> context.getString(R.string.nip_94)
+                    96 -> context.getString(R.string.nip_96)
+                    98 -> context.getString(R.string.nip_98)
+                    99 -> context.getString(R.string.nip_99)
+                    else -> context.getString(R.string.nip_kind, kind.toString())
+                }
+            }
             else -> type
         }
     }
 }
+
+data class KindNip(val kind: IntRange, val nip: String)
+
+fun Int.kindToNipUrl(): String? =
+    kindsByNip.firstOrNull { it.kind.contains(this) }?.let {
+        return if (it.nip.startsWith("http")) it.nip else "https://github.com/nostr-protocol/nips/blob/master/${it.nip}.md"
+    }
+
+fun Int.containsNip(): Boolean = kindsByNip.any {
+    val nip = if (this < 10) {
+        this.toString().padStart(2, '0')
+    } else {
+        this.toString()
+    }
+    it.nip.contains(nip)
+}
+
+fun Int.kindToNip(): String? = kindsByNip.firstOrNull { it.kind.contains(this) }?.nip
+
+fun Int.nipToUrl(): String? = kindsByNip.firstOrNull { it.nip.toIntOrNull() == this }
+    ?.nip?.let { nip -> if (nip.startsWith("http")) nip else "https://github.com/nostr-protocol/nips/blob/master/$nip.md" }
+
+val kindsByNip = listOf(
+    KindNip(0..2, "01"),
+    KindNip(3..3, "02"),
+    KindNip(4..4, "04"),
+    KindNip(5..5, "09"),
+    KindNip(6..6, "18"),
+    KindNip(16..16, "18"),
+    KindNip(7..7, "25"),
+    KindNip(8..8, "58"),
+    KindNip(9..12, "29"),
+    KindNip(13..13, "59"),
+    KindNip(14..14, "17"),
+    KindNip(40..44, "28"),
+    KindNip(818..818, "54"),
+    KindNip(1021..1022, "15"),
+    KindNip(1040..1040, "03"),
+    KindNip(1059..1059, "59"),
+    KindNip(1063..1063, "94"),
+    KindNip(1311..1311, "53"),
+    KindNip(1617..1633, "34"),
+    KindNip(1971..1971, "https://github.com/nostrocket/NIPS/blob/main/Problems.md"),
+    KindNip(1984..1985, "56"),
+    KindNip(2003..2004, "35"),
+    KindNip(2022..2022, "https://gitlab.com/1440000bytes/joinstr/-/blob/main/NIP.md"),
+    KindNip(4550..4550, "72"),
+    KindNip(5000..5999, "90"),
+    KindNip(6000..6999, "90"),
+    KindNip(7000..7000, "90"),
+    KindNip(9000..9030, "29"),
+    KindNip(9041..9041, "75"),
+    KindNip(9734..9735, "57"),
+    KindNip(9802..9802, "84"),
+    KindNip(10009..10009, "29"),
+    KindNip(10000..10030, "51"),
+    KindNip(10050..10050, "17"),
+    KindNip(10096..10096, "96"),
+    KindNip(13194..13194, "47"),
+    KindNip(23194..23195, "47"),
+    KindNip(21000..21000, "https://github.com/shocknet/Lightning.Pub/blob/master/proto/autogenerated/client.md"),
+    KindNip(22242..22242, "42"),
+    KindNip(24133..24133, "46"),
+    KindNip(27235..27235, "98"),
+    KindNip(30000..30005, "51"),
+    KindNip(30008..30009, "58"),
+    KindNip(30017..30020, "15"),
+    KindNip(30023..30024, "23"),
+    KindNip(30078..30078, "78"),
+    KindNip(30311..30311, "53"),
+    KindNip(30315..30315, "38"),
+    KindNip(30402..30403, "99"),
+    KindNip(30617..30617, "34"),
+    KindNip(30818..30819, "54"),
+    KindNip(31890..31890, "https://wikifreedia.xyz/cip-01/97c70a44366a6535c1"),
+    KindNip(31922..31925, "52"),
+    KindNip(31989..31990, "89"),
+    KindNip(34235..34237, "71"),
+    KindNip(34550..34550, "72"),
+    KindNip(39000..39009, "29"),
+    KindNip(31234..31234, "https://github.com/nostr-protocol/nips/pull/1124"),
+)

@@ -15,9 +15,9 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 lifecycle_version = "2.8.3"
 material3 = "1.2.1"
-mockk = "1.13.11"
+mockk = "1.13.12"
 nav_version = "2.7.7"
-quartz = "e764ebbcb2" # TODO: change back to amethyst before releasing a new version
+quartz = "0.89.7"
 compose_ui = "1.6.8"
 richtextUi = "077a2cde64"
 roomKtx = "2.6.1"
@@ -53,8 +53,8 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "nav_version" }
-quartz = { module = "com.github.greenart7c3.amethyst:quartz", version.ref = "quartz" }
-ammolite = { module = "com.github.greenart7c3.amethyst:ammolite", version.ref = "quartz" }
+quartz = { module = "com.github.vitorpamplona.amethyst:quartz", version.ref = "quartz" }
+ammolite = { module = "com.github.vitorpamplona.amethyst:ammolite", version.ref = "quartz" }
 richtext-commonmark = { module = "com.github.vitorpamplona.compose-richtext:richtext-commonmark", version.ref = "richtextUi" }
 richtext-ui = { module = "com.github.vitorpamplona.compose-richtext:richtext-ui", version.ref = "richtextUi" }
 richtext-ui-material3 = { module = "com.github.vitorpamplona.compose-richtext:richtext-ui-material3", version.ref = "richtextUi" }

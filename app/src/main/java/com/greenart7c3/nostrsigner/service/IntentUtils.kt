@@ -30,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.NotificationType
@@ -433,6 +434,9 @@ object IntentUtils {
             }
         }
 
+        permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
+        permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
+
         when (type) {
             SignerType.CONNECT -> {
                 onReady(
@@ -611,7 +615,8 @@ object IntentUtils {
         permissions?.forEach {
             it.checked = true
         }
-        permissions?.removeIf { it.kind == null && it.type == "sign_event" }
+        permissions?.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
+        permissions?.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
         when (type) {
             SignerType.SIGN_EVENT -> {

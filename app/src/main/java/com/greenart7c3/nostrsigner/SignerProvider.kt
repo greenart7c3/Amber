@@ -8,6 +8,7 @@ import android.net.Uri
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.vitorpamplona.quartz.crypto.CryptoUtils
@@ -127,7 +128,7 @@ class SignerProvider : ContentProvider() {
                 val event = Event.fromJson(json)
                 val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
-                val permission =
+                var permission =
                     database
                         .applicationDao()
                         .getPermission(
@@ -135,6 +136,18 @@ class SignerProvider : ContentProvider() {
                             "SIGN_EVENT",
                             event.kind,
                         )
+                if (permission == null) {
+                    event.kind.kindToNip()?.let {
+                        permission =
+                            database
+                                .applicationDao()
+                                .getPermission(
+                                    sortOrder ?: packageName,
+                                    "NIP",
+                                    it.toInt(),
+                                )
+                    }
+                }
                 if (currentSelection == "1") {
                     val isRemembered = permission?.acceptable ?: return null
                     if (!isRemembered) {
@@ -224,13 +237,33 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
-                val permission =
+                var permission =
                     database
                         .applicationDao()
                         .getPermission(
                             sortOrder ?: packageName,
                             uri.toString().replace("content://$appId.", ""),
                         )
+                if (permission == null) {
+                    val nip = when (stringType) {
+                        "NIP04_DECRYPT" -> 4
+                        "NIP44_DECRYPT" -> 44
+                        "NIP04_ENCRYPT" -> 4
+                        "NIP44_ENCRYPT" -> 44
+                        "DECRYPT_ZAP_EVENT" -> null
+                        else -> null
+                    }
+                    nip?.let {
+                        permission =
+                            database
+                                .applicationDao()
+                                .getPermission(
+                                    sortOrder ?: packageName,
+                                    "NIP",
+                                    it,
+                                )
+                    }
+                }
 
                 if (currentSelection == "1") {
                     val isRemembered = permission?.acceptable ?: return null

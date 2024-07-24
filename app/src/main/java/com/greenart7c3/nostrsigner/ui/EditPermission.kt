@@ -243,7 +243,7 @@ fun EditPermission(
             ) {
                 Text(
                     modifier = Modifier.weight(1f),
-                    text = "Use secret to connect to the application",
+                    text = stringResource(R.string.use_secret_to_connect_to_the_application),
                 )
                 Switch(
                     checked = checked,
@@ -268,7 +268,7 @@ fun EditPermission(
                 textFieldvalue = TextFieldValue(it)
             },
             label = {
-                Text("Name")
+                Text(stringResource(R.string.name))
             },
         )
 

@@ -328,4 +328,6 @@
     <string name="no_information_available_for">No information available for %1$s</string>
     <string name="nip_not_found">Nip %1$s not found</string>
     <string name="nip_not_found_for_the_event_kind">Nip not found for the event kind %1$s</string>
+    <string name="use_secret_to_connect_to_the_application">Use secret to connect to the application</string>
+    <string name="name">Name</string>
 </resources>

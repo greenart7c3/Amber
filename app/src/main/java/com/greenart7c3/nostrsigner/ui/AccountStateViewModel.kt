@@ -108,26 +108,121 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         tryLoginExistingAccount(route, npub)
     }
 
+    fun isValidKey(key: String, password: String): Boolean {
+        try {
+            val account =
+                if (key.startsWith("ncryptsec")) {
+                    val newKey =
+                        CryptoUtils.decryptNIP49(key, password)
+                            ?: throw Exception("Could not decrypt key with provided password")
+                    Account(
+                        KeyPair(Hex.decode(newKey)),
+                        name = "",
+                        useProxy = false,
+                        proxyPort = 0,
+                        language = null,
+                        allowNewConnections = false,
+                        signPolicy = 0,
+                        seedWords = emptySet(),
+                    )
+                } else if (key.startsWith("nsec")) {
+                    Account(
+                        KeyPair(privKey = key.bechToBytes()),
+                        name = "",
+                        useProxy = false,
+                        proxyPort = 0,
+                        language = null,
+                        allowNewConnections = false,
+                        signPolicy = 0,
+                        seedWords = emptySet(),
+                    )
+                } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
+                    val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
+                    Account(
+                        keyPair,
+                        name = "",
+                        useProxy = false,
+                        proxyPort = 0,
+                        language = null,
+                        allowNewConnections = false,
+                        signPolicy = 0,
+                        seedWords = emptySet(),
+                    )
+                } else {
+                    Account(
+                        KeyPair(Hex.decode(key)),
+                        name = "",
+                        useProxy = false,
+                        proxyPort = 0,
+                        language = null,
+                        allowNewConnections = false,
+                        signPolicy = 0,
+                        seedWords = emptySet(),
+                    )
+                }
+            return account.keyPair.privKey != null
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
     fun startUI(
         key: String,
         password: String,
         route: String?,
         useProxy: Boolean,
         proxyPort: Int,
+        signPolicy: Int,
     ) {
         val account =
             if (key.startsWith("ncryptsec")) {
                 val newKey =
                     CryptoUtils.decryptNIP49(key, password)
                         ?: throw Exception("Could not decrypt key with provided password")
-                Account(KeyPair(Hex.decode(newKey)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null, allowNewConnections = false)
+                Account(
+                    KeyPair(Hex.decode(newKey)),
+                    name = "",
+                    useProxy = useProxy,
+                    proxyPort = proxyPort,
+                    language = null,
+                    allowNewConnections = false,
+                    signPolicy = signPolicy,
+                    seedWords = emptySet(),
+                )
             } else if (key.startsWith("nsec")) {
-                Account(KeyPair(privKey = key.bechToBytes()), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null, allowNewConnections = false)
+                Account(
+                    KeyPair(privKey = key.bechToBytes()),
+                    name = "",
+                    useProxy = useProxy,
+                    proxyPort = proxyPort,
+                    language = null,
+                    allowNewConnections = false,
+                    signPolicy = signPolicy,
+                    seedWords = emptySet(),
+                )
             } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
                 val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
-                Account(keyPair, name = "", useProxy = useProxy, proxyPort = proxyPort, language = null, allowNewConnections = false)
+                Account(
+                    keyPair,
+                    name = "",
+                    useProxy = useProxy,
+                    proxyPort = proxyPort,
+                    language = null,
+                    allowNewConnections = false,
+                    signPolicy = signPolicy,
+                    seedWords = emptySet(),
+                )
             } else {
-                Account(KeyPair(Hex.decode(key)), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null, allowNewConnections = false)
+                Account(
+                    KeyPair(Hex.decode(key)),
+                    name = "",
+                    useProxy = useProxy,
+                    proxyPort = proxyPort,
+                    language = null,
+                    allowNewConnections = false,
+                    signPolicy = signPolicy,
+                    seedWords = emptySet(),
+                )
             }
 
         LocalPreferences.updatePrefsForLogin(NostrSigner.getInstance(), account)
@@ -137,8 +232,19 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     fun newKey(
         useProxy: Boolean,
         proxyPort: Int,
+        signPolicy: Int,
+        seedWords: Set<String>,
     ) {
-        val account = Account(KeyPair(), name = "", useProxy = useProxy, proxyPort = proxyPort, language = null, allowNewConnections = false)
+        val account = Account(
+            KeyPair(),
+            name = "",
+            useProxy = useProxy,
+            proxyPort = proxyPort,
+            language = null,
+            allowNewConnections = false,
+            signPolicy = signPolicy,
+            seedWords = seedWords,
+        )
         LocalPreferences.updatePrefsForLogin(NostrSigner.getInstance(), account)
         startUI(account, null)
     }

@@ -47,7 +47,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.greenart7c3.nostrsigner.ui.LoginPage
+import com.greenart7c3.nostrsigner.ui.MainLoginPage
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.PostButton
@@ -165,7 +165,7 @@ fun AccountsBottomSheet(
             ) {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     Box {
-                        LoginPage(accountStateViewModel)
+                        MainLoginPage(accountStateViewModel)
                         TopAppBar(
                             title = { Text(text = stringResource(R.string.add_new_account)) },
                             navigationIcon = {

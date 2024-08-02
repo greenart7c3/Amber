@@ -17,6 +17,8 @@ class Account(
     var proxyPort: Int,
     var language: String?,
     var allowNewConnections: Boolean,
+    var signPolicy: Int,
+    var seedWords: Set<String>,
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
 

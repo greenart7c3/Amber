@@ -71,7 +71,7 @@ fun AccountScreen(
         ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {
-                    LoginPage(accountStateViewModel)
+                    MainLoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
                     var intentData by remember {

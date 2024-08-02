@@ -52,6 +52,8 @@ private object PrefKeys {
     const val USE_AUTH = "use_auth"
     const val BIOMETRICS_TYPE = "biometrics_type"
     const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
+    const val SIGN_POLICY = "sign_policy"
+    const val SEED_WORDS = "seed_words"
 }
 
 @Immutable
@@ -285,6 +287,8 @@ object LocalPreferences {
             putString(PrefKeys.ACCOUNT_NAME, account.name)
             putString(PrefKeys.LANGUAGE_PREFS, account.language)
             putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
+            putInt(PrefKeys.SIGN_POLICY, account.signPolicy)
+            putStringSet(PrefKeys.SEED_WORDS, account.seedWords.toSet())
         }.apply()
     }
 
@@ -428,6 +432,8 @@ object LocalPreferences {
             val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
             val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
+            val signPolicy = getInt(PrefKeys.SIGN_POLICY, 0)
+            val seedWords = getStringSet(PrefKeys.SEED_WORDS, null) ?: emptySet()
             HttpClientManager.setDefaultProxy(proxy)
             val account =
                 Account(
@@ -437,6 +443,8 @@ object LocalPreferences {
                     proxyPort = proxyPort,
                     language = language,
                     allowNewConnections = allowNewConnections,
+                    signPolicy = signPolicy,
+                    seedWords = seedWords,
                 )
             accountCache.put(npub, account)
             return account

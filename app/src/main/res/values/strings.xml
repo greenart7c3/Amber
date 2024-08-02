@@ -26,7 +26,7 @@
     <string name="invalid_key">Invalid key</string>
     <string name="key_is_required">Key is required</string>
     <string name="login">Login</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Create a key</string>
     <string name="backup_keys">Backup Keys</string>
     <string name="read_your_public_key">Read your public key</string>
     <string name="no_permissions_granted">No permissions granted</string>
@@ -335,4 +335,16 @@
     <string name="nip_not_found">Nip %1$s not found</string>
     <string name="nip_not_found_for_the_event_kind">Nip not found for the event kind %1$s</string>
     <string name="use_secret_to_connect_to_the_application">Use secret to connect to the application</string>
+    <string name="add_a_key">Add a key</string>
+    <string name="next">Next</string>
+    <string name="add_your_key">Add your key</string>
+    <string name="sign_policy_basic">Approve basic actions</string>
+    <string name="sign_policy_basic_explainer">Recommended for most people. This will minimize the number of interruptions during your app usage.</string>
+    <string name="sign_policy_manual">Manually approve each app</string>
+    <string name="sign_policy_manual_explainer">Recommended for privacy-minded people who would like control over each app. Choosing this will prompt you set a preference every time you try a new app.</string>
+    <string name="sign_policy_title">Select a signing policy</string>
+    <string name="sign_policy_explainer">Should I approve nostr events automatically or would you like to review them for each app?</string>
+    <string name="finish">Finish</string>
+    <string name="seed_words_title">Your recovery phrase</string>
+    <string name="seed_words_explainer">These words let you recreate your account in case you lose access. Write them down in a safe place</string>
 </resources>

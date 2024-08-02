@@ -25,7 +25,6 @@ android {
             useSupportLibrary true
         }
         resourceConfigurations += [
-                'ar',
                 'bn-rBD',
                 'cs',
                 'cy-rGB',

@@ -9,7 +9,6 @@ files:
     type: android
     languages_mapping:
       android_code:
-        ar: ar
         cs: cs
         de: de
         eo: eo

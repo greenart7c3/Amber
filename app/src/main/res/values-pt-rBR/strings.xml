@@ -338,4 +338,5 @@
     <string name="finish">Finish</string>
     <string name="seed_words_title">Your recovery phrase</string>
     <string name="seed_words_explainer">These words let you recreate your account in case you lose access. Write them down in a safe place</string>
+    <string name="show_seed_words">Show seed words</string>
 </resources>

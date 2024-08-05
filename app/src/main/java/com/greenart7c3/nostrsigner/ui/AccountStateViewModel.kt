@@ -210,7 +210,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     language = null,
                     allowNewConnections = false,
                     signPolicy = signPolicy,
-                    seedWords = emptySet(),
+                    seedWords = key.split(" ").toSet(),
                 )
             } else {
                 Account(

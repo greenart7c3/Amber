@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -80,6 +79,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.PackageUtils
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
+import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.crypto.CryptoUtils.random
 import com.vitorpamplona.quartz.crypto.nip06.Bip39Mnemonics
@@ -221,7 +221,6 @@ fun SignUpPage(
         launch(Dispatchers.IO) {
             val entropy = random(16)
             seedWords = Bip39Mnemonics.toMnemonics(entropy).toSet()
-            Log.d("NostrSigner", "Seed words: $seedWords")
         }
     }
 
@@ -234,9 +233,16 @@ fun SignUpPage(
             0 -> {
                 SeedWordsPage(
                     seedWords = seedWords,
-                    pageState = pageState,
-                    scope = scope,
-                    context = context,
+                    onNextPage = {
+                        scope.launch {
+                            @Suppress("KotlinConstantConditions")
+                            if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
+                                pageState.animateScrollToPage(1)
+                            } else {
+                                pageState.animateScrollToPage(2)
+                            }
+                        }
+                    },
                 )
             }
             1 -> {
@@ -349,116 +355,6 @@ fun OrbotPage(
                 ) {
                     Text(text = stringResource(R.string.next))
                 }
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-fun SeedWordsPage(
-    seedWords: Set<String>,
-    pageState: PagerState,
-    scope: CoroutineScope,
-    context: Context,
-) {
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .navigationBarsPadding()
-            .verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Center,
-    ) {
-        Text(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.seed_words_title),
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-        )
-        Spacer(modifier = Modifier.height(4.dp))
-
-        Text(
-            text = stringResource(R.string.seed_words_explainer),
-            textAlign = TextAlign.Center,
-        )
-
-        Spacer(modifier = Modifier.height(20.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            val firstColumnWords = seedWords.mapIndexedNotNull {
-                    index, word ->
-                if (index <= 5) {
-                    word
-                } else {
-                    null
-                }
-            }
-            val secondColumnWords = seedWords.mapIndexedNotNull {
-                    index, word ->
-                if (index > 5) {
-                    word
-                } else {
-                    null
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                firstColumnWords.forEachIndexed { index, word ->
-                    OutlinedTextField(
-                        word,
-                        onValueChange = {},
-                        modifier = Modifier.padding(8.dp),
-                        readOnly = true,
-                        prefix = {
-                            Text("${index + 1} - ")
-                        },
-                    )
-                }
-            }
-
-            Column(
-                modifier = Modifier.weight(1f),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                secondColumnWords.forEachIndexed { index, word ->
-                    OutlinedTextField(
-                        word,
-                        onValueChange = {},
-                        readOnly = true,
-                        prefix = {
-                            Text("${index + 1 + firstColumnWords.size} - ")
-                        },
-                        modifier = Modifier.padding(8.dp),
-                    )
-                }
-            }
-        }
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Button(
-                modifier = Modifier
-                    .height(50.dp),
-                onClick = {
-                    scope.launch {
-                        @Suppress("KotlinConstantConditions")
-                        if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
-                            pageState.animateScrollToPage(1)
-                        } else {
-                            pageState.animateScrollToPage(2)
-                        }
-                    }
-                },
-            ) {
-                Text(text = stringResource(R.string.next))
             }
         }
     }

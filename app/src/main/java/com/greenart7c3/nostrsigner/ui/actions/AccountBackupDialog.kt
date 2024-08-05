@@ -20,7 +20,9 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Key
+import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -67,6 +69,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
+import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
@@ -87,6 +90,38 @@ fun AccountBackupDialog(
     account: Account,
     onClose: () -> Unit,
 ) {
+    var showSeedWords by remember { mutableStateOf(false) }
+    if (showSeedWords) {
+        Dialog(
+            onDismissRequest = {
+                showSeedWords = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Column(
+                modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
+            ) {
+                Row(
+                    modifier =
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(10.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    CloseButton(onCancel = { showSeedWords = false })
+                }
+                SeedWordsPage(
+                    seedWords = account.seedWords,
+                    showNextButton = false,
+                ) {}
+            }
+        }
+    }
+
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -135,6 +170,46 @@ fun AccountBackupDialog(
 
                     Spacer(modifier = Modifier.height(30.dp))
 
+                    if (account.seedWords.isNotEmpty()) {
+                        val keyguardLauncher =
+                            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                                if (result.resultCode == Activity.RESULT_OK) {
+                                    showSeedWords = true
+                                }
+                            }
+                        val context = LocalContext.current
+
+                        Button(
+                            onClick = {
+                                authenticate(
+                                    title = context.getString(R.string.show_seed_words),
+                                    context = context,
+                                    keyguardLauncher = keyguardLauncher,
+                                    onApproved = {
+                                        showSeedWords = true
+                                    },
+                                    onError = { _, message ->
+                                        Toast.makeText(
+                                            context,
+                                            message,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    },
+                                )
+                            },
+                        ) {
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(
+                                    Icons.AutoMirrored.Filled.List,
+                                    contentDescription = stringResource(R.string.show_seed_words),
+                                )
+                                Text(text = stringResource(R.string.show_seed_words))
+                            }
+                        }
+                    }
                     NSecCopyButton(account)
                     NSecQrButton(account)
 

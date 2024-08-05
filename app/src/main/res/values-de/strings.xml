@@ -328,4 +328,16 @@
     <string name="nip_not_found">NIP-%1$s wurde nicht gefunden</string>
     <string name="nip_not_found_for_the_event_kind">NIP für Event-Art %1$s nicht gefunden</string>
     <string name="use_secret_to_connect_to_the_application">Geheimnis verwenden, um sich mit der Anwendung zu verbinden</string>
+    <string name="add_a_key">Add a key</string>
+    <string name="next">Next</string>
+    <string name="add_your_key">Add your key</string>
+    <string name="sign_policy_basic">Approve basic actions</string>
+    <string name="sign_policy_basic_explainer">Recommended for most people. This will minimize the number of interruptions during your app usage.</string>
+    <string name="sign_policy_manual">Manually approve each app</string>
+    <string name="sign_policy_manual_explainer">Recommended for privacy-minded people who would like control over each app. Choosing this will prompt you set a preference every time you try a new app.</string>
+    <string name="sign_policy_title">Select a signing policy</string>
+    <string name="sign_policy_explainer">Should I approve nostr events automatically or would you like to review them for each app?</string>
+    <string name="finish">Finish</string>
+    <string name="seed_words_title">Your recovery phrase</string>
+    <string name="seed_words_explainer">These words let you recreate your account in case you lose access. Write them down in a safe place</string>
 </resources>

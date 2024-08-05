@@ -127,7 +127,7 @@ fun AccountScreen(
                             }
 
                             @Suppress("KotlinConstantConditions")
-                            if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
                                 NostrSigner.getInstance().checkForNewRelays()
                                 NotificationDataSource.start()
                                 delay(5000)

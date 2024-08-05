@@ -10,6 +10,7 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.RelayPool
@@ -60,7 +61,7 @@ class ConnectivityService : Service() {
         timer.schedule(
             object : TimerTask() {
                 override fun run() {
-                    if (LocalPreferences.getNotificationType(applicationContext) == NotificationType.PUSH) return
+                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.PUSH) return
 
                     Log.d("ConnectivityService", "Checking connectivity...")
                     RelayPool.getAll().forEach {

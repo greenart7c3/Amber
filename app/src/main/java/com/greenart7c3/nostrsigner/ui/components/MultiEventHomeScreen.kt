@@ -416,7 +416,7 @@ private fun sendResultIntent(
 private suspend fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    NostrSigner.getInstance().checkForNewRelays(LocalPreferences.getNotificationType(NostrSigner.getInstance()) != NotificationType.DIRECT)
+    NostrSigner.getInstance().checkForNewRelays(NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT)
 }
 
 @Composable

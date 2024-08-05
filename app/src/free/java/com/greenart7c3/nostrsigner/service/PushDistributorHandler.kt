@@ -26,6 +26,10 @@ import android.os.Build
 import android.util.Log
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 import org.unifiedpush.android.connector.UnifiedPush
 
 interface PushDistributorActions {
@@ -42,19 +46,27 @@ object PushDistributorHandler : PushDistributorActions {
     private val appContext = NostrSigner.getInstance().applicationContext
     private val unifiedPush: UnifiedPush = UnifiedPush
 
-    private var endpointInternal = LocalPreferences.getEndpoint(NostrSigner.getInstance())
+    private var endpointInternal = NostrSigner.getInstance().settings.endpoint
 
     fun getSavedEndpoint() = endpointInternal
 
-    fun setEndpoint(context: Context, newEndpoint: String) {
+    @OptIn(DelicateCoroutinesApi::class)
+    fun setEndpoint(newEndpoint: String) {
         endpointInternal = newEndpoint
-        LocalPreferences.setEndpoint(context, newEndpoint)
+        GlobalScope.launch(Dispatchers.IO) {
+            NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(endpoint = newEndpoint)
+            LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+        }
         Log.d("PushHandler", "New endpoint saved : $endpointInternal")
     }
 
-    fun removeEndpoint(context: Context) {
+    @OptIn(DelicateCoroutinesApi::class)
+    fun removeEndpoint() {
         endpointInternal = ""
-        LocalPreferences.setEndpoint(context, "")
+        GlobalScope.launch(Dispatchers.IO) {
+            NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(endpoint = "")
+            LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+        }
     }
 
     override fun getSavedDistributor(): String {

@@ -7,6 +7,7 @@ import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.greenart7c3.nostrsigner.ui.NotificationType
@@ -17,9 +18,11 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
     private var databases = ConcurrentHashMap<String, AppDatabase>()
+    lateinit var settings: AmberSettings
 
     override fun onCreate() {
         super.onCreate()
@@ -28,6 +31,10 @@ class NostrSigner : Application() {
 
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
+        }
+
+        runBlocking {
+            settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }
 
         try {
@@ -68,7 +75,7 @@ class NostrSigner : Application() {
     ) {
         val savedRelays = getSavedRelays() + newRelays
 
-        if (LocalPreferences.getNotificationType(this) != NotificationType.DIRECT) {
+        if (settings.notificationType != NotificationType.DIRECT) {
             RelayPool.register(Client)
             savedRelays.forEach { setupInfo ->
                 if (RelayPool.getRelay(setupInfo.url) == null) {
@@ -88,7 +95,7 @@ class NostrSigner : Application() {
             checkIfRelaysAreConnected()
         }
         @Suppress("KotlinConstantConditions")
-        if (LocalPreferences.getNotificationType(this) == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+        if (settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
             Client.reconnect(
                 savedRelays.toTypedArray(),
                 true,

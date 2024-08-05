@@ -133,15 +133,16 @@ fun sendResult(
 ) {
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
+        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
         val savedApplication = database.applicationDao().getByKey(key)
         val relays = if (savedApplication != null) {
-            savedApplication.application.relays.ifEmpty { LocalPreferences.getDefaultRelays(context) }
+            savedApplication.application.relays.ifEmpty { defaultRelays }
         } else {
-            intentData.bunkerRequest?.relays?.ifEmpty { LocalPreferences.getDefaultRelays(context) } ?: LocalPreferences.getDefaultRelays(context)
+            intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
         }
         if (intentData.bunkerRequest != null) {
             NostrSigner.getInstance().checkForNewRelays(
-                LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
+                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
                 relays.toSet(),
             )
         }
@@ -585,7 +586,7 @@ fun MainScreen(
                             ApplicationEntity(
                                 secret,
                                 "",
-                                LocalPreferences.getDefaultRelays(context),
+                                NostrSigner.getInstance().settings.defaultRelays,
                                 "",
                                 "",
                                 "",
@@ -598,7 +599,7 @@ fun MainScreen(
                         database.applicationDao().insertApplication(
                             application,
                         )
-                        val relayString = LocalPreferences.getDefaultRelays(context).joinToString(separator = "&") { "relay=${it.url}" }
+                        val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
                         val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?$relayString"
                         clipboardManager.setText(AnnotatedString(bunkerUrl))
                         scope.launch(Dispatchers.Main) {

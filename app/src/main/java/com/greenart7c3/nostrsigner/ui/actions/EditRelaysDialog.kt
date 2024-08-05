@@ -243,14 +243,13 @@ fun EditDefaultRelaysDialog(
     onClose: () -> Unit,
     onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
 ) {
-    val context = LocalContext.current
     var textFieldRelay by remember {
         mutableStateOf(TextFieldValue(""))
     }
     val relays2 =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            LocalPreferences.getDefaultRelays(context).forEach {
+            NostrSigner.getInstance().settings.defaultRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )

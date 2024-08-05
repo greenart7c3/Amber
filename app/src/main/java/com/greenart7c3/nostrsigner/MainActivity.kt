@@ -81,15 +81,15 @@ class MainActivity : AppCompatActivity() {
 
                 LaunchedEffect(Unit) {
                     launch(Dispatchers.IO) {
-                        val lastAuthTime = LocalPreferences.getLastBiometricsTime(context)
-                        val whenToAsk = LocalPreferences.getBiometricsTimeType(context)
+                        val lastAuthTime = NostrSigner.getInstance().settings.lastBiometricsTime
+                        val whenToAsk = NostrSigner.getInstance().settings.biometricsTimeType
                         val isTimeToAsk = when (whenToAsk) {
                             BiometricsTimeType.EVERY_TIME -> true
                             BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
                             BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
                             BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
                         }
-                        val shouldAuthenticate = LocalPreferences.useAuth(context) && isTimeToAsk
+                        val shouldAuthenticate = NostrSigner.getInstance().settings.useAuth && isTimeToAsk
                         if (!shouldAuthenticate) {
                             isAuthenticated = true
                         } else {
@@ -100,8 +100,14 @@ class MainActivity : AppCompatActivity() {
                                         this@MainActivity,
                                         keyguardLauncher,
                                         {
-                                            LocalPreferences.setLastBiometricsTime(context, System.currentTimeMillis())
-                                            isAuthenticated = true
+                                            launch(Dispatchers.IO) {
+                                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                    lastBiometricsTime = System.currentTimeMillis(),
+                                                )
+
+                                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                                isAuthenticated = true
+                                            }
                                         },
                                         { _, message ->
                                             this@MainActivity.finish()

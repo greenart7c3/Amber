@@ -9,7 +9,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
+import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.parseNotificationType
@@ -77,58 +77,6 @@ object LocalPreferences {
         }.toSet().toList()
     }
 
-    fun getEndpoint(context: Context): String {
-        return encryptedPreferences(context).getString(PrefKeys.ENDPOINT, "") ?: ""
-    }
-
-    fun setEndpoint(context: Context, endpoint: String) {
-        encryptedPreferences(context).edit().apply {
-            putString(PrefKeys.ENDPOINT, endpoint)
-        }.apply()
-    }
-
-    fun getPushServerMessage(context: Context): Boolean {
-        return encryptedPreferences(context).getBoolean(PrefKeys.PUSH_SERVER_MESSAGE, false)
-    }
-
-    fun setPushServerMessage(context: Context, value: Boolean) {
-        encryptedPreferences(context).edit().apply {
-            putBoolean(PrefKeys.PUSH_SERVER_MESSAGE, value)
-        }.apply()
-    }
-
-    fun getDefaultRelays(context: Context): List<RelaySetupInfo> {
-        return encryptedPreferences(context).getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
-            RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
-        } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES))
-    }
-
-    fun getLastBiometricsTime(context: Context): Long {
-        return encryptedPreferences(context).getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0)
-    }
-
-    fun setLastBiometricsTime(context: Context, time: Long) {
-        encryptedPreferences(context).edit().apply {
-            putLong(PrefKeys.LAST_BIOMETRICS_TIME, time)
-        }.apply()
-    }
-
-    fun useAuth(context: Context): Boolean {
-        return encryptedPreferences(context).getBoolean(PrefKeys.USE_AUTH, false)
-    }
-
-    fun setUseAuth(context: Context, value: Boolean) {
-        encryptedPreferences(context).edit().apply {
-            putBoolean(PrefKeys.USE_AUTH, value)
-        }.apply()
-    }
-
-    fun setDefaultRelays(context: Context, relays: List<RelaySetupInfo>) {
-        encryptedPreferences(context).edit().apply {
-            putStringSet(PrefKeys.DEFAULT_RELAYS, relays.map { it.url }.toSet())
-        }.apply()
-    }
-
     fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
             currentAccount = encryptedPreferences(context).getString(PrefKeys.CURRENT_ACCOUNT, null)
@@ -157,6 +105,37 @@ object LocalPreferences {
         encryptedPreferences(context).edit().apply {
             putBoolean(PrefKeys.RATIONALE, value)
         }.apply()
+    }
+
+    suspend fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
+        val context = NostrSigner.getInstance()
+        encryptedPreferences(context).edit().apply {
+            putString(PrefKeys.ENDPOINT, settings.endpoint)
+            putBoolean(PrefKeys.PUSH_SERVER_MESSAGE, settings.pushServerMessage)
+            putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
+            putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
+            putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
+            putInt(PrefKeys.NOTIFICATION_TYPE, settings.notificationType.screenCode)
+            putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
+        }.apply()
+    }
+
+    suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
+        val context = NostrSigner.getInstance()
+
+        encryptedPreferences(context).apply {
+            return AmberSettings(
+                endpoint = getString(PrefKeys.ENDPOINT, "") ?: "",
+                pushServerMessage = getBoolean(PrefKeys.PUSH_SERVER_MESSAGE, false),
+                defaultRelays = getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
+                    RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
+                } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
+                lastBiometricsTime = getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0),
+                useAuth = getBoolean(PrefKeys.USE_AUTH, false),
+                notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0)),
+                biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
+            )
+        }
     }
 
     private var savedAccounts: List<String>? = null
@@ -331,36 +310,6 @@ object LocalPreferences {
         }
         val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", port)
         HttpClientManager.setDefaultProxy(proxy)
-    }
-
-    fun updateNotificationType(context: Context, notificationType: NotificationType) {
-        notificationTypeCache = notificationType
-        encryptedPreferences(context).edit().apply {
-            putInt(PrefKeys.NOTIFICATION_TYPE, notificationType.screenCode)
-        }.apply()
-    }
-
-    fun getNotificationType(context: Context): NotificationType {
-        notificationTypeCache?.let {
-            return it
-        }
-        encryptedPreferences(context).apply {
-            val notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0))
-            notificationTypeCache = notificationType
-            return notificationType
-        }
-    }
-
-    fun updateBiometricsTimeType(context: Context, biometricsTimeType: BiometricsTimeType) {
-        encryptedPreferences(context).edit().apply {
-            putInt(PrefKeys.BIOMETRICS_TYPE, biometricsTimeType.screenCode)
-        }.apply()
-    }
-
-    fun getBiometricsTimeType(context: Context): BiometricsTimeType {
-        encryptedPreferences(context).apply {
-            return parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0))
-        }
     }
 
     private suspend fun convertToDatabase(

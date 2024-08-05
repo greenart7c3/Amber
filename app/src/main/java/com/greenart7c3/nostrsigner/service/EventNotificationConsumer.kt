@@ -73,7 +73,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         LocalPreferences.allSavedAccounts(applicationContext).forEach {
             if (it.hasPrivKey) {
                 LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    if (LocalPreferences.getNotificationType(applicationContext) == NotificationType.PUSH) {
+                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.PUSH) {
                         consumeIfMatchesAccount(event, acc)
                     }
                 }

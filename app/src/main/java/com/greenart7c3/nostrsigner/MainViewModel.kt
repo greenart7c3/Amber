@@ -39,7 +39,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
 
-                if (lastNetwork != null && lastNetwork != network && LocalPreferences.getNotificationType(context) == NotificationType.DIRECT) {
+                if (lastNetwork != null && lastNetwork != network && NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
                     viewModelScope.launch(Dispatchers.IO) {
                         NotificationDataSource.stopSync()
                         delay(1000)
@@ -65,7 +65,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${isOnMobileDataState.value} hasWifi ${isOnWifiDataState.value}",
                     )
-                    if (updateNetworkCapabilities(networkCapabilities) && LocalPreferences.getNotificationType(context) == NotificationType.DIRECT) {
+                    if (updateNetworkCapabilities(networkCapabilities) && NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
                         NotificationDataSource.stopSync()
                         delay(1000)
                         NotificationDataSource.start()

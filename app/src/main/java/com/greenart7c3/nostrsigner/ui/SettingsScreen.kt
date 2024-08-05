@@ -193,10 +193,15 @@ fun SettingsScreen(
                 relayDialog = false
             },
             onPost = {
-                if (it.isNotEmpty()) {
-                    LocalPreferences.setDefaultRelays(context, it)
+                scope.launch(Dispatchers.IO) {
+                    if (it.isNotEmpty()) {
+                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                            defaultRelays = it,
+                        )
+                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                    }
+                    relayDialog = false
                 }
-                relayDialog = false
             },
         )
     }
@@ -293,7 +298,7 @@ fun SettingsScreen(
 
     if (notificationTypeDialog) {
         var notificationItemsIndex by remember {
-            mutableIntStateOf(LocalPreferences.getNotificationType(context).screenCode)
+            mutableIntStateOf(NostrSigner.getInstance().settings.notificationType.screenCode)
         }
         Dialog(
             onDismissRequest = {
@@ -319,7 +324,10 @@ fun SettingsScreen(
                         ) {
                             notificationTypeDialog = false
                             scope.launch(Dispatchers.IO) {
-                                LocalPreferences.updateNotificationType(context, parseNotificationType(notificationItemsIndex))
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    notificationType = parseNotificationType(notificationItemsIndex),
+                                )
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
                                 PushNotificationUtils.hasInit = false
                                 PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
                                 if (notificationItemsIndex == 0) {
@@ -416,7 +424,7 @@ fun SettingsScreen(
 
     if (securityDialog) {
         var biometricsIndex by remember {
-            mutableIntStateOf(LocalPreferences.getBiometricsTimeType(context).screenCode)
+            mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
         }
 
         Dialog(
@@ -425,7 +433,7 @@ fun SettingsScreen(
             },
             properties = DialogProperties(usePlatformDefaultWidth = false),
         ) {
-            var enableBiometrics by remember { mutableStateOf(LocalPreferences.useAuth(context)) }
+            var enableBiometrics by remember { mutableStateOf(NostrSigner.getInstance().settings.useAuth) }
 
             Surface(Modifier.fillMaxSize()) {
                 Column(
@@ -442,8 +450,11 @@ fun SettingsScreen(
                         PostButton(isActive = true) {
                             securityDialog = false
                             scope.launch(Dispatchers.IO) {
-                                LocalPreferences.setUseAuth(context, enableBiometrics)
-                                LocalPreferences.updateBiometricsTimeType(context, parseBiometricsTimeType(biometricsIndex))
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    useAuth = enableBiometrics,
+                                    biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
+                                )
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
                             }
                         }
                     }

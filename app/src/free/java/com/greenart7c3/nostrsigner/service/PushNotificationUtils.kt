@@ -31,12 +31,17 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.DelicateCoroutinesApi
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.launch
 
 object PushNotificationUtils {
     var hasInit: Boolean = false
     private val pushHandler = PushDistributorHandler
     var accountState: AccountStateViewModel? = null
 
+    @OptIn(DelicateCoroutinesApi::class)
     suspend fun init(accounts: List<AccountInfo>) {
         if (hasInit) {
             return
@@ -61,12 +66,16 @@ object PushNotificationUtils {
                         ),
                     )
                 }
-                if (!LocalPreferences.getPushServerMessage(NostrSigner.getInstance())) {
+                if (!NostrSigner.getInstance().settings.pushServerMessage) {
                     accountState?.toast(
                         title = NostrSigner.getInstance().getString(R.string.push_server),
                         message = NostrSigner.getInstance().getString(R.string.no_distributors_found),
                         onOk = {
-                            LocalPreferences.setPushServerMessage(NostrSigner.getInstance(), true)
+                            GlobalScope.launch(Dispatchers.IO) {
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(pushServerMessage = true)
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                            }
+
                             val intent = Intent(Intent.ACTION_VIEW)
                             intent.data = Uri.parse("https://ntfy.sh/")
                             intent.flags = FLAG_ACTIVITY_NEW_TASK

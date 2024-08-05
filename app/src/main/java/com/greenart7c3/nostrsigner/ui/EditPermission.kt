@@ -101,7 +101,7 @@ fun EditPermission(
     }
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
-        val relayString = LocalPreferences.getDefaultRelays(context).joinToString(separator = "&") { "relay=${it.url}" }
+        val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
         mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?$relayString$secret")
     }
     var editRelaysDialog by remember {
@@ -147,7 +147,7 @@ fun EditPermission(
                     .applicationDao()
                     .delete(applicationData)
 
-                if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT) {
+                if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
                     NostrSigner.getInstance().checkForNewRelays()
                 }
             }
@@ -474,7 +474,7 @@ fun EditPermission(
                                 permissions,
                             ),
                         )
-                        if (LocalPreferences.getNotificationType(context) == NotificationType.DIRECT) {
+                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
                             NostrSigner.getInstance().checkForNewRelays()
                         }
 

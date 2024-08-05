@@ -91,7 +91,7 @@ class PushMessageReceiver : MessagingReceiver() {
             Log.d(TAG, "Endpoint already saved. ")
             return
         }
-        pushHandler.setEndpoint(context, sanitizedEndpoint)
+        pushHandler.setEndpoint(sanitizedEndpoint)
         scope.launch(Dispatchers.IO) {
             RegisterAccounts(LocalPreferences.allSavedAccounts(context)).go(sanitizedEndpoint)
             NotificationUtils.getOrCreateDMChannel(appContext)
@@ -138,7 +138,7 @@ class PushMessageReceiver : MessagingReceiver() {
         Log.d(TAG, "Endpoint: $removedEndpoint removed for Instance: $instance")
         Log.d(TAG, "App is unregistered. ")
         pushHandler.forceRemoveDistributor(context)
-        pushHandler.removeEndpoint(context)
+        pushHandler.removeEndpoint()
     }
 
     fun notificationManager(): NotificationManager {

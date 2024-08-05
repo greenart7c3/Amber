@@ -374,13 +374,13 @@ object IntentUtils {
             GlobalScope.launch(Dispatchers.IO) {
                 if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
-                        LocalPreferences.getNotificationType(context) != NotificationType.DIRECT,
+                        NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
                         newRelays = relays.toSet(),
                     )
                 }
 
                 val success = Client.sendAndWaitForResponse(it, relayList = relays)
-                if (LocalPreferences.getNotificationType(context) != NotificationType.DIRECT) {
+                if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
                     RelayPool.unregister(Client)
                 }
                 if (success) {

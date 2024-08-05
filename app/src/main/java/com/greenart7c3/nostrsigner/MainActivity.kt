@@ -100,14 +100,12 @@ class MainActivity : AppCompatActivity() {
                                         this@MainActivity,
                                         keyguardLauncher,
                                         {
-                                            launch(Dispatchers.IO) {
-                                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                                    lastBiometricsTime = System.currentTimeMillis(),
-                                                )
+                                            NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                lastBiometricsTime = System.currentTimeMillis(),
+                                            )
 
-                                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                                isAuthenticated = true
-                                            }
+                                            LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                            isAuthenticated = true
                                         },
                                         { _, message ->
                                             this@MainActivity.finish()

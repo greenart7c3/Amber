@@ -107,7 +107,7 @@ object LocalPreferences {
         }.apply()
     }
 
-    suspend fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
+    fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
         val context = NostrSigner.getInstance()
         encryptedPreferences(context).edit().apply {
             putString(PrefKeys.ENDPOINT, settings.endpoint)

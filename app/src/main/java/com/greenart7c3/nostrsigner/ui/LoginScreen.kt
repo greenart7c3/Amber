@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
@@ -40,6 +43,7 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -79,8 +83,87 @@ import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.crypto.CryptoUtils.random
 import com.vitorpamplona.quartz.crypto.nip06.Bip39Mnemonics
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+
+@Composable
+fun AmberLogo(size: Int) {
+    Image(
+        painterResource(id = R.mipmap.ic_launcher_foreground),
+        contentDescription = "Amber",
+        modifier = Modifier
+            .size(size.dp)
+            .clip(CircleShape)
+            .background(colorResource(id = R.color.amber)),
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun MainPage(
+    scope: CoroutineScope,
+    state: PagerState,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Box(modifier = Modifier.height(0.dp))
+
+        Column(
+            modifier = Modifier
+                .padding(20.dp)
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            AmberLogo(200)
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Text(
+                text = stringResource(R.string.app_name),
+                fontSize = 24.sp,
+                fontWeight = FontWeight.Bold,
+            )
+
+            Spacer(modifier = Modifier.height(40.dp))
+
+            Row(
+                modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                ElevatedButton(
+                    onClick = {
+                        scope.launch {
+                            state.animateScrollToPage(1)
+                        }
+                    },
+
+                    modifier = Modifier
+                        .height(50.dp),
+                ) {
+                    Text(text = stringResource(R.string.add_a_key))
+                }
+
+                Button(
+                    modifier = Modifier
+                        .height(50.dp),
+                    onClick = {
+                        scope.launch {
+                            state.animateScrollToPage(2)
+                        }
+                    },
+                ) {
+                    Text(stringResource(R.string.generate_a_new_key))
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -99,71 +182,10 @@ fun MainLoginPage(
     ) {
         when (it) {
             0 -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .navigationBarsPadding()
-                        .verticalScroll(rememberScrollState()),
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    Box(modifier = Modifier.height(0.dp))
-
-                    Column(
-                        modifier = Modifier
-                            .padding(20.dp)
-                            .fillMaxSize(),
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Image(
-                            painterResource(id = R.mipmap.ic_launcher_foreground),
-                            contentDescription = "NostrSigner",
-                            modifier = Modifier
-                                .size(200.dp)
-                                .clip(CircleShape)
-                                .background(colorResource(id = R.color.amber)),
-                        )
-
-                        Spacer(modifier = Modifier.height(40.dp))
-
-                        Text(
-                            text = stringResource(R.string.app_name),
-                            fontSize = 24.sp,
-                            fontWeight = FontWeight.Bold,
-                        )
-
-                        Spacer(modifier = Modifier.height(40.dp))
-
-                        Row(
-                            modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            ElevatedButton(
-                                onClick = {
-                                    scope.launch {
-                                        state.animateScrollToPage(1)
-                                    }
-                                },
-
-                                modifier = Modifier
-                                    .height(50.dp),
-                            ) {
-                                Text(text = stringResource(R.string.add_a_key))
-                            }
-
-                            Button(
-                                modifier = Modifier
-                                    .height(50.dp),
-                                onClick = {
-                                    scope.launch {
-                                        state.animateScrollToPage(2)
-                                    }
-                                },
-                            ) {
-                                Text(stringResource(R.string.generate_a_new_key))
-                            }
-                        }
-                    }
-                }
+                MainPage(
+                    scope = scope,
+                    state = state,
+                )
             }
             1 -> {
                 LoginPage(
@@ -171,230 +193,272 @@ fun MainLoginPage(
                 )
             }
             2 -> {
-                val useProxy = remember { mutableStateOf(false) }
-                val proxyPort = remember { mutableStateOf("9050") }
-                var connectOrbotDialogOpen by remember { mutableStateOf(false) }
-                var seedWords by remember { mutableStateOf(setOf<String>()) }
-                val pageState = rememberPagerState {
-                    3
-                }
-                val context = LocalContext.current
+                SignUpPage(
+                    accountViewModel = accountViewModel,
+                    scope = scope,
+                )
+            }
+        }
+    }
+}
 
-                LaunchedEffect(Unit) {
-                    launch(Dispatchers.IO) {
-                        val entropy = random(16)
-                        seedWords = Bip39Mnemonics.toMnemonics(entropy).toSet()
-                    }
-                }
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SignUpPage(
+    accountViewModel: AccountStateViewModel,
+    scope: CoroutineScope,
+) {
+    val useProxy = remember { mutableStateOf(false) }
+    val proxyPort = remember { mutableStateOf("9050") }
+    val connectOrbotDialogOpen = remember { mutableStateOf(false) }
+    var seedWords by remember { mutableStateOf(setOf<String>()) }
+    val pageState = rememberPagerState {
+        3
+    }
+    val context = LocalContext.current
 
-                HorizontalPager(
-                    state = pageState,
-                    modifier = Modifier.fillMaxSize(),
-                    userScrollEnabled = false,
-                ) { currentPage ->
-                    when (currentPage) {
-                        0 -> {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .navigationBarsPadding()
-                                    .verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.Center,
-                            ) {
-                                Text(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    text = stringResource(R.string.seed_words_title),
-                                    fontSize = 24.sp,
-                                    fontWeight = FontWeight.Bold,
-                                    textAlign = TextAlign.Center,
-                                )
-                                Spacer(modifier = Modifier.height(4.dp))
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            val entropy = random(16)
+            seedWords = Bip39Mnemonics.toMnemonics(entropy).toSet()
+            Log.d("NostrSigner", "Seed words: $seedWords")
+        }
+    }
 
-                                Text(
-                                    text = stringResource(R.string.seed_words_explainer),
-                                    textAlign = TextAlign.Center,
-                                )
+    HorizontalPager(
+        state = pageState,
+        modifier = Modifier.fillMaxSize(),
+        userScrollEnabled = false,
+    ) { currentPage ->
+        when (currentPage) {
+            0 -> {
+                SeedWordsPage(
+                    seedWords = seedWords,
+                    pageState = pageState,
+                    scope = scope,
+                    context = context,
+                )
+            }
+            1 -> {
+                OrbotPage(
+                    connectOrbotDialogOpen = connectOrbotDialogOpen,
+                    useProxy = useProxy,
+                    proxyPort = proxyPort,
+                    pageState = pageState,
+                    scope = scope,
+                    context = context,
+                )
+            }
+            else -> {
+                SignPolicyScreen(
+                    accountViewModel = accountViewModel,
+                    key = "",
+                    password = "",
+                    useProxy = useProxy.value,
+                    proxyPort = proxyPort.value.toInt(),
+                    seedWords = seedWords,
+                )
+            }
+        }
+    }
+}
 
-                                Spacer(modifier = Modifier.height(20.dp))
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                ) {
-                                    val firstColumnWords = seedWords.mapIndexedNotNull {
-                                            index, word ->
-                                        if (index <= 5) {
-                                            word
-                                        } else {
-                                            null
-                                        }
-                                    }
-                                    val secondColumnWords = seedWords.mapIndexedNotNull {
-                                            index, word ->
-                                        if (index > 5) {
-                                            word
-                                        } else {
-                                            null
-                                        }
-                                    }
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun OrbotPage(
+    connectOrbotDialogOpen: MutableState<Boolean>,
+    useProxy: MutableState<Boolean>,
+    proxyPort: MutableState<String>,
+    pageState: PagerState,
+    scope: CoroutineScope,
+    context: Context,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center,
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        AmberLogo(size = 150)
 
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                    ) {
-                                        firstColumnWords.forEachIndexed { index, word ->
-                                            OutlinedTextField(
-                                                word,
-                                                onValueChange = {},
-                                                modifier = Modifier.padding(8.dp),
-                                                readOnly = true,
-                                                prefix = {
-                                                    Text("${index + 1} - ")
-                                                },
-                                            )
-                                        }
-                                    }
+        Spacer(modifier = Modifier.height(40.dp))
 
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                    ) {
-                                        secondColumnWords.forEachIndexed { index, word ->
-                                            OutlinedTextField(
-                                                word,
-                                                onValueChange = {},
-                                                readOnly = true,
-                                                prefix = {
-                                                    Text("${index + 1 + firstColumnWords.size} - ")
-                                                },
-                                                modifier = Modifier.padding(8.dp),
-                                            )
-                                        }
-                                    }
-                                }
-                                Row(
-                                    Modifier
-                                        .fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                ) {
-                                    Button(
-                                        modifier = Modifier
-                                            .height(50.dp),
-                                        onClick = {
-                                            scope.launch {
-                                                @Suppress("KotlinConstantConditions")
-                                                if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
-                                                    pageState.animateScrollToPage(1)
-                                                } else {
-                                                    pageState.animateScrollToPage(2)
-                                                }
-                                            }
-                                        },
-                                    ) {
-                                        Text(text = stringResource(R.string.next))
-                                    }
-                                }
-                            }
+        @Suppress("KotlinConstantConditions")
+        if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .clickable {
+                        if (!useProxy.value) {
+                            connectOrbotDialogOpen.value = true
+                        } else {
+                            useProxy.value = false
                         }
-                        1 -> {
-                            Column(
-                                modifier = Modifier
-                                    .fillMaxSize()
-                                    .navigationBarsPadding()
-                                    .verticalScroll(rememberScrollState()),
-                                verticalArrangement = Arrangement.Center,
-                                horizontalAlignment = Alignment.CenterHorizontally,
-                            ) {
-                                Image(
-                                    painterResource(id = R.mipmap.ic_launcher_foreground),
-                                    contentDescription = "NostrSigner",
-                                    modifier = Modifier
-                                        .size(150.dp)
-                                        .clip(CircleShape)
-                                        .background(colorResource(id = R.color.amber)),
-                                )
-
-                                Spacer(modifier = Modifier.height(40.dp))
-
-                                @Suppress("KotlinConstantConditions")
-                                if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
-                                    Row(
-                                        verticalAlignment = Alignment.CenterVertically,
-                                        modifier = Modifier
-                                            .clickable {
-                                                if (!useProxy.value) {
-                                                    connectOrbotDialogOpen = true
-                                                } else {
-                                                    useProxy.value = false
-                                                }
-                                            },
-                                    ) {
-                                        Checkbox(
-                                            checked = useProxy.value,
-                                            onCheckedChange = { value ->
-                                                if (value) {
-                                                    connectOrbotDialogOpen = true
-                                                } else {
-                                                    useProxy.value = false
-                                                }
-                                            },
-                                        )
-
-                                        Text(stringResource(R.string.connect_through_your_orbot_setup))
-                                    }
-
-                                    if (connectOrbotDialogOpen) {
-                                        ConnectOrbotDialog(
-                                            onClose = { connectOrbotDialogOpen = false },
-                                            onPost = {
-                                                connectOrbotDialogOpen = false
-                                                useProxy.value = true
-                                            },
-                                            onError = {
-                                                scope.launch {
-                                                    Toast.makeText(
-                                                        context,
-                                                        it,
-                                                        Toast.LENGTH_LONG,
-                                                    )
-                                                        .show()
-                                                }
-                                            },
-                                            proxyPort,
-                                        )
-                                    }
-
-                                    Spacer(modifier = Modifier.height(20.dp))
-                                    Row(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalArrangement = Arrangement.Center,
-                                    ) {
-                                        Button(
-                                            modifier = Modifier
-                                                .height(50.dp),
-                                            onClick = {
-                                                scope.launch {
-                                                    pageState.animateScrollToPage(2)
-                                                }
-                                            },
-                                        ) {
-                                            Text(text = stringResource(R.string.next))
-                                        }
-                                    }
-                                }
-                            }
+                    },
+            ) {
+                Checkbox(
+                    checked = useProxy.value,
+                    onCheckedChange = { value ->
+                        if (value) {
+                            connectOrbotDialogOpen.value = true
+                        } else {
+                            useProxy.value = false
                         }
-                        else -> {
-                            SignPolicyScreen(
-                                accountViewModel = accountViewModel,
-                                key = "",
-                                password = "",
-                                useProxy = useProxy.value,
-                                proxyPort = proxyPort.value.toInt(),
-                                seedWords = seedWords,
+                    },
+                )
+
+                Text(stringResource(R.string.connect_through_your_orbot_setup))
+            }
+
+            if (connectOrbotDialogOpen.value) {
+                ConnectOrbotDialog(
+                    onClose = { connectOrbotDialogOpen.value = false },
+                    onPost = {
+                        connectOrbotDialogOpen.value = false
+                        useProxy.value = true
+                    },
+                    onError = {
+                        scope.launch {
+                            Toast.makeText(
+                                context,
+                                it,
+                                Toast.LENGTH_LONG,
                             )
+                                .show()
+                        }
+                    },
+                    proxyPort,
+                )
+            }
+
+            Spacer(modifier = Modifier.height(20.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                Button(
+                    modifier = Modifier
+                        .height(50.dp),
+                    onClick = {
+                        scope.launch {
+                            pageState.animateScrollToPage(2)
+                        }
+                    },
+                ) {
+                    Text(text = stringResource(R.string.next))
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+fun SeedWordsPage(
+    seedWords: Set<String>,
+    pageState: PagerState,
+    scope: CoroutineScope,
+    context: Context,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .navigationBarsPadding()
+            .verticalScroll(rememberScrollState()),
+        verticalArrangement = Arrangement.Center,
+    ) {
+        Text(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.seed_words_title),
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+
+        Text(
+            text = stringResource(R.string.seed_words_explainer),
+            textAlign = TextAlign.Center,
+        )
+
+        Spacer(modifier = Modifier.height(20.dp))
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            val firstColumnWords = seedWords.mapIndexedNotNull {
+                    index, word ->
+                if (index <= 5) {
+                    word
+                } else {
+                    null
+                }
+            }
+            val secondColumnWords = seedWords.mapIndexedNotNull {
+                    index, word ->
+                if (index > 5) {
+                    word
+                } else {
+                    null
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                firstColumnWords.forEachIndexed { index, word ->
+                    OutlinedTextField(
+                        word,
+                        onValueChange = {},
+                        modifier = Modifier.padding(8.dp),
+                        readOnly = true,
+                        prefix = {
+                            Text("${index + 1} - ")
+                        },
+                    )
+                }
+            }
+
+            Column(
+                modifier = Modifier.weight(1f),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                secondColumnWords.forEachIndexed { index, word ->
+                    OutlinedTextField(
+                        word,
+                        onValueChange = {},
+                        readOnly = true,
+                        prefix = {
+                            Text("${index + 1 + firstColumnWords.size} - ")
+                        },
+                        modifier = Modifier.padding(8.dp),
+                    )
+                }
+            }
+        }
+        Row(
+            Modifier
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(
+                modifier = Modifier
+                    .height(50.dp),
+                onClick = {
+                    scope.launch {
+                        @Suppress("KotlinConstantConditions")
+                        if (BuildConfig.FLAVOR != "offline" && PackageUtils.isOrbotInstalled(context)) {
+                            pageState.animateScrollToPage(1)
+                        } else {
+                            pageState.animateScrollToPage(2)
                         }
                     }
-                }
+                },
+            ) {
+                Text(text = stringResource(R.string.next))
             }
         }
     }
@@ -435,15 +499,7 @@ fun SignPolicyScreen(
                 .fillMaxSize(),
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            Image(
-                painterResource(id = R.mipmap.ic_launcher_foreground),
-                contentDescription = "NostrSigner",
-                modifier = Modifier
-                    .size(150.dp)
-                    .clip(CircleShape)
-                    .background(colorResource(id = R.color.amber)),
-            )
-
+            AmberLogo(size = 150)
             Spacer(modifier = Modifier.height(40.dp))
 
             Text(

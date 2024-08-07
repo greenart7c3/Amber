@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,8 +18,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
@@ -30,6 +34,7 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -168,6 +173,7 @@ fun SettingsScreen(
     var logDialog by remember { mutableStateOf(false) }
     var relayDialog by remember { mutableStateOf(false) }
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
+    var signatureDialog by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
     val notificationItems =
@@ -204,6 +210,103 @@ fun SettingsScreen(
                 }
             },
         )
+    }
+
+    if (signatureDialog) {
+        val radioOptions = listOf(
+            TitleExplainer(
+                title = stringResource(R.string.sign_policy_basic),
+                explainer = stringResource(R.string.sign_policy_basic_explainer),
+            ),
+            TitleExplainer(
+                title = stringResource(R.string.sign_policy_manual),
+                explainer = stringResource(R.string.sign_policy_manual_explainer),
+            ),
+        )
+        var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
+
+        Dialog(
+            onDismissRequest = {
+                signatureDialog = false
+            },
+            properties = DialogProperties(usePlatformDefaultWidth = false),
+        ) {
+            Surface(Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier.padding(10.dp),
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        CloseButton {
+                            signatureDialog = false
+                        }
+
+                        PostButton(isActive = true) {
+                            signatureDialog = false
+                            scope.launch(Dispatchers.IO) {
+                                account.signPolicy = selectedOption
+                                LocalPreferences.saveToEncryptedStorage(context, account)
+                            }
+                        }
+                    }
+
+                    Column(
+                        modifier = Modifier.fillMaxSize(),
+                        Arrangement.Center,
+                        Alignment.CenterHorizontally,
+                    ) {
+                        radioOptions.forEachIndexed { index, option ->
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .selectable(
+                                        selected = selectedOption == index,
+                                        onClick = {
+                                            selectedOption = index
+                                        },
+                                    )
+                                    .border(
+                                        width = 1.dp,
+                                        color = if (selectedOption == index) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            Color.Transparent
+                                        },
+                                        shape = RoundedCornerShape(8.dp),
+                                    )
+                                    .padding(16.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                RadioButton(
+                                    selected = selectedOption == index,
+                                    onClick = {
+                                        selectedOption = index
+                                    },
+                                )
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                                ) {
+                                    Text(
+                                        text = option.title,
+                                        modifier = Modifier.padding(start = 16.dp),
+                                        style = MaterialTheme.typography.titleLarge,
+                                    )
+                                    option.explainer?.let {
+                                        Text(
+                                            text = it,
+                                            modifier = Modifier.padding(start = 16.dp),
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     if (logDialog) {
@@ -641,6 +744,20 @@ fun SettingsScreen(
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
                     logDialog = true
+                },
+            )
+        }
+
+        Box(
+            Modifier
+                .padding(8.dp),
+        ) {
+            IconRow(
+                title = stringResource(R.string.sign_policy),
+                icon = Icons.Default.Draw,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    signatureDialog = true
                 },
             )
         }

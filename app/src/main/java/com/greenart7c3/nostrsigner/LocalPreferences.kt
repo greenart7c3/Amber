@@ -10,7 +10,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.parseNotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
@@ -66,7 +65,6 @@ object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
     private var accountCache = LruCache<String, Account>(10)
-    private var notificationTypeCache: NotificationType? = null
 
     fun allSavedAccounts(context: Context): List<AccountInfo> {
         return savedAccounts(context).map { npub ->
@@ -381,7 +379,7 @@ object LocalPreferences {
             val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
             val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
-            val signPolicy = getInt(PrefKeys.SIGN_POLICY, 0)
+            val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
             val seedWords = getStringSet(PrefKeys.SEED_WORDS, null) ?: emptySet()
             HttpClientManager.setDefaultProxy(proxy)
             val account =

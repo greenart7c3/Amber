@@ -344,4 +344,5 @@
     <string name="sign_policy_manual_new_app_explainer">Recommended for privacy-minded people who would like control over each permission. Choosing this will prompt you set a preference every time you receive a new permission.</string>
     <string name="sign_policy_fully">I fully trust this application</string>
     <string name="sign_policy_fully_explainer">Sign automatically every request</string>
+    <string name="event_kind_10050">DM relays</string>
 </resources>

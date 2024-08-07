@@ -342,4 +342,9 @@
     <string name="seed_words_explainer">这些单词能够在账户丢失时找回密钥。请在安全的位置记下它们。</string>
     <string name="show_seed_words">显示种子助记词</string>
     <string name="sign_policy">Sign policy</string>
+    <string name="handle_application_permissions">How to handle this application permissions?</string>
+    <string name="sign_policy_manual_new_app">Manually approve each permission</string>
+    <string name="sign_policy_manual_new_app_explainer">Recommended for privacy-minded people who would like control over each permission. Choosing this will prompt you set a preference every time you receive a new permission.</string>
+    <string name="sign_policy_fully">I fully trust this application</string>
+    <string name="sign_policy_fully_explainer">Sign automatically every request</string>
 </resources>

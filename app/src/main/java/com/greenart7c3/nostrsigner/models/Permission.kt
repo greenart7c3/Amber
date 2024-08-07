@@ -86,6 +86,7 @@ data class Permission(
                     10013 -> context.getString(R.string.event_kind_10013)
                     10015 -> context.getString(R.string.event_kind_10015)
                     10030 -> context.getString(R.string.event_kind_10030)
+                    10050 -> context.getString(R.string.event_kind_10050)
                     10096 -> context.getString(R.string.event_kind_10096)
                     13194 -> context.getString(R.string.event_kind_13194)
                     21000 -> context.getString(R.string.event_kind_21000)

@@ -341,4 +341,5 @@
     <string name="seed_words_title">恢复口令</string>
     <string name="seed_words_explainer">这些单词能够在账户丢失时找回密钥。请在安全的位置记下它们。</string>
     <string name="show_seed_words">显示种子助记词</string>
+    <string name="sign_policy">Sign policy</string>
 </resources>

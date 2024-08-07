@@ -11,6 +11,9 @@ import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ApplicationDao {
+    @Query("SELECT signPolicy FROM application WHERE `key` = :key")
+    fun getSignPolicy(key: String): Int?
+
     @Query("SELECT MAX(time) FROM notification")
     fun getLatestNotification(): Long?
 

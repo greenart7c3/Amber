@@ -333,6 +333,7 @@ object LocalPreferences {
                     true,
                     "",
                     false,
+                    1,
                 ),
             )
             database.applicationDao().insertPermissions(

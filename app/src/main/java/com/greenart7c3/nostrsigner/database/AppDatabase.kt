@@ -33,6 +33,13 @@ val MIGRATION_3_4 =
         }
     }
 
+val MIGRATION_4_5 =
+    object : Migration(4, 5) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `application` ADD COLUMN `signPolicy` INTEGER NOT NULL DEFAULT 1")
+        }
+    }
+
 @Database(
     entities = [
         ApplicationEntity::class,
@@ -41,7 +48,7 @@ val MIGRATION_3_4 =
         HistoryEntity::class,
         LogEntity::class,
     ],
-    version = 4,
+    version = 5,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -62,6 +69,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_1_2)
                         .addMigrations(MIGRATION_2_3)
                         .addMigrations(MIGRATION_3_4)
+                        .addMigrations(MIGRATION_4_5)
                         .build()
                 instance
             }

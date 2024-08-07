@@ -93,10 +93,11 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
+                account,
                 appName,
                 applicationName,
                 intentData.permissions,
-                { permissions ->
+                { permissions, signPolicy ->
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
                             "ack"
@@ -121,6 +122,7 @@ fun SingleEventHomeScreen(
                             appName = applicationName ?: appName,
                             database = database,
                             onLoading = onLoading,
+                            signPolicy = signPolicy,
                         )
                     }
                     return@LoginWithPubKey
@@ -219,6 +221,7 @@ fun SingleEventHomeScreen(
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
+                                    account.signPolicy,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -348,6 +351,7 @@ fun SingleEventHomeScreen(
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
+                                    account.signPolicy,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -499,6 +503,7 @@ fun SingleEventHomeScreen(
                                         true,
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
+                                        account.signPolicy,
                                     ),
                                     permissions = mutableListOf(),
                                 )

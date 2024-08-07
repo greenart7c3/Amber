@@ -36,6 +36,7 @@ data class ApplicationEntity(
     var isConnected: Boolean,
     val secret: String,
     val useSecret: Boolean,
+    var signPolicy: Int,
 )
 
 data class ApplicationWithPermissions(

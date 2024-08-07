@@ -87,7 +87,7 @@ fun EditPermission(
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
     var applicationData by remember {
-        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false))
+        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false, 1))
     }
     var textFieldvalue by remember(applicationData.name) {
         mutableStateOf(TextFieldValue(applicationData.name))

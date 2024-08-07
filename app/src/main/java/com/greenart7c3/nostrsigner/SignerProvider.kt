@@ -58,6 +58,7 @@ class SignerProvider : ContentProvider() {
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
+                val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val permission =
                     database
                         .applicationDao()
@@ -65,7 +66,7 @@ class SignerProvider : ContentProvider() {
                             sortOrder ?: packageName,
                             "SIGN_MESSAGE",
                         )
-                val isRemembered = permission?.acceptable ?: return null
+                val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
                     database.applicationDao().addHistory(
                         HistoryEntity(
@@ -136,7 +137,8 @@ class SignerProvider : ContentProvider() {
                                 )
                     }
                 }
-                val isRemembered = permission?.acceptable ?: return null
+                val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
+                val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
                     database.applicationDao().addHistory(
                         HistoryEntity(
@@ -240,8 +242,8 @@ class SignerProvider : ContentProvider() {
                                 )
                     }
                 }
-
-                val isRemembered = permission?.acceptable ?: return null
+                val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
+                val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
                     database.applicationDao().addHistory(
                         HistoryEntity(
@@ -317,7 +319,8 @@ class SignerProvider : ContentProvider() {
                             "GET_PUBLIC_KEY",
                         )
 
-                val isRemembered = permission?.acceptable ?: return null
+                val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
+                val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
                     database.applicationDao().addHistory(
                         HistoryEntity(

@@ -196,6 +196,7 @@ fun MultiEventHomeScreen(
                                                 true,
                                                 intentData.bunkerRequest?.secret ?: "",
                                                 intentData.bunkerRequest?.secret != null,
+                                                localAccount.signPolicy,
                                             ),
                                             permissions = mutableListOf(),
                                         )
@@ -269,6 +270,7 @@ fun MultiEventHomeScreen(
                                                 true,
                                                 intentData.bunkerRequest?.secret ?: "",
                                                 intentData.bunkerRequest?.secret != null,
+                                                localAccount.signPolicy,
                                             ),
                                             permissions = mutableListOf(),
                                         )
@@ -335,6 +337,7 @@ fun MultiEventHomeScreen(
                                                 true,
                                                 intentData.bunkerRequest?.secret ?: "",
                                                 intentData.bunkerRequest?.secret != null,
+                                                localAccount.signPolicy,
                                             ),
                                             permissions = mutableListOf(),
                                         )

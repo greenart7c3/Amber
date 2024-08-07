@@ -166,6 +166,7 @@ object AmberUtils {
                     true,
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
+                    account.signPolicy,
                 ),
                 permissions = mutableListOf(),
             )

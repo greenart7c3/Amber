@@ -94,6 +94,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
@@ -130,6 +131,7 @@ fun sendResult(
     onLoading: (Boolean) -> Unit,
     permissions: List<Permission>? = null,
     appName: String? = null,
+    signPolicy: Int? = null,
 ) {
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
@@ -169,25 +171,54 @@ fun sendResult(
                     true,
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
+                    account.signPolicy,
                 ),
                 permissions = mutableListOf(),
             )
         application.application.isConnected = true
 
-        permissions?.filter { it.checked }?.forEach {
-            if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
-                return@forEach
+        if (signPolicy != null) {
+            when (signPolicy) {
+                0 -> {
+                    application.application.signPolicy = 0
+                    basicPermissions.forEach {
+                        if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
+                            return@forEach
+                        }
+                        application.permissions.add(
+                            ApplicationPermissionsEntity(
+                                null,
+                                key,
+                                it.type.toUpperCase(Locale.current),
+                                it.kind,
+                                true,
+                            ),
+                        )
+                    }
+                }
+                1 -> {
+                    application.application.signPolicy = 1
+                    permissions?.filter { it.checked }?.forEach {
+                        if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
+                            return@forEach
+                        }
+                        application.permissions.add(
+                            ApplicationPermissionsEntity(
+                                null,
+                                key,
+                                it.type.toUpperCase(Locale.current),
+                                it.kind,
+                                true,
+                            ),
+                        )
+                    }
+                }
+                2 -> {
+                    application.application.signPolicy = 2
+                }
             }
-            application.permissions.add(
-                ApplicationPermissionsEntity(
-                    null,
-                    key,
-                    it.type.toUpperCase(Locale.current),
-                    it.kind,
-                    true,
-                ),
-            )
         }
+
         if (rememberChoice) {
             application.permissions.add(
                 ApplicationPermissionsEntity(
@@ -594,6 +625,7 @@ fun MainScreen(
                                 false,
                                 secret,
                                 false,
+                                account.signPolicy,
                             )
 
                         database.applicationDao().insertApplication(

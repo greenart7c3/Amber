@@ -93,6 +93,7 @@ class MainViewModel : ViewModel() {
                             }
                         }
                     }
+                    IntentUtils.clearRequests()
                 }
             }
         }

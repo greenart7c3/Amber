@@ -65,38 +65,26 @@ class SignerProvider : ContentProvider() {
                             sortOrder ?: packageName,
                             "SIGN_MESSAGE",
                         )
-                if (currentSelection == "1") {
-                    val isRemembered = permission?.acceptable ?: return null
-                    if (!isRemembered) {
+                val isRemembered = permission?.acceptable ?: return null
+                if (!isRemembered) {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            null,
+                            TimeUtils.now(),
+                            false,
+                        ),
+                    )
+                    if (currentSelection == "1") {
                         val cursor =
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+
                         return cursor
-                    }
-                } else {
-                    val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) {
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+                    } else {
                         return null
                     }
                 }
@@ -148,38 +136,26 @@ class SignerProvider : ContentProvider() {
                                 )
                     }
                 }
-                if (currentSelection == "1") {
-                    val isRemembered = permission?.acceptable ?: return null
-                    if (!isRemembered) {
+                val isRemembered = permission?.acceptable ?: return null
+                if (!isRemembered) {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            event.kind,
+                            TimeUtils.now(),
+                            false,
+                        ),
+                    )
+                    if (currentSelection == "1") {
                         val cursor =
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                event.kind,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+
                         return cursor
-                    }
-                } else {
-                    val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) {
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                event.kind,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+                    } else {
                         return null
                     }
                 }
@@ -265,38 +241,27 @@ class SignerProvider : ContentProvider() {
                     }
                 }
 
-                if (currentSelection == "1") {
-                    val isRemembered = permission?.acceptable ?: return null
-                    if (!isRemembered) {
+                val isRemembered = permission?.acceptable ?: return null
+                if (!isRemembered) {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            null,
+                            TimeUtils.now(),
+                            false,
+                        ),
+                    )
+
+                    if (currentSelection == "1") {
                         val cursor =
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+
                         return cursor
-                    }
-                } else {
-                    val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) {
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+                    } else {
                         return null
                     }
                 }
@@ -352,38 +317,27 @@ class SignerProvider : ContentProvider() {
                             "GET_PUBLIC_KEY",
                         )
 
-                if (currentSelection == "1") {
-                    val isRemembered = permission?.acceptable ?: return null
-                    if (!isRemembered) {
+                val isRemembered = permission?.acceptable ?: return null
+                if (!isRemembered) {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            null,
+                            TimeUtils.now(),
+                            false,
+                        ),
+                    )
+
+                    if (currentSelection == "1") {
                         val cursor =
                             MatrixCursor(arrayOf("rejected")).also {
                                 it.addRow(arrayOf("true"))
                             }
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+
                         return cursor
-                    }
-                } else {
-                    val isRemembered = permission?.acceptable ?: false
-                    if (!isRemembered) {
-                        database.applicationDao().addHistory(
-                            HistoryEntity(
-                                0,
-                                sortOrder ?: packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
+                    } else {
                         return null
                     }
                 }

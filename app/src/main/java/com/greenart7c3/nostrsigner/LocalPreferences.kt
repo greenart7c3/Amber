@@ -51,7 +51,7 @@ private object PrefKeys {
     const val USE_AUTH = "use_auth"
     const val BIOMETRICS_TYPE = "biometrics_type"
     const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
-    const val SIGN_POLICY = "default_sign_policy"
+    const val SIGN_POLICY = "sign_policy"
     const val SEED_WORDS = "seed_words"
 }
 

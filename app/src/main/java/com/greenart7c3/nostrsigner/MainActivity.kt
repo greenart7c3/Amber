@@ -43,10 +43,11 @@ fun Intent.isLaunchFromHistory(): Boolean =
     this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
 class MainActivity : AppCompatActivity() {
-    private val mainViewModel = MainViewModel()
+    private lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        mainViewModel = MainViewModel(applicationContext)
         WindowCompat.setDecorFitsSystemWindows(window, false)
         installSplashScreen()
 
@@ -136,11 +137,12 @@ class MainActivity : AppCompatActivity() {
                         }
                     } else {
                         val npub = intent.getStringExtra("current_user") ?: mainViewModel.getAccount()
+
                         val accountStateViewModel: AccountStateViewModel =
                             viewModel {
                                 AccountStateViewModel(npub)
                             }
-                        AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel)
+                        AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents)
                     }
                 }
             }

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner
 
 import android.annotation.SuppressLint
+import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
@@ -24,7 +25,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak")
-class MainViewModel : ViewModel() {
+class MainViewModel(val context: Context) : ViewModel() {
     val intents = MutableStateFlow<List<IntentData>>(listOf())
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
@@ -73,31 +74,6 @@ class MainViewModel : ViewModel() {
             }
         }
 
-    init {
-        viewModelScope.launch(Dispatchers.IO) {
-            val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance())
-            account?.let { acc ->
-                IntentUtils.bunkerRequests.collect {
-                    it.values.map { bunkerRequest ->
-                        val contentIntent =
-                            Intent(NostrSigner.getInstance(), MainActivity::class.java).apply {
-                                data = Uri.parse("nostrsigner:")
-                            }
-                        contentIntent.putExtra("bunker", bunkerRequest.toJson())
-                        contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                        IntentUtils.getIntentData(NostrSigner.getInstance(), contentIntent, null, Route.Home.route, acc) { intentData ->
-                            if (intentData != null) {
-                                if (intents.value.none { item -> item.id == intentData.id }) {
-                                    intents.value += listOf(intentData)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
     fun getAccount(): String? {
         val pubKeys =
             intents.value.mapNotNull {
@@ -110,12 +86,12 @@ class MainViewModel : ViewModel() {
 
     fun showBunkerRequests(callingPackage: String?) {
         val requests =
-            IntentUtils.map().map {
+            IntentUtils.bunkerRequests.map {
                 it.value.copy()
             }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance())
+            val account = LocalPreferences.loadFromEncryptedStorage(context)
             account?.let { acc ->
                 requests.forEach {
                     val contentIntent =
@@ -124,7 +100,7 @@ class MainViewModel : ViewModel() {
                         }
                     contentIntent.putExtra("bunker", it.toJson())
                     contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    IntentUtils.getIntentData(NostrSigner.getInstance(), contentIntent, callingPackage, Route.Home.route, acc) { intentData ->
+                    IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.Home.route, acc) { intentData ->
                         if (intentData != null) {
                             if (intents.value.none { item -> item.id == intentData.id }) {
                                 intents.value += listOf(intentData)
@@ -134,7 +110,7 @@ class MainViewModel : ViewModel() {
                 }
             }
 
-            IntentUtils.clearRequests()
+            IntentUtils.bunkerRequests.clear()
         }
     }
 
@@ -143,9 +119,9 @@ class MainViewModel : ViewModel() {
         callingPackage: String?,
     ) {
         viewModelScope.launch(Dispatchers.IO) {
-            val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance())
+            val account = LocalPreferences.loadFromEncryptedStorage(context)
             account?.let { acc ->
-                IntentUtils.getIntentData(NostrSigner.getInstance(), intent, callingPackage, intent.getStringExtra("route"), acc) { intentData ->
+                IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc) { intentData ->
                     if (intentData != null) {
                         if (intents.value.none { item -> item.id == intentData.id }) {
                             intents.value += listOf(intentData)

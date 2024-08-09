@@ -111,7 +111,7 @@ object NotificationUtils {
                 PendingIntent.FLAG_MUTABLE,
             )
 
-        IntentUtils.addRequest(notId.toString(), bunkerRequest)
+        IntentUtils.bunkerRequests[notId.toString()] = bunkerRequest
 
         // Build the notification
         val builderPublic =

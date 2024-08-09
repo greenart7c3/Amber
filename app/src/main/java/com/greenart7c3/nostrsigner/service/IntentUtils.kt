@@ -48,8 +48,6 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
 data class BunkerMetadata(
@@ -86,24 +84,7 @@ data class BunkerMetadata(
 }
 
 object IntentUtils {
-    private val _bunkerRequests = MutableStateFlow<Map<String, BunkerRequest>>(emptyMap())
-    val bunkerRequests: StateFlow<Map<String, BunkerRequest>> = _bunkerRequests
-
-    private val bunkerRequestMap = ConcurrentHashMap<String, BunkerRequest>()
-
-    fun addRequest(key: String, request: BunkerRequest) {
-        bunkerRequestMap[key] = request
-        _bunkerRequests.value = bunkerRequestMap.toMap() // Update the state flow
-    }
-
-    fun clearRequests() {
-        bunkerRequestMap.clear()
-        _bunkerRequests.value = bunkerRequestMap.toMap() // Update the state flow
-    }
-
-    fun map(): Map<String, BunkerRequest> {
-        return bunkerRequestMap
-    }
+    val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
     private fun getIntentDataWithoutExtras(
         context: Context,

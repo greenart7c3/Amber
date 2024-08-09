@@ -36,7 +36,6 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.MainViewModel
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -48,6 +47,7 @@ import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
@@ -57,11 +57,11 @@ fun AccountScreen(
     intent: Intent,
     packageName: String?,
     appName: String?,
-    mainViewModel: MainViewModel,
+    flow: MutableStateFlow<List<IntentData>>,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
+    val intents by flow.collectAsState(initial = emptyList())
     val context = LocalContext.current
-    val intents by mainViewModel.intents.collectAsStateWithLifecycle()
 
     Column {
         Crossfade(
@@ -99,6 +99,7 @@ fun AccountScreen(
                         if (intents.none { item -> item.id == intentData!!.id }) {
                             val oldIntents = intents.toMutableList()
                             oldIntents.add(intentData!!)
+                            flow.value = oldIntents
                         }
                     }
 

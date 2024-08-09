@@ -20,10 +20,12 @@ import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toNpub
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 @SuppressLint("StaticFieldLeak")
 class MainViewModel(val context: Context) : ViewModel() {
     val intents = MutableStateFlow<List<IntentData>>(listOf())
@@ -86,7 +88,7 @@ class MainViewModel(val context: Context) : ViewModel() {
 
     fun showBunkerRequests(callingPackage: String?) {
         val requests =
-            IntentUtils.bunkerRequests.map {
+            IntentUtils.getBunkerRequests().map {
                 it.value.copy()
             }
 
@@ -110,7 +112,10 @@ class MainViewModel(val context: Context) : ViewModel() {
                 }
             }
 
-            IntentUtils.bunkerRequests.clear()
+            viewModelScope.launch(Dispatchers.IO) {
+                delay(10000)
+                IntentUtils.clearRequests()
+            }
         }
     }
 

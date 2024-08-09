@@ -29,6 +29,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.greenart7c3.nostrsigner.service.Biometrics
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
@@ -37,6 +38,8 @@ import com.vitorpamplona.ammolite.service.HttpClientManager
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 fun Intent.isLaunchFromHistory(): Boolean =
@@ -142,6 +145,17 @@ class MainActivity : AppCompatActivity() {
                             viewModel {
                                 AccountStateViewModel(npub)
                             }
+
+                        LaunchedEffect(Unit) {
+                            launch {
+                                IntentUtils.state
+                                    .receiveAsFlow()
+                                    .collectLatest {
+                                        mainViewModel.showBunkerRequests(null)
+                                    }
+                            }
+                        }
+
                         AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents)
                     }
                 }

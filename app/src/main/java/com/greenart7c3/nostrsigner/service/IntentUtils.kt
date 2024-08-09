@@ -48,6 +48,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
 data class BunkerMetadata(
@@ -84,7 +85,22 @@ data class BunkerMetadata(
 }
 
 object IntentUtils {
-    val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
+    val state = Channel<String>(Channel.CONFLATED)
+    private val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
+
+    fun addRequest(key: String, request: BunkerRequest) {
+        bunkerRequests[key] = request
+        state.trySend("")
+    }
+
+    fun clearRequests() {
+        bunkerRequests.clear()
+        state.trySend("")
+    }
+
+    fun getBunkerRequests(): Map<String, BunkerRequest> {
+        return bunkerRequests
+    }
 
     private fun getIntentDataWithoutExtras(
         context: Context,

@@ -335,7 +335,7 @@
     <string name="sign_policy_basic_explainer">推荐用于大多数人。这将最大限度地减少在使用 Nostr 应用过程中的中断次数。</string>
     <string name="sign_policy_manual">手动批复每个应用</string>
     <string name="sign_policy_manual_explainer">推荐用于想要掌控每个应用的隐私优先人士。该选项将会要求手动调整新应用的每一个权限偏好。</string>
-    <string name="sign_policy_title">选择签名策略</string>
+    <string name="sign_policy_title">选择签署策略</string>
     <string name="sign_policy_explainer">自动批复或手动审查每一个应用？</string>
     <string name="finish">完成</string>
     <string name="seed_words_title">恢复口令</string>
@@ -344,8 +344,8 @@
     <string name="sign_policy">签署策略</string>
     <string name="handle_application_permissions">如何处理该应用的权限？</string>
     <string name="sign_policy_manual_new_app">手动批复每项权限</string>
-    <string name="sign_policy_manual_new_app_explainer">Recommended for privacy-minded people who would like control over each permission. Choosing this will prompt you set a preference every time you receive a new permission.</string>
-    <string name="sign_policy_fully">I fully trust this application</string>
-    <string name="sign_policy_fully_explainer">Sign automatically every request</string>
-    <string name="event_kind_10050">DM relays</string>
+    <string name="sign_policy_manual_new_app_explainer">推荐用于想要掌控每项权限的隐私优先人士。该选项将会要求手动调整每个新权限请求的偏好。</string>
+    <string name="sign_policy_fully">完全信任该应用</string>
+    <string name="sign_policy_fully_explainer">自动签署每个请求</string>
+    <string name="event_kind_10050">私信中继</string>
 </resources>

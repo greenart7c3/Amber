@@ -28,12 +28,12 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
-import com.vitorpamplona.ammolite.relays.EOSETime
-import com.vitorpamplona.ammolite.relays.Filter
 import com.vitorpamplona.ammolite.relays.NostrDataSource
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.TypedFilter
+import com.vitorpamplona.ammolite.relays.filters.EOSETime
+import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 
@@ -167,7 +167,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
 
         return TypedFilter(
             types = COMMON_FEED_TYPES,
-            filter = Filter(
+            filter = SincePerRelayFilter(
                 kinds = listOf(24133),
                 tags = mapOf("p" to pubKeys),
                 limit = 1,

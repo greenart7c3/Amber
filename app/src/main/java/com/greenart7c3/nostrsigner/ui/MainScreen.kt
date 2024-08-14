@@ -163,7 +163,7 @@ fun sendResult(
                 application = ApplicationEntity(
                     key,
                     appName ?: localAppName ?: "",
-                    relays,
+                    if (packageName != null) emptyList() else relays,
                     "",
                     "",
                     "",

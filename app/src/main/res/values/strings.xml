@@ -123,7 +123,7 @@
     <string name="event_kind_1">Short text note</string>
     <string name="event_kind_3">Follows</string>
     <string name="event_kind_4">Encrypted direct messages</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Event deletion request</string>
     <string name="event_kind_6">Repost</string>
     <string name="event_kind_7">Reaction</string>
     <string name="event_kind_8">Badge award</string>

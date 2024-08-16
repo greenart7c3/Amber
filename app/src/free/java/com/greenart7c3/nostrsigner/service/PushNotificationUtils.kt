@@ -30,6 +30,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -66,7 +67,7 @@ object PushNotificationUtils {
                         ),
                     )
                 }
-                if (!NostrSigner.getInstance().settings.pushServerMessage) {
+                if (!NostrSigner.getInstance().settings.pushServerMessage && NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
                     accountState?.toast(
                         title = NostrSigner.getInstance().getString(R.string.push_server),
                         message = NostrSigner.getInstance().getString(R.string.no_distributors_found),

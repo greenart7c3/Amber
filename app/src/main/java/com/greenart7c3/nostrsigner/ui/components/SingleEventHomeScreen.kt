@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
@@ -35,6 +36,7 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.bechToBytes
@@ -471,9 +473,24 @@ fun SingleEventHomeScreen(
                         )
                     },
                     {
+                        onLoading(true)
                         coroutineScope.launch(Dispatchers.IO) {
                             if (key == "null") {
                                 return@launch
+                            }
+
+                            val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
+                            val savedApplication = database.applicationDao().getByKey(key)
+                            val relays = if (savedApplication != null) {
+                                savedApplication.application.relays.ifEmpty { defaultRelays }
+                            } else {
+                                intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
+                            }
+                            if (intentData.bunkerRequest != null) {
+                                NostrSigner.getInstance().checkForNewRelays(
+                                    NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                    relays.toSet(),
+                                )
                             }
 
                             if (remember.value) {
@@ -488,8 +505,6 @@ fun SingleEventHomeScreen(
                                 )
                             }
 
-                            val savedApplication = database.applicationDao().getByKey(key)
-                            val relays = intentData.bunkerRequest?.relays ?: listOf()
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(
@@ -520,19 +535,19 @@ fun SingleEventHomeScreen(
                                     false,
                                 ),
                             )
-                        }
 
-                        if (intentData.bunkerRequest != null) {
-                            AmberUtils.sendBunkerError(
-                                account,
-                                intentData.bunkerRequest,
-                                applicationEntity?.application?.relays ?: emptyList(),
-                                context,
-                                onLoading,
-                            )
-                        } else {
-                            context.getAppCompatActivity()?.intent = null
-                            context.getAppCompatActivity()?.finish()
+                            if (intentData.bunkerRequest != null) {
+                                AmberUtils.sendBunkerError(
+                                    account,
+                                    intentData.bunkerRequest,
+                                    relays,
+                                    context,
+                                    onLoading,
+                                )
+                            } else {
+                                context.getAppCompatActivity()?.intent = null
+                                context.getAppCompatActivity()?.finish()
+                            }
                         }
                     },
                 )

@@ -24,12 +24,12 @@ roomKtx = "2.6.1"
 securityCryptoKtx = "1.1.0-alpha06"
 zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.0.0-alpha.14"
-kotlin = "2.0.0"
+kotlin = "2.0.10"
 workRuntimeKtx = "2.9.1"
 agp = "8.5.2"
 ktlint = "12.1.1"
 gms = "4.4.2"
-ksp = "2.0.0-1.0.22"
+ksp = "2.0.10-1.0.24"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }

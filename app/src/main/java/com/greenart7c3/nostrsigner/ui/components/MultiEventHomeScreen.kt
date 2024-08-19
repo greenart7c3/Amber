@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -98,7 +97,6 @@ fun SelectAllButton(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,
@@ -161,8 +159,14 @@ fun MultiEventHomeScreen(
                                     .padding(8.dp),
                                 Arrangement.SpaceBetween,
                             ) {
+                                val permission = Permission(it.first.toString().toLowerCase(Locale.current), null)
+                                val message = if (it.first == SignerType.CONNECT) {
+                                    stringResource(R.string.connect)
+                                } else {
+                                    permission.toLocalizedString(context)
+                                }
                                 Text(
-                                    text = Permission(it.first.toString().toLowerCase(Locale.current), null).toLocalizedString(context),
+                                    text = message,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )

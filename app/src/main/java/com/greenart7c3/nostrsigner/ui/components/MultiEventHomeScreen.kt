@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -97,6 +98,7 @@ fun SelectAllButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,
@@ -106,12 +108,14 @@ fun MultiEventHomeScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val grouped = intents.groupBy { it.type }.filter { it.key != SignerType.SIGN_EVENT }
+    val grouped2 = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
 
     Column(
         Modifier.fillMaxSize(),
     ) {
         var selectAll by remember {
-            mutableStateOf(false)
+            mutableStateOf(true)
         }
         SelectAllButton(
             checked = selectAll,
@@ -124,12 +128,115 @@ fun MultiEventHomeScreen(
         LazyColumn(
             Modifier.fillMaxHeight(0.9f),
         ) {
-            items(intents.size) {
-                ListItem(
-                    intents[it],
-                    packageName,
-                    intents,
-                )
+            grouped.toList().forEach {
+                item {
+                    var isExpanded by remember { mutableStateOf(false) }
+                    Card(
+                        Modifier
+                            .padding(4.dp)
+                            .clickable {
+                                isExpanded = !isExpanded
+                            },
+                    ) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.run {
+                                    if (isExpanded) {
+                                        KeyboardArrowDown
+                                    } else {
+                                        KeyboardArrowUp
+                                    }
+                                },
+                                contentDescription = "",
+                                tint = Color.LightGray,
+                            )
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    text = Permission(it.first.toString().toLowerCase(Locale.current), null).toLocalizedString(context),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                )
+                                Text(
+                                    text = it.second.size.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                )
+                            }
+                        }
+                    }
+                    if (isExpanded) {
+                        Column {
+                            it.second.forEach {
+                                ListItem(it, packageName, intents)
+                            }
+                        }
+                    }
+                }
+            }
+            grouped2.toList().forEach {
+                item {
+                    var isExpanded by remember { mutableStateOf(false) }
+                    Card(
+                        Modifier
+                            .padding(4.dp)
+                            .clickable {
+                                isExpanded = !isExpanded
+                            },
+                    ) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Default.run {
+                                    if (isExpanded) {
+                                        KeyboardArrowDown
+                                    } else {
+                                        KeyboardArrowUp
+                                    }
+                                },
+                                contentDescription = "",
+                                tint = Color.LightGray,
+                            )
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    text = Permission("sign_event", it.first).toLocalizedString(context),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                )
+                                Text(
+                                    text = it.second.size.toString(),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                )
+                            }
+                        }
+                    }
+                    if (isExpanded) {
+                        Column {
+                            it.second.forEach {
+                                ListItem(it, packageName, intents)
+                            }
+                        }
+                    }
+                }
             }
         }
         Row(

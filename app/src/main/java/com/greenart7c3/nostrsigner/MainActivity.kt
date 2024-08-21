@@ -165,17 +165,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         mainViewModel.showBunkerRequests(callingPackage)
-
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
-            connectivityManager.registerDefaultNetworkCallback(mainViewModel.networkCallback)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                mainViewModel.updateNetworkCapabilities(it)
+                NostrSigner.getInstance().updateNetworkCapabilities(it)
             }
         }
-
         super.onResume()
     }
 

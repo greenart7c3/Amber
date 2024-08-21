@@ -2,7 +2,9 @@ package com.greenart7c3.nostrsigner
 
 import android.app.Application
 import android.content.Intent
+import android.net.NetworkCapabilities
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -23,6 +25,38 @@ import kotlinx.coroutines.runBlocking
 class NostrSigner : Application() {
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
+
+    val isOnMobileDataState = mutableStateOf(false)
+    val isOnWifiDataState = mutableStateOf(false)
+
+    fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities): Boolean {
+        val isOnMobileData = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        val isOnWifi = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+
+        var changedNetwork = false
+
+        if (isOnMobileDataState.value != isOnMobileData) {
+            isOnMobileDataState.value = isOnMobileData
+
+            changedNetwork = true
+        }
+
+        if (isOnWifiDataState.value != isOnWifi) {
+            isOnWifiDataState.value = isOnWifi
+
+            changedNetwork = true
+        }
+
+        if (changedNetwork) {
+            if (isOnMobileData) {
+                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_MOBILE)
+            } else {
+                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_WIFI)
+            }
+        }
+
+        return changedNetwork
+    }
 
     override fun onCreate() {
         super.onCreate()

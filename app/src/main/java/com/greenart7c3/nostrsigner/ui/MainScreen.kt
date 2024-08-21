@@ -31,6 +31,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.QrCode
@@ -392,6 +393,61 @@ fun PermissionsFloatingActionButton(
             Column(
                 horizontalAlignment = Alignment.End,
             ) {
+                Row(
+                    Modifier
+                        .padding(end = 10.dp)
+                        .clickable {
+                            dialogOpen = true
+                            expanded = false
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    val clipboardManager = LocalClipboardManager.current
+                    RichTooltip {
+                        Text(stringResource(R.string.paste_from_clipboard))
+                    }
+                    Spacer(modifier = Modifier.size(4.dp))
+                    FloatingActionButton(
+                        onClick = {
+                            clipboardManager.getText()?.let {
+                                if (it.text.isBlank()) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.invalid_nostr_connect_uri),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@let
+                                }
+                                if (!it.text.startsWith("nostrconnect://")) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.invalid_nostr_connect_uri),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@let
+                                }
+
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.data = Uri.parse(it.text)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                context.getAppCompatActivity()?.startActivity(intent)
+                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+                            }
+                            expanded = false
+                        },
+                        modifier = Modifier.size(35.dp),
+                        shape = CircleShape,
+                    ) {
+                        Icon(
+                            Icons.Default.ContentPaste,
+                            contentDescription = stringResource(R.string.paste_from_clipboard),
+                            tint = Color.White,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
                 Row(
                     Modifier
                         .padding(end = 10.dp)

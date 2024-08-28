@@ -348,6 +348,6 @@
     <string name="sign_policy_fully">完全信任该应用</string>
     <string name="sign_policy_fully_explainer">自动签署每个请求</string>
     <string name="event_kind_10050">私信中继</string>
-    <string name="paste_from_clipboard">Paste from clipboard</string>
-    <string name="invalid_nostr_connect_uri">Invalid nostr connect URI</string>
+    <string name="paste_from_clipboard">从剪贴板粘贴</string>
+    <string name="invalid_nostr_connect_uri">无效的 Nostr 连接 URI</string>
 </resources>

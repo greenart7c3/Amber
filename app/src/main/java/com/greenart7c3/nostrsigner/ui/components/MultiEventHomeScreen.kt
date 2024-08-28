@@ -5,6 +5,7 @@ import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -108,6 +109,16 @@ fun MultiEventHomeScreen(
     val context = LocalContext.current
     val grouped = intents.groupBy { it.type }.filter { it.key != SignerType.SIGN_EVENT }
     val grouped2 = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
+    val rememberMyChoices = grouped.map {
+        remember {
+            mutableStateOf(false)
+        }
+    }
+    val rememberMyChoices2 = grouped2.map {
+        remember {
+            mutableStateOf(false)
+        }
+    }
 
     Column(
         Modifier.fillMaxSize(),
@@ -126,7 +137,7 @@ fun MultiEventHomeScreen(
         LazyColumn(
             Modifier.fillMaxHeight(0.9f),
         ) {
-            grouped.toList().forEach {
+            grouped.toList().forEachIndexed { index, it ->
                 item {
                     var isExpanded by remember { mutableStateOf(false) }
                     Card(
@@ -180,14 +191,33 @@ fun MultiEventHomeScreen(
                     }
                     if (isExpanded) {
                         Column {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                            ) {
+                                RememberMyChoice(
+                                    shouldRunAcceptOrReject = null,
+                                    rememberMyChoices[index].value,
+                                    null,
+                                    true,
+                                    { },
+                                    { },
+                                ) {
+                                    rememberMyChoices[index].value = !rememberMyChoices[index].value
+                                    it.second.forEach { item ->
+                                        item.rememberMyChoice.value = rememberMyChoices[index].value
+                                    }
+                                }
+                            }
                             it.second.forEach {
-                                ListItem(it, packageName, intents)
+                                ListItem(it, packageName)
                             }
                         }
                     }
                 }
             }
-            grouped2.toList().forEach {
+            grouped2.toList().forEachIndexed { index, it ->
                 item {
                     var isExpanded by remember { mutableStateOf(false) }
                     Card(
@@ -235,8 +265,27 @@ fun MultiEventHomeScreen(
                     }
                     if (isExpanded) {
                         Column {
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                            ) {
+                                RememberMyChoice(
+                                    shouldRunAcceptOrReject = null,
+                                    rememberMyChoices2[index].value,
+                                    null,
+                                    true,
+                                    { },
+                                    { },
+                                ) {
+                                    rememberMyChoices2[index].value = !rememberMyChoices2[index].value
+                                    it.second.forEach { item ->
+                                        item.rememberMyChoice.value = rememberMyChoices2[index].value
+                                    }
+                                }
+                            }
                             it.second.forEach {
-                                ListItem(it, packageName, intents)
+                                ListItem(it, packageName)
                             }
                         }
                     }
@@ -537,7 +586,6 @@ private suspend fun reconnectToRelays(intents: List<IntentData>) {
 fun ListItem(
     intentData: IntentData,
     packageName: String?,
-    intents: List<IntentData>,
 ) {
     var isExpanded by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -639,27 +687,13 @@ fun ListItem(
                     }
 
                 Text(
-                    content,
+                    content.take(100),
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                 )
-                RememberMyChoice(
-                    shouldRunAcceptOrReject = null,
-                    intentData.rememberMyChoice.value,
-                    appName,
-                    { },
-                    { },
-                ) {
-                    intentData.rememberMyChoice.value = !intentData.rememberMyChoice.value
-                    intents.filter { item ->
-                        intentData.type == item.type
-                    }.forEach { item ->
-                        item.rememberMyChoice.value = intentData.rememberMyChoice.value
-                    }
-                }
             }
         }
     }

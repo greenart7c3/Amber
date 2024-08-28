@@ -129,6 +129,7 @@ fun EncryptDecryptData(
             shouldRunOnAccept,
             remember.value,
             packageName,
+            false,
             onAccept,
             onReject,
         ) {

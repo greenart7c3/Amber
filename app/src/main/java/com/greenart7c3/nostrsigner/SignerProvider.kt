@@ -127,14 +127,18 @@ class SignerProvider : ContentProvider() {
                         )
                 if (permission == null) {
                     event.kind.kindToNip()?.let {
-                        permission =
+                        val nipNumber = it.toIntOrNull()
+                        permission = if (nipNumber == null) {
+                            null
+                        } else {
                             database
                                 .applicationDao()
                                 .getPermission(
                                     sortOrder ?: packageName,
                                     "NIP",
-                                    it.toInt(),
+                                    nipNumber,
                                 )
+                        }
                     }
                 }
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)

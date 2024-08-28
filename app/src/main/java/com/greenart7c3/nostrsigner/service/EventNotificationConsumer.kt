@@ -65,7 +65,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    suspend fun consume(event: GiftWrapEvent) {
+    fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
 
         // PushNotification Wraps don't include a receiver.
@@ -85,7 +85,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         pushWrappedEvent: GiftWrapEvent,
         account: Account,
     ) {
-        pushWrappedEvent.cachedGift(account.signer) { notificationEvent ->
+        pushWrappedEvent.unwrap(account.signer) { notificationEvent ->
             unwrapAndConsume(notificationEvent, account) { innerEvent ->
                 if (innerEvent.kind == 24133) {
                     notify(innerEvent, account)
@@ -101,10 +101,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     ) {
         when (event) {
             is GiftWrapEvent -> {
-                event.cachedGift(account.signer) { unwrapAndConsume(it, account, onReady) }
+                event.unwrap(account.signer) { unwrapAndConsume(it, account, onReady) }
             }
             is SealedGossipEvent -> {
-                event.cachedGossip(account.signer) {
+                event.unseal(account.signer) {
                     onReady(it)
                 }
             }

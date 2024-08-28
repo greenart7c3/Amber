@@ -20,12 +20,9 @@
  */
 package com.greenart7c3.nostrsigner.service
 
-import android.app.NotificationManager
 import android.content.Context
-import android.content.Intent
 import android.util.Log
 import android.util.LruCache
-import androidx.core.content.ContextCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -54,8 +51,8 @@ class PushMessageReceiver : MessagingReceiver() {
         message: ByteArray,
         instance: String,
     ) {
-        val messageStr = String(message)
-        Log.d(TAG, "New message ${message.decodeToString()} for Instance: $instance")
+        val messageStr = message.decodeToString()
+        Log.d(TAG, "New message $messageStr for Instance: $instance")
         scope.launch {
             try {
                 parseMessage(messageStr)?.let { receiveIfNew(it) }
@@ -98,16 +95,6 @@ class PushMessageReceiver : MessagingReceiver() {
         }
     }
 
-    override fun onReceive(
-        context: Context,
-        intent: Intent,
-    ) {
-        val intentData = intent.dataString
-        val intentAction = intent.action.toString()
-        Log.d(TAG, "Intent Data:- $intentData Intent Action: $intentAction")
-        super.onReceive(context, intent)
-    }
-
     override fun onRegistrationFailed(
         context: Context,
         instance: String,
@@ -139,10 +126,5 @@ class PushMessageReceiver : MessagingReceiver() {
         Log.d(TAG, "App is unregistered. ")
         pushHandler.forceRemoveDistributor(context)
         pushHandler.removeEndpoint()
-    }
-
-    fun notificationManager(): NotificationManager {
-        return ContextCompat.getSystemService(appContext, NotificationManager::class.java)
-            as NotificationManager
     }
 }

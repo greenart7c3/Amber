@@ -820,6 +820,30 @@ object IntentUtils {
                 if (paramName == "name") {
                     name = json
                 }
+
+                if (paramName == "perms") {
+                    if (json.isNotEmpty()) {
+                        val splitPerms = json.split(",")
+                        splitPerms.forEach {
+                            val split2 = it.split(":")
+                            val permissionType = split2.first()
+                            val kind =
+                                try {
+                                    split2[1].toInt()
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                            permissions.add(
+                                Permission(
+                                    permissionType,
+                                    kind,
+                                ),
+                            )
+                        }
+                    }
+                }
+
                 if (paramName == "metadata") {
                     val bunkerMetada = metaDataFromJson(json)
                     name = bunkerMetada.name
@@ -859,7 +883,7 @@ object IntentUtils {
                     null,
                     CompressionType.NONE,
                     ReturnType.EVENT,
-                    listOf(),
+                    permissions,
                     "",
                     mutableStateOf(true),
                     mutableStateOf(false),

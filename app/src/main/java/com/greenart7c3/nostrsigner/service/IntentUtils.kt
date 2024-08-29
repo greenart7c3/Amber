@@ -805,16 +805,20 @@ object IntentUtils {
             val splitParsedData = parsedData.split("&")
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
-                if (internalSplit.first() == "relay") {
+                val paramName = internalSplit.first()
+                val json = internalSplit.mapIndexedNotNull { index, s ->
+                    if (index == 0) null else s
+                }.joinToString { data -> data }
+                if (paramName == "relay") {
                     relays.add(
-                        RelaySetupInfo(internalSplit[1], read = true, write = true, feedTypes = COMMON_FEED_TYPES),
+                        RelaySetupInfo(json, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
                     )
                 }
-                if (internalSplit.first() == "name") {
-                    name = internalSplit[1]
+                if (paramName == "name") {
+                    name = json
                 }
-                if (internalSplit.first() == "metadata") {
-                    val bunkerMetada = metaDataFromJson(internalSplit[1])
+                if (paramName == "metadata") {
+                    val bunkerMetada = metaDataFromJson(json)
                     name = bunkerMetada.name
                 }
             }

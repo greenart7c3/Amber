@@ -55,6 +55,7 @@ data class BunkerMetadata(
     val name: String,
     val url: String,
     val description: String,
+    val perms: String,
 ) {
     companion object {
         val mapper: ObjectMapper =
@@ -70,6 +71,7 @@ data class BunkerMetadata(
                 name = jsonObject.get("name")?.asText()?.intern() ?: "",
                 url = jsonObject.get("url")?.asText()?.intern() ?: "",
                 description = jsonObject.get("description")?.asText()?.intern() ?: "",
+                perms = jsonObject.get("perms")?.asText()?.intern() ?: "",
             )
         }
 
@@ -803,6 +805,7 @@ object IntentUtils {
             val pubKey = split.first()
             val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
             val splitParsedData = parsedData.split("&")
+            val permissions = mutableListOf<Permission>()
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
                 val paramName = internalSplit.first()
@@ -820,8 +823,31 @@ object IntentUtils {
                 if (paramName == "metadata") {
                     val bunkerMetada = metaDataFromJson(json)
                     name = bunkerMetada.name
+                    if (bunkerMetada.perms.isNotEmpty()) {
+                        val splitPerms = bunkerMetada.perms.split(",")
+                        splitPerms.forEach {
+                            val split2 = it.split(":")
+                            val permissionType = split2.first()
+                            val kind =
+                                try {
+                                    split2[1].toInt()
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                            permissions.add(
+                                Permission(
+                                    permissionType,
+                                    kind,
+                                ),
+                            )
+                        }
+                    }
                 }
             }
+
+            permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
+            permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
             onReady(
                 IntentData(

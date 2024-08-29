@@ -139,12 +139,14 @@ fun MultiEventHomeScreen(
         ) {
             grouped.toList().forEachIndexed { index, it ->
                 item {
-                    var isExpanded by remember { mutableStateOf(false) }
                     Card(
                         Modifier
                             .padding(4.dp)
                             .clickable {
-                                isExpanded = !isExpanded
+                                rememberMyChoices[index].value = !rememberMyChoices[index].value
+                                it.second.forEach { item ->
+                                    item.rememberMyChoice.value = rememberMyChoices[index].value
+                                }
                             },
                     ) {
                         Row(
@@ -153,17 +155,6 @@ fun MultiEventHomeScreen(
                                 .padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(
-                                Icons.Default.run {
-                                    if (isExpanded) {
-                                        KeyboardArrowDown
-                                    } else {
-                                        KeyboardArrowUp
-                                    }
-                                },
-                                contentDescription = "",
-                                tint = Color.LightGray,
-                            )
                             Row(
                                 Modifier
                                     .fillMaxWidth()
@@ -188,30 +179,23 @@ fun MultiEventHomeScreen(
                                 )
                             }
                         }
-                    }
-                    if (isExpanded) {
-                        Column {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp),
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp),
+                        ) {
+                            RememberMyChoice(
+                                shouldRunAcceptOrReject = null,
+                                rememberMyChoices[index].value,
+                                null,
+                                true,
+                                { },
+                                { },
                             ) {
-                                RememberMyChoice(
-                                    shouldRunAcceptOrReject = null,
-                                    rememberMyChoices[index].value,
-                                    null,
-                                    true,
-                                    { },
-                                    { },
-                                ) {
-                                    rememberMyChoices[index].value = !rememberMyChoices[index].value
-                                    it.second.forEach { item ->
-                                        item.rememberMyChoice.value = rememberMyChoices[index].value
-                                    }
+                                rememberMyChoices[index].value = !rememberMyChoices[index].value
+                                it.second.forEach { item ->
+                                    item.rememberMyChoice.value = rememberMyChoices[index].value
                                 }
-                            }
-                            it.second.forEach {
-                                ListItem(it, packageName)
                             }
                         }
                     }
@@ -219,12 +203,14 @@ fun MultiEventHomeScreen(
             }
             grouped2.toList().forEachIndexed { index, it ->
                 item {
-                    var isExpanded by remember { mutableStateOf(false) }
                     Card(
                         Modifier
                             .padding(4.dp)
                             .clickable {
-                                isExpanded = !isExpanded
+                                rememberMyChoices2[index].value = !rememberMyChoices2[index].value
+                                it.second.forEach { item ->
+                                    item.rememberMyChoice.value = rememberMyChoices2[index].value
+                                }
                             },
                     ) {
                         Row(
@@ -233,17 +219,6 @@ fun MultiEventHomeScreen(
                                 .padding(8.dp),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Icon(
-                                Icons.Default.run {
-                                    if (isExpanded) {
-                                        KeyboardArrowDown
-                                    } else {
-                                        KeyboardArrowUp
-                                    }
-                                },
-                                contentDescription = "",
-                                tint = Color.LightGray,
-                            )
                             Row(
                                 Modifier
                                     .fillMaxWidth()
@@ -262,30 +237,23 @@ fun MultiEventHomeScreen(
                                 )
                             }
                         }
-                    }
-                    if (isExpanded) {
-                        Column {
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp),
+                        Box(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 10.dp),
+                        ) {
+                            RememberMyChoice(
+                                shouldRunAcceptOrReject = null,
+                                rememberMyChoices2[index].value,
+                                null,
+                                true,
+                                { },
+                                { },
                             ) {
-                                RememberMyChoice(
-                                    shouldRunAcceptOrReject = null,
-                                    rememberMyChoices2[index].value,
-                                    null,
-                                    true,
-                                    { },
-                                    { },
-                                ) {
-                                    rememberMyChoices2[index].value = !rememberMyChoices2[index].value
-                                    it.second.forEach { item ->
-                                        item.rememberMyChoice.value = rememberMyChoices2[index].value
-                                    }
+                                rememberMyChoices2[index].value = !rememberMyChoices2[index].value
+                                it.second.forEach { item ->
+                                    item.rememberMyChoice.value = rememberMyChoices2[index].value
                                 }
-                            }
-                            it.second.forEach {
-                                ListItem(it, packageName)
                             }
                         }
                     }

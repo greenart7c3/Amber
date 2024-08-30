@@ -23,7 +23,9 @@ package com.greenart7c3.nostrsigner.service
 import android.util.Log
 import com.google.firebase.messaging.FirebaseMessaging
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.tasks.await
@@ -34,7 +36,7 @@ object PushNotificationUtils {
 
     suspend fun init(accounts: List<AccountInfo>) =
         with(Dispatchers.IO) {
-            if (hasInit) {
+            if (hasInit || NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
                 return@with
             }
             // get user notification token provided by firebase

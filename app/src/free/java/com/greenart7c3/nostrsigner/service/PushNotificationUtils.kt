@@ -44,7 +44,7 @@ object PushNotificationUtils {
 
     @OptIn(DelicateCoroutinesApi::class)
     suspend fun init(accounts: List<AccountInfo>) {
-        if (hasInit) {
+        if (hasInit || NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
             return
         }
 

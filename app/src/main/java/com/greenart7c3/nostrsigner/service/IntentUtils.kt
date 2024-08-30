@@ -20,6 +20,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
@@ -892,7 +893,7 @@ object IntentUtils {
                         "connect",
                         arrayOf(pubKey),
                         pubKey,
-                        relays,
+                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         "",
                         account.keyPair.pubKey.toNpub(),
                         EncryptionType.NIP04,
@@ -904,6 +905,15 @@ object IntentUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
+            NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                LogEntity(
+                    0,
+                    "nostrconnect",
+                    "nostrconnect",
+                    e.message ?: "",
+                    System.currentTimeMillis(),
+                ),
+            )
             onReady(null)
         }
     }

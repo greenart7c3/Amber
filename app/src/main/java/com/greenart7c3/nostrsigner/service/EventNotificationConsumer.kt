@@ -189,7 +189,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 permission.application.relays,
                 onLoading = {},
                 onDone = {},
-                checkForEmptyRelays = false,
             )
             return
         }
@@ -221,10 +220,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc,
                         bunkerRequest,
                         BunkerResponse(bunkerRequest.id, "", message),
-                        applicationWithSecret?.application?.relays ?: listOf(),
+                        applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList(),
                         onLoading = { },
                         onDone = { },
-                        checkForEmptyRelays = false,
                     )
                     return
                 }
@@ -263,7 +261,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (type == SignerType.CONNECT) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
-        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
+        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList()
 
         if (permission == null && applicationWithSecret == null && !acc.allowNewConnections) {
             IntentUtils.sendBunkerResponse(
@@ -271,10 +269,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 acc,
                 bunkerRequest,
                 BunkerResponse(bunkerRequest.id, "", "no permission"),
-                listOf(),
+                relays,
                 onLoading = { },
                 onDone = {},
-                checkForEmptyRelays = false,
             )
             return
         }
@@ -302,7 +299,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             relays,
                             onLoading = { },
                             onDone = { },
-                            checkForEmptyRelays = false,
                         )
                     } else {
                         val index = localCursor.getColumnIndex("event")
@@ -316,7 +312,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             relays,
                             onLoading = { },
                             onDone = { },
-                            checkForEmptyRelays = false,
                         )
                     }
                 } else {

@@ -316,14 +316,7 @@ object IntentUtils {
         relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
-        checkForEmptyRelays: Boolean = true,
     ) {
-        if (relays.isEmpty() && checkForEmptyRelays) {
-            onLoading(false)
-            AmberListenerSingleton.accountStateViewModel?.toast("Relays", "No relays found")
-            return
-        }
-
         AmberListenerSingleton.getListener()?.let {
             Client.unsubscribe(it)
         }
@@ -345,9 +338,7 @@ object IntentUtils {
                         account,
                         bunkerRequest.localKey,
                         encryptedContent,
-                        relays,
-                        checkForEmptyRelays,
-                        context,
+                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         onLoading,
                         onDone,
                     )
@@ -362,9 +353,7 @@ object IntentUtils {
                         account,
                         bunkerRequest.localKey,
                         encryptedContent,
-                        relays,
-                        checkForEmptyRelays,
-                        context,
+                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         onLoading,
                         onDone,
                     )
@@ -379,8 +368,6 @@ object IntentUtils {
         localKey: String,
         encryptedContent: String,
         relays: List<RelaySetupInfo>,
-        checkForEmptyRelays: Boolean,
-        context: Context,
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
     ) {
@@ -391,7 +378,7 @@ object IntentUtils {
             encryptedContent,
         ) {
             GlobalScope.launch(Dispatchers.IO) {
-                if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
+                if (RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
                         NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
                         newRelays = relays.toSet(),

@@ -100,6 +100,9 @@ class NostrSigner : Application() {
                 }
             }
         }
+        if (savedRelays.isEmpty()) {
+            savedRelays.addAll(settings.defaultRelays)
+        }
         return savedRelays
     }
 

@@ -350,4 +350,11 @@
     <string name="event_kind_10050">私信中继</string>
     <string name="paste_from_clipboard">从剪贴板粘贴</string>
     <string name="invalid_nostr_connect_uri">无效的 Nostr 连接 URI</string>
+    <string name="event_kind_1986">Relay reviews</string>
+    <string name="event_kind_1987">AI Embeddings / Vector lists</string>
+    <string name="event_kind_9467">Tidal login</string>
+    <string name="event_kind_10063">User server list</string>
+    <string name="event_kind_24242">Blobs stored on mediaservers</string>
+    <string name="event_kind_30040">Modular Article Header</string>
+    <string name="event_kind_30041">Modular Article Content</string>
 </resources>

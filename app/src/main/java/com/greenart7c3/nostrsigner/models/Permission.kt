@@ -8,6 +8,7 @@ data class Permission(
     val kind: Int?,
     var checked: Boolean = true,
 ) {
+    // LAST_COMMIT_CHECKED = "14ec14dac92d891715239bfb83ed1c9bdf2ac382"
     fun toLocalizedString(context: Context): String {
         return when (type) {
             "get_public_key" -> context.getString(R.string.read_your_public_key)
@@ -56,6 +57,8 @@ data class Permission(
                     1971 -> context.getString(R.string.event_kind_1971)
                     1984 -> context.getString(R.string.event_kind_1984)
                     1985 -> context.getString(R.string.event_kind_1985)
+                    1986 -> context.getString(R.string.event_kind_1986)
+                    1987 -> context.getString(R.string.event_kind_1987)
                     4550 -> context.getString(R.string.event_kind_4550)
                     in 5000..5999 -> context.getString(R.string.event_kind_5000_5999)
                     in 6000..6999 -> context.getString(R.string.event_kind_6000_6999)
@@ -71,6 +74,7 @@ data class Permission(
                     9021 -> context.getString(R.string.event_kind_9021)
                     in 9008..9030 -> context.getString(R.string.event_kind_9000_9030)
                     9041 -> context.getString(R.string.event_kind_9041)
+                    9467 -> context.getString(R.string.event_kind_9467)
                     9734 -> context.getString(R.string.event_kind_9734)
                     9735 -> context.getString(R.string.event_kind_9735)
                     9802 -> context.getString(R.string.event_kind_9802)
@@ -87,6 +91,7 @@ data class Permission(
                     10015 -> context.getString(R.string.event_kind_10015)
                     10030 -> context.getString(R.string.event_kind_10030)
                     10050 -> context.getString(R.string.event_kind_10050)
+                    10063 -> context.getString(R.string.event_kind_10063)
                     10096 -> context.getString(R.string.event_kind_10096)
                     13194 -> context.getString(R.string.event_kind_13194)
                     21000 -> context.getString(R.string.event_kind_21000)
@@ -94,6 +99,7 @@ data class Permission(
                     23194 -> context.getString(R.string.event_kind_23194)
                     23195 -> context.getString(R.string.event_kind_23195)
                     24133 -> context.getString(R.string.event_kind_24133)
+                    24242 -> context.getString(R.string.event_kind_24242)
                     27235 -> context.getString(R.string.event_kind_27235)
                     30000 -> context.getString(R.string.event_kind_30000)
                     30001 -> context.getString(R.string.event_kind_30001)
@@ -110,6 +116,8 @@ data class Permission(
                     30023 -> context.getString(R.string.event_kind_30023)
                     30024 -> context.getString(R.string.event_kind_30024)
                     30030 -> context.getString(R.string.event_kind_30030)
+                    30040 -> context.getString(R.string.event_kind_30040)
+                    30041 -> context.getString(R.string.event_kind_30041)
                     30063 -> context.getString(R.string.event_kind_30063)
                     30078 -> context.getString(R.string.event_kind_30078)
                     30311 -> context.getString(R.string.event_kind_30311)
@@ -295,11 +303,16 @@ val kindsByNip = listOf(
     KindNip(30402..30403, "99"),
     KindNip(30617..30617, "34"),
     KindNip(30818..30819, "54"),
-    KindNip(31890..31890, "https://wikifreedia.xyz/cip-01/97c70a44366a6535c1"),
+    KindNip(31890..31890, "https://wikifreedia.xyz/cip-01"),
     KindNip(31922..31925, "52"),
     KindNip(31989..31990, "89"),
     KindNip(34235..34237, "71"),
     KindNip(34550..34550, "72"),
     KindNip(39000..39009, "29"),
     KindNip(31234..31234, "https://github.com/nostr-protocol/nips/pull/1124"),
+    KindNip(9467..9467, "https://wikistr.com/tidal-nostr"),
+    KindNip(24242..24242, "https://wikistr.com/blossom"),
+    KindNip(10063..10063, "https://wikistr.com/blossom"),
+    KindNip(30040..30041, "https://wikistr.com/nkbip-01"),
+    KindNip(1987..1987, "https://wikistr.com/nkbip-02"),
 )

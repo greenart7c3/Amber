@@ -132,9 +132,9 @@ fun MainPage(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Row(
+            Column(
                 modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
                 ElevatedButton(
                     onClick = {

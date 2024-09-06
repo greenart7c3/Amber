@@ -66,6 +66,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -76,7 +77,6 @@ import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
-import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.EditDefaultRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
@@ -86,6 +86,7 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.IOException
@@ -158,8 +159,8 @@ fun SettingsScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
+    navController: NavController,
 ) {
-    var backupDialogOpen by remember { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var checked by remember { mutableStateOf(account.useProxy) }
@@ -643,7 +644,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Key,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    backupDialogOpen = true
+                    navController.navigate(Route.AccountBackup.route)
                 },
             )
         }
@@ -831,10 +832,6 @@ fun SettingsScreen(
                 }
             },
         )
-    }
-
-    if (backupDialogOpen) {
-        AccountBackupDialog(account, onClose = { backupDialogOpen = false })
     }
 }
 

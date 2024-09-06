@@ -46,4 +46,11 @@ sealed class Route(
         icon = Icons.AutoMirrored.Outlined.ViewList,
         selectedIcon = Icons.AutoMirrored.Default.ViewList,
     )
+
+    data object AccountBackup : Route(
+        title = "",
+        route = "AccountBackup",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }

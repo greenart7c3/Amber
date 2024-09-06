@@ -22,7 +22,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.List
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -86,9 +85,9 @@ import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
-fun AccountBackupDialog(
+fun AccountBackupScreen(
+    modifier: Modifier,
     account: Account,
-    onClose: () -> Unit,
 ) {
     var showSeedWords by remember { mutableStateOf(false) }
     if (showSeedWords) {
@@ -122,189 +121,173 @@ fun AccountBackupDialog(
         }
     }
 
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+    Surface(
+        modifier =
+        modifier
+            .fillMaxSize(),
     ) {
-        Surface(
+        Column(
             modifier =
             Modifier
+                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize(),
         ) {
             Column(
                 modifier =
                 Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize(),
+                    .padding(horizontal = 30.dp)
+                    .verticalScroll(rememberScrollState()),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Row(
-                    modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
+                val content = stringResource(R.string.account_backup_tips_md)
+
+                val astNode =
+                    remember {
+                        CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content)
+                    }
+
+                RichText(
+                    style = RichTextStyle().resolveDefaults(),
                 ) {
-                    CloseButton(onCancel = onClose)
+                    BasicMarkdown(astNode)
                 }
 
-                Column(
-                    modifier =
-                    Modifier
-                        .padding(horizontal = 30.dp)
-                        .verticalScroll(rememberScrollState()),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    val content = stringResource(R.string.account_backup_tips_md)
+                Spacer(modifier = Modifier.height(30.dp))
 
-                    val astNode =
-                        remember {
-                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content)
+                if (account.seedWords.isNotEmpty()) {
+                    val keyguardLauncher =
+                        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                            if (result.resultCode == Activity.RESULT_OK) {
+                                showSeedWords = true
+                            }
                         }
+                    val context = LocalContext.current
 
-                    RichText(
-                        style = RichTextStyle().resolveDefaults(),
-                    ) {
-                        BasicMarkdown(astNode)
-                    }
-
-                    Spacer(modifier = Modifier.height(30.dp))
-
-                    if (account.seedWords.isNotEmpty()) {
-                        val keyguardLauncher =
-                            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-                                if (result.resultCode == Activity.RESULT_OK) {
+                    Button(
+                        onClick = {
+                            authenticate(
+                                title = context.getString(R.string.show_seed_words),
+                                context = context,
+                                keyguardLauncher = keyguardLauncher,
+                                onApproved = {
                                     showSeedWords = true
-                                }
-                            }
-                        val context = LocalContext.current
-
-                        Button(
-                            onClick = {
-                                authenticate(
-                                    title = context.getString(R.string.show_seed_words),
-                                    context = context,
-                                    keyguardLauncher = keyguardLauncher,
-                                    onApproved = {
-                                        showSeedWords = true
-                                    },
-                                    onError = { _, message ->
-                                        Toast.makeText(
-                                            context,
-                                            message,
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                    },
-                                )
-                            },
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                            ) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.List,
-                                    contentDescription = stringResource(R.string.show_seed_words),
-                                )
-                                Text(text = stringResource(R.string.show_seed_words))
-                            }
-                        }
-                    }
-                    NSecCopyButton(account)
-                    NSecQrButton(account)
-
-                    Spacer(modifier = Modifier.height(30.dp))
-
-                    val content1 = stringResource(R.string.account_backup_tips3_md)
-
-                    val astNode1 =
-                        remember {
-                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                        }
-
-                    RichText(
-                        style = RichTextStyle().resolveDefaults(),
-                    ) {
-                        BasicMarkdown(astNode1)
-                    }
-
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    val password = remember { mutableStateOf(TextFieldValue("")) }
-                    var errorMessage by remember { mutableStateOf("") }
-                    var showCharsPassword by remember { mutableStateOf(false) }
-
-                    val autofillNode =
-                        AutofillNode(
-                            autofillTypes = listOf(AutofillType.Password),
-                            onFill = { password.value = TextFieldValue(it) },
-                        )
-                    val autofill = LocalAutofill.current
-                    LocalAutofillTree.current += autofillNode
-
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .onGloballyPositioned { coordinates ->
-                                autofillNode.boundingBox = coordinates.boundsInWindow()
-                            }
-                            .onFocusChanged { focusState ->
-                                autofill?.run {
-                                    if (focusState.isFocused) {
-                                        requestAutofillForNode(autofillNode)
-                                    } else {
-                                        cancelAutofillForNode(autofillNode)
-                                    }
-                                }
-                            },
-                        value = password.value,
-                        onValueChange = {
-                            password.value = it
-                            if (errorMessage.isNotEmpty()) {
-                                errorMessage = ""
-                            }
-                        },
-                        keyboardOptions = KeyboardOptions(
-                            autoCorrect = false,
-                            keyboardType = KeyboardType.Password,
-                            imeAction = ImeAction.Go,
-                        ),
-                        placeholder = {
-                            Text(
-                                text = stringResource(R.string.ncryptsec_password),
+                                },
+                                onError = { _, message ->
+                                    Toast.makeText(
+                                        context,
+                                        message,
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                },
                             )
                         },
-                        trailingIcon = {
-                            Row {
-                                IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
-                                    Icon(
-                                        imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                        contentDescription = if (showCharsPassword) {
-                                            stringResource(R.string.show_password)
-                                        } else {
-                                            stringResource(
-                                                R.string.hide_password,
-                                            )
-                                        },
-                                    )
+                    ) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Filled.List,
+                                contentDescription = stringResource(R.string.show_seed_words),
+                            )
+                            Text(text = stringResource(R.string.show_seed_words))
+                        }
+                    }
+                }
+                NSecCopyButton(account)
+                NSecQrButton(account)
+
+                Spacer(modifier = Modifier.height(30.dp))
+
+                val content1 = stringResource(R.string.account_backup_tips3_md)
+
+                val astNode1 =
+                    remember {
+                        CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                    }
+
+                RichText(
+                    style = RichTextStyle().resolveDefaults(),
+                ) {
+                    BasicMarkdown(astNode1)
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                val password = remember { mutableStateOf(TextFieldValue("")) }
+                var errorMessage by remember { mutableStateOf("") }
+                var showCharsPassword by remember { mutableStateOf(false) }
+
+                val autofillNode =
+                    AutofillNode(
+                        autofillTypes = listOf(AutofillType.Password),
+                        onFill = { password.value = TextFieldValue(it) },
+                    )
+                val autofill = LocalAutofill.current
+                LocalAutofillTree.current += autofillNode
+
+                OutlinedTextField(
+                    modifier = Modifier
+                        .onGloballyPositioned { coordinates ->
+                            autofillNode.boundingBox = coordinates.boundsInWindow()
+                        }
+                        .onFocusChanged { focusState ->
+                            autofill?.run {
+                                if (focusState.isFocused) {
+                                    requestAutofillForNode(autofillNode)
+                                } else {
+                                    cancelAutofillForNode(autofillNode)
                                 }
                             }
                         },
-                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                    )
-
-                    if (errorMessage.isNotBlank()) {
+                    value = password.value,
+                    onValueChange = {
+                        password.value = it
+                        if (errorMessage.isNotEmpty()) {
+                            errorMessage = ""
+                        }
+                    },
+                    keyboardOptions = KeyboardOptions(
+                        autoCorrect = false,
+                        keyboardType = KeyboardType.Password,
+                        imeAction = ImeAction.Go,
+                    ),
+                    placeholder = {
                         Text(
-                            text = errorMessage,
-                            color = MaterialTheme.colorScheme.error,
-                            style = MaterialTheme.typography.bodySmall,
+                            text = stringResource(R.string.ncryptsec_password),
                         )
-                    }
+                    },
+                    trailingIcon = {
+                        Row {
+                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                Icon(
+                                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    contentDescription = if (showCharsPassword) {
+                                        stringResource(R.string.show_password)
+                                    } else {
+                                        stringResource(
+                                            R.string.hide_password,
+                                        )
+                                    },
+                                )
+                            }
+                        }
+                    },
+                    visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                )
 
-                    Spacer(modifier = Modifier.height(10.dp))
-
-                    EncryptNSecCopyButton(account, password)
-                    EncryptNSecQRButton(account, password)
+                if (errorMessage.isNotBlank()) {
+                    Text(
+                        text = errorMessage,
+                        color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.bodySmall,
+                    )
                 }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                EncryptNSecCopyButton(account, password)
+                EncryptNSecQRButton(account, password)
             }
         }
     }

@@ -1,21 +1,16 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Draw
@@ -28,14 +23,10 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,28 +42,21 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
-import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -89,193 +73,8 @@ fun SettingsScreen(
     var conectOrbotDialogOpen by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
-    var signatureDialog by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-
-    val biometricItems =
-        persistentListOf(
-            TitleExplainer(stringResource(BiometricsTimeType.EVERY_TIME.resourceId)),
-            TitleExplainer(stringResource(BiometricsTimeType.ONE_MINUTE.resourceId)),
-            TitleExplainer(stringResource(BiometricsTimeType.FIVE_MINUTES.resourceId)),
-            TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
-        )
-
-    var securityDialog by remember { mutableStateOf(false) }
-
-    if (signatureDialog) {
-        val radioOptions = listOf(
-            TitleExplainer(
-                title = stringResource(R.string.sign_policy_basic),
-                explainer = stringResource(R.string.sign_policy_basic_explainer),
-            ),
-            TitleExplainer(
-                title = stringResource(R.string.sign_policy_manual),
-                explainer = stringResource(R.string.sign_policy_manual_explainer),
-            ),
-        )
-        var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
-
-        Dialog(
-            onDismissRequest = {
-                signatureDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            signatureDialog = false
-                        }
-
-                        PostButton(isActive = true) {
-                            signatureDialog = false
-                            scope.launch(Dispatchers.IO) {
-                                account.signPolicy = selectedOption
-                                LocalPreferences.saveToEncryptedStorage(context, account)
-                            }
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        Arrangement.Center,
-                        Alignment.CenterHorizontally,
-                    ) {
-                        radioOptions.forEachIndexed { index, option ->
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                        selected = selectedOption == index,
-                                        onClick = {
-                                            selectedOption = index
-                                        },
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = if (selectedOption == index) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            Color.Transparent
-                                        },
-                                        shape = RoundedCornerShape(8.dp),
-                                    )
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                RadioButton(
-                                    selected = selectedOption == index,
-                                    onClick = {
-                                        selectedOption = index
-                                    },
-                                )
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    Text(
-                                        text = option.title,
-                                        modifier = Modifier.padding(start = 16.dp),
-                                        style = MaterialTheme.typography.titleLarge,
-                                    )
-                                    option.explainer?.let {
-                                        Text(
-                                            text = it,
-                                            modifier = Modifier.padding(start = 16.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (securityDialog) {
-        var biometricsIndex by remember {
-            mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
-        }
-
-        Dialog(
-            onDismissRequest = {
-                securityDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            var enableBiometrics by remember { mutableStateOf(NostrSigner.getInstance().settings.useAuth) }
-
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            securityDialog = false
-                        }
-                        PostButton(isActive = true) {
-                            securityDialog = false
-                            scope.launch(Dispatchers.IO) {
-                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                    useAuth = enableBiometrics,
-                                    biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
-                                )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                            }
-                        }
-                    }
-
-                    Column {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .clickable {
-                                    enableBiometrics = !enableBiometrics
-                                },
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.enable_biometrics),
-                            )
-                            Switch(
-                                checked = enableBiometrics,
-                                onCheckedChange = {
-                                    enableBiometrics = !enableBiometrics
-                                },
-                            )
-                        }
-                        Box(
-                            Modifier
-                                .padding(8.dp),
-                        ) {
-                            SettingsRow(
-                                R.string.when_to_ask,
-                                R.string.when_to_ask,
-                                biometricItems,
-                                biometricsIndex,
-                            ) {
-                                biometricsIndex = it
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     if (logoutDialog) {
         LogoutDialog(
@@ -303,7 +102,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Security,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        securityDialog = true
+                        navController.navigate(Route.Security.route)
                     },
                 )
             }
@@ -432,7 +231,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Draw,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    signatureDialog = true
+                    navController.navigate(Route.SignPolicy.route)
                 },
             )
         }

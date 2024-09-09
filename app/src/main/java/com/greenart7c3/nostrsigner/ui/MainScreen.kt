@@ -843,5 +843,40 @@ fun MainScreen(
                 }
             },
         )
+
+        composable(
+            Route.SignPolicy.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    SignPolicySettingsScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                        navController = navController,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.Security.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    SecurityScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        navController = navController,
+                    )
+                }
+            },
+        )
     }
 }

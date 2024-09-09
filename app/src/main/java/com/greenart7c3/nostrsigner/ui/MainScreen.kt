@@ -87,6 +87,8 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
+import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
+import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.components.BackButtonScaffold
 import com.greenart7c3.nostrsigner.ui.components.MainScaffold
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -753,6 +755,90 @@ fun MainScreen(
                         selectedPackage = it.arguments?.getString("packageName")!!,
                         navController = navController,
                         database = database,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.Logs.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    LogsScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.ActiveRelays.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    ActiveRelaysScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.Language.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    LanguageScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.NotificationType.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    NotificationTypeScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        navController = navController,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.DefaultRelays.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    DefaultRelaysScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        navController = navController,
                     )
                 }
             },

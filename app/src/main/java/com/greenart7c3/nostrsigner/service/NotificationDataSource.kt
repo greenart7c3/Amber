@@ -20,12 +20,12 @@
  */
 package com.greenart7c3.nostrsigner.service
 
-import android.util.Log
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.NostrDataSource
@@ -36,9 +36,14 @@ import com.vitorpamplona.ammolite.relays.filters.EOSETime
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 object NotificationDataSource : NostrDataSource("AccountData") {
     private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.getInstance())
+    private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val clientListener =
         object : Client.Listener {
@@ -136,8 +141,19 @@ object NotificationDataSource : NostrDataSource("AccountData") {
         }
 
     init {
-        Log.d(this.javaClass.simpleName, "${this.javaClass.simpleName} Subscribe")
-        Client.subscribe(clientListener)
+        scope.launch {
+            LocalPreferences.loadSettingsFromEncryptedStorage()
+            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                Client.subscribe(clientListener)
+            }
+        }
+    }
+
+    override fun start() {
+        if (!Client.isSubscribed(clientListener)) {
+            Client.subscribe(clientListener)
+        }
+        super.start()
     }
 
     override fun stop() {

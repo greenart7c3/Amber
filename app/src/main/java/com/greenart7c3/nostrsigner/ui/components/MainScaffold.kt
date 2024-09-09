@@ -46,7 +46,6 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.PermissionsFloatingActionButton
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
-import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysDialog
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -135,16 +134,6 @@ fun MainScaffold(
                 actions = {
                     @Suppress("KotlinConstantConditions")
                     if (BuildConfig.FLAVOR != "offline") {
-                        var showDialogRelay by remember { mutableStateOf(false) }
-
-                        if (showDialogRelay) {
-                            ActiveRelaysDialog(
-                                onClose = {
-                                    showDialogRelay = false
-                                },
-                            )
-                        }
-
                         Box(
                             modifier = Modifier
                                 .minimumInteractiveComponentSize()
@@ -153,7 +142,7 @@ fun MainScaffold(
                                     interactionSource = interactionSource,
                                     indication = null,
                                 ) {
-                                    showDialogRelay = true
+                                    navController.navigate(Route.ActiveRelays.route)
                                 },
                             contentAlignment = Alignment.Center,
                         ) {

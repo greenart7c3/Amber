@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
@@ -49,6 +50,7 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
@@ -61,6 +63,7 @@ import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.merge
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
@@ -239,10 +242,11 @@ fun EditRelaysDialog(
 }
 
 @Composable
-fun EditDefaultRelaysDialog(
-    onClose: () -> Unit,
-    onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
+fun DefaultRelaysScreen(
+    modifier: Modifier,
+    navController: NavController,
 ) {
+    val scope = rememberCoroutineScope()
     var textFieldRelay by remember {
         mutableStateOf(TextFieldValue(""))
     }
@@ -256,126 +260,38 @@ fun EditDefaultRelaysDialog(
             }
             localRelays
         }
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+
+    Surface(
+        modifier = modifier
+            .fillMaxSize(),
     ) {
-        Surface(
+        Column(
             modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize(),
         ) {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize(),
+            Row(
+                Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
+                OutlinedTextField(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CloseButton {
-                        onClose()
-                    }
-                    PostButton(
-                        isActive = relays2.isNotEmpty(),
-                        onPost = {
-                            onPost(relays2)
-                        },
-                    )
-                }
-                LazyColumn(
-                    Modifier
-                        .fillMaxWidth(),
-                ) {
-                    items(relays2.size) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                relays2[it].url,
-                                Modifier
-                                    .weight(0.9f)
-                                    .padding(8.dp),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            IconButton(
-                                onClick = {
-                                    relays2.removeAt(it)
-                                },
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    stringResource(R.string.delete),
-                                )
-                            }
-                        }
-                    }
-                }
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .padding(horizontal = 16.dp),
-                        value = textFieldRelay.text,
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Done,
-                        ),
-                        onValueChange = {
-                            textFieldRelay = TextFieldValue(it)
-                        },
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                val url = textFieldRelay.text
-                                if (url.isNotBlank() && url != "/") {
-                                    var addedWSS =
-                                        if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
-                                            if (url.endsWith(".onion") || url.endsWith(".onion/")) {
-                                                "ws://$url"
-                                            } else {
-                                                "wss://$url"
-                                            }
-                                        } else {
-                                            url
-                                        }
-                                    if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
-                                    if (relays2.any { it.url == addedWSS }) {
-                                        textFieldRelay = TextFieldValue("")
-                                        return@KeyboardActions
-                                    }
-                                    relays2.add(
-                                        RelaySetupInfo(
-                                            addedWSS,
-                                            read = true,
-                                            write = true,
-                                            feedTypes = COMMON_FEED_TYPES,
-                                        ),
-                                    )
-                                    textFieldRelay = TextFieldValue("")
-                                }
-                            },
-                        ),
-                        label = {
-                            Text("Relay")
-                        },
-                    )
-                    IconButton(
-                        onClick = {
+                        .fillMaxWidth(0.9f)
+                        .padding(horizontal = 16.dp),
+                    value = textFieldRelay.text,
+                    keyboardOptions = KeyboardOptions(
+                        imeAction = ImeAction.Done,
+                    ),
+                    onValueChange = {
+                        textFieldRelay = TextFieldValue(it)
+                    },
+                    keyboardActions = KeyboardActions(
+                        onDone = {
                             val url = textFieldRelay.text
                             if (url.isNotBlank() && url != "/") {
                                 var addedWSS =
                                     if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
-                                        // TODO: How to identify relays on the local network?
-                                        val isLocalHost = url.contains("127.0.0.1") || url.contains("localhost")
-                                        if (url.endsWith(".onion") || url.endsWith(".onion/") || isLocalHost) {
+                                        if (url.endsWith(".onion") || url.endsWith(".onion/")) {
                                             "ws://$url"
                                         } else {
                                             "wss://$url"
@@ -386,7 +302,7 @@ fun EditDefaultRelaysDialog(
                                 if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
                                 if (relays2.any { it.url == addedWSS }) {
                                     textFieldRelay = TextFieldValue("")
-                                    return@IconButton
+                                    return@KeyboardActions
                                 }
                                 relays2.add(
                                     RelaySetupInfo(
@@ -399,11 +315,104 @@ fun EditDefaultRelaysDialog(
                                 textFieldRelay = TextFieldValue("")
                             }
                         },
+                    ),
+                    label = {
+                        Text("Relay")
+                    },
+                )
+                IconButton(
+                    onClick = {
+                        val url = textFieldRelay.text
+                        if (url.isNotBlank() && url != "/") {
+                            var addedWSS =
+                                if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
+                                    // TODO: How to identify relays on the local network?
+                                    val isLocalHost = url.contains("127.0.0.1") || url.contains("localhost")
+                                    if (url.endsWith(".onion") || url.endsWith(".onion/") || isLocalHost) {
+                                        "ws://$url"
+                                    } else {
+                                        "wss://$url"
+                                    }
+                                } else {
+                                    url
+                                }
+                            if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
+                            if (relays2.any { it.url == addedWSS }) {
+                                textFieldRelay = TextFieldValue("")
+                                return@IconButton
+                            }
+                            relays2.add(
+                                RelaySetupInfo(
+                                    addedWSS,
+                                    read = true,
+                                    write = true,
+                                    feedTypes = COMMON_FEED_TYPES,
+                                ),
+                            )
+                            textFieldRelay = TextFieldValue("")
+                        }
+                    },
+                ) {
+                    Icon(
+                        Icons.Default.Add,
+                        null,
+                    )
+                }
+            }
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(10.dp),
+                horizontalArrangement = Arrangement.Center,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                PostButton(
+                    isActive = relays2.isNotEmpty(),
+                    onPost = {
+                        scope.launch(Dispatchers.IO) {
+                            if (relays2.isNotEmpty()) {
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    defaultRelays = relays2,
+                                )
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                            }
+                            scope.launch(Dispatchers.Main) {
+                                navController.navigateUp()
+                            }
+                        }
+                    },
+                )
+            }
+
+            LazyColumn(
+                Modifier
+                    .weight(1f),
+            ) {
+                items(relays2.size) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            Icons.Default.Add,
-                            null,
+                        Text(
+                            relays2[it].url,
+                            Modifier
+                                .weight(0.9f)
+                                .padding(8.dp),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
                         )
+                        IconButton(
+                            onClick = {
+                                relays2.removeAt(it)
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.Delete,
+                                stringResource(R.string.delete),
+                            )
+                        }
                     }
                 }
             }
@@ -493,8 +502,8 @@ fun RelayLogDialog(
 }
 
 @Composable
-fun ActiveRelaysDialog(
-    onClose: () -> Unit,
+fun ActiveRelaysScreen(
+    modifier: Modifier,
 ) {
     val relays2 =
         remember {
@@ -520,60 +529,44 @@ fun ActiveRelaysDialog(
         )
     }
 
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+    Surface(
+        modifier = modifier
+            .fillMaxSize(),
     ) {
-        Surface(
+        Column(
             modifier = Modifier
+                .background(MaterialTheme.colorScheme.background)
                 .fillMaxSize(),
         ) {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize(),
+            LazyColumn(
+                Modifier
+                    .fillMaxHeight(0.9f)
+                    .fillMaxWidth(),
             ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CloseButton {
-                        onClose()
-                    }
-                }
-                LazyColumn(
-                    Modifier
-                        .fillMaxHeight(0.9f)
-                        .fillMaxWidth(),
-                ) {
-                    items(relays2.size) {
-                        Row(
+                items(relays2.size) {
+                    Row(
+                        Modifier
+                            .padding(6.dp)
+                            .clickable {
+                                relayLogUrl = relays2[it].url
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Circle,
+                            contentDescription = "Active Relay",
+                            tint = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Green else Color.Red,
+                        )
+                        Text(
+                            relays2[it].url,
                             Modifier
-                                .padding(6.dp)
-                                .clickable {
-                                    relayLogUrl = relays2[it].url
-                                },
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Circle,
-                                contentDescription = "Active Relay",
-                                tint = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Green else Color.Red,
-                            )
-                            Text(
-                                relays2[it].url,
-                                Modifier
-                                    .weight(0.9f)
-                                    .padding(8.dp),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                                .weight(0.9f)
+                                .padding(8.dp),
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 18.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
             }

@@ -354,4 +354,8 @@
     <string name="event_kind_24242">Blobs stored on mediaservers</string>
     <string name="event_kind_30040">Modular Article Header</string>
     <string name="event_kind_30041">Modular Article Content</string>
+    <string name="push_notifications_explainer">Using push notifications is significantly slower and less private</string>
+    <string name="direct_notifications_explainer">Keep the relays connections open all the time. Using this option is faster and will result in a better experience</string>
+    <string name="notification_settings">Notification Settings</string>
+    <string name="please_configure_your_notification_settings_before_continuing">Please configure your notification settings before continuing.</string>
 </resources>

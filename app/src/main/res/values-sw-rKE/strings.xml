@@ -358,4 +358,17 @@
     <string name="direct_notifications_explainer">Keep the relays connections open all the time. Using this option is faster and will result in a better experience</string>
     <string name="notification_settings">Notification Settings</string>
     <string name="please_configure_your_notification_settings_before_continuing">Please configure your notification settings before continuing.</string>
+    <string name="relay">Relay</string>
+    <string name="paid_relays_are_not_supported">Paid relays are not supported</string>
+    <string name="auth_required_message">Relays that require auth are not supported</string>
+    <string name="relay_information_document_error_assemble_url">Failed to reach %1$s: %2$s</string>
+    <string name="relay_information_document_error_failed_to_assemble_url">Failed to assemble NIP-11 url for %1$s: %2$s</string>
+    <string name="relay_information_document_error_failed_to_reach_server">Failed to reach %1$s: %2$s</string>
+    <string name="relay_information_document_error_failed_to_parse_response">Failed to parse response from %1$s: %2$s</string>
+    <string name="relay_information_document_error_failed_with_http">Relay declined request %1$s: %2$s</string>
+    <string name="relay_information_document_error_reach_server">Failed to reach %1$s: %2$s</string>
+    <string name="relay_information_document_error_parse_result">Failed to parse result from %1$s: %2$s</string>
+    <string name="relay_information_document_error_http_status">%1$s failed with code %2$s</string>
+    <string name="unable_to_download_relay_document">Download relay document unavailable</string>
+    <string name="failed_to_send_event">Failed to send event to relay</string>
 </resources>

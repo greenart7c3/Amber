@@ -846,6 +846,7 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(padding),
                         navController = navController,
+                        accountStateViewModel = accountStateViewModel,
                     )
                 }
             },

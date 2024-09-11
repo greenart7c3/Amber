@@ -14,7 +14,11 @@
 /captures
 .cxx
 .kotlin/
-
+free/
+offline/
+app/free/release/
+app/play/release/
+app/offline/release/
 
 # Built application files
 *.apk

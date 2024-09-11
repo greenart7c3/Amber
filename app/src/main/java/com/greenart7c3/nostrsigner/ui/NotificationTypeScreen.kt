@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -20,11 +21,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
@@ -38,17 +39,35 @@ import kotlinx.coroutines.launch
 @Composable
 fun NotificationTypeScreen(
     modifier: Modifier = Modifier,
-    navController: NavController,
+    onDone: () -> Unit,
 ) {
     val context = LocalContext.current
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            if (!LocalPreferences.isNotificationTypeConfigured()) {
+                AmberListenerSingleton.accountStateViewModel?.toast(
+                    context.getString(R.string.notification_settings),
+                    context.getString(R.string.please_configure_your_notification_settings_before_continuing),
+                )
+            }
+        }
+    }
+
     val scope = rememberCoroutineScope()
     var notificationItemsIndex by remember {
         mutableIntStateOf(NostrSigner.getInstance().settings.notificationType.screenCode)
     }
     val notificationItems =
         persistentListOf(
-            TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
-            TitleExplainer(stringResource(NotificationType.DIRECT.resourceId)),
+            TitleExplainer(
+                stringResource(NotificationType.PUSH.resourceId),
+                stringResource(R.string.push_notifications_explainer),
+            ),
+            TitleExplainer(
+                stringResource(NotificationType.DIRECT.resourceId),
+                stringResource(R.string.direct_notifications_explainer),
+            ),
         )
     Surface(
         modifier.fillMaxSize(),
@@ -112,7 +131,7 @@ fun NotificationTypeScreen(
                             ),
                         )
                         scope.launch(Dispatchers.Main) {
-                            navController.navigateUp()
+                            onDone()
                         }
                     }
                 }

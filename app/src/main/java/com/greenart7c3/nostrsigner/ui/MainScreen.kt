@@ -524,7 +524,9 @@ private suspend fun askNotificationPermission(
     onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
-        initNotifications(context)
+        initNotifications(
+            context = context,
+        )
         return
     }
 
@@ -572,7 +574,9 @@ fun MainScreen(
         ) { isGranted: Boolean ->
             if (isGranted) {
                 scope.launch(Dispatchers.IO) {
-                    initNotifications(context)
+                    initNotifications(
+                        context = context,
+                    )
                 }
             } else {
                 if (LocalPreferences.shouldShowRationale(context) == null) {
@@ -587,11 +591,12 @@ fun MainScreen(
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
                 askNotificationPermission(
-                    context,
-                    requestPermissionLauncher,
-                ) {
-                    showDialog = true
-                }
+                    context = context,
+                    requestPermissionLauncher = requestPermissionLauncher,
+                    onShouldShowRequestPermissionRationale = {
+                        showDialog = true
+                    },
+                )
             }
         }
     }
@@ -821,7 +826,9 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding),
-                        navController = navController,
+                        onDone = {
+                            navController.navigateUp()
+                        },
                     )
                 }
             },

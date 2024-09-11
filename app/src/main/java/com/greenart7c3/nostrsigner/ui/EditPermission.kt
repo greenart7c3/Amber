@@ -109,7 +109,7 @@ fun EditPermission(
     }
 
     LaunchedEffect(Unit) {
-        scope.launch(Dispatchers.IO) {
+        launch(Dispatchers.IO) {
             permissions.addAll(database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
             applicationData = database.applicationDao().getByKey(selectedPackage)!!.application
             checked = applicationData.useSecret

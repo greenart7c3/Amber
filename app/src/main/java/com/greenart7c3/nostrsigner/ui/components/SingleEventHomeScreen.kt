@@ -131,13 +131,28 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(
-                            account,
-                            intentData.bunkerRequest,
-                            applicationEntity?.application?.relays ?: emptyList(),
-                            context,
-                            onLoading = onLoading,
-                        )
+                        coroutineScope.launch(Dispatchers.IO) {
+                            val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
+                            val savedApplication = database.applicationDao().getByKey(key)
+                            val relays = if (savedApplication != null) {
+                                savedApplication.application.relays.ifEmpty { defaultRelays }
+                            } else {
+                                intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
+                            }
+
+                            NostrSigner.getInstance().checkForNewRelays(
+                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                relays.toSet(),
+                            )
+
+                            AmberUtils.sendBunkerError(
+                                account,
+                                intentData.bunkerRequest,
+                                applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
+                                context,
+                                onLoading = onLoading,
+                            )
+                        }
                     } else {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
@@ -208,8 +223,19 @@ fun SingleEventHomeScreen(
                             )
                         }
 
+                        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val savedApplication = database.applicationDao().getByKey(key)
-                        val relays = intentData.bunkerRequest?.relays ?: listOf()
+                        val relays = if (savedApplication != null) {
+                            savedApplication.application.relays.ifEmpty { defaultRelays }
+                        } else {
+                            intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
+                        }
+                        if (intentData.bunkerRequest != null) {
+                            NostrSigner.getInstance().checkForNewRelays(
+                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                relays.toSet(),
+                            )
+                        }
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
@@ -240,19 +266,19 @@ fun SingleEventHomeScreen(
                                 false,
                             ),
                         )
-                    }
 
-                    if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(
-                            account,
-                            intentData.bunkerRequest,
-                            applicationEntity?.application?.relays ?: emptyList(),
-                            context,
-                            onLoading,
-                        )
-                    } else {
-                        context.getAppCompatActivity()?.intent = null
-                        context.getAppCompatActivity()?.finish()
+                        if (intentData.bunkerRequest != null) {
+                            AmberUtils.sendBunkerError(
+                                account,
+                                intentData.bunkerRequest,
+                                relays,
+                                context,
+                                onLoading,
+                            )
+                        } else {
+                            context.getAppCompatActivity()?.intent = null
+                            context.getAppCompatActivity()?.finish()
+                        }
                     }
                 },
             )
@@ -337,9 +363,20 @@ fun SingleEventHomeScreen(
                                 database,
                             )
                         }
-
+                        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val savedApplication = database.applicationDao().getByKey(key)
-                        val relays = intentData.bunkerRequest?.relays ?: listOf()
+                        val relays = if (savedApplication != null) {
+                            savedApplication.application.relays.ifEmpty { defaultRelays }
+                        } else {
+                            intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
+                        }
+                        if (intentData.bunkerRequest != null) {
+                            NostrSigner.getInstance().checkForNewRelays(
+                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                relays.toSet(),
+                            )
+                        }
+
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
@@ -370,19 +407,19 @@ fun SingleEventHomeScreen(
                                 false,
                             ),
                         )
-                    }
 
-                    if (intentData.bunkerRequest != null) {
-                        AmberUtils.sendBunkerError(
-                            account,
-                            intentData.bunkerRequest,
-                            applicationEntity?.application?.relays ?: emptyList(),
-                            context,
-                            onLoading,
-                        )
-                    } else {
-                        context.getAppCompatActivity()?.intent = null
-                        context.getAppCompatActivity()?.finish()
+                        if (intentData.bunkerRequest != null) {
+                            AmberUtils.sendBunkerError(
+                                account,
+                                intentData.bunkerRequest,
+                                relays,
+                                context,
+                                onLoading,
+                            )
+                        } else {
+                            context.getAppCompatActivity()?.intent = null
+                            context.getAppCompatActivity()?.finish()
+                        }
                     }
                 },
             )

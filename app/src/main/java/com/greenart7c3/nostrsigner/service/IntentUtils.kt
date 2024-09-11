@@ -20,6 +20,7 @@ import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
@@ -55,6 +56,7 @@ data class BunkerMetadata(
     val name: String,
     val url: String,
     val description: String,
+    val perms: String,
 ) {
     companion object {
         val mapper: ObjectMapper =
@@ -70,6 +72,7 @@ data class BunkerMetadata(
                 name = jsonObject.get("name")?.asText()?.intern() ?: "",
                 url = jsonObject.get("url")?.asText()?.intern() ?: "",
                 description = jsonObject.get("description")?.asText()?.intern() ?: "",
+                perms = jsonObject.get("perms")?.asText()?.intern() ?: "",
             )
         }
 
@@ -313,14 +316,7 @@ object IntentUtils {
         relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
-        checkForEmptyRelays: Boolean = true,
     ) {
-        if (relays.isEmpty() && checkForEmptyRelays) {
-            onLoading(false)
-            AmberListenerSingleton.accountStateViewModel?.toast("Relays", "No relays found")
-            return
-        }
-
         AmberListenerSingleton.getListener()?.let {
             Client.unsubscribe(it)
         }
@@ -342,9 +338,7 @@ object IntentUtils {
                         account,
                         bunkerRequest.localKey,
                         encryptedContent,
-                        relays,
-                        checkForEmptyRelays,
-                        context,
+                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         onLoading,
                         onDone,
                     )
@@ -359,9 +353,7 @@ object IntentUtils {
                         account,
                         bunkerRequest.localKey,
                         encryptedContent,
-                        relays,
-                        checkForEmptyRelays,
-                        context,
+                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         onLoading,
                         onDone,
                     )
@@ -376,8 +368,6 @@ object IntentUtils {
         localKey: String,
         encryptedContent: String,
         relays: List<RelaySetupInfo>,
-        checkForEmptyRelays: Boolean,
-        context: Context,
         onLoading: (Boolean) -> Unit,
         onDone: () -> Unit,
     ) {
@@ -388,7 +378,7 @@ object IntentUtils {
             encryptedContent,
         ) {
             GlobalScope.launch(Dispatchers.IO) {
-                if (!checkForEmptyRelays || RelayPool.getAll().any { !it.isConnected() }) {
+                if (RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
                         NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
                         newRelays = relays.toSet(),
@@ -803,21 +793,73 @@ object IntentUtils {
             val pubKey = split.first()
             val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
             val splitParsedData = parsedData.split("&")
+            val permissions = mutableListOf<Permission>()
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
-                if (internalSplit.first() == "relay") {
+                val paramName = internalSplit.first()
+                val json = internalSplit.mapIndexedNotNull { index, s ->
+                    if (index == 0) null else s
+                }.joinToString { data -> data }
+                if (paramName == "relay") {
                     relays.add(
-                        RelaySetupInfo(internalSplit[1], read = true, write = true, feedTypes = COMMON_FEED_TYPES),
+                        RelaySetupInfo(json, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
                     )
                 }
-                if (internalSplit.first() == "name") {
-                    name = internalSplit[1]
+                if (paramName == "name") {
+                    name = json
                 }
-                if (internalSplit.first() == "metadata") {
-                    val bunkerMetada = metaDataFromJson(internalSplit[1])
+
+                if (paramName == "perms") {
+                    if (json.isNotEmpty()) {
+                        val splitPerms = json.split(",")
+                        splitPerms.forEach {
+                            val split2 = it.split(":")
+                            val permissionType = split2.first()
+                            val kind =
+                                try {
+                                    split2[1].toInt()
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                            permissions.add(
+                                Permission(
+                                    permissionType,
+                                    kind,
+                                ),
+                            )
+                        }
+                    }
+                }
+
+                if (paramName == "metadata") {
+                    val bunkerMetada = metaDataFromJson(json)
                     name = bunkerMetada.name
+                    if (bunkerMetada.perms.isNotEmpty()) {
+                        val splitPerms = bunkerMetada.perms.split(",")
+                        splitPerms.forEach {
+                            val split2 = it.split(":")
+                            val permissionType = split2.first()
+                            val kind =
+                                try {
+                                    split2[1].toInt()
+                                } catch (_: Exception) {
+                                    null
+                                }
+
+                            permissions.add(
+                                Permission(
+                                    permissionType,
+                                    kind,
+                                ),
+                            )
+                        }
+                    }
                 }
             }
+
+            permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
+            permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
             onReady(
                 IntentData(
@@ -829,7 +871,7 @@ object IntentUtils {
                     null,
                     CompressionType.NONE,
                     ReturnType.EVENT,
-                    listOf(),
+                    permissions,
                     "",
                     mutableStateOf(true),
                     mutableStateOf(false),
@@ -838,7 +880,7 @@ object IntentUtils {
                         "connect",
                         arrayOf(pubKey),
                         pubKey,
-                        relays,
+                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         "",
                         account.keyPair.pubKey.toNpub(),
                         EncryptionType.NIP04,
@@ -850,6 +892,15 @@ object IntentUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
+            NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                LogEntity(
+                    0,
+                    "nostrconnect",
+                    "nostrconnect",
+                    e.message ?: "",
+                    System.currentTimeMillis(),
+                ),
+            )
             onReady(null)
         }
     }

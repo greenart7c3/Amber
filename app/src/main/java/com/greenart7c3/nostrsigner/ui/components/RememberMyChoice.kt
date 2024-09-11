@@ -17,6 +17,7 @@ fun RememberMyChoice(
     shouldRunAcceptOrReject: Boolean?,
     remember: Boolean,
     packageName: String?,
+    alwaysShow: Boolean = false,
     onAccept: () -> Unit,
     onReject: () -> Unit,
     onChanged: () -> Unit,
@@ -30,7 +31,7 @@ fun RememberMyChoice(
             }
         }
     }
-    if (packageName != null) {
+    if (packageName != null || alwaysShow) {
         Row(
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically,

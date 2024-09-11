@@ -21,7 +21,7 @@ jobs:
           java-version: 17
 
       - name: Cache gradle
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
@@ -42,7 +42,7 @@ jobs:
         run: ./gradlew assembleDebug --no-daemon
 
       - name: Upload APK
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: Debug APK
           path: app/build/outputs/apk/play/debug/app-play-universal-debug.apk

@@ -11,6 +11,6 @@ data class AmberSettings(
     val defaultRelays: List<RelaySetupInfo> = listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
     val lastBiometricsTime: Long = 0,
     val useAuth: Boolean = false,
-    val notificationType: NotificationType = NotificationType.PUSH,
+    val notificationType: NotificationType = NotificationType.DIRECT,
     val biometricsTimeType: BiometricsTimeType = BiometricsTimeType.EVERY_TIME,
 )

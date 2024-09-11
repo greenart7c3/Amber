@@ -16,10 +16,7 @@ import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -31,25 +28,15 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.RichTooltip
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -99,16 +86,16 @@ import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
-import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
-import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysDialog
+import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
+import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
+import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
+import com.greenart7c3.nostrsigner.ui.components.BackButtonScaffold
+import com.greenart7c3.nostrsigner.ui.components.MainScaffold
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.ByteArrayOutputStream
 import java.util.Base64
-import java.util.UUID
 import java.util.zip.GZIPOutputStream
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -137,11 +124,7 @@ fun sendResult(
     GlobalScope.launch(Dispatchers.IO) {
         val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
         val savedApplication = database.applicationDao().getByKey(key)
-        val relays = if (savedApplication != null) {
-            savedApplication.application.relays.ifEmpty { defaultRelays }
-        } else {
-            intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
-        }
+        val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
         if (intentData.bunkerRequest != null) {
             NostrSigner.getInstance().checkForNewRelays(
                 NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
@@ -401,6 +384,61 @@ fun PermissionsFloatingActionButton(
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    val clipboardManager = LocalClipboardManager.current
+                    RichTooltip {
+                        Text(stringResource(R.string.paste_from_clipboard))
+                    }
+                    Spacer(modifier = Modifier.size(4.dp))
+                    FloatingActionButton(
+                        onClick = {
+                            clipboardManager.getText()?.let {
+                                if (it.text.isBlank()) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.invalid_nostr_connect_uri),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@let
+                                }
+                                if (!it.text.startsWith("nostrconnect://")) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.invalid_nostr_connect_uri),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@let
+                                }
+
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.data = Uri.parse(it.text)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                context.getAppCompatActivity()?.startActivity(intent)
+                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+                            }
+                            expanded = false
+                        },
+                        modifier = Modifier.size(35.dp),
+                        shape = CircleShape,
+                    ) {
+                        Icon(
+                            Icons.Default.ContentPaste,
+                            contentDescription = stringResource(R.string.paste_from_clipboard),
+                            tint = Color.White,
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Row(
+                    Modifier
+                        .padding(end = 10.dp)
+                        .clickable {
+                            dialogOpen = true
+                            expanded = false
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
                     RichTooltip {
                         Text(stringResource(R.string.connect_app))
                     }
@@ -486,7 +524,9 @@ private suspend fun askNotificationPermission(
     onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
-        initNotifications(context)
+        initNotifications(
+            context = context,
+        )
         return
     }
 
@@ -512,7 +552,6 @@ private suspend fun initNotifications(context: Context) {
     PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     account: Account,
@@ -526,17 +565,7 @@ fun MainScreen(
     val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
-    val items = listOf(Route.Home, Route.Permissions, Route.Settings)
-    var shouldShowBottomSheet by remember { mutableStateOf(false) }
-
-    val sheetState =
-        rememberModalBottomSheetState(
-            confirmValueChange = { it != SheetValue.PartiallyExpanded },
-            skipPartiallyExpanded = true,
-        )
     val scope = rememberCoroutineScope()
-    val interactionSource = remember { MutableInteractionSource() }
-    val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
 
     val requestPermissionLauncher =
@@ -545,7 +574,9 @@ fun MainScreen(
         ) { isGranted: Boolean ->
             if (isGranted) {
                 scope.launch(Dispatchers.IO) {
-                    initNotifications(context)
+                    initNotifications(
+                        context = context,
+                    )
                 }
             } else {
                 if (LocalPreferences.shouldShowRationale(context) == null) {
@@ -560,11 +591,12 @@ fun MainScreen(
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
                 askNotificationPermission(
-                    context,
-                    requestPermissionLauncher,
-                ) {
-                    showDialog = true
-                }
+                    context = context,
+                    requestPermissionLauncher = requestPermissionLauncher,
+                    onShouldShowRequestPermissionRationale = {
+                        showDialog = true
+                    },
+                )
             }
         }
     }
@@ -603,173 +635,37 @@ fun MainScreen(
         )
     }
 
-    Scaffold(
-        floatingActionButton = {
-            @Suppress("KotlinConstantConditions")
-            if (destinationRoute == "Permissions" && BuildConfig.FLAVOR != "offline") {
-                PermissionsFloatingActionButton(
-                    accountStateViewModel,
-                    account,
-                ) {
-                    val secret = UUID.randomUUID().toString().substring(0, 6)
-                    scope.launch(Dispatchers.IO) {
-                        val application =
-                            ApplicationEntity(
-                                secret,
-                                "",
-                                NostrSigner.getInstance().settings.defaultRelays,
-                                "",
-                                "",
-                                "",
-                                account.keyPair.pubKey.toHexKey(),
-                                false,
-                                secret,
-                                false,
-                                account.signPolicy,
-                            )
+    var localRoute by remember { mutableStateOf(route.value ?: Route.Home.route) }
 
-                        database.applicationDao().insertApplication(
-                            application,
-                        )
-                        val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?$relayString"
-                        clipboardManager.setText(AnnotatedString(bunkerUrl))
-                        scope.launch(Dispatchers.Main) {
-                            navController.navigate("Permission/$secret")
-                        }
-                    }
-                }
-            }
-        },
-        topBar = {
-            if (shouldShowBottomSheet) {
-                AccountsBottomSheet(
-                    sheetState = sheetState,
-                    account = account,
-                    accountStateViewModel = accountStateViewModel,
-                    onClose = {
-                        scope.launch {
-                            shouldShowBottomSheet = false
-                            sheetState.hide()
-                        }
-                    },
-                )
-            }
-
-            CenterAlignedTopAppBar(
-                actions = {
-                    @Suppress("KotlinConstantConditions")
-                    if (BuildConfig.FLAVOR != "offline") {
-                        var showDialogRelay by remember { mutableStateOf(false) }
-
-                        if (showDialogRelay) {
-                            ActiveRelaysDialog(
-                                onClose = {
-                                    showDialogRelay = false
-                                },
-                            )
-                        }
-
-                        Box(
-                            modifier = Modifier
-                                .minimumInteractiveComponentSize()
-                                .size(40.dp)
-                                .clickable(
-                                    interactionSource = interactionSource,
-                                    indication = null,
-                                ) {
-                                    showDialogRelay = true
-                                },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Default.Hub,
-                                contentDescription = "Relays",
-                            )
-                        }
-                    }
-                },
-                title = {
-                    val name = LocalPreferences.getAccountName(context, account.keyPair.pubKey.toNpub())
-                    Row(
-                        Modifier
-                            .border(
-                                border = ButtonDefaults.outlinedButtonBorder,
-                                shape = ButtonBorder,
-                            )
-                            .padding(8.dp)
-                            .clickable(
-                                interactionSource = interactionSource,
-                                indication = null,
-                            ) {
-                                scope.launch {
-                                    sheetState.show()
-                                    shouldShowBottomSheet = true
-                                }
-                            },
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(name.ifBlank { account.keyPair.pubKey.toNpub().toShortenHex() })
-                        Icon(
-                            imageVector = Icons.Default.ExpandMore,
-                            null,
-                            modifier = Modifier.size(20.dp),
-                            tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.32f),
-                        )
-                    }
-                },
-            )
-        },
-        bottomBar = {
-            if (!destinationRoute.contains("Permission/")) {
-                NavigationBar(tonalElevation = 0.dp) {
-                    items.forEach {
-                        val selected = destinationRoute == it.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                navController.navigate(it.route) {
-                                    popUpTo(0)
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    if (selected) it.selectedIcon else it.icon,
-                                    it.route,
-                                )
-                            },
-                            label = {
-                                Text(it.title)
-                            },
-                        )
-                    }
-                }
-            }
-        },
-    ) { padding ->
-        var localRoute by remember { mutableStateOf(route.value ?: Route.Home.route) }
-
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR != "offline") {
-            LaunchedEffect(Unit, route.value) {
-                launch(Dispatchers.Main) {
-                    if (route.value != null) {
-                        localRoute = route.value!!
-                        route.value = null
-                    }
+    @Suppress("KotlinConstantConditions")
+    if (BuildConfig.FLAVOR != "offline") {
+        LaunchedEffect(Unit, route.value) {
+            launch(Dispatchers.Main) {
+                if (route.value != null) {
+                    localRoute = route.value!!
+                    route.value = null
                 }
             }
         }
+    }
 
-        NavHost(
-            navController,
-            startDestination = localRoute,
-            enterTransition = { fadeIn(animationSpec = tween(200)) },
-            exitTransition = { fadeOut(animationSpec = tween(200)) },
-        ) {
-            composable(
-                Route.Home.route,
-                content = {
+    NavHost(
+        navController,
+        startDestination = localRoute,
+        enterTransition = { fadeIn(animationSpec = tween(200)) },
+        exitTransition = { fadeOut(animationSpec = tween(200)) },
+    ) {
+        composable(
+            Route.Home.route,
+            content = {
+                MainScaffold(
+                    accountStateViewModel,
+                    account,
+                    database,
+                    navController,
+                    destinationRoute,
+                    false,
+                ) { padding ->
                     HomeScreen(
                         Modifier
                             .fillMaxSize()
@@ -780,12 +676,21 @@ fun MainScreen(
                         account,
                         database,
                     )
-                },
-            )
+                }
+            },
+        )
 
-            composable(
-                Route.Permissions.route,
-                content = {
+        composable(
+            Route.Permissions.route,
+            content = {
+                MainScaffold(
+                    accountStateViewModel,
+                    account,
+                    database,
+                    navController,
+                    destinationRoute,
+                    true,
+                ) { padding ->
                     PermissionsScreen(
                         modifier = Modifier
                             .fillMaxSize()
@@ -795,26 +700,56 @@ fun MainScreen(
                         navController = navController,
                         database = database,
                     )
-                },
-            )
+                }
+            },
+        )
 
-            composable(
-                Route.Settings.route,
-                content = {
+        composable(
+            Route.Settings.route,
+            content = {
+                MainScaffold(
+                    accountStateViewModel,
+                    account,
+                    database,
+                    navController,
+                    destinationRoute,
+                    false,
+                ) { padding ->
                     SettingsScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding),
                         accountStateViewModel,
                         account,
+                        navController,
                     )
-                },
-            )
+                }
+            },
+        )
 
-            composable(
-                Route.Permission.route,
-                arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
-                content = {
+        composable(
+            Route.AccountBackup.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    AccountBackupScreen(
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.Permission.route,
+            arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
                     EditPermission(
                         modifier =
                         Modifier
@@ -826,8 +761,130 @@ fun MainScreen(
                         navController = navController,
                         database = database,
                     )
-                },
-            )
-        }
+                }
+            },
+        )
+
+        composable(
+            Route.Logs.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    LogsScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.ActiveRelays.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    ActiveRelaysScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.Language.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    LanguageScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.NotificationType.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    NotificationTypeScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        onDone = {
+                            navController.navigateUp()
+                        },
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.DefaultRelays.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    DefaultRelaysScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        navController = navController,
+                        accountStateViewModel = accountStateViewModel,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.SignPolicy.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    SignPolicySettingsScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        account = account,
+                        navController = navController,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.Security.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    SecurityScreen(
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        navController = navController,
+                    )
+                }
+            },
+        )
     }
 }

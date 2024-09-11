@@ -6,9 +6,13 @@ import android.app.NotificationManager
 import android.app.Service
 import android.content.Context
 import android.content.Intent
+import android.net.ConnectivityManager
+import android.net.Network
+import android.net.NetworkCapabilities
 import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
@@ -19,12 +23,57 @@ import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
     private var isStarted = false
     private val timer = Timer()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    private val networkCallback =
+        object : ConnectivityManager.NetworkCallback() {
+            var lastNetwork: Network? = null
+
+            override fun onAvailable(network: Network) {
+                super.onAvailable(network)
+                @Suppress("KotlinConstantConditions")
+                if (BuildConfig.FLAVOR == "offline") return
+
+                if (lastNetwork != null && lastNetwork != network && NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                    scope.launch(Dispatchers.IO) {
+                        NotificationDataSource.stopSync()
+                        delay(1000)
+                        NotificationDataSource.start()
+                    }
+                }
+
+                lastNetwork = network
+            }
+
+            // Network capabilities have changed for the network
+            override fun onCapabilitiesChanged(
+                network: Network,
+                networkCapabilities: NetworkCapabilities,
+            ) {
+                super.onCapabilitiesChanged(network, networkCapabilities)
+
+                @Suppress("KotlinConstantConditions")
+                if (BuildConfig.FLAVOR == "offline") return
+
+                scope.launch(Dispatchers.IO) {
+                    Log.d(
+                        "ServiceManager NetworkCallback",
+                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${NostrSigner.getInstance().isOnMobileDataState.value} hasWifi ${NostrSigner.getInstance().isOnWifiDataState.value}",
+                    )
+                    if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities) && NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                        NotificationDataSource.stopSync()
+                        delay(1000)
+                        NotificationDataSource.start()
+                    }
+                }
+            }
+        }
 
     override fun onBind(intent: Intent): IBinder {
         return null!!
@@ -58,6 +107,16 @@ class ConnectivityService : Service() {
             PushNotificationUtils.init(LocalPreferences.allSavedAccounts(this@ConnectivityService))
         }
 
+        @Suppress("KotlinConstantConditions")
+        if (BuildConfig.FLAVOR != "offline") {
+            val connectivityManager =
+                (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
+            connectivityManager.registerDefaultNetworkCallback(networkCallback)
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
+                NostrSigner.getInstance().updateNetworkCapabilities(it)
+            }
+        }
+
         timer.schedule(
             object : TimerTask() {
                 override fun run() {
@@ -84,6 +143,16 @@ class ConnectivityService : Service() {
     override fun onDestroy() {
         isStarted = false
         timer.cancel()
+        @Suppress("KotlinConstantConditions")
+        if (BuildConfig.FLAVOR != "offline") {
+            try {
+                val connectivityManager =
+                    (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
+                connectivityManager.unregisterNetworkCallback(networkCallback)
+            } catch (e: Exception) {
+                Log.d("connectivityManager", "Failed to unregisterNetworkCallback", e)
+            }
+        }
         super.onDestroy()
     }
 }

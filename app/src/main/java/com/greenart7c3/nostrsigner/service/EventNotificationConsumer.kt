@@ -65,7 +65,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    suspend fun consume(event: GiftWrapEvent) {
+    fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
 
         // PushNotification Wraps don't include a receiver.
@@ -85,7 +85,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         pushWrappedEvent: GiftWrapEvent,
         account: Account,
     ) {
-        pushWrappedEvent.cachedGift(account.signer) { notificationEvent ->
+        pushWrappedEvent.unwrap(account.signer) { notificationEvent ->
             unwrapAndConsume(notificationEvent, account) { innerEvent ->
                 if (innerEvent.kind == 24133) {
                     notify(innerEvent, account)
@@ -101,10 +101,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     ) {
         when (event) {
             is GiftWrapEvent -> {
-                event.cachedGift(account.signer) { unwrapAndConsume(it, account, onReady) }
+                event.unwrap(account.signer) { unwrapAndConsume(it, account, onReady) }
             }
             is SealedGossipEvent -> {
-                event.cachedGossip(account.signer) {
+                event.unseal(account.signer) {
                     onReady(it)
                 }
             }
@@ -189,7 +189,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 permission.application.relays,
                 onLoading = {},
                 onDone = {},
-                checkForEmptyRelays = false,
             )
             return
         }
@@ -221,10 +220,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc,
                         bunkerRequest,
                         BunkerResponse(bunkerRequest.id, "", message),
-                        applicationWithSecret?.application?.relays ?: listOf(),
+                        applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList(),
                         onLoading = { },
                         onDone = { },
-                        checkForEmptyRelays = false,
                     )
                     return
                 }
@@ -263,7 +261,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (type == SignerType.CONNECT) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
-        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: listOf()
+        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList()
 
         if (permission == null && applicationWithSecret == null && !acc.allowNewConnections) {
             IntentUtils.sendBunkerResponse(
@@ -271,10 +269,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 acc,
                 bunkerRequest,
                 BunkerResponse(bunkerRequest.id, "", "no permission"),
-                listOf(),
+                relays,
                 onLoading = { },
                 onDone = {},
-                checkForEmptyRelays = false,
             )
             return
         }
@@ -302,7 +299,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             relays,
                             onLoading = { },
                             onDone = { },
-                            checkForEmptyRelays = false,
                         )
                     } else {
                         val index = localCursor.getColumnIndex("event")
@@ -316,7 +312,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             relays,
                             onLoading = { },
                             onDone = { },
-                            checkForEmptyRelays = false,
                         )
                     }
                 } else {

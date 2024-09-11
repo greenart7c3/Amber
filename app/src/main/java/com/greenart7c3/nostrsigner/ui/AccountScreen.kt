@@ -9,6 +9,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -18,6 +20,7 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -26,7 +29,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -74,71 +76,106 @@ fun AccountScreen(
                     MainLoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    var intentData by remember {
-                        mutableStateOf<IntentData?>(null)
+                    var isLoading by remember { mutableStateOf(true) }
+                    var isNotificationsConfigured by remember {
+                        mutableStateOf(false)
                     }
-                    LaunchedEffect(intent, intents) {
-                        IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
-                            intentData = it
+                    LaunchedEffect(Unit) {
+                        launch(Dispatchers.IO) {
+                            isNotificationsConfigured = LocalPreferences.isNotificationTypeConfigured()
+                            isLoading = false
                         }
-                        val data =
-                            intents.firstOrNull {
-                                it.currentAccount.isNotBlank()
-                            }
+                    }
 
-                        data?.bunkerRequest?.let {
-                            if (it.currentAccount.isNotBlank()) {
-                                if (LocalPreferences.currentAccount(context) != it.currentAccount) {
-                                    accountStateViewModel.switchUser(it.currentAccount, null)
+                    if (isLoading) {
+                        Scaffold { innerPadding ->
+                            CenterCircularProgressIndicator(
+                                Modifier
+                                    .fillMaxSize()
+                                    .padding(innerPadding),
+                            )
+                        }
+                    } else {
+                        if (isNotificationsConfigured) {
+                            var intentData by remember {
+                                mutableStateOf<IntentData?>(null)
+                            }
+                            LaunchedEffect(intent, intents) {
+                                IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
+                                    intentData = it
+                                }
+                                val data =
+                                    intents.firstOrNull {
+                                        it.currentAccount.isNotBlank()
+                                    }
+
+                                data?.bunkerRequest?.let {
+                                    if (it.currentAccount.isNotBlank()) {
+                                        if (LocalPreferences.currentAccount(context) != it.currentAccount) {
+                                            accountStateViewModel.switchUser(it.currentAccount, null)
+                                        }
+                                    }
                                 }
                             }
-                        }
-                    }
 
-                    if (intentData != null) {
-                        if (intents.none { item -> item.id == intentData!!.id }) {
-                            val oldIntents = intents.toMutableList()
-                            oldIntents.add(intentData!!)
-                            flow.value = oldIntents
-                        }
-                    }
-
-                    val newIntents =
-                        intents.ifEmpty {
-                            if (intentData == null) {
-                                listOf()
-                            } else {
-                                listOf(intentData)
+                            if (intentData != null) {
+                                if (intents.none { item -> item.id == intentData!!.id }) {
+                                    val oldIntents = intents.toMutableList()
+                                    oldIntents.add(intentData!!)
+                                    flow.value = oldIntents
+                                }
                             }
-                        }.mapNotNull { it }
-                    val database = NostrSigner.getInstance().getDatabase(state.account.keyPair.pubKey.toNpub())
-                    val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
-                    val scope = rememberCoroutineScope()
 
-                    SideEffect {
-                        scope.launch(Dispatchers.IO) {
-                            PushNotificationUtils.accountState = accountStateViewModel
-                            try {
-                                NostrSigner.getInstance().applicationContext.startForegroundService(
-                                    Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
+                            val newIntents =
+                                intents.ifEmpty {
+                                    if (intentData == null) {
+                                        listOf()
+                                    } else {
+                                        listOf(intentData)
+                                    }
+                                }.mapNotNull { it }
+                            val database = NostrSigner.getInstance().getDatabase(state.account.keyPair.pubKey.toNpub())
+                            val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
+
+                            SideEffect {
+                                NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                                    PushNotificationUtils.accountState = accountStateViewModel
+                                    try {
+                                        NostrSigner.getInstance().applicationContext.startForegroundService(
+                                            Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
+                                        )
+                                    } catch (e: Exception) {
+                                        Log.d("NostrSigner", "Failed to start ConnectivityService", e)
+                                    }
+
+                                    @Suppress("KotlinConstantConditions")
+                                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                        NostrSigner.getInstance().checkForNewRelays()
+                                        NotificationDataSource.start()
+                                        delay(5000)
+                                    }
+                                }
+                            }
+
+                            AmberListenerSingleton.accountStateViewModel = accountStateViewModel
+
+                            DisplayErrorMessages(accountStateViewModel)
+                            MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
+                        } else {
+                            AmberListenerSingleton.accountStateViewModel = accountStateViewModel
+                            DisplayErrorMessages(accountStateViewModel)
+                            Scaffold { innerPadding ->
+                                NotificationTypeScreen(
+                                    Modifier
+                                        .fillMaxSize()
+                                        .padding(innerPadding),
+                                    onDone = {
+                                        isNotificationsConfigured = true
+                                    },
                                 )
-                            } catch (e: Exception) {
-                                Log.d("NostrSigner", "Failed to start ConnectivityService", e)
-                            }
-
-                            @Suppress("KotlinConstantConditions")
-                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
-                                NostrSigner.getInstance().checkForNewRelays()
-                                NotificationDataSource.start()
-                                delay(5000)
                             }
                         }
                     }
-
-                    AmberListenerSingleton.accountStateViewModel = accountStateViewModel
-
-                    DisplayErrorMessages(accountStateViewModel)
-                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
                 }
             }
         }

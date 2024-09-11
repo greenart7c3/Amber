@@ -120,6 +120,7 @@ fun SignMessage(
             shouldRunOnAccept,
             remember.value,
             packageName,
+            false,
             onAccept,
             onReject,
         ) {

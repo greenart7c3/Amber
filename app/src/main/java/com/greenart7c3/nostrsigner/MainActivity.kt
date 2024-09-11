@@ -8,6 +8,7 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -49,10 +50,11 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        WindowCompat.setDecorFitsSystemWindows(window, true)
+        installSplashScreen()
+        enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         mainViewModel = MainViewModel(applicationContext)
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        installSplashScreen()
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
@@ -165,17 +167,14 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         mainViewModel.showBunkerRequests(callingPackage)
-
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
-            connectivityManager.registerDefaultNetworkCallback(mainViewModel.networkCallback)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                mainViewModel.updateNetworkCapabilities(it)
+                NostrSigner.getInstance().updateNetworkCapabilities(it)
             }
         }
-
         super.onResume()
     }
 

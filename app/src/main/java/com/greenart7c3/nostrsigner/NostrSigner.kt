@@ -2,7 +2,9 @@ package com.greenart7c3.nostrsigner
 
 import android.app.Application
 import android.content.Intent
+import android.net.NetworkCapabilities
 import android.util.Log
+import androidx.compose.runtime.mutableStateOf
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
@@ -17,12 +19,49 @@ import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
+    val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
+
+    val isOnMobileDataState = mutableStateOf(false)
+    val isOnWifiDataState = mutableStateOf(false)
+
+    fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities): Boolean {
+        val isOnMobileData = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
+        val isOnWifi = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+
+        var changedNetwork = false
+
+        if (isOnMobileDataState.value != isOnMobileData) {
+            isOnMobileDataState.value = isOnMobileData
+
+            changedNetwork = true
+        }
+
+        if (isOnWifiDataState.value != isOnWifi) {
+            isOnWifiDataState.value = isOnWifi
+
+            changedNetwork = true
+        }
+
+        if (changedNetwork) {
+            if (isOnMobileData) {
+                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_MOBILE)
+            } else {
+                HttpClientManager.setDefaultTimeout(HttpClientManager.DEFAULT_TIMEOUT_ON_WIFI)
+            }
+        }
+
+        return changedNetwork
+    }
 
     override fun onCreate() {
         super.onCreate()
@@ -65,6 +104,9 @@ class NostrSigner : Application() {
                     savedRelays.add(setupInfo)
                 }
             }
+        }
+        if (savedRelays.isEmpty()) {
+            savedRelays.addAll(settings.defaultRelays)
         }
         return savedRelays
     }
@@ -124,6 +166,11 @@ class NostrSigner : Application() {
         if (RelayPool.getAll().any { !it.isConnected() } && tryAgain) {
             checkIfRelaysAreConnected(false)
         }
+    }
+
+    override fun onTerminate() {
+        super.onTerminate()
+        applicationIOScope.cancel()
     }
 
     companion object {

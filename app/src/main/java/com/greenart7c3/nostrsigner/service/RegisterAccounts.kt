@@ -27,13 +27,14 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.RelayAuthEvent
+import java.net.URL
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.Request
@@ -61,13 +62,44 @@ class RegisterAccounts(
         }
     }
 
+    private fun isSupportedUrl(url: String): Boolean {
+        return url.isNotBlank() &&
+            !url.contains("brb.io") && // no broken relays
+            !url.contains("echo.websocket.org") && // test relay
+            !url.contains("127.0") && // no local relays
+            !url.contains("umbrel.local") && // no local relays
+            !url.contains("192.168.") && // no local relays
+            !url.contains(".onion") && // we are not running on Tor
+            !url.contains("https://") && // not a websocket
+            !url.contains("http://") && // not a websocket
+            !url.contains("www://") && // not a websocket
+            !url.contains("https//") && // not a websocket
+            !url.contains("http//") && // not a websocket
+            !url.contains("www//") && // not a websocket
+            !url.contains("npub1") && // does not allow custom uris
+            !url.contains("was://") && // common mispellings
+            !url.contains("ws://umbrel:") && // local domain
+            !url.contains("\t") && // tab is not allowed
+            !url.contains(" ") && // space is not allowed
+            isValidUrl(url)
+    }
+
+    private fun isValidUrl(url: String): Boolean {
+        try {
+            URL(url.replace("wss://", "https://").replace("ws://", "http://"))
+            return true
+        } catch (e: Exception) {
+            return false
+        }
+    }
+
     // creates proof that it controls all accounts
     private fun signEventsToProveControlOfAccounts(
         accounts: List<AccountInfo>,
         notificationToken: String,
         onReady: (List<RelayAuthEvent>) -> Unit,
     ) {
-        val readyToSend: MutableList<Pair<Account, String>> = mutableListOf()
+        val readyToSend: MutableSet<Pair<Account, String>> = mutableSetOf()
         accounts.forEach {
             val acc = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub)
             if (acc != null) {
@@ -77,11 +109,23 @@ class RegisterAccounts(
                     ).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
-                        if (relay.url.isNotBlank()) {
+                        if (isSupportedUrl(relay.url)) {
                             readyToSend.add(
                                 Pair(acc, relay.url),
                             )
                         }
+                    }
+                }
+
+                runBlocking {
+                    LocalPreferences.loadSettingsFromEncryptedStorage()
+                }
+                val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
+                defaultRelays.forEach { relay ->
+                    if (isSupportedUrl(relay.url)) {
+                        readyToSend.add(
+                            Pair(acc, relay.url),
+                        )
                     }
                 }
             }
@@ -90,7 +134,7 @@ class RegisterAccounts(
         val listOfAuthEvents = mutableListOf<RelayAuthEvent>()
         recursiveAuthCreation(
             notificationToken,
-            readyToSend,
+            readyToSend.toList(),
             listOfAuthEvents,
             onReady,
         )
@@ -144,7 +188,6 @@ class RegisterAccounts(
                         ),
                     )
                 }
-                AmberListenerSingleton.accountStateViewModel?.toast("Push server", "Failed to register with push server")
             }
         } catch (e: java.lang.Exception) {
             if (e is CancellationException) throw e

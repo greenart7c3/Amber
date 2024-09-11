@@ -1,25 +1,16 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.content.Context
-import android.content.Intent
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatDelegate
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Draw
@@ -31,17 +22,11 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -51,556 +36,45 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
-import androidx.core.os.LocaleListCompat
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.Biometrics
-import com.greenart7c3.nostrsigner.service.ConnectivityService
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.PushNotificationUtils
-import com.greenart7c3.nostrsigner.ui.actions.AccountBackupDialog
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
-import com.greenart7c3.nostrsigner.ui.actions.EditDefaultRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
-import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
-import com.vitorpamplona.ammolite.relays.RelayPool
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
-import java.io.IOException
 import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.ImmutableMap
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toImmutableList
-import kotlinx.collections.immutable.toImmutableMap
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import org.xmlpull.v1.XmlPullParser
-import org.xmlpull.v1.XmlPullParserException
-
-fun Context.getLocaleListFromXml(): LocaleListCompat {
-    val tagsList = mutableListOf<CharSequence>()
-    try {
-        val xpp: XmlPullParser = resources.getXml(R.xml.locales_config)
-        while (xpp.eventType != XmlPullParser.END_DOCUMENT) {
-            if (xpp.eventType == XmlPullParser.START_TAG) {
-                if (xpp.name == "locale") {
-                    tagsList.add(xpp.getAttributeValue(0))
-                }
-            }
-            xpp.next()
-        }
-    } catch (e: XmlPullParserException) {
-        e.printStackTrace()
-    } catch (e: IOException) {
-        e.printStackTrace()
-    }
-
-    return LocaleListCompat.forLanguageTags(tagsList.joinToString(","))
-}
-
-fun Context.getLangPreferenceDropdownEntries(): ImmutableMap<String, String> {
-    val localeList = getLocaleListFromXml()
-    val map = mutableMapOf<String, String>()
-
-    for (a in 0 until localeList.size()) {
-        localeList[a].let {
-            map.put(
-                it!!.getDisplayName(it).replaceFirstChar { char -> char.uppercase() },
-                it.toLanguageTag(),
-            )
-        }
-    }
-    return map.toImmutableMap()
-}
-
-fun getLanguageIndex(
-    languageEntries: ImmutableMap<String, String>,
-    selectedLanguage: String?,
-): Int {
-    var languageIndex: Int
-    languageIndex =
-        if (selectedLanguage != null) {
-            languageEntries.values.toTypedArray().indexOf(selectedLanguage)
-        } else {
-            languageEntries.values.toTypedArray().indexOf(Locale.current.toLanguageTag())
-        }
-    if (languageIndex == -1) {
-        languageIndex = languageEntries.values.toTypedArray().indexOf(Locale.current.language)
-    }
-    if (languageIndex == -1) languageIndex = languageEntries.values.toTypedArray().indexOf("en")
-    return languageIndex
-}
 
 @Composable
 fun SettingsScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
+    navController: NavController,
 ) {
-    var backupDialogOpen by remember { mutableStateOf(false) }
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var checked by remember { mutableStateOf(account.useProxy) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
     var conectOrbotDialogOpen by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
-    val languageEntries = remember { context.getLangPreferenceDropdownEntries() }
-    val languageList = remember { languageEntries.keys.map { TitleExplainer(it) }.toImmutableList() }
-    val languageIndex = getLanguageIndex(languageEntries, account.language)
-    var languageDialog by remember { mutableStateOf(false) }
-    var logDialog by remember { mutableStateOf(false) }
-    var relayDialog by remember { mutableStateOf(false) }
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
-    var signatureDialog by remember { mutableStateOf(false) }
 
     val scope = rememberCoroutineScope()
-    val notificationItems =
-        persistentListOf(
-            TitleExplainer(stringResource(NotificationType.PUSH.resourceId)),
-            TitleExplainer(stringResource(NotificationType.DIRECT.resourceId)),
-        )
-
-    val biometricItems =
-        persistentListOf(
-            TitleExplainer(stringResource(BiometricsTimeType.EVERY_TIME.resourceId)),
-            TitleExplainer(stringResource(BiometricsTimeType.ONE_MINUTE.resourceId)),
-            TitleExplainer(stringResource(BiometricsTimeType.FIVE_MINUTES.resourceId)),
-            TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
-        )
-
-    var notificationTypeDialog by remember { mutableStateOf(false) }
-    var securityDialog by remember { mutableStateOf(false) }
-
-    if (relayDialog) {
-        EditDefaultRelaysDialog(
-            onClose = {
-                relayDialog = false
-            },
-            onPost = {
-                scope.launch(Dispatchers.IO) {
-                    if (it.isNotEmpty()) {
-                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                            defaultRelays = it,
-                        )
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                    }
-                    relayDialog = false
-                }
-            },
-        )
-    }
-
-    if (signatureDialog) {
-        val radioOptions = listOf(
-            TitleExplainer(
-                title = stringResource(R.string.sign_policy_basic),
-                explainer = stringResource(R.string.sign_policy_basic_explainer),
-            ),
-            TitleExplainer(
-                title = stringResource(R.string.sign_policy_manual),
-                explainer = stringResource(R.string.sign_policy_manual_explainer),
-            ),
-        )
-        var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
-
-        Dialog(
-            onDismissRequest = {
-                signatureDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            signatureDialog = false
-                        }
-
-                        PostButton(isActive = true) {
-                            signatureDialog = false
-                            scope.launch(Dispatchers.IO) {
-                                account.signPolicy = selectedOption
-                                LocalPreferences.saveToEncryptedStorage(context, account)
-                            }
-                        }
-                    }
-
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        Arrangement.Center,
-                        Alignment.CenterHorizontally,
-                    ) {
-                        radioOptions.forEachIndexed { index, option ->
-                            Row(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .selectable(
-                                        selected = selectedOption == index,
-                                        onClick = {
-                                            selectedOption = index
-                                        },
-                                    )
-                                    .border(
-                                        width = 1.dp,
-                                        color = if (selectedOption == index) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            Color.Transparent
-                                        },
-                                        shape = RoundedCornerShape(8.dp),
-                                    )
-                                    .padding(16.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                RadioButton(
-                                    selected = selectedOption == index,
-                                    onClick = {
-                                        selectedOption = index
-                                    },
-                                )
-                                Column(
-                                    verticalArrangement = Arrangement.spacedBy(4.dp),
-                                ) {
-                                    Text(
-                                        text = option.title,
-                                        modifier = Modifier.padding(start = 16.dp),
-                                        style = MaterialTheme.typography.titleLarge,
-                                    )
-                                    option.explainer?.let {
-                                        Text(
-                                            text = it,
-                                            modifier = Modifier.padding(start = 16.dp),
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (logDialog) {
-        Dialog(
-            onDismissRequest = {
-                logDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            logDialog = false
-                        }
-                    }
-
-                    val logsFlow = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
-                    val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
-
-                    LazyColumn(
-                        Modifier.weight(1f),
-                    ) {
-                        items(logs.value.size) { index ->
-                            Card(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(6.dp),
-                            ) {
-                                Column(Modifier.padding(6.dp)) {
-                                    val log = logs.value[index]
-                                    Text(
-                                        buildAnnotatedString {
-                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                                append("Date: ")
-                                            }
-                                            append(TimeUtils.convertLongToDateTime(log.time))
-                                        },
-                                    )
-                                    Text(
-                                        buildAnnotatedString {
-                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                                append("URL: ")
-                                            }
-                                            append(log.url)
-                                        },
-                                    )
-                                    Text(
-                                        buildAnnotatedString {
-                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                                append("Type: ")
-                                            }
-                                            append(log.type)
-                                        },
-                                    )
-                                    Text(
-                                        buildAnnotatedString {
-                                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                                append("Message: ")
-                                            }
-                                            append(log.message)
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Box(
-                        Modifier.fillMaxWidth(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Button(
-                            onClick = {
-                                scope.launch(Dispatchers.IO) {
-                                    NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
-                                }
-                            },
-                        ) {
-                            Text(text = stringResource(R.string.clear_logs))
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (notificationTypeDialog) {
-        var notificationItemsIndex by remember {
-            mutableIntStateOf(NostrSigner.getInstance().settings.notificationType.screenCode)
-        }
-        Dialog(
-            onDismissRequest = {
-                notificationTypeDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            notificationTypeDialog = false
-                        }
-
-                        PostButton(
-                            isActive = true,
-                        ) {
-                            notificationTypeDialog = false
-                            scope.launch(Dispatchers.IO) {
-                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                    notificationType = parseNotificationType(notificationItemsIndex),
-                                )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                PushNotificationUtils.hasInit = false
-                                PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
-                                if (notificationItemsIndex == 0) {
-                                    NotificationDataSource.stopSync()
-                                    RelayPool.disconnect()
-                                } else {
-                                    NostrSigner.getInstance().checkForNewRelays()
-                                    NotificationDataSource.start()
-                                }
-                                NostrSigner.getInstance().applicationContext.startForegroundService(
-                                    Intent(
-                                        NostrSigner.getInstance().applicationContext,
-                                        ConnectivityService::class.java,
-                                    ),
-                                )
-                            }
-                        }
-                    }
-
-                    Column {
-                        Box(
-                            Modifier
-                                .padding(8.dp),
-                        ) {
-                            SettingsRow(
-                                R.string.notification_type,
-                                R.string.select_the_type_of_notification_you_want_to_receive,
-                                notificationItems,
-                                notificationItemsIndex,
-                            ) {
-                                notificationItemsIndex = it
-                            }
-                        }
-
-                        @Suppress("KotlinConstantConditions")
-                        if (BuildConfig.FLAVOR == "free") {
-                            Box(
-                                Modifier
-                                    .padding(8.dp),
-                            ) {
-                                PushNotificationSettingsRow()
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (languageDialog) {
-        Dialog(
-            onDismissRequest = {
-                languageDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            languageDialog = false
-                        }
-                    }
-
-                    Column {
-                        Box(
-                            Modifier
-                                .padding(8.dp),
-                        ) {
-                            SettingsRow(
-                                R.string.language,
-                                R.string.language_description,
-                                languageList,
-                                languageIndex,
-                            ) {
-                                account.language = languageEntries[languageList[it].title]
-                                LocalPreferences.saveToEncryptedStorage(context, account)
-                                AppCompatDelegate.setApplicationLocales(
-                                    LocaleListCompat.forLanguageTags(account.language),
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    if (securityDialog) {
-        var biometricsIndex by remember {
-            mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
-        }
-
-        Dialog(
-            onDismissRequest = {
-                securityDialog = false
-            },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
-        ) {
-            var enableBiometrics by remember { mutableStateOf(NostrSigner.getInstance().settings.useAuth) }
-
-            Surface(Modifier.fillMaxSize()) {
-                Column(
-                    modifier = Modifier.padding(10.dp),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        CloseButton {
-                            securityDialog = false
-                        }
-                        PostButton(isActive = true) {
-                            securityDialog = false
-                            scope.launch(Dispatchers.IO) {
-                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                    useAuth = enableBiometrics,
-                                    biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
-                                )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                            }
-                        }
-                    }
-
-                    Column {
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .clickable {
-                                    enableBiometrics = !enableBiometrics
-                                },
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = stringResource(R.string.enable_biometrics),
-                            )
-                            Switch(
-                                checked = enableBiometrics,
-                                onCheckedChange = {
-                                    enableBiometrics = !enableBiometrics
-                                },
-                            )
-                        }
-                        Box(
-                            Modifier
-                                .padding(8.dp),
-                        ) {
-                            SettingsRow(
-                                R.string.when_to_ask,
-                                R.string.when_to_ask,
-                                biometricItems,
-                                biometricsIndex,
-                            ) {
-                                biometricsIndex = it
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     if (logoutDialog) {
         LogoutDialog(
@@ -628,7 +102,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Security,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        securityDialog = true
+                        navController.navigate(Route.Security.route)
                     },
                 )
             }
@@ -643,7 +117,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Key,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    backupDialogOpen = true
+                    navController.navigate(Route.AccountBackup.route)
                 },
             )
         }
@@ -657,7 +131,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Language,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    languageDialog = true
+                    navController.navigate(Route.Language.route)
                 },
             )
         }
@@ -673,7 +147,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Notifications,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        notificationTypeDialog = true
+                        navController.navigate(Route.NotificationType.route)
                     },
                 )
             }
@@ -713,7 +187,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Hub,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    relayDialog = true
+                    navController.navigate(Route.DefaultRelays.route)
                 },
             )
         }
@@ -743,7 +217,7 @@ fun SettingsScreen(
                 icon = Icons.Default.FilterList,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    logDialog = true
+                    navController.navigate(Route.Logs.route)
                 },
             )
         }
@@ -757,7 +231,7 @@ fun SettingsScreen(
                 icon = Icons.Default.Draw,
                 tint = MaterialTheme.colorScheme.onBackground,
                 onClick = {
-                    signatureDialog = true
+                    navController.navigate(Route.SignPolicy.route)
                 },
             )
         }
@@ -831,10 +305,6 @@ fun SettingsScreen(
                 }
             },
         )
-    }
-
-    if (backupDialogOpen) {
-        AccountBackupDialog(account, onClose = { backupDialogOpen = false })
     }
 }
 

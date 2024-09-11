@@ -46,4 +46,60 @@ sealed class Route(
         icon = Icons.AutoMirrored.Outlined.ViewList,
         selectedIcon = Icons.AutoMirrored.Default.ViewList,
     )
+
+    data object AccountBackup : Route(
+        title = "",
+        route = "AccountBackup",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object Logs : Route(
+        title = "",
+        route = "Logs",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object ActiveRelays : Route(
+        title = "",
+        route = "ActiveRelays",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object Language : Route(
+        title = "",
+        route = "Language",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object NotificationType : Route(
+        title = "",
+        route = "NotificationType",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object DefaultRelays : Route(
+        title = "",
+        route = "DefaultRelays",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object SignPolicy : Route(
+        title = "",
+        route = "SignPolicy",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object Security : Route(
+        title = "",
+        route = "Security",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }

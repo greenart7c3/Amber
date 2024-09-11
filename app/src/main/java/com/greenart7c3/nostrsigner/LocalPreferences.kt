@@ -118,6 +118,12 @@ object LocalPreferences {
         }.apply()
     }
 
+    suspend fun isNotificationTypeConfigured(): Boolean {
+        val context = NostrSigner.getInstance()
+        val prefs = encryptedPreferences(context)
+        return prefs.contains(PrefKeys.NOTIFICATION_TYPE)
+    }
+
     suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
         val context = NostrSigner.getInstance()
 
@@ -130,7 +136,7 @@ object LocalPreferences {
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
                 lastBiometricsTime = getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0),
                 useAuth = getBoolean(PrefKeys.USE_AUTH, false),
-                notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 0)),
+                notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 1)),
                 biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
             )
         }

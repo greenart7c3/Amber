@@ -97,23 +97,26 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
 
+    if (System.getenv('SIGN_RELEASE')) {
+        def keystorePropertiesFile = rootProject.file("keystore.properties")
+        def keystoreProperties = new Properties()
+        keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
 
-    def keystorePropertiesFile = rootProject.file("keystore.properties")
-    def keystoreProperties = new Properties()
-    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
-
-    signingConfigs {
-        release {
-            keyAlias keystoreProperties['keyAlias']
-            keyPassword keystoreProperties['keyPassword']
-            storeFile file(keystoreProperties['storeFile'])
-            storePassword keystoreProperties['storePassword']
+        signingConfigs {
+            release {
+                keyAlias keystoreProperties['keyAlias']
+                keyPassword keystoreProperties['keyPassword']
+                storeFile file(keystoreProperties['storeFile'])
+                storePassword keystoreProperties['storePassword']
+            }
         }
     }
 
     buildTypes {
         release {
-	    signingConfig signingConfigs.release	
+            if (System.getenv('SIGN_RELEASE')) {
+                signingConfig signingConfigs.release
+            }
             proguardFiles getDefaultProguardFile("proguard-android-optimize.txt"), 'proguard-rules.pro'
             minifyEnabled true
             resValue "string", "app_name", "@string/app_name_release"

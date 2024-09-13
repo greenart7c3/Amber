@@ -28,6 +28,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Create keystore.properties
+        run: touch keystore.properties
+
       - name: Linter (gradle)
         run: ./gradlew ktlintCheck
 

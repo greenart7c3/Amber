@@ -22,6 +22,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -119,6 +120,26 @@ fun MultiEventHomeScreen(
             mutableStateOf(false)
         }
     }
+    val acceptEventsGroup1 = grouped.map {
+        remember {
+            mutableStateOf(true)
+        }
+    }
+    val acceptEventsGroup2 = grouped.map {
+        remember {
+            mutableStateOf(true)
+        }
+    }
+    val showItemsGroup1 = grouped.map {
+        remember {
+            mutableStateOf(false)
+        }
+    }
+    val showItemsGroup2 = grouped.map {
+        remember {
+            mutableStateOf(false)
+        }
+    }
 
     Column(
         Modifier.fillMaxSize(),
@@ -126,10 +147,12 @@ fun MultiEventHomeScreen(
         var selectAll by remember {
             mutableStateOf(true)
         }
+
         SelectAllButton(
             checked = selectAll,
         ) {
             selectAll = !selectAll
+            acceptEventsGroup1.forEach { it.value = selectAll }
             intents.forEach {
                 it.checked.value = selectAll
             }
@@ -141,26 +164,27 @@ fun MultiEventHomeScreen(
                 item {
                     Card(
                         Modifier
-                            .padding(4.dp)
-                            .clickable {
-                                rememberMyChoices[index].value = !rememberMyChoices[index].value
-                                it.second.forEach { item ->
-                                    item.rememberMyChoice.value = rememberMyChoices[index].value
-                                }
-                            },
+                            .padding(4.dp),
                     ) {
-                        Row(
+                        Column(
                             Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                                .padding(4.dp),
                         ) {
                             Row(
-                                Modifier
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(8.dp),
-                                Arrangement.SpaceBetween,
+                                    .padding(8.dp)
+                                    .clickable {
+                                        acceptEventsGroup1[index].value = !acceptEventsGroup1[index].value
+                                    },
                             ) {
+                                Text(
+                                    text = "${it.second.size} - ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                )
+
                                 val permission = Permission(it.first.toString().toLowerCase(Locale.current), null)
                                 val message = if (it.first == SignerType.CONNECT) {
                                     stringResource(R.string.connect)
@@ -168,35 +192,67 @@ fun MultiEventHomeScreen(
                                     permission.toLocalizedString(context)
                                 }
                                 Text(
+                                    modifier = Modifier.weight(1f),
                                     text = message,
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )
-                                Text(
-                                    text = it.second.size.toString(),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
+
+                                Switch(
+                                    checked = acceptEventsGroup1[index].value,
+                                    onCheckedChange = { _ ->
+                                        acceptEventsGroup1[index].value = !acceptEventsGroup1[index].value
+                                        it.second.forEach { item ->
+                                            item.checked.value = acceptEventsGroup1[index].value
+                                        }
+                                    },
+                                )
+                            }
+
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                            ) {
+                                RememberMyChoice(
+                                    shouldRunAcceptOrReject = null,
+                                    rememberMyChoices[index].value,
+                                    null,
+                                    true,
+                                    { },
+                                    { },
+                                ) {
+                                    rememberMyChoices[index].value = !rememberMyChoices[index].value
+                                    it.second.forEach { item ->
+                                        item.rememberMyChoice.value = rememberMyChoices[index].value
+                                    }
+                                }
+                            }
+
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Button(
+                                    onClick = {
+                                        showItemsGroup1[index].value = !showItemsGroup1[index].value
+                                    },
+                                    content = {
+                                        Text(if (showItemsGroup1[index].value) context.getString(R.string.hide_details) else context.getString(R.string.show_details))
+                                    },
                                 )
                             }
                         }
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp),
-                        ) {
-                            RememberMyChoice(
-                                shouldRunAcceptOrReject = null,
-                                rememberMyChoices[index].value,
-                                null,
-                                true,
-                                { },
-                                { },
-                            ) {
-                                rememberMyChoices[index].value = !rememberMyChoices[index].value
-                                it.second.forEach { item ->
-                                    item.rememberMyChoice.value = rememberMyChoices[index].value
-                                }
-                            }
+                    }
+                }
+
+                if (showItemsGroup1[index].value) {
+                    it.second.forEach {
+                        item {
+                            ListItem(it, packageName)
                         }
                     }
                 }
@@ -205,56 +261,88 @@ fun MultiEventHomeScreen(
                 item {
                     Card(
                         Modifier
-                            .padding(4.dp)
-                            .clickable {
-                                rememberMyChoices2[index].value = !rememberMyChoices2[index].value
-                                it.second.forEach { item ->
-                                    item.rememberMyChoice.value = rememberMyChoices2[index].value
-                                }
-                            },
+                            .padding(4.dp),
                     ) {
-                        Row(
+                        Column(
                             Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
+                                .padding(4.dp),
                         ) {
                             Row(
-                                Modifier
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(8.dp),
-                                Arrangement.SpaceBetween,
+                                    .padding(8.dp)
+                                    .clickable {
+                                        acceptEventsGroup2[index].value = !acceptEventsGroup2[index].value
+                                    },
                             ) {
                                 Text(
+                                    text = "${it.second.size} - ",
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                )
+
+                                Text(
+                                    modifier = Modifier.weight(1f),
                                     text = Permission("sign_event", it.first).toLocalizedString(context),
                                     fontWeight = FontWeight.Bold,
                                     fontSize = 18.sp,
                                 )
-                                Text(
-                                    text = it.second.size.toString(),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
+
+                                Switch(
+                                    checked = acceptEventsGroup2[index].value,
+                                    onCheckedChange = { _ ->
+                                        acceptEventsGroup2[index].value = !acceptEventsGroup2[index].value
+                                        it.second.forEach { item ->
+                                            item.checked.value = acceptEventsGroup2[index].value
+                                        }
+                                    },
+                                )
+                            }
+
+                            Box(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 10.dp),
+                            ) {
+                                RememberMyChoice(
+                                    shouldRunAcceptOrReject = null,
+                                    rememberMyChoices2[index].value,
+                                    null,
+                                    true,
+                                    { },
+                                    { },
+                                ) {
+                                    rememberMyChoices2[index].value = !rememberMyChoices2[index].value
+                                    it.second.forEach { item ->
+                                        item.rememberMyChoice.value = rememberMyChoices2[index].value
+                                    }
+                                }
+                            }
+
+                            Row(
+                                Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Button(
+                                    onClick = {
+                                        showItemsGroup2[index].value = !showItemsGroup2[index].value
+                                    },
+                                    content = {
+                                        Text(if (showItemsGroup2[index].value) context.getString(R.string.hide_details) else context.getString(R.string.show_details))
+                                    },
                                 )
                             }
                         }
-                        Box(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 10.dp),
-                        ) {
-                            RememberMyChoice(
-                                shouldRunAcceptOrReject = null,
-                                rememberMyChoices2[index].value,
-                                null,
-                                true,
-                                { },
-                                { },
-                            ) {
-                                rememberMyChoices2[index].value = !rememberMyChoices2[index].value
-                                it.second.forEach { item ->
-                                    item.rememberMyChoice.value = rememberMyChoices2[index].value
-                                }
-                            }
+                    }
+                }
+                if (showItemsGroup2[index].value) {
+                    it.second.forEach {
+                        item {
+                            ListItem(it, packageName)
                         }
                     }
                 }
@@ -564,10 +652,16 @@ fun ListItem(
         "$packageName"
     }
 
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(
-        context,
-        intentData.currentAccount,
-    )?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
+    var localAccount by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            localAccount = LocalPreferences.loadFromEncryptedStorage(
+                context,
+                intentData.currentAccount,
+            )?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
+        }
+    }
 
     val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
 

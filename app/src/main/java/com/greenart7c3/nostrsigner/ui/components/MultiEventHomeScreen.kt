@@ -125,7 +125,7 @@ fun MultiEventHomeScreen(
             mutableStateOf(true)
         }
     }
-    val acceptEventsGroup2 = grouped.map {
+    val acceptEventsGroup2 = grouped2.map {
         remember {
             mutableStateOf(true)
         }
@@ -135,7 +135,7 @@ fun MultiEventHomeScreen(
             mutableStateOf(false)
         }
     }
-    val showItemsGroup2 = grouped.map {
+    val showItemsGroup2 = grouped2.map {
         remember {
             mutableStateOf(false)
         }

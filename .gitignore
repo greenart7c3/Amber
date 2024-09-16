@@ -15,8 +15,8 @@
 .cxx
 .kotlin/
 keystore.properties
-free/
-offline/
+/free/
+/offline/
 app/free/release/
 app/play/release/
 app/offline/release/

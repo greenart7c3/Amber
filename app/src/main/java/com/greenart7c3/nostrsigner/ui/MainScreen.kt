@@ -35,8 +35,11 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.RichTooltip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TooltipBox
+import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -351,6 +354,7 @@ fun PermissionsFloatingActionButton(
     account: Account,
     goToTop: () -> Unit,
 ) {
+    val clipboardManager = LocalClipboardManager.current
     var expanded by remember { mutableStateOf(false) }
     var dialogOpen by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -379,15 +383,58 @@ fun PermissionsFloatingActionButton(
                     Modifier
                         .padding(end = 10.dp)
                         .clickable {
-                            dialogOpen = true
+                            clipboardManager.getText()?.let {
+                                if (it.text.isBlank()) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.invalid_nostr_connect_uri),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@let
+                                }
+                                if (!it.text.startsWith("nostrconnect://")) {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.invalid_nostr_connect_uri),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                    return@let
+                                }
+
+                                val intent = Intent(Intent.ACTION_VIEW)
+                                intent.data = Uri.parse(it.text)
+                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                                context.getAppCompatActivity()?.startActivity(intent)
+                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+                            }
                             expanded = false
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    val clipboardManager = LocalClipboardManager.current
-                    RichTooltip {
-                        Text(stringResource(R.string.paste_from_clipboard))
-                    }
+                    val tooltipState = rememberTooltipState()
+                    val positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
+
+                    TooltipBox(
+                        content = {
+                            Surface(
+                                shape = TooltipDefaults.richTooltipContainerShape,
+                                color = TooltipDefaults.richTooltipColors().containerColor,
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                ) {
+                                    Text(
+                                        stringResource(R.string.paste_from_clipboard),
+                                        modifier = Modifier.padding(vertical = 4.dp),
+                                    )
+                                }
+                            }
+                        },
+                        state = tooltipState,
+                        positionProvider = positionProvider,
+                        tooltip = {},
+                    )
+
                     Spacer(modifier = Modifier.size(4.dp))
                     FloatingActionButton(
                         onClick = {
@@ -439,9 +486,30 @@ fun PermissionsFloatingActionButton(
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RichTooltip {
-                        Text(stringResource(R.string.connect_app))
-                    }
+                    val tooltipState = rememberTooltipState()
+                    val positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
+
+                    TooltipBox(
+                        content = {
+                            Surface(
+                                shape = TooltipDefaults.richTooltipContainerShape,
+                                color = TooltipDefaults.richTooltipColors().containerColor,
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                ) {
+                                    Text(
+                                        stringResource(R.string.connect_app),
+                                        modifier = Modifier.padding(vertical = 4.dp),
+                                    )
+                                }
+                            }
+                        },
+                        state = tooltipState,
+                        positionProvider = positionProvider,
+                        tooltip = { },
+                    )
+
                     Spacer(modifier = Modifier.size(4.dp))
                     FloatingActionButton(
                         onClick = {
@@ -470,9 +538,30 @@ fun PermissionsFloatingActionButton(
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    RichTooltip {
-                        Text(stringResource(R.string.new_app))
-                    }
+                    val tooltipState = rememberTooltipState()
+                    val positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
+
+                    TooltipBox(
+                        content = {
+                            Surface(
+                                shape = TooltipDefaults.richTooltipContainerShape,
+                                color = TooltipDefaults.richTooltipColors().containerColor,
+                            ) {
+                                Column(
+                                    modifier = Modifier.padding(horizontal = 16.dp),
+                                ) {
+                                    Text(
+                                        stringResource(R.string.new_app),
+                                        modifier = Modifier.padding(vertical = 4.dp),
+                                    )
+                                }
+                            }
+                        },
+                        state = tooltipState,
+                        positionProvider = positionProvider,
+                        tooltip = { },
+                    )
+
                     Spacer(modifier = Modifier.size(4.dp))
                     FloatingActionButton(
                         onClick = {
@@ -513,6 +602,7 @@ fun PermissionsFloatingActionButton(
                 if (expanded) Icons.Default.Close else Icons.Default.Add,
                 contentDescription = stringResource(R.string.connect_app),
                 modifier = Modifier.rotate(rotation),
+                tint = Color.White,
             )
         }
     }

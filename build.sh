@@ -9,6 +9,9 @@ version=$1
 
 ./gradlew clean bundleRelease --stacktrace
 ./gradlew assembleRelease --stacktrace
+rm ~/release/amber-*
+rm ~/release/citrine-*
+rm ~/release/manifest-*
 mv app/build/outputs/bundle/playRelease/app-play-release.aab ~/release/
 mv app/build/outputs/bundle/offlineRelease/app-offline-release.aab ~/release/
 mv app/build/outputs/bundle/freeRelease/app-free-release.aab ~/release/

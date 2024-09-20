@@ -5,13 +5,12 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.LiveData
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.events.RelayAuthEvent
-import com.vitorpamplona.quartz.signers.NostrSigner
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
 
 @Stable
 class Account(
     val keyPair: KeyPair,
-    val signer: NostrSigner = NostrSignerInternal(keyPair),
+    val signer: NostrSignerInternal = NostrSignerInternal(keyPair),
     var name: String,
     var useProxy: Boolean,
     var proxyPort: Int,

@@ -5,6 +5,7 @@ import android.content.ContentValues
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
+import android.util.Log
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
@@ -166,9 +167,10 @@ class SignerProvider : ContentProvider() {
                     }
                 }
 
-                var cursor: MatrixCursor? = null
+                val signedEvent = account.signer.signerSync.sign<Event>(event.createdAt, event.kind, event.tags, event.content)
 
-                account.signer.sign<Event>(event.createdAt, event.kind, event.tags, event.content) { signedEvent ->
+                if (signedEvent == null) {
+                    Log.d("SignerProvider", "Failed to sign event from $packageName")
                     database.applicationDao().addHistory(
                         HistoryEntity(
                             0,
@@ -176,31 +178,38 @@ class SignerProvider : ContentProvider() {
                             "SIGN_EVENT",
                             event.kind,
                             TimeUtils.now(),
-                            true,
+                            false,
                         ),
                     )
+                    return null
+                }
 
-                    val localCursor =
-                        MatrixCursor(arrayOf("signature", "event")).also {
-                            val signature =
-                                if (event is LnZapRequestEvent &&
-                                    event.tags.any {
-                                            tag ->
-                                        tag.any { t -> t == "anon" }
-                                    }
-                                ) {
-                                    signedEvent.toJson()
-                                } else {
-                                    signedEvent.sig
+                database.applicationDao().addHistory(
+                    HistoryEntity(
+                        0,
+                        sortOrder ?: packageName,
+                        "SIGN_EVENT",
+                        event.kind,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                )
+
+                val cursor =
+                    MatrixCursor(arrayOf("signature", "event")).also {
+                        val signature =
+                            if (event is LnZapRequestEvent &&
+                                event.tags.any {
+                                        tag ->
+                                    tag.any { t -> t == "anon" }
                                 }
-                            it.addRow(arrayOf(signature, signedEvent.toJson()))
-                        }
-                    cursor = localCursor
-                }
-
-                while (cursor == null) {
-                    // do nothing
-                }
+                            ) {
+                                signedEvent.toJson()
+                            } else {
+                                signedEvent.sig
+                            }
+                        it.addRow(arrayOf(signature, signedEvent.toJson()))
+                    }
 
                 return cursor
             }

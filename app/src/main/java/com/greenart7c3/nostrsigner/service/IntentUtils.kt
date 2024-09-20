@@ -812,8 +812,8 @@ object IntentUtils {
                 if (paramName == "perms") {
                     if (json.isNotEmpty()) {
                         val splitPerms = json.split(",")
-                        splitPerms.forEach {
-                            val split2 = it.split(":")
+                        splitPerms.forEach { perm ->
+                            val split2 = perm.split(":")
                             val permissionType = split2.first()
                             val kind =
                                 try {
@@ -837,8 +837,8 @@ object IntentUtils {
                     name = bunkerMetada.name
                     if (bunkerMetada.perms.isNotEmpty()) {
                         val splitPerms = bunkerMetada.perms.split(",")
-                        splitPerms.forEach {
-                            val split2 = it.split(":")
+                        splitPerms.forEach { perm ->
+                            val split2 = perm.split(":")
                             val permissionType = split2.first()
                             val kind =
                                 try {

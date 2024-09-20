@@ -1,5 +1,3 @@
-@file:OptIn(DelicateCoroutinesApi::class)
-
 package com.greenart7c3.nostrsigner.relays
 
 import android.annotation.SuppressLint
@@ -12,7 +10,6 @@ import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
-import kotlinx.coroutines.DelicateCoroutinesApi
 
 @SuppressLint("StaticFieldLeak")
 object AmberListenerSingleton {

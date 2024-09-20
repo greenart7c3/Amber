@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
 import android.widget.Toast
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -99,7 +98,6 @@ fun AmberLogo(size: Int) {
     )
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainPage(
     scope: CoroutineScope,
@@ -165,7 +163,6 @@ fun MainPage(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MainLoginPage(
     accountViewModel: AccountStateViewModel,
@@ -202,7 +199,6 @@ fun MainLoginPage(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SignUpPage(
     accountViewModel: AccountStateViewModel,
@@ -269,7 +265,6 @@ fun SignUpPage(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun OrbotPage(
     connectOrbotDialogOpen: MutableState<Boolean>,
@@ -486,7 +481,7 @@ fun SignPolicyScreen(
     }
 }
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun LoginPage(accountViewModel: AccountStateViewModel) {
     val pageState = rememberPagerState {
@@ -594,7 +589,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                             value = key.value,
                             onValueChange = { key.value = it },
                             keyboardOptions = KeyboardOptions(
-                                autoCorrect = false,
+                                autoCorrectEnabled = false,
                                 keyboardType = KeyboardType.Password,
                                 imeAction = ImeAction.Go,
                             ),
@@ -692,7 +687,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                                     }
                                 },
                                 keyboardOptions = KeyboardOptions(
-                                    autoCorrect = false,
+                                    autoCorrectEnabled = false,
                                     keyboardType = KeyboardType.Password,
                                     imeAction = ImeAction.Go,
                                 ),

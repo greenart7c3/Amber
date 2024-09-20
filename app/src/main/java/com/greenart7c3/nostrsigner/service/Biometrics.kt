@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
 import android.content.ContextWrapper
@@ -66,6 +67,7 @@ object Biometrics {
             BiometricPrompt(
                 fragmentContext,
                 object : BiometricPrompt.AuthenticationCallback() {
+                    @SuppressLint("StringFormatInvalid")
                     override fun onAuthenticationError(
                         errorCode: Int,
                         errString: CharSequence,

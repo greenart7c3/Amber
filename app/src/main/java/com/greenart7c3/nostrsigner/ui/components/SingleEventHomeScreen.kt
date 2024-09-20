@@ -134,11 +134,7 @@ fun SingleEventHomeScreen(
                         coroutineScope.launch(Dispatchers.IO) {
                             val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                             val savedApplication = database.applicationDao().getByKey(key)
-                            val relays = if (savedApplication != null) {
-                                savedApplication.application.relays.ifEmpty { defaultRelays }
-                            } else {
-                                intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
-                            }
+                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
 
                             NostrSigner.getInstance().checkForNewRelays(
                                 NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
@@ -225,11 +221,7 @@ fun SingleEventHomeScreen(
 
                         val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val savedApplication = database.applicationDao().getByKey(key)
-                        val relays = if (savedApplication != null) {
-                            savedApplication.application.relays.ifEmpty { defaultRelays }
-                        } else {
-                            intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
-                        }
+                        val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                         if (intentData.bunkerRequest != null) {
                             NostrSigner.getInstance().checkForNewRelays(
                                 NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
@@ -365,11 +357,7 @@ fun SingleEventHomeScreen(
                         }
                         val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val savedApplication = database.applicationDao().getByKey(key)
-                        val relays = if (savedApplication != null) {
-                            savedApplication.application.relays.ifEmpty { defaultRelays }
-                        } else {
-                            intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
-                        }
+                        val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                         if (intentData.bunkerRequest != null) {
                             NostrSigner.getInstance().checkForNewRelays(
                                 NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
@@ -518,11 +506,7 @@ fun SingleEventHomeScreen(
 
                             val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                             val savedApplication = database.applicationDao().getByKey(key)
-                            val relays = if (savedApplication != null) {
-                                savedApplication.application.relays.ifEmpty { defaultRelays }
-                            } else {
-                                intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
-                            }
+                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                             if (intentData.bunkerRequest != null) {
                                 NostrSigner.getInstance().checkForNewRelays(
                                     NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,

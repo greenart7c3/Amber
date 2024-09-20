@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -70,6 +71,7 @@ import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@SuppressLint("StringFormatInvalid")
 @Composable
 fun EditPermission(
     modifier: Modifier,

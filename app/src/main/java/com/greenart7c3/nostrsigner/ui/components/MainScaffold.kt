@@ -158,7 +158,7 @@ fun MainScaffold(
                     Row(
                         Modifier
                             .border(
-                                border = ButtonDefaults.outlinedButtonBorder,
+                                border = ButtonDefaults.outlinedButtonBorder(),
                                 shape = ButtonBorder,
                             )
                             .padding(8.dp)

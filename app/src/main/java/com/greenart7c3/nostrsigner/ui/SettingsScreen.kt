@@ -36,10 +36,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.ParagraphStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -50,7 +56,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
-import com.greenart7c3.nostrsigner.ui.components.HyperlinkText
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
@@ -238,24 +243,49 @@ fun SettingsScreen(
 
         Spacer(modifier = Modifier.weight(1f))
 
-        HyperlinkText(
-            Modifier
+        val primaryColor = MaterialTheme.colorScheme.primary
+
+        Text(
+            buildAnnotatedString {
+                withStyle(
+                    style = ParagraphStyle(
+                        textAlign = TextAlign.Center,
+                    ),
+                ) {
+                    append("v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n")
+                    withLink(
+                        LinkAnnotation.Url(
+                            context.getString(R.string.amber_github_uri),
+                            styles = TextLinkStyles(
+                                style = SpanStyle(
+                                    color = primaryColor,
+                                    textDecoration = TextDecoration.Underline,
+                                ),
+                            ),
+                        ),
+                    ) {
+                        append("${context.getString(R.string.source_code)}\n\n")
+                    }
+                    withLink(
+                        LinkAnnotation.Url(
+                            context.getString(R.string.support_development_uri),
+                            styles = TextLinkStyles(
+                                style = SpanStyle(
+                                    color = primaryColor,
+                                    textDecoration = TextDecoration.Underline,
+                                ),
+                            ),
+                        ),
+                    ) {
+                        append(context.getString(R.string.support_development))
+                    }
+                }
+                toAnnotatedString()
+            },
+            fontSize = 18.sp,
+            modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
-            fullText = "v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n${context.getString(
-                R.string.support_development,
-            )}\n\n${context.getString(R.string.source_code)}",
-            hyperLinks = mutableMapOf(
-                stringResource(R.string.source_code) to stringResource(R.string.amber_github_uri),
-                stringResource(R.string.support_development) to stringResource(R.string.support_development_uri),
-            ),
-            textStyle = TextStyle(
-                textAlign = TextAlign.Center,
-                color = MaterialTheme.colorScheme.inverseSurface,
-            ),
-            linkTextColor = MaterialTheme.colorScheme.primary,
-            linkTextDecoration = TextDecoration.Underline,
-            fontSize = 18.sp,
         )
     }
 

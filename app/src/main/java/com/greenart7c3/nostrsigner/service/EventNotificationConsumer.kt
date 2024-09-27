@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.vitorpamplona.quartz.encoders.Hex
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.GiftWrapEvent
@@ -53,20 +54,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     fun consume(event: Event) {
         if (!notificationManager().areNotificationsEnabled()) return
         if (event.kind() != 24133) return
+        if (!event.hasCorrectIDHash()) return
+        if (!event.hasVerifiedSignature()) return
 
-        // PushNotification Wraps don't include a receiver.
-        // Test with all logged in accounts
-        LocalPreferences.allSavedAccounts(applicationContext).forEach {
-            if (it.hasPrivKey) {
-                LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    notify(event, acc)
-                }
-            }
+        val taggedKey = event.taggedUsers().firstOrNull() ?: return
+        LocalPreferences.loadFromEncryptedStorage(applicationContext, Hex.decode(taggedKey).toNpub())?.let { acc ->
+            notify(event, acc)
         }
     }
 
     fun consume(event: GiftWrapEvent) {
         if (!notificationManager().areNotificationsEnabled()) return
+        if (!event.hasCorrectIDHash()) return
+        if (!event.hasVerifiedSignature()) return
 
         // PushNotification Wraps don't include a receiver.
         // Test with all logged in accounts
@@ -88,7 +88,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         pushWrappedEvent.unwrap(account.signer) { notificationEvent ->
             unwrapAndConsume(notificationEvent, account) { innerEvent ->
                 if (innerEvent.kind == 24133) {
-                    notify(innerEvent, account)
+                    if (innerEvent.hasCorrectIDHash()) {
+                        if (innerEvent.hasVerifiedSignature()) {
+                            notify(innerEvent, account)
+                        }
+                    }
                 }
             }
         }

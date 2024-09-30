@@ -121,6 +121,14 @@ fun EditPermission(
         }
     }
 
+    LaunchedEffect(bunkerUri) {
+        launch(Dispatchers.IO) {
+            if (!applicationData.isConnected) {
+                clipboardManager.setText(AnnotatedString(bunkerUri))
+            }
+        }
+    }
+
     if (editRelaysDialog) {
         EditRelaysDialog(
             applicationData = applicationData,
@@ -456,6 +464,13 @@ fun EditPermission(
         ) {
             Button(
                 onClick = {
+                    if (!applicationData.isConnected) {
+                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
+                        val localSecret = if (applicationData.useSecret) "&secret=${applicationData.secret}" else ""
+                        val localBunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+                        clipboardManager.setText(AnnotatedString(localBunkerUri))
+                    }
+
                     navController.navigateUp()
                 },
                 Modifier.padding(6.dp),

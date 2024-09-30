@@ -23,6 +23,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
@@ -56,6 +57,19 @@ fun SignMessage(
             .padding(8.dp),
     ) {
         val message = stringResource(R.string.sign_message)
+
+        packageName?.let {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                text = it,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center,
+            )
+            Spacer(Modifier.size(4.dp))
+        }
+
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

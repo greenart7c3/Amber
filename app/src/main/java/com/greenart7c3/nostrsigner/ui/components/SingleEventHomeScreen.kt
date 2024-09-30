@@ -96,6 +96,7 @@ fun SingleEventHomeScreen(
 
             LoginWithPubKey(
                 account,
+                packageName,
                 appName,
                 applicationName,
                 intentData.permissions,

@@ -312,8 +312,7 @@ object LocalPreferences {
             it.useProxy = useProxy
             it.proxyPort = port
         }
-        val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", port)
-        HttpClientManager.setDefaultProxy(proxy)
+        HttpClientManager.setDefaultProxyOnPort(port)
     }
 
     private suspend fun convertToDatabase(
@@ -383,12 +382,11 @@ object LocalPreferences {
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
             val useProxy = getBoolean(PrefKeys.USE_PROXY, false)
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
-            val proxy = HttpClientManager.initProxy(useProxy, "127.0.0.1", proxyPort)
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
             val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
             val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
             val seedWords = getStringSet(PrefKeys.SEED_WORDS, null) ?: emptySet()
-            HttpClientManager.setDefaultProxy(proxy)
+            HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =
                 Account(
                     keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),

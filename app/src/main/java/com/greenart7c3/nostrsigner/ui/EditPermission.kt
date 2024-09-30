@@ -133,6 +133,7 @@ fun EditPermission(
         EditRelaysDialog(
             applicationData = applicationData,
             accountStateViewModel = accountStateViewModel,
+            account = account,
             onClose = {
                 editRelaysDialog = false
             },

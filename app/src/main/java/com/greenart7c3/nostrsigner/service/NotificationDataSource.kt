@@ -219,10 +219,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
         LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
             val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub) ?: return@forEach
             account.createAuthEvent(relay.url, challenge) { authEvent ->
-                Client.send(
-                    authEvent,
-                    relay.url,
-                )
+                Client.sendIfExists(authEvent, relay)
             }
         }
     }

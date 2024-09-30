@@ -162,7 +162,18 @@ class RegisterAccounts(
                     .post(body)
                     .build()
 
-            val client = HttpClientManager.getHttpClient()
+            val useProxy = accounts.any {
+                val account = LocalPreferences.loadFromEncryptedStorage(context = NostrSigner.getInstance(), npub = it.npub)
+                val useProxy = account?.useProxy ?: false
+
+                if (useProxy) {
+                    HttpClientManager.setDefaultProxyOnPort(account?.proxyPort ?: 9050)
+                }
+
+                useProxy
+            }
+
+            val client = HttpClientManager.getHttpClient(useProxy)
             var isSuccess = client.newCall(request).execute().use {
                 it.isSuccessful
             }

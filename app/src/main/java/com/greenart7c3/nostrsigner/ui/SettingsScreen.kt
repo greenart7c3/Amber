@@ -51,17 +51,21 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -297,6 +301,15 @@ fun SettingsScreen(
                 disconnectTorDialog = false
                 checked = true
                 LocalPreferences.updateProxy(context, true, proxyPort.value.toInt())
+                scope.launch(Dispatchers.IO) {
+                    NotificationDataSource.stopSync()
+                    if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
+                        RelayPool.disconnect()
+                    } else {
+                        NostrSigner.getInstance().checkForNewRelays()
+                        NotificationDataSource.start()
+                    }
+                }
             },
             onError = {
                 scope.launch {
@@ -322,6 +335,15 @@ fun SettingsScreen(
                         disconnectTorDialog = false
                         checked = false
                         LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
+                        scope.launch(Dispatchers.IO) {
+                            NotificationDataSource.stopSync()
+                            if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
+                                RelayPool.disconnect()
+                            } else {
+                                NostrSigner.getInstance().checkForNewRelays()
+                                NotificationDataSource.start()
+                            }
+                        }
                     },
                 ) {
                     Text(text = stringResource(R.string.yes))

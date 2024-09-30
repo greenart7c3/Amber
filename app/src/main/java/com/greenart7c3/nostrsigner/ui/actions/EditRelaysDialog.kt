@@ -57,6 +57,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -84,6 +85,7 @@ import kotlinx.coroutines.withContext
 fun EditRelaysDialog(
     applicationData: ApplicationEntity,
     accountStateViewModel: AccountStateViewModel,
+    account: Account,
     onClose: () -> Unit,
     onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
 ) {
@@ -196,6 +198,7 @@ fun EditRelaysDialog(
                                             relays2,
                                             scope,
                                             accountStateViewModel,
+                                            account,
                                             context,
                                         )
                                     }
@@ -215,6 +218,7 @@ fun EditRelaysDialog(
                                         relays2,
                                         scope,
                                         accountStateViewModel,
+                                        account,
                                         context,
                                     )
                                 }
@@ -236,6 +240,7 @@ fun EditRelaysDialog(
 fun DefaultRelaysScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
+    account: Account,
     navController: NavController,
 ) {
     val scope = rememberCoroutineScope()
@@ -293,6 +298,7 @@ fun DefaultRelaysScreen(
                                         relays2,
                                         scope,
                                         accountStateViewModel,
+                                        account,
                                         context,
                                     )
                                 }
@@ -311,6 +317,7 @@ fun DefaultRelaysScreen(
                                     relays2,
                                     scope,
                                     accountStateViewModel,
+                                    account,
                                     context,
                                 )
                             }
@@ -390,6 +397,7 @@ private suspend fun onAddRelay(
     relays2: SnapshotStateList<RelaySetupInfo>,
     scope: CoroutineScope,
     accountStateViewModel: AccountStateViewModel,
+    account: Account,
     context: Context,
 ) {
     val url = textFieldRelay.value.text
@@ -419,6 +427,7 @@ private suspend fun onAddRelay(
             retriever.loadRelayInfo(
                 httpsUrl,
                 addedWSS,
+                forceProxy = account.useProxy,
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
                         if (info.limitation?.payment_required == true) {

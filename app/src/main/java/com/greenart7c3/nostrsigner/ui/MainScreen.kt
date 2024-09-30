@@ -937,6 +937,7 @@ fun MainScreen(
                             .padding(padding),
                         navController = navController,
                         accountStateViewModel = accountStateViewModel,
+                        account = account,
                     )
                 }
             },

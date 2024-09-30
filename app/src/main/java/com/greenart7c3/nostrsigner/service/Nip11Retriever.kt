@@ -42,6 +42,7 @@ class Nip11Retriever {
     suspend fun loadRelayInfo(
         url: String,
         dirtyUrl: String,
+        forceProxy: Boolean,
         onInfo: (Nip11RelayInformation) -> Unit,
         onError: (String, ErrorCode, String?) -> Unit,
     ) {
@@ -55,7 +56,7 @@ class Nip11Retriever {
                     .build()
 
             HttpClientManager
-                .getHttpClientForUrl(dirtyUrl)
+                .getHttpClient(forceProxy)
                 .newCall(request)
                 .enqueue(
                     object : Callback {

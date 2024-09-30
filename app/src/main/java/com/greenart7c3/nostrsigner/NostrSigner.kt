@@ -17,6 +17,7 @@ import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.service.HttpClientManager
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -117,6 +118,10 @@ class NostrSigner : Application() {
     ) {
         val savedRelays = getSavedRelays() + newRelays
 
+        val useProxy = LocalPreferences.allSavedAccounts(this).any {
+            LocalPreferences.loadFromEncryptedStorage(this, it.npub)?.useProxy ?: false
+        }
+
         if (settings.notificationType != NotificationType.DIRECT) {
             RelayPool.register(Client)
             savedRelays.forEach { setupInfo ->
@@ -126,6 +131,7 @@ class NostrSigner : Application() {
                             setupInfo.url,
                             setupInfo.read,
                             setupInfo.write,
+                            useProxy,
                             setupInfo.feedTypes,
                         ),
                     )
@@ -139,7 +145,7 @@ class NostrSigner : Application() {
         @Suppress("KotlinConstantConditions")
         if (settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
             Client.reconnect(
-                savedRelays.toTypedArray(),
+                savedRelays.map { RelaySetupInfoToConnect(it.url, useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
         }

@@ -114,9 +114,17 @@ object IntentUtils {
         account: Account,
         onReady: (IntentData?) -> Unit,
     ) {
-        val localData = URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8")
-        val parameters = data.replace("nostrsigner:", "").split("?").toMutableList()
-        parameters.removeFirst()
+        val content: String
+        if (data.contains("?iv")) {
+            val splitData = data.replace("nostrsigner:", "").split("?")
+            content = splitData[0] + "?" + splitData[1]
+        } else {
+            content = ""
+        }
+        val localData = content.ifEmpty { URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8") }
+        val parameters = if (content.isEmpty()) data.replace("nostrsigner:", "").split("?").toMutableList() else data.replace(content, "").replace("nostrsigner:", "").split("?").toMutableList()
+        parameters.removeAt(0)
+        parameters.removeIf { it.isBlank() }
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
             getIntentDataFromIntent(context, intent, packageName, route, account, onReady)
@@ -128,7 +136,7 @@ object IntentUtils {
             var returnType = ReturnType.SIGNATURE
             parameters.joinToString("?").split("&").forEach {
                 val params = it.split("=").toMutableList()
-                val parameter = params.removeFirst()
+                val parameter = params.removeAt(0)
                 val parameterData = params.joinToString("=")
                 if (parameter == "type") {
                     type =

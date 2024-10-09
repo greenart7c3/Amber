@@ -430,21 +430,23 @@ object IntentUtils {
         if (type == SignerType.CONNECT && bunkerRequest.params.size > 2) {
             val split = bunkerRequest.params[2].split(",")
             split.forEach {
-                val split2 = it.split(":")
-                val permissionType = split2.first()
-                val kind =
-                    try {
-                        split2[1].toInt()
-                    } catch (_: Exception) {
-                        null
-                    }
+                if (it.isNotBlank()) {
+                    val split2 = it.split(":")
+                    val permissionType = split2.first()
+                    val kind =
+                        try {
+                            split2[1].toInt()
+                        } catch (_: Exception) {
+                            null
+                        }
 
-                permissions.add(
-                    Permission(
-                        permissionType,
-                        kind,
-                    ),
-                )
+                    permissions.add(
+                        Permission(
+                            permissionType,
+                            kind,
+                        ),
+                    )
+                }
             }
         }
 

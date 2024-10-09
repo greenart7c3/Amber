@@ -52,7 +52,7 @@ private object PrefKeys {
     const val BIOMETRICS_TYPE = "biometrics_type"
     const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
     const val SIGN_POLICY = "default_sign_policy"
-    const val SEED_WORDS = "seed_words"
+    const val SEED_WORDS2 = "seed_words"
 }
 
 @Immutable
@@ -271,7 +271,7 @@ object LocalPreferences {
             putString(PrefKeys.LANGUAGE_PREFS, account.language)
             putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
             putInt(PrefKeys.SIGN_POLICY, account.signPolicy)
-            putStringSet(PrefKeys.SEED_WORDS, account.seedWords.toSet())
+            putString(PrefKeys.SEED_WORDS2, account.seedWords.joinToString(separator = " ") { it })
         }.apply()
     }
 
@@ -385,7 +385,9 @@ object LocalPreferences {
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
             val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
             val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
-            val seedWords = getStringSet(PrefKeys.SEED_WORDS, null) ?: emptySet()
+            val savedSeedWords = getString(PrefKeys.SEED_WORDS2, null)
+            val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
+
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =
                 Account(

@@ -112,5 +112,6 @@ fun HomeScreen(
 data class Result(
     val `package`: String?,
     val signature: String?,
+    val result: String?,
     val id: String?,
 )

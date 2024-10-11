@@ -103,8 +103,8 @@ class SignerProvider : ContentProvider() {
                     ),
                 )
 
-                val localCursor = MatrixCursor(arrayOf("signature", "event")).also {
-                    it.addRow(arrayOf(result, result))
+                val localCursor = MatrixCursor(arrayOf("signature", "event", "result")).also {
+                    it.addRow(arrayOf(result, result, result))
                 }
 
                 return localCursor
@@ -196,7 +196,7 @@ class SignerProvider : ContentProvider() {
                 )
 
                 val cursor =
-                    MatrixCursor(arrayOf("signature", "event")).also {
+                    MatrixCursor(arrayOf("signature", "event", "result")).also {
                         val signature =
                             if (event is LnZapRequestEvent &&
                                 event.tags.any {
@@ -208,7 +208,7 @@ class SignerProvider : ContentProvider() {
                             } else {
                                 signedEvent.sig
                             }
-                        it.addRow(arrayOf(signature, signedEvent.toJson()))
+                        it.addRow(arrayOf(signature, signedEvent.toJson(), signature))
                     }
 
                 return cursor
@@ -314,8 +314,8 @@ class SignerProvider : ContentProvider() {
                     ),
                 )
 
-                val cursor = MatrixCursor(arrayOf("signature", "event"))
-                cursor.addRow(arrayOf<Any>(result, result))
+                val cursor = MatrixCursor(arrayOf("signature", "event", "result"))
+                cursor.addRow(arrayOf<Any>(result, result, result))
                 return cursor
             }
 
@@ -369,8 +369,8 @@ class SignerProvider : ContentProvider() {
                     ),
                 )
 
-                val cursor = MatrixCursor(arrayOf("signature"))
-                cursor.addRow(arrayOf<Any>(account.keyPair.pubKey.toNpub()))
+                val cursor = MatrixCursor(arrayOf("signature", "result"))
+                cursor.addRow(arrayOf<Any>(account.keyPair.pubKey.toNpub(), account.keyPair.pubKey.toNpub()))
                 return cursor
             }
 

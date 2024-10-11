@@ -444,7 +444,7 @@ fun MultiEventHomeScreen(
                                         results.add(
                                             Result(
                                                 null,
-                                                if (localEvent is LnZapRequestEvent &&
+                                                signature = if (localEvent is LnZapRequestEvent &&
                                                     localEvent.tags.any {
                                                             tag ->
                                                         tag.any { t -> t == "anon" }
@@ -454,7 +454,17 @@ fun MultiEventHomeScreen(
                                                 } else {
                                                     localEvent.sig
                                                 },
-                                                intentData.id,
+                                                result = if (localEvent is LnZapRequestEvent &&
+                                                    localEvent.tags.any {
+                                                            tag ->
+                                                        tag.any { t -> t == "anon" }
+                                                    }
+                                                ) {
+                                                    localEvent.toJson()
+                                                } else {
+                                                    localEvent.sig
+                                                },
+                                                id = intentData.id,
                                             ),
                                         )
                                     }
@@ -520,8 +530,9 @@ fun MultiEventHomeScreen(
                                         results.add(
                                             Result(
                                                 null,
-                                                signedMessage,
-                                                intentData.id,
+                                                signature = signedMessage,
+                                                result = signedMessage,
+                                                id = intentData.id,
                                             ),
                                         )
                                     }
@@ -587,8 +598,9 @@ fun MultiEventHomeScreen(
                                         results.add(
                                             Result(
                                                 null,
-                                                signature,
-                                                intentData.id,
+                                                signature = signature,
+                                                result = signature,
+                                                id = intentData.id,
                                             ),
                                         )
                                     }

@@ -283,6 +283,7 @@ fun sendResult(
 
             val intent = Intent()
             intent.putExtra("signature", value)
+            intent.putExtra("result", value)
             intent.putExtra("id", intentData.id)
             intent.putExtra("event", event)
             if (intentData.type == SignerType.GET_PUBLIC_KEY) {

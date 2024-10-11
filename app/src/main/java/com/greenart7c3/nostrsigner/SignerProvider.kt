@@ -57,7 +57,6 @@ class SignerProvider : ContentProvider() {
                 val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val permission =
@@ -79,16 +78,12 @@ class SignerProvider : ContentProvider() {
                             false,
                         ),
                     )
-                    if (currentSelection == "1") {
-                        val cursor =
-                            MatrixCursor(arrayOf("rejected")).also {
-                                it.addRow(arrayOf("true"))
-                            }
+                    val cursor =
+                        MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
 
-                        return cursor
-                    } else {
-                        return null
-                    }
+                    return cursor
                 }
 
                 val result = CryptoUtils.signString(message, account.keyPair.privKey!!).toHexKey()
@@ -116,7 +111,6 @@ class SignerProvider : ContentProvider() {
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val event = Event.fromJson(json)
-                val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 var permission =
                     database
@@ -155,16 +149,13 @@ class SignerProvider : ContentProvider() {
                             false,
                         ),
                     )
-                    if (currentSelection == "1") {
-                        val cursor =
-                            MatrixCursor(arrayOf("rejected")).also {
-                                it.addRow(arrayOf("true"))
-                            }
 
-                        return cursor
-                    } else {
-                        return null
-                    }
+                    val cursor =
+                        MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
+
+                    return cursor
                 }
 
                 val signedEvent = account.signer.signerSync.sign<Event>(event.createdAt, event.kind, event.tags, event.content)
@@ -226,7 +217,6 @@ class SignerProvider : ContentProvider() {
                 val stringType = uri.toString().replace("content://$appId.", "")
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 var permission =
                     database
@@ -269,16 +259,12 @@ class SignerProvider : ContentProvider() {
                         ),
                     )
 
-                    if (currentSelection == "1") {
-                        val cursor =
-                            MatrixCursor(arrayOf("rejected")).also {
-                                it.addRow(arrayOf("true"))
-                            }
+                    val cursor =
+                        MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
 
-                        return cursor
-                    } else {
-                        return null
-                    }
+                    return cursor
                 }
 
                 val type =
@@ -322,7 +308,6 @@ class SignerProvider : ContentProvider() {
             "content://$appId.GET_PUBLIC_KEY" -> {
                 val packageName = callingPackage ?: return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!) ?: return null
-                val currentSelection = selection ?: "0"
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 val permission =
                     database
@@ -346,16 +331,12 @@ class SignerProvider : ContentProvider() {
                         ),
                     )
 
-                    if (currentSelection == "1") {
-                        val cursor =
-                            MatrixCursor(arrayOf("rejected")).also {
-                                it.addRow(arrayOf("true"))
-                            }
+                    val cursor =
+                        MatrixCursor(arrayOf("rejected")).also {
+                            it.addRow(arrayOf("true"))
+                        }
 
-                        return cursor
-                    } else {
-                        return null
-                    }
+                    return cursor
                 }
 
                 database.applicationDao().addHistory(

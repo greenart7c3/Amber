@@ -110,7 +110,7 @@ class SignerProvider : ContentProvider() {
                 val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val event = Event.fromJson(json)
+                val event = IntentUtils.getUnsignedEvent(json, account)
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 var permission =
                     database

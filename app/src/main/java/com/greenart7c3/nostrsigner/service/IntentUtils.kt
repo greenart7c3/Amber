@@ -966,7 +966,7 @@ object IntentUtils {
         }
     }
 
-    private fun getUnsignedEvent(
+    fun getUnsignedEvent(
         data: String,
         account: Account,
     ): Event {

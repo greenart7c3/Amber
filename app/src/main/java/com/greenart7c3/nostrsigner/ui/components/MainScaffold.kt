@@ -3,14 +3,12 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ExpandMore
-import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -21,7 +19,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -67,7 +64,11 @@ fun MainScaffold(
 ) {
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
-    val items = listOf(Route.Home, Route.Permissions, Route.Settings)
+    val items = mutableListOf(Route.Home, Route.Permissions, Route.ActiveRelays, Route.Settings)
+    @Suppress("KotlinConstantConditions")
+    if (BuildConfig.FLAVOR == "offline") {
+        items.remove(Route.ActiveRelays)
+    }
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
     val sheetState =
         rememberModalBottomSheetState(
@@ -131,28 +132,6 @@ fun MainScaffold(
             }
 
             CenterAlignedTopAppBar(
-                actions = {
-                    @Suppress("KotlinConstantConditions")
-                    if (BuildConfig.FLAVOR != "offline") {
-                        Box(
-                            modifier = Modifier
-                                .minimumInteractiveComponentSize()
-                                .size(40.dp)
-                                .clickable(
-                                    interactionSource = interactionSource,
-                                    indication = null,
-                                ) {
-                                    navController.navigate(Route.ActiveRelays.route)
-                                },
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Icon(
-                                Icons.Default.Hub,
-                                contentDescription = "Relays",
-                            )
-                        }
-                    }
-                },
                 title = {
                     val name = LocalPreferences.getAccountName(context, account.keyPair.pubKey.toNpub())
                     Row(

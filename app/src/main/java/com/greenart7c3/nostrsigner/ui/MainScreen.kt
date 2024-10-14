@@ -876,8 +876,13 @@ fun MainScreen(
         composable(
             Route.ActiveRelays.route,
             content = {
-                BackButtonScaffold(
+                MainScaffold(
+                    accountStateViewModel,
+                    account,
+                    database,
                     navController = navController,
+                    destinationRoute = destinationRoute,
+                    false,
                 ) { padding ->
                     ActiveRelaysScreen(
                         modifier =

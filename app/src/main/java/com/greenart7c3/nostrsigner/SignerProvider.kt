@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -111,7 +112,7 @@ class SignerProvider : ContentProvider() {
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val event = try {
-                    Event.fromJson(json)
+                    AmberEvent.toEvent(AmberEvent.fromJson(json))
                 } catch (e: Exception) {
                     Log.d("SignerProvider", "Failed to parse event from $packageName", e)
                     return null

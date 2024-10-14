@@ -110,7 +110,28 @@ class SignerProvider : ContentProvider() {
                 val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val event = IntentUtils.getUnsignedEvent(json, account)
+                val event = try {
+                    Event.fromJson(json)
+                } catch (e: Exception) {
+                    Log.d("SignerProvider", "Failed to parse event from $packageName", e)
+                    return null
+                }
+
+                if (event.pubKey.isBlank()) {
+                    Log.d("SignerProvider", "Event from $packageName has no pubkey")
+                    return null
+                }
+
+                if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
+                    Log.d("SignerProvider", "Event from $packageName has incorrect pubkey")
+                    return null
+                }
+
+                if (!event.hasCorrectIDHash()) {
+                    Log.d("SignerProvider", "Event from $packageName has incorrect ID hash")
+                    return null
+                }
+
                 val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
                 var permission =
                     database

@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Context
 import android.util.Log
 import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
@@ -143,34 +142,13 @@ object AmberUtils {
     }
 
     fun acceptOrRejectPermission(
+        application: ApplicationWithPermissions,
         key: String,
         intentData: IntentData,
         kind: Int?,
         value: Boolean,
-        appName: String,
-        account: Account,
         database: AppDatabase,
     ) {
-        val application =
-            database
-                .applicationDao()
-                .getByKey(key) ?: ApplicationWithPermissions(
-                application = ApplicationEntity(
-                    key,
-                    appName,
-                    listOf(),
-                    "",
-                    "",
-                    "",
-                    account.keyPair.pubKey.toHexKey(),
-                    true,
-                    intentData.bunkerRequest?.secret ?: "",
-                    intentData.bunkerRequest?.secret != null,
-                    account.signPolicy,
-                ),
-                permissions = mutableListOf(),
-            )
-
         val noPermission = application.permissions.none {
             val nip = it.kind?.kindToNip()?.toIntOrNull()
             (it.type == intentData.type.toString() && it.kind == kind) || (nip != null && it.type == "NIP" && it.kind == nip)

@@ -63,7 +63,7 @@ interface ApplicationDao {
         name: String,
     )
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
     fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
         permissions.forEach {

@@ -208,27 +208,9 @@ fun SingleEventHomeScreen(
                             return@launch
                         }
 
-                        if (remember.value) {
-                            AmberUtils.acceptOrRejectPermission(
-                                key,
-                                intentData,
-                                null,
-                                false,
-                                applicationName ?: appName,
-                                account,
-                                database,
-                            )
-                        }
-
-                        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val savedApplication = database.applicationDao().getByKey(key)
+                        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
-                        if (intentData.bunkerRequest != null) {
-                            NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
-                            )
-                        }
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
@@ -246,6 +228,24 @@ fun SingleEventHomeScreen(
                                 ),
                                 permissions = mutableListOf(),
                             )
+
+                        if (remember.value) {
+                            AmberUtils.acceptOrRejectPermission(
+                                application,
+                                key,
+                                intentData,
+                                null,
+                                false,
+                                database,
+                            )
+                        }
+
+                        if (intentData.bunkerRequest != null) {
+                            NostrSigner.getInstance().checkForNewRelays(
+                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                relays.toSet(),
+                            )
+                        }
 
                         database.applicationDao().insertApplicationWithPermissions(application)
 
@@ -345,27 +345,9 @@ fun SingleEventHomeScreen(
                             return@launch
                         }
 
-                        if (remember.value) {
-                            AmberUtils.acceptOrRejectPermission(
-                                key,
-                                intentData,
-                                null,
-                                false,
-                                applicationName ?: appName,
-                                account,
-                                database,
-                            )
-                        }
                         val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                         val savedApplication = database.applicationDao().getByKey(key)
                         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
-                        if (intentData.bunkerRequest != null) {
-                            NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
-                            )
-                        }
-
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
@@ -383,6 +365,23 @@ fun SingleEventHomeScreen(
                                 ),
                                 permissions = mutableListOf(),
                             )
+                        if (remember.value) {
+                            AmberUtils.acceptOrRejectPermission(
+                                application,
+                                key,
+                                intentData,
+                                null,
+                                false,
+                                database,
+                            )
+                        }
+
+                        if (intentData.bunkerRequest != null) {
+                            NostrSigner.getInstance().checkForNewRelays(
+                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                relays.toSet(),
+                            )
+                        }
 
                         database.applicationDao().insertApplicationWithPermissions(application)
 
@@ -508,24 +507,6 @@ fun SingleEventHomeScreen(
                             val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                             val savedApplication = database.applicationDao().getByKey(key)
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
-                            if (intentData.bunkerRequest != null) {
-                                NostrSigner.getInstance().checkForNewRelays(
-                                    NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                    relays.toSet(),
-                                )
-                            }
-
-                            if (remember.value) {
-                                AmberUtils.acceptOrRejectPermission(
-                                    key,
-                                    intentData,
-                                    event.kind,
-                                    false,
-                                    applicationName ?: appName,
-                                    account,
-                                    database,
-                                )
-                            }
 
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
@@ -544,6 +525,24 @@ fun SingleEventHomeScreen(
                                     ),
                                     permissions = mutableListOf(),
                                 )
+
+                            if (intentData.bunkerRequest != null) {
+                                NostrSigner.getInstance().checkForNewRelays(
+                                    NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
+                                    relays.toSet(),
+                                )
+                            }
+
+                            if (remember.value) {
+                                AmberUtils.acceptOrRejectPermission(
+                                    application,
+                                    key,
+                                    intentData,
+                                    event.kind,
+                                    false,
+                                    database,
+                                )
+                            }
 
                             database.applicationDao().insertApplicationWithPermissions(application)
 

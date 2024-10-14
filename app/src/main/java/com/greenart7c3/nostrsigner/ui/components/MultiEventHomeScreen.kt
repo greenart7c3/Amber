@@ -380,42 +380,39 @@ fun MultiEventHomeScreen(
 
                                 val database = NostrSigner.getInstance().getDatabase(localAccount.keyPair.pubKey.toNpub())
 
-                                val applicationEntity = database.applicationDao().getByKey(key)
+                                val application =
+                                    database
+                                        .applicationDao()
+                                        .getByKey(key) ?: ApplicationWithPermissions(
+                                        application = ApplicationEntity(
+                                            key,
+                                            "",
+                                            listOf(),
+                                            "",
+                                            "",
+                                            "",
+                                            localAccount.keyPair.pubKey.toHexKey(),
+                                            true,
+                                            intentData.bunkerRequest?.secret ?: "",
+                                            intentData.bunkerRequest?.secret != null,
+                                            localAccount.signPolicy,
+                                        ),
+                                        permissions = mutableListOf(),
+                                    )
 
                                 if (intentData.type == SignerType.SIGN_EVENT) {
                                     val localEvent = intentData.event!!
 
                                     if (intentData.rememberMyChoice.value) {
                                         AmberUtils.acceptOrRejectPermission(
+                                            application,
                                             key,
                                             intentData,
                                             localEvent.kind,
                                             intentData.rememberMyChoice.value,
-                                            applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                            localAccount,
                                             database,
                                         )
                                     }
-
-                                    val application =
-                                        database
-                                            .applicationDao()
-                                            .getByKey(key) ?: ApplicationWithPermissions(
-                                            application = ApplicationEntity(
-                                                key,
-                                                applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                                listOf(),
-                                                "",
-                                                "",
-                                                "",
-                                                localAccount.keyPair.pubKey.toHexKey(),
-                                                true,
-                                                intentData.bunkerRequest?.secret ?: "",
-                                                intentData.bunkerRequest?.secret != null,
-                                                localAccount.signPolicy,
-                                            ),
-                                            permissions = mutableListOf(),
-                                        )
 
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
@@ -436,7 +433,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
-                                            applicationEntity?.application?.relays ?: emptyList(),
+                                            application.application.relays,
                                             onLoading = {},
                                             onDone = {},
                                         )
@@ -471,38 +468,16 @@ fun MultiEventHomeScreen(
                                 } else if (intentData.type == SignerType.SIGN_MESSAGE) {
                                     if (intentData.rememberMyChoice.value) {
                                         AmberUtils.acceptOrRejectPermission(
+                                            application,
                                             key,
                                             intentData,
                                             null,
                                             intentData.rememberMyChoice.value,
-                                            applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                            localAccount,
                                             database,
                                         )
                                     }
 
-                                    val application =
-                                        database
-                                            .applicationDao()
-                                            .getByKey(key) ?: ApplicationWithPermissions(
-                                            application = ApplicationEntity(
-                                                key,
-                                                applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                                listOf(),
-                                                "",
-                                                "",
-                                                "",
-                                                localAccount.keyPair.pubKey.toHexKey(),
-                                                true,
-                                                intentData.bunkerRequest?.secret ?: "",
-                                                intentData.bunkerRequest?.secret != null,
-                                                localAccount.signPolicy,
-                                            ),
-                                            permissions = mutableListOf(),
-                                        )
-
                                     database.applicationDao().insertApplicationWithPermissions(application)
-
                                     database.applicationDao().addHistory(
                                         HistoryEntity(
                                             0,
@@ -522,7 +497,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
-                                            applicationEntity?.application?.relays ?: emptyList(),
+                                            application.application.relays,
                                             onLoading = {},
                                             onDone = {},
                                         )
@@ -539,35 +514,14 @@ fun MultiEventHomeScreen(
                                 } else {
                                     if (intentData.rememberMyChoice.value) {
                                         AmberUtils.acceptOrRejectPermission(
+                                            application,
                                             key,
                                             intentData,
                                             null,
                                             intentData.rememberMyChoice.value,
-                                            applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                            localAccount,
                                             database,
                                         )
                                     }
-
-                                    val application =
-                                        database
-                                            .applicationDao()
-                                            .getByKey(key) ?: ApplicationWithPermissions(
-                                            application = ApplicationEntity(
-                                                key,
-                                                applicationEntity?.application?.name?.ifBlank { applicationEntity.application.key.toShortenHex() } ?: "",
-                                                listOf(),
-                                                "",
-                                                "",
-                                                "",
-                                                localAccount.keyPair.pubKey.toHexKey(),
-                                                true,
-                                                intentData.bunkerRequest?.secret ?: "",
-                                                intentData.bunkerRequest?.secret != null,
-                                                localAccount.signPolicy,
-                                            ),
-                                            permissions = mutableListOf(),
-                                        )
 
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
@@ -590,7 +544,7 @@ fun MultiEventHomeScreen(
                                             localAccount,
                                             intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
-                                            applicationEntity?.application?.relays ?: emptyList(),
+                                            application.application.relays,
                                             onLoading = {},
                                             onDone = {},
                                         )

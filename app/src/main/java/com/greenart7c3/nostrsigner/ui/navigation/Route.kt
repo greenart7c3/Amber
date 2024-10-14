@@ -5,9 +5,11 @@ import androidx.compose.material.icons.automirrored.filled.ViewList
 import androidx.compose.material.icons.automirrored.outlined.ViewList
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Hub
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Hub
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -103,5 +105,12 @@ sealed class Route(
         route = "Security",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
+    )
+
+    data object Accounts : Route(
+        title = NostrSigner.getInstance().getString(R.string.accounts),
+        route = "Accounts",
+        icon = Icons.Outlined.Person,
+        selectedIcon = Icons.Default.Person,
     )
 }

@@ -60,3 +60,4 @@ jobs:
           asset_path: app/build/outputs/apk/free/release/app-free-universal-release-unsigned-signed.apk
           asset_name: amber-fdroid-universal-${{ github.ref_name }}.apk
           asset_content_type: application/zip
+

@@ -23,7 +23,7 @@ interface ApplicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertNotification(notificationEntity: NotificationEntity): Long?
 
-    @Query("SELECT * FROM application where pubKey = :pubKey")
+    @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     fun getAll(pubKey: String): List<ApplicationEntity>
 
     @Query("SELECT * FROM application WHERE `key` = :key")

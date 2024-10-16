@@ -117,9 +117,41 @@ sealed class Route(
     )
 
     data object NewApplication : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.add_a_new_application),
         route = "NewApplication",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
+
+    data object NewNsecBunker : Route(
+        title = NostrSigner.getInstance().getString(R.string.add_a_nsecbunker),
+        route = "NewNsecBunker",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object NSecBunkerCreated : Route(
+        title = NostrSigner.getInstance().getString(R.string.add_a_nsecbunker),
+        route = "NewNsecBunkerCreated/{key}",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }
+
+val routes = listOf(
+    Route.IncomingRequest,
+    Route.Applications,
+    Route.Settings,
+    Route.Permission,
+    Route.AccountBackup,
+    Route.Logs,
+    Route.ActiveRelays,
+    Route.Language,
+    Route.NotificationType,
+    Route.DefaultRelays,
+    Route.SignPolicy,
+    Route.Security,
+    Route.Accounts,
+    Route.NewApplication,
+    Route.NewNsecBunker,
+)

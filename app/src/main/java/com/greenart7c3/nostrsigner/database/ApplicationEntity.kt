@@ -37,7 +37,23 @@ data class ApplicationEntity(
     val secret: String,
     val useSecret: Boolean,
     var signPolicy: Int,
-)
+) {
+    companion object {
+        fun empty() = ApplicationEntity(
+            key = "",
+            name = "",
+            relays = emptyList(),
+            url = "",
+            icon = "",
+            description = "",
+            pubKey = "",
+            isConnected = false,
+            secret = "",
+            useSecret = false,
+            signPolicy = 0,
+        )
+    }
+}
 
 data class ApplicationWithPermissions(
     @Embedded val application: ApplicationEntity,

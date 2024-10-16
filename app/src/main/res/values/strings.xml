@@ -392,4 +392,13 @@
     <string name="nostr_connect_description">If your app offeres you a Nostr Connect URL, you can paste it here. Usually this login mode it is offered by web apps.</string>
     <string name="new_app_description">Usually Nostr applications have a “Login with Amber” option that permits to use Amber as external signer; when you press that button Amber is launched and you are asked to approve some permissions.\n\nBut you have other options to use Amber:</string>
     <string name="add_a_new_application">Add a new application</string>
+    <string name="account_backup">Account backup</string>
+    <string name="create_nsecbunker_description">To create a new nsecbunker you need to give it a name and select one or more relays, that’s all!</string>
+    <string name="create">Create</string>
+    <string name="name">Name</string>
+    <string name="no_relays_added">No relays added</string>
+    <string name="wss">wss://...</string>
+    <string name="name_cannot_be_empty">"Name can't be empty "</string>
+    <string name="your_nsec_bunker_has_been_created">Your nsecbunker is ready!</string>
+    <string name="use_this_url_in_your_app">Use this url in your app:</string>
 </resources>

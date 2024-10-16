@@ -11,30 +11,32 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.navigation.routes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BackButtonScaffold(
     navController: NavController,
+    title: String,
+    backButtonTitle: String? = null,
+    onNav: () -> Unit = {
+        navController.navigateUp()
+    },
     content: @Composable (paddingValues: PaddingValues) -> Unit,
 ) {
-    val context = LocalContext.current
-    val title = remember {
-        navController.previousBackStackEntry?.destination?.route?.let { context.getString(R.string.back_to, it) } ?: ""
-    }
     Scaffold(
         bottomBar = {
+            val localBackButtonTitle = remember {
+                backButtonTitle ?: routes.find { it.route == navController.previousBackStackEntry?.destination?.route }?.title ?: ""
+            }
             BottomAppBar {
                 IconRow(
-                    title = title,
+                    title = stringResource(R.string.back_to, localBackButtonTitle),
                     icon = Icons.AutoMirrored.Filled.ArrowBack,
-                    onClick = {
-                        navController.navigateUp()
-                    },
+                    onClick = onNav,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
@@ -42,7 +44,7 @@ fun BackButtonScaffold(
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
-                    Text(stringResource(R.string.add_a_new_application))
+                    Text(title)
                 },
             )
         },

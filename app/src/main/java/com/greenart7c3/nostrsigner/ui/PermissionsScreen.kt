@@ -84,7 +84,7 @@ fun PermissionsScreen(
                         resetPermissions = false
                         scope.launch {
                             LocalPreferences.deleteSavedApps(applications, database)
-                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
                         }
                     },
                 ) {

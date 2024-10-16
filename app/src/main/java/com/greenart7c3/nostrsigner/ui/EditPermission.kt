@@ -166,7 +166,7 @@ fun EditPermission(
 
             scope.launch(Dispatchers.Main) {
                 navController.navigateUp()
-                accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
             }
         }
     }
@@ -499,7 +499,7 @@ fun EditPermission(
 
                         scope.launch(Dispatchers.Main) {
                             navController.navigateUp()
-                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
+                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
                         }
                     }
                 },

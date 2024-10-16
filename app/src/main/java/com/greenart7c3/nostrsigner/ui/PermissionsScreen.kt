@@ -1,32 +1,25 @@
 package com.greenart7c3.nostrsigner.ui
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.ClearAll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -34,8 +27,6 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.components.IconRow
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
@@ -56,9 +47,8 @@ fun PermissionsScreen(
         remember {
             mutableListOf<ApplicationEntity>()
         }
-    var resetPermissions by remember { mutableStateOf(false) }
-
     val scope = rememberCoroutineScope()
+    // val sortBy by remember { mutableStateOf("name") }
 
     LaunchedEffect(lifecycleEvent) {
         scope.launch(Dispatchers.IO) {
@@ -67,61 +57,9 @@ fun PermissionsScreen(
         }
     }
 
-    if (resetPermissions) {
-        AlertDialog(
-            title = {
-                Text(text = stringResource(R.string.reset_permissions))
-            },
-            text = {
-                Text(text = stringResource(R.string.do_you_want_to_reset_all_permissions))
-            },
-            onDismissRequest = {
-                resetPermissions = false
-            },
-            confirmButton = {
-                TextButton(
-                    onClick = {
-                        resetPermissions = false
-                        scope.launch {
-                            LocalPreferences.deleteSavedApps(applications, database)
-                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
-                        }
-                    },
-                ) {
-                    Text(text = stringResource(R.string.confirm))
-                }
-            },
-            dismissButton = {
-                TextButton(
-                    onClick = {
-                        resetPermissions = false
-                    },
-                ) {
-                    Text(text = stringResource(R.string.cancel))
-                }
-            },
-        )
-    }
-
     Column(
         modifier,
     ) {
-        Box(
-            Modifier
-                .padding(16.dp),
-        ) {
-            IconRow(
-                title = stringResource(id = R.string.reset_permissions),
-                icon = Icons.Default.ClearAll,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    resetPermissions = true
-                },
-            )
-        }
-
-        HorizontalDivider()
-
         if (applications.isEmpty()) {
             Column(
                 Modifier.fillMaxSize(),
@@ -133,26 +71,66 @@ fun PermissionsScreen(
         } else {
             LazyColumn(
                 Modifier
-                    .fillMaxSize(),
+                    .fillMaxSize()
+                    .padding(8.dp),
             ) {
+//                item {
+//                    Row(
+//                        Modifier
+//                            .fillMaxWidth()
+//                            .padding(8.dp)
+//                            .clickable {
+//
+//                            },
+//                        horizontalArrangement = Arrangement.End,
+//                    ) {
+//                        Icon(
+//                            Icons.AutoMirrored.Filled.Sort,
+//                            null,
+//                            modifier = Modifier.size(22.dp),
+//                            tint = MaterialTheme.colorScheme.onBackground,
+//                        )
+//                        Text(
+//                            modifier = Modifier.padding(start = 16.dp),
+//                            text = "Sort by $sortBy",
+//                            maxLines = 1,
+//                            overflow = TextOverflow.Ellipsis,
+//                        )
+//                    }
+//                }
                 items(applications.size) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
+                    ElevatedCard(
+                        modifier = Modifier
+                            .padding(4.dp)
+                            .fillMaxSize(),
                     ) {
-                        Box(
-                            Modifier
-                                .padding(16.dp)
-                                .weight(0.9f),
+                        Row(
+                            modifier = Modifier.clickable {
+                                navController.navigate("Permission/${applications.elementAt(it).key}")
+                            },
+                            verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            val localPermission = applications.elementAt(it)
-                            IconRow(
-                                title = localPermission.name.ifBlank { localPermission.key.toShortenHex() },
-                                icon = Icons.AutoMirrored.Default.ArrowForward,
-                                tint = MaterialTheme.colorScheme.onBackground,
-                                onClick = {
-                                    navController.navigate("Permission/${applications.elementAt(it).key}")
-                                },
-                            )
+                            Column(
+                                Modifier
+                                    .padding(16.dp)
+                                    .weight(0.9f),
+                            ) {
+                                val localPermission = applications.elementAt(it)
+                                Text(
+                                    modifier = Modifier.padding(start = 16.dp),
+                                    text = localPermission.name.ifBlank { localPermission.key.toShortenHex() },
+                                    fontSize = 24.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    modifier = Modifier.padding(start = 16.dp, top = 4.dp),
+                                    text = localPermission.key,
+                                    fontSize = 18.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
                 }

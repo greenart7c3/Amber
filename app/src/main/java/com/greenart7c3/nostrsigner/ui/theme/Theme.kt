@@ -54,6 +54,8 @@ private val LightColorPalette =
         tertiary = secondaryColor,
         primaryContainer = secondaryColor,
         secondaryContainer = secondaryColor,
+        surface = Color(0xFFFFDE9E),
+        surfaceContainer = Color(0xFFFFDE9E),
     )
 
 @Composable
@@ -78,9 +80,9 @@ fun NostrSignerTheme(
             if (darkTheme) {
                 window.statusBarColor = colors.background.toArgb()
             } else {
-                window.statusBarColor = colors.primary.toArgb()
+                window.statusBarColor = colors.surface.toArgb()
             }
-            window.navigationBarColor = colors.background.toArgb()
+            window.navigationBarColor = colors.surface.toArgb()
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }

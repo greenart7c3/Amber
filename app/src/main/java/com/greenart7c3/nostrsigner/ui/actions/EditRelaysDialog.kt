@@ -391,7 +391,7 @@ fun DefaultRelaysScreen(
     }
 }
 
-private suspend fun onAddRelay(
+suspend fun onAddRelay(
     textFieldRelay: MutableState<TextFieldValue>,
     isLoading: MutableState<Boolean>,
     relays2: SnapshotStateList<RelaySetupInfo>,

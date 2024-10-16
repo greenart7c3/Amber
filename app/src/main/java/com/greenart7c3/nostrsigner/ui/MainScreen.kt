@@ -823,6 +823,7 @@ fun MainScreen(
             Route.AccountBackup.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.account_backup),
                     navController = navController,
                 ) { padding ->
                     AccountBackupScreen(
@@ -840,6 +841,7 @@ fun MainScreen(
             arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.permissions),
                     navController = navController,
                 ) { padding ->
                     EditPermission(
@@ -861,6 +863,7 @@ fun MainScreen(
             Route.Logs.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.logs),
                     navController = navController,
                 ) { padding ->
                     LogsScreen(
@@ -899,6 +902,7 @@ fun MainScreen(
             Route.Language.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.language),
                     navController = navController,
                 ) { padding ->
                     LanguageScreen(
@@ -916,6 +920,7 @@ fun MainScreen(
             Route.NotificationType.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.notification_type),
                     navController = navController,
                 ) { padding ->
                     NotificationTypeScreen(
@@ -935,6 +940,7 @@ fun MainScreen(
             Route.DefaultRelays.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.default_relays),
                     navController = navController,
                 ) { padding ->
                     DefaultRelaysScreen(
@@ -954,6 +960,7 @@ fun MainScreen(
             Route.SignPolicy.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.sign_policy),
                     navController = navController,
                 ) { padding ->
                     SignPolicySettingsScreen(
@@ -972,6 +979,7 @@ fun MainScreen(
             Route.Security.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.security),
                     navController = navController,
                 ) { padding ->
                     SecurityScreen(
@@ -989,16 +997,69 @@ fun MainScreen(
             Route.NewApplication.route,
             content = {
                 BackButtonScaffold(
+                    title = stringResource(R.string.add_a_new_application),
                     navController = navController,
                 ) { padding ->
                     NewApplicationScreen(
                         account = account,
                         accountStateViewModel = accountStateViewModel,
+                        navController = navController,
                         modifier =
                         Modifier
                             .fillMaxSize()
                             .padding(padding),
                     )
+                }
+            },
+        )
+
+        composable(
+            Route.NewNsecBunker.route,
+            content = {
+                BackButtonScaffold(
+                    title = stringResource(R.string.add_a_nsecbunker),
+                    navController = navController,
+                ) { padding ->
+                    NewNsecBunkerScreen(
+                        database = database,
+                        account = account,
+                        accountStateViewModel = accountStateViewModel,
+                        navController = navController,
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.NSecBunkerCreated.route,
+            arguments = listOf(navArgument("key") { type = NavType.StringType }),
+            content = {
+                it.arguments?.getString("key")?.let { key ->
+                    BackButtonScaffold(
+                        title = stringResource(R.string.add_a_nsecbunker),
+                        navController = navController,
+                        backButtonTitle = stringResource(R.string.add_a_new_application),
+                        onNav = {
+                            navController.navigate(Route.Applications.route) {
+                                popUpTo(0)
+                            }
+                        },
+                    ) { padding ->
+                        NewNsecBunkerCreatedScreen(
+                            database = database,
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                            key = key,
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                        )
+                    }
                 }
             },
         )

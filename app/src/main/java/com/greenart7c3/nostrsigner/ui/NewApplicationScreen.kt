@@ -21,6 +21,7 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -32,6 +33,7 @@ fun NewApplicationScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
+    navController: NavController,
 ) {
     var dialogOpen by remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboardManager.current
@@ -130,7 +132,9 @@ fun NewApplicationScreen(
             horizontalArrangement = Arrangement.Center,
         ) {
             Button(
-                onClick = { },
+                onClick = {
+                    navController.navigate(Route.NewNsecBunker.route)
+                },
                 content = {
                     Text(text = stringResource(R.string.add_a_nsecbunker))
                 },

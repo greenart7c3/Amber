@@ -80,35 +80,39 @@ fun MainScaffold(
                 PermissionsFloatingActionButton(
                     accountStateViewModel,
                     account,
-                ) {
-                    val secret = UUID.randomUUID().toString().substring(0, 6)
-                    scope.launch(Dispatchers.IO) {
-                        val application =
-                            ApplicationEntity(
-                                secret,
-                                "",
-                                NostrSigner.getInstance().settings.defaultRelays,
-                                "",
-                                "",
-                                "",
-                                account.keyPair.pubKey.toHexKey(),
-                                false,
-                                secret,
-                                false,
-                                account.signPolicy,
-                            )
+                    goToTop = {
+                        val secret = UUID.randomUUID().toString().substring(0, 6)
+                        scope.launch(Dispatchers.IO) {
+                            val application =
+                                ApplicationEntity(
+                                    secret,
+                                    "",
+                                    NostrSigner.getInstance().settings.defaultRelays,
+                                    "",
+                                    "",
+                                    "",
+                                    account.keyPair.pubKey.toHexKey(),
+                                    false,
+                                    secret,
+                                    false,
+                                    account.signPolicy,
+                                )
 
-                        database.applicationDao().insertApplication(
-                            application,
-                        )
-                        val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?$relayString"
-                        clipboardManager.setText(AnnotatedString(bunkerUrl))
-                        scope.launch(Dispatchers.Main) {
-                            navController.navigate("Permission/$secret")
+                            database.applicationDao().insertApplication(
+                                application,
+                            )
+                            val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
+                            val bunkerUrl = "bunker://${account.keyPair.pubKey.toHexKey()}?$relayString"
+                            clipboardManager.setText(AnnotatedString(bunkerUrl))
+                            scope.launch(Dispatchers.Main) {
+                                navController.navigate("Permission/$secret")
+                            }
                         }
-                    }
-                }
+                    },
+                    onClick = {
+                        navController.navigate(Route.NewApplication.route)
+                    },
+                )
             }
         },
         topBar = {

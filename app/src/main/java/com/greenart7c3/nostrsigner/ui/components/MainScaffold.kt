@@ -1,8 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -19,7 +17,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -50,7 +47,7 @@ fun MainScaffold(
 ) {
     val scope = rememberCoroutineScope()
     val clipboardManager = LocalClipboardManager.current
-    val items = mutableListOf(Route.Home, Route.Permissions, Route.ActiveRelays, Route.Settings, Route.Accounts)
+    val items = mutableListOf(Route.Applications, Route.IncomingRequest, Route.ActiveRelays, Route.Settings, Route.Accounts)
     @Suppress("KotlinConstantConditions")
     if (BuildConfig.FLAVOR == "offline") {
         items.remove(Route.ActiveRelays)
@@ -61,8 +58,6 @@ fun MainScaffold(
             confirmValueChange = { it != SheetValue.PartiallyExpanded },
             skipPartiallyExpanded = true,
         )
-    val interactionSource = remember { MutableInteractionSource() }
-    val context = LocalContext.current
 
     if (shouldShowBottomSheet) {
         AccountsBottomSheet(

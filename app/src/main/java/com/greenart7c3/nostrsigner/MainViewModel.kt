@@ -46,7 +46,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                         }
                     contentIntent.putExtra("bunker", it.toJson())
                     contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.Home.route, acc) { intentData ->
+                    IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.IncomingRequest.route, acc) { intentData ->
                         if (intentData != null) {
                             if (intents.value.none { item -> item.id == intentData.id }) {
                                 intents.value += listOf(intentData)

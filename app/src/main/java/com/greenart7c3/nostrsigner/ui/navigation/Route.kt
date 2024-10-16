@@ -1,13 +1,15 @@
 package com.greenart7c3.nostrsigner.ui.navigation
 
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.automirrored.filled.ViewList
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.automirrored.outlined.ViewList
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Home
+import androidx.compose.material.icons.outlined.Apps
 import androidx.compose.material.icons.outlined.Hub
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Settings
@@ -23,18 +25,18 @@ sealed class Route(
     val icon: ImageVector,
     val selectedIcon: ImageVector,
 ) {
-    data object Home : Route(
-        title = NostrSigner.getInstance().getString(R.string.home),
-        route = "Home",
-        icon = Icons.Outlined.Home,
-        selectedIcon = Icons.Default.Home,
+    data object IncomingRequest : Route(
+        title = NostrSigner.getInstance().getString(R.string.incoming_request),
+        route = "IncomingRequest",
+        icon = Icons.AutoMirrored.Outlined.List,
+        selectedIcon = Icons.AutoMirrored.Filled.List,
     )
 
-    data object Permissions : Route(
-        route = "Permissions",
-        title = NostrSigner.getInstance().getString(R.string.permissions),
-        icon = Icons.AutoMirrored.Outlined.ViewList,
-        selectedIcon = Icons.AutoMirrored.Default.ViewList,
+    data object Applications : Route(
+        route = "Applications",
+        title = NostrSigner.getInstance().getString(R.string.applications),
+        icon = Icons.Outlined.Apps,
+        selectedIcon = Icons.Default.Apps,
     )
 
     data object Settings : Route(

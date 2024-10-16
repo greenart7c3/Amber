@@ -368,7 +368,7 @@ fun PermissionsFloatingActionButton(
                 intent.data = Uri.parse(it)
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 context.getAppCompatActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
             }
         }
     }
@@ -406,7 +406,7 @@ fun PermissionsFloatingActionButton(
                                 intent.data = Uri.parse(it.text)
                                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                 context.getAppCompatActivity()?.startActivity(intent)
-                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
                             }
                             expanded = false
                         },
@@ -461,7 +461,7 @@ fun PermissionsFloatingActionButton(
                                 intent.data = Uri.parse(it.text)
                                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                                 context.getAppCompatActivity()?.startActivity(intent)
-                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Home.route)
+                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
                             }
                             expanded = false
                         },
@@ -726,15 +726,17 @@ fun MainScreen(
         )
     }
 
-    var localRoute by remember { mutableStateOf(route.value ?: Route.Home.route) }
+    var localRoute by remember { mutableStateOf(route.value ?: if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route) }
 
     @Suppress("KotlinConstantConditions")
     if (BuildConfig.FLAVOR != "offline") {
-        LaunchedEffect(Unit, route.value) {
+        LaunchedEffect(Unit, route.value, intents) {
             launch(Dispatchers.Main) {
                 if (route.value != null) {
                     localRoute = route.value!!
                     route.value = null
+                } else {
+                    localRoute = if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
                 }
             }
         }
@@ -747,7 +749,7 @@ fun MainScreen(
         exitTransition = { fadeOut(animationSpec = tween(200)) },
     ) {
         composable(
-            Route.Home.route,
+            Route.IncomingRequest.route,
             content = {
                 MainScaffold(
                     accountStateViewModel,
@@ -772,7 +774,7 @@ fun MainScreen(
         )
 
         composable(
-            Route.Permissions.route,
+            Route.Applications.route,
             content = {
                 MainScaffold(
                     accountStateViewModel,

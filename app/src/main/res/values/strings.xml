@@ -382,4 +382,6 @@
     <string name="unable_to_download_relay_document">Download relay document unavailable</string>
     <string name="failed_to_send_event">Failed to send event to relay</string>
     <string name="accounts">Accounts</string>
+    <string name="applications">Applications</string>
+    <string name="incoming_request">Incoming Request</string>
 </resources>

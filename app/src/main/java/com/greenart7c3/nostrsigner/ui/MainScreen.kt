@@ -354,6 +354,7 @@ fun PermissionsFloatingActionButton(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
     goToTop: () -> Unit,
+    onClick: () -> Unit,
 ) {
     val clipboardManager = LocalClipboardManager.current
     var expanded by remember { mutableStateOf(false) }
@@ -594,9 +595,7 @@ fun PermissionsFloatingActionButton(
         )
 
         FloatingActionButton(
-            onClick = {
-                expanded = !expanded
-            },
+            onClick = onClick,
             shape = CircleShape,
         ) {
             Icon(
@@ -981,6 +980,24 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(padding),
                         navController = navController,
+                    )
+                }
+            },
+        )
+
+        composable(
+            Route.NewApplication.route,
+            content = {
+                BackButtonScaffold(
+                    navController = navController,
+                ) { padding ->
+                    NewApplicationScreen(
+                        account = account,
+                        accountStateViewModel = accountStateViewModel,
+                        modifier =
+                        Modifier
+                            .fillMaxSize()
+                            .padding(padding),
                     )
                 }
             },

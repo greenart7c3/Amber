@@ -384,4 +384,12 @@
     <string name="accounts">Accounts</string>
     <string name="applications">Applications</string>
     <string name="incoming_request">Incoming Request</string>
+    <string name="back_to">Back to %1$s</string>
+    <string name="scan_qr_code">Scan a QR Code</string>
+    <string name="add_a_nsecbunker">Add a nsecbunker</string>
+    <string name="nsecbunker_description">This option allow to add a nsecbunker manually, and use with whichever app supports Nostr Connect (NIP-46)</string>
+    <string name="nostr_connect_qr_description">If your app offers you a Nostr Connect QR Code you can scan it from here. Usually this login mode it is offered by web apps.</string>
+    <string name="nostr_connect_description">If your app offeres you a Nostr Connect URL, you can paste it here. Usually this login mode it is offered by web apps.</string>
+    <string name="new_app_description">Usually Nostr applications have a “Login with Amber” option that permits to use Amber as external signer; when you press that button Amber is launched and you are asked to approve some permissions.\n\nBut you have other options to use Amber:</string>
+    <string name="add_a_new_application">Add a new application</string>
 </resources>

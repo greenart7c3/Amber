@@ -115,4 +115,11 @@ sealed class Route(
         icon = Icons.Outlined.Person,
         selectedIcon = Icons.Default.Person,
     )
+
+    data object NewApplication : Route(
+        title = "",
+        route = "NewApplication",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }

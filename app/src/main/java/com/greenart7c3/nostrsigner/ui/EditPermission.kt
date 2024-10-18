@@ -14,10 +14,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
@@ -40,10 +38,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
@@ -59,7 +55,6 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.kindToNipUrl
 import com.greenart7c3.nostrsigner.models.nipToUrl
 import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
-import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.vitorpamplona.quartz.encoders.toHexKey
 import kotlinx.coroutines.Dispatchers
@@ -111,14 +106,6 @@ fun EditPermission(
         }
     }
 
-    LaunchedEffect(bunkerUri) {
-        launch(Dispatchers.IO) {
-            if (!applicationData.isConnected) {
-                clipboardManager.setText(AnnotatedString(bunkerUri))
-            }
-        }
-    }
-
     if (editRelaysDialog) {
         EditRelaysDialog(
             applicationData = applicationData,
@@ -155,22 +142,34 @@ fun EditPermission(
         }
     }
 
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-
-    if (showDialog) {
-        QrCodeDialog(
-            content = bunkerUri,
-        ) {
-            showDialog = false
-        }
-    }
-
     Column(
         modifier = modifier
             .padding(8.dp),
     ) {
+        if (!applicationData.isConnected) {
+            Text(
+                bunkerUri,
+                Modifier
+                    .padding(8.dp),
+                textAlign = TextAlign.Start,
+                fontSize = 18.sp,
+            )
+
+            Button(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp),
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(bunkerUri))
+                },
+                content = {
+                    Text(stringResource(R.string.copy_to_clipboard))
+                },
+            )
+
+            Spacer(Modifier.height(12.dp))
+        }
+
         Row(
             Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
@@ -193,71 +192,13 @@ fun EditPermission(
         ) {
             Button(
                 onClick = {
+                    navController.navigate("EditConfiguration/${applicationData.key}")
                 },
                 Modifier
                     .fillMaxWidth()
                     .padding(6.dp),
             ) {
                 Text(stringResource(R.string.edit_configuration))
-            }
-        }
-
-        if (!applicationData.isConnected) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    bunkerUri,
-                    Modifier
-                        .weight(0.9f)
-                        .padding(8.dp),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    fontSize = 18.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                IconButton(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(bunkerUri))
-                    },
-                ) {
-                    Icon(Icons.Default.ContentPaste, stringResource(R.string.copy_to_clipboard))
-                }
-                IconButton(
-                    onClick = {
-                        showDialog = true
-                    },
-                ) {
-                    Icon(Icons.Default.QrCode, stringResource(R.string.show_qr_code))
-                }
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clickable {
-                        checked = !checked
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                    },
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.use_secret_to_connect_to_the_application),
-                )
-                Switch(
-                    checked = checked,
-                    onCheckedChange = {
-                        checked = !checked
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                    },
-                )
             }
         }
 

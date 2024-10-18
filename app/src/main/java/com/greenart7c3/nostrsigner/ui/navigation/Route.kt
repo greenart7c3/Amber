@@ -150,6 +150,13 @@ sealed class Route(
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
+
+    data object EditConfiguration : Route(
+        title = NostrSigner.getInstance().getString(R.string.edit_configuration),
+        route = "EditConfiguration/{key}",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }
 
 val routes = listOf(
@@ -168,4 +175,8 @@ val routes = listOf(
     Route.Accounts,
     Route.NewApplication,
     Route.NewNsecBunker,
+    Route.NSecBunkerCreated,
+    Route.Activity,
+    Route.RelayLogScreen,
+    Route.EditConfiguration,
 )

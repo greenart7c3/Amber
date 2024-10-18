@@ -842,21 +842,30 @@ fun MainScreen(
             Route.Permission.route,
             arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
             content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.permissions),
-                    navController = navController,
-                ) { padding ->
-                    EditPermission(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding),
-                        account = account,
-                        accountStateViewModel = accountStateViewModel,
-                        selectedPackage = it.arguments?.getString("packageName")!!,
+                it.arguments?.getString("packageName")?.let { packageName ->
+                    var title by remember { mutableStateOf(packageName) }
+                    LaunchedEffect(Unit) {
+                        launch(Dispatchers.IO) {
+                            title = database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                        }
+                    }
+
+                    BackButtonScaffold(
+                        title = title,
                         navController = navController,
-                        database = database,
-                    )
+                    ) { padding ->
+                        EditPermission(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                            selectedPackage = packageName,
+                            navController = navController,
+                            database = database,
+                        )
+                    }
                 }
             },
         )
@@ -1106,6 +1115,30 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding),
+                        )
+                    }
+                }
+            },
+        )
+
+        composable(
+            Route.EditConfiguration.route,
+            arguments = listOf(navArgument("key") { type = NavType.StringType }),
+            content = {
+                it.arguments?.getString("key")?.let { key ->
+                    BackButtonScaffold(
+                        title = stringResource(R.string.edit_configuration),
+                        navController = navController,
+                    ) { padding ->
+                        EditConfigurationScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                            database = database,
+                            key = key,
+                            accountStateViewModel = accountStateViewModel,
+                            account = account,
+                            navController = navController,
                         )
                     }
                 }

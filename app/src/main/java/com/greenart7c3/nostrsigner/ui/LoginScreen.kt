@@ -135,6 +135,7 @@ fun MainPage(
             Column(
                 modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 ElevatedButton(
                     onClick = {

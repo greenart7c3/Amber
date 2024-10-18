@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
@@ -35,73 +34,73 @@ fun LogsScreen(
     modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    Surface(modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-        ) {
-            val logsFlow = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
-            val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(10.dp),
+    ) {
+        val logsFlow = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
+        val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
-            LazyColumn(
-                Modifier.weight(1f),
-            ) {
-                items(logs.value.size) { index ->
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(6.dp),
-                    ) {
-                        Column(Modifier.padding(6.dp)) {
-                            val log = logs.value[index]
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Date: ")
-                                    }
-                                    append(TimeUtils.convertLongToDateTime(log.time))
-                                },
-                            )
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("URL: ")
-                                    }
-                                    append(log.url)
-                                },
-                            )
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Type: ")
-                                    }
-                                    append(log.type)
-                                },
-                            )
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Message: ")
-                                    }
-                                    append(log.message)
-                                },
-                            )
-                        }
+        LazyColumn(
+            Modifier.weight(1f),
+        ) {
+            items(logs.value.size) { index ->
+                Card(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(6.dp),
+                ) {
+                    Column(Modifier.padding(6.dp)) {
+                        val log = logs.value[index]
+                        Text(
+                            buildAnnotatedString {
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append("Date: ")
+                                }
+                                append(TimeUtils.convertLongToDateTime(log.time))
+                            },
+                        )
+                        Text(
+                            buildAnnotatedString {
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append("URL: ")
+                                }
+                                append(log.url)
+                            },
+                        )
+                        Text(
+                            buildAnnotatedString {
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append("Type: ")
+                                }
+                                append(log.type)
+                            },
+                        )
+                        Text(
+                            buildAnnotatedString {
+                                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                    append("Message: ")
+                                }
+                                append(log.message)
+                            },
+                        )
                     }
                 }
             }
-            Box(
-                Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
+        }
+        Box(
+            Modifier.fillMaxWidth(),
+            contentAlignment = Alignment.Center,
+        ) {
+            Button(
+                onClick = {
+                    scope.launch(Dispatchers.IO) {
+                        NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
+                    }
+                },
             ) {
-                Button(
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
-                        }
-                    },
-                ) {
-                    Text(text = stringResource(R.string.clear_logs))
-                }
+                Text(text = stringResource(R.string.clear_logs))
             }
         }
     }

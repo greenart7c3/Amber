@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -69,70 +68,68 @@ fun NotificationTypeScreen(
                 stringResource(R.string.direct_notifications_explainer),
             ),
         )
-    Surface(
-        modifier.fillMaxSize(),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(10.dp),
     ) {
         Column(
-            modifier = Modifier.padding(10.dp),
+            Modifier.weight(1f),
         ) {
-            Column(
-                Modifier.weight(1f),
+            Box(
+                Modifier
+                    .padding(8.dp),
             ) {
+                SettingsRow(
+                    R.string.notification_type,
+                    R.string.select_the_type_of_notification_you_want_to_receive,
+                    notificationItems,
+                    notificationItemsIndex,
+                ) {
+                    notificationItemsIndex = it
+                }
+            }
+
+            @Suppress("KotlinConstantConditions")
+            if (BuildConfig.FLAVOR == "free") {
                 Box(
                     Modifier
                         .padding(8.dp),
                 ) {
-                    SettingsRow(
-                        R.string.notification_type,
-                        R.string.select_the_type_of_notification_you_want_to_receive,
-                        notificationItems,
-                        notificationItemsIndex,
-                    ) {
-                        notificationItemsIndex = it
-                    }
-                }
-
-                @Suppress("KotlinConstantConditions")
-                if (BuildConfig.FLAVOR == "free") {
-                    Box(
-                        Modifier
-                            .padding(8.dp),
-                    ) {
-                        PushNotificationSettingsRow()
-                    }
+                    PushNotificationSettingsRow()
                 }
             }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
+        }
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            PostButton(
+                isActive = true,
             ) {
-                PostButton(
-                    isActive = true,
-                ) {
-                    scope.launch(Dispatchers.IO) {
-                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                            notificationType = parseNotificationType(notificationItemsIndex),
-                        )
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                        PushNotificationUtils.hasInit = false
-                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
-                        if (notificationItemsIndex == 0) {
-                            NotificationDataSource.stopSync()
-                            RelayPool.disconnect()
-                        } else {
-                            NostrSigner.getInstance().checkForNewRelays()
-                            NotificationDataSource.start()
-                        }
-                        NostrSigner.getInstance().applicationContext.startForegroundService(
-                            Intent(
-                                NostrSigner.getInstance().applicationContext,
-                                ConnectivityService::class.java,
-                            ),
-                        )
-                        scope.launch(Dispatchers.Main) {
-                            onDone()
-                        }
+                scope.launch(Dispatchers.IO) {
+                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                        notificationType = parseNotificationType(notificationItemsIndex),
+                    )
+                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                    PushNotificationUtils.hasInit = false
+                    PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
+                    if (notificationItemsIndex == 0) {
+                        NotificationDataSource.stopSync()
+                        RelayPool.disconnect()
+                    } else {
+                        NostrSigner.getInstance().checkForNewRelays()
+                        NotificationDataSource.start()
+                    }
+                    NostrSigner.getInstance().applicationContext.startForegroundService(
+                        Intent(
+                            NostrSigner.getInstance().applicationContext,
+                            ConnectivityService::class.java,
+                        ),
+                    )
+                    scope.launch(Dispatchers.Main) {
+                        onDone()
                     }
                 }
             }

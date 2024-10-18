@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -35,29 +34,27 @@ fun LanguageScreen(
     val languageList = remember { languageEntries.keys.map { TitleExplainer(it) }.toImmutableList() }
     val languageIndex = getLanguageIndex(languageEntries, account.language)
 
-    Surface(
-        modifier.fillMaxSize(),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(10.dp),
     ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-        ) {
-            Column {
-                Box(
-                    Modifier
-                        .padding(8.dp),
+        Column {
+            Box(
+                Modifier
+                    .padding(8.dp),
+            ) {
+                SettingsRow(
+                    R.string.language,
+                    R.string.language_description,
+                    languageList,
+                    languageIndex,
                 ) {
-                    SettingsRow(
-                        R.string.language,
-                        R.string.language_description,
-                        languageList,
-                        languageIndex,
-                    ) {
-                        account.language = languageEntries[languageList[it].title]
-                        LocalPreferences.saveToEncryptedStorage(context, account)
-                        AppCompatDelegate.setApplicationLocales(
-                            LocaleListCompat.forLanguageTags(account.language),
-                        )
-                    }
+                    account.language = languageEntries[languageList[it].title]
+                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    AppCompatDelegate.setApplicationLocales(
+                        LocaleListCompat.forLanguageTags(account.language),
+                    )
                 }
             }
         }

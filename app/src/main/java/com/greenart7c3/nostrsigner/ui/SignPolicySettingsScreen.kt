@@ -13,7 +13,6 @@ import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -56,73 +55,73 @@ fun SignPolicySettingsScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
 
-    Surface(modifier.fillMaxSize()) {
-        Column(
-            modifier = Modifier.padding(10.dp),
+    Column(
+        modifier = modifier
+            .fillMaxSize()
+            .padding(10.dp),
+    ) {
+        LazyColumn(
+            modifier = Modifier.weight(1f),
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally,
         ) {
-            LazyColumn(
-                modifier = Modifier.weight(1f),
-                verticalArrangement = Arrangement.Center,
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                itemsIndexed(radioOptions) { index, option ->
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .selectable(
-                                selected = selectedOption == index,
-                                onClick = {
-                                    selectedOption = index
-                                },
-                            )
-                            .border(
-                                width = 1.dp,
-                                color = if (selectedOption == index) {
-                                    MaterialTheme.colorScheme.primary
-                                } else {
-                                    Color.Transparent
-                                },
-                                shape = RoundedCornerShape(8.dp),
-                            )
-                            .padding(16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        RadioButton(
+            itemsIndexed(radioOptions) { index, option ->
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .selectable(
                             selected = selectedOption == index,
                             onClick = {
                                 selectedOption = index
                             },
                         )
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
+                        .border(
+                            width = 1.dp,
+                            color = if (selectedOption == index) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                Color.Transparent
+                            },
+                            shape = RoundedCornerShape(8.dp),
+                        )
+                        .padding(16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    RadioButton(
+                        selected = selectedOption == index,
+                        onClick = {
+                            selectedOption = index
+                        },
+                    )
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp),
+                    ) {
+                        Text(
+                            text = option.title,
+                            modifier = Modifier.padding(start = 16.dp),
+                            style = MaterialTheme.typography.titleLarge,
+                        )
+                        option.explainer?.let {
                             Text(
-                                text = option.title,
+                                text = it,
                                 modifier = Modifier.padding(start = 16.dp),
-                                style = MaterialTheme.typography.titleLarge,
                             )
-                            option.explainer?.let {
-                                Text(
-                                    text = it,
-                                    modifier = Modifier.padding(start = 16.dp),
-                                )
-                            }
                         }
                     }
                 }
             }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                PostButton(isActive = true) {
-                    scope.launch(Dispatchers.IO) {
-                        account.signPolicy = selectedOption
-                        LocalPreferences.saveToEncryptedStorage(context, account)
-                        scope.launch(Dispatchers.Main) {
-                            navController.navigateUp()
-                        }
+        }
+        Row(
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.fillMaxWidth(),
+        ) {
+            PostButton(isActive = true) {
+                scope.launch(Dispatchers.IO) {
+                    account.signPolicy = selectedOption
+                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    scope.launch(Dispatchers.Main) {
+                        navController.navigateUp()
                     }
                 }
             }

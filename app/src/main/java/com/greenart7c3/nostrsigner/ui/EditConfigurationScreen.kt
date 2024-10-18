@@ -161,7 +161,7 @@ fun EditConfigurationScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            if ((application?.application?.secret?.isNotEmpty() == true || application?.application?.relays?.isNotEmpty() == true) && application?.application?.isConnected == false) {
+            if (application?.application?.shouldShowRelays() == true) {
                 LazyColumn(
                     Modifier.weight(1f),
                 ) {

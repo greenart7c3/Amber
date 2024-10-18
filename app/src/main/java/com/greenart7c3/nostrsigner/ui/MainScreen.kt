@@ -91,6 +91,7 @@ import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
+import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.components.BackButtonScaffold
 import com.greenart7c3.nostrsigner.ui.components.MainScaffold
@@ -1053,6 +1054,28 @@ fun MainScreen(
                             database = database,
                             account = account,
                             accountStateViewModel = accountStateViewModel,
+                            key = key,
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                        )
+                    }
+                }
+            },
+        )
+
+        composable(
+            Route.Activity.route,
+            arguments = listOf(navArgument("key") { type = NavType.StringType }),
+            content = {
+                it.arguments?.getString("key")?.let { key ->
+                    BackButtonScaffold(
+                        title = stringResource(R.string.activity_title),
+                        navController = navController,
+                    ) { padding ->
+                        ActivityScreen(
+                            database = database,
                             key = key,
                             modifier =
                             Modifier

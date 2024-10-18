@@ -8,16 +8,16 @@ import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.R
 
 @Composable
-fun DeleteDialog(
+fun RemoveAllPermissionsDialog(
     onCancel: () -> Unit,
     onConfirm: () -> Unit,
 ) {
     AlertDialog(
         title = {
-            Text(text = stringResource(R.string.delete))
+            Text(text = stringResource(R.string.remove))
         },
         text = {
-            Text(text = "Are you sure you want to remove this application?")
+            Text(text = "Are you sure you want to remove all permissions from this application?")
         },
         onDismissRequest = {
             onCancel()
@@ -28,7 +28,7 @@ fun DeleteDialog(
                     onConfirm()
                 },
             ) {
-                Text(text = stringResource(R.string.delete))
+                Text(text = stringResource(R.string.remove))
             }
         },
         dismissButton = {

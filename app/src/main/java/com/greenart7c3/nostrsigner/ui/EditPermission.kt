@@ -211,26 +211,6 @@ fun EditPermission(
 
         Spacer(Modifier.height(8.dp))
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            if (applicationData.secret.isNotEmpty() || applicationData.relays.isNotEmpty()) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Button(
-                        onClick = {
-                            editRelaysDialog = true
-                        },
-                        Modifier.padding(6.dp),
-                    ) {
-                        Text(stringResource(R.string.relays))
-                    }
-                }
-            }
-        }
-
         LazyColumn(
             Modifier.weight(1f),
         ) {

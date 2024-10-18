@@ -136,6 +136,13 @@ sealed class Route(
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
+
+    data object Activity : Route(
+        title = NostrSigner.getInstance().getString(R.string.activity),
+        route = "Activity/{key}",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }
 
 val routes = listOf(

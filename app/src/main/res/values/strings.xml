@@ -105,7 +105,7 @@
     <string name="direct_connection">Direct Connection</string>
     <string name="notification_type">Notification Type</string>
     <string name="select_the_type_of_notification_you_want_to_receive">Select the type of notification you want to receive</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Show activity</string>
     <string name="accepted">Accepted</string>
     <string name="rejected">Rejected</string>
     <string name="language">Language</string>
@@ -401,4 +401,9 @@
     <string name="name_cannot_be_empty">"Name can't be empty "</string>
     <string name="your_nsec_bunker_has_been_created">Your nsecbunker is ready!</string>
     <string name="use_this_url_in_your_app">Use this url in your app:</string>
+    <string name="edit_configuration">Edit configuration</string>
+    <string name="edit_permissions_description">Manage the app permissions by temporarily disabling or completely reverting them. New permission are added by the app when required.</string>
+    <string name="remove_all_permissions">Remove all permissions</string>
+    <string name="remove">Remove</string>
+    <string name="activity_title">Activity</string>
 </resources>

@@ -6,21 +6,22 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.Button
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -40,8 +41,6 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -50,24 +49,19 @@ import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.kindToNipUrl
 import com.greenart7c3.nostrsigner.models.nipToUrl
-import com.greenart7c3.nostrsigner.ui.actions.ActivityDialog
-import com.greenart7c3.nostrsigner.ui.actions.DeleteDialog
 import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
-import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -84,18 +78,14 @@ fun EditPermission(
     val uriHandler = LocalUriHandler.current
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.keyPair.pubKey.toNpub())!!
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
     var applicationData by remember {
         mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false, 1))
     }
-    var textFieldvalue by remember(applicationData.name) {
-        mutableStateOf(TextFieldValue(applicationData.name))
-    }
 
-    var wantsToDelete by remember { mutableStateOf(false) }
+    var wantsToRemovePermissions by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     var checked by remember {
@@ -148,45 +138,25 @@ fun EditPermission(
         }
     }
 
-    if (wantsToDelete) {
-        DeleteDialog(
+    if (wantsToRemovePermissions) {
+        RemoveAllPermissionsDialog(
             onCancel = {
-                wantsToDelete = false
+                wantsToRemovePermissions = false
             },
         ) {
             scope.launch(Dispatchers.IO) {
                 database
                     .applicationDao()
-                    .delete(applicationData)
+                    .deletePermissions(applicationData.key)
 
-                if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                    NostrSigner.getInstance().checkForNewRelays()
-                }
-            }
-
-            scope.launch(Dispatchers.Main) {
-                navController.navigateUp()
-                accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
+                permissions.clear()
+                wantsToRemovePermissions = false
             }
         }
     }
 
     var showDialog by remember {
         mutableStateOf(false)
-    }
-
-    var showActivityDialog by remember {
-        mutableStateOf(false)
-    }
-
-    if (showActivityDialog) {
-        ActivityDialog(
-            database = database,
-            key = selectedPackage,
-            onClose = {
-                showActivityDialog = false
-            },
-        )
     }
 
     if (showDialog) {
@@ -198,17 +168,39 @@ fun EditPermission(
     }
 
     Column(
-        modifier = modifier,
+        modifier = modifier
+            .padding(8.dp),
     ) {
-        Text(
-            stringResource(R.string.permissions),
-            Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            fontSize = 18.sp,
-        )
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(
+                onClick = {
+                    navController.navigate("Activity/${applicationData.key}")
+                },
+                Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
+            ) {
+                Text(stringResource(R.string.activity))
+            }
+        }
+
+        Row(
+            Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Button(
+                onClick = {
+                },
+                Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
+            ) {
+                Text(stringResource(R.string.edit_configuration))
+            }
+        }
 
         if (!applicationData.isConnected) {
             Row(
@@ -268,21 +260,15 @@ fun EditPermission(
                 )
             }
         }
-        OutlinedTextField(
+
+        Text(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
-            value = textFieldvalue.text,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done,
-            ),
-            onValueChange = {
-                textFieldvalue = TextFieldValue(it)
-            },
-            label = {
-                Text("Name")
-            },
+            text = stringResource(R.string.edit_permissions_description),
         )
+
+        Spacer(Modifier.height(8.dp))
 
         Row(
             Modifier.fillMaxWidth(),
@@ -300,19 +286,6 @@ fun EditPermission(
                     ) {
                         Text(stringResource(R.string.relays))
                     }
-                }
-            }
-
-            Row(
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        showActivityDialog = true
-                    },
-                    Modifier.padding(6.dp),
-                ) {
-                    Text(stringResource(R.string.activity))
                 }
             }
         }
@@ -333,113 +306,120 @@ fun EditPermission(
                     } else {
                         localPermission.toLocalizedString(context)
                     }
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                ElevatedCard(
                     modifier = Modifier
-                        .padding(vertical = 8.dp, horizontal = 25.dp)
+                        .padding(4.dp)
                         .fillMaxWidth(),
                 ) {
                     Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp)
-                            .clickable {
-                                val localPermissions =
-                                    permissions.map {
-                                        if (it.id == permission.id) {
-                                            it.copy(acceptable = !permission.acceptable)
-                                        } else {
-                                            it.copy()
-                                        }
-                                    }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
-                            },
+                            .padding(vertical = 8.dp, horizontal = 8.dp)
+                            .fillMaxWidth(),
                     ) {
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = message,
-                            fontSize = 18.sp,
-                        )
-                        Switch(
-                            checked = permission.acceptable,
-                            onCheckedChange = {
-                                val localPermissions =
-                                    permissions.map {
-                                        if (it.id == permission.id) {
-                                            it.copy(acceptable = !permission.acceptable)
-                                        } else {
-                                            it.copy()
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(end = 8.dp)
+                                .clickable {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
                                         }
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                },
+                        ) {
+                            Switch(
+                                modifier = Modifier.padding(end = 8.dp),
+                                checked = permission.acceptable,
+                                onCheckedChange = {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
+                                        }
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                },
+                            )
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = message,
+                                fontSize = 18.sp,
+                            )
+                        }
+                        IconButton(
+                            content = {
+                                Icon(
+                                    Icons.Default.Delete,
+                                    stringResource(R.string.remove_permission),
+                                    modifier = Modifier
+                                        .fillMaxHeight(),
+                                    tint = Color.Red,
+                                )
+                            },
+                            onClick = {
+                                permissions.remove(permission)
+                            },
+                        )
+                        IconButton(
+                            content = {
+                                Icon(
+                                    Icons.Default.Info,
+                                    stringResource(R.string.more_info),
+                                    modifier = Modifier
+                                        .fillMaxHeight(),
+                                )
+                            },
+                            onClick = {
+                                if (permission.type.toLowerCase(Locale.current) == "sign_event") {
+                                    val nip = permission.kind?.kindToNipUrl()
+                                    if (nip == null) {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.nip_not_found_for_the_event_kind, permission.kind.toString()),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                        return@IconButton
                                     }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
+                                    uriHandler.openUri(nip)
+                                } else if (permission.type.toLowerCase(Locale.current) == "nip") {
+                                    val nip = permission.kind?.nipToUrl()
+                                    if (nip == null) {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.nip_not_found, permission.kind.toString()),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                        return@IconButton
+                                    }
+                                    uriHandler.openUri(nip)
+                                } else if ((permission.type.toUpperCase(Locale.current) == "NIP04_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP04_DECRYPT")) {
+                                    uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/04.md")
+                                } else if ((permission.type.toUpperCase(Locale.current) == "NIP44_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP44_DECRYPT")) {
+                                    uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/44.md")
+                                } else if (permission.type.toLowerCase(Locale.current) == "decrypt_zap_event") {
+                                    uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/57.md")
+                                } else {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.no_information_available_for, localPermission.toLocalizedString(context)),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
                             },
                         )
                     }
-                    IconButton(
-                        content = {
-                            Icon(
-                                Icons.Default.Delete,
-                                stringResource(R.string.remove_permission),
-                                modifier = Modifier
-                                    .fillMaxHeight(),
-                                tint = Color.Red,
-                            )
-                        },
-                        onClick = {
-                            permissions.remove(permission)
-                        },
-                    )
-                    IconButton(
-                        content = {
-                            Icon(
-                                Icons.Default.Info,
-                                stringResource(R.string.more_info),
-                                modifier = Modifier
-                                    .fillMaxHeight(),
-                            )
-                        },
-                        onClick = {
-                            if (permission.type.toLowerCase(Locale.current) == "sign_event") {
-                                val nip = permission.kind?.kindToNipUrl()
-                                if (nip == null) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.nip_not_found_for_the_event_kind, permission.kind.toString()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@IconButton
-                                }
-                                uriHandler.openUri(nip)
-                            } else if (permission.type.toLowerCase(Locale.current) == "nip") {
-                                val nip = permission.kind?.nipToUrl()
-                                if (nip == null) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.nip_not_found, permission.kind.toString()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@IconButton
-                                }
-                                uriHandler.openUri(nip)
-                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP04_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP04_DECRYPT")) {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/04.md")
-                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP44_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP44_DECRYPT")) {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/44.md")
-                            } else if (permission.type.toLowerCase(Locale.current) == "decrypt_zap_event") {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/57.md")
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.no_information_available_for, localPermission.toLocalizedString(context)),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        },
-                    )
                 }
             }
         }
@@ -450,63 +430,65 @@ fun EditPermission(
         ) {
             Button(
                 onClick = {
-                    wantsToDelete = true
+                    wantsToRemovePermissions = true
                 },
-                Modifier.padding(6.dp),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(6.dp),
             ) {
-                Text(stringResource(R.string.delete_application))
+                Text(stringResource(R.string.remove_all_permissions))
             }
         }
 
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    if (!applicationData.isConnected) {
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val localSecret = if (applicationData.useSecret) "&secret=${applicationData.secret}" else ""
-                        val localBunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                        clipboardManager.setText(AnnotatedString(localBunkerUri))
-                    }
-
-                    navController.navigateUp()
-                },
-                Modifier.padding(6.dp),
-            ) {
-                Text(stringResource(id = R.string.cancel))
-            }
-            Button(
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        val localApplicationData =
-                            applicationData.copy(
-                                name = textFieldvalue.text,
-                                useSecret = checked,
-                            )
-                        database.applicationDao().delete(applicationData)
-                        database.applicationDao().insertApplicationWithPermissions(
-                            ApplicationWithPermissions(
-                                localApplicationData,
-                                permissions,
-                            ),
-                        )
-                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                            NostrSigner.getInstance().checkForNewRelays()
-                        }
-
-                        scope.launch(Dispatchers.Main) {
-                            navController.navigateUp()
-                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
-                        }
-                    }
-                },
-                Modifier.padding(6.dp),
-            ) {
-                Text(stringResource(id = R.string.confirm))
-            }
-        }
+//        Row(
+//            Modifier
+//                .fillMaxWidth(),
+//            Arrangement.Center,
+//        ) {
+//            Button(
+//                onClick = {
+//                    if (!applicationData.isConnected) {
+//                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
+//                        val localSecret = if (applicationData.useSecret) "&secret=${applicationData.secret}" else ""
+//                        val localBunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+//                        clipboardManager.setText(AnnotatedString(localBunkerUri))
+//                    }
+//
+//                    navController.navigateUp()
+//                },
+//                Modifier.padding(6.dp),
+//            ) {
+//                Text(stringResource(id = R.string.cancel))
+//            }
+//            Button(
+//                onClick = {
+//                    scope.launch(Dispatchers.IO) {
+//                        val localApplicationData =
+//                            applicationData.copy(
+//                                name = textFieldvalue.text,
+//                                useSecret = checked,
+//                            )
+//                        database.applicationDao().delete(applicationData)
+//                        database.applicationDao().insertApplicationWithPermissions(
+//                            ApplicationWithPermissions(
+//                                localApplicationData,
+//                                permissions,
+//                            ),
+//                        )
+//                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+//                            NostrSigner.getInstance().checkForNewRelays()
+//                        }
+//
+//                        scope.launch(Dispatchers.Main) {
+//                            navController.navigateUp()
+//                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
+//                        }
+//                    }
+//                },
+//                Modifier.padding(6.dp),
+//            ) {
+//                Text(stringResource(id = R.string.confirm))
+//            }
+//        }
     }
 }

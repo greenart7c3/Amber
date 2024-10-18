@@ -143,6 +143,13 @@ sealed class Route(
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
+
+    data object RelayLogScreen : Route(
+        title = NostrSigner.getInstance().getString(R.string.relays),
+        route = "RelayLogScreen/{url}",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }
 
 val routes = listOf(

@@ -93,6 +93,7 @@ import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
+import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.BackButtonScaffold
 import com.greenart7c3.nostrsigner.ui.components.MainScaffold
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -890,6 +891,7 @@ fun MainScreen(
                     false,
                 ) { padding ->
                     ActiveRelaysScreen(
+                        navController = navController,
                         modifier =
                         Modifier
                             .fillMaxSize()
@@ -1077,6 +1079,29 @@ fun MainScreen(
                         ActivityScreen(
                             database = database,
                             key = key,
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                        )
+                    }
+                }
+            },
+        )
+
+        composable(
+            Route.RelayLogScreen.route,
+            arguments = listOf(navArgument("url") { type = NavType.StringType }),
+            content = {
+                it.arguments?.getString("url")?.let { url ->
+                    val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
+
+                    BackButtonScaffold(
+                        title = localUrl,
+                        navController = navController,
+                    ) { padding ->
+                        RelayLogScreen(
+                            url = localUrl,
                             modifier =
                             Modifier
                                 .fillMaxSize()

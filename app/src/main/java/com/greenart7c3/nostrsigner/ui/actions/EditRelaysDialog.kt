@@ -18,7 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -74,6 +74,7 @@ import com.vitorpamplona.quartz.encoders.RelayUrlFormatter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
+import java.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -112,6 +113,7 @@ fun EditRelaysDialog(
         properties = DialogProperties(usePlatformDefaultWidth = false),
     ) {
         Surface(
+            color = MaterialTheme.colorScheme.background,
             modifier = Modifier
                 .fillMaxSize(),
         ) {
@@ -263,6 +265,7 @@ fun DefaultRelaysScreen(
         }
 
     Surface(
+        color = MaterialTheme.colorScheme.background,
         modifier = modifier
             .fillMaxSize(),
     ) {
@@ -550,78 +553,67 @@ suspend fun onAddRelay(
 }
 
 @Composable
-fun RelayLogDialog(
+fun RelayLogScreen(
+    modifier: Modifier,
     url: String,
-    onClose: () -> Unit,
 ) {
     val context = LocalContext.current
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+
+    Surface(
+        modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
     ) {
-        Surface(Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.padding(10.dp),
+        Column(
+            modifier = Modifier.padding(10.dp),
+        ) {
+            val flows = LocalPreferences.allSavedAccounts(context).map {
+                NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+            }.merge()
+
+            val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
+
+            LazyColumn(
+                Modifier.weight(1f),
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    CloseButton(
-                        onCancel = onClose,
-                    )
-                }
-
-                val flows = LocalPreferences.allSavedAccounts(context).map {
-                    NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
-                }.merge()
-
-                val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
-
-                LazyColumn(
-                    Modifier.weight(1f),
-                ) {
-                    itemsIndexed(logs.value) { _, log ->
-                        Card(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(6.dp),
-                        ) {
-                            Column(Modifier.padding(6.dp)) {
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Date: ")
-                                        }
-                                        append(TimeUtils.convertLongToDateTime(log.time))
-                                    },
-                                )
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("URL: ")
-                                        }
-                                        append(log.url)
-                                    },
-                                )
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Type: ")
-                                        }
-                                        append(log.type)
-                                    },
-                                )
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Message: ")
-                                        }
-                                        append(log.message)
-                                    },
-                                )
-                            }
+                itemsIndexed(logs.value) { _, log ->
+                    ElevatedCard(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(6.dp),
+                    ) {
+                        Column(Modifier.padding(6.dp)) {
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("Date: ")
+                                    }
+                                    append(TimeUtils.convertLongToDateTime(log.time))
+                                },
+                            )
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("URL: ")
+                                    }
+                                    append(log.url)
+                                },
+                            )
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("Type: ")
+                                    }
+                                    append(log.type)
+                                },
+                            )
+                            Text(
+                                buildAnnotatedString {
+                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                        append("Message: ")
+                                    }
+                                    append(log.message)
+                                },
+                            )
                         }
                     }
                 }
@@ -633,29 +625,17 @@ fun RelayLogDialog(
 @Composable
 fun ActiveRelaysScreen(
     modifier: Modifier,
+    navController: NavController,
 ) {
     val relays2 =
         remember {
             mutableStateListOf<RelaySetupInfo>()
         }
 
-    var relayLogUrl by remember {
-        mutableStateOf("")
-    }
-
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             relays2.addAll(NostrSigner.getInstance().getSavedRelays())
         }
-    }
-
-    if (relayLogUrl.isNotBlank()) {
-        RelayLogDialog(
-            url = relayLogUrl,
-            onClose = {
-                relayLogUrl = ""
-            },
-        )
     }
 
     Surface(
@@ -677,7 +657,7 @@ fun ActiveRelaysScreen(
                         Modifier
                             .padding(6.dp)
                             .clickable {
-                                relayLogUrl = relays2[it].url
+                                navController.navigate("RelayLogScreen/${Base64.getEncoder().encodeToString(relays2[it].url.toByteArray())}")
                             },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

@@ -53,6 +53,10 @@ data class ApplicationEntity(
             signPolicy = 0,
         )
     }
+
+    fun shouldShowRelays(): Boolean {
+        return (secret.isNotEmpty() || relays.isNotEmpty()) && !isConnected
+    }
 }
 
 data class ApplicationWithPermissions(

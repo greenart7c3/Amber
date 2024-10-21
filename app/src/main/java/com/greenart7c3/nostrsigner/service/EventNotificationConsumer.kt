@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.vitorpamplona.quartz.crypto.nip04.Nip04
 import com.vitorpamplona.quartz.encoders.Hex
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
@@ -123,7 +124,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         acc: Account,
     ) {
         if (event.content.isEmpty()) return
-        if (IntentUtils.isNip04(event.content)) {
+        if (Nip04.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
                 notify(event, acc, it, EncryptionType.NIP04)
             }

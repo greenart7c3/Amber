@@ -55,11 +55,11 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
-import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -408,8 +408,8 @@ fun MainScreen(
     appName: String?,
     route: MutableState<String?>,
     database: AppDatabase,
+    navController: NavHostController,
 ) {
-    val navController = rememberNavController()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
     val scope = rememberCoroutineScope()

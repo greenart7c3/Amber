@@ -3,13 +3,9 @@ package com.greenart7c3.nostrsigner.ui
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Button
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -25,6 +21,7 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
 
@@ -62,84 +59,63 @@ fun NewApplicationScreen(
             text = stringResource(R.string.new_app_description),
         )
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    clipboardManager.getText()?.let {
-                        if (it.text.isBlank()) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.invalid_nostr_connect_uri),
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                            return@let
-                        }
-                        if (!it.text.startsWith("nostrconnect://")) {
-                            Toast.makeText(
-                                context,
-                                context.getString(R.string.invalid_nostr_connect_uri),
-                                Toast.LENGTH_SHORT,
-                            ).show()
-                            return@let
-                        }
-
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = Uri.parse(it.text)
-                        intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                        context.getAppCompatActivity()?.startActivity(intent)
-                        accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+        AmberButton(
+            onClick = {
+                clipboardManager.getText()?.let {
+                    if (it.text.isBlank()) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.invalid_nostr_connect_uri),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        return@let
                     }
-                },
-                content = {
-                    Text(text = stringResource(R.string.paste_from_clipboard))
-                },
-            )
-        }
+                    if (!it.text.startsWith("nostrconnect://")) {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.invalid_nostr_connect_uri),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                        return@let
+                    }
+
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = Uri.parse(it.text)
+                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    context.getAppCompatActivity()?.startActivity(intent)
+                    accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+                }
+            },
+            content = {
+                Text(text = stringResource(R.string.paste_from_clipboard))
+            },
+        )
 
         Text(
             stringResource(R.string.nostr_connect_description),
         )
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    dialogOpen = true
-                },
-                content = {
-                    Text(text = stringResource(R.string.scan_qr_code))
-                },
-            )
-        }
+        AmberButton(
+            onClick = {
+                dialogOpen = true
+            },
+            content = {
+                Text(text = stringResource(R.string.scan_qr_code))
+            },
+        )
 
         Text(
             stringResource(R.string.nostr_connect_qr_description),
         )
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    navController.navigate(Route.NewNsecBunker.route)
-                },
-                content = {
-                    Text(text = stringResource(R.string.add_a_nsecbunker))
-                },
-            )
-        }
+        AmberButton(
+            onClick = {
+                navController.navigate(Route.NewNsecBunker.route)
+            },
+            content = {
+                Text(text = stringResource(R.string.add_a_nsecbunker))
+            },
+        )
 
         Text(
             stringResource(R.string.nsecbunker_description),

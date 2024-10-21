@@ -62,6 +62,7 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
@@ -333,31 +334,6 @@ fun DefaultRelaysScreen(
                     }
                 }
 
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    PostButton(
-                        isActive = relays2.isNotEmpty(),
-                        onPost = {
-                            scope.launch(Dispatchers.IO) {
-                                if (relays2.isNotEmpty()) {
-                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                        defaultRelays = relays2,
-                                    )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                }
-                                scope.launch(Dispatchers.Main) {
-                                    navController.navigateUp()
-                                }
-                            }
-                        },
-                    )
-                }
-
                 LazyColumn(
                     Modifier
                         .weight(1f),
@@ -389,6 +365,26 @@ fun DefaultRelaysScreen(
                         }
                     }
                 }
+                AmberButton(
+                    onClick = {
+                        scope.launch(Dispatchers.IO) {
+                            if (relays2.isNotEmpty()) {
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    defaultRelays = relays2,
+                                )
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                            }
+                            scope.launch(Dispatchers.Main) {
+                                navController.navigateUp()
+                            }
+                        }
+                    },
+                    content = {
+                        Text(
+                            text = stringResource(R.string.save),
+                        )
+                    },
+                )
             }
         }
     }

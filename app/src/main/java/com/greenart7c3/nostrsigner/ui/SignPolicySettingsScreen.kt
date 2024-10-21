@@ -30,7 +30,7 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -111,12 +111,9 @@ fun SignPolicySettingsScreen(
                 }
             }
         }
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            PostButton(isActive = true) {
+
+        AmberButton(
+            onClick = {
                 scope.launch(Dispatchers.IO) {
                     account.signPolicy = selectedOption
                     LocalPreferences.saveToEncryptedStorage(context, account)
@@ -124,7 +121,12 @@ fun SignPolicySettingsScreen(
                         navController.navigateUp()
                     }
                 }
-            }
-        }
+            },
+            content = {
+                Text(
+                    text = stringResource(R.string.save),
+                )
+            },
+        )
     }
 }

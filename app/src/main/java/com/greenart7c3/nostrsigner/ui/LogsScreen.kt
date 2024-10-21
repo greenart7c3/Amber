@@ -1,17 +1,14 @@
 package com.greenart7c3.nostrsigner.ui
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
+import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -24,6 +21,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -46,7 +44,7 @@ fun LogsScreen(
             Modifier.weight(1f),
         ) {
             items(logs.value.size) { index ->
-                Card(
+                ElevatedCard(
                     Modifier
                         .fillMaxWidth()
                         .padding(6.dp),
@@ -89,19 +87,18 @@ fun LogsScreen(
                 }
             }
         }
-        Box(
-            Modifier.fillMaxWidth(),
-            contentAlignment = Alignment.Center,
-        ) {
-            Button(
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
-                    }
-                },
-            ) {
-                Text(text = stringResource(R.string.clear_logs))
-            }
-        }
+
+        AmberButton(
+            onClick = {
+                scope.launch(Dispatchers.IO) {
+                    NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
+                }
+            },
+            content = {
+                Text(
+                    text = stringResource(R.string.clear_logs),
+                )
+            },
+        )
     }
 }

@@ -13,7 +13,9 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
@@ -546,30 +548,38 @@ fun MainScreen(
         },
         bottomBar = {
             if (destinationRoute in items.map { it.route }) {
-                NavigationBar(tonalElevation = 0.dp) {
-                    items.forEach {
-                        val selected = destinationRoute == it.route
-                        NavigationBarItem(
-                            selected = selected,
-                            onClick = {
-                                if (it.route == Route.Accounts.route) {
-                                    scope.launch {
-                                        sheetState.show()
-                                        shouldShowBottomSheet = true
+                NavigationBar(
+                    tonalElevation = 0.dp,
+                ) {
+                    Row(
+                        Modifier
+                            .padding(horizontal = 40.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        items.forEach {
+                            val selected = destinationRoute == it.route
+                            NavigationBarItem(
+                                selected = selected,
+                                onClick = {
+                                    if (it.route == Route.Accounts.route) {
+                                        scope.launch {
+                                            sheetState.show()
+                                            shouldShowBottomSheet = true
+                                        }
+                                    } else {
+                                        navController.navigate(it.route) {
+                                            popUpTo(0)
+                                        }
                                     }
-                                } else {
-                                    navController.navigate(it.route) {
-                                        popUpTo(0)
-                                    }
-                                }
-                            },
-                            icon = {
-                                Icon(
-                                    if (selected) it.selectedIcon else it.icon,
-                                    it.route,
-                                )
-                            },
-                        )
+                                },
+                                icon = {
+                                    Icon(
+                                        if (selected) it.selectedIcon else it.icon,
+                                        it.route,
+                                    )
+                                },
+                            )
+                        }
                     }
                 }
             } else {

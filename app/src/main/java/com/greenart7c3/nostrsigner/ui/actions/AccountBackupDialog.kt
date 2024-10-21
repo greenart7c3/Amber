@@ -148,6 +148,7 @@ fun AccountBackupScreen(
 
                 RichText(
                     style = RichTextStyle().resolveDefaults(),
+                    modifier = Modifier.padding(top = 16.dp),
                 ) {
                     BasicMarkdown(astNode)
                 }

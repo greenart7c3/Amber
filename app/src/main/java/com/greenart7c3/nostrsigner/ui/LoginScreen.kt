@@ -32,7 +32,6 @@ import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,6 +79,8 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.PackageUtils
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.quartz.crypto.CryptoUtils.random
@@ -137,7 +138,7 @@ fun MainPage(
                 verticalArrangement = Arrangement.spacedBy(8.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                ElevatedButton(
+                AmberElevatedButton(
                     onClick = {
                         scope.launch {
                             state.animateScrollToPage(1)
@@ -150,7 +151,7 @@ fun MainPage(
                     Text(text = stringResource(R.string.add_a_key))
                 }
 
-                Button(
+                AmberButton(
                     modifier = Modifier
                         .height(50.dp),
                     onClick = {
@@ -338,22 +339,19 @@ fun OrbotPage(
             }
 
             Spacer(modifier = Modifier.height(20.dp))
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    modifier = Modifier
-                        .height(50.dp),
-                    onClick = {
-                        scope.launch {
-                            pageState.animateScrollToPage(2)
-                        }
-                    },
-                ) {
+
+            AmberButton(
+                Modifier
+                    .padding(start = 40.dp, end = 40.dp),
+                onClick = {
+                    scope.launch {
+                        pageState.animateScrollToPage(2)
+                    }
+                },
+                content = {
                     Text(text = stringResource(R.string.next))
-                }
-            }
+                },
+            )
         }
     }
 }
@@ -457,7 +455,10 @@ fun SignPolicyScreen(
                 }
             }
             Spacer(modifier = Modifier.height(40.dp))
-            Button(
+
+            AmberButton(
+                Modifier
+                    .padding(start = 40.dp, end = 40.dp),
                 onClick = {
                     if (key.isBlank()) {
                         accountViewModel.newKey(

@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -58,18 +57,17 @@ fun SeedWordsPage(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
-                    },
-                ) {
+            AmberButton(
+                Modifier
+                    .padding(start = 40.dp, end = 40.dp),
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
+                },
+                content = {
                     Text(text = stringResource(R.string.copy_to_clipboard))
-                }
-            }
+                },
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -129,19 +127,15 @@ fun SeedWordsPage(
                 }
             }
             if (showNextButton) {
-                Row(
+                AmberButton(
                     Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Button(
-                        modifier = Modifier
-                            .height(50.dp),
-                        onClick = onNextPage,
-                    ) {
+                        .padding(start = 40.dp, end = 40.dp)
+                        .height(50.dp),
+                    onClick = onNextPage,
+                    content = {
                         Text(text = stringResource(R.string.next))
-                    }
-                }
+                    },
+                )
             }
         }
     }

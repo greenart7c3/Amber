@@ -9,7 +9,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,13 +19,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -67,9 +61,9 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
-import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
@@ -164,7 +158,7 @@ fun AccountBackupScreen(
                         }
                     val context = LocalContext.current
 
-                    Button(
+                    AmberButton(
                         onClick = {
                             authenticate(
                                 title = context.getString(R.string.show_seed_words),
@@ -182,18 +176,10 @@ fun AccountBackupScreen(
                                 },
                             )
                         },
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.List,
-                                contentDescription = stringResource(R.string.show_seed_words),
-                            )
+                        content = {
                             Text(text = stringResource(R.string.show_seed_words))
-                        }
-                    }
+                        },
+                    )
                 }
                 NSecCopyButton(account)
                 NSecQrButton(account)
@@ -229,6 +215,7 @@ fun AccountBackupScreen(
 
                 OutlinedTextField(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
                             autofillNode.boundingBox = coordinates.boundsInWindow()
                         }
@@ -317,8 +304,7 @@ private fun NSecQrButton(account: Account) {
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.show_qr_code),
@@ -338,20 +324,13 @@ private fun NSecQrButton(account: Account) {
                 },
             )
         },
-        shape = ButtonBorder,
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.QrCode,
-            contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(
-            stringResource(id = R.string.show_qr_code),
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
+        content = {
+            Text(
+                stringResource(id = R.string.show_qr_code),
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+        },
+    )
 }
 
 @Composable
@@ -413,8 +392,7 @@ private fun NSecCopyButton(account: Account) {
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -434,17 +412,10 @@ private fun NSecCopyButton(account: Account) {
                 },
             )
         },
-        shape = ButtonBorder,
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.Key,
-            contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(stringResource(id = R.string.copy_my_secret_key), color = MaterialTheme.colorScheme.onPrimary)
-    }
+        content = {
+            Text(stringResource(id = R.string.copy_my_secret_key))
+        },
+    )
 }
 
 private fun copyNSec(
@@ -482,8 +453,7 @@ private fun EncryptNSecCopyButton(
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -501,24 +471,14 @@ private fun EncryptNSecCopyButton(
                 },
             )
         },
-        shape = ButtonBorder,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-        ),
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
         enabled = password.value.text.isNotBlank(),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.Key,
-            contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(
-            stringResource(id = R.string.encrypt_and_copy_my_secret_key),
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
+        content = {
+            Text(
+                stringResource(id = R.string.encrypt_and_copy_my_secret_key),
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+        },
+    )
 }
 
 @Composable
@@ -549,8 +509,7 @@ private fun EncryptNSecQRButton(
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -568,24 +527,14 @@ private fun EncryptNSecQRButton(
                 },
             )
         },
-        shape = ButtonBorder,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-        ),
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
         enabled = password.value.text.isNotBlank(),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.QrCode,
-            contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(
-            stringResource(id = R.string.show_qr_code),
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
+        content = {
+            Text(
+                stringResource(id = R.string.show_qr_code),
+                color = MaterialTheme.colorScheme.onPrimary,
+            )
+        },
+    )
 }
 
 private fun encryptCopyNSec(

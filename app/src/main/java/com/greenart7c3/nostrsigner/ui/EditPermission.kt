@@ -56,6 +56,7 @@ import com.greenart7c3.nostrsigner.models.kindToNipUrl
 import com.greenart7c3.nostrsigner.models.nipToUrl
 import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.quartz.encoders.toHexKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -170,37 +171,23 @@ fun EditPermission(
             Spacer(Modifier.height(12.dp))
         }
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    navController.navigate("Activity/${applicationData.key}")
-                },
-                Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp),
-            ) {
+        AmberButton(
+            onClick = {
+                navController.navigate("Activity/${applicationData.key}")
+            },
+            content = {
                 Text(stringResource(R.string.activity))
-            }
-        }
+            },
+        )
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    navController.navigate("EditConfiguration/${applicationData.key}")
-                },
-                Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp),
-            ) {
+        AmberButton(
+            onClick = {
+                navController.navigate("EditConfiguration/${applicationData.key}")
+            },
+            content = {
                 Text(stringResource(R.string.edit_configuration))
-            }
-        }
+            },
+        )
 
         Text(
             modifier = Modifier
@@ -344,72 +331,14 @@ fun EditPermission(
                 }
             }
         }
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            Arrangement.Center,
-        ) {
-            Button(
-                onClick = {
-                    wantsToRemovePermissions = true
-                },
-                Modifier
-                    .fillMaxWidth()
-                    .padding(6.dp),
-            ) {
-                Text(stringResource(R.string.remove_all_permissions))
-            }
-        }
 
-//        Row(
-//            Modifier
-//                .fillMaxWidth(),
-//            Arrangement.Center,
-//        ) {
-//            Button(
-//                onClick = {
-//                    if (!applicationData.isConnected) {
-//                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-//                        val localSecret = if (applicationData.useSecret) "&secret=${applicationData.secret}" else ""
-//                        val localBunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-//                        clipboardManager.setText(AnnotatedString(localBunkerUri))
-//                    }
-//
-//                    navController.navigateUp()
-//                },
-//                Modifier.padding(6.dp),
-//            ) {
-//                Text(stringResource(id = R.string.cancel))
-//            }
-//            Button(
-//                onClick = {
-//                    scope.launch(Dispatchers.IO) {
-//                        val localApplicationData =
-//                            applicationData.copy(
-//                                name = textFieldvalue.text,
-//                                useSecret = checked,
-//                            )
-//                        database.applicationDao().delete(applicationData)
-//                        database.applicationDao().insertApplicationWithPermissions(
-//                            ApplicationWithPermissions(
-//                                localApplicationData,
-//                                permissions,
-//                            ),
-//                        )
-//                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-//                            NostrSigner.getInstance().checkForNewRelays()
-//                        }
-//
-//                        scope.launch(Dispatchers.Main) {
-//                            navController.navigateUp()
-//                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Applications.route)
-//                        }
-//                    }
-//                },
-//                Modifier.padding(6.dp),
-//            ) {
-//                Text(stringResource(id = R.string.confirm))
-//            }
-//        }
+        AmberButton(
+            onClick = {
+                wantsToRemovePermissions = true
+            },
+            content = {
+                Text(stringResource(R.string.remove_all_permissions))
+            },
+        )
     }
 }

@@ -1,13 +1,11 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Intent
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -15,7 +13,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -28,7 +25,7 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
-import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.vitorpamplona.ammolite.relays.RelayPool
 import kotlinx.collections.immutable.persistentListOf
@@ -100,14 +97,8 @@ fun NotificationTypeScreen(
                 }
             }
         }
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            PostButton(
-                isActive = true,
-            ) {
+        AmberButton(
+            onClick = {
                 scope.launch(Dispatchers.IO) {
                     NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
                         notificationType = parseNotificationType(notificationItemsIndex),
@@ -132,7 +123,12 @@ fun NotificationTypeScreen(
                         onDone()
                     }
                 }
-            }
-        }
+            },
+            content = {
+                Text(
+                    text = stringResource(R.string.save),
+                )
+            },
+        )
     }
 }

@@ -160,7 +160,10 @@ fun AccountsBottomSheet(
                 onDismissRequest = { popupExpanded = false },
                 properties = DialogProperties(usePlatformDefaultWidth = false),
             ) {
-                Surface(modifier = Modifier.fillMaxSize()) {
+                Surface(
+                    color = MaterialTheme.colorScheme.background,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
                     Box {
                         MainLoginPage(accountStateViewModel)
                         TopAppBar(

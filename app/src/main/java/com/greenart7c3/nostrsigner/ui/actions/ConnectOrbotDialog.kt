@@ -71,7 +71,9 @@ fun ConnectOrbotDialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
     ) {
-        Surface {
+        Surface(
+            color = MaterialTheme.colorScheme.background,
+        ) {
             Column(
                 modifier = Modifier.padding(10.dp),
             ) {

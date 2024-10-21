@@ -164,6 +164,7 @@ fun <T> SpinnerSelectionDialog(
 ) {
     Dialog(onDismissRequest = onDismiss) {
         Surface(
+            color = MaterialTheme.colorScheme.background,
             border = BorderStroke(0.25.dp, Color.LightGray),
             shape = RoundedCornerShape(5.dp),
         ) {

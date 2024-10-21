@@ -54,14 +54,14 @@ sealed class Route(
     )
 
     data object AccountBackup : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.account_backup),
         route = "AccountBackup",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object Logs : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.logs),
         route = "Logs",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
@@ -75,35 +75,35 @@ sealed class Route(
     )
 
     data object Language : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.language),
         route = "Language",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object NotificationType : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.notification_type),
         route = "NotificationType",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object DefaultRelays : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.default_relays),
         route = "DefaultRelays",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object SignPolicy : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.sign_policy),
         route = "SignPolicy",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object Security : Route(
-        title = "",
+        title = NostrSigner.getInstance().getString(R.string.security),
         route = "Security",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
@@ -138,14 +138,14 @@ sealed class Route(
     )
 
     data object Activity : Route(
-        title = NostrSigner.getInstance().getString(R.string.activity),
+        title = NostrSigner.getInstance().getString(R.string.activity_title),
         route = "Activity/{key}",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
 
     data object RelayLogScreen : Route(
-        title = NostrSigner.getInstance().getString(R.string.relays),
+        title = NostrSigner.getInstance().getString(R.string.logs),
         route = "RelayLogScreen/{url}",
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,

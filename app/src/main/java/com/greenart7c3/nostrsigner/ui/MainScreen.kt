@@ -10,36 +10,30 @@ import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.LinearEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Surface
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.TooltipBox
-import androidx.compose.material3.TooltipDefaults
-import androidx.compose.material3.rememberTooltipState
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
@@ -50,10 +44,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
-import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
@@ -90,15 +82,15 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
+import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
-import com.greenart7c3.nostrsigner.ui.components.BackButtonScaffold
-import com.greenart7c3.nostrsigner.ui.components.MainScaffold
+import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
@@ -350,260 +342,20 @@ fun sendResult(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PermissionsFloatingActionButton(
-    accountStateViewModel: AccountStateViewModel,
-    account: Account,
-    goToTop: () -> Unit,
     onClick: () -> Unit,
 ) {
-    val clipboardManager = LocalClipboardManager.current
-    var expanded by remember { mutableStateOf(false) }
-    var dialogOpen by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    if (dialogOpen) {
-        SimpleQrCodeScanner {
-            dialogOpen = false
-            if (!it.isNullOrEmpty()) {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(it)
-                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                context.getAppCompatActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
-            }
-        }
-    }
-
     Column(
         horizontalAlignment = Alignment.End,
     ) {
-        AnimatedVisibility(visible = expanded) {
-            Column(
-                horizontalAlignment = Alignment.End,
-            ) {
-                Row(
-                    Modifier
-                        .padding(end = 10.dp)
-                        .clickable {
-                            clipboardManager.getText()?.let {
-                                if (it.text.isBlank()) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.invalid_nostr_connect_uri),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@let
-                                }
-                                if (!it.text.startsWith("nostrconnect://")) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.invalid_nostr_connect_uri),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@let
-                                }
-
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.data = Uri.parse(it.text)
-                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                                context.getAppCompatActivity()?.startActivity(intent)
-                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
-                            }
-                            expanded = false
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val tooltipState = rememberTooltipState()
-                    val positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
-
-                    TooltipBox(
-                        content = {
-                            Surface(
-                                shape = TooltipDefaults.richTooltipContainerShape,
-                                color = TooltipDefaults.richTooltipColors().containerColor,
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                ) {
-                                    Text(
-                                        stringResource(R.string.paste_from_clipboard),
-                                        modifier = Modifier.padding(vertical = 4.dp),
-                                    )
-                                }
-                            }
-                        },
-                        state = tooltipState,
-                        positionProvider = positionProvider,
-                        tooltip = {},
-                    )
-
-                    Spacer(modifier = Modifier.size(4.dp))
-                    FloatingActionButton(
-                        onClick = {
-                            clipboardManager.getText()?.let {
-                                if (it.text.isBlank()) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.invalid_nostr_connect_uri),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@let
-                                }
-                                if (!it.text.startsWith("nostrconnect://")) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.invalid_nostr_connect_uri),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@let
-                                }
-
-                                val intent = Intent(Intent.ACTION_VIEW)
-                                intent.data = Uri.parse(it.text)
-                                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                                context.getAppCompatActivity()?.startActivity(intent)
-                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
-                            }
-                            expanded = false
-                        },
-                        modifier = Modifier.size(35.dp),
-                        shape = CircleShape,
-                    ) {
-                        Icon(
-                            Icons.Default.ContentPaste,
-                            contentDescription = stringResource(R.string.paste_from_clipboard),
-                            tint = Color.White,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    Modifier
-                        .padding(end = 10.dp)
-                        .clickable {
-                            dialogOpen = true
-                            expanded = false
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val tooltipState = rememberTooltipState()
-                    val positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
-
-                    TooltipBox(
-                        content = {
-                            Surface(
-                                shape = TooltipDefaults.richTooltipContainerShape,
-                                color = TooltipDefaults.richTooltipColors().containerColor,
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                ) {
-                                    Text(
-                                        stringResource(R.string.connect_app),
-                                        modifier = Modifier.padding(vertical = 4.dp),
-                                    )
-                                }
-                            }
-                        },
-                        state = tooltipState,
-                        positionProvider = positionProvider,
-                        tooltip = { },
-                    )
-
-                    Spacer(modifier = Modifier.size(4.dp))
-                    FloatingActionButton(
-                        onClick = {
-                            dialogOpen = true
-                            expanded = false
-                        },
-                        modifier = Modifier.size(35.dp),
-                        shape = CircleShape,
-                    ) {
-                        Icon(
-                            Icons.Default.QrCode,
-                            contentDescription = stringResource(R.string.connect_app),
-                            tint = Color.White,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-
-                Row(
-                    Modifier
-                        .padding(end = 10.dp)
-                        .clickable {
-                            goToTop()
-                            expanded = false
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    val tooltipState = rememberTooltipState()
-                    val positionProvider = TooltipDefaults.rememberPlainTooltipPositionProvider()
-
-                    TooltipBox(
-                        content = {
-                            Surface(
-                                shape = TooltipDefaults.richTooltipContainerShape,
-                                color = TooltipDefaults.richTooltipColors().containerColor,
-                            ) {
-                                Column(
-                                    modifier = Modifier.padding(horizontal = 16.dp),
-                                ) {
-                                    Text(
-                                        stringResource(R.string.new_app),
-                                        modifier = Modifier.padding(vertical = 4.dp),
-                                    )
-                                }
-                            }
-                        },
-                        state = tooltipState,
-                        positionProvider = positionProvider,
-                        tooltip = { },
-                    )
-
-                    Spacer(modifier = Modifier.size(4.dp))
-                    FloatingActionButton(
-                        onClick = {
-                            goToTop()
-                            expanded = false
-                        },
-                        modifier = Modifier.size(35.dp),
-                        shape = CircleShape,
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            contentDescription = stringResource(R.string.new_app),
-                            tint = Color.White,
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.height(20.dp))
-            }
-        }
-
-        val rotation by animateFloatAsState(
-            targetValue = if (expanded) 0f else 180f,
-            animationSpec = tween(
-                durationMillis = 150,
-                easing = LinearEasing,
-            ),
-            label = "rotation",
-        )
-
         FloatingActionButton(
             onClick = onClick,
             shape = CircleShape,
         ) {
             Icon(
-                if (expanded) Icons.Default.Close else Icons.Default.Add,
+                Icons.Default.Add,
                 contentDescription = stringResource(R.string.connect_app),
-                modifier = Modifier.rotate(rotation),
                 tint = Color.White,
             )
         }
@@ -644,6 +396,7 @@ private suspend fun initNotifications(context: Context) {
     PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     account: Account,
@@ -743,23 +496,133 @@ fun MainScreen(
         }
     }
 
-    NavHost(
-        navController,
-        startDestination = localRoute,
-        enterTransition = { fadeIn(animationSpec = tween(200)) },
-        exitTransition = { fadeOut(animationSpec = tween(200)) },
-    ) {
-        composable(
-            Route.IncomingRequest.route,
-            content = {
-                MainScaffold(
-                    accountStateViewModel,
-                    account,
-                    database,
-                    navController,
-                    destinationRoute,
-                    false,
-                ) { padding ->
+    val items = mutableListOf(Route.Applications, Route.IncomingRequest, Route.ActiveRelays, Route.Settings, Route.Accounts)
+    @Suppress("KotlinConstantConditions")
+    if (BuildConfig.FLAVOR == "offline") {
+        items.remove(Route.ActiveRelays)
+    }
+
+    var shouldShowBottomSheet by remember { mutableStateOf(false) }
+    val sheetState =
+        rememberModalBottomSheetState(
+            confirmValueChange = { it != SheetValue.PartiallyExpanded },
+            skipPartiallyExpanded = true,
+        )
+
+    if (shouldShowBottomSheet) {
+        AccountsBottomSheet(
+            sheetState = sheetState,
+            account = account,
+            accountStateViewModel = accountStateViewModel,
+            onClose = {
+                scope.launch {
+                    shouldShowBottomSheet = false
+                    sheetState.hide()
+                }
+            },
+        )
+    }
+
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
+                    LaunchedEffect(destinationRoute) {
+                        if (destinationRoute.startsWith("Permission/")) {
+                            launch(Dispatchers.IO) {
+                                navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
+                                    title = database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                                }
+                            }
+                        } else {
+                            title = routes.find { it.route == destinationRoute }?.title ?: ""
+                        }
+                    }
+
+                    Text(title)
+                },
+            )
+        },
+        bottomBar = {
+            if (destinationRoute in items.map { it.route }) {
+                NavigationBar(tonalElevation = 0.dp) {
+                    items.forEach {
+                        val selected = destinationRoute == it.route
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                if (it.route == Route.Accounts.route) {
+                                    scope.launch {
+                                        sheetState.show()
+                                        shouldShowBottomSheet = true
+                                    }
+                                } else {
+                                    navController.navigate(it.route) {
+                                        popUpTo(0)
+                                    }
+                                }
+                            },
+                            icon = {
+                                Icon(
+                                    if (selected) it.selectedIcon else it.icon,
+                                    it.route,
+                                )
+                            },
+                        )
+                    }
+                }
+            } else {
+                val localBackButtonTitle = remember {
+                    routes.find { it.route == navController.previousBackStackEntry?.destination?.route }?.title ?: ""
+                }
+                if (localBackButtonTitle.isNotBlank()) {
+                    BottomAppBar {
+                        IconRow(
+                            title = if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
+                                stringResource(R.string.back_to, localBackButtonTitle)
+                            } else {
+                                if (destinationRoute == "NewNsecBunker") {
+                                    stringResource(R.string.back_to, stringResource(R.string.add_a_new_application))
+                                } else {
+                                    stringResource(R.string.back_to, localBackButtonTitle)
+                                }
+                            },
+                            icon = Icons.AutoMirrored.Filled.ArrowBack,
+                            onClick = {
+                                if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
+                                    navController.navigate(Route.Applications.route) {
+                                        popUpTo(0)
+                                    }
+                                } else {
+                                    navController.navigateUp()
+                                }
+                            },
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
+        },
+        floatingActionButton = {
+            if (navBackStackEntry?.destination?.route == Route.Applications.route) {
+                PermissionsFloatingActionButton(
+                    onClick = {
+                        navController.navigate(Route.NewApplication.route)
+                    },
+                )
+            }
+        },
+    ) { padding ->
+        NavHost(
+            navController,
+            startDestination = localRoute,
+            enterTransition = { fadeIn(animationSpec = tween(200)) },
+            exitTransition = { fadeOut(animationSpec = tween(200)) },
+        ) {
+            composable(
+                Route.IncomingRequest.route,
+                content = {
                     HomeScreen(
                         Modifier
                             .fillMaxSize()
@@ -770,21 +633,12 @@ fun MainScreen(
                         account,
                         database,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Applications.route,
-            content = {
-                MainScaffold(
-                    accountStateViewModel,
-                    account,
-                    database,
-                    navController,
-                    destinationRoute,
-                    true,
-                ) { padding ->
+            composable(
+                Route.Applications.route,
+                content = {
                     PermissionsScreen(
                         modifier = Modifier
                             .fillMaxSize()
@@ -794,21 +648,12 @@ fun MainScreen(
                         navController = navController,
                         database = database,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Settings.route,
-            content = {
-                MainScaffold(
-                    accountStateViewModel,
-                    account,
-                    database,
-                    navController,
-                    destinationRoute,
-                    false,
-                ) { padding ->
+            composable(
+                Route.Settings.route,
+                content = {
                     SettingsScreen(
                         Modifier
                             .fillMaxSize()
@@ -817,43 +662,26 @@ fun MainScreen(
                         account,
                         navController,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.AccountBackup.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.account_backup),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.AccountBackup.route,
+                content = {
                     AccountBackupScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding),
                         account,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Permission.route,
-            arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
-            content = {
-                it.arguments?.getString("packageName")?.let { packageName ->
-                    var title by remember { mutableStateOf(packageName) }
-                    LaunchedEffect(Unit) {
-                        launch(Dispatchers.IO) {
-                            title = database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
-                        }
-                    }
-
-                    BackButtonScaffold(
-                        title = title,
-                        navController = navController,
-                    ) { padding ->
+            composable(
+                Route.Permission.route,
+                arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("packageName")?.let { packageName ->
                         EditPermission(
                             modifier =
                             Modifier
@@ -866,17 +694,12 @@ fun MainScreen(
                             database = database,
                         )
                     }
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Logs.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.logs),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.Logs.route,
+                content = {
                     LogsScreen(
                         modifier =
                         Modifier
@@ -884,21 +707,12 @@ fun MainScreen(
                             .padding(padding),
                         account = account,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.ActiveRelays.route,
-            content = {
-                MainScaffold(
-                    accountStateViewModel,
-                    account,
-                    database,
-                    navController = navController,
-                    destinationRoute = destinationRoute,
-                    false,
-                ) { padding ->
+            composable(
+                Route.ActiveRelays.route,
+                content = {
                     ActiveRelaysScreen(
                         navController = navController,
                         modifier =
@@ -906,17 +720,12 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(padding),
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Language.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.language),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.Language.route,
+                content = {
                     LanguageScreen(
                         modifier =
                         Modifier
@@ -924,17 +733,12 @@ fun MainScreen(
                             .padding(padding),
                         account = account,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.NotificationType.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.notification_type),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.NotificationType.route,
+                content = {
                     NotificationTypeScreen(
                         modifier =
                         Modifier
@@ -944,17 +748,12 @@ fun MainScreen(
                             navController.navigateUp()
                         },
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.DefaultRelays.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.default_relays),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.DefaultRelays.route,
+                content = {
                     DefaultRelaysScreen(
                         modifier =
                         Modifier
@@ -964,17 +763,12 @@ fun MainScreen(
                         accountStateViewModel = accountStateViewModel,
                         account = account,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.SignPolicy.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.sign_policy),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.SignPolicy.route,
+                content = {
                     SignPolicySettingsScreen(
                         modifier =
                         Modifier
@@ -983,17 +777,12 @@ fun MainScreen(
                         account = account,
                         navController = navController,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Security.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.security),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.Security.route,
+                content = {
                     SecurityScreen(
                         modifier =
                         Modifier
@@ -1001,17 +790,12 @@ fun MainScreen(
                             .padding(padding),
                         navController = navController,
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.NewApplication.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.add_a_new_application),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.NewApplication.route,
+                content = {
                     NewApplicationScreen(
                         account = account,
                         accountStateViewModel = accountStateViewModel,
@@ -1021,17 +805,12 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(padding),
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.NewNsecBunker.route,
-            content = {
-                BackButtonScaffold(
-                    title = stringResource(R.string.add_a_nsecbunker),
-                    navController = navController,
-                ) { padding ->
+            composable(
+                Route.NewNsecBunker.route,
+                content = {
                     NewNsecBunkerScreen(
                         database = database,
                         account = account,
@@ -1042,25 +821,14 @@ fun MainScreen(
                             .fillMaxSize()
                             .padding(padding),
                     )
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.NSecBunkerCreated.route,
-            arguments = listOf(navArgument("key") { type = NavType.StringType }),
-            content = {
-                it.arguments?.getString("key")?.let { key ->
-                    BackButtonScaffold(
-                        title = stringResource(R.string.add_a_nsecbunker),
-                        navController = navController,
-                        backButtonTitle = stringResource(R.string.add_a_new_application),
-                        onNav = {
-                            navController.navigate(Route.Applications.route) {
-                                popUpTo(0)
-                            }
-                        },
-                    ) { padding ->
+            composable(
+                Route.NSecBunkerCreated.route,
+                arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("key")?.let { key ->
                         NewNsecBunkerCreatedScreen(
                             database = database,
                             account = account,
@@ -1072,19 +840,14 @@ fun MainScreen(
                                 .padding(padding),
                         )
                     }
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.Activity.route,
-            arguments = listOf(navArgument("key") { type = NavType.StringType }),
-            content = {
-                it.arguments?.getString("key")?.let { key ->
-                    BackButtonScaffold(
-                        title = stringResource(R.string.activity_title),
-                        navController = navController,
-                    ) { padding ->
+            composable(
+                Route.Activity.route,
+                arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("key")?.let { key ->
                         ActivityScreen(
                             database = database,
                             key = key,
@@ -1094,21 +857,15 @@ fun MainScreen(
                                 .padding(padding),
                         )
                     }
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.RelayLogScreen.route,
-            arguments = listOf(navArgument("url") { type = NavType.StringType }),
-            content = {
-                it.arguments?.getString("url")?.let { url ->
-                    val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
-
-                    BackButtonScaffold(
-                        title = localUrl,
-                        navController = navController,
-                    ) { padding ->
+            composable(
+                Route.RelayLogScreen.route,
+                arguments = listOf(navArgument("url") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("url")?.let { url ->
+                        val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
                         RelayLogScreen(
                             url = localUrl,
                             modifier =
@@ -1117,19 +874,14 @@ fun MainScreen(
                                 .padding(padding),
                         )
                     }
-                }
-            },
-        )
+                },
+            )
 
-        composable(
-            Route.EditConfiguration.route,
-            arguments = listOf(navArgument("key") { type = NavType.StringType }),
-            content = {
-                it.arguments?.getString("key")?.let { key ->
-                    BackButtonScaffold(
-                        title = stringResource(R.string.edit_configuration),
-                        navController = navController,
-                    ) { padding ->
+            composable(
+                Route.EditConfiguration.route,
+                arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("key")?.let { key ->
                         EditConfigurationScreen(
                             modifier = Modifier
                                 .fillMaxSize()
@@ -1141,8 +893,8 @@ fun MainScreen(
                             navController = navController,
                         )
                     }
-                }
-            },
-        )
+                },
+            )
+        }
     }
 }

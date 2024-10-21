@@ -36,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -60,6 +61,7 @@ fun AccountScreen(
     packageName: String?,
     appName: String?,
     flow: MutableStateFlow<List<IntentData>>,
+    navController: NavHostController,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val intents by flow.collectAsState(initial = emptyList())
@@ -160,7 +162,7 @@ fun AccountScreen(
                             AmberListenerSingleton.accountStateViewModel = accountStateViewModel
 
                             DisplayErrorMessages(accountStateViewModel)
-                            MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
+                            MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database, navController)
                         } else {
                             AmberListenerSingleton.accountStateViewModel = accountStateViewModel
                             DisplayErrorMessages(accountStateViewModel)

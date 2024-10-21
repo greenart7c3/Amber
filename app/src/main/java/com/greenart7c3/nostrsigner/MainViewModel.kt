@@ -6,6 +6,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -19,6 +20,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("StaticFieldLeak")
 class MainViewModel(val context: Context) : ViewModel() {
     val intents = MutableStateFlow<List<IntentData>>(listOf())
+    var navController: NavHostController? = null
 
     fun getAccount(): String? {
         val pubKeys =
@@ -56,6 +58,14 @@ class MainViewModel(val context: Context) : ViewModel() {
                 }
             }
 
+            if (requests.isNotEmpty()) {
+                viewModelScope.launch(Dispatchers.Main) {
+                    navController?.navigate(Route.IncomingRequest.route) {
+                        popUpTo(0)
+                    }
+                }
+            }
+
             viewModelScope.launch(Dispatchers.IO) {
                 delay(10000)
                 IntentUtils.clearRequests()
@@ -79,6 +89,14 @@ class MainViewModel(val context: Context) : ViewModel() {
                             intents.value.map {
                                 it.copy()
                             }.toMutableList()
+
+                        intent.getStringExtra("route")?.let {
+                            viewModelScope.launch(Dispatchers.Main) {
+                                navController?.navigate(it) {
+                                    popUpTo(0)
+                                }
+                            }
+                        }
                     }
                 }
             }

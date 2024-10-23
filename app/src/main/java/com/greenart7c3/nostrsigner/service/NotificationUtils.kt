@@ -101,7 +101,7 @@ object NotificationUtils {
 
         val contentIntent = Intent(applicationContext, MainActivity::class.java).apply { data = Uri.parse(uri) }
         contentIntent.putExtra("bunker", bunkerRequest.toJson())
-        contentIntent.putExtra("route", Route.Home.route)
+        contentIntent.putExtra("route", Route.IncomingRequest.route)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val contentPendingIntent =
             PendingIntent.getActivity(
@@ -119,7 +119,7 @@ object NotificationUtils {
                 applicationContext,
                 channelId,
             )
-                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setColor(0xFFBF00)
                 .setContentTitle(messageTitle)
                 .setContentText(applicationContext.getString(R.string.new_event_to_sign))
@@ -132,7 +132,7 @@ object NotificationUtils {
                 .setAutoCancel(true)
                 .setExtras(
                     Bundle().apply {
-                        putString("route", Route.Home.route)
+                        putString("route", Route.IncomingRequest.route)
                     },
                 )
 
@@ -142,7 +142,7 @@ object NotificationUtils {
                 applicationContext,
                 channelId,
             )
-                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setColor(0xFFBF00)
                 .setContentTitle(messageTitle)
                 .setContentText(messageBody)
@@ -156,7 +156,7 @@ object NotificationUtils {
                 .setAutoCancel(true)
                 .setExtras(
                     Bundle().apply {
-                        putString("route", Route.Home.route)
+                        putString("route", Route.IncomingRequest.route)
                     },
                 )
 

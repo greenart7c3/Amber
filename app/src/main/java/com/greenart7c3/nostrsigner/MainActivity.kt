@@ -29,6 +29,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
@@ -74,6 +75,8 @@ class MainActivity : AppCompatActivity() {
                 }
 
             NostrSignerTheme {
+                val navController = rememberNavController()
+                mainViewModel.navController = navController
                 var isAuthenticated by remember { mutableStateOf(false) }
                 val keyguardLauncher =
                     rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -158,7 +161,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                        AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents)
+                        AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController)
                     }
                 }
             }

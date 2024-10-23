@@ -90,7 +90,7 @@ class ConnectivityService : Service() {
             NotificationCompat.Builder(this, channelId)
                 .setContentTitle(getString(R.string.amber_is_running_in_background))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.mipmap.ic_launcher_foreground)
+                .setSmallIcon(R.drawable.ic_notification)
                 .setColor(0xFFBF00)
 
         return notificationBuilder.build()

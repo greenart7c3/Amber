@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -26,7 +26,7 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
@@ -49,7 +49,10 @@ fun SecurityScreen(
         mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
-    Surface(modifier.fillMaxSize()) {
+    Surface(
+        modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -92,12 +95,9 @@ fun SecurityScreen(
                     }
                 }
             }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                PostButton(isActive = true) {
+
+            AmberButton(
+                onClick = {
                     scope.launch(Dispatchers.IO) {
                         NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
                             useAuth = enableBiometrics,
@@ -108,8 +108,13 @@ fun SecurityScreen(
                             navController.navigateUp()
                         }
                     }
-                }
-            }
+                },
+                content = {
+                    Text(
+                        text = stringResource(R.string.save),
+                    )
+                },
+            )
         }
     }
 }

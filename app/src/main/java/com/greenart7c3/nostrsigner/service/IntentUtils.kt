@@ -987,10 +987,4 @@ object IntentUtils {
 
         return AmberEvent.toEvent(event)
     }
-
-    fun isNip04(content: String): Boolean {
-        if (!content.contains("?iv=")) return false
-        if (content.length < 28) return false
-        return content[content.length - 28] == '?' && content[content.length - 27] == 'i' && content[content.length - 26] == 'v' && content[content.length - 25] == '='
-    }
 }

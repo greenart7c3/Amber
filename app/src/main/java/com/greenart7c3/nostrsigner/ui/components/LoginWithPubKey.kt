@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,21 +15,22 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -40,8 +42,6 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.ui.actions.AdjustPermissionsDialog
-import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 
 @Composable
 fun LoginWithPubKey(
@@ -53,27 +53,12 @@ fun LoginWithPubKey(
     onAccept: (List<Permission>?, Int) -> Unit,
     onReject: () -> Unit,
 ) {
-    var localPermissions by remember {
-        mutableStateOf(permissions)
-    }
-
-    var showAdjustDialog by remember {
-        mutableStateOf(false)
-    }
-
-    if (showAdjustDialog) {
-        AdjustPermissionsDialog(
-            localPermissions ?: emptyList(),
-            onClose = {
-                showAdjustDialog = false
-            },
-        ) { dialogPermissions ->
-            localPermissions =
-                dialogPermissions.map {
-                    it.copy()
-                }
-            showAdjustDialog = false
+    val localPermissions = remember {
+        val snapshot = mutableStateListOf<Permission>()
+        permissions?.forEach {
+            snapshot.add(it)
         }
+        snapshot
     }
 
     Column(
@@ -186,45 +171,92 @@ fun LoginWithPubKey(
             Alignment.CenterHorizontally,
         ) {
             if (selectedOption == 1) {
-                localPermissions?.let {
-                    if (it.isNotEmpty()) {
-                        TextButton(
-                            onClick = {
-                                showAdjustDialog = true
+                var selectAll by remember {
+                    mutableStateOf(true)
+                }
+                val enabledPermissions = localPermissions.map {
+                    remember { mutableStateOf(it.checked) }
+                }
+                if (localPermissions.isNotEmpty()) {
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .clickable {
+                                selectAll = !selectAll
+                                val permissions2 = localPermissions.map { permission ->
+                                    permission.copy(checked = selectAll)
+                                }
+                                localPermissions.clear()
+                                localPermissions.addAll(permissions2)
+                                enabledPermissions.forEach {
+                                    it.value = selectAll
+                                }
                             },
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = stringResource(R.string.select_deselect_all),
+                        )
+                        Switch(
+                            checked = selectAll,
+                            onCheckedChange = {
+                                selectAll = !selectAll
+                                val permissions2 = localPermissions.map { permission ->
+                                    permission.copy(checked = selectAll)
+                                }
+                                localPermissions.clear()
+                                localPermissions.addAll(permissions2)
+                                enabledPermissions.forEach {
+                                    it.value = selectAll
+                                }
+                            },
+                        )
+                    }
+                    localPermissions.forEachIndexed { index, permission ->
+                        Row(
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
                             modifier = Modifier
-                                .padding(8.dp),
+                                .clickable {
+                                    permission.checked = !permission.checked
+                                    enabledPermissions[index].value = permission.checked
+                                },
                         ) {
-                            Text(text = stringResource(R.string.adjust))
+                            Text(
+                                modifier = Modifier.weight(1f),
+                                text = permission.toLocalizedString(LocalContext.current),
+                            )
+                            Switch(
+                                checked = enabledPermissions[index].value,
+                                onCheckedChange = { _ ->
+                                    permission.checked = !permission.checked
+                                    enabledPermissions[index].value = permission.checked
+                                },
+                            )
                         }
                     }
                 }
             }
 
-            Button(
-                modifier = Modifier
-                    .fillMaxWidth(0.8f)
-                    .padding(8.dp),
-                shape = ButtonBorder,
+            AmberButton(
                 onClick = {
                     onAccept(localPermissions, selectedOption)
                 },
-            ) {
-                Text(stringResource(R.string.grant_permissions))
-            }
-            Spacer(modifier = Modifier.width(8.dp))
-            Button(
-                modifier =
-                Modifier
-                    .padding(8.dp),
-                shape = ButtonBorder,
+                content = {
+                    Text(stringResource(R.string.grant_permissions))
+                },
+            )
+            Spacer(modifier = Modifier.width(16.dp))
+            AmberButton(
                 onClick = onReject,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFF5A5554),
                 ),
-            ) {
-                Text(stringResource(R.string.reject))
-            }
+                content = {
+                    Text(stringResource(R.string.reject))
+                },
+            )
         }
     }
 }

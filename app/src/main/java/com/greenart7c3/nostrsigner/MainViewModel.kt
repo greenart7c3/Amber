@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -60,8 +61,15 @@ class MainViewModel(val context: Context) : ViewModel() {
 
             if (requests.isNotEmpty()) {
                 viewModelScope.launch(Dispatchers.Main) {
-                    navController?.navigate(Route.IncomingRequest.route) {
-                        popUpTo(0)
+                    val hasNavGraph = navController?.currentDestination?.id
+                    while (hasNavGraph == null || hasNavGraph == 0) {
+                        Log.d("MainViewModel", "Waiting for nav graph")
+                        delay(100)
+                    }
+                    if (hasNavGraph != 0) {
+                        navController?.navigate(Route.IncomingRequest.route) {
+                            popUpTo(0)
+                        }
                     }
                 }
             }
@@ -92,8 +100,15 @@ class MainViewModel(val context: Context) : ViewModel() {
 
                         intent.getStringExtra("route")?.let {
                             viewModelScope.launch(Dispatchers.Main) {
-                                navController?.navigate(it) {
-                                    popUpTo(0)
+                                val hasNavGraph = navController?.currentDestination?.id
+                                while (hasNavGraph == null || hasNavGraph == 0) {
+                                    Log.d("MainViewModel", "Waiting for nav graph")
+                                    delay(100)
+                                }
+                                if (hasNavGraph != 0) {
+                                    navController?.navigate(Route.IncomingRequest.route) {
+                                        popUpTo(0)
+                                    }
                                 }
                             }
                         }

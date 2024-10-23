@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.ui.actions
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -15,7 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.ElevatedCard
@@ -28,12 +26,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,27 +40,23 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
-import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
@@ -82,162 +74,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
-@Composable
-fun EditRelaysDialog(
-    applicationData: ApplicationEntity,
-    accountStateViewModel: AccountStateViewModel,
-    account: Account,
-    onClose: () -> Unit,
-    onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
-) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val textFieldRelay = remember {
-        mutableStateOf(TextFieldValue(""))
-    }
-    val isLoading = remember {
-        mutableStateOf(false)
-    }
-    val relays2 =
-        remember {
-            val localRelays = mutableStateListOf<RelaySetupInfo>()
-            applicationData.relays.forEach {
-                localRelays.add(
-                    it.copy(),
-                )
-            }
-            localRelays
-        }
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            color = MaterialTheme.colorScheme.background,
-            modifier = Modifier
-                .fillMaxSize(),
-        ) {
-            if (isLoading.value) {
-                CenterCircularProgressIndicator(Modifier)
-            } else {
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        CloseButton {
-                            onClose()
-                        }
-                        PostButton(
-                            isActive = !applicationData.isConnected,
-                            onPost = {
-                                onPost(relays2)
-                            },
-                        )
-                    }
-                    LazyColumn(
-                        Modifier
-                            .fillMaxWidth(),
-                    ) {
-                        items(relays2.size) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    relays2[it].url,
-                                    Modifier
-                                        .weight(0.9f)
-                                        .padding(8.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                IconButton(
-                                    onClick = {
-                                        relays2.removeAt(it)
-                                    },
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        stringResource(R.string.delete),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        OutlinedTextField(
-                            enabled = !applicationData.isConnected,
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .padding(horizontal = 16.dp),
-                            value = textFieldRelay.value.text,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done,
-                            ),
-                            onValueChange = {
-                                textFieldRelay.value = TextFieldValue(it)
-                            },
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    if (applicationData.isConnected) return@KeyboardActions
-
-                                    scope.launch(Dispatchers.IO) {
-                                        onAddRelay(
-                                            textFieldRelay,
-                                            isLoading,
-                                            relays2,
-                                            scope,
-                                            accountStateViewModel,
-                                            account,
-                                            context,
-                                        )
-                                    }
-                                },
-                            ),
-                            label = {
-                                Text("Relay")
-                            },
-                        )
-                        IconButton(
-                            onClick = {
-                                if (applicationData.isConnected) return@IconButton
-                                scope.launch(Dispatchers.IO) {
-                                    onAddRelay(
-                                        textFieldRelay,
-                                        isLoading,
-                                        relays2,
-                                        scope,
-                                        accountStateViewModel,
-                                        account,
-                                        context,
-                                    )
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                null,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun DefaultRelaysScreen(
@@ -278,42 +114,21 @@ fun DefaultRelaysScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .fillMaxSize(),
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .padding(horizontal = 16.dp),
-                        value = textFieldRelay.value.text,
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Done,
-                        ),
-                        onValueChange = {
-                            textFieldRelay.value = TextFieldValue(it)
-                        },
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                scope.launch(Dispatchers.IO) {
-                                    onAddRelay(
-                                        textFieldRelay,
-                                        isLoading,
-                                        relays2,
-                                        scope,
-                                        accountStateViewModel,
-                                        account,
-                                        context,
-                                    )
-                                }
-                            },
-                        ),
-                        label = {
-                            Text("Relay")
-                        },
-                    )
-                    IconButton(
-                        onClick = {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    value = textFieldRelay.value.text,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = false,
+                        imeAction = ImeAction.Done,
+                    ),
+                    onValueChange = {
+                        textFieldRelay.value = TextFieldValue(it)
+                    },
+                    keyboardActions = KeyboardActions(
+                        onDone = {
                             scope.launch(Dispatchers.IO) {
                                 onAddRelay(
                                     textFieldRelay,
@@ -323,16 +138,48 @@ fun DefaultRelaysScreen(
                                     accountStateViewModel,
                                     account,
                                     context,
+                                    onDone = {
+                                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                            defaultRelays = relays2,
+                                        )
+                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                    },
                                 )
                             }
                         },
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            null,
-                        )
-                    }
-                }
+                    ),
+                    label = {
+                        Text("Relay")
+                    },
+                )
+
+                AmberButton(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp),
+                    onClick = {
+                        scope.launch(Dispatchers.IO) {
+                            onAddRelay(
+                                textFieldRelay,
+                                isLoading,
+                                relays2,
+                                scope,
+                                accountStateViewModel,
+                                account,
+                                context,
+                                onDone = {
+                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                        defaultRelays = relays2,
+                                    )
+                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                },
+                            )
+                        }
+                    },
+                    content = {
+                        Text(stringResource(R.string.add))
+                    },
+                )
 
                 LazyColumn(
                     Modifier
@@ -346,7 +193,7 @@ fun DefaultRelaysScreen(
                                 relays2[it].url,
                                 Modifier
                                     .weight(0.9f)
-                                    .padding(8.dp),
+                                    .padding(16.dp),
                                 fontWeight = FontWeight.Bold,
                                 fontSize = 18.sp,
                                 maxLines = 1,
@@ -355,6 +202,10 @@ fun DefaultRelaysScreen(
                             IconButton(
                                 onClick = {
                                     relays2.removeAt(it)
+                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                        defaultRelays = relays2,
+                                    )
+                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
                                 },
                             ) {
                                 Icon(
@@ -365,26 +216,6 @@ fun DefaultRelaysScreen(
                         }
                     }
                 }
-                AmberButton(
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            if (relays2.isNotEmpty()) {
-                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                    defaultRelays = relays2,
-                                )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                            }
-                            scope.launch(Dispatchers.Main) {
-                                navController.navigateUp()
-                            }
-                        }
-                    },
-                    content = {
-                        Text(
-                            text = stringResource(R.string.save),
-                        )
-                    },
-                )
             }
         }
     }
@@ -398,6 +229,7 @@ suspend fun onAddRelay(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
     context: Context,
+    onDone: () -> Unit,
 ) {
     val url = textFieldRelay.value.text
     if (url.isNotBlank() && url != "/") {
@@ -492,6 +324,7 @@ suspend fun onAddRelay(
                                             feedTypes = COMMON_FEED_TYPES,
                                         ),
                                     )
+                                    onDone()
                                 } else {
                                     accountStateViewModel.toast(
                                         context.getString(R.string.relay),

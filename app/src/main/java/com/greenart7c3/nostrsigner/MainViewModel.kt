@@ -61,14 +61,18 @@ class MainViewModel(val context: Context) : ViewModel() {
 
             if (requests.isNotEmpty()) {
                 viewModelScope.launch(Dispatchers.Main) {
-                    val hasNavGraph = navController?.currentDestination?.id
-                    while (hasNavGraph == null || hasNavGraph == 0) {
-                        Log.d("MainViewModel", "Waiting for nav graph")
+                    var error = true
+                    var count = 0
+                    while (error && count < 10) {
                         delay(100)
-                    }
-                    if (hasNavGraph != 0) {
-                        navController?.navigate(Route.IncomingRequest.route) {
-                            popUpTo(0)
+                        count++
+                        try {
+                            navController?.navigate(Route.IncomingRequest.route) {
+                                popUpTo(0)
+                            }
+                            error = false
+                        } catch (e: Exception) {
+                            Log.e("MainViewModel", "Error showing bunker requests", e)
                         }
                     }
                 }
@@ -100,14 +104,18 @@ class MainViewModel(val context: Context) : ViewModel() {
 
                         intent.getStringExtra("route")?.let {
                             viewModelScope.launch(Dispatchers.Main) {
-                                val hasNavGraph = navController?.currentDestination?.id
-                                while (hasNavGraph == null || hasNavGraph == 0) {
-                                    Log.d("MainViewModel", "Waiting for nav graph")
+                                var error = true
+                                var count = 0
+                                while (error && count < 10) {
                                     delay(100)
-                                }
-                                if (hasNavGraph != 0) {
-                                    navController?.navigate(Route.IncomingRequest.route) {
-                                        popUpTo(0)
+                                    count++
+                                    try {
+                                        navController?.navigate(Route.IncomingRequest.route) {
+                                            popUpTo(0)
+                                        }
+                                        error = false
+                                    } catch (e: Exception) {
+                                        Log.e("MainViewModel", "Error showing bunker requests", e)
                                     }
                                 }
                             }

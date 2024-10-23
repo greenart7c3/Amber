@@ -54,7 +54,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.kindToNipUrl
 import com.greenart7c3.nostrsigner.models.nipToUrl
-import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -66,7 +65,6 @@ import kotlinx.coroutines.launch
 fun EditPermission(
     modifier: Modifier,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     selectedPackage: String,
     navController: NavController,
     database: AppDatabase,
@@ -92,9 +90,6 @@ fun EditPermission(
         val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
         mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?$relayString$secret")
     }
-    var editRelaysDialog by remember {
-        mutableStateOf(false)
-    }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -104,25 +99,6 @@ fun EditPermission(
             val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
             bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-        }
-    }
-
-    if (editRelaysDialog) {
-        EditRelaysDialog(
-            applicationData = applicationData,
-            accountStateViewModel = accountStateViewModel,
-            account = account,
-            onClose = {
-                editRelaysDialog = false
-            },
-        ) { relays2 ->
-            applicationData =
-                applicationData.copy(
-                    relays = relays2.map { it },
-                )
-            val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$secret"
-            editRelaysDialog = false
         }
     }
 

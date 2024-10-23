@@ -408,4 +408,5 @@
     <string name="activity_title">Activity</string>
     <string name="edit_configuration_description">To create a new nsecbunker you need to give it a name and select one or more relays, that’s all!</string>
     <string name="update">Update</string>
+    <string name="add">Add</string>
 </resources>

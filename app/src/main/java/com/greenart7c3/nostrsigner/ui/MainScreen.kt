@@ -698,7 +698,6 @@ fun MainScreen(
                                 .fillMaxSize()
                                 .padding(padding),
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
                             selectedPackage = packageName,
                             navController = navController,
                             database = database,
@@ -842,7 +841,6 @@ fun MainScreen(
                         NewNsecBunkerCreatedScreen(
                             database = database,
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
                             key = key,
                             modifier =
                             Modifier

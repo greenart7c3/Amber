@@ -33,6 +33,8 @@ private const val DEBUG_PLAINTEXT_PREFERENCES = false
 private const val DEBUG_PREFERENCES_NAME = "debug_prefs"
 
 private object PrefKeys {
+    const val PIN = "pin"
+    const val USE_PIN = "use_pin"
     const val CURRENT_ACCOUNT = "currently_logged_in_account"
     const val SAVED_ACCOUNTS = "all_saved_accounts"
     const val NOSTR_PRIVKEY = "nostr_privkey"
@@ -115,6 +117,23 @@ object LocalPreferences {
             putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
             putInt(PrefKeys.NOTIFICATION_TYPE, settings.notificationType.screenCode)
             putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
+            putBoolean(PrefKeys.USE_PIN, settings.usePin)
+        }.apply()
+    }
+
+    fun loadPinFromEncryptedStorage(): String? {
+        val context = NostrSigner.getInstance()
+        return encryptedPreferences(context).getString(PrefKeys.PIN, null)
+    }
+
+    fun savePinToEncryptedStorage(pin: String?) {
+        val context = NostrSigner.getInstance()
+        encryptedPreferences(context).edit().apply {
+            if (pin == null) {
+                remove(PrefKeys.PIN)
+            } else {
+                putString(PrefKeys.PIN, pin)
+            }
         }.apply()
     }
 
@@ -138,6 +157,7 @@ object LocalPreferences {
                 useAuth = getBoolean(PrefKeys.USE_AUTH, false),
                 notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 1)),
                 biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
+                usePin = getBoolean(PrefKeys.USE_PIN, false),
             )
         }
     }
@@ -403,5 +423,13 @@ object LocalPreferences {
             accountCache.put(npub, account)
             return account
         }
+    }
+
+    fun clearPin() {
+        val context = NostrSigner.getInstance()
+        encryptedPreferences(context).edit().apply {
+            remove(PrefKeys.USE_PIN)
+        }.apply()
+        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(usePin = false)
     }
 }

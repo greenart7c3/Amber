@@ -903,6 +903,35 @@ fun MainScreen(
                     }
                 },
             )
+
+            composable(
+                Route.SetupPin.route,
+                content = {
+                    SetupPinScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding),
+                        navController = navController,
+                    )
+                },
+            )
+
+            composable(
+                Route.ConfirmPin.route,
+                arguments = listOf(navArgument("pin") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("pin")?.let { pin ->
+                        ConfirmPinScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding),
+                            accountStateViewModel = accountStateViewModel,
+                            pin = pin,
+                            navController = navController,
+                        )
+                    }
+                },
+            )
         }
     }
 }

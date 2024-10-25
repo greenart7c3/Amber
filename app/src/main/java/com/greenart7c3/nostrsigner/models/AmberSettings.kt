@@ -13,4 +13,5 @@ data class AmberSettings(
     val useAuth: Boolean = false,
     val notificationType: NotificationType = NotificationType.DIRECT,
     val biometricsTimeType: BiometricsTimeType = BiometricsTimeType.EVERY_TIME,
+    val usePin: Boolean = false,
 )

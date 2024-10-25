@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -13,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -398,6 +400,13 @@ private suspend fun initNotifications(context: Context) {
     PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
 }
 
+fun Color.Companion.fromHex(colorString: String) = try {
+    Color(android.graphics.Color.parseColor("#$colorString"))
+} catch (e: Exception) {
+    Log.e("Color", "Failed to parse color: $colorString", e)
+    Unspecified
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -573,10 +582,22 @@ fun MainScreen(
                                     }
                                 },
                                 icon = {
-                                    Icon(
-                                        if (selected) it.selectedIcon else it.icon,
-                                        it.route,
-                                    )
+                                    if (it.route == Route.Accounts.route) {
+                                        Icon(
+                                            if (selected) it.selectedIcon else it.icon,
+                                            it.route,
+                                            modifier = Modifier.border(
+                                                2.dp,
+                                                Color.fromHex(account.keyPair.pubKey.toHexKey().slice(0..5)),
+                                                CircleShape,
+                                            ),
+                                        )
+                                    } else {
+                                        Icon(
+                                            if (selected) it.selectedIcon else it.icon,
+                                            it.route,
+                                        )
+                                    }
                                 },
                             )
                         }

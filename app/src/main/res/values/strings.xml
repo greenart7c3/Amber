@@ -409,4 +409,9 @@
     <string name="edit_configuration_description">To create a new nsecbunker you need to give it a name and select one or more relays, that’s all!</string>
     <string name="update">Update</string>
     <string name="add">Add</string>
+    <string name="setup_pin">Setup PIN</string>
+    <string name="pin">Pin</string>
+    <string name="pin_does_not_match">Pin does not match</string>
+    <string name="confirm_pin">Confirm Pin</string>
+    <string name="enter_pin">Enter PIN</string>
 </resources>

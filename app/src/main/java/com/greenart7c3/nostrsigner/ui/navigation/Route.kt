@@ -157,6 +157,20 @@ sealed class Route(
         icon = Icons.Outlined.Settings,
         selectedIcon = Icons.Default.Settings,
     )
+
+    data object SetupPin : Route(
+        title = NostrSigner.getInstance().getString(R.string.setup_pin),
+        route = "SetupPin",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
+
+    data object ConfirmPin : Route(
+        title = NostrSigner.getInstance().getString(R.string.confirm_pin),
+        route = "ConfirmPin/{pin}",
+        icon = Icons.Outlined.Settings,
+        selectedIcon = Icons.Default.Settings,
+    )
 }
 
 val routes = listOf(
@@ -179,4 +193,6 @@ val routes = listOf(
     Route.Activity,
     Route.RelayLogScreen,
     Route.EditConfiguration,
+    Route.SetupPin,
+    Route.ConfirmPin,
 )

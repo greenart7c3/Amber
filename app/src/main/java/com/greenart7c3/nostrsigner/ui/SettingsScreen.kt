@@ -54,7 +54,6 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
@@ -101,20 +100,18 @@ fun SettingsScreen(
         modifier
             .verticalScroll(rememberScrollState()),
     ) {
-        if (Biometrics.isFingerprintAvailable(context)) {
-            Box(
-                Modifier
-                    .padding(8.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.security),
-                    icon = Icons.Default.Security,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        navController.navigate(Route.Security.route)
-                    },
-                )
-            }
+        Box(
+            Modifier
+                .padding(8.dp),
+        ) {
+            IconRow(
+                title = stringResource(R.string.security),
+                icon = Icons.Default.Security,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    navController.navigate(Route.Security.route)
+                },
+            )
         }
 
         Box(

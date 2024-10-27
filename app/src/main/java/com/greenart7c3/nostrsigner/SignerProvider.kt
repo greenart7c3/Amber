@@ -12,7 +12,6 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -112,24 +111,9 @@ class SignerProvider : ContentProvider() {
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
                 val event = try {
-                    AmberEvent.toEvent(AmberEvent.fromJson(json))
+                    IntentUtils.getUnsignedEvent(json, account)
                 } catch (e: Exception) {
                     Log.d("SignerProvider", "Failed to parse event from $packageName", e)
-                    return null
-                }
-
-                if (event.pubKey.isBlank()) {
-                    Log.d("SignerProvider", "Event from $packageName has no pubkey")
-                    return null
-                }
-
-                if (event.pubKey != account.keyPair.pubKey.toHexKey()) {
-                    Log.d("SignerProvider", "Event from $packageName has incorrect pubkey")
-                    return null
-                }
-
-                if (!event.hasCorrectIDHash()) {
-                    Log.d("SignerProvider", "Event from $packageName has incorrect ID hash")
                     return null
                 }
 
@@ -211,7 +195,7 @@ class SignerProvider : ContentProvider() {
                 val cursor =
                     MatrixCursor(arrayOf("signature", "event", "result")).also {
                         val signature =
-                            if (event is LnZapRequestEvent &&
+                            if (event.kind == LnZapRequestEvent.KIND &&
                                 event.tags.any {
                                         tag ->
                                     tag.any { t -> t == "anon" }

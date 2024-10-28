@@ -58,8 +58,6 @@ fun SeedWordsPage(
             Spacer(modifier = Modifier.height(20.dp))
 
             AmberButton(
-                Modifier
-                    .padding(start = 40.dp, end = 40.dp),
                 onClick = {
                     clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
                 },
@@ -128,9 +126,6 @@ fun SeedWordsPage(
             }
             if (showNextButton) {
                 AmberButton(
-                    Modifier
-                        .padding(start = 40.dp, end = 40.dp)
-                        .height(50.dp),
                     onClick = onNextPage,
                     content = {
                         Text(text = stringResource(R.string.next))

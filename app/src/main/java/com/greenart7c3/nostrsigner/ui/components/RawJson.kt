@@ -68,11 +68,11 @@ fun RawJson(
         }
     }
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
-        Button(
-            shape = ButtonBorder,
+        AmberButton(
             onClick = {
                 if (onCopy != null) {
                     onCopy()

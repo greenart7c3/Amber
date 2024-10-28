@@ -4,10 +4,12 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -99,38 +101,40 @@ fun PermissionsScreen(
 //                    }
 //                }
                 items(applications.size) {
-                    ElevatedCard(
+                    Row(
                         modifier = Modifier
-                            .padding(4.dp)
-                            .fillMaxSize(),
-                    ) {
-                        Row(
-                            modifier = Modifier.clickable {
+                            .fillMaxSize()
+                            .padding(vertical = 4.dp)
+                            .clickable {
                                 navController.navigate("Permission/${applications.elementAt(it).key}")
                             },
-                            verticalAlignment = Alignment.CenterVertically,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(
+                            Modifier
+                                .fillMaxSize(),
+                            verticalArrangement = Arrangement.Center,
                         ) {
-                            Column(
-                                Modifier
-                                    .padding(16.dp)
-                                    .weight(0.9f),
-                            ) {
-                                val localPermission = applications.elementAt(it)
-                                Text(
-                                    modifier = Modifier.padding(start = 16.dp),
-                                    text = localPermission.name.ifBlank { localPermission.key.toShortenHex() },
-                                    fontSize = 24.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    modifier = Modifier.padding(start = 16.dp, top = 4.dp),
-                                    text = localPermission.key,
-                                    fontSize = 18.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
+                            val localPermission = applications.elementAt(it)
+                            Text(
+                                modifier = Modifier.padding(top = 16.dp),
+                                text = localPermission.name.ifBlank { localPermission.key.toShortenHex() },
+                                fontSize = 24.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                text = localPermission.key,
+                                fontSize = 18.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                            Spacer(Modifier.weight(1f))
+                            HorizontalDivider(
+
+                                color = MaterialTheme.colorScheme.primary,
+                            )
                         }
                     }
                 }

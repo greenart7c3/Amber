@@ -31,9 +31,9 @@ val Size35dp = 35.dp
 val ButtonBorder = RoundedCornerShape(20.dp)
 val Size20Modifier = Modifier.size(20.dp)
 
-val primaryColor = Color(0xFFF16F26)
+val primaryColor = Color(0xFFFFCA62)
 val primaryVariant = Color(0xFFC8541A)
-val secondaryColor = Color(0xFFFF8E4C)
+val secondaryColor = Color(0xFFFFCA62)
 
 val RichTextDefaults = RichTextStyle().resolveDefaults()
 
@@ -64,10 +64,11 @@ fun NostrSignerTheme(
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColorPalette else LightColorPalette
+    val typography = if (darkTheme) TypographyDark else Typography
 
     MaterialTheme(
         colorScheme = colors,
-        typography = Typography,
+        typography = typography,
         shapes = Shapes,
         content = content,
     )

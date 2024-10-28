@@ -14,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -46,6 +45,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.encoders.toHexKey
 import java.util.UUID
@@ -88,8 +88,7 @@ fun NewNsecBunkerScreen(
     } else {
         Column(
             modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxSize(),
         ) {
             Text(stringResource(R.string.create_nsecbunker_description))
 
@@ -196,61 +195,54 @@ fun NewNsecBunkerScreen(
                 }
             }
 
-            Row(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        if (relays.isEmpty()) {
-                            accountStateViewModel.toast(
-                                context.getString(R.string.relays),
-                                context.getString(R.string.no_relays_added),
+            AmberButton(
+                content = {
+                    Text(text = stringResource(R.string.create))
+                },
+                onClick = {
+                    if (relays.isEmpty()) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.relays),
+                            context.getString(R.string.no_relays_added),
+                        )
+
+                        return@AmberButton
+                    }
+
+                    if (name.text.isBlank()) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.name),
+                            context.getString(R.string.name_cannot_be_empty),
+                        )
+
+                        return@AmberButton
+                    }
+
+                    scope.launch(Dispatchers.IO) {
+                        val application =
+                            ApplicationEntity(
+                                secret.value,
+                                name.text,
+                                relays,
+                                "",
+                                "",
+                                "",
+                                account.keyPair.pubKey.toHexKey(),
+                                false,
+                                secret.value,
+                                true,
+                                account.signPolicy,
                             )
 
-                            return@Button
+                        database.applicationDao().insertApplication(
+                            application,
+                        )
+                        scope.launch(Dispatchers.Main) {
+                            navController.navigate("NewNsecBunkerCreated/${secret.value}")
                         }
-
-                        if (name.text.isBlank()) {
-                            accountStateViewModel.toast(
-                                context.getString(R.string.name),
-                                context.getString(R.string.name_cannot_be_empty),
-                            )
-
-                            return@Button
-                        }
-
-                        scope.launch(Dispatchers.IO) {
-                            val application =
-                                ApplicationEntity(
-                                    secret.value,
-                                    name.text,
-                                    relays,
-                                    "",
-                                    "",
-                                    "",
-                                    account.keyPair.pubKey.toHexKey(),
-                                    false,
-                                    secret.value,
-                                    true,
-                                    account.signPolicy,
-                                )
-
-                            database.applicationDao().insertApplication(
-                                application,
-                            )
-                            scope.launch(Dispatchers.Main) {
-                                navController.navigate("NewNsecBunkerCreated/${secret.value}")
-                            }
-                        }
-                    },
-                    content = {
-                        Text(text = stringResource(R.string.create))
-                    },
-                )
-            }
+                    }
+                },
+            )
         }
     }
 }
@@ -285,8 +277,7 @@ fun NewNsecBunkerCreatedScreen(
 
         Column(
             modifier = modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxSize(),
         ) {
             Row(
                 Modifier.fillMaxWidth(),
@@ -317,19 +308,14 @@ fun NewNsecBunkerCreatedScreen(
 
             Spacer(modifier = Modifier.height(8.dp))
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(bunkerUri))
-                    },
-                    content = {
-                        Text(text = stringResource(R.string.copy_to_clipboard))
-                    },
-                )
-            }
+            AmberButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(bunkerUri))
+                },
+                content = {
+                    Text(text = stringResource(R.string.copy_to_clipboard))
+                },
+            )
         }
     }
 }

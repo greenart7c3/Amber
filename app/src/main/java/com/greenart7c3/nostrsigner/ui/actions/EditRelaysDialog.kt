@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.content.Context
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -16,7 +17,8 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -80,7 +82,6 @@ fun DefaultRelaysScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
-    navController: NavController,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -388,63 +389,58 @@ fun RelayLogScreen(
 ) {
     val context = LocalContext.current
 
-    Surface(
+    val flows = LocalPreferences.allSavedAccounts(context).map {
+        NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+    }.merge()
+
+    val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    LazyColumn(
         modifier.fillMaxSize(),
-        color = MaterialTheme.colorScheme.background,
     ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-        ) {
-            val flows = LocalPreferences.allSavedAccounts(context).map {
-                NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
-            }.merge()
-
-            val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
-
-            LazyColumn(
-                Modifier.weight(1f),
+        itemsIndexed(logs.value) { _, log ->
+            Card(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp),
+                border = BorderStroke(1.dp, Color.Gray),
+                colors = CardDefaults.cardColors().copy(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
             ) {
-                itemsIndexed(logs.value) { _, log ->
-                    ElevatedCard(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(6.dp),
-                    ) {
-                        Column(Modifier.padding(6.dp)) {
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Date: ")
-                                    }
-                                    append(TimeUtils.convertLongToDateTime(log.time))
-                                },
-                            )
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("URL: ")
-                                    }
-                                    append(log.url)
-                                },
-                            )
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Type: ")
-                                    }
-                                    append(log.type)
-                                },
-                            )
-                            Text(
-                                buildAnnotatedString {
-                                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                        append("Message: ")
-                                    }
-                                    append(log.message)
-                                },
-                            )
-                        }
-                    }
+                Column(Modifier.padding(6.dp)) {
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("Date: ")
+                            }
+                            append(TimeUtils.convertLongToDateTime(log.time))
+                        },
+                    )
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("URL: ")
+                            }
+                            append(log.url)
+                        },
+                    )
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("Type: ")
+                            }
+                            append(log.type)
+                        },
+                    )
+                    Text(
+                        buildAnnotatedString {
+                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                append("Message: ")
+                            }
+                            append(log.message)
+                        },
+                    )
                 }
             }
         }

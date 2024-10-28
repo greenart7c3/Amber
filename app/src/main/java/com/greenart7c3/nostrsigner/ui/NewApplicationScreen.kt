@@ -52,10 +52,10 @@ fun NewApplicationScreen(
     Column(
         modifier =
         modifier
-            .fillMaxSize()
-            .padding(horizontal = 16.dp, vertical = 24.dp),
+            .fillMaxSize(),
     ) {
         Text(
+            modifier = Modifier.padding(bottom = 20.dp),
             text = stringResource(R.string.new_app_description),
         )
 
@@ -92,7 +92,8 @@ fun NewApplicationScreen(
         )
 
         Text(
-            stringResource(R.string.nostr_connect_description),
+            modifier = Modifier.padding(bottom = 20.dp),
+            text = stringResource(R.string.nostr_connect_description),
         )
 
         AmberButton(
@@ -105,7 +106,8 @@ fun NewApplicationScreen(
         )
 
         Text(
-            stringResource(R.string.nostr_connect_qr_description),
+            modifier = Modifier.padding(bottom = 20.dp),
+            text = stringResource(R.string.nostr_connect_qr_description),
         )
 
         AmberButton(

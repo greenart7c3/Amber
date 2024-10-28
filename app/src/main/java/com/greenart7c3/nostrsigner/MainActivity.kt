@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,6 +27,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
@@ -160,30 +162,35 @@ class MainActivity : AppCompatActivity() {
                             },
                         ) {
                             Surface(
-                                modifier = Modifier.fillMaxSize(),
+                                modifier = Modifier
+                                    .fillMaxSize(),
                                 color = MaterialTheme.colorScheme.background,
                             ) {
-                                RandomPinInput(
-                                    text = getString(R.string.enter_pin),
-                                    onPinEntered = {
-                                        val pin = LocalPreferences.loadPinFromEncryptedStorage()
-                                        if (it == pin) {
-                                            NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                                lastBiometricsTime = System.currentTimeMillis(),
-                                            )
+                                Box(
+                                    Modifier.padding(40.dp),
+                                ) {
+                                    RandomPinInput(
+                                        text = getString(R.string.enter_pin),
+                                        onPinEntered = {
+                                            val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                            if (it == pin) {
+                                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                    lastBiometricsTime = System.currentTimeMillis(),
+                                                )
 
-                                            LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                            isAuthenticated = true
-                                            showPinDialog = false
-                                        } else {
-                                            Toast.makeText(
-                                                context,
-                                                getString(R.string.pin_does_not_match),
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }
-                                    },
-                                )
+                                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                                isAuthenticated = true
+                                                showPinDialog = false
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    getString(R.string.pin_does_not_match),
+                                                    Toast.LENGTH_SHORT,
+                                                ).show()
+                                            }
+                                        },
+                                    )
+                                }
                             }
                         }
                     }

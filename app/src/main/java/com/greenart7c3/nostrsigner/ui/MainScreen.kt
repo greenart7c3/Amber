@@ -15,12 +15,14 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
@@ -355,12 +357,12 @@ fun PermissionsFloatingActionButton(
     ) {
         FloatingActionButton(
             onClick = onClick,
-            shape = CircleShape,
+            shape = RoundedCornerShape(24),
         ) {
             Icon(
                 Icons.Default.Add,
                 contentDescription = stringResource(R.string.connect_app),
-                tint = Color.White,
+                tint = Color.Black,
             )
         }
     }
@@ -596,6 +598,7 @@ fun MainScreen(
                                         Icon(
                                             if (selected) it.selectedIcon else it.icon,
                                             it.route,
+                                            tint = if (selected) Color.Black else if (isSystemInDarkTheme()) Color.White else Color.Black,
                                         )
                                     }
                                 },
@@ -654,10 +657,11 @@ fun MainScreen(
             composable(
                 Route.IncomingRequest.route,
                 content = {
-                    HomeScreen(
+                    IncomingRequestScreen(
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         intents,
                         packageName,
                         appName,
@@ -673,7 +677,8 @@ fun MainScreen(
                     PermissionsScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(24.dp),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
                         navController = navController,
@@ -688,7 +693,8 @@ fun MainScreen(
                     SettingsScreen(
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         accountStateViewModel,
                         account,
                         navController,
@@ -702,7 +708,8 @@ fun MainScreen(
                     AccountBackupScreen(
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         account,
                     )
                 },
@@ -717,7 +724,8 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(padding),
+                                .padding(padding)
+                                .padding(40.dp),
                             account = account,
                             selectedPackage = packageName,
                             navController = navController,
@@ -734,7 +742,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         account = account,
                     )
                 },
@@ -748,7 +757,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                     )
                 },
             )
@@ -760,7 +770,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         account = account,
                     )
                 },
@@ -773,7 +784,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         onDone = {
                             navController.navigateUp()
                         },
@@ -788,8 +800,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
-                        navController = navController,
+                            .padding(padding)
+                            .padding(40.dp),
                         accountStateViewModel = accountStateViewModel,
                         account = account,
                     )
@@ -803,7 +815,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         account = account,
                         navController = navController,
                     )
@@ -817,7 +830,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         navController = navController,
                     )
                 },
@@ -833,7 +847,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                     )
                 },
             )
@@ -849,7 +864,8 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                     )
                 },
             )
@@ -866,7 +882,8 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(padding),
+                                .padding(padding)
+                                .padding(40.dp),
                         )
                     }
                 },
@@ -900,7 +917,8 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(padding),
+                                .padding(padding)
+                                .padding(40.dp),
                         )
                     }
                 },
@@ -914,7 +932,8 @@ fun MainScreen(
                         EditConfigurationScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(padding),
+                                .padding(padding)
+                                .padding(40.dp),
                             database = database,
                             key = key,
                             accountStateViewModel = accountStateViewModel,
@@ -931,7 +950,8 @@ fun MainScreen(
                     SetupPinScreen(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(padding),
+                            .padding(padding)
+                            .padding(40.dp),
                         navController = navController,
                     )
                 },
@@ -945,7 +965,8 @@ fun MainScreen(
                         ConfirmPinScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .padding(padding),
+                                .padding(padding)
+                                .padding(40.dp),
                             accountStateViewModel = accountStateViewModel,
                             pin = pin,
                             navController = navController,

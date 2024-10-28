@@ -211,6 +211,13 @@ fun SettingsScreen(
                     account.allowNewConnections = allowNewConnections
                     LocalPreferences.saveToEncryptedStorage(context, account)
                 },
+                onLongClick = {
+                    Toast.makeText(
+                        context,
+                        if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
+                        Toast.LENGTH_LONG,
+                    ).show()
+                },
             )
         }
 

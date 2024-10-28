@@ -67,8 +67,7 @@ fun NotificationTypeScreen(
         )
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(10.dp),
+            .fillMaxSize(),
     ) {
         Column(
             Modifier.weight(1f),

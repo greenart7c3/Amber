@@ -46,7 +46,7 @@ fun SecurityScreen(
             TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
         )
     var enableBiometrics by remember { mutableStateOf(NostrSigner.getInstance().settings.useAuth) }
-    var setupPin by remember { mutableStateOf(NostrSigner.getInstance().settings.usePin) }
+    val setupPin by remember { mutableStateOf(NostrSigner.getInstance().settings.usePin) }
     var biometricsIndex by remember {
         mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
     }
@@ -57,8 +57,7 @@ fun SecurityScreen(
     ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
+                .fillMaxSize(),
         ) {
             Column(
                 Modifier.weight(1f),

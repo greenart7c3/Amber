@@ -36,8 +36,7 @@ fun LanguageScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(10.dp),
+            .fillMaxSize(),
     ) {
         Column {
             Box(

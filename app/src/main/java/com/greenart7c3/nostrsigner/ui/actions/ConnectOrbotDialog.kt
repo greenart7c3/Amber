@@ -179,6 +179,6 @@ fun UseOrbotButton(
             containerColor = if (isActive) MaterialTheme.colorScheme.primary else Color.Gray,
         ),
     ) {
-        Text(text = stringResource(R.string.use_orbot), color = Color.White)
+        Text(text = stringResource(R.string.use_orbot), color = Color.Black)
     }
 }

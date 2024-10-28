@@ -29,7 +29,7 @@ fun ActiveMarker(
         Icon(
             imageVector = Icons.Default.RadioButtonChecked,
             contentDescription = stringResource(R.string.active_account),
-            tint = MaterialTheme.colorScheme.secondary,
+            tint = MaterialTheme.colorScheme.primary,
         )
     }
 }

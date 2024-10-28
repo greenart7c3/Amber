@@ -13,7 +13,6 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Button
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.OutlinedTextField
@@ -87,8 +86,7 @@ fun EditConfigurationScreen(
     } else {
         Column(
             modifier
-                .fillMaxSize()
-                .padding(16.dp),
+                .fillMaxSize(),
         ) {
             Text(stringResource(R.string.edit_configuration_description))
 
@@ -125,21 +123,62 @@ fun EditConfigurationScreen(
             )
 
             Spacer(modifier = Modifier.height(16.dp))
+            if (application?.application?.shouldShowRelays() == true) {
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    value = textFieldRelay.value.text,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = false,
+                        imeAction = ImeAction.Done,
+                    ),
+                    onValueChange = {
+                        textFieldRelay.value = TextFieldValue(it)
+                    },
+                    keyboardActions = KeyboardActions(
+                        onDone = {
+                            scope.launch(Dispatchers.IO) {
+                                onAddRelay(
+                                    textFieldRelay,
+                                    isLoading,
+                                    relays,
+                                    scope,
+                                    accountStateViewModel,
+                                    account,
+                                    context,
+                                    onDone = {
+                                        scope.launch(Dispatchers.IO) {
+                                            application?.let {
+                                                val localApplicationData =
+                                                    it.application.copy(
+                                                        name = name.text,
+                                                        relays = relays,
+                                                    )
+                                                database.applicationDao().delete(it.application)
+                                                database.applicationDao().insertApplicationWithPermissions(
+                                                    ApplicationWithPermissions(
+                                                        localApplicationData,
+                                                        it.permissions,
+                                                    ),
+                                                )
+                                                if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                                                    NostrSigner.getInstance().checkForNewRelays()
+                                                }
+                                            }
+                                        }
+                                    },
+                                )
+                            }
+                        },
+                    ),
+                    label = {
+                        Text(stringResource(R.string.wss))
+                    },
+                )
 
-            OutlinedTextField(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                value = textFieldRelay.value.text,
-                keyboardOptions = KeyboardOptions(
-                    capitalization = KeyboardCapitalization.None,
-                    autoCorrectEnabled = false,
-                    imeAction = ImeAction.Done,
-                ),
-                onValueChange = {
-                    textFieldRelay.value = TextFieldValue(it)
-                },
-                keyboardActions = KeyboardActions(
-                    onDone = {
+                AmberButton(
+                    onClick = {
                         scope.launch(Dispatchers.IO) {
                             onAddRelay(
                                 textFieldRelay,
@@ -173,55 +212,13 @@ fun EditConfigurationScreen(
                             )
                         }
                     },
-                ),
-                label = {
-                    Text(stringResource(R.string.wss))
-                },
-            )
+                    content = {
+                        Text(stringResource(R.string.add))
+                    },
+                )
 
-            AmberButton(
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        onAddRelay(
-                            textFieldRelay,
-                            isLoading,
-                            relays,
-                            scope,
-                            accountStateViewModel,
-                            account,
-                            context,
-                            onDone = {
-                                scope.launch(Dispatchers.IO) {
-                                    application?.let {
-                                        val localApplicationData =
-                                            it.application.copy(
-                                                name = name.text,
-                                                relays = relays,
-                                            )
-                                        database.applicationDao().delete(it.application)
-                                        database.applicationDao().insertApplicationWithPermissions(
-                                            ApplicationWithPermissions(
-                                                localApplicationData,
-                                                it.permissions,
-                                            ),
-                                        )
-                                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                                            NostrSigner.getInstance().checkForNewRelays()
-                                        }
-                                    }
-                                }
-                            },
-                        )
-                    }
-                },
-                content = {
-                    Text(stringResource(R.string.add))
-                },
-            )
+                Spacer(modifier = Modifier.height(16.dp))
 
-            Spacer(modifier = Modifier.height(16.dp))
-
-            if (application?.application?.shouldShowRelays() == true) {
                 LazyColumn(
                     Modifier.weight(1f),
                 ) {
@@ -277,36 +274,28 @@ fun EditConfigurationScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            Row(
-                Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(8.dp),
-                    onClick = {
-                        application?.let {
-                            scope.launch(Dispatchers.IO) {
-                                database.applicationDao().delete(it.application)
+            AmberButton(
+                onClick = {
+                    application?.let {
+                        scope.launch(Dispatchers.IO) {
+                            database.applicationDao().delete(it.application)
 
-                                if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                                    NostrSigner.getInstance().checkForNewRelays()
-                                }
+                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                                NostrSigner.getInstance().checkForNewRelays()
+                            }
 
-                                scope.launch(Dispatchers.Main) {
-                                    navController.navigate(Route.Applications.route) {
-                                        popUpTo(0)
-                                    }
+                            scope.launch(Dispatchers.Main) {
+                                navController.navigate(Route.Applications.route) {
+                                    popUpTo(0)
                                 }
                             }
                         }
-                    },
-                    content = {
-                        Text(stringResource(R.string.delete_application))
-                    },
-                )
-            }
+                    }
+                },
+                content = {
+                    Text(stringResource(R.string.delete_application))
+                },
+            )
         }
     }
 }

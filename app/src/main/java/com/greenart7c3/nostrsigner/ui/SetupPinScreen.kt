@@ -1,11 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -19,8 +17,7 @@ fun SetupPinScreen(
     navController: NavController,
 ) {
     Column(
-        modifier
-            .padding(16.dp),
+        modifier,
     ) {
         RandomPinInput { pin ->
             navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
@@ -37,8 +34,7 @@ fun ConfirmPinScreen(
 ) {
     val context = LocalContext.current
     Column(
-        modifier
-            .padding(16.dp),
+        modifier,
     ) {
         RandomPinInput(
             onPinEntered = { enteredPin ->

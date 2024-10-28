@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -73,8 +74,7 @@ fun RandomPinInput(
 
     Column(
         modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -122,7 +122,7 @@ fun RandomPinInput(
                     },
                     modifier = Modifier.padding(8.dp),
                 ) {
-                    Text(number.toString())
+                    Text(number.toString(), color = Color.Black)
                 }
             }
 
@@ -138,6 +138,7 @@ fun RandomPinInput(
                     Icon(
                         Icons.AutoMirrored.Filled.Backspace,
                         contentDescription = "Erase",
+                        tint = Color.Black,
                     )
                 }
             }
@@ -151,7 +152,7 @@ fun RandomPinInput(
                     },
                     modifier = Modifier.weight(1f).padding(8.dp),
                 ) {
-                    Text(randomNumbers.last().toString())
+                    Text(randomNumbers.last().toString(), color = Color.Black)
                 }
             }
 
@@ -168,6 +169,7 @@ fun RandomPinInput(
                     Icon(
                         Icons.Default.Done,
                         contentDescription = "Done",
+                        tint = Color.Black,
                     )
                 }
             }

@@ -30,13 +30,15 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Button
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -125,14 +127,6 @@ fun MainPage(
 
             Spacer(modifier = Modifier.height(40.dp))
 
-            Text(
-                text = stringResource(R.string.app_name),
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-            )
-
-            Spacer(modifier = Modifier.height(40.dp))
-
             Column(
                 modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -144,16 +138,11 @@ fun MainPage(
                             state.animateScrollToPage(1)
                         }
                     },
-
-                    modifier = Modifier
-                        .height(50.dp),
                 ) {
                     Text(text = stringResource(R.string.add_a_key))
                 }
 
                 AmberButton(
-                    modifier = Modifier
-                        .height(50.dp),
                     onClick = {
                         scope.launch {
                             state.animateScrollToPage(2)
@@ -167,6 +156,7 @@ fun MainPage(
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainLoginPage(
     accountViewModel: AccountStateViewModel,
@@ -176,28 +166,41 @@ fun MainLoginPage(
         3
     }
 
-    HorizontalPager(
-        modifier = Modifier.fillMaxSize(),
-        state = state,
-        userScrollEnabled = false,
-    ) {
-        when (it) {
-            0 -> {
-                MainPage(
-                    scope = scope,
-                    state = state,
-                )
-            }
-            1 -> {
-                LoginPage(
-                    accountViewModel = accountViewModel,
-                )
-            }
-            2 -> {
-                SignUpPage(
-                    accountViewModel = accountViewModel,
-                    scope = scope,
-                )
+    Scaffold(
+        topBar = {
+            CenterAlignedTopAppBar(
+                title = {
+                    Text(text = stringResource(R.string.app_name))
+                },
+            )
+        },
+    ) { innerPadding ->
+        HorizontalPager(
+            modifier = Modifier
+                .padding(innerPadding)
+                .padding(40.dp)
+                .fillMaxSize(),
+            state = state,
+            userScrollEnabled = false,
+        ) {
+            when (it) {
+                0 -> {
+                    MainPage(
+                        scope = scope,
+                        state = state,
+                    )
+                }
+                1 -> {
+                    LoginPage(
+                        accountViewModel = accountViewModel,
+                    )
+                }
+                2 -> {
+                    SignUpPage(
+                        accountViewModel = accountViewModel,
+                        scope = scope,
+                    )
+                }
             }
         }
     }
@@ -341,8 +344,6 @@ fun OrbotPage(
             Spacer(modifier = Modifier.height(20.dp))
 
             AmberButton(
-                Modifier
-                    .padding(start = 40.dp, end = 40.dp),
                 onClick = {
                     scope.launch {
                         pageState.animateScrollToPage(2)
@@ -457,8 +458,6 @@ fun SignPolicyScreen(
             Spacer(modifier = Modifier.height(40.dp))
 
             AmberButton(
-                Modifier
-                    .padding(start = 40.dp, end = 40.dp),
                 onClick = {
                     if (key.isBlank()) {
                         accountViewModel.newKey(
@@ -577,6 +576,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
 
                         OutlinedTextField(
                             modifier = Modifier
+                                .fillMaxWidth()
                                 .onGloballyPositioned { coordinates ->
                                     autofillNodeKey.boundingBox = coordinates.boundsInWindow()
                                 }
@@ -670,6 +670,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                         if (needsPassword.value) {
                             OutlinedTextField(
                                 modifier = Modifier
+                                    .fillMaxWidth()
                                     .onGloballyPositioned { coordinates ->
                                         autofillNodePassword.boundingBox = coordinates.boundsInWindow()
                                     }
@@ -784,36 +785,30 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
 
                         Spacer(modifier = Modifier.height(10.dp))
 
-                        Row(
-                            modifier = Modifier.padding(40.dp, 0.dp, 40.dp, 0.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        ) {
-                            Button(
-                                onClick = {
-                                    if (key.value.text.isBlank()) {
-                                        errorMessage = context.getString(R.string.key_is_required)
-                                    }
-
-                                    if (needsPassword.value && password.value.text.isBlank()) {
-                                        errorMessage = context.getString(R.string.password_is_required)
-                                    }
-
-                                    if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                        if (accountViewModel.isValidKey(key.value.text, password.value.text)) {
-                                            scope.launch {
-                                                pageState.animateScrollToPage(1)
-                                            }
-                                        } else {
-                                            errorMessage = context.getString(R.string.invalid_key)
-                                        }
-                                    }
-                                },
-                                modifier = Modifier
-                                    .height(50.dp),
-                            ) {
+                        AmberButton(
+                            content = {
                                 Text(text = stringResource(R.string.next))
-                            }
-                        }
+                            },
+                            onClick = {
+                                if (key.value.text.isBlank()) {
+                                    errorMessage = context.getString(R.string.key_is_required)
+                                }
+
+                                if (needsPassword.value && password.value.text.isBlank()) {
+                                    errorMessage = context.getString(R.string.password_is_required)
+                                }
+
+                                if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                    if (accountViewModel.isValidKey(key.value.text, password.value.text)) {
+                                        scope.launch {
+                                            pageState.animateScrollToPage(1)
+                                        }
+                                    } else {
+                                        errorMessage = context.getString(R.string.invalid_key)
+                                    }
+                                }
+                            },
+                        )
                     }
                 }
             }

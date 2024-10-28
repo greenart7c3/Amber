@@ -1,15 +1,19 @@
 package com.greenart7c3.nostrsigner.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -34,8 +38,7 @@ fun LogsScreen(
     val scope = rememberCoroutineScope()
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(10.dp),
+            .fillMaxSize(),
     ) {
         val logsFlow = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
         val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -44,10 +47,14 @@ fun LogsScreen(
             Modifier.weight(1f),
         ) {
             items(logs.value.size) { index ->
-                ElevatedCard(
+                Card(
                     Modifier
                         .fillMaxWidth()
-                        .padding(6.dp),
+                        .padding(4.dp),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
                 ) {
                     Column(Modifier.padding(6.dp)) {
                         val log = logs.value[index]
@@ -89,6 +96,7 @@ fun LogsScreen(
         }
 
         AmberButton(
+            modifier = Modifier.padding(top = 8.dp),
             onClick = {
                 scope.launch(Dispatchers.IO) {
                     NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()

@@ -35,7 +35,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun HomeScreen(
+fun IncomingRequestScreen(
     modifier: Modifier,
     intents: List<IntentData>,
     packageName: String?,

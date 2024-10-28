@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -16,10 +17,11 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
-import androidx.compose.material3.Button
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -120,8 +122,7 @@ fun EditPermission(
     }
 
     Column(
-        modifier = modifier
-            .padding(8.dp),
+        modifier = modifier,
     ) {
         if (!applicationData.isConnected) {
             Text(
@@ -132,10 +133,9 @@ fun EditPermission(
                 fontSize = 18.sp,
             )
 
-            Button(
+            AmberButton(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
+                    .fillMaxWidth(),
                 onClick = {
                     clipboardManager.setText(AnnotatedString(bunkerUri))
                 },
@@ -190,10 +190,14 @@ fun EditPermission(
                     } else {
                         localPermission.toLocalizedString(context)
                     }
-                ElevatedCard(
+                Card(
                     modifier = Modifier
                         .padding(4.dp)
                         .fillMaxWidth(),
+                    border = BorderStroke(1.dp, Color.Gray),
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
                 ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,

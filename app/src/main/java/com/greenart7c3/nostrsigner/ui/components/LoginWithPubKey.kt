@@ -64,7 +64,6 @@ fun LoginWithPubKey(
     Column(
         Modifier
             .fillMaxSize()
-            .padding(16.dp)
             .verticalScroll(rememberScrollState()),
     ) {
         packageName?.let {
@@ -251,7 +250,7 @@ fun LoginWithPubKey(
             AmberButton(
                 onClick = onReject,
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFF5A5554),
+                    containerColor = Color(0xFFFF6B00),
                 ),
                 content = {
                     Text(stringResource(R.string.reject))

@@ -57,8 +57,7 @@ fun SignPolicySettingsScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .padding(10.dp),
+            .fillMaxSize(),
     ) {
         LazyColumn(
             modifier = Modifier.weight(1f),

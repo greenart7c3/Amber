@@ -54,6 +54,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -327,7 +328,6 @@ private fun NSecQrButton(account: Account) {
         content = {
             Text(
                 stringResource(id = R.string.show_qr_code),
-                color = MaterialTheme.colorScheme.onPrimary,
             )
         },
     )
@@ -475,7 +475,8 @@ private fun EncryptNSecCopyButton(
         content = {
             Text(
                 stringResource(id = R.string.encrypt_and_copy_my_secret_key),
-                color = MaterialTheme.colorScheme.onPrimary,
+                maxLines = 1,
+                textAlign = TextAlign.Center,
             )
         },
     )
@@ -531,7 +532,6 @@ private fun EncryptNSecQRButton(
         content = {
             Text(
                 stringResource(id = R.string.show_qr_code),
-                color = MaterialTheme.colorScheme.onPrimary,
             )
         },
     )

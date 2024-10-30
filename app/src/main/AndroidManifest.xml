@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
     <application
+        android:largeHeap="true"
         android:name=".NostrSigner"
         android:allowBackup="false"
         android:configChanges="orientation|screenSize|screenLayout"

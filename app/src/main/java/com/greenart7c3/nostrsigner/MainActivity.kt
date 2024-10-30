@@ -40,8 +40,11 @@ import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import com.vitorpamplona.ammolite.service.HttpClientManager
+import com.vitorpamplona.quartz.encoders.toNpub
+import fr.acinq.secp256k1.Hex
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -211,6 +214,17 @@ class MainActivity : AppCompatActivity() {
                             }
 
                         LaunchedEffect(Unit) {
+                            launch(Dispatchers.IO) {
+                                val currentAccount = LocalPreferences.currentAccount(context)
+                                if (currentAccount != null && npub != null && currentAccount != npub) {
+                                    if (npub.startsWith("npub")) {
+                                        accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
+                                    } else {
+                                        val localNpub = Hex.decode(npub).toNpub()
+                                        accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                    }
+                                }
+                            }
                             launch {
                                 IntentUtils.state
                                     .receiveAsFlow()

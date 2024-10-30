@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -33,8 +34,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -60,6 +63,8 @@ fun AccountsBottomSheet(
     accountStateViewModel: AccountStateViewModel,
     onClose: () -> Unit,
 ) {
+    val clipboardManager = LocalClipboardManager.current
+
     ModalBottomSheet(
         sheetState = sheetState,
         onDismissRequest = {
@@ -124,6 +129,18 @@ fun AccountsBottomSheet(
                                 currentNpub = ""
                                 accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.Settings.route)
                             },
+                        )
+                    }
+
+                    IconButton(
+                        onClick = {
+                            clipboardManager.setText(AnnotatedString(acc.npub))
+                        },
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.ContentCopy,
+                            contentDescription = stringResource(R.string.copy_to_clipboard),
+                            tint = MaterialTheme.colorScheme.onSurface,
                         )
                     }
 

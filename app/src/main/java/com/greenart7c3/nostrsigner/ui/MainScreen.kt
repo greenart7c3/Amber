@@ -154,7 +154,7 @@ fun sendResult(
                     "",
                     "",
                     "",
-                    account.keyPair.pubKey.toHexKey(),
+                    account.signer.keyPair.pubKey.toHexKey(),
                     true,
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
@@ -592,7 +592,7 @@ fun MainScreen(
                                             it.route,
                                             modifier = Modifier.border(
                                                 2.dp,
-                                                Color.fromHex(account.keyPair.pubKey.toHexKey().slice(0..5)),
+                                                Color.fromHex(account.signer.keyPair.pubKey.toHexKey().slice(0..5)),
                                                 CircleShape,
                                             ),
                                         )

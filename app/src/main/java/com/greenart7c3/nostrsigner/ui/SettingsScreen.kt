@@ -91,7 +91,7 @@ fun SettingsScreen(
             },
             onConfirm = {
                 logoutDialog = false
-                accountStateViewModel.logOff(account.keyPair.pubKey.toNpub())
+                accountStateViewModel.logOff(account.signer.keyPair.pubKey.toNpub())
             },
         )
     }

@@ -227,7 +227,7 @@ fun NewNsecBunkerScreen(
                                 "",
                                 "",
                                 "",
-                                account.keyPair.pubKey.toHexKey(),
+                                account.signer.keyPair.pubKey.toHexKey(),
                                 false,
                                 secret.value,
                                 true,
@@ -273,7 +273,7 @@ fun NewNsecBunkerCreatedScreen(
     } else {
         val relays = application.relays.joinToString(separator = "&") { "relay=${it.url}" }
         val localSecret = "&secret=${application.secret}"
-        val bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+        val bunkerUri = "bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relays$localSecret"
 
         Column(
             modifier = modifier

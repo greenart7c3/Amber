@@ -173,7 +173,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
 
         val pubKeys =
             accounts.mapNotNull {
-                LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub)?.keyPair?.pubKey?.toHexKey()
+                LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub)?.signer?.keyPair?.pubKey?.toHexKey()
             }
 
         val eoses =

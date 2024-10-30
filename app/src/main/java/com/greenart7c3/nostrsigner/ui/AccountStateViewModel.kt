@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.bechToBytes
+import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -119,7 +120,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         CryptoUtils.decryptNIP49(key, password)
                             ?: throw Exception("Could not decrypt key with provided password")
                     Account(
-                        KeyPair(Hex.decode(newKey)),
+                        signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -130,7 +131,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     )
                 } else if (key.startsWith("nsec")) {
                     Account(
-                        KeyPair(privKey = key.bechToBytes()),
+                        signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -142,7 +143,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
                     val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
                     Account(
-                        keyPair,
+                        signer = NostrSignerInternal(keyPair),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -153,7 +154,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     )
                 } else {
                     Account(
-                        KeyPair(Hex.decode(key)),
+                        signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -163,7 +164,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         seedWords = emptySet(),
                     )
                 }
-            return account.keyPair.privKey != null
+            return account.signer.keyPair.privKey != null
         } catch (e: Exception) {
             return false
         }
@@ -183,7 +184,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     CryptoUtils.decryptNIP49(key, password)
                         ?: throw Exception("Could not decrypt key with provided password")
                 Account(
-                    KeyPair(Hex.decode(newKey)),
+                    signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -194,7 +195,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 )
             } else if (key.startsWith("nsec")) {
                 Account(
-                    KeyPair(privKey = key.bechToBytes()),
+                    signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -206,7 +207,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
                 val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
                 Account(
-                    keyPair,
+                    signer = NostrSignerInternal(keyPair),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -217,7 +218,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 )
             } else {
                 Account(
-                    KeyPair(Hex.decode(key)),
+                    signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -241,7 +242,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         val key = seedWords.joinToString(separator = " ") { it }
         val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
         val account = Account(
-            keyPair,
+            NostrSignerInternal(keyPair),
             name = "",
             useProxy = useProxy,
             proxyPort = proxyPort,

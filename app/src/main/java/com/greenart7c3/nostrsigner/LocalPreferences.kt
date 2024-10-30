@@ -19,6 +19,7 @@ import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.jni.BuildConfig
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -195,7 +196,7 @@ object LocalPreferences {
     }
 
     private fun setCurrentAccount(context: Context, account: Account) {
-        val npub = account.keyPair.pubKey.toNpub()
+        val npub = account.signer.keyPair.pubKey.toNpub()
         updateCurrentAccount(context, npub)
         addAccount(context, npub)
     }
@@ -281,10 +282,10 @@ object LocalPreferences {
     }
 
     fun saveToEncryptedStorage(context: Context, account: Account) {
-        val prefs = encryptedPreferences(context = context, account.keyPair.pubKey.toNpub())
+        val prefs = encryptedPreferences(context = context, account.signer.keyPair.pubKey.toNpub())
         prefs.edit().apply {
-            account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
-            account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
+            account.signer.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
+            account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
             putBoolean(PrefKeys.USE_PROXY, account.useProxy)
             putInt(PrefKeys.PROXY_PORT, account.proxyPort)
             putString(PrefKeys.ACCOUNT_NAME, account.name)
@@ -411,7 +412,7 @@ object LocalPreferences {
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =
                 Account(
-                    keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
+                    signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
                     name = name,
                     useProxy = useProxy,
                     proxyPort = proxyPort,

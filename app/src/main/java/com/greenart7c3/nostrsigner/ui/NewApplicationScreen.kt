@@ -44,7 +44,7 @@ fun NewApplicationScreen(
                 intent.data = Uri.parse(it)
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 context.getAppCompatActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
             }
         }
     }
@@ -83,7 +83,7 @@ fun NewApplicationScreen(
                     intent.data = Uri.parse(it.text)
                     intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     context.getAppCompatActivity()?.startActivity(intent)
-                    accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+                    accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
                 }
             },
             content = {

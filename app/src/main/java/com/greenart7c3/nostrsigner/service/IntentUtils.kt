@@ -173,7 +173,7 @@ object IntentUtils {
                 SignerType.SIGN_EVENT -> {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
-                    if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                    if (unsignedEvent.pubKey != account.signer.keyPair.pubKey.toHexKey()) {
                         LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                             localAccount = it
                         }
@@ -543,7 +543,7 @@ object IntentUtils {
             SignerType.GET_PUBLIC_KEY -> {
                 onReady(
                     IntentData(
-                        account.keyPair.pubKey.toNpub(),
+                        account.signer.keyPair.pubKey.toNpub(),
                         "",
                         type,
                         pubKey,
@@ -638,7 +638,7 @@ object IntentUtils {
             SignerType.SIGN_EVENT -> {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
-                if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                if (unsignedEvent.pubKey != account.signer.keyPair.pubKey.toHexKey()) {
                     LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                         localAccount = it
                     }
@@ -892,7 +892,7 @@ object IntentUtils {
                         pubKey,
                         relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         "",
-                        account.keyPair.pubKey.toNpub(),
+                        account.signer.keyPair.pubKey.toNpub(),
                         EncryptionType.NIP04,
                     ),
                     route,
@@ -902,7 +902,7 @@ object IntentUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
-            NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+            NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
                 LogEntity(
                     0,
                     "nostrconnect",
@@ -972,7 +972,7 @@ object IntentUtils {
     ): Event {
         val event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
-            event.pubKey = account.keyPair.pubKey.toHexKey()
+            event.pubKey = account.signer.keyPair.pubKey.toHexKey()
         }
         if (event.id.isEmpty()) {
             event.id =

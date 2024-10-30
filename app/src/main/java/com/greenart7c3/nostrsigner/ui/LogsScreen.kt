@@ -40,7 +40,7 @@ fun LogsScreen(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        val logsFlow = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().getLogs()
+        val logsFlow = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().getLogs()
         val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
 
         LazyColumn(
@@ -99,7 +99,7 @@ fun LogsScreen(
             modifier = Modifier.padding(top = 8.dp),
             onClick = {
                 scope.launch(Dispatchers.IO) {
-                    NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
+                    NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
                 }
             },
             content = {

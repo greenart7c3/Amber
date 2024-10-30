@@ -140,7 +140,7 @@ fun AccountScreen(
                                         listOf(intentData)
                                     }
                                 }.mapNotNull { it }
-                            val database = NostrSigner.getInstance().getDatabase(state.account.keyPair.pubKey.toNpub())
+                            val database = NostrSigner.getInstance().getDatabase(state.account.signer.keyPair.pubKey.toNpub())
                             val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
 
                             SideEffect {

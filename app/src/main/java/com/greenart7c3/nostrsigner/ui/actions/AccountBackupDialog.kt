@@ -292,7 +292,7 @@ private fun NSecQrButton(account: Account) {
 
     if (showDialog) {
         QrCodeDialog(
-            content = account.keyPair.privKey!!.toNsec(),
+            content = account.signer.keyPair.privKey!!.toNsec(),
         ) {
             showDialog = false
         }
@@ -424,7 +424,7 @@ private fun copyNSec(
     account: Account,
     clipboardManager: ClipboardManager,
 ) {
-    account.keyPair.privKey?.let {
+    account.signer.keyPair.privKey?.let {
         clipboardManager.setText(AnnotatedString(it.toNsec()))
         scope.launch {
             Toast.makeText(
@@ -496,7 +496,7 @@ private fun EncryptNSecQRButton(
 
     if (showDialog) {
         QrCodeDialog(
-            content = CryptoUtils.encryptNIP49(account.keyPair.privKey!!.toHexKey(), password.value.text),
+            content = CryptoUtils.encryptNIP49(account.signer.keyPair.privKey!!.toHexKey(), password.value.text),
         ) {
             showDialog = false
         }
@@ -554,7 +554,7 @@ private fun encryptCopyNSec(
                 .show()
         }
     } else {
-        account.keyPair.privKey?.let {
+        account.signer.keyPair.privKey?.let {
             try {
                 val key = CryptoUtils.encryptNIP49(it.toHexKey(), password.value.text)
                 clipboardManager.setText(AnnotatedString(key))

@@ -105,8 +105,8 @@ class RegisterAccounts(
             if (acc != null) {
                 val permissions =
                     NostrSigner.getInstance().getDatabase(
-                        acc.keyPair.pubKey.toNpub(),
-                    ).applicationDao().getAll(acc.keyPair.pubKey.toHexKey())
+                        acc.signer.keyPair.pubKey.toNpub(),
+                    ).applicationDao().getAll(acc.signer.keyPair.pubKey.toHexKey())
                 permissions.forEach { permission ->
                     permission.relays.forEach { relay ->
                         if (isSupportedUrl(relay.url)) {

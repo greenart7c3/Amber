@@ -90,7 +90,7 @@ fun EditPermission(
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
         val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
-        mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?$relayString$secret")
+        mutableStateOf("bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relayString$secret")
     }
 
     LaunchedEffect(Unit) {
@@ -100,7 +100,7 @@ fun EditPermission(
             checked = applicationData.useSecret
             val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+            bunkerUri = "bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relays$localSecret"
         }
     }
 

@@ -357,7 +357,7 @@ fun MultiEventHomeScreen(
 
                             val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                            val database = NostrSigner.getInstance().getDatabase(localAccount.keyPair.pubKey.toNpub())
+                            val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
 
                             val application =
                                 database
@@ -370,7 +370,7 @@ fun MultiEventHomeScreen(
                                         "",
                                         "",
                                         "",
-                                        localAccount.keyPair.pubKey.toHexKey(),
+                                        localAccount.signer.keyPair.pubKey.toHexKey(),
                                         true,
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
@@ -468,7 +468,7 @@ fun MultiEventHomeScreen(
                                     ),
                                 )
 
-                                val signedMessage = CryptoUtils.signString(intentData.data, localAccount.keyPair.privKey!!).toHexKey()
+                                val signedMessage = CryptoUtils.signString(intentData.data, localAccount.signer.keyPair.privKey!!).toHexKey()
 
                                 if (intentData.bunkerRequest != null) {
                                     IntentUtils.sendBunkerResponse(
@@ -601,7 +601,7 @@ fun ListItem(
             localAccount = LocalPreferences.loadFromEncryptedStorage(
                 context,
                 intentData.currentAccount,
-            )?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
+            )?.signer?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
         }
     }
 

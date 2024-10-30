@@ -122,7 +122,7 @@ fun AccountsBottomSheet(
                                 LocalPreferences.setAccountName(context, currentNpub, it)
                                 showNameDialog = false
                                 currentNpub = ""
-                                accountStateViewModel.switchUser(account.keyPair.pubKey.toNpub(), Route.Settings.route)
+                                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.Settings.route)
                             },
                         )
                     }

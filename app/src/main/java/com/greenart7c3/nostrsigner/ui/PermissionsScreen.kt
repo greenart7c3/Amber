@@ -44,7 +44,7 @@ fun PermissionsScreen(
 ) {
     val lifecycleEvent = rememberLifecycleEvent()
     val context = LocalContext.current
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.keyPair.pubKey.toNpub())!!
+    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.signer.keyPair.pubKey.toNpub())!!
     val applications =
         remember {
             mutableListOf<ApplicationEntity>()
@@ -55,7 +55,7 @@ fun PermissionsScreen(
     LaunchedEffect(lifecycleEvent) {
         scope.launch(Dispatchers.IO) {
             applications.clear()
-            applications.addAll(database.applicationDao().getAll(localAccount.keyPair.pubKey.toHexKey()))
+            applications.addAll(database.applicationDao().getAll(localAccount.signer.keyPair.pubKey.toHexKey()))
         }
     }
 

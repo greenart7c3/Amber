@@ -146,14 +146,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             Log.d("bunker", request)
         }
 
-        val dao = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
+        val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
         val notification = dao.getNotification(event.id)
         if (notification != null) return
         dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
 
         val bunkerRequest = BunkerRequest.mapper.readValue(request, BunkerRequest::class.java)
         bunkerRequest.localKey = event.pubKey
-        bunkerRequest.currentAccount = acc.keyPair.pubKey.toNpub()
+        bunkerRequest.currentAccount = acc.signer.keyPair.pubKey.toNpub()
         bunkerRequest.encryptionType = encryptionType
 
         val type = IntentUtils.getTypeFromBunker(bunkerRequest)
@@ -171,7 +171,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-        val database = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub())
+        val database = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub())
 
         val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
         if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
@@ -245,7 +245,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val cursor =
             applicationContext.contentResolver.query(
                 Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
-                arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
+                arrayOf(data, pubKey, acc.signer.keyPair.pubKey.toNpub()),
                 "1",
                 null,
                 bunkerRequest.localKey,

@@ -21,7 +21,7 @@ fun ActiveMarker(
 ) {
     val isCurrentUser by remember(account) {
         derivedStateOf {
-            account.keyPair.pubKey.toNpub() == acc.npub
+            account.signer.keyPair.pubKey.toNpub() == acc.npub
         }
     }
 

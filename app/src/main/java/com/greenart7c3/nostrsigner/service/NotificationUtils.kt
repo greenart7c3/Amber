@@ -120,7 +120,6 @@ object NotificationUtils {
                 channelId,
             )
                 .setSmallIcon(R.drawable.ic_notification)
-                .setColor(0xFFBF00)
                 .setContentTitle(messageTitle)
                 .setContentText(applicationContext.getString(R.string.new_event_to_sign))
                 .setLargeIcon(picture?.bitmap)
@@ -143,7 +142,6 @@ object NotificationUtils {
                 channelId,
             )
                 .setSmallIcon(R.drawable.ic_notification)
-                .setColor(0xFFBF00)
                 .setContentTitle(messageTitle)
                 .setContentText(messageBody)
                 .setLargeIcon(picture?.bitmap)

@@ -91,7 +91,6 @@ class ConnectivityService : Service() {
                 .setContentTitle(getString(R.string.amber_is_running_in_background))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)
-                .setColor(0xFFBF00)
 
         return notificationBuilder.build()
     }

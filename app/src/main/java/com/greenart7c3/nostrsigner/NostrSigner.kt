@@ -12,9 +12,7 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.Client
-import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
@@ -122,28 +120,11 @@ class NostrSigner : Application() {
             LocalPreferences.loadFromEncryptedStorage(this, it.npub)?.useProxy ?: false
         }
 
-        if (settings.notificationType != NotificationType.DIRECT) {
-            RelayPool.register(Client)
-            savedRelays.forEach { setupInfo ->
-                if (RelayPool.getRelay(setupInfo.url) == null) {
-                    RelayPool.addRelay(
-                        Relay(
-                            setupInfo.url,
-                            setupInfo.read,
-                            setupInfo.write,
-                            if (isPrivateIp(setupInfo.url)) false else useProxy,
-                            setupInfo.feedTypes,
-                        ),
-                    )
-                }
-            }
-        }
-
         if (shouldReconnect) {
             checkIfRelaysAreConnected()
         }
         @Suppress("KotlinConstantConditions")
-        if (settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
+        if (BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
             Client.reconnect(
                 savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,

@@ -42,13 +42,10 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.quartz.crypto.nip04.Nip04
 import com.vitorpamplona.quartz.encoders.Hex
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.GiftWrapEvent
-import com.vitorpamplona.quartz.events.SealedGossipEvent
 
 class EventNotificationConsumer(private val applicationContext: Context) {
 
@@ -61,61 +58,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
         LocalPreferences.loadFromEncryptedStorage(applicationContext, Hex.decode(taggedKey).toNpub())?.let { acc ->
             notify(event, acc)
-        }
-    }
-
-    fun consume(event: GiftWrapEvent) {
-        if (!notificationManager().areNotificationsEnabled()) return
-        if (!event.hasCorrectIDHash()) return
-        if (!event.hasVerifiedSignature()) return
-
-        // PushNotification Wraps don't include a receiver.
-        // Test with all logged in accounts
-        LocalPreferences.allSavedAccounts(applicationContext).forEach {
-            if (it.hasPrivKey) {
-                LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.PUSH) {
-                        consumeIfMatchesAccount(event, acc)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun consumeIfMatchesAccount(
-        pushWrappedEvent: GiftWrapEvent,
-        account: Account,
-    ) {
-        pushWrappedEvent.unwrap(account.signer) { notificationEvent ->
-            unwrapAndConsume(notificationEvent, account) { innerEvent ->
-                if (innerEvent.kind == 24133) {
-                    if (innerEvent.hasCorrectIDHash()) {
-                        if (innerEvent.hasVerifiedSignature()) {
-                            notify(innerEvent, account)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun unwrapAndConsume(
-        event: Event,
-        account: Account,
-        onReady: (Event) -> Unit,
-    ) {
-        when (event) {
-            is GiftWrapEvent -> {
-                event.unwrap(account.signer) { unwrapAndConsume(it, account, onReady) }
-            }
-            is SealedGossipEvent -> {
-                event.unseal(account.signer) {
-                    onReady(it)
-                }
-            }
-            else -> {
-                onReady(event)
-            }
         }
     }
 

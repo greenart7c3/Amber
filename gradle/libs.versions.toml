@@ -1,6 +1,5 @@
 [versions]
 activityCompose = "1.9.3"
-unfiedpush = "2.4.0"
 appcompat = "1.7.0"
 biometricKtx = "1.2.0-alpha05"
 converterGson = "2.11.0"
@@ -8,8 +7,6 @@ core = "3.5.3"
 coreKtx = "1.13.1"
 coreSplashscreen = "1.0.1"
 espressoCore = "3.6.1"
-firebaseBom = "33.5.1"
-firebaseMessaging = "24.0.3"
 jna = "5.14.0"
 junit = "4.13.2"
 junitVersion = "1.2.1"
@@ -33,7 +30,6 @@ ksp = "2.0.20-1.0.24"
 
 [libraries]
 activity-compose = { module = "androidx.activity:activity-compose", version.ref = "activityCompose" }
-unfiedpush = { module = "com.github.UnifiedPush:android-connector", version.ref = "unfiedpush" }
 appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat" }
 biometric-ktx = { module = "androidx.biometric:biometric-ktx", version.ref = "biometricKtx" }
 converter-gson = { module = "com.squareup.retrofit2:converter-gson", version.ref = "converterGson" }
@@ -42,8 +38,6 @@ core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
 core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
 ext-junit = { module = "androidx.test.ext:junit", version.ref = "junitVersion" }
-firebase-bom = { module = "com.google.firebase:firebase-bom", version.ref = "firebaseBom" }
-firebase-messaging = { module = "com.google.firebase:firebase-messaging", version.ref = "firebaseMessaging" }
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
 junit = { module = "junit:junit", version.ref = "junit" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle_version" }
@@ -76,7 +70,6 @@ jetbrainsKotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "k
 androidLibrary = { id = "com.android.library", version.ref = "agp" }
 androidApplication = { id = "com.android.application", version.ref = "agp" }
 gradle_ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "ktlint" }
-google_gms = { id = "com.google.gms.google-services", version = "gms" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin_ksp = { id = "com.google.devtools.ksp", version = "ksp" }
 jetbrainsComposeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

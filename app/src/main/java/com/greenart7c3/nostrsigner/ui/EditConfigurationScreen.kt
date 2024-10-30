@@ -162,9 +162,8 @@ fun EditConfigurationScreen(
                                                         it.permissions,
                                                     ),
                                                 )
-                                                if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                                                    NostrSigner.getInstance().checkForNewRelays()
-                                                }
+
+                                                NostrSigner.getInstance().checkForNewRelays()
                                             }
                                         }
                                     },
@@ -203,9 +202,7 @@ fun EditConfigurationScreen(
                                                     it.permissions,
                                                 ),
                                             )
-                                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                                                NostrSigner.getInstance().checkForNewRelays()
-                                            }
+                                            NostrSigner.getInstance().checkForNewRelays()
                                         }
                                     }
                                 },
@@ -255,9 +252,7 @@ fun EditConfigurationScreen(
                                                     it.permissions,
                                                 ),
                                             )
-                                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                                                NostrSigner.getInstance().checkForNewRelays()
-                                            }
+                                            NostrSigner.getInstance().checkForNewRelays()
                                         }
                                     }
                                 },
@@ -280,9 +275,7 @@ fun EditConfigurationScreen(
                         scope.launch(Dispatchers.IO) {
                             database.applicationDao().delete(it.application)
 
-                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                                NostrSigner.getInstance().checkForNewRelays()
-                            }
+                            NostrSigner.getInstance().checkForNewRelays()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {

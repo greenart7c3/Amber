@@ -18,7 +18,6 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material3.AlertDialog
@@ -61,7 +60,6 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -149,20 +147,6 @@ fun SettingsScreen(
                     .padding(8.dp),
             ) {
                 IconRow(
-                    title = stringResource(R.string.notification_type),
-                    icon = Icons.Default.Notifications,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        navController.navigate(Route.NotificationType.route)
-                    },
-                )
-            }
-
-            Box(
-                Modifier
-                    .padding(8.dp),
-            ) {
-                IconRow(
                     title = if (checked) {
                         stringResource(R.string.disconnect_from_your_orbot_setup)
                     } else {
@@ -182,43 +166,43 @@ fun SettingsScreen(
                     },
                 )
             }
-        }
 
-        Box(
-            Modifier
-                .padding(8.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.default_relays),
-                icon = Icons.Default.Hub,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.DefaultRelays.route)
-                },
-            )
-        }
+            Box(
+                Modifier
+                    .padding(8.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.default_relays),
+                    icon = Icons.Default.Hub,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.DefaultRelays.route)
+                    },
+                )
+            }
 
-        Box(
-            Modifier
-                .padding(8.dp),
-        ) {
-            IconRow(
-                title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
-                icon = Icons.Default.SurroundSound,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    allowNewConnections = !allowNewConnections
-                    account.allowNewConnections = allowNewConnections
-                    LocalPreferences.saveToEncryptedStorage(context, account)
-                },
-                onLongClick = {
-                    Toast.makeText(
-                        context,
-                        if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
-                        Toast.LENGTH_LONG,
-                    ).show()
-                },
-            )
+            Box(
+                Modifier
+                    .padding(8.dp),
+            ) {
+                IconRow(
+                    title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
+                    icon = Icons.Default.SurroundSound,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        allowNewConnections = !allowNewConnections
+                        account.allowNewConnections = allowNewConnections
+                        LocalPreferences.saveToEncryptedStorage(context, account)
+                    },
+                    onLongClick = {
+                        Toast.makeText(
+                            context,
+                            if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                    },
+                )
+            }
         }
 
         Box(
@@ -307,12 +291,8 @@ fun SettingsScreen(
                 LocalPreferences.updateProxy(context, true, proxyPort.value.toInt())
                 scope.launch(Dispatchers.IO) {
                     NotificationDataSource.stopSync()
-                    if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
-                        RelayPool.disconnect()
-                    } else {
-                        NostrSigner.getInstance().checkForNewRelays()
-                        NotificationDataSource.start()
-                    }
+                    NostrSigner.getInstance().checkForNewRelays()
+                    NotificationDataSource.start()
                 }
             },
             onError = {
@@ -341,12 +321,8 @@ fun SettingsScreen(
                         LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                         scope.launch(Dispatchers.IO) {
                             NotificationDataSource.stopSync()
-                            if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
-                                RelayPool.disconnect()
-                            } else {
-                                NostrSigner.getInstance().checkForNewRelays()
-                                NotificationDataSource.start()
-                            }
+                            NostrSigner.getInstance().checkForNewRelays()
+                            NotificationDataSource.start()
                         }
                     },
                 ) {
@@ -406,11 +382,6 @@ fun SettingsRow(
     }
 }
 
-enum class NotificationType(val screenCode: Int, val resourceId: Int) {
-    PUSH(0, R.string.push_notifications),
-    DIRECT(1, R.string.direct_connection),
-}
-
 enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {
     EVERY_TIME(0, R.string.every_time),
     ONE_MINUTE(1, R.string.one_minute),
@@ -425,16 +396,6 @@ fun parseBiometricsTimeType(screenCode: Int): BiometricsTimeType {
         BiometricsTimeType.TEN_MINUTES.screenCode -> BiometricsTimeType.TEN_MINUTES
         else -> {
             BiometricsTimeType.EVERY_TIME
-        }
-    }
-}
-
-fun parseNotificationType(screenCode: Int): NotificationType {
-    return when (screenCode) {
-        NotificationType.PUSH.screenCode -> NotificationType.PUSH
-        NotificationType.DIRECT.screenCode -> NotificationType.DIRECT
-        else -> {
-            NotificationType.PUSH
         }
     }
 }

@@ -36,7 +36,6 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.bechToBytes
@@ -138,8 +137,7 @@ fun SingleEventHomeScreen(
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
 
                             NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
+                                newRelays = relays.toSet(),
                             )
 
                             AmberUtils.sendBunkerError(
@@ -242,8 +240,7 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
+                                newRelays = relays.toSet(),
                             )
                         }
 
@@ -378,8 +375,7 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
+                                newRelays = relays.toSet(),
                             )
                         }
 
@@ -528,8 +524,7 @@ fun SingleEventHomeScreen(
 
                             if (intentData.bunkerRequest != null) {
                                 NostrSigner.getInstance().checkForNewRelays(
-                                    NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                    relays.toSet(),
+                                    newRelays = relays.toSet(),
                                 )
                             }
 

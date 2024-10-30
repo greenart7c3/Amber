@@ -86,7 +86,6 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
@@ -131,8 +130,7 @@ fun sendResult(
         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
         if (intentData.bunkerRequest != null) {
             NostrSigner.getInstance().checkForNewRelays(
-                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                relays.toSet(),
+                newRelays = relays.toSet(),
             )
         }
 
@@ -259,10 +257,6 @@ fun sendResult(
                             true,
                         ),
                     )
-                    PushNotificationUtils.hasInit = false
-                    GlobalScope.launch(Dispatchers.IO) {
-                        PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
-                    }
 
                     EventNotificationConsumer(context).notificationManager().cancelAll()
                     activity?.intent = null
@@ -375,9 +369,6 @@ private suspend fun askNotificationPermission(
     onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
-        initNotifications(
-            context = context,
-        )
         return
     }
 
@@ -396,11 +387,6 @@ private suspend fun askNotificationPermission(
     } else {
         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
     }
-}
-
-private suspend fun initNotifications(context: Context) {
-    PushNotificationUtils.hasInit = false
-    PushNotificationUtils.init(LocalPreferences.allSavedAccounts(context))
 }
 
 fun Color.Companion.fromHex(colorString: String) = try {
@@ -431,13 +417,7 @@ fun MainScreen(
         rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission(),
         ) { isGranted: Boolean ->
-            if (isGranted) {
-                scope.launch(Dispatchers.IO) {
-                    initNotifications(
-                        context = context,
-                    )
-                }
-            } else {
+            if (!isGranted) {
                 if (LocalPreferences.shouldShowRationale(context) == null) {
                     LocalPreferences.updateShouldShowRationale(context, true)
                 }
@@ -682,7 +662,6 @@ fun MainScreen(
                             .padding(padding)
                             .padding(24.dp),
                         account = account,
-                        accountStateViewModel = accountStateViewModel,
                         navController = navController,
                         database = database,
                     )
@@ -775,22 +754,6 @@ fun MainScreen(
                             .padding(padding)
                             .padding(40.dp),
                         account = account,
-                    )
-                },
-            )
-
-            composable(
-                Route.NotificationType.route,
-                content = {
-                    NotificationTypeScreen(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(40.dp),
-                        onDone = {
-                            navController.navigateUp()
-                        },
                     )
                 },
             )

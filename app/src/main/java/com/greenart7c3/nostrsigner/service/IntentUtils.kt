@@ -34,7 +34,6 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.RelayPool
@@ -388,15 +387,11 @@ object IntentUtils {
             GlobalScope.launch(Dispatchers.IO) {
                 if (RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
-                        NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
                         newRelays = relays.toSet(),
                     )
                 }
 
                 val success = Client.sendAndWaitForResponse(it, relayList = relays)
-                if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
-                    RelayPool.unregister(Client)
-                }
                 if (success) {
                     onDone()
                 }

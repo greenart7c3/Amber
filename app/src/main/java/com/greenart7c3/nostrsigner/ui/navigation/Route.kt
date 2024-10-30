@@ -81,13 +81,6 @@ sealed class Route(
         selectedIcon = Icons.Default.Settings,
     )
 
-    data object NotificationType : Route(
-        title = NostrSigner.getInstance().getString(R.string.notification_type),
-        route = "NotificationType",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
-    )
-
     data object DefaultRelays : Route(
         title = NostrSigner.getInstance().getString(R.string.default_relays),
         route = "DefaultRelays",
@@ -182,7 +175,6 @@ val routes = listOf(
     Route.Logs,
     Route.ActiveRelays,
     Route.Language,
-    Route.NotificationType,
     Route.DefaultRelays,
     Route.SignPolicy,
     Route.Security,

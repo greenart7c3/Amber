@@ -60,7 +60,6 @@ import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
@@ -149,7 +148,7 @@ fun DefaultRelaysScreen(
                                         LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
-                                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                            if (BuildConfig.FLAVOR != "offline") {
                                                 NostrSigner.getInstance().checkForNewRelays()
                                                 NotificationDataSource.stop()
                                                 delay(2000)
@@ -191,7 +190,7 @@ fun DefaultRelaysScreen(
                                     LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
-                                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                        if (BuildConfig.FLAVOR != "offline") {
                                             NostrSigner.getInstance().checkForNewRelays()
                                             NotificationDataSource.stop()
                                             delay(2000)
@@ -238,7 +237,7 @@ fun DefaultRelaysScreen(
                                     LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
-                                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                        if (BuildConfig.FLAVOR != "offline") {
                                             NostrSigner.getInstance().checkForNewRelays()
                                             NotificationDataSource.stop()
                                             delay(2000)

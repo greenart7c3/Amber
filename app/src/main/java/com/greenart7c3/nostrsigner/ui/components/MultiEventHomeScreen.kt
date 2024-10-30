@@ -61,7 +61,6 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -577,7 +576,7 @@ private fun sendResultIntent(
 private suspend fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    NostrSigner.getInstance().checkForNewRelays(NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT)
+    NostrSigner.getInstance().checkForNewRelays()
 }
 
 @Composable

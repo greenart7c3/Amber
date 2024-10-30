@@ -25,7 +25,6 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.NostrDataSource
@@ -143,9 +142,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
     init {
         scope.launch {
             LocalPreferences.loadSettingsFromEncryptedStorage()
-            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                Client.subscribe(clientListener)
-            }
+            Client.subscribe(clientListener)
         }
     }
 

@@ -12,57 +12,35 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Composable
 fun PermissionsScreen(
     modifier: Modifier,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     navController: NavController,
     database: AppDatabase,
 ) {
-    val lifecycleEvent = rememberLifecycleEvent()
-    val context = LocalContext.current
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.signer.keyPair.pubKey.toNpub())!!
-    val applications =
-        remember {
-            mutableListOf<ApplicationEntity>()
-        }
-    val scope = rememberCoroutineScope()
-    // val sortBy by remember { mutableStateOf("name") }
-
-    LaunchedEffect(lifecycleEvent) {
-        scope.launch(Dispatchers.IO) {
-            applications.clear()
-            applications.addAll(database.applicationDao().getAll(localAccount.signer.keyPair.pubKey.toHexKey()))
-        }
-    }
+    val applications = database.applicationDao().getAllFlow(account.signer.keyPair.pubKey.toHexKey()).collectAsStateWithLifecycle(emptyList())
 
     Column(
         modifier,
     ) {
-        if (applications.isEmpty()) {
+        if (applications.value.isEmpty()) {
             Column(
                 Modifier.fillMaxSize(),
                 Arrangement.Center,
@@ -100,13 +78,13 @@ fun PermissionsScreen(
 //                        )
 //                    }
 //                }
-                items(applications.size) {
+                items(applications.value.size) {
                     Row(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(vertical = 4.dp)
                             .clickable {
-                                navController.navigate("Permission/${applications.elementAt(it).key}")
+                                navController.navigate("Permission/${applications.value.elementAt(it).key}")
                             },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -115,7 +93,7 @@ fun PermissionsScreen(
                                 .fillMaxSize(),
                             verticalArrangement = Arrangement.Center,
                         ) {
-                            val localPermission = applications.elementAt(it)
+                            val localPermission = applications.value.elementAt(it)
                             Text(
                                 modifier = Modifier.padding(top = 16.dp),
                                 text = localPermission.name.ifBlank { localPermission.key.toShortenHex() },

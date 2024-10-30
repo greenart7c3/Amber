@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.gradle.ktlint) version(libs.versions.ktlint)
-    alias(libs.plugins.google.gms) version(libs.versions.gms)
     alias(libs.plugins.kotlin.ksp) version(libs.versions.ksp)
     alias(libs.plugins.jetbrainsComposeCompiler)
 }
@@ -58,7 +57,6 @@ android {
                 'ku-rTR',
                 'lt-rLT',
                 'ne-rNP',
-                'night',
                 'nl',
                 'nl-rBE',
                 'pcm-rNG',
@@ -131,11 +129,8 @@ android {
     flavorDimensions += "version"
 
     productFlavors {
-        create("play") {
-            getIsDefault().set(true)
-            dimension = "version"
-        }
         create("free") {
+            getIsDefault().set(true)
             dimension = "version"
         }
         create("offline") {
@@ -241,12 +236,8 @@ dependencies {
     // Biometrics
     implementation libs.biometric.ktx
 
-    playImplementation platform(libs.firebase.bom)
-    playImplementation(libs.firebase.messaging)
-    freeImplementation(libs.unfiedpush)
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
     freeImplementation(libs.okhttp)
-    playImplementation(libs.okhttp)
 }

@@ -11,7 +11,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
-import com.greenart7c3.nostrsigner.ui.parseNotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
@@ -116,7 +115,6 @@ object LocalPreferences {
             putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
             putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
             putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
-            putInt(PrefKeys.NOTIFICATION_TYPE, settings.notificationType.screenCode)
             putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
             putBoolean(PrefKeys.USE_PIN, settings.usePin)
         }.apply()
@@ -156,7 +154,6 @@ object LocalPreferences {
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
                 lastBiometricsTime = getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0),
                 useAuth = getBoolean(PrefKeys.USE_AUTH, false),
-                notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 1)),
                 biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
                 usePin = getBoolean(PrefKeys.USE_PIN, false),
             )

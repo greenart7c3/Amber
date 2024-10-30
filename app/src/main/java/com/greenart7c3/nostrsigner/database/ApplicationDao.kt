@@ -26,6 +26,9 @@ interface ApplicationDao {
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     fun getAll(pubKey: String): List<ApplicationEntity>
 
+    @Query("SELECT * FROM application where pubKey = :pubKey order by name")
+    fun getAllFlow(pubKey: String): Flow<List<ApplicationEntity>>
+
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
     fun getByKey(key: String): ApplicationWithPermissions?

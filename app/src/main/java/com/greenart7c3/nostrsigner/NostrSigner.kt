@@ -143,7 +143,7 @@ class NostrSigner : Application() {
             checkIfRelaysAreConnected()
         }
         @Suppress("KotlinConstantConditions")
-        if (settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+        if (settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
             Client.reconnect(
                 savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,

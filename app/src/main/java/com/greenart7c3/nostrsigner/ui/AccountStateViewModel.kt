@@ -77,6 +77,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), currentUser)?.let {
             startUI(it, route)
         }
+        if (currentUser == null) {
+            _accountContent.update { AccountState.LoggedOff }
+        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)

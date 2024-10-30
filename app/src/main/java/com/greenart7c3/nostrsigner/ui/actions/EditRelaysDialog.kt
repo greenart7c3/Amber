@@ -50,14 +50,17 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
@@ -144,6 +147,18 @@ fun DefaultRelaysScreen(
                                             defaultRelays = relays2,
                                         )
                                         LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                        scope.launch(Dispatchers.IO) {
+                                            @Suppress("KotlinConstantConditions")
+                                            if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                                NostrSigner.getInstance().checkForNewRelays()
+                                                NotificationDataSource.stop()
+                                                delay(2000)
+                                                NotificationDataSource.start()
+                                                isLoading.value = false
+                                            } else {
+                                                isLoading.value = false
+                                            }
+                                        }
                                     },
                                 )
                             }
@@ -169,10 +184,23 @@ fun DefaultRelaysScreen(
                                 account,
                                 context,
                                 onDone = {
+                                    isLoading.value = true
                                     NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
                                         defaultRelays = relays2,
                                     )
                                     LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                    scope.launch(Dispatchers.IO) {
+                                        @Suppress("KotlinConstantConditions")
+                                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                            NostrSigner.getInstance().checkForNewRelays()
+                                            NotificationDataSource.stop()
+                                            delay(2000)
+                                            NotificationDataSource.start()
+                                            isLoading.value = false
+                                        } else {
+                                            isLoading.value = false
+                                        }
+                                    }
                                 },
                             )
                         }
@@ -202,11 +230,24 @@ fun DefaultRelaysScreen(
                             )
                             IconButton(
                                 onClick = {
+                                    isLoading.value = true
                                     relays2.removeAt(it)
                                     NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
                                         defaultRelays = relays2,
                                     )
                                     LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                    scope.launch(Dispatchers.IO) {
+                                        @Suppress("KotlinConstantConditions")
+                                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
+                                            NostrSigner.getInstance().checkForNewRelays()
+                                            NotificationDataSource.stop()
+                                            delay(2000)
+                                            NotificationDataSource.start()
+                                            isLoading.value = false
+                                        } else {
+                                            isLoading.value = false
+                                        }
+                                    }
                                 },
                             ) {
                                 Icon(
@@ -238,8 +279,8 @@ suspend fun onAddRelay(
         var addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                 // TODO: How to identify relays on the local network?
-                val isLocalHost = url.contains("127.0.0.1") || url.contains("localhost")
-                if (url.endsWith(".onion") || url.endsWith(".onion/") || isLocalHost) {
+                val isPrivateIp = NostrSigner.getInstance().isPrivateIp(url)
+                if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
                     "ws://$url"
                 } else {
                     "wss://$url"
@@ -295,12 +336,15 @@ suspend fun onAddRelay(
                                 it,
                             )
 
+                            val isPrivateIp = NostrSigner.getInstance().isPrivateIp(addedWSS)
+
                             event?.let { signedEvent ->
                                 val relay = Relay(
                                     addedWSS,
                                     read = true,
                                     write = true,
                                     activeTypes = setOf(),
+                                    forceProxy = if (isPrivateIp) false else account.useProxy,
                                 )
                                 RelayPool.addRelay(
                                     relay,

@@ -131,7 +131,7 @@ class NostrSigner : Application() {
                             setupInfo.url,
                             setupInfo.read,
                             setupInfo.write,
-                            useProxy,
+                            if (isPrivateIp(setupInfo.url)) false else useProxy,
                             setupInfo.feedTypes,
                         ),
                     )
@@ -145,10 +145,32 @@ class NostrSigner : Application() {
         @Suppress("KotlinConstantConditions")
         if (settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
             Client.reconnect(
-                savedRelays.map { RelaySetupInfoToConnect(it.url, useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
+                savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
         }
+    }
+
+    fun isPrivateIp(url: String): Boolean {
+        return url.contains("127.0.0.1") ||
+            url.contains("localhost") ||
+            url.contains("192.168.") ||
+            url.contains("172.16.") ||
+            url.contains("172.17.") ||
+            url.contains("172.18.") ||
+            url.contains("172.19.") ||
+            url.contains("172.20.") ||
+            url.contains("172.21.") ||
+            url.contains("172.22.") ||
+            url.contains("172.23.") ||
+            url.contains("172.24.") ||
+            url.contains("172.25.") ||
+            url.contains("172.26.") ||
+            url.contains("172.27.") ||
+            url.contains("172.28.") ||
+            url.contains("172.29.") ||
+            url.contains("172.30.") ||
+            url.contains("172.31.")
     }
 
     private suspend fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {

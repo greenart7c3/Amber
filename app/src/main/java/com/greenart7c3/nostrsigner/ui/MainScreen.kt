@@ -6,6 +6,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -438,10 +439,11 @@ fun MainScreen(
                 }
             } else {
                 if (LocalPreferences.shouldShowRationale(context) == null) {
-                    LocalPreferences.updateShoulShowRationale(context, true)
+                    LocalPreferences.updateShouldShowRationale(context, true)
                 }
             }
         }
+
     var showDialog by remember { mutableStateOf(false) }
 
     @Suppress("KotlinConstantConditions")
@@ -465,10 +467,10 @@ fun MainScreen(
                 showDialog = false
             },
             title = {
-                Text(text = "Permission Needed")
+                Text(text = stringResource(R.string.permission_needed))
             },
             text = {
-                Text(text = "Notifications are needed to use Amber as a nsec bunker.")
+                Text(text = stringResource(R.string.notifications_are_needed_to_use_amber_as_a_nsec_bunker))
             },
             confirmButton = {
                 Button(
@@ -477,17 +479,17 @@ fun MainScreen(
                         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
                     },
                 ) {
-                    Text(text = "Allow")
+                    Text(text = stringResource(R.string.allow))
                 }
             },
             dismissButton = {
                 Button(
                     onClick = {
                         showDialog = false
-                        LocalPreferences.updateShoulShowRationale(context, false)
+                        LocalPreferences.updateShouldShowRationale(context, false)
                     },
                 ) {
-                    Text(text = "Deny")
+                    Text(text = stringResource(R.string.deny))
                 }
             },
         )

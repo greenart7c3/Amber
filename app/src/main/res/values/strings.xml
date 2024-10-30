@@ -414,4 +414,8 @@
     <string name="pin_does_not_match">Pin does not match</string>
     <string name="confirm_pin">Confirm Pin</string>
     <string name="enter_pin">Enter PIN</string>
+    <string name="permission_needed">Permission Needed</string>
+    <string name="notifications_are_needed_to_use_amber_as_a_nsec_bunker">Notifications are needed to use Amber as a nsec bunker.</string>
+    <string name="allow">Allow</string>
+    <string name="deny">Deny</string>
 </resources>

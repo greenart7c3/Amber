@@ -101,7 +101,7 @@ object LocalPreferences {
         return encryptedPreferences(context).getBoolean(PrefKeys.RATIONALE, true)
     }
 
-    fun updateShoulShowRationale(context: Context, value: Boolean) {
+    fun updateShouldShowRationale(context: Context, value: Boolean) {
         encryptedPreferences(context).edit().apply {
             putBoolean(PrefKeys.RATIONALE, value)
         }.apply()

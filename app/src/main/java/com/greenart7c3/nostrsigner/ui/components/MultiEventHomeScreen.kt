@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.app.Activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +18,9 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -163,6 +166,10 @@ fun MultiEventHomeScreen(
                     Card(
                         Modifier
                             .padding(4.dp),
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
+                        border = BorderStroke(1.dp, Color.Gray),
                     ) {
                         Column(
                             Modifier
@@ -252,6 +259,10 @@ fun MultiEventHomeScreen(
                     Card(
                         Modifier
                             .padding(4.dp),
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
+                        border = BorderStroke(1.dp, Color.Gray),
                     ) {
                         Column(
                             Modifier
@@ -612,6 +623,10 @@ fun ListItem(
             .clickable {
                 isExpanded = !isExpanded
             },
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+        border = BorderStroke(1.dp, Color.Gray),
     ) {
         val name = LocalPreferences.getAccountName(context, intentData.currentAccount)
         Row(
@@ -628,9 +643,10 @@ fun ListItem(
 
         Row(
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(4.dp),
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(4.dp),
+                .padding(horizontal = 8.dp, vertical = 4.dp),
         ) {
             Icon(
                 Icons.Default.run {

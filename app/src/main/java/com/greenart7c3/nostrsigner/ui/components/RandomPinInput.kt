@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Backspace
-import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Done
 import androidx.compose.material.icons.filled.Visibility
 import androidx.compose.material.icons.filled.VisibilityOff
@@ -115,6 +115,7 @@ fun RandomPinInput(
         ) {
             itemsIndexed(randomNumbers.dropLast(1)) { _, number ->
                 Button(
+                    shape = RoundedCornerShape(20),
                     onClick = {
                         if (selectedPin.length < 6) {
                             selectedPin += number.toString()
@@ -128,6 +129,7 @@ fun RandomPinInput(
 
             item {
                 Button(
+                    shape = RoundedCornerShape(20),
                     onClick = {
                         if (selectedPin.isNotEmpty()) {
                             selectedPin = selectedPin.dropLast(1) // Remove last digit
@@ -145,6 +147,7 @@ fun RandomPinInput(
 
             item {
                 Button(
+                    shape = RoundedCornerShape(20),
                     onClick = {
                         if (selectedPin.length < 6) {
                             selectedPin += randomNumbers.last().toString()
@@ -158,6 +161,7 @@ fun RandomPinInput(
 
             item {
                 Button(
+                    shape = RoundedCornerShape(20),
                     enabled = selectedPin.length >= 4,
                     onClick = {
                         if (selectedPin.length >= 4) {

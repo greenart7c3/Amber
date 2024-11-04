@@ -806,8 +806,10 @@ object IntentUtils {
                     if (index == 0) null else s
                 }.joinToString { data -> data }
                 if (paramName == "relay") {
+                    var relayUrl = json
+                    if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
                     relays.add(
-                        RelaySetupInfo(json, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
+                        RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
                     )
                 }
                 if (paramName == "name") {

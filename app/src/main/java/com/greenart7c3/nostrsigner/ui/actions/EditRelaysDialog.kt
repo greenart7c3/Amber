@@ -4,11 +4,13 @@ import android.content.Context
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
@@ -66,6 +68,7 @@ import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.ammolite.relays.RelayStats
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.RelayUrlFormatter
 import com.vitorpamplona.quartz.encoders.toHexKey
@@ -521,29 +524,60 @@ fun ActiveRelaysScreen(
                     .fillMaxWidth(),
             ) {
                 items(relays2.size) {
-                    Row(
+                    Card(
                         Modifier
-                            .padding(6.dp)
-                            .clickable {
-                                navController.navigate("RelayLogScreen/${Base64.getEncoder().encodeToString(relays2[it].url.toByteArray())}")
-                            },
-                        verticalAlignment = Alignment.CenterVertically,
+                            .fillMaxWidth()
+                            .padding(4.dp),
+                        border = BorderStroke(1.dp, Color.Gray),
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
                     ) {
-                        Icon(
-                            imageVector = Icons.Default.Circle,
-                            contentDescription = "Active Relay",
-                            tint = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Green else Color.Red,
-                        )
-                        Text(
-                            relays2[it].url,
+                        Row(
                             Modifier
-                                .weight(0.9f)
-                                .padding(8.dp),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                                .height(80.dp)
+                                .padding(6.dp)
+                                .clickable {
+                                    navController.navigate(
+                                        "RelayLogScreen/${
+                                            Base64
+                                                .getEncoder()
+                                                .encodeToString(relays2[it].url.toByteArray())
+                                        }",
+                                    )
+                                },
+                            verticalAlignment = Alignment.CenterVertically,
+
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Circle,
+                                contentDescription = "Active Relay",
+                                tint = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Green else Color.Red,
+                            )
+                            Column(
+                                verticalArrangement = Arrangement.Center,
+                            ) {
+                                Text(
+                                    buildAnnotatedString {
+                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                                            append("Ping: ")
+                                        }
+                                        append("${RelayStats.get(relays2[it].url).pingInMs} ms")
+                                    },
+                                    Modifier
+                                        .padding(vertical = 2.dp, horizontal = 8.dp),
+                                )
+                                Text(
+                                    relays2[it].url,
+                                    Modifier
+                                        .padding(vertical = 2.dp, horizontal = 8.dp),
+                                    fontWeight = FontWeight.Bold,
+                                    fontSize = 18.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                        }
                     }
                 }
             }

@@ -527,7 +527,16 @@ fun ActiveRelaysScreen(
                     Card(
                         Modifier
                             .fillMaxWidth()
-                            .padding(4.dp),
+                            .padding(4.dp)
+                            .clickable {
+                                navController.navigate(
+                                    "RelayLogScreen/${
+                                        Base64
+                                            .getEncoder()
+                                            .encodeToString(relays2[it].url.toByteArray())
+                                    }",
+                                )
+                            },
                         border = BorderStroke(1.dp, Color.Gray),
                         colors = CardDefaults.cardColors().copy(
                             containerColor = MaterialTheme.colorScheme.background,
@@ -536,16 +545,7 @@ fun ActiveRelaysScreen(
                         Row(
                             Modifier
                                 .height(80.dp)
-                                .padding(6.dp)
-                                .clickable {
-                                    navController.navigate(
-                                        "RelayLogScreen/${
-                                            Base64
-                                                .getEncoder()
-                                                .encodeToString(relays2[it].url.toByteArray())
-                                        }",
-                                    )
-                                },
+                                .padding(6.dp),
                             verticalAlignment = Alignment.CenterVertically,
 
                         ) {

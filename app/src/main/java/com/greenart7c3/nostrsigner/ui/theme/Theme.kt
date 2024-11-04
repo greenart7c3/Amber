@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.theme
 
 import android.app.Activity
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -58,6 +59,7 @@ private val LightColorPalette =
         surfaceContainer = Color(0xFFFFDE9E),
     )
 
+@Suppress("DEPRECATION")
 @Composable
 fun NostrSignerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -78,12 +80,14 @@ fun NostrSignerTheme(
         SideEffect {
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
-            if (darkTheme) {
-                window.statusBarColor = colors.background.toArgb()
-            } else {
-                window.statusBarColor = colors.surface.toArgb()
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                if (darkTheme) {
+                    window.statusBarColor = colors.background.toArgb()
+                } else {
+                    window.statusBarColor = colors.surface.toArgb()
+                }
+                window.navigationBarColor = colors.surface.toArgb()
             }
-            window.navigationBarColor = colors.surface.toArgb()
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }

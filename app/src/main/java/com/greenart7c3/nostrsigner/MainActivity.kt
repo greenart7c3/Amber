@@ -216,7 +216,7 @@ class MainActivity : AppCompatActivity() {
                         LaunchedEffect(Unit) {
                             launch(Dispatchers.IO) {
                                 val currentAccount = LocalPreferences.currentAccount(context)
-                                if (currentAccount != null && npub != null && currentAccount != npub) {
+                                if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
                                     if (npub.startsWith("npub")) {
                                         accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
                                     } else {

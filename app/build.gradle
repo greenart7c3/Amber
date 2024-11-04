@@ -10,12 +10,12 @@ plugins {
 
 android {
     namespace 'com.greenart7c3.nostrsigner'
-    compileSdk 34
+    compileSdk 35
 
     defaultConfig {
         applicationId "com.greenart7c3.nostrsigner"
         minSdk 26
-        targetSdk 34
+        targetSdk 35
         versionCode 101
         versionName "3.0.0"
 

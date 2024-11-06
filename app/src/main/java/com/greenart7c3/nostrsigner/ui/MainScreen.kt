@@ -26,6 +26,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.outlined.AccountCircle
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -54,6 +55,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
@@ -574,7 +576,7 @@ fun MainScreen(
                                 icon = {
                                     if (it.route == Route.Accounts.route) {
                                         Icon(
-                                            if (selected) it.selectedIcon else it.icon,
+                                            Icons.Outlined.AccountCircle,
                                             it.route,
                                             modifier = Modifier.border(
                                                 2.dp,
@@ -584,7 +586,7 @@ fun MainScreen(
                                         )
                                     } else {
                                         Icon(
-                                            if (selected) it.selectedIcon else it.icon,
+                                            painterResource(it.icon),
                                             it.route,
                                             tint = if (selected) Color.Black else if (isSystemInDarkTheme()) Color.White else Color.Black,
                                         )

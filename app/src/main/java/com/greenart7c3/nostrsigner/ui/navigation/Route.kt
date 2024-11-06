@@ -1,20 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.navigation
 
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.automirrored.filled.ViewList
-import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.automirrored.outlined.ViewList
-import androidx.compose.material.icons.filled.Apps
-import androidx.compose.material.icons.filled.Hub
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.material.icons.filled.Settings
-import androidx.compose.material.icons.outlined.Apps
-import androidx.compose.material.icons.outlined.Hub
-import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Settings
+import androidx.annotation.DrawableRes
 import androidx.compose.runtime.Immutable
-import androidx.compose.ui.graphics.vector.ImageVector
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 
@@ -22,147 +9,147 @@ import com.greenart7c3.nostrsigner.R
 sealed class Route(
     val title: String,
     val route: String,
-    val icon: ImageVector,
-    val selectedIcon: ImageVector,
+    @DrawableRes val icon: Int,
+    @DrawableRes val selectedIcon: Int,
 ) {
     data object IncomingRequest : Route(
         title = NostrSigner.getInstance().getString(R.string.incoming_request),
         route = "IncomingRequest",
-        icon = Icons.AutoMirrored.Outlined.List,
-        selectedIcon = Icons.AutoMirrored.Filled.List,
+        icon = R.drawable.incoming_request,
+        selectedIcon = R.drawable.incoming_request,
     )
 
     data object Applications : Route(
         route = "Applications",
         title = NostrSigner.getInstance().getString(R.string.applications),
-        icon = Icons.Outlined.Apps,
-        selectedIcon = Icons.Default.Apps,
+        icon = R.drawable.applications,
+        selectedIcon = R.drawable.applications,
     )
 
     data object Settings : Route(
         title = NostrSigner.getInstance().getString(R.string.settings),
         route = "Settings",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object Permission : Route(
         title = NostrSigner.getInstance().getString(R.string.permissions),
         route = "Permission/{packageName}",
-        icon = Icons.AutoMirrored.Outlined.ViewList,
-        selectedIcon = Icons.AutoMirrored.Default.ViewList,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object AccountBackup : Route(
         title = NostrSigner.getInstance().getString(R.string.account_backup),
         route = "AccountBackup",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object Logs : Route(
         title = NostrSigner.getInstance().getString(R.string.logs),
         route = "Logs",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object ActiveRelays : Route(
         title = NostrSigner.getInstance().getString(R.string.relays),
         route = "ActiveRelays",
-        icon = Icons.Outlined.Hub,
-        selectedIcon = Icons.Default.Hub,
+        icon = R.drawable.relays,
+        selectedIcon = R.drawable.relays,
     )
 
     data object Language : Route(
         title = NostrSigner.getInstance().getString(R.string.language),
         route = "Language",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object DefaultRelays : Route(
         title = NostrSigner.getInstance().getString(R.string.default_relays),
         route = "DefaultRelays",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object SignPolicy : Route(
         title = NostrSigner.getInstance().getString(R.string.sign_policy),
         route = "SignPolicy",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object Security : Route(
         title = NostrSigner.getInstance().getString(R.string.security),
         route = "Security",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object Accounts : Route(
         title = NostrSigner.getInstance().getString(R.string.accounts),
         route = "Accounts",
-        icon = Icons.Outlined.Person,
-        selectedIcon = Icons.Default.Person,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object NewApplication : Route(
         title = NostrSigner.getInstance().getString(R.string.add_a_new_application),
         route = "NewApplication",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object NewNsecBunker : Route(
         title = NostrSigner.getInstance().getString(R.string.add_a_nsecbunker),
         route = "NewNsecBunker",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object NSecBunkerCreated : Route(
         title = NostrSigner.getInstance().getString(R.string.add_a_nsecbunker),
         route = "NewNsecBunkerCreated/{key}",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object Activity : Route(
         title = NostrSigner.getInstance().getString(R.string.activity_title),
         route = "Activity/{key}",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object RelayLogScreen : Route(
         title = NostrSigner.getInstance().getString(R.string.logs),
         route = "RelayLogScreen/{url}",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object EditConfiguration : Route(
         title = NostrSigner.getInstance().getString(R.string.edit_configuration),
         route = "EditConfiguration/{key}",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object SetupPin : Route(
         title = NostrSigner.getInstance().getString(R.string.setup_pin),
         route = "SetupPin",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 
     data object ConfirmPin : Route(
         title = NostrSigner.getInstance().getString(R.string.confirm_pin),
         route = "ConfirmPin/{pin}",
-        icon = Icons.Outlined.Settings,
-        selectedIcon = Icons.Default.Settings,
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
     )
 }
 

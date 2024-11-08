@@ -26,8 +26,17 @@ interface ApplicationDao {
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     fun getAll(pubKey: String): List<ApplicationEntity>
 
-    @Query("SELECT * FROM application where pubKey = :pubKey order by name")
-    fun getAllFlow(pubKey: String): Flow<List<ApplicationEntity>>
+    @Query(
+        """
+    SELECT a.*, MAX(h.time) as latestTime
+    FROM application a
+    LEFT JOIN history h ON a.`key` = h.pkKey
+    AND a.pubKey = :pubKey
+    GROUP BY a.`key`, a.description, a.icon, a.isConnected, a.name, a.pubKey, a.secret, a.signPolicy, a.url
+    ORDER BY latestTime DESC
+    """,
+    )
+    fun getAllFlow(pubKey: String): Flow<List<ApplicationWithLatestHistory>>
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction

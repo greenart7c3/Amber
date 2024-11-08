@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -106,20 +108,20 @@ fun NewNsecBunkerScreen(
                 label = { Text(stringResource(R.string.name)) },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .focusRequester(focusRequester),
+                    .focusRequester(focusRequester)
+                    .padding(vertical = 20.dp),
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             Row(
-                Modifier.fillMaxWidth(),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(top = 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
                 horizontalArrangement = Arrangement.Center,
             ) {
                 OutlinedTextField(
                     modifier = Modifier
-                        .fillMaxWidth(0.9f)
-                        .padding(end = 16.dp),
+                        .fillMaxWidth(),
                     value = textFieldRelay.value.text,
                     keyboardOptions = KeyboardOptions(
                         imeAction = ImeAction.Done,
@@ -147,34 +149,42 @@ fun NewNsecBunkerScreen(
                     label = {
                         Text(stringResource(R.string.wss))
                     },
-                )
-                IconButton(
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            onAddRelay(
-                                textFieldRelay,
-                                isLoading,
-                                relays,
-                                scope,
-                                accountStateViewModel,
-                                account,
-                                context,
-                                onDone = {
-                                },
+                    trailingIcon = {
+                        IconButton(
+                            colors = IconButtonDefaults.iconButtonColors().copy(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            onClick = {
+                                scope.launch(Dispatchers.IO) {
+                                    onAddRelay(
+                                        textFieldRelay,
+                                        isLoading,
+                                        relays,
+                                        scope,
+                                        accountStateViewModel,
+                                        account,
+                                        context,
+                                        onDone = {
+                                        },
+                                    )
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                null,
                             )
                         }
                     },
-                ) {
-                    Icon(
-                        Icons.Default.Add,
-                        null,
-                    )
-                }
+                )
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn {
+            LazyColumn(
+                Modifier
+                    .padding(bottom = 20.dp),
+            ) {
                 items(relays.size) {
                     Row(
                         Modifier.fillMaxWidth(),

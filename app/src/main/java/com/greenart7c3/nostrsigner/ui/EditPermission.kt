@@ -268,20 +268,22 @@ fun EditPermission(
             }
         }
 
-        AmberButton(
-            colors = ButtonDefaults.buttonColors().copy(
-                containerColor = orange,
-            ),
-            modifier = Modifier.padding(bottom = 20.dp),
-            onClick = {
-                wantsToRemovePermissions = true
-            },
-            content = {
-                Text(
-                    stringResource(R.string.remove_all_permissions),
-                    color = Color.White,
-                )
-            },
-        )
+        if (permissions.isNotEmpty()) {
+            AmberButton(
+                colors = ButtonDefaults.buttonColors().copy(
+                    containerColor = orange,
+                ),
+                modifier = Modifier.padding(bottom = 20.dp),
+                onClick = {
+                    wantsToRemovePermissions = true
+                },
+                content = {
+                    Text(
+                        stringResource(R.string.remove_all_permissions),
+                        color = Color.White,
+                    )
+                },
+            )
+        }
     }
 }

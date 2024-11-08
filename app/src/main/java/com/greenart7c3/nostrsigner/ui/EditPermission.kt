@@ -195,7 +195,7 @@ fun EditPermission(
                 modifier = Modifier
                     .padding(4.dp)
                     .fillMaxWidth(),
-                border = BorderStroke(1.dp, Color.Gray),
+                border = BorderStroke(1.dp, Color.LightGray),
                 colors = CardDefaults.cardColors().copy(
                     containerColor = MaterialTheme.colorScheme.background,
                 ),

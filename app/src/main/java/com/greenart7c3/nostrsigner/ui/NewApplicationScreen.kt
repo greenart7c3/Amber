@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.Intent
 import android.net.Uri
-import android.widget.Toast
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -62,30 +61,35 @@ fun NewApplicationScreen(
 
         AmberButton(
             onClick = {
-                clipboardManager.getText()?.let {
-                    if (it.text.isBlank()) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.invalid_nostr_connect_uri),
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                        return@let
-                    }
-                    if (!it.text.startsWith("nostrconnect://")) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.invalid_nostr_connect_uri),
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                        return@let
-                    }
-
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse(it.text)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                    context.getAppCompatActivity()?.startActivity(intent)
-                    accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+                val clipboardText = clipboardManager.getText()
+                if (clipboardText == null) {
+                    accountStateViewModel.toast(
+                        context.getString(R.string.warning),
+                        context.getString(R.string.invalid_nostr_connect_uri),
+                    )
+                    return@AmberButton
                 }
+
+                if (clipboardText.text.isBlank()) {
+                    accountStateViewModel.toast(
+                        context.getString(R.string.warning),
+                        context.getString(R.string.invalid_nostr_connect_uri),
+                    )
+                    return@AmberButton
+                }
+                if (!clipboardText.text.startsWith("nostrconnect://")) {
+                    accountStateViewModel.toast(
+                        context.getString(R.string.warning),
+                        context.getString(R.string.invalid_nostr_connect_uri),
+                    )
+                    return@AmberButton
+                }
+
+                val intent = Intent(Intent.ACTION_VIEW)
+                intent.data = Uri.parse(clipboardText.text)
+                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                context.getAppCompatActivity()?.startActivity(intent)
+                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
             },
             content = {
                 Text(

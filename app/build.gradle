@@ -240,4 +240,13 @@ dependencies {
     implementation(libs.room.ktx)
 
     freeImplementation(libs.okhttp)
+
+    // Load images from the web.
+    implementation libs.coil.compose
+    // view gifs
+    implementation libs.coil.gif
+    // view svgs
+    implementation libs.coil.svg
+    // enables network for coil
+    implementation libs.coil.okhttp
 }

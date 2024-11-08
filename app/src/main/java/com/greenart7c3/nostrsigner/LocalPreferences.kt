@@ -55,6 +55,8 @@ private object PrefKeys {
     const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
     const val SIGN_POLICY = "default_sign_policy"
     const val SEED_WORDS2 = "seed_words"
+    const val PROFILE_URL = "profile_url"
+    const val LAST_METADATA_UPDATE = "last_metadata_update"
 }
 
 @Immutable
@@ -120,9 +122,35 @@ object LocalPreferences {
         }.apply()
     }
 
+    fun getLastMetadataUpdate(context: Context, npub: String): Long {
+        return encryptedPreferences(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE, 0)
+    }
+
+    fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
+        encryptedPreferences(context, npub).edit().apply {
+            putLong(PrefKeys.LAST_METADATA_UPDATE, time)
+        }.apply()
+    }
+
     fun loadPinFromEncryptedStorage(): String? {
         val context = NostrSigner.getInstance()
         return encryptedPreferences(context).getString(PrefKeys.PIN, null)
+    }
+
+    fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
+        val context = NostrSigner.getInstance()
+        return encryptedPreferences(context, npub).getString(PrefKeys.PROFILE_URL, null)
+    }
+
+    fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
+        val context = NostrSigner.getInstance()
+        encryptedPreferences(context, npub).edit().apply {
+            if (profileUrl == null) {
+                remove(PrefKeys.PROFILE_URL)
+            } else {
+                putString(PrefKeys.PROFILE_URL, profileUrl)
+            }
+        }.apply()
     }
 
     fun savePinToEncryptedStorage(pin: String?) {

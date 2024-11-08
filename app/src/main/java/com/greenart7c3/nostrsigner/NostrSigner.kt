@@ -8,15 +8,31 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.work.Data
 import androidx.work.OneTimeWorkRequest
 import androidx.work.WorkManager
+import coil3.ImageLoader
+import coil3.SingletonImageLoader
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.crossfade
+import coil3.util.DebugLogger
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
+import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
+import com.vitorpamplona.ammolite.relays.TypedFilter
+import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.ammolite.service.HttpClientManager
+import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.events.EventInterface
+import com.vitorpamplona.quartz.events.MetadataEvent
+import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -64,6 +80,7 @@ class NostrSigner : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         instance = this
 
@@ -182,6 +199,73 @@ class NostrSigner : Application() {
         applicationIOScope.cancel()
     }
 
+    suspend fun fetchProfileData(account: Account, onPictureFound: (String) -> Unit) {
+        SingletonImageLoader.setSafe {
+            ImageLoader.Builder(this)
+                .crossfade(true)
+                .logger(DebugLogger())
+                .components {
+                    add(
+                        OkHttpNetworkFetcherFactory(
+                            callFactory = {
+                                HttpClientManager.getHttpClient(account.useProxy)
+                            },
+                        ),
+                    )
+                }
+                .build()
+        }
+
+        val lastMetaData = LocalPreferences.getLastMetadataUpdate(this, account.signer.keyPair.pubKey.toNpub())
+        val oneDayAgo = TimeUtils.oneDayAgo()
+        if (lastMetaData == 0L || oneDayAgo > lastMetaData) {
+            Log.d("NostrSigner", "Fetching profile data for ${account.signer.keyPair.pubKey.toNpub()}")
+            val listener = RelayListener(account, onPictureFound)
+
+            val relays = listOf(
+                Relay(
+                    url = "wss://purplepag.es",
+                    read = true,
+                    write = false,
+                    forceProxy = account.useProxy,
+                    activeTypes = COMMON_FEED_TYPES,
+                ),
+                Relay(
+                    url = "wss://relay.nostr.band",
+                    read = true,
+                    write = false,
+                    forceProxy = account.useProxy,
+                    activeTypes = COMMON_FEED_TYPES,
+                ),
+            )
+
+            relays.forEach {
+                it.register(listener)
+                it.connectAndRun { relay ->
+                    relay.sendFilter(
+                        UUID.randomUUID().toString().substring(0, 4),
+                        filters = listOf(
+                            TypedFilter(
+                                types = COMMON_FEED_TYPES,
+                                filter = SincePerRelayFilter(
+                                    kinds = listOf(MetadataEvent.KIND),
+                                    authors = listOf("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19"),
+                                    limit = 1,
+                                ),
+                            ),
+                        ),
+                    )
+                }
+            }
+        } else {
+            Log.d("NostrSigner", "Using cached profile data for ${account.signer.keyPair.pubKey.toNpub()}")
+            LocalPreferences.loadProfileUrlFromEncryptedStorage(account.signer.keyPair.pubKey.toNpub())?.let {
+                onPictureFound(it)
+                return
+            }
+        }
+    }
+
     companion object {
         @Volatile
         private var instance: NostrSigner? = null
@@ -190,5 +274,54 @@ class NostrSigner : Application() {
             instance ?: synchronized(this) {
                 instance ?: NostrSigner().also { instance = it }
             }
+    }
+}
+
+class RelayListener(
+    val account: Account,
+    val onPictureFound: (String) -> Unit,
+) : Relay.Listener {
+    override fun onAuth(relay: Relay, challenge: String) {
+        Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
+    }
+
+    override fun onBeforeSend(relay: Relay, event: EventInterface) {
+        Log.d("RelayListener", "Sending event ${event.id()} to relay ${relay.url}")
+    }
+
+    override fun onError(relay: Relay, subscriptionId: String, error: Error) {
+        Log.d("RelayListener", "Received error $error from subscription $subscriptionId")
+    }
+
+    override fun onEvent(relay: Relay, subscriptionId: String, event: Event, afterEOSE: Boolean) {
+        Log.d("RelayListener", "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
+        (event as MetadataEvent).contactMetaData()?.let { metadata ->
+            metadata.name?.let { name ->
+                account.name = name
+                LocalPreferences.saveToEncryptedStorage(account = account, context = NostrSigner.getInstance())
+            }
+
+            metadata.profilePicture()?.let { url ->
+                LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.signer.keyPair.pubKey.toNpub())
+                LocalPreferences.setLastMetadataUpdate(NostrSigner.getInstance(), account.signer.keyPair.pubKey.toNpub(), TimeUtils.now())
+                onPictureFound(url)
+            }
+        }
+    }
+
+    override fun onNotify(relay: Relay, description: String) {
+        Log.d("RelayListener", "Received notify $description from relay ${relay.url}")
+    }
+
+    override fun onRelayStateChange(relay: Relay, type: Relay.StateType, channel: String?) {
+        Log.d("RelayListener", "Relay ${relay.url} state changed to $type")
+    }
+
+    override fun onSend(relay: Relay, msg: String, success: Boolean) {
+        Log.d("RelayListener", "Sent message $msg to relay ${relay.url} success: $success")
+    }
+
+    override fun onSendResponse(relay: Relay, eventId: String, success: Boolean, message: String) {
+        Log.d("RelayListener", "Sent response to event $eventId to relay ${relay.url} success: $success message: $message")
     }
 }

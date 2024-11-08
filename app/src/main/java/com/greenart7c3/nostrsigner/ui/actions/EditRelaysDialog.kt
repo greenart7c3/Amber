@@ -58,6 +58,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -341,6 +342,10 @@ suspend fun onAddRelay(
                             val isPrivateIp = NostrSigner.getInstance().isPrivateIp(addedWSS)
 
                             event?.let { signedEvent ->
+                                AmberListenerSingleton.setListener(context, accountStateViewModel)
+                                AmberListenerSingleton.getListener()?.let { listener ->
+                                    Client.subscribe(listener)
+                                }
                                 val relay = Relay(
                                     addedWSS,
                                     read = true,
@@ -357,6 +362,9 @@ suspend fun onAddRelay(
                                     signedEvent = signedEvent,
                                     relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
                                 )
+                                AmberListenerSingleton.getListener()?.let { listener ->
+                                    Client.unsubscribe(listener)
+                                }
                                 RelayPool.getRelay(addedWSS)?.disconnect()
                                 RelayPool.removeRelay(
                                     relay,
@@ -372,11 +380,6 @@ suspend fun onAddRelay(
                                         ),
                                     )
                                     onDone()
-                                } else {
-                                    accountStateViewModel.toast(
-                                        context.getString(R.string.relay),
-                                        context.getString(R.string.failed_to_send_event),
-                                    )
                                 }
                                 textFieldRelay.value = TextFieldValue("")
                             }

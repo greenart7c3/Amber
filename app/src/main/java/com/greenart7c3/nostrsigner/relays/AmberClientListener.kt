@@ -73,7 +73,11 @@ class AmberClientListener(
             )
         }
         if (!success) {
-            accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
+            if (msg.isNotBlank()) {
+                accountStateViewModel?.toast("Error", "Failed to send event.\n$msg")
+            } else {
+                accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
+            }
         }
     }
 

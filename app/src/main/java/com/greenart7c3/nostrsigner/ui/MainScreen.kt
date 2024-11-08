@@ -545,10 +545,21 @@ fun MainScreen(
                 title = {
                     var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
                     LaunchedEffect(destinationRoute) {
-                        if (destinationRoute.startsWith("Permission/")) {
+                        if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/")) {
                             launch(Dispatchers.IO) {
                                 navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                    title = database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                                    title = if (destinationRoute.startsWith("Activity/")) {
+                                        "${database.applicationDao().getByKey(packageName)?.application?.name ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                                    } else {
+                                        database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                                    }
+                                }
+                                navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
+                                    title = if (destinationRoute.startsWith("Activity/")) {
+                                        "${database.applicationDao().getByKey(packageName)?.application?.name ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                                    } else {
+                                        database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                                    }
                                 }
                             }
                         } else {
@@ -900,7 +911,8 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .padding(padding),
+                                .padding(padding)
+                                .padding(40.dp),
                         )
                     }
                 },

@@ -17,6 +17,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Info
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import com.greenart7c3.nostrsigner.models.kindToNipUrl
 import com.greenart7c3.nostrsigner.models.nipToUrl
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.encoders.toHexKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -311,12 +313,18 @@ fun EditPermission(
         }
 
         AmberButton(
+            colors = ButtonDefaults.buttonColors().copy(
+                containerColor = orange,
+            ),
             modifier = Modifier.padding(bottom = 20.dp),
             onClick = {
                 wantsToRemovePermissions = true
             },
             content = {
-                Text(stringResource(R.string.remove_all_permissions))
+                Text(
+                    stringResource(R.string.remove_all_permissions),
+                    color = Color.White,
+                )
             },
         )
     }

@@ -208,32 +208,38 @@ fun EditPermission(
                             .weight(1f)
                             .padding(end = 8.dp)
                             .clickable {
-                                val localPermissions =
-                                    permissions.map {
-                                        if (it.id == permission.id) {
-                                            it.copy(acceptable = !permission.acceptable)
-                                        } else {
-                                            it.copy()
+                                scope.launch(Dispatchers.IO) {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
                                         }
-                                    }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                    database.applicationDao().insertPermissions(localPermissions)
+                                }
                             },
                     ) {
                         Switch(
                             modifier = Modifier.padding(end = 8.dp),
                             checked = permission.acceptable,
                             onCheckedChange = {
-                                val localPermissions =
-                                    permissions.map {
-                                        if (it.id == permission.id) {
-                                            it.copy(acceptable = !permission.acceptable)
-                                        } else {
-                                            it.copy()
+                                scope.launch(Dispatchers.IO) {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
                                         }
-                                    }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                    database.applicationDao().insertPermissions(localPermissions)
+                                }
                             },
                         )
                         Text(
@@ -253,7 +259,10 @@ fun EditPermission(
                             )
                         },
                         onClick = {
-                            permissions.remove(permission)
+                            scope.launch(Dispatchers.IO) {
+                                permissions.remove(permission)
+                                database.applicationDao().deletePermission(permission)
+                            }
                         },
                     )
                 }

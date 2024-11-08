@@ -154,4 +154,7 @@ interface ApplicationDao {
 
     @Query("DELETE FROM amber_log")
     fun clearLogs()
+
+    @Delete
+    fun deletePermission(permission: ApplicationPermissionsEntity)
 }

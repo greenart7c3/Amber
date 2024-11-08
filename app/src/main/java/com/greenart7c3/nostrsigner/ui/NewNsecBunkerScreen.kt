@@ -28,6 +28,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -197,7 +198,10 @@ fun NewNsecBunkerScreen(
 
             AmberButton(
                 content = {
-                    Text(text = stringResource(R.string.create))
+                    Text(
+                        text = stringResource(R.string.create),
+                        Modifier.scale(1.25f),
+                    )
                 },
                 onClick = {
                     if (relays.isEmpty()) {
@@ -313,7 +317,10 @@ fun NewNsecBunkerCreatedScreen(
                     clipboardManager.setText(AnnotatedString(bunkerUri))
                 },
                 content = {
-                    Text(text = stringResource(R.string.copy_to_clipboard))
+                    Text(
+                        text = stringResource(R.string.copy_to_clipboard),
+                        Modifier.scale(1.25f),
+                    )
                 },
             )
         }

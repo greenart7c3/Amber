@@ -13,6 +13,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -87,7 +88,10 @@ fun NewApplicationScreen(
                 }
             },
             content = {
-                Text(text = stringResource(R.string.paste_from_clipboard))
+                Text(
+                    text = stringResource(R.string.paste_from_clipboard),
+                    Modifier.scale(1.25f),
+                )
             },
         )
 
@@ -101,7 +105,10 @@ fun NewApplicationScreen(
                 dialogOpen = true
             },
             content = {
-                Text(text = stringResource(R.string.scan_qr_code))
+                Text(
+                    text = stringResource(R.string.scan_qr_code),
+                    Modifier.scale(1.25f),
+                )
             },
         )
 
@@ -115,7 +122,10 @@ fun NewApplicationScreen(
                 navController.navigate(Route.NewNsecBunker.route)
             },
             content = {
-                Text(text = stringResource(R.string.add_a_nsecbunker))
+                Text(
+                    text = stringResource(R.string.add_a_nsecbunker),
+                    Modifier.scale(1.25f),
+                )
             },
         )
 

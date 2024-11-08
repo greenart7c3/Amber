@@ -224,7 +224,6 @@ fun EditPermission(
                             },
                     ) {
                         Checkbox(
-                            modifier = Modifier.padding(end = 8.dp),
                             checked = permission.acceptable,
                             onCheckedChange = {
                                 scope.launch(Dispatchers.IO) {

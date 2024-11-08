@@ -1,8 +1,10 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,9 +13,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -23,7 +24,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -38,7 +38,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.TimeUtils.convertLongToDateTime
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -92,46 +92,45 @@ fun ActivityScreen(
                         activity.type.toLowerCase(Locale.current),
                         activity.kind,
                     )
-                ElevatedCard(
-                    Modifier.padding(8.dp),
-                ) {
+                Column {
                     Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 4.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Column(
-                            Modifier
-                                .weight(0.9f)
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier.fillMaxWidth(0.9f),
+                            verticalArrangement = Arrangement.Center,
                         ) {
-                            val textColor = if (activity.accepted) Color.Unspecified else Color.Gray
-                            val textAlpha = if (activity.accepted) 1f else 0.5f
+                            Text(
+                                modifier = Modifier.padding(top = 16.dp),
+                                text = if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = if (activity.accepted) Color.Unspecified else Color.Gray,
+                            )
 
                             Text(
-                                if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
+                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                text = TimeUtils.formatLongToCustomDateTimeWithSeconds(activity.time * 1000),
+                                fontSize = 16.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
-                                color = textColor,
-                                modifier = Modifier.alpha(textAlpha),
-                            )
-                            Text(
-                                convertLongToDateTime(activity.time * 1000),
-                                fontSize = 14.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = textColor,
-                                modifier = Modifier.alpha(textAlpha),
+                                color = Color.Gray,
                             )
                         }
-                        IconButton(onClick = { }) {
-                            Icon(
-                                if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
-                                contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
-                                tint = if (activity.accepted) Color(0xFF1D8802) else Color(0xFFFF6B00),
-                            )
-                        }
+                        Icon(
+                            if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
+                            contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
+                            tint = if (activity.accepted) Color(0xFF1D8802) else Color(0xFFFF6B00),
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                        )
                     }
+                    Spacer(Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }

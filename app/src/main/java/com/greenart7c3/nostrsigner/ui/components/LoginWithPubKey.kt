@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -15,10 +16,15 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -32,11 +38,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
@@ -79,16 +82,16 @@ fun LoginWithPubKey(
         }
 
         Text(
-            buildAnnotatedString {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(applicationName ?: appName)
-                }
-                append(stringResource(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf))
-            },
-            fontSize = 18.sp,
+            modifier = Modifier.fillMaxWidth(),
+            text = applicationName ?: appName,
+            fontSize = 24.sp,
+            fontWeight = FontWeight.Bold,
+            textAlign = TextAlign.Center,
         )
 
-        Spacer(Modifier.size(8.dp))
+        Text(
+            stringResource(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf),
+        )
 
         val radioOptions = listOf(
             TitleExplainer(
@@ -108,8 +111,6 @@ fun LoginWithPubKey(
 
         Text(
             text = stringResource(R.string.handle_application_permissions),
-            fontSize = 18.sp,
-            fontWeight = FontWeight.Bold,
         )
 
         Spacer(modifier = Modifier.size(8.dp))
@@ -136,12 +137,20 @@ fun LoginWithPubKey(
                     .padding(16.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                RadioButton(
-                    selected = selectedOption == index,
-                    onClick = {
-                        selectedOption = index
-                    },
-                )
+                if (selectedOption == index) {
+                    Icon(
+                        Icons.Default.Check,
+                        contentDescription = null,
+                        tint = Color(0xFF1D8802),
+                    )
+                } else {
+                    RadioButton(
+                        selected = false,
+                        onClick = {
+                            selectedOption = index
+                        },
+                    )
+                }
                 Column(
                     verticalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
@@ -170,75 +179,48 @@ fun LoginWithPubKey(
             Alignment.CenterHorizontally,
         ) {
             if (selectedOption == 1) {
-                var selectAll by remember {
-                    mutableStateOf(true)
-                }
                 val enabledPermissions = localPermissions.map {
                     remember { mutableStateOf(it.checked) }
                 }
                 if (localPermissions.isNotEmpty()) {
-                    Row(
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .clickable {
-                                selectAll = !selectAll
-                                val permissions2 = localPermissions.map { permission ->
-                                    permission.copy(checked = selectAll)
-                                }
-                                localPermissions.clear()
-                                localPermissions.addAll(permissions2)
-                                enabledPermissions.forEach {
-                                    it.value = selectAll
-                                }
-                            },
-                    ) {
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = stringResource(R.string.select_deselect_all),
-                        )
-                        Switch(
-                            checked = selectAll,
-                            onCheckedChange = {
-                                selectAll = !selectAll
-                                val permissions2 = localPermissions.map { permission ->
-                                    permission.copy(checked = selectAll)
-                                }
-                                localPermissions.clear()
-                                localPermissions.addAll(permissions2)
-                                enabledPermissions.forEach {
-                                    it.value = selectAll
-                                }
-                            },
-                        )
-                    }
                     localPermissions.forEachIndexed { index, permission ->
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
+                        Card(
                             modifier = Modifier
-                                .clickable {
-                                    permission.checked = !permission.checked
-                                    enabledPermissions[index].value = permission.checked
-                                },
+                                .fillMaxWidth()
+                                .padding(vertical = 4.dp),
+                            border = BorderStroke(1.dp, Color.LightGray),
+                            colors = CardDefaults.cardColors().copy(
+                                containerColor = MaterialTheme.colorScheme.background,
+                            ),
                         ) {
-                            Text(
-                                modifier = Modifier.weight(1f),
-                                text = permission.toLocalizedString(LocalContext.current),
-                            )
-                            Switch(
-                                checked = enabledPermissions[index].value,
-                                onCheckedChange = { _ ->
-                                    permission.checked = !permission.checked
-                                    enabledPermissions[index].value = permission.checked
-                                },
-                            )
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .clickable {
+                                        permission.checked = !permission.checked
+                                        enabledPermissions[index].value = permission.checked
+                                    },
+                            ) {
+                                Checkbox(
+                                    checked = enabledPermissions[index].value,
+                                    onCheckedChange = { _ ->
+                                        permission.checked = !permission.checked
+                                        enabledPermissions[index].value = permission.checked
+                                    },
+                                )
+                                Text(
+                                    modifier = Modifier.weight(1f),
+                                    text = permission.toLocalizedString(LocalContext.current),
+                                )
+                            }
                         }
                     }
                 }
             }
 
             AmberButton(
+                modifier = Modifier.padding(vertical = 20.dp),
                 onClick = {
                     onAccept(localPermissions, selectedOption)
                 },
@@ -246,8 +228,9 @@ fun LoginWithPubKey(
                     Text(stringResource(R.string.grant_permissions))
                 },
             )
-            Spacer(modifier = Modifier.width(16.dp))
+
             AmberButton(
+                modifier = Modifier.padding(vertical = 20.dp),
                 onClick = onReject,
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFF6B00),

@@ -26,7 +26,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
@@ -56,10 +55,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
@@ -628,6 +629,7 @@ fun MainScreen(
                 if (localBackButtonTitle.isNotBlank()) {
                     BottomAppBar {
                         IconRow(
+                            center = true,
                             title = if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
                                 stringResource(R.string.back_to, localBackButtonTitle)
                             } else {
@@ -637,7 +639,7 @@ fun MainScreen(
                                     stringResource(R.string.back_to, localBackButtonTitle)
                                 }
                             },
-                            icon = Icons.AutoMirrored.Filled.ArrowBack,
+                            icon = ImageVector.vectorResource(R.drawable.back),
                             onClick = {
                                 if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
                                     navController.navigate(Route.Applications.route) {

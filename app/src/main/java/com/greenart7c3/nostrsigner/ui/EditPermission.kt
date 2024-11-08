@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
-import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -16,7 +15,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -44,7 +42,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.toLowerCase
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -55,8 +52,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.kindToNipUrl
-import com.greenart7c3.nostrsigner.models.nipToUrl
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.orange
@@ -259,53 +254,6 @@ fun EditPermission(
                         },
                         onClick = {
                             permissions.remove(permission)
-                        },
-                    )
-                    IconButton(
-                        content = {
-                            Icon(
-                                Icons.Default.Info,
-                                stringResource(R.string.more_info),
-                                modifier = Modifier
-                                    .fillMaxHeight(),
-                            )
-                        },
-                        onClick = {
-                            if (permission.type.toLowerCase(Locale.current) == "sign_event") {
-                                val nip = permission.kind?.kindToNipUrl()
-                                if (nip == null) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.nip_not_found_for_the_event_kind, permission.kind.toString()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@IconButton
-                                }
-                                uriHandler.openUri(nip)
-                            } else if (permission.type.toLowerCase(Locale.current) == "nip") {
-                                val nip = permission.kind?.nipToUrl()
-                                if (nip == null) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.nip_not_found, permission.kind.toString()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@IconButton
-                                }
-                                uriHandler.openUri(nip)
-                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP04_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP04_DECRYPT")) {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/04.md")
-                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP44_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP44_DECRYPT")) {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/44.md")
-                            } else if (permission.type.toLowerCase(Locale.current) == "decrypt_zap_event") {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/57.md")
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.no_information_available_for, localPermission.toLocalizedString(context)),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
                         },
                     )
                 }

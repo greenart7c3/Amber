@@ -1,26 +1,23 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.content.Context
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Circle
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,14 +37,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -448,47 +442,36 @@ fun RelayLogScreen(
         modifier.fillMaxSize(),
     ) {
         itemsIndexed(logs.value) { _, log ->
-            Card(
-                Modifier
-                    .fillMaxWidth()
-                    .padding(4.dp),
-                border = BorderStroke(1.dp, Color.Gray),
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(Modifier.padding(6.dp)) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                ) {
                     Text(
-                        buildAnnotatedString {
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append("Date: ")
-                            }
-                            append(TimeUtils.convertLongToDateTime(log.time))
-                        },
+                        modifier = Modifier.padding(top = 16.dp),
+                        text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
                     Text(
-                        buildAnnotatedString {
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append("URL: ")
-                            }
-                            append(log.url)
-                        },
+                        modifier = Modifier.padding(top = 4.dp),
+                        text = log.type,
+                        fontSize = 20.sp,
                     )
                     Text(
-                        buildAnnotatedString {
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append("Type: ")
-                            }
-                            append(log.type)
-                        },
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                        text = log.message,
+                        fontSize = 20.sp,
                     )
-                    Text(
-                        buildAnnotatedString {
-                            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                append("Message: ")
-                            }
-                            append(log.message)
-                        },
+
+                    Spacer(Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.primary,
                     )
                 }
             }
@@ -527,10 +510,10 @@ fun ActiveRelaysScreen(
                     .fillMaxWidth(),
             ) {
                 items(relays2.size) {
-                    Card(
-                        Modifier
-                            .fillMaxWidth()
-                            .padding(4.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 4.dp)
                             .clickable {
                                 navController.navigate(
                                     "RelayLogScreen/${
@@ -540,46 +523,37 @@ fun ActiveRelaysScreen(
                                     }",
                                 )
                             },
-                        border = BorderStroke(1.dp, Color.Gray),
-                        colors = CardDefaults.cardColors().copy(
-                            containerColor = MaterialTheme.colorScheme.background,
-                        ),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Row(
-                            Modifier
-                                .height(80.dp)
-                                .padding(6.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-
+                        Column(
+                            verticalArrangement = Arrangement.Center,
                         ) {
-                            Icon(
-                                imageVector = Icons.Default.Circle,
-                                contentDescription = "Active Relay",
-                                tint = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Green else Color.Red,
+                            Text(
+                                modifier = Modifier.padding(top = 16.dp),
+                                text = relays2[it].url,
+                                fontSize = 24.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                             )
-                            Column(
-                                verticalArrangement = Arrangement.Center,
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
                             ) {
                                 Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Ping: ")
-                                        }
-                                        append("${RelayStats.get(relays2[it].url).pingInMs} ms")
-                                    },
-                                    Modifier
-                                        .padding(vertical = 2.dp, horizontal = 8.dp),
-                                )
-                                Text(
-                                    relays2[it].url,
-                                    Modifier
-                                        .padding(vertical = 2.dp, horizontal = 8.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
+                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                    text = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) "${RelayStats.get(relays2[it].url).pingInMs}ms ping" else "Unavailable",
+                                    fontSize = 16.sp,
                                     maxLines = 1,
                                     overflow = TextOverflow.Ellipsis,
+                                    color = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                                 )
                             }
+
+                            Spacer(Modifier.weight(1f))
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.primary,
+                            )
                         }
                     }
                 }

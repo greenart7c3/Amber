@@ -546,7 +546,7 @@ fun MainScreen(
                 title = {
                     var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
                     LaunchedEffect(destinationRoute) {
-                        if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/")) {
+                        if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/")) {
                             launch(Dispatchers.IO) {
                                 navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
                                     title = if (destinationRoute.startsWith("Activity/")) {
@@ -561,6 +561,10 @@ fun MainScreen(
                                     } else {
                                         database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
                                     }
+                                }
+                                navBackStackEntry?.arguments?.getString("url")?.let { url ->
+                                    val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
+                                    title = localUrl
                                 }
                             }
                         } else {

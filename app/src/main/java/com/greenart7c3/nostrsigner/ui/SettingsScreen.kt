@@ -100,7 +100,7 @@ fun SettingsScreen(
     ) {
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.security),
@@ -114,7 +114,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.backup_keys),
@@ -128,7 +128,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.language),
@@ -144,7 +144,7 @@ fun SettingsScreen(
         if (BuildConfig.FLAVOR != "offline") {
             Box(
                 Modifier
-                    .padding(8.dp),
+                    .padding(vertical = 8.dp),
             ) {
                 IconRow(
                     title = if (checked) {
@@ -169,7 +169,7 @@ fun SettingsScreen(
 
             Box(
                 Modifier
-                    .padding(8.dp),
+                    .padding(vertical = 8.dp),
             ) {
                 IconRow(
                     title = stringResource(R.string.default_relays),
@@ -183,7 +183,7 @@ fun SettingsScreen(
 
             Box(
                 Modifier
-                    .padding(8.dp),
+                    .padding(vertical = 8.dp),
             ) {
                 IconRow(
                     title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
@@ -207,7 +207,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.logs),
@@ -221,7 +221,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.sign_policy),

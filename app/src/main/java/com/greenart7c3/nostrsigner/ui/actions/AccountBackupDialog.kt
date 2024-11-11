@@ -130,7 +130,6 @@ fun AccountBackupScreen(
             Column(
                 modifier =
                 Modifier
-                    .padding(horizontal = 30.dp)
                     .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {

@@ -36,6 +36,7 @@ val primaryColor = Color(0xFFFFCA62)
 val primaryVariant = Color(0xFFC8541A)
 val secondaryColor = Color(0xFFFFCA62)
 val orange = Color(0xFFFF6B00)
+val defaultPadding = 40.dp
 
 val RichTextDefaults = RichTextStyle().resolveDefaults()
 

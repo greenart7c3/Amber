@@ -103,6 +103,7 @@ import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
+import com.greenart7c3.nostrsigner.ui.theme.defaultPadding
 import com.vitorpamplona.quartz.encoders.toHexKey
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -607,8 +608,8 @@ fun MainScreen(
                                                     .clip(
                                                         RoundedCornerShape(50),
                                                     )
-                                                    .height(24.dp)
-                                                    .width(24.dp),
+                                                    .height(defaultPadding)
+                                                    .width(defaultPadding),
                                             )
                                         } else {
                                             Icon(
@@ -689,7 +690,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         intents,
                         packageName,
                         appName,
@@ -706,7 +707,7 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(24.dp),
+                            .padding(defaultPadding),
                         account = account,
                         navController = navController,
                         database = database,
@@ -721,7 +722,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         accountStateViewModel,
                         account,
                         navController,
@@ -736,7 +737,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         account,
                     )
                 },
@@ -752,7 +753,7 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(40.dp),
+                                .padding(defaultPadding),
                             account = account,
                             selectedPackage = packageName,
                             navController = navController,
@@ -770,7 +771,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         account = account,
                     )
                 },
@@ -785,7 +786,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                     )
                 },
             )
@@ -798,7 +799,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         account = account,
                     )
                 },
@@ -812,7 +813,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         accountStateViewModel = accountStateViewModel,
                         account = account,
                     )
@@ -827,7 +828,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         account = account,
                         navController = navController,
                     )
@@ -842,7 +843,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         navController = navController,
                     )
                 },
@@ -859,7 +860,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                     )
                 },
             )
@@ -876,7 +877,7 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                     )
                 },
             )
@@ -894,7 +895,7 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(40.dp),
+                                .padding(defaultPadding),
                         )
                     }
                 },
@@ -912,7 +913,7 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(40.dp),
+                                .padding(defaultPadding),
                         )
                     }
                 },
@@ -930,7 +931,7 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(40.dp),
+                                .padding(defaultPadding),
                         )
                     }
                 },
@@ -945,7 +946,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(40.dp),
+                                .padding(defaultPadding),
                             database = database,
                             key = key,
                             accountStateViewModel = accountStateViewModel,
@@ -963,7 +964,7 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(40.dp),
+                            .padding(defaultPadding),
                         navController = navController,
                     )
                 },
@@ -978,7 +979,7 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(40.dp),
+                                .padding(defaultPadding),
                             accountStateViewModel = accountStateViewModel,
                             pin = pin,
                             navController = navController,

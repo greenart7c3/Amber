@@ -201,6 +201,11 @@ class NostrSigner : Application() {
     }
 
     suspend fun fetchProfileData(account: Account, onPictureFound: (String) -> Unit) {
+        @Suppress("KotlinConstantConditions")
+        if (BuildConfig.FLAVOR == "offline") {
+            return
+        }
+
         SingletonImageLoader.setSafe {
             ImageLoader.Builder(this)
                 .crossfade(true)

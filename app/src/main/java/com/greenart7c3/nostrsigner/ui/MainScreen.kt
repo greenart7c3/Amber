@@ -604,7 +604,8 @@ fun MainScreen(
                                 },
                                 icon = {
                                     if (it.route == Route.Accounts.route) {
-                                        if (!profileUrl.isNullOrBlank()) {
+                                        @Suppress("KotlinConstantConditions")
+                                        if (!profileUrl.isNullOrBlank() && BuildConfig.FLAVOR != "offline") {
                                             AsyncImage(
                                                 profileUrl,
                                                 it.route,

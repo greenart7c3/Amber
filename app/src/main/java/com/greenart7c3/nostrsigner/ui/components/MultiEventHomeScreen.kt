@@ -12,12 +12,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -26,7 +22,6 @@ import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
@@ -51,13 +46,10 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.withLink
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -179,7 +171,7 @@ fun MultiEventHomeScreen(
                         permission.toLocalizedString(context)
                     }
                     Text(
-                        "$appName is requiring to sign these events related to $message permission.",
+                        stringResource(R.string.is_requiring_to_sign_these_events_related_to_permission, appName, message),
                         Modifier
                             .fillMaxWidth()
                             .padding(bottom = 20.dp),
@@ -205,7 +197,7 @@ fun MultiEventHomeScreen(
                             modifier = Modifier
                                 .weight(1f)
                                 .padding(start = 8.dp),
-                            text = "Always approve this permission",
+                            text = stringResource(R.string.always_approve_this_permission),
                         )
                     }
 
@@ -263,7 +255,7 @@ fun MultiEventHomeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             Text(
-                "$appName is requiring some permissions, please review them.",
+                stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),
                 Modifier
                     .fillMaxWidth()
                     .padding(bottom = 20.dp),
@@ -596,134 +588,6 @@ private suspend fun reconnectToRelays(intents: List<IntentData>) {
 }
 
 @Composable
-fun ListItem(
-    intentData: IntentData,
-    packageName: String?,
-) {
-    var isExpanded by remember { mutableStateOf(false) }
-    val context = LocalContext.current
-
-    val key = if (intentData.bunkerRequest != null) {
-        intentData.bunkerRequest.localKey
-    } else {
-        "$packageName"
-    }
-
-    var localAccount by remember { mutableStateOf("") }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            localAccount = LocalPreferences.loadFromEncryptedStorage(
-                context,
-                intentData.currentAccount,
-            )?.signer?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
-        }
-    }
-
-    val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
-
-    Card(
-        Modifier
-            .padding(4.dp)
-            .clickable {
-                isExpanded = !isExpanded
-            },
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.background,
-        ),
-        border = BorderStroke(1.dp, Color.Gray),
-    ) {
-        val name = LocalPreferences.getAccountName(context, intentData.currentAccount)
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            Arrangement.Center,
-            Alignment.CenterVertically,
-        ) {
-            Text(
-                name.ifBlank { intentData.currentAccount.toShortenHex() },
-                fontWeight = FontWeight.Bold,
-            )
-        }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(4.dp),
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 4.dp),
-        ) {
-            Icon(
-                Icons.Default.run {
-                    if (isExpanded) {
-                        KeyboardArrowDown
-                    } else {
-                        KeyboardArrowUp
-                    }
-                },
-                contentDescription = "",
-                tint = Color.LightGray,
-            )
-            val text =
-                if (intentData.type == SignerType.SIGN_EVENT) {
-                    val event = intentData.event!!
-                    val permission = Permission("sign_event", event.kind)
-                    stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
-                } else {
-                    val permission = Permission(intentData.type.toString().toLowerCase(Locale.current), null)
-                    stringResource(R.string.wants_you_to, permission.toLocalizedString(context))
-                }
-            Text(
-                modifier = Modifier.weight(1f),
-                text = buildAnnotatedString {
-                    withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                        append(appName)
-                    }
-                    append(" $text")
-                },
-                fontSize = 18.sp,
-            )
-
-            Switch(
-                checked = intentData.checked.value,
-                onCheckedChange = { _ ->
-                    intentData.checked.value = !intentData.checked.value
-                },
-            )
-        }
-
-        if (isExpanded) {
-            Column(
-                Modifier
-                    .fillMaxSize()
-                    .padding(10.dp),
-            ) {
-                Text(
-                    "Event content",
-                    fontWeight = FontWeight.Bold,
-                )
-                val content =
-                    if (intentData.type == SignerType.SIGN_EVENT) {
-                        val event = intentData.event!!
-                        if (event.kind == 22242) AmberEvent.relay(event) else event.content
-                    } else {
-                        intentData.data
-                    }
-
-                Text(
-                    content.take(100),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp),
-                )
-            }
-        }
-    }
-}
-
-@Composable
 fun PermissionCard(
     context: Context,
     acceptEventsGroup: List<MutableState<Boolean>>,
@@ -789,7 +653,7 @@ fun PermissionCard(
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(
-                        "$selected of $total events",
+                        stringResource(R.string.of_events, selected, total),
                         modifier = Modifier.padding(start = 48.dp, bottom = 4.dp),
                         color = Color.Gray,
                         fontSize = 14.sp,
@@ -810,7 +674,7 @@ fun PermissionCard(
                                     },
                                 ),
                             ) {
-                                append("See details")
+                                append(stringResource(R.string.see_details))
                             }
                         },
                         modifier = Modifier.padding(start = 46.dp, bottom = 8.dp),

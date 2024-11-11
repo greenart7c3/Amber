@@ -1,30 +1,39 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
+import androidx.compose.material3.BottomAppBar
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -32,18 +41,27 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -65,6 +83,8 @@ import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.Result
+import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -72,33 +92,7 @@ import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-@Composable
-fun SelectAllButton(
-    checked: Boolean,
-    onSelected: () -> Unit,
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(horizontal = 8.dp)
-            .clickable {
-                onSelected()
-            },
-    ) {
-        Text(
-            modifier = Modifier.weight(1f),
-            text = stringResource(R.string.select_deselect_all),
-        )
-        Switch(
-            checked = checked,
-            onCheckedChange = {
-                onSelected()
-            },
-        )
-    }
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MultiEventHomeScreen(
     intents: List<IntentData>,
@@ -110,16 +104,7 @@ fun MultiEventHomeScreen(
     val context = LocalContext.current
     val grouped = intents.groupBy { it.type }.filter { it.key != SignerType.SIGN_EVENT }
     val grouped2 = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
-    val rememberMyChoices = grouped.map {
-        remember {
-            mutableStateOf(false)
-        }
-    }
-    val rememberMyChoices2 = grouped2.map {
-        remember {
-            mutableStateOf(false)
-        }
-    }
+    var intentsDialog by remember { mutableStateOf<List<IntentData>?>(null) }
     val acceptEventsGroup1 = grouped.map {
         remember {
             mutableStateOf(true)
@@ -130,441 +115,461 @@ fun MultiEventHomeScreen(
             mutableStateOf(true)
         }
     }
-    val showItemsGroup1 = grouped.map {
-        remember {
-            mutableStateOf(false)
-        }
-    }
-    val showItemsGroup2 = grouped2.map {
-        remember {
-            mutableStateOf(false)
+    var localAccount by remember { mutableStateOf("") }
+    val key = intents.firstOrNull()?.bunkerRequest?.localKey ?: "$packageName"
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            localAccount = LocalPreferences.loadFromEncryptedStorage(
+                context,
+                intents.firstOrNull()?.currentAccount ?: "",
+            )?.signer?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
         }
     }
 
-    Column(
-        Modifier.fillMaxSize(),
-    ) {
-        var selectAll by remember {
-            mutableStateOf(true)
-        }
+    val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
 
-        SelectAllButton(
-            checked = selectAll,
+    if (intentsDialog != null) {
+        Dialog(
+            properties = DialogProperties(
+                usePlatformDefaultWidth = false,
+            ),
+            onDismissRequest = {
+                intentsDialog = null
+            },
         ) {
-            selectAll = !selectAll
-            acceptEventsGroup1.forEach { it.value = selectAll }
-            acceptEventsGroup2.forEach { it.value = selectAll }
-            intents.forEach {
-                it.checked.value = selectAll
-            }
-        }
-        LazyColumn(
-            Modifier.fillMaxHeight(0.9f),
-        ) {
-            grouped.toList().forEachIndexed { index, it ->
-                item {
-                    Card(
+            Scaffold(
+                bottomBar = {
+                    BottomAppBar {
+                        IconRow(
+                            center = true,
+                            title = stringResource(R.string.back_to, Route.IncomingRequest.title),
+                            icon = ImageVector.vectorResource(R.drawable.back),
+                            onClick = {
+                                intentsDialog = null
+                            },
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                },
+                topBar = {
+                    CenterAlignedTopAppBar(
+                        title = {
+                            Text(Route.IncomingRequest.title)
+                        },
+                    )
+                },
+            ) {
+                Column(
+                    modifier = Modifier
+                        .padding(it)
+                        .padding(40.dp),
+                ) {
+                    var rememberMyChoice by remember { mutableStateOf(intentsDialog!!.first().rememberMyChoice.value) }
+                    val first = intentsDialog!!.first()
+                    val permission = if (first.type == SignerType.SIGN_EVENT) {
+                        Permission("sign_event", first.event!!.kind)
+                    } else {
+                        Permission(first.type.toString().toLowerCase(Locale.current), null)
+                    }
+
+                    val message = if (first.type == SignerType.CONNECT) {
+                        stringResource(R.string.connect)
+                    } else {
+                        permission.toLocalizedString(context)
+                    }
+                    Text(
+                        "$appName is requiring to sign these events related to $message permission.",
                         Modifier
-                            .padding(4.dp),
-                        colors = CardDefaults.cardColors().copy(
-                            containerColor = MaterialTheme.colorScheme.background,
-                        ),
-                        border = BorderStroke(1.dp, Color.Gray),
+                            .fillMaxWidth()
+                            .padding(bottom = 20.dp),
+                    )
+
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .padding(vertical = 8.dp)
+                            .clickable {
+                                rememberMyChoice = !rememberMyChoice
+                            },
                     ) {
-                        Column(
+                        Switch(
+                            modifier = Modifier.scale(0.85f),
+                            checked = rememberMyChoice,
+                            onCheckedChange = {
+                                rememberMyChoice = !rememberMyChoice
+                            },
+                        )
+                        Text(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(start = 8.dp),
+                            text = "Always approve this permission",
+                        )
+                    }
+
+                    intentsDialog?.forEach { intent ->
+                        Card(
                             Modifier
                                 .padding(4.dp),
+                            colors = CardDefaults.cardColors().copy(
+                                containerColor = MaterialTheme.colorScheme.background,
+                            ),
+                            border = BorderStroke(1.dp, Color.Gray),
                         ) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(8.dp)
                                     .clickable {
-                                        acceptEventsGroup1[index].value = !acceptEventsGroup1[index].value
+                                        intent.checked.value = !intent.checked.value
                                     },
                             ) {
-                                Text(
-                                    text = "${it.second.size} - ",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                )
-
-                                val permission = Permission(it.first.toString().toLowerCase(Locale.current), null)
-                                val message = if (it.first == SignerType.CONNECT) {
-                                    stringResource(R.string.connect)
-                                } else {
-                                    permission.toLocalizedString(context)
-                                }
-                                Text(
-                                    modifier = Modifier.weight(1f),
-                                    text = message,
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                )
-
-                                Switch(
-                                    checked = acceptEventsGroup1[index].value,
+                                Checkbox(
+                                    checked = intent.checked.value,
                                     onCheckedChange = { _ ->
-                                        acceptEventsGroup1[index].value = !acceptEventsGroup1[index].value
-                                        it.second.forEach { item ->
-                                            item.checked.value = acceptEventsGroup1[index].value
-                                        }
+                                        intent.checked.value = !intent.checked.value
                                     },
+                                    colors = CheckboxDefaults.colors().copy(
+                                        uncheckedBorderColor = Color.Gray,
+                                    ),
+                                )
+
+                                val data = if (intent.type == SignerType.SIGN_EVENT) {
+                                    val event = intent.event!!
+                                    if (event.kind == 22242) AmberEvent.relay(event) else event.content
+                                } else {
+                                    intent.encryptedData ?: intent.data
+                                }
+
+                                Text(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(vertical = 8.dp),
+                                    text = data,
+                                    color = if (intent.checked.value) Color.Unspecified else Color.Gray,
                                 )
                             }
-
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp),
-                            ) {
-                                RememberMyChoice(
-                                    shouldRunAcceptOrReject = null,
-                                    rememberMyChoices[index].value,
-                                    null,
-                                    true,
-                                    { },
-                                    { },
-                                ) {
-                                    rememberMyChoices[index].value = !rememberMyChoices[index].value
-                                    it.second.forEach { item ->
-                                        item.rememberMyChoice.value = rememberMyChoices[index].value
-                                    }
-                                }
-                            }
-
-                            AmberButton(
-                                onClick = {
-                                    showItemsGroup1[index].value = !showItemsGroup1[index].value
-                                },
-                                content = {
-                                    Text(if (showItemsGroup1[index].value) context.getString(R.string.hide_details) else context.getString(R.string.show_details))
-                                },
-                            )
                         }
                     }
                 }
+            }
+        }
+    } else {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState()),
+        ) {
+            Text(
+                "$appName is requiring some permissions, please review them.",
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp),
+            )
 
-                if (showItemsGroup1[index].value) {
-                    it.second.forEach {
-                        item {
-                            ListItem(it, packageName)
-                        }
-                    }
-                }
+            grouped.toList().forEachIndexed { index, it ->
+                PermissionCard(
+                    context = context,
+                    acceptEventsGroup = acceptEventsGroup1,
+                    index = index,
+                    item = it,
+                    onDetailsClick = {
+                        intentsDialog = it
+                    },
+                )
             }
             grouped2.toList().forEachIndexed { index, it ->
-                item {
-                    Card(
-                        Modifier
-                            .padding(4.dp),
-                        colors = CardDefaults.cardColors().copy(
-                            containerColor = MaterialTheme.colorScheme.background,
-                        ),
-                        border = BorderStroke(1.dp, Color.Gray),
-                    ) {
-                        Column(
-                            Modifier
-                                .padding(4.dp),
-                        ) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(8.dp)
-                                    .clickable {
-                                        acceptEventsGroup2[index].value = !acceptEventsGroup2[index].value
-                                    },
-                            ) {
-                                Text(
-                                    text = "${it.second.size} - ",
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                )
+                PermissionCard(
+                    context = context,
+                    acceptEventsGroup = acceptEventsGroup2,
+                    index = index,
+                    item = it,
+                    onDetailsClick = {
+                        intentsDialog = it
+                    },
+                )
+            }
 
-                                Text(
-                                    modifier = Modifier.weight(1f),
-                                    text = Permission("sign_event", it.first).toLocalizedString(context),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                )
+            AmberButton(
+                Modifier.padding(vertical = 20.dp),
+                content = {
+                    Text(stringResource(R.string.approve_selected))
+                },
+                onClick = {
+                    onLoading(true)
+                    coroutineScope.launch(Dispatchers.IO) {
+                        try {
+                            val activity = context.getAppCompatActivity()
+                            val results = mutableListOf<Result>()
+                            reconnectToRelays(intents)
 
-                                Switch(
-                                    checked = acceptEventsGroup2[index].value,
-                                    onCheckedChange = { _ ->
-                                        acceptEventsGroup2[index].value = !acceptEventsGroup2[index].value
-                                        it.second.forEach { item ->
-                                            item.checked.value = acceptEventsGroup2[index].value
+                            for (intentData in intents) {
+                                val localAccount =
+                                    if (intentData.currentAccount.isNotBlank()) {
+                                        LocalPreferences.loadFromEncryptedStorage(
+                                            context,
+                                            intentData.currentAccount,
+                                        )
+                                    } else {
+                                        accountParam
+                                    } ?: continue
+
+                                val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+
+                                val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
+
+                                val application =
+                                    database
+                                        .applicationDao()
+                                        .getByKey(key) ?: ApplicationWithPermissions(
+                                        application = ApplicationEntity(
+                                            key,
+                                            "",
+                                            listOf(),
+                                            "",
+                                            "",
+                                            "",
+                                            localAccount.signer.keyPair.pubKey.toHexKey(),
+                                            true,
+                                            intentData.bunkerRequest?.secret ?: "",
+                                            intentData.bunkerRequest?.secret != null,
+                                            localAccount.signPolicy,
+                                        ),
+                                        permissions = mutableListOf(),
+                                    )
+
+                                if (intentData.type == SignerType.SIGN_EVENT) {
+                                    val localEvent = intentData.event!!
+
+                                    if (intentData.rememberMyChoice.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            application,
+                                            key,
+                                            intentData,
+                                            localEvent.kind,
+                                            intentData.rememberMyChoice.value,
+                                            database,
+                                        )
+                                    }
+
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            localEvent.kind,
+                                            TimeUtils.now(),
+                                            intentData.checked.value,
+                                        ),
+                                    )
+
+                                    if (intentData.bunkerRequest != null) {
+                                        if (intentData.checked.value) {
+                                            IntentUtils.sendBunkerResponse(
+                                                context,
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
+                                                application.application.relays,
+                                                onLoading = {},
+                                                onDone = {},
+                                            )
+                                        } else {
+                                            AmberUtils.sendBunkerError(
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                relays = application.application.relays,
+                                                context = context,
+                                                onLoading = {},
+                                            )
                                         }
-                                    },
-                                )
-                            }
+                                    } else {
+                                        if (intentData.checked.value) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = if (localEvent is LnZapRequestEvent &&
+                                                        localEvent.tags.any { tag ->
+                                                            tag.any { t -> t == "anon" }
+                                                        }
+                                                    ) {
+                                                        localEvent.toJson()
+                                                    } else {
+                                                        localEvent.sig
+                                                    },
+                                                    result = if (localEvent is LnZapRequestEvent &&
+                                                        localEvent.tags.any { tag ->
+                                                            tag.any { t -> t == "anon" }
+                                                        }
+                                                    ) {
+                                                        localEvent.toJson()
+                                                    } else {
+                                                        localEvent.sig
+                                                    },
+                                                    id = intentData.id,
+                                                ),
+                                            )
+                                        }
+                                    }
+                                } else if (intentData.type == SignerType.SIGN_MESSAGE) {
+                                    if (intentData.rememberMyChoice.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            application,
+                                            key,
+                                            intentData,
+                                            null,
+                                            intentData.rememberMyChoice.value,
+                                            database,
+                                        )
+                                    }
 
-                            Box(
-                                Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 10.dp),
-                            ) {
-                                RememberMyChoice(
-                                    shouldRunAcceptOrReject = null,
-                                    rememberMyChoices2[index].value,
-                                    null,
-                                    true,
-                                    { },
-                                    { },
-                                ) {
-                                    rememberMyChoices2[index].value = !rememberMyChoices2[index].value
-                                    it.second.forEach { item ->
-                                        item.rememberMyChoice.value = rememberMyChoices2[index].value
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            null,
+                                            TimeUtils.now(),
+                                            intentData.checked.value,
+                                        ),
+                                    )
+
+                                    val signedMessage = CryptoUtils.signString(intentData.data, localAccount.signer.keyPair.privKey!!).toHexKey()
+
+                                    if (intentData.bunkerRequest != null) {
+                                        if (intentData.checked.value) {
+                                            IntentUtils.sendBunkerResponse(
+                                                context,
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
+                                                application.application.relays,
+                                                onLoading = {},
+                                                onDone = {},
+                                            )
+                                        } else {
+                                            AmberUtils.sendBunkerError(
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                relays = application.application.relays,
+                                                context = context,
+                                                onLoading = {},
+                                            )
+                                        }
+                                    } else {
+                                        if (intentData.checked.value) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = signedMessage,
+                                                    result = signedMessage,
+                                                    id = intentData.id,
+                                                ),
+                                            )
+                                        }
+                                    }
+                                } else {
+                                    if (intentData.rememberMyChoice.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            application,
+                                            key,
+                                            intentData,
+                                            null,
+                                            intentData.rememberMyChoice.value,
+                                            database,
+                                        )
+                                    }
+
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            null,
+                                            TimeUtils.now(),
+                                            intentData.checked.value,
+                                        ),
+                                    )
+
+                                    val signature = intentData.encryptedData ?: continue
+
+                                    if (intentData.bunkerRequest != null) {
+                                        if (intentData.checked.value) {
+                                            IntentUtils.sendBunkerResponse(
+                                                context,
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                BunkerResponse(intentData.bunkerRequest.id, signature, null),
+                                                application.application.relays,
+                                                onLoading = {},
+                                                onDone = {},
+                                            )
+                                        } else {
+                                            AmberUtils.sendBunkerError(
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                relays = application.application.relays,
+                                                context = context,
+                                                onLoading = {},
+                                            )
+                                        }
+                                    } else {
+                                        if (intentData.checked.value) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = signature,
+                                                    result = signature,
+                                                    id = intentData.id,
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
                             }
 
-                            AmberButton(
-                                onClick = {
-                                    showItemsGroup2[index].value = !showItemsGroup2[index].value
-                                },
-                                content = {
-                                    Text(if (showItemsGroup2[index].value) context.getString(R.string.hide_details) else context.getString(R.string.show_details))
-                                },
-                            )
-                        }
-                    }
-                }
-                if (showItemsGroup2[index].value) {
-                    it.second.forEach {
-                        item {
-                            ListItem(it, packageName)
-                        }
-                    }
-                }
-            }
-        }
-
-        AmberButton(
-            content = {
-                Text(stringResource(R.string.confirm))
-            },
-            onClick = {
-                onLoading(true)
-                coroutineScope.launch(Dispatchers.IO) {
-                    try {
-                        val activity = context.getAppCompatActivity()
-                        val results = mutableListOf<Result>()
-                        reconnectToRelays(intents)
-
-                        for (intentData in intents) {
-                            val localAccount =
-                                if (intentData.currentAccount.isNotBlank()) {
-                                    LocalPreferences.loadFromEncryptedStorage(
-                                        context,
-                                        intentData.currentAccount,
-                                    )
-                                } else {
-                                    accountParam
-                                } ?: continue
-
-                            val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
-
-                            val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
-
-                            val application =
-                                database
-                                    .applicationDao()
-                                    .getByKey(key) ?: ApplicationWithPermissions(
-                                    application = ApplicationEntity(
-                                        key,
-                                        "",
-                                        listOf(),
-                                        "",
-                                        "",
-                                        "",
-                                        localAccount.signer.keyPair.pubKey.toHexKey(),
-                                        true,
-                                        intentData.bunkerRequest?.secret ?: "",
-                                        intentData.bunkerRequest?.secret != null,
-                                        localAccount.signPolicy,
-                                    ),
-                                    permissions = mutableListOf(),
-                                )
-
-                            if (intentData.type == SignerType.SIGN_EVENT) {
-                                val localEvent = intentData.event!!
-
-                                if (intentData.rememberMyChoice.value) {
-                                    AmberUtils.acceptOrRejectPermission(
-                                        application,
-                                        key,
-                                        intentData,
-                                        localEvent.kind,
-                                        intentData.rememberMyChoice.value,
-                                        database,
-                                    )
-                                }
-
-                                database.applicationDao().insertApplicationWithPermissions(application)
-
-                                database.applicationDao().addHistory(
-                                    HistoryEntity(
-                                        0,
-                                        key,
-                                        intentData.type.toString(),
-                                        localEvent.kind,
-                                        TimeUtils.now(),
-                                        true,
-                                    ),
-                                )
-
-                                if (intentData.bunkerRequest != null) {
-                                    IntentUtils.sendBunkerResponse(
-                                        context,
-                                        localAccount,
-                                        intentData.bunkerRequest,
-                                        BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
-                                        application.application.relays,
-                                        onLoading = {},
-                                        onDone = {},
-                                    )
-                                } else {
-                                    results.add(
-                                        Result(
-                                            null,
-                                            signature = if (localEvent is LnZapRequestEvent &&
-                                                localEvent.tags.any {
-                                                        tag ->
-                                                    tag.any { t -> t == "anon" }
-                                                }
-                                            ) {
-                                                localEvent.toJson()
-                                            } else {
-                                                localEvent.sig
-                                            },
-                                            result = if (localEvent is LnZapRequestEvent &&
-                                                localEvent.tags.any {
-                                                        tag ->
-                                                    tag.any { t -> t == "anon" }
-                                                }
-                                            ) {
-                                                localEvent.toJson()
-                                            } else {
-                                                localEvent.sig
-                                            },
-                                            id = intentData.id,
-                                        ),
-                                    )
-                                }
-                            } else if (intentData.type == SignerType.SIGN_MESSAGE) {
-                                if (intentData.rememberMyChoice.value) {
-                                    AmberUtils.acceptOrRejectPermission(
-                                        application,
-                                        key,
-                                        intentData,
-                                        null,
-                                        intentData.rememberMyChoice.value,
-                                        database,
-                                    )
-                                }
-
-                                database.applicationDao().insertApplicationWithPermissions(application)
-                                database.applicationDao().addHistory(
-                                    HistoryEntity(
-                                        0,
-                                        key,
-                                        intentData.type.toString(),
-                                        null,
-                                        TimeUtils.now(),
-                                        true,
-                                    ),
-                                )
-
-                                val signedMessage = CryptoUtils.signString(intentData.data, localAccount.signer.keyPair.privKey!!).toHexKey()
-
-                                if (intentData.bunkerRequest != null) {
-                                    IntentUtils.sendBunkerResponse(
-                                        context,
-                                        localAccount,
-                                        intentData.bunkerRequest,
-                                        BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
-                                        application.application.relays,
-                                        onLoading = {},
-                                        onDone = {},
-                                    )
-                                } else {
-                                    results.add(
-                                        Result(
-                                            null,
-                                            signature = signedMessage,
-                                            result = signedMessage,
-                                            id = intentData.id,
-                                        ),
-                                    )
-                                }
-                            } else {
-                                if (intentData.rememberMyChoice.value) {
-                                    AmberUtils.acceptOrRejectPermission(
-                                        application,
-                                        key,
-                                        intentData,
-                                        null,
-                                        intentData.rememberMyChoice.value,
-                                        database,
-                                    )
-                                }
-
-                                database.applicationDao().insertApplicationWithPermissions(application)
-
-                                database.applicationDao().addHistory(
-                                    HistoryEntity(
-                                        0,
-                                        key,
-                                        intentData.type.toString(),
-                                        null,
-                                        TimeUtils.now(),
-                                        true,
-                                    ),
-                                )
-
-                                val signature = intentData.encryptedData ?: continue
-
-                                if (intentData.bunkerRequest != null) {
-                                    IntentUtils.sendBunkerResponse(
-                                        context,
-                                        localAccount,
-                                        intentData.bunkerRequest,
-                                        BunkerResponse(intentData.bunkerRequest.id, signature, null),
-                                        application.application.relays,
-                                        onLoading = {},
-                                        onDone = {},
-                                    )
-                                } else {
-                                    results.add(
-                                        Result(
-                                            null,
-                                            signature = signature,
-                                            result = signature,
-                                            id = intentData.id,
-                                        ),
-                                    )
-                                }
+                            if (results.isNotEmpty()) {
+                                sendResultIntent(results, activity)
                             }
+                            if (intents.any { it.bunkerRequest != null }) {
+                                EventNotificationConsumer(context).notificationManager().cancelAll()
+                                finishActivity(activity)
+                            } else {
+                                finishActivity(activity)
+                            }
+                        } finally {
+                            onLoading(false)
                         }
-
-                        if (results.isNotEmpty()) {
-                            sendResultIntent(results, activity)
-                        }
-                        if (intents.any { it.bunkerRequest != null }) {
-                            EventNotificationConsumer(context).notificationManager().cancelAll()
-                            finishActivity(activity)
-                        } else {
-                            finishActivity(activity)
-                        }
-                    } finally {
-                        onLoading(false)
                     }
-                }
-            },
-        )
+                },
+            )
+
+            AmberButton(
+                Modifier.padding(vertical = 20.dp),
+                colors = ButtonDefaults.buttonColors().copy(
+                    containerColor = orange,
+                ),
+                onClick = {
+                    val activity = context.getAppCompatActivity()
+                    if (intents.any { it.bunkerRequest != null }) {
+                        EventNotificationConsumer(context).notificationManager().cancelAll()
+                        finishActivity(activity)
+                    } else {
+                        finishActivity(activity)
+                    }
+                },
+                content = {
+                    Text(stringResource(R.string.discard_all_requests))
+                },
+            )
+        }
     }
 }
 
@@ -713,6 +718,106 @@ fun ListItem(
                         .fillMaxWidth()
                         .padding(top = 8.dp),
                 )
+            }
+        }
+    }
+}
+
+@Composable
+fun PermissionCard(
+    context: Context,
+    acceptEventsGroup: List<MutableState<Boolean>>,
+    index: Int,
+    item: Pair<Any?, List<IntentData>>,
+    onDetailsClick: (List<IntentData>) -> Unit,
+) {
+    Card(
+        Modifier
+            .padding(4.dp),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+        border = BorderStroke(1.dp, Color.Gray),
+    ) {
+        Column(
+            Modifier
+                .padding(4.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        acceptEventsGroup[index].value = !acceptEventsGroup[index].value
+                    },
+            ) {
+                Checkbox(
+                    checked = acceptEventsGroup[index].value,
+                    onCheckedChange = { _ ->
+                        acceptEventsGroup[index].value = !acceptEventsGroup[index].value
+                    },
+                    colors = CheckboxDefaults.colors().copy(
+                        uncheckedBorderColor = Color.Gray,
+                    ),
+                )
+                val first = item.first
+                val permission = if (first is Int) {
+                    Permission("sign_event", first)
+                } else {
+                    Permission(first.toString().toLowerCase(Locale.current), null)
+                }
+
+                val message = if (first == SignerType.CONNECT) {
+                    stringResource(R.string.connect)
+                } else {
+                    permission.toLocalizedString(context)
+                }
+
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = message,
+                    color = if (acceptEventsGroup[index].value) Color.Unspecified else Color.Gray,
+                )
+            }
+            if (acceptEventsGroup[index].value) {
+                val selected = item.second.filter { it.checked.value }.size
+                val total = item.second.size
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(end = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        "$selected of $total events",
+                        modifier = Modifier.padding(start = 48.dp, bottom = 4.dp),
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                    )
+
+                    Text(
+                        buildAnnotatedString {
+                            withLink(
+                                LinkAnnotation.Clickable(
+                                    tag = "See_details",
+                                    styles = TextLinkStyles(
+                                        style = SpanStyle(
+                                            textDecoration = TextDecoration.Underline,
+                                        ),
+                                    ),
+                                    linkInteractionListener = {
+                                        onDetailsClick(item.second)
+                                    },
+                                ),
+                            ) {
+                                append("See details")
+                            }
+                        },
+                        modifier = Modifier.padding(start = 46.dp, bottom = 8.dp),
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                    )
+                }
             }
         }
     }

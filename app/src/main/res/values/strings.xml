@@ -420,4 +420,6 @@
     <string name="deny">Deny</string>
     <string name="never">Never</string>
     <string name="warning">Warning</string>
+    <string name="approve_selected">Approve selected</string>
+    <string name="discard_all_requests">Discard all requests</string>
 </resources>

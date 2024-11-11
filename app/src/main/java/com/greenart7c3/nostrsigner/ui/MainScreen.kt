@@ -613,8 +613,8 @@ fun MainScreen(
                                                     .clip(
                                                         RoundedCornerShape(50),
                                                     )
-                                                    .height(defaultPadding)
-                                                    .width(defaultPadding),
+                                                    .height(24.dp)
+                                                    .width(24.dp),
                                             )
                                         } else {
                                             Icon(

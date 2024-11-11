@@ -184,6 +184,9 @@ fun MultiEventHomeScreen(
                             .padding(vertical = 8.dp)
                             .clickable {
                                 rememberMyChoice = !rememberMyChoice
+                                intentsDialog?.forEach { intent ->
+                                    intent.rememberMyChoice.value = rememberMyChoice
+                                }
                             },
                     ) {
                         Switch(
@@ -191,6 +194,9 @@ fun MultiEventHomeScreen(
                             checked = rememberMyChoice,
                             onCheckedChange = {
                                 rememberMyChoice = !rememberMyChoice
+                                intentsDialog?.forEach { intent ->
+                                    intent.rememberMyChoice.value = rememberMyChoice
+                                }
                             },
                         )
                         Text(
@@ -335,7 +341,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.type == SignerType.SIGN_EVENT) {
                                     val localEvent = intentData.event!!
 
-                                    if (intentData.rememberMyChoice.value) {
+                                    if (intentData.rememberMyChoice.value && intentData.checked.value) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             key,
@@ -408,7 +414,7 @@ fun MultiEventHomeScreen(
                                         }
                                     }
                                 } else if (intentData.type == SignerType.SIGN_MESSAGE) {
-                                    if (intentData.rememberMyChoice.value) {
+                                    if (intentData.rememberMyChoice.value && intentData.checked.value) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             key,
@@ -466,7 +472,7 @@ fun MultiEventHomeScreen(
                                         }
                                     }
                                 } else {
-                                    if (intentData.rememberMyChoice.value) {
+                                    if (intentData.rememberMyChoice.value && intentData.checked.value) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             key,

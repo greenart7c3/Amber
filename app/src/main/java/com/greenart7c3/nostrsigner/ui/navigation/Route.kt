@@ -151,6 +151,13 @@ sealed class Route(
         icon = R.drawable.settings,
         selectedIcon = R.drawable.settings,
     )
+
+    data object SeeDetails : Route(
+        title = NostrSigner.getInstance().getString(R.string.incoming_request),
+        route = "SeeDetails",
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -174,4 +181,5 @@ val routes = listOf(
     Route.EditConfiguration,
     Route.SetupPin,
     Route.ConfirmPin,
+    Route.SeeDetails,
 )

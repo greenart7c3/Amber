@@ -15,11 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -37,7 +33,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
@@ -57,6 +52,7 @@ import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
@@ -108,7 +104,10 @@ fun DefaultRelaysScreen(
             .fillMaxSize(),
     ) {
         if (isLoading.value) {
-            CenterCircularProgressIndicator(Modifier)
+            CenterCircularProgressIndicator(
+                Modifier,
+                text = "Testing relay...",
+            )
         } else {
             Column(
                 modifier = Modifier
@@ -117,8 +116,7 @@ fun DefaultRelaysScreen(
             ) {
                 OutlinedTextField(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .fillMaxWidth(),
                     value = textFieldRelay.value.text,
                     keyboardOptions = KeyboardOptions(
                         capitalization = KeyboardCapitalization.None,
@@ -168,8 +166,7 @@ fun DefaultRelaysScreen(
 
                 AmberButton(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp),
+                        .fillMaxWidth(),
                     onClick = {
                         scope.launch(Dispatchers.IO) {
                             onAddRelay(
@@ -202,9 +199,7 @@ fun DefaultRelaysScreen(
                             )
                         }
                     },
-                    content = {
-                        Text(stringResource(R.string.add))
-                    },
+                    text = stringResource(R.string.add),
                 )
 
                 LazyColumn(
@@ -212,47 +207,29 @@ fun DefaultRelaysScreen(
                         .weight(1f),
                 ) {
                     items(relays2.size) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                relays2[it].url,
-                                Modifier
-                                    .weight(0.9f)
-                                    .padding(16.dp),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            IconButton(
-                                onClick = {
-                                    isLoading.value = true
-                                    relays2.removeAt(it)
-                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                        defaultRelays = relays2,
-                                    )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                    scope.launch(Dispatchers.IO) {
-                                        @Suppress("KotlinConstantConditions")
-                                        if (BuildConfig.FLAVOR != "offline") {
-                                            NostrSigner.getInstance().checkForNewRelays()
-                                            NotificationDataSource.stop()
-                                            delay(2000)
-                                            NotificationDataSource.start()
-                                            isLoading.value = false
-                                        } else {
-                                            isLoading.value = false
-                                        }
-                                    }
-                                },
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    stringResource(R.string.delete),
+                        RelayCard(
+                            relay = relays2[it].url,
+                            onClick = {
+                                isLoading.value = true
+                                relays2.removeAt(it)
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    defaultRelays = relays2,
                                 )
-                            }
-                        }
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                scope.launch(Dispatchers.IO) {
+                                    @Suppress("KotlinConstantConditions")
+                                    if (BuildConfig.FLAVOR != "offline") {
+                                        NostrSigner.getInstance().checkForNewRelays()
+                                        NotificationDataSource.stop()
+                                        delay(2000)
+                                        NotificationDataSource.start()
+                                        isLoading.value = false
+                                    } else {
+                                        isLoading.value = false
+                                    }
+                                }
+                            },
+                        )
                     }
                 }
             }

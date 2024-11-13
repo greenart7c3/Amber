@@ -61,9 +61,7 @@ fun SeedWordsPage(
                 onClick = {
                     clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
                 },
-                content = {
-                    Text(text = stringResource(R.string.copy_to_clipboard))
-                },
+                text = stringResource(R.string.copy_to_clipboard),
             )
 
             Row(
@@ -127,9 +125,7 @@ fun SeedWordsPage(
             if (showNextButton) {
                 AmberButton(
                     onClick = onNextPage,
-                    content = {
-                        Text(text = stringResource(R.string.next))
-                    },
+                    text = stringResource(R.string.next),
                 )
             }
         }

@@ -100,7 +100,7 @@ fun SettingsScreen(
     ) {
         Box(
             Modifier
-                .padding(vertical = 8.dp),
+                .padding(bottom = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.security),

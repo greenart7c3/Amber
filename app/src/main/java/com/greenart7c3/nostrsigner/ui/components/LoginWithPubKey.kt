@@ -224,9 +224,7 @@ fun LoginWithPubKey(
                 onClick = {
                     onAccept(localPermissions, selectedOption)
                 },
-                content = {
-                    Text(stringResource(R.string.grant_permissions))
-                },
+                text = stringResource(R.string.grant_permissions),
             )
 
             AmberButton(
@@ -235,9 +233,7 @@ fun LoginWithPubKey(
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFF6B00),
                 ),
-                content = {
-                    Text(stringResource(R.string.reject))
-                },
+                text = stringResource(R.string.reject),
             )
         }
     }

@@ -121,11 +121,7 @@ fun SignPolicySettingsScreen(
                     }
                 }
             },
-            content = {
-                Text(
-                    text = stringResource(R.string.save),
-                )
-            },
+            text = stringResource(R.string.save),
         )
     }
 }

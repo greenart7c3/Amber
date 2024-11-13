@@ -29,6 +29,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -123,7 +124,11 @@ fun RandomPinInput(
                     },
                     modifier = Modifier.padding(8.dp),
                 ) {
-                    Text(number.toString(), color = Color.Black)
+                    Text(
+                        number.toString(),
+                        color = Color.Black,
+                        modifier = Modifier.scale(1.50f),
+                    )
                 }
             }
 
@@ -155,7 +160,11 @@ fun RandomPinInput(
                     },
                     modifier = Modifier.weight(1f).padding(8.dp),
                 ) {
-                    Text(randomNumbers.last().toString(), color = Color.Black)
+                    Text(
+                        randomNumbers.last().toString(),
+                        color = Color.Black,
+                        modifier = Modifier.scale(1.50f),
+                    )
                 }
             }
 

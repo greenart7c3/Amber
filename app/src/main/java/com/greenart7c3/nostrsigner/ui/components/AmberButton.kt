@@ -10,9 +10,12 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -23,7 +26,10 @@ fun AmberButton(
     colors: ButtonColors = ButtonDefaults.buttonColors().copy(
         contentColor = Color.Black,
     ),
-    content: @Composable () -> Unit,
+    textColor: Color = Color.Unspecified,
+    text: String,
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     Row(
         modifier.fillMaxWidth(),
@@ -39,7 +45,13 @@ fun AmberButton(
                 .padding(vertical = 6.dp),
             contentPadding = PaddingValues(vertical = 14.dp),
         ) {
-            content()
+            Text(
+                text = text,
+                color = textColor,
+                modifier = Modifier.scale(1.50f),
+                textAlign = textAlign,
+                maxLines = maxLines,
+            )
         }
     }
 }
@@ -49,7 +61,10 @@ fun AmberElevatedButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    content: @Composable () -> Unit,
+    textColor: Color = Color.Unspecified,
+    text: String,
+    textAlign: TextAlign? = null,
+    maxLines: Int = Int.MAX_VALUE,
 ) {
     Row(
         modifier.fillMaxWidth(),
@@ -64,7 +79,13 @@ fun AmberElevatedButton(
                 .padding(vertical = 6.dp),
             contentPadding = PaddingValues(vertical = 14.dp),
         ) {
-            content()
+            Text(
+                text = text,
+                color = textColor,
+                modifier = Modifier.scale(1.50f),
+                textAlign = textAlign,
+                maxLines = maxLines,
+            )
         }
     }
 }

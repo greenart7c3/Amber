@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,12 +36,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -68,7 +69,6 @@ fun EditPermission(
     navController: NavController,
     database: AppDatabase,
 ) {
-    val uriHandler = LocalUriHandler.current
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
     val permissions = remember {
@@ -119,13 +119,14 @@ fun EditPermission(
     }
 
     Column(
-        modifier = modifier.verticalScroll(rememberScrollState()),
+        modifier = modifier
+            .verticalScroll(rememberScrollState()),
     ) {
         if (!applicationData.isConnected) {
             Text(
                 bunkerUri,
                 Modifier
-                    .padding(8.dp),
+                    .padding(bottom = 8.dp),
                 textAlign = TextAlign.Start,
                 fontSize = 18.sp,
             )
@@ -136,9 +137,7 @@ fun EditPermission(
                 onClick = {
                     clipboardManager.setText(AnnotatedString(bunkerUri))
                 },
-                content = {
-                    Text(stringResource(R.string.copy_to_clipboard))
-                },
+                text = stringResource(R.string.copy_to_clipboard),
             )
 
             Spacer(Modifier.height(12.dp))
@@ -149,9 +148,7 @@ fun EditPermission(
             onClick = {
                 navController.navigate("Activity/${applicationData.key}")
             },
-            content = {
-                Text(stringResource(R.string.activity))
-            },
+            text = stringResource(R.string.activity),
         )
 
         AmberButton(
@@ -159,15 +156,12 @@ fun EditPermission(
             onClick = {
                 navController.navigate("EditConfiguration/${applicationData.key}")
             },
-            content = {
-                Text(stringResource(R.string.edit_configuration))
-            },
+            text = stringResource(R.string.edit_configuration),
         )
 
         Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
                 .padding(bottom = 20.dp),
             text = stringResource(R.string.edit_permissions_description),
         )
@@ -188,7 +182,7 @@ fun EditPermission(
 
             Card(
                 modifier = Modifier
-                    .padding(4.dp)
+                    .padding(vertical = 4.dp)
                     .fillMaxWidth(),
                 border = BorderStroke(1.dp, Color.LightGray),
                 colors = CardDefaults.cardColors().copy(
@@ -219,7 +213,9 @@ fun EditPermission(
                                         }
                                     permissions.clear()
                                     permissions.addAll(localPermissions)
-                                    database.applicationDao().insertPermissions(localPermissions)
+                                    database
+                                        .applicationDao()
+                                        .insertPermissions(localPermissions)
                                 }
                             },
                     ) {
@@ -269,20 +265,58 @@ fun EditPermission(
 
         if (permissions.isNotEmpty()) {
             AmberButton(
+                modifier = Modifier.padding(top = 60.dp, bottom = 20.dp),
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = orange,
                 ),
-                modifier = Modifier.padding(bottom = 20.dp),
                 onClick = {
                     wantsToRemovePermissions = true
                 },
-                content = {
-                    Text(
-                        stringResource(R.string.remove_all_permissions),
-                        color = Color.White,
-                    )
-                },
+                text = stringResource(R.string.remove_all_permissions),
+                textColor = Color.White,
             )
+        }
+    }
+}
+
+@Composable
+fun RelayCard(
+    modifier: Modifier = Modifier,
+    relay: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        border = BorderStroke(1.dp, Color.LightGray),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+    ) {
+        Row(
+            modifier
+                .fillMaxWidth(),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+        ) {
+            Text(
+                relay,
+                Modifier
+                    .weight(0.9f)
+                    .padding(8.dp)
+                    .padding(start = 8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            IconButton(
+                onClick = onClick,
+            ) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.delete),
+                    stringResource(R.string.delete),
+                )
+            }
         }
     }
 }

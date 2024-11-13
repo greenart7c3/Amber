@@ -124,7 +124,7 @@ fun ActivityScreen(
                             if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
                             contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
                             tint = if (activity.accepted) Color(0xFF1D8802) else Color(0xFFFF6B00),
-                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                            modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 16.dp),
                         )
                     }
                     Spacer(Modifier.weight(1f))

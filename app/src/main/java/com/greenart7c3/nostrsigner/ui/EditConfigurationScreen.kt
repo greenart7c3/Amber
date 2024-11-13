@@ -250,9 +250,7 @@ fun EditConfigurationScreen(
                         }
                     }
                 },
-                content = {
-                    Text(stringResource(R.string.update))
-                },
+                text = stringResource(R.string.update),
             )
 
             AmberButton(
@@ -276,12 +274,8 @@ fun EditConfigurationScreen(
                         }
                     }
                 },
-                content = {
-                    Text(
-                        stringResource(R.string.delete_application),
-                        color = Color.White,
-                    )
-                },
+                text = stringResource(R.string.delete_application),
+                textColor = Color.White,
             )
         }
     }

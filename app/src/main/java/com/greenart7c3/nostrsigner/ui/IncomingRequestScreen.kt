@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
@@ -42,6 +43,7 @@ fun IncomingRequestScreen(
     applicationName: String?,
     account: Account,
     database: AppDatabase,
+    navController: NavController,
 ) {
     var loading by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -101,6 +103,7 @@ fun IncomingRequestScreen(
                     intents,
                     packageName,
                     account,
+                    navController,
                 ) {
                     loading = it
                 }

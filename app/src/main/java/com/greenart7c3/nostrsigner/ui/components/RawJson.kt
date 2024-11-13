@@ -88,8 +88,7 @@ fun RawJson(
                     }
                 }
             },
-        ) {
-            Text(stringResource(R.string.copy) + label)
-        }
+            text = (stringResource(R.string.copy) + label),
+        )
     }
 }

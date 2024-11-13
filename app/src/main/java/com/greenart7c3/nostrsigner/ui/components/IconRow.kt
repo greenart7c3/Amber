@@ -40,7 +40,7 @@ fun IconRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 25.dp),
+                .padding(vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = if (center) Arrangement.Center else Arrangement.Start,
         ) {
@@ -81,7 +81,7 @@ fun IconRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 25.dp),
+                .padding(vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(

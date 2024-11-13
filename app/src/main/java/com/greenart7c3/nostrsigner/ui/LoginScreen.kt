@@ -138,9 +138,8 @@ fun MainPage(
                             state.animateScrollToPage(1)
                         }
                     },
-                ) {
-                    Text(text = stringResource(R.string.add_a_key))
-                }
+                    text = stringResource(R.string.add_a_key),
+                )
 
                 AmberButton(
                     onClick = {
@@ -148,9 +147,8 @@ fun MainPage(
                             state.animateScrollToPage(2)
                         }
                     },
-                ) {
-                    Text(stringResource(R.string.generate_a_new_key))
-                }
+                    text = stringResource(R.string.sign_policy),
+                )
             }
         }
     }
@@ -349,9 +347,7 @@ fun OrbotPage(
                         pageState.animateScrollToPage(2)
                     }
                 },
-                content = {
-                    Text(text = stringResource(R.string.next))
-                },
+                text = stringResource(R.string.next),
             )
         }
     }
@@ -477,9 +473,8 @@ fun SignPolicyScreen(
                         )
                     }
                 },
-            ) {
-                Text(text = stringResource(R.string.finish))
-            }
+                text = stringResource(R.string.finish),
+            )
         }
     }
 }
@@ -786,9 +781,7 @@ fun LoginPage(accountViewModel: AccountStateViewModel) {
                         Spacer(modifier = Modifier.height(10.dp))
 
                         AmberButton(
-                            content = {
-                                Text(text = stringResource(R.string.next))
-                            },
+                            text = stringResource(R.string.next),
                             onClick = {
                                 if (key.value.text.isBlank()) {
                                     errorMessage = context.getString(R.string.key_is_required)

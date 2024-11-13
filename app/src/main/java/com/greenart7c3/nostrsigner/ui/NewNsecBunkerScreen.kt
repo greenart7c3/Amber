@@ -8,12 +8,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -30,7 +28,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -40,7 +37,6 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -93,7 +89,8 @@ fun NewNsecBunkerScreen(
 
     if (isLoading.value) {
         CenterCircularProgressIndicator(
-            modifier = Modifier.fillMaxSize(),
+            modifier = Modifier,
+            text = "Testing the relay...",
         )
     } else {
         Column(
@@ -181,47 +178,18 @@ fun NewNsecBunkerScreen(
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            LazyColumn(
-                Modifier
-                    .padding(bottom = 20.dp),
-            ) {
-                items(relays.size) {
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            relays[it].url,
-                            Modifier
-                                .weight(0.9f)
-                                .padding(8.dp),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        IconButton(
-                            onClick = {
-                                relays.removeAt(it)
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.Delete,
-                                stringResource(R.string.delete),
-                            )
-                        }
-                    }
-                }
+            relays.forEachIndexed { index, relay ->
+                RelayCard(
+                    relay = relay.url,
+                    onClick = {
+                        relays.removeAt(index)
+                    },
+                )
             }
 
             AmberButton(
-                content = {
-                    Text(
-                        text = stringResource(R.string.create),
-                        Modifier.scale(1.25f),
-                    )
-                },
+                Modifier.padding(top = 20.dp),
+                text = stringResource(R.string.create),
                 onClick = {
                     if (relays.isEmpty()) {
                         accountStateViewModel.toast(
@@ -335,12 +303,7 @@ fun NewNsecBunkerCreatedScreen(
                 onClick = {
                     clipboardManager.setText(AnnotatedString(bunkerUri))
                 },
-                content = {
-                    Text(
-                        text = stringResource(R.string.copy_to_clipboard),
-                        Modifier.scale(1.25f),
-                    )
-                },
+                text = stringResource(R.string.copy_to_clipboard),
             )
         }
     }

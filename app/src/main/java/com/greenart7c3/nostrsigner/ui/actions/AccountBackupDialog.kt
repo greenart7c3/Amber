@@ -176,9 +176,7 @@ fun AccountBackupScreen(
                                 },
                             )
                         },
-                        content = {
-                            Text(text = stringResource(R.string.show_seed_words))
-                        },
+                        text = stringResource(R.string.show_seed_words),
                     )
                 }
                 NSecCopyButton(account)
@@ -324,11 +322,7 @@ private fun NSecQrButton(account: Account) {
                 },
             )
         },
-        content = {
-            Text(
-                stringResource(id = R.string.show_qr_code),
-            )
-        },
+        text = stringResource(id = R.string.show_qr_code),
     )
 }
 
@@ -411,9 +405,7 @@ private fun NSecCopyButton(account: Account) {
                 },
             )
         },
-        content = {
-            Text(stringResource(id = R.string.copy_my_secret_key))
-        },
+        text = stringResource(id = R.string.copy_my_secret_key),
     )
 }
 
@@ -471,13 +463,9 @@ private fun EncryptNSecCopyButton(
             )
         },
         enabled = password.value.text.isNotBlank(),
-        content = {
-            Text(
-                stringResource(id = R.string.encrypt_and_copy_my_secret_key),
-                maxLines = 1,
-                textAlign = TextAlign.Center,
-            )
-        },
+        text = stringResource(id = R.string.encrypt_and_copy_my_secret_key),
+        maxLines = 1,
+        textAlign = TextAlign.Center,
     )
 }
 
@@ -528,11 +516,7 @@ private fun EncryptNSecQRButton(
             )
         },
         enabled = password.value.text.isNotBlank(),
-        content = {
-            Text(
-                stringResource(id = R.string.show_qr_code),
-            )
-        },
+        text = stringResource(id = R.string.show_qr_code),
     )
 }
 

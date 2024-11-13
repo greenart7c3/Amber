@@ -12,7 +12,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -91,12 +90,7 @@ fun NewApplicationScreen(
                 context.getAppCompatActivity()?.startActivity(intent)
                 accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
             },
-            content = {
-                Text(
-                    text = stringResource(R.string.paste_from_clipboard),
-                    Modifier.scale(1.25f),
-                )
-            },
+            text = stringResource(R.string.paste_from_clipboard),
         )
 
         Text(
@@ -108,12 +102,7 @@ fun NewApplicationScreen(
             onClick = {
                 dialogOpen = true
             },
-            content = {
-                Text(
-                    text = stringResource(R.string.scan_qr_code),
-                    Modifier.scale(1.25f),
-                )
-            },
+            text = stringResource(R.string.scan_qr_code),
         )
 
         Text(
@@ -125,12 +114,7 @@ fun NewApplicationScreen(
             onClick = {
                 navController.navigate(Route.NewNsecBunker.route)
             },
-            content = {
-                Text(
-                    text = stringResource(R.string.add_a_nsecbunker),
-                    Modifier.scale(1.25f),
-                )
-            },
+            text = stringResource(R.string.add_a_nsecbunker),
         )
 
         Text(

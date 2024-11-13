@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -57,6 +58,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -103,7 +105,6 @@ import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
-import com.greenart7c3.nostrsigner.ui.theme.defaultPadding
 import com.vitorpamplona.quartz.encoders.toHexKey
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -372,6 +373,7 @@ fun PermissionsFloatingActionButton(
                 Icons.Default.Add,
                 contentDescription = stringResource(R.string.connect_app),
                 tint = Color.Black,
+                modifier = Modifier.size(48.dp),
             )
         }
     }
@@ -427,7 +429,10 @@ fun MainScreen(
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
     var profileUrl by remember { mutableStateOf<String?>(null) }
-
+    val configuration = LocalConfiguration.current
+    val screenHeightDp = configuration.screenHeightDp.dp
+    val percentage = (screenHeightDp * 0.97f)
+    val verticalPadding = (screenHeightDp - percentage)
     val requestPermissionLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission(),
@@ -613,8 +618,8 @@ fun MainScreen(
                                                     .clip(
                                                         RoundedCornerShape(50),
                                                     )
-                                                    .height(24.dp)
-                                                    .width(24.dp),
+                                                    .height(28.dp)
+                                                    .width(28.dp),
                                             )
                                         } else {
                                             Icon(
@@ -695,12 +700,14 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         intents,
                         packageName,
                         appName,
                         account,
                         database,
+                        navController,
                     )
                 },
             )
@@ -712,7 +719,8 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         account = account,
                         navController = navController,
                         database = database,
@@ -727,7 +735,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         accountStateViewModel,
                         account,
                         navController,
@@ -742,7 +751,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         account,
                     )
                 },
@@ -758,7 +768,8 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(defaultPadding),
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
                             account = account,
                             selectedPackage = packageName,
                             navController = navController,
@@ -776,7 +787,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         account = account,
                     )
                 },
@@ -791,7 +803,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                     )
                 },
             )
@@ -804,7 +817,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         account = account,
                     )
                 },
@@ -818,7 +832,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         accountStateViewModel = accountStateViewModel,
                         account = account,
                     )
@@ -833,7 +848,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         account = account,
                         navController = navController,
                     )
@@ -848,7 +864,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         navController = navController,
                     )
                 },
@@ -865,7 +882,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                     )
                 },
             )
@@ -882,7 +900,8 @@ fun MainScreen(
                         Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                     )
                 },
             )
@@ -900,7 +919,8 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(defaultPadding),
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
                         )
                     }
                 },
@@ -918,7 +938,8 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(defaultPadding),
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
                         )
                     }
                 },
@@ -936,7 +957,8 @@ fun MainScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(defaultPadding),
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
                         )
                     }
                 },
@@ -951,7 +973,8 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(defaultPadding),
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
                             database = database,
                             key = key,
                             accountStateViewModel = accountStateViewModel,
@@ -969,7 +992,8 @@ fun MainScreen(
                         modifier = Modifier
                             .fillMaxSize()
                             .padding(padding)
-                            .padding(defaultPadding),
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
                         navController = navController,
                     )
                 },
@@ -984,12 +1008,26 @@ fun MainScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .padding(defaultPadding),
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
                             accountStateViewModel = accountStateViewModel,
                             pin = pin,
                             navController = navController,
                         )
                     }
+                },
+            )
+
+            composable(
+                Route.SeeDetails.route,
+                content = {
+                    SeeDetailsScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(padding)
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
+                    )
                 },
             )
         }

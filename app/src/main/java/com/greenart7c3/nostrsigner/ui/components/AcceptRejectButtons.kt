@@ -6,7 +6,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -27,17 +26,16 @@ fun AcceptRejectButtons(
         AmberButton(
             modifier = Modifier.fillMaxWidth(),
             onClick = onAccept,
-        ) {
-            Text(stringResource(R.string.accept))
-        }
+            text = stringResource(R.string.accept),
+        )
+
         Spacer(modifier = Modifier.width(20.dp))
         AmberButton(
             onClick = onReject,
             colors = ButtonDefaults.buttonColors(
                 containerColor = Color(0xFFFF6B00),
             ),
-        ) {
-            Text(stringResource(R.string.reject))
-        }
+            text = stringResource(R.string.reject),
+        )
     }
 }

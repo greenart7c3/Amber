@@ -96,11 +96,7 @@ fun LogsScreen(
                     NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
                 }
             },
-            content = {
-                Text(
-                    text = stringResource(R.string.clear_logs),
-                )
-            },
+            text = stringResource(R.string.clear_logs),
         )
     }
 }

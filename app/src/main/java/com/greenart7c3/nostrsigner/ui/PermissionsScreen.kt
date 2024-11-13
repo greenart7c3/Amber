@@ -52,33 +52,8 @@ fun PermissionsScreen(
         } else {
             LazyColumn(
                 Modifier
-                    .fillMaxSize()
-                    .padding(8.dp),
+                    .fillMaxSize(),
             ) {
-//                item {
-//                    Row(
-//                        Modifier
-//                            .fillMaxWidth()
-//                            .padding(8.dp)
-//                            .clickable {
-//
-//                            },
-//                        horizontalArrangement = Arrangement.End,
-//                    ) {
-//                        Icon(
-//                            Icons.AutoMirrored.Filled.Sort,
-//                            null,
-//                            modifier = Modifier.size(22.dp),
-//                            tint = MaterialTheme.colorScheme.onBackground,
-//                        )
-//                        Text(
-//                            modifier = Modifier.padding(start = 16.dp),
-//                            text = "Sort by $sortBy",
-//                            maxLines = 1,
-//                            overflow = TextOverflow.Ellipsis,
-//                        )
-//                    }
-//                }
                 itemsIndexed(applications.value) { _, applicationWithHistory ->
                     Row(
                         modifier = Modifier

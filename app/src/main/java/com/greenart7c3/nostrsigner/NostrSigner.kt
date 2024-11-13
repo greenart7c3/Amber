@@ -254,7 +254,7 @@ class NostrSigner : Application() {
                                 types = COMMON_FEED_TYPES,
                                 filter = SincePerRelayFilter(
                                     kinds = listOf(MetadataEvent.KIND),
-                                    authors = listOf("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19"),
+                                    authors = listOf(account.signer.keyPair.pubKey.toNpub()),
                                     limit = 1,
                                 ),
                             ),

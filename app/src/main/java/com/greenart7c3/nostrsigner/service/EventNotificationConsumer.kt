@@ -132,7 +132,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 applicationContext,
                 acc,
                 bunkerRequest,
-                BunkerResponse(bunkerRequest.id, "ack", null),
+                BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
                 permission.application.relays,
                 onLoading = {},
                 onDone = {},
@@ -248,7 +248,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             onDone = { },
                         )
                     } else {
-                        val index = localCursor.getColumnIndex("event")
+                        var index = localCursor.getColumnIndex("event")
+                        if (index == -1) {
+                            index = localCursor.getColumnIndex("result")
+                        }
                         val result = localCursor.getString(index)
 
                         IntentUtils.sendBunkerResponse(

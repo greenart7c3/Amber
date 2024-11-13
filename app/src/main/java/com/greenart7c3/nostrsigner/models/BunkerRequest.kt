@@ -24,6 +24,7 @@ data class BunkerRequest(
     var secret: String,
     var currentAccount: String,
     var encryptionType: EncryptionType,
+    var nostrConnectSecret: String,
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
@@ -92,6 +93,7 @@ data class BunkerRequest(
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
                 encryptionType = encryptionType,
+                nostrConnectSecret = jsonObject.get("nostrConnectSecret")?.asText()?.intern() ?: "",
             )
         }
 
@@ -127,6 +129,7 @@ data class BunkerRequest(
                 gen.writeStringField("secret", value.secret)
                 gen.writeStringField("currentAccount", value.currentAccount)
                 gen.writeStringField("encryptionType", value.encryptionType.toString())
+                gen.writeStringField("nostrConnectSecret", value.nostrConnectSecret)
                 gen.writeEndObject()
             }
         }

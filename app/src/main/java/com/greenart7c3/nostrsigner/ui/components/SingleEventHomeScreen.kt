@@ -105,7 +105,7 @@ fun SingleEventHomeScreen(
                 { permissions, signPolicy ->
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
-                            "ack"
+                            intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
                         } else if (intentData.bunkerRequest != null) {
                             account.signer.keyPair.pubKey.toHexKey()
                         } else {

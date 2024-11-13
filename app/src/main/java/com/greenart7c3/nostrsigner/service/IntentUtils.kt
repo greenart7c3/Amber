@@ -799,6 +799,7 @@ object IntentUtils {
             val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
             val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()
+            var nostrConnectSecret = ""
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
                 val paramName = internalSplit.first()
@@ -814,6 +815,10 @@ object IntentUtils {
                 }
                 if (paramName == "name") {
                     name = json
+                }
+
+                if (paramName == "secret") {
+                    nostrConnectSecret = json
                 }
 
                 if (paramName == "perms") {
@@ -891,6 +896,7 @@ object IntentUtils {
                         "",
                         account.signer.keyPair.pubKey.toNpub(),
                         EncryptionType.NIP04,
+                        nostrConnectSecret,
                     ),
                     route,
                     null,

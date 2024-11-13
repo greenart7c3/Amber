@@ -83,15 +83,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         request: String,
         encryptionType: EncryptionType,
     ) {
-        if (BuildConfig.DEBUG) {
-            Log.d("bunker", event.toJson())
-            Log.d("bunker", request)
-        }
-
         val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
         val notification = dao.getNotification(event.id)
         if (notification != null) return
         dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+
+        if (BuildConfig.DEBUG) {
+            Log.d("bunker", event.toJson())
+            Log.d("bunker", request)
+        }
 
         val bunkerRequest = BunkerRequest.mapper.readValue(request, BunkerRequest::class.java)
         bunkerRequest.localKey = event.pubKey

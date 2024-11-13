@@ -25,7 +25,6 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -75,12 +74,15 @@ fun AccountScreen(
                     MainLoginPage(accountStateViewModel)
                 }
                 is AccountState.LoggedIn -> {
-                    var intentData by remember {
-                        mutableStateOf<IntentData?>(null)
-                    }
                     LaunchedEffect(intent, intents) {
                         IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
-                            intentData = it
+                            it?.let { intentData ->
+                                if (intents.none { item -> item.id == intentData.id }) {
+                                    val oldIntents = intents.toMutableList()
+                                    oldIntents.add(intentData)
+                                    flow.value = oldIntents
+                                }
+                            }
                         }
                         val data =
                             intents.firstOrNull {
@@ -96,24 +98,8 @@ fun AccountScreen(
                         }
                     }
 
-                    if (intentData != null) {
-                        if (intents.none { item -> item.id == intentData!!.id }) {
-                            val oldIntents = intents.toMutableList()
-                            oldIntents.add(intentData!!)
-                            flow.value = oldIntents
-                        }
-                    }
-
-                    val newIntents =
-                        intents.ifEmpty {
-                            if (intentData == null) {
-                                listOf()
-                            } else {
-                                listOf(intentData)
-                            }
-                        }.mapNotNull { it }
                     val database = NostrSigner.getInstance().getDatabase(state.account.signer.keyPair.pubKey.toNpub())
-                    val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
+                    val localRoute = mutableStateOf(intents.firstNotNullOfOrNull { it.route } ?: state.route)
 
                     SideEffect {
                         NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
@@ -137,7 +123,21 @@ fun AccountScreen(
                     AmberListenerSingleton.accountStateViewModel = accountStateViewModel
 
                     DisplayErrorMessages(accountStateViewModel)
-                    MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database, navController)
+                    MainScreen(
+                        state.account,
+                        accountStateViewModel,
+                        intents,
+                        packageName,
+                        appName,
+                        localRoute,
+                        database,
+                        navController,
+                        onRemoveIntentData = {
+                            val oldIntents = intents.toMutableList()
+                            oldIntents.remove(it)
+                            flow.value = oldIntents
+                        },
+                    )
                 }
             }
         }

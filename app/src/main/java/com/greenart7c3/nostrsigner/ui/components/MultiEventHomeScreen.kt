@@ -82,6 +82,7 @@ fun MultiEventHomeScreen(
     packageName: String?,
     accountParam: Account,
     navController: NavController,
+    onRemoveIntentData: (IntentData) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -233,14 +234,18 @@ fun MultiEventHomeScreen(
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
                                             application.application.relays,
                                             onLoading = {},
-                                            onDone = {},
+                                            onDone = {
+                                                onRemoveIntentData(intentData)
+                                            },
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(
+                                            intentData,
                                             localAccount,
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
+                                            onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
                                     }
@@ -307,14 +312,18 @@ fun MultiEventHomeScreen(
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
                                             application.application.relays,
                                             onLoading = {},
-                                            onDone = {},
+                                            onDone = {
+                                                onRemoveIntentData(intentData)
+                                            },
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(
+                                            intentData,
                                             localAccount,
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
+                                            onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
                                     }
@@ -366,14 +375,18 @@ fun MultiEventHomeScreen(
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
                                             application.application.relays,
                                             onLoading = {},
-                                            onDone = {},
+                                            onDone = {
+                                                onRemoveIntentData(intentData)
+                                            },
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(
+                                            intentData,
                                             localAccount,
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
+                                            onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
                                     }

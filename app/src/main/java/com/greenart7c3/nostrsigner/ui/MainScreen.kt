@@ -131,6 +131,7 @@ fun sendResult(
     permissions: List<Permission>? = null,
     appName: String? = null,
     signPolicy: Int? = null,
+    onRemoveIntentData: (IntentData) -> Unit,
 ) {
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
@@ -246,6 +247,7 @@ fun sendResult(
                 relays,
                 onLoading,
                 onDone = {
+                    EventNotificationConsumer(context).notificationManager().cancelAll()
                     if (intentData.bunkerRequest.secret.isNotBlank()) {
                         val secretApplication = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
                         secretApplication?.let {
@@ -268,6 +270,7 @@ fun sendResult(
                     )
 
                     EventNotificationConsumer(context).notificationManager().cancelAll()
+                    onRemoveIntentData(intentData)
                     activity?.intent = null
                     activity?.finish()
                 },
@@ -294,6 +297,7 @@ fun sendResult(
                 intent.putExtra("package", BuildConfig.APPLICATION_ID)
             }
             activity?.setResult(RESULT_OK, intent)
+            onRemoveIntentData(intentData)
             activity?.intent = null
             activity?.finish()
         } else if (!intentData.callBackUrl.isNullOrBlank()) {
@@ -321,6 +325,7 @@ fun sendResult(
                     context.startActivity(intent)
                 }
             }
+            onRemoveIntentData(intentData)
             activity?.intent = null
             activity?.finish()
         } else {
@@ -346,6 +351,7 @@ fun sendResult(
                     Toast.LENGTH_SHORT,
                 ).show()
             }
+            onRemoveIntentData(intentData)
             activity?.intent = null
             activity?.finish()
         }
@@ -423,6 +429,7 @@ fun MainScreen(
     route: MutableState<String?>,
     database: AppDatabase,
     navController: NavHostController,
+    onRemoveIntentData: (IntentData) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
@@ -708,6 +715,7 @@ fun MainScreen(
                         account,
                         database,
                         navController,
+                        onRemoveIntentData,
                     )
                 },
             )

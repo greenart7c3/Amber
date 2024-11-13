@@ -53,6 +53,7 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account,
     database: AppDatabase,
+    onRemoveIntentData: (IntentData) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     var applicationEntity by remember {
@@ -94,6 +95,8 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
+                remember,
+                intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
                 account,
                 packageName,
                 appName,
@@ -125,6 +128,7 @@ fun SingleEventHomeScreen(
                             database = database,
                             onLoading = onLoading,
                             signPolicy = signPolicy,
+                            onRemoveIntentData = onRemoveIntentData,
                         )
                     }
                     return@LoginWithPubKey
@@ -141,14 +145,17 @@ fun SingleEventHomeScreen(
                             )
 
                             AmberUtils.sendBunkerError(
+                                intentData,
                                 account,
                                 intentData.bunkerRequest,
                                 applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
                                 context,
                                 onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
                             )
                         }
                     } else {
+                        onRemoveIntentData(intentData)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
@@ -197,6 +204,7 @@ fun SingleEventHomeScreen(
                             null,
                             database,
                             onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
                         )
                     }
                 },
@@ -259,13 +267,16 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             AmberUtils.sendBunkerError(
+                                intentData,
                                 account,
                                 intentData.bunkerRequest,
                                 relays,
                                 context,
-                                onLoading,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
                             )
                         } else {
+                            onRemoveIntentData(intentData)
                             context.getAppCompatActivity()?.intent = null
                             context.getAppCompatActivity()?.finish()
                         }
@@ -332,7 +343,8 @@ fun SingleEventHomeScreen(
                             intentData,
                             null,
                             database,
-                            onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                            onLoading = onLoading,
                         )
                     }
                 },
@@ -394,13 +406,16 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             AmberUtils.sendBunkerError(
+                                intentData,
                                 account,
                                 intentData.bunkerRequest,
                                 relays,
                                 context,
+                                onRemoveIntentData = onRemoveIntentData,
                                 onLoading,
                             )
                         } else {
+                            onRemoveIntentData(intentData)
                             context.getAppCompatActivity()?.intent = null
                             context.getAppCompatActivity()?.finish()
                         }
@@ -491,6 +506,7 @@ fun SingleEventHomeScreen(
                             event.kind,
                             database,
                             onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
                         )
                     },
                     {
@@ -554,13 +570,16 @@ fun SingleEventHomeScreen(
 
                             if (intentData.bunkerRequest != null) {
                                 AmberUtils.sendBunkerError(
+                                    intentData,
                                     account,
                                     intentData.bunkerRequest,
                                     relays,
                                     context,
-                                    onLoading,
+                                    onLoading = onLoading,
+                                    onRemoveIntentData = onRemoveIntentData,
                                 )
                             } else {
+                                onRemoveIntentData(intentData)
                                 context.getAppCompatActivity()?.intent = null
                                 context.getAppCompatActivity()?.finish()
                             }

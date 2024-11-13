@@ -44,6 +44,7 @@ fun IncomingRequestScreen(
     account: Account,
     database: AppDatabase,
     navController: NavController,
+    onRemoveIntentData: (IntentData) -> Unit,
 ) {
     var loading by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -95,6 +96,7 @@ fun IncomingRequestScreen(
                     intents.first(),
                     account,
                     database,
+                    onRemoveIntentData,
                 ) {
                     loading = it
                 }
@@ -104,6 +106,7 @@ fun IncomingRequestScreen(
                     packageName,
                     account,
                     navController,
+                    onRemoveIntentData,
                 ) {
                     loading = it
                 }

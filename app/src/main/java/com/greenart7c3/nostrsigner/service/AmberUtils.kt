@@ -121,10 +121,12 @@ object AmberUtils {
     }
 
     fun sendBunkerError(
+        intentData: IntentData,
         account: Account,
         bunkerRequest: BunkerRequest,
         relays: List<RelaySetupInfo>,
         context: Context,
+        onRemoveIntentData: (IntentData) -> Unit,
         onLoading: (Boolean) -> Unit,
     ) {
         IntentUtils.sendBunkerResponse(
@@ -135,6 +137,7 @@ object AmberUtils {
             relays,
             onLoading = onLoading,
             onDone = {
+                onRemoveIntentData(intentData)
                 context.getAppCompatActivity()?.intent = null
                 context.getAppCompatActivity()?.finish()
             },

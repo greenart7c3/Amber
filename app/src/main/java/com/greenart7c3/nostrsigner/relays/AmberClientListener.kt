@@ -100,6 +100,7 @@ class AmberClientListener(
     }
 
     override fun onError(error: Error, subscriptionId: String, relay: Relay) {
+        if (error.message?.trim()?.equals("Relay sent notice:") == true) return
         LocalPreferences.currentAccount(context)?.let { account ->
             NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(

@@ -357,8 +357,8 @@ class SignerProvider : ContentProvider() {
                 )
 
                 val cursor = MatrixCursor(arrayOf("signature", "result"))
-                val npub = account.signer.keyPair.pubKey.toNpub()
-                cursor.addRow(arrayOf<Any>(npub, npub))
+                val result = if (sortOrder == null) account.signer.keyPair.pubKey.toNpub() else account.signer.keyPair.pubKey.toHexKey()
+                cursor.addRow(arrayOf<Any>(result, result))
                 return cursor
             }
 

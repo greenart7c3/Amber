@@ -27,6 +27,7 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.ammolite.service.HttpClientManager
+import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
@@ -254,7 +255,7 @@ class NostrSigner : Application() {
                                 types = COMMON_FEED_TYPES,
                                 filter = SincePerRelayFilter(
                                     kinds = listOf(MetadataEvent.KIND),
-                                    authors = listOf(account.signer.keyPair.pubKey.toNpub()),
+                                    authors = listOf(account.signer.keyPair.pubKey.toHexKey()),
                                     limit = 1,
                                 ),
                             ),

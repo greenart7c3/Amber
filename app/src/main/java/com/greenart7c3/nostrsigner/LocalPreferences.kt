@@ -57,6 +57,7 @@ private object PrefKeys {
     const val SEED_WORDS2 = "seed_words"
     const val PROFILE_URL = "profile_url"
     const val LAST_METADATA_UPDATE = "last_metadata_update"
+    const val LAST_CHECK = "last_check"
 }
 
 @Immutable
@@ -119,6 +120,16 @@ object LocalPreferences {
             putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
             putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
             putBoolean(PrefKeys.USE_PIN, settings.usePin)
+        }.apply()
+    }
+
+    fun getLastCheck(context: Context, npub: String): Long {
+        return encryptedPreferences(context, npub).getLong(PrefKeys.LAST_CHECK, 0)
+    }
+
+    fun setLastCheck(context: Context, npub: String, time: Long) {
+        encryptedPreferences(context, npub).edit().apply {
+            putLong(PrefKeys.LAST_CHECK, time)
         }.apply()
     }
 

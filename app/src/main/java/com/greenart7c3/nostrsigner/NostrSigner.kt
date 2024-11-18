@@ -226,9 +226,12 @@ class NostrSigner : Application() {
         }
 
         val lastMetaData = LocalPreferences.getLastMetadataUpdate(this, account.signer.keyPair.pubKey.toNpub())
+        val lastCheck = LocalPreferences.getLastCheck(this, account.signer.keyPair.pubKey.toNpub())
         val oneDayAgo = TimeUtils.oneDayAgo()
-        if (lastMetaData == 0L || oneDayAgo > lastMetaData) {
+        val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
+        if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
             Log.d("NostrSigner", "Fetching profile data for ${account.signer.keyPair.pubKey.toNpub()}")
+            LocalPreferences.setLastCheck(this, account.signer.keyPair.pubKey.toNpub(), TimeUtils.now())
             val listener = RelayListener(
                 account = account,
                 onReceiveEvent = { _, _, event ->

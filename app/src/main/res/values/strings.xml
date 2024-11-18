@@ -427,5 +427,5 @@
     <string name="is_requiring_some_permissions_please_review_them">%1$s is requiring some permissions, please review them.</string>
     <string name="always_approve_this_permission">Always approve this permission</string>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s is requiring to sign these events related to %2$s permission.</string>
-    <string name="relay_filter_failed">Relay does not support receiving Bunker events</string>
+    <string name="relay_filter_failed">Relay does not support retrieving Bunker events. Would you like to add it anyway?</string>
 </resources>

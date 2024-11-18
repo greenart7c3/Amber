@@ -32,6 +32,9 @@ class StringToastMsg(val title: String, val msg: String) : ToastMsg()
 class ConfirmationToastMsg(val title: String, val msg: String, val onOk: () -> Unit) : ToastMsg()
 
 @Immutable
+class AcceptRejectToastMsg(val title: String, val msg: String, val onAccept: () -> Unit, val onReject: () -> Unit) : ToastMsg()
+
+@Immutable
 class ResourceToastMsg(
     val titleResId: Int,
     val resourceId: Int,
@@ -65,6 +68,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         onOk: () -> Unit,
     ) {
         viewModelScope.launch { toasts.emit(ConfirmationToastMsg(title, message, onOk)) }
+    }
+
+    fun toast(
+        title: String,
+        message: String,
+        onAccept: () -> Unit,
+        onReject: () -> Unit,
+    ) {
+        viewModelScope.launch { toasts.emit(AcceptRejectToastMsg(title, message, onAccept, onReject)) }
     }
 
     private fun tryLoginExistingAccount(

@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -183,8 +184,74 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                     obj.onOk()
                     accountViewModel.clearToasts()
                 }
+            is AcceptRejectToastMsg ->
+                InformationDialog(
+                    obj.title,
+                    obj.msg,
+                    onAccept = {
+                        obj.onAccept()
+                        accountViewModel.clearToasts()
+                    },
+                    onReject = {
+                        obj.onReject()
+                        accountViewModel.clearToasts()
+                    },
+                )
         }
     }
+}
+
+@Composable
+fun InformationDialog(
+    title: String,
+    textContent: String,
+    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onReject,
+        title = { Text(title) },
+        text = { SelectionContainer { Text(textContent) } },
+        dismissButton = {
+            Button(
+                onClick = onReject,
+                colors = buttonColors,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = null,
+                        tint = Color.Black,
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(R.string.no))
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onAccept,
+                colors = buttonColors,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Done,
+                        contentDescription = null,
+                        tint = Color.Black,
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(R.string.yes))
+                }
+            }
+        },
+    )
 }
 
 @Composable

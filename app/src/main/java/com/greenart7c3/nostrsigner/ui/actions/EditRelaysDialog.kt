@@ -349,21 +349,25 @@ suspend fun onAddRelay(
                                     signedEvent = signedEvent,
                                     relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
                                 )
-                                relay.sendFilter(
-                                    UUID.randomUUID().toString().substring(0, 4),
-                                    filters = listOf(
-                                        TypedFilter(
-                                            types = COMMON_FEED_TYPES,
-                                            filter = SincePerRelayFilter(
-                                                ids = listOf(event.id),
+                                if (result) {
+                                    relay.sendFilter(
+                                        UUID.randomUUID().toString().substring(0, 4),
+                                        filters = listOf(
+                                            TypedFilter(
+                                                types = COMMON_FEED_TYPES,
+                                                filter = SincePerRelayFilter(
+                                                    ids = listOf(event.id),
+                                                ),
                                             ),
                                         ),
-                                    ),
-                                )
-                                var count = 0
-                                while (!filterResult && count < 10) {
-                                    delay(1000)
-                                    count++
+                                    )
+                                    var count = 0
+                                    while (!filterResult && count < 10) {
+                                        delay(1000)
+                                        count++
+                                    }
+                                } else {
+                                    filterResult = true
                                 }
 
                                 AmberListenerSingleton.getListener()?.let { listener ->
@@ -388,6 +392,18 @@ suspend fun onAddRelay(
                                     accountStateViewModel.toast(
                                         context.getString(R.string.relay),
                                         context.getString(R.string.relay_filter_failed),
+                                        onAccept = {
+                                            relays2.add(
+                                                RelaySetupInfo(
+                                                    addedWSS,
+                                                    read = true,
+                                                    write = true,
+                                                    feedTypes = COMMON_FEED_TYPES,
+                                                ),
+                                            )
+                                            onDone()
+                                        },
+                                        onReject = {},
                                     )
                                 }
 

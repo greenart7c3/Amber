@@ -9,8 +9,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
@@ -78,6 +78,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MultiEventHomeScreen(
+    paddingValues: PaddingValues,
     intents: List<IntentData>,
     packageName: String?,
     accountParam: Account,
@@ -115,8 +116,8 @@ fun MultiEventHomeScreen(
 
     Column(
         Modifier
-            .fillMaxSize()
-            .verticalScroll(rememberScrollState()),
+            .verticalScroll(rememberScrollState())
+            .padding(paddingValues),
     ) {
         Text(
             stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),

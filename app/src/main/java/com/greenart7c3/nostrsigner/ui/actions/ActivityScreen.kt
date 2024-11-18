@@ -5,11 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -80,58 +78,51 @@ fun ActivityScreen(
             )
         }
 
-        LazyColumn(
-            Modifier
-                .fillMaxHeight()
-                .fillMaxWidth(),
-        ) {
-            items(activities.size) {
-                val activity = activities[it]
-                val permission =
-                    Permission(
-                        activity.type.toLowerCase(Locale.current),
-                        activity.kind,
-                    )
-                Column {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+        activities.forEach { activity ->
+            val permission =
+                Permission(
+                    activity.type.toLowerCase(Locale.current),
+                    activity.kind,
+                )
+            Column {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        modifier = Modifier.fillMaxWidth(0.9f),
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        Column(
-                            modifier = Modifier.fillMaxWidth(0.9f),
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(top = 16.dp),
-                                text = if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = if (activity.accepted) Color.Unspecified else Color.Gray,
-                            )
+                        Text(
+                            modifier = Modifier.padding(top = 16.dp),
+                            text = if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = if (activity.accepted) Color.Unspecified else Color.Gray,
+                        )
 
-                            Text(
-                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                text = TimeUtils.formatLongToCustomDateTimeWithSeconds(activity.time * 1000),
-                                fontSize = 16.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = Color.Gray,
-                            )
-                        }
-                        Icon(
-                            if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
-                            contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
-                            tint = if (activity.accepted) Color(0xFF1D8802) else Color(0xFFFF6B00),
-                            modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 16.dp),
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                            text = TimeUtils.formatLongToCustomDateTimeWithSeconds(activity.time * 1000),
+                            fontSize = 16.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = Color.Gray,
                         )
                     }
-                    Spacer(Modifier.weight(1f))
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.primary,
+                    Icon(
+                        if (activity.accepted) Icons.Default.Check else Icons.Default.Close,
+                        contentDescription = if (activity.accepted) stringResource(R.string.accepted) else stringResource(R.string.rejected),
+                        tint = if (activity.accepted) Color(0xFF1D8802) else Color(0xFFFF6B00),
+                        modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 16.dp),
                     )
                 }
+                Spacer(Modifier.weight(1f))
+                HorizontalDivider(
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
         }
     }

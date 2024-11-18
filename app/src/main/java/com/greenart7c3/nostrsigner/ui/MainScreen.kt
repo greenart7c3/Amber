@@ -18,14 +18,19 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Person
@@ -66,6 +71,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
+import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.navigation.NavHostController
@@ -709,6 +715,12 @@ fun MainScreen(
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
+                        paddingValues = PaddingValues(
+                            top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                            bottom = padding.calculateBottomPadding(),
+                            start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                            end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                        ),
                         intents,
                         packageName,
                         appName,
@@ -726,6 +738,7 @@ fun MainScreen(
                     PermissionsScreen(
                         modifier = Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
@@ -742,6 +755,7 @@ fun MainScreen(
                     SettingsScreen(
                         Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
@@ -758,6 +772,7 @@ fun MainScreen(
                     AccountBackupScreen(
                         Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
@@ -775,6 +790,7 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -791,12 +807,12 @@ fun MainScreen(
                 Route.Logs.route,
                 content = {
                     LogsScreen(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
+                        PaddingValues(
+                            top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                            bottom = padding.calculateBottomPadding(),
+                            start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                            end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                        ),
                         account = account,
                     )
                 },
@@ -810,6 +826,7 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
@@ -889,6 +906,7 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
@@ -907,6 +925,7 @@ fun MainScreen(
                         modifier =
                         Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
@@ -926,6 +945,7 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -945,6 +965,7 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -961,12 +982,12 @@ fun MainScreen(
                         val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
                         RelayLogScreen(
                             url = localUrl,
-                            modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(padding)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
+                            paddingValues = PaddingValues(
+                                top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                                bottom = padding.calculateBottomPadding(),
+                                start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                                end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                            ),
                         )
                     }
                 },
@@ -980,6 +1001,7 @@ fun MainScreen(
                         EditConfigurationScreen(
                             modifier = Modifier
                                 .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1032,6 +1054,7 @@ fun MainScreen(
                     SeeDetailsScreen(
                         modifier = Modifier
                             .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),

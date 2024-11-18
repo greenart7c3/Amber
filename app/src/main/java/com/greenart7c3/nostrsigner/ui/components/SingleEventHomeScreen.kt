@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -48,6 +49,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SingleEventHomeScreen(
+    paddingValues: PaddingValues,
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
@@ -95,6 +97,7 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
+                paddingValues,
                 remember,
                 intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
                 account,
@@ -180,6 +183,7 @@ fun SingleEventHomeScreen(
                     packageName
                 }
             SignMessage(
+                paddingValues,
                 intentData.data,
                 permission?.acceptable,
                 remember,
@@ -211,6 +215,8 @@ fun SingleEventHomeScreen(
                 {
                     coroutineScope.launch(Dispatchers.IO) {
                         if (key == "null") {
+                            context.getAppCompatActivity()?.intent = null
+                            context.getAppCompatActivity()?.finish()
                             return@launch
                         }
 
@@ -314,6 +320,7 @@ fun SingleEventHomeScreen(
                     packageName
                 }
             EncryptDecryptData(
+                paddingValues,
                 intentData.data,
                 intentData.encryptedData ?: "",
                 permission?.acceptable,
@@ -462,6 +469,7 @@ fun SingleEventHomeScreen(
                         packageName
                     }
                 EventData(
+                    paddingValues,
                     permission?.acceptable,
                     remember,
                     localPackageName,

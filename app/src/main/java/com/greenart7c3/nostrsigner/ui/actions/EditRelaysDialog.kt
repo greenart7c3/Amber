@@ -5,9 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -443,7 +443,7 @@ suspend fun onAddRelay(
 
 @Composable
 fun RelayLogScreen(
-    modifier: Modifier,
+    paddingValues: PaddingValues,
     url: String,
 ) {
     val context = LocalContext.current
@@ -455,7 +455,8 @@ fun RelayLogScreen(
     val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
 
     LazyColumn(
-        modifier.fillMaxSize(),
+        Modifier.fillMaxSize(),
+        contentPadding = paddingValues,
     ) {
         itemsIndexed(logs.value) { _, log ->
             Row(
@@ -511,67 +512,55 @@ fun ActiveRelaysScreen(
         }
     }
 
-    Surface(
+    Column(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .fillMaxSize(),
-        ) {
-            LazyColumn(
-                Modifier
-                    .fillMaxHeight(0.9f)
-                    .fillMaxWidth(),
+        relays2.forEach { relay ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 4.dp)
+                    .clickable {
+                        navController.navigate(
+                            "RelayLogScreen/${
+                                Base64
+                                    .getEncoder()
+                                    .encodeToString(relay.url.toByteArray())
+                            }",
+                        )
+                    },
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                items(relays2.size) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        modifier = Modifier.padding(top = 16.dp),
+                        text = relay.url,
+                        fontSize = 24.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (RelayPool.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                    )
                     Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                navController.navigate(
-                                    "RelayLogScreen/${
-                                        Base64
-                                            .getEncoder()
-                                            .encodeToString(relays2[it].url.toByteArray())
-                                    }",
-                                )
-                            },
-                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        Column(
-                            verticalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(top = 16.dp),
-                                text = relays2[it].url,
-                                fontSize = 24.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                color = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Unspecified else Color.Gray,
-                            )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) "${RelayStats.get(relays2[it].url).pingInMs}ms ping" else "Unavailable",
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    color = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Unspecified else Color.Gray,
-                                )
-                            }
-
-                            Spacer(Modifier.weight(1f))
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.primary,
-                            )
-                        }
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                            text = if (RelayPool.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
+                            fontSize = 16.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = if (RelayPool.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                        )
                     }
+
+                    Spacer(Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }

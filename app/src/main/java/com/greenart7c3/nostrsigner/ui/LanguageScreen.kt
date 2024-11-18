@@ -5,13 +5,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -40,8 +38,7 @@ fun LanguageScreen(
     ) {
         Column {
             Box(
-                Modifier
-                    .padding(8.dp),
+                Modifier,
             ) {
                 SettingsRow(
                     R.string.language,

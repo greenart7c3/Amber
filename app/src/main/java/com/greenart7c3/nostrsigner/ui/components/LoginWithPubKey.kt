@@ -5,6 +5,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -49,6 +50,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 
 @Composable
 fun LoginWithPubKey(
+    paddingValues: PaddingValues,
     remember: MutableState<Boolean>,
     isBunkerRequest: Boolean,
     account: Account,
@@ -71,7 +73,8 @@ fun LoginWithPubKey(
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues),
         ) {
             packageName?.let {
                 Text(
@@ -140,7 +143,8 @@ fun LoginWithPubKey(
         Column(
             Modifier
                 .fillMaxSize()
-                .verticalScroll(rememberScrollState()),
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues),
         ) {
             packageName?.let {
                 Text(

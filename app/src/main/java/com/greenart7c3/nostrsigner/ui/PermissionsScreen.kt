@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -50,55 +48,50 @@ fun PermissionsScreen(
                 Text(stringResource(R.string.no_permissions_granted))
             }
         } else {
-            LazyColumn(
-                Modifier
-                    .fillMaxSize(),
-            ) {
-                itemsIndexed(applications.value) { _, applicationWithHistory ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(vertical = 4.dp)
-                            .clickable {
-                                navController.navigate("Permission/${applicationWithHistory.application.key}")
-                            },
-                        verticalAlignment = Alignment.CenterVertically,
+            applications.value.forEach { applicationWithHistory ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 4.dp)
+                        .clickable {
+                            navController.navigate("Permission/${applicationWithHistory.application.key}")
+                        },
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(
+                        verticalArrangement = Arrangement.Center,
                     ) {
-                        Column(
-                            verticalArrangement = Arrangement.Center,
+                        Text(
+                            modifier = Modifier.padding(top = 16.dp),
+                            text = applicationWithHistory.application.name.ifBlank { applicationWithHistory.application.key.toShortenHex() },
+                            fontSize = 24.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Row(
+                            modifier = Modifier.fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
                         ) {
                             Text(
-                                modifier = Modifier.padding(top = 16.dp),
-                                text = applicationWithHistory.application.name.ifBlank { applicationWithHistory.application.key.toShortenHex() },
-                                fontSize = 24.sp,
+                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                text = applicationWithHistory.application.key.toShortenHex(),
+                                fontSize = 16.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text(
-                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = applicationWithHistory.application.key.toShortenHex(),
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                Text(
-                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                    text = if (applicationWithHistory.latestTime == null) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.latestTime * 1000),
-                                    fontSize = 16.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                            }
-
-                            Spacer(Modifier.weight(1f))
-                            HorizontalDivider(
-                                color = MaterialTheme.colorScheme.primary,
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                text = if (applicationWithHistory.latestTime == null) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.latestTime * 1000),
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
                             )
                         }
+
+                        Spacer(Modifier.weight(1f))
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.primary,
+                        )
                     }
                 }
             }

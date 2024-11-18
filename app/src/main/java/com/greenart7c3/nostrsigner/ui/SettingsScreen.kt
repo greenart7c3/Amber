@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.FilterList
@@ -95,8 +93,7 @@ fun SettingsScreen(
     }
 
     Column(
-        modifier
-            .verticalScroll(rememberScrollState()),
+        modifier,
     ) {
         Box(
             Modifier

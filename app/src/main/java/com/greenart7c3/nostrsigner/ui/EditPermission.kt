@@ -12,8 +12,6 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -119,8 +117,7 @@ fun EditPermission(
     }
 
     Column(
-        modifier = modifier
-            .verticalScroll(rememberScrollState()),
+        modifier = modifier,
     ) {
         if (!applicationData.isConnected) {
             Text(

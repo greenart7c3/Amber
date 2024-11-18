@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,72 +32,70 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun LogsScreen(
+    paddingValues: PaddingValues,
     account: Account,
-    modifier: Modifier = Modifier,
 ) {
     val scope = rememberCoroutineScope()
-    Column(
-        modifier = modifier
+    val logsFlow = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().getLogs()
+    val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    LazyColumn(
+        modifier = Modifier
             .fillMaxSize(),
+        contentPadding = paddingValues,
     ) {
-        val logsFlow = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().getLogs()
-        val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
-
-        LazyColumn(
-            Modifier.weight(1f),
-        ) {
-            items(logs.value) { log ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(top = 16.dp),
-                            text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
-                            fontSize = 14.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = log.url,
-                            fontSize = 20.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp),
-                            text = log.type,
-                            fontSize = 20.sp,
-                        )
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = log.message,
-                            fontSize = 20.sp,
-                        )
-
-                        Spacer(Modifier.weight(1f))
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.primary,
-                        )
+        item {
+            AmberButton(
+                modifier = Modifier.padding(bottom = 8.dp),
+                onClick = {
+                    scope.launch(Dispatchers.IO) {
+                        NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
                     }
+                },
+                text = stringResource(R.string.clear_logs),
+            )
+        }
+        items(logs.value) { log ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        modifier = Modifier.padding(top = 16.dp),
+                        text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 4.dp),
+                        text = log.url,
+                        fontSize = 20.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 4.dp),
+                        text = log.type,
+                        fontSize = 20.sp,
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                        text = log.message,
+                        fontSize = 20.sp,
+                    )
+
+                    Spacer(Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }
-
-        AmberButton(
-            modifier = Modifier.padding(top = 8.dp),
-            onClick = {
-                scope.launch(Dispatchers.IO) {
-                    NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
-                }
-            },
-            text = stringResource(R.string.clear_logs),
-        )
     }
 }

@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -38,6 +38,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun IncomingRequestScreen(
     modifier: Modifier,
+    paddingValues: PaddingValues,
     intents: List<IntentData>,
     packageName: String?,
     applicationName: String?,
@@ -69,47 +70,45 @@ fun IncomingRequestScreen(
     if (loading) {
         CenterCircularProgressIndicator(modifier)
     } else {
-        Box(
-            modifier,
-        ) {
-            if (intents.isEmpty()) {
-                Column(
-                    Modifier.fillMaxSize(),
-                    Arrangement.Center,
-                    Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        stringResource(R.string.nothing_to_approve_yet),
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 21.sp,
-                    )
-                    Spacer(Modifier.size(8.dp))
-                    Text(
-                        stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
-                        textAlign = TextAlign.Center,
-                    )
-                }
-            } else if (intents.size == 1) {
-                SingleEventHomeScreen(
-                    packageName,
-                    applicationName,
-                    intents.first(),
-                    account,
-                    database,
-                    onRemoveIntentData,
-                ) {
-                    loading = it
-                }
-            } else {
-                MultiEventHomeScreen(
-                    intents,
-                    packageName,
-                    account,
-                    navController,
-                    onRemoveIntentData,
-                ) {
-                    loading = it
-                }
+        if (intents.isEmpty()) {
+            Column(
+                modifier.fillMaxSize(),
+                Arrangement.Center,
+                Alignment.CenterHorizontally,
+            ) {
+                Text(
+                    stringResource(R.string.nothing_to_approve_yet),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 21.sp,
+                )
+                Spacer(Modifier.size(8.dp))
+                Text(
+                    stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
+                    textAlign = TextAlign.Center,
+                )
+            }
+        } else if (intents.size == 1) {
+            SingleEventHomeScreen(
+                paddingValues,
+                packageName,
+                applicationName,
+                intents.first(),
+                account,
+                database,
+                onRemoveIntentData,
+            ) {
+                loading = it
+            }
+        } else {
+            MultiEventHomeScreen(
+                paddingValues = paddingValues,
+                intents,
+                packageName,
+                account,
+                navController,
+                onRemoveIntentData,
+            ) {
+                loading = it
             }
         }
     }

@@ -147,7 +147,7 @@ fun MainPage(
                             state.animateScrollToPage(2)
                         }
                     },
-                    text = stringResource(R.string.sign_policy),
+                    text = stringResource(R.string.generate_a_new_key),
                 )
             }
         }

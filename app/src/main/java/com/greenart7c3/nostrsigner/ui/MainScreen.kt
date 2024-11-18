@@ -437,9 +437,9 @@ fun MainScreen(
     val context = LocalContext.current
     var profileUrl by remember { mutableStateOf<String?>(null) }
     val configuration = LocalConfiguration.current
-    val screenHeightDp = configuration.screenHeightDp.dp
-    val percentage = (screenHeightDp * 0.97f)
-    val verticalPadding = (screenHeightDp - percentage)
+    val screenWidthDp = configuration.screenWidthDp.dp
+    val percentage = (screenWidthDp * 0.93f)
+    val verticalPadding = (screenWidthDp - percentage)
     val requestPermissionLauncher =
         rememberLauncherForActivityResult(
             ActivityResultContracts.RequestPermission(),

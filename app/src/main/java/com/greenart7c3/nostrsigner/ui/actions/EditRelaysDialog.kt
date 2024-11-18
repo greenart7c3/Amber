@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.RelayListener
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -60,12 +61,15 @@ import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelayStats
+import com.vitorpamplona.ammolite.relays.TypedFilter
+import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.RelayUrlFormatter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import java.util.Base64
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -321,18 +325,47 @@ suspend fun onAddRelay(
                                     addedWSS,
                                     read = true,
                                     write = true,
-                                    activeTypes = setOf(),
+                                    activeTypes = COMMON_FEED_TYPES,
                                     forceProxy = if (isPrivateIp) false else account.useProxy,
                                 )
                                 RelayPool.addRelay(
                                     relay,
                                 )
+                                var filterResult = false
+                                val listener2 = RelayListener(
+                                    account,
+                                    onReceiveEvent = { _, _, event ->
+                                        if (event.kind == 24133 && event.id == signedEvent.id) {
+                                            filterResult = true
+                                        }
+                                    },
+                                )
+                                relay.register(
+                                    listener2,
+                                )
                                 relay.connect()
-                                delay(2000)
+                                delay(3000)
                                 val result = Client.sendAndWaitForResponse(
                                     signedEvent = signedEvent,
                                     relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
                                 )
+                                relay.sendFilter(
+                                    UUID.randomUUID().toString().substring(0, 4),
+                                    filters = listOf(
+                                        TypedFilter(
+                                            types = COMMON_FEED_TYPES,
+                                            filter = SincePerRelayFilter(
+                                                ids = listOf(event.id),
+                                            ),
+                                        ),
+                                    ),
+                                )
+                                var count = 0
+                                while (!filterResult && count < 10) {
+                                    delay(1000)
+                                    count++
+                                }
+
                                 AmberListenerSingleton.getListener()?.let { listener ->
                                     Client.unsubscribe(listener)
                                 }
@@ -341,7 +374,7 @@ suspend fun onAddRelay(
                                     relay,
                                 )
 
-                                if (result) {
+                                if (result && filterResult) {
                                     relays2.add(
                                         RelaySetupInfo(
                                             addedWSS,
@@ -351,7 +384,13 @@ suspend fun onAddRelay(
                                         ),
                                     )
                                     onDone()
+                                } else if (!filterResult) {
+                                    accountStateViewModel.toast(
+                                        context.getString(R.string.relay),
+                                        context.getString(R.string.relay_filter_failed),
+                                    )
                                 }
+
                                 textFieldRelay.value = TextFieldValue("")
                             }
                             isLoading.value = false

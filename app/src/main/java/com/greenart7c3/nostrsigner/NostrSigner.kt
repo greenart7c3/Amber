@@ -200,7 +200,10 @@ class NostrSigner : Application() {
         applicationIOScope.cancel()
     }
 
-    suspend fun fetchProfileData(account: Account, onPictureFound: (String) -> Unit) {
+    suspend fun fetchProfileData(
+        account: Account,
+        onPictureFound: (String) -> Unit,
+    ) {
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR == "offline") {
             return
@@ -226,7 +229,25 @@ class NostrSigner : Application() {
         val oneDayAgo = TimeUtils.oneDayAgo()
         if (lastMetaData == 0L || oneDayAgo > lastMetaData) {
             Log.d("NostrSigner", "Fetching profile data for ${account.signer.keyPair.pubKey.toNpub()}")
-            val listener = RelayListener(account, onPictureFound)
+            val listener = RelayListener(
+                account = account,
+                onReceiveEvent = { _, _, event ->
+                    if (event.kind == MetadataEvent.KIND) {
+                        (event as MetadataEvent).contactMetaData()?.let { metadata ->
+                            metadata.name?.let { name ->
+                                account.name = name
+                                LocalPreferences.saveToEncryptedStorage(account = account, context = this)
+                            }
+
+                            metadata.profilePicture()?.let { url ->
+                                LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.signer.keyPair.pubKey.toNpub())
+                                LocalPreferences.setLastMetadataUpdate(this, account.signer.keyPair.pubKey.toNpub(), TimeUtils.now())
+                                onPictureFound(url)
+                            }
+                        }
+                    }
+                },
+            )
 
             val relays = listOf(
                 Relay(
@@ -285,7 +306,7 @@ class NostrSigner : Application() {
 
 class RelayListener(
     val account: Account,
-    val onPictureFound: (String) -> Unit,
+    val onReceiveEvent: (relay: Relay, subscriptionId: String, event: Event) -> Unit,
 ) : Relay.Listener {
     override fun onAuth(relay: Relay, challenge: String) {
         Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
@@ -301,18 +322,7 @@ class RelayListener(
 
     override fun onEvent(relay: Relay, subscriptionId: String, event: Event, afterEOSE: Boolean) {
         Log.d("RelayListener", "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
-        (event as MetadataEvent).contactMetaData()?.let { metadata ->
-            metadata.name?.let { name ->
-                account.name = name
-                LocalPreferences.saveToEncryptedStorage(account = account, context = NostrSigner.getInstance())
-            }
-
-            metadata.profilePicture()?.let { url ->
-                LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.signer.keyPair.pubKey.toNpub())
-                LocalPreferences.setLastMetadataUpdate(NostrSigner.getInstance(), account.signer.keyPair.pubKey.toNpub(), TimeUtils.now())
-                onPictureFound(url)
-            }
-        }
+        onReceiveEvent(relay, subscriptionId, event)
     }
 
     override fun onNotify(relay: Relay, description: String) {

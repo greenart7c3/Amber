@@ -73,7 +73,7 @@ fun EditPermission(
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
     var applicationData by remember {
-        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false, 1))
+        mutableStateOf(ApplicationEntity.empty())
     }
 
     var wantsToRemovePermissions by remember { mutableStateOf(false) }

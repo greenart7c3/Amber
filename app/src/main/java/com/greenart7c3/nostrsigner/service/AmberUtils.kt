@@ -126,6 +126,7 @@ object AmberUtils {
         bunkerRequest: BunkerRequest,
         relays: List<RelaySetupInfo>,
         context: Context,
+        closeApplication: Boolean,
         onRemoveIntentData: (IntentData) -> Unit,
         onLoading: (Boolean) -> Unit,
     ) {
@@ -139,7 +140,9 @@ object AmberUtils {
             onDone = {
                 onRemoveIntentData(intentData)
                 context.getAppCompatActivity()?.intent = null
-                context.getAppCompatActivity()?.finish()
+                if (closeApplication) {
+                    context.getAppCompatActivity()?.finish()
+                }
             },
         )
     }

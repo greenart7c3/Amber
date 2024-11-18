@@ -897,6 +897,7 @@ object IntentUtils {
                         account.signer.keyPair.pubKey.toNpub(),
                         EncryptionType.NIP04,
                         nostrConnectSecret,
+                        intent.getBooleanExtra("closeApplication", true),
                     ),
                     route,
                     null,

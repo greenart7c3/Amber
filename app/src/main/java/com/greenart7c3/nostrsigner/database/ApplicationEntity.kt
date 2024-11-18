@@ -37,6 +37,7 @@ data class ApplicationEntity(
     val secret: String,
     val useSecret: Boolean,
     var signPolicy: Int,
+    var closeApplication: Boolean,
 ) {
     companion object {
         fun empty() = ApplicationEntity(
@@ -51,6 +52,7 @@ data class ApplicationEntity(
             secret = "",
             useSecret = false,
             signPolicy = 0,
+            closeApplication = true,
         )
     }
 

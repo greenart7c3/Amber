@@ -153,6 +153,7 @@ fun SingleEventHomeScreen(
                                 intentData.bunkerRequest,
                                 applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
                                 context,
+                                closeApplication = intentData.bunkerRequest.closeApplication,
                                 onLoading = onLoading,
                                 onRemoveIntentData = onRemoveIntentData,
                             )
@@ -237,6 +238,7 @@ fun SingleEventHomeScreen(
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
                                     account.signPolicy,
+                                    intentData.bunkerRequest?.closeApplication ?: true,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -278,13 +280,16 @@ fun SingleEventHomeScreen(
                                 intentData.bunkerRequest,
                                 relays,
                                 context,
+                                closeApplication = application.application.closeApplication,
                                 onLoading = onLoading,
                                 onRemoveIntentData = onRemoveIntentData,
                             )
                         } else {
                             onRemoveIntentData(intentData)
                             context.getAppCompatActivity()?.intent = null
-                            context.getAppCompatActivity()?.finish()
+                            if (application.application.closeApplication) {
+                                context.getAppCompatActivity()?.finish()
+                            }
                         }
                     }
                 },
@@ -378,6 +383,7 @@ fun SingleEventHomeScreen(
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
                                     account.signPolicy,
+                                    intentData.bunkerRequest?.closeApplication ?: true,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -418,13 +424,16 @@ fun SingleEventHomeScreen(
                                 intentData.bunkerRequest,
                                 relays,
                                 context,
+                                closeApplication = application.application.closeApplication,
                                 onRemoveIntentData = onRemoveIntentData,
                                 onLoading,
                             )
                         } else {
                             onRemoveIntentData(intentData)
                             context.getAppCompatActivity()?.intent = null
-                            context.getAppCompatActivity()?.finish()
+                            if (application.application.closeApplication) {
+                                context.getAppCompatActivity()?.finish()
+                            }
                         }
                     }
                 },
@@ -542,6 +551,7 @@ fun SingleEventHomeScreen(
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
                                         account.signPolicy,
+                                        intentData.bunkerRequest?.closeApplication ?: true,
                                     ),
                                     permissions = mutableListOf(),
                                 )
@@ -583,13 +593,16 @@ fun SingleEventHomeScreen(
                                     intentData.bunkerRequest,
                                     relays,
                                     context,
+                                    closeApplication = application.application.closeApplication,
                                     onLoading = onLoading,
                                     onRemoveIntentData = onRemoveIntentData,
                                 )
                             } else {
                                 onRemoveIntentData(intentData)
                                 context.getAppCompatActivity()?.intent = null
-                                context.getAppCompatActivity()?.finish()
+                                if (application.application.closeApplication) {
+                                    context.getAppCompatActivity()?.finish()
+                                }
                             }
                         }
                     },

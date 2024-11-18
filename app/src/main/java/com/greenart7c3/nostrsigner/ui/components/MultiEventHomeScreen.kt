@@ -163,6 +163,7 @@ fun MultiEventHomeScreen(
                         val activity = context.getAppCompatActivity()
                         val results = mutableListOf<Result>()
                         reconnectToRelays(intents)
+                        var closeApp = true
 
                         for (intentData in intents) {
                             val localAccount =
@@ -195,9 +196,14 @@ fun MultiEventHomeScreen(
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
                                         localAccount.signPolicy,
+                                        intentData.bunkerRequest?.closeApplication ?: true,
                                     ),
                                     permissions = mutableListOf(),
                                 )
+
+                            if (!application.application.closeApplication) {
+                                closeApp = false
+                            }
 
                             if (intentData.type == SignerType.SIGN_EVENT) {
                                 val localEvent = intentData.event!!
@@ -246,6 +252,7 @@ fun MultiEventHomeScreen(
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
+                                            closeApplication = application.application.closeApplication,
                                             onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
@@ -324,6 +331,7 @@ fun MultiEventHomeScreen(
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
+                                            closeApplication = application.application.closeApplication,
                                             onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
@@ -387,6 +395,7 @@ fun MultiEventHomeScreen(
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
+                                            closeApplication = application.application.closeApplication,
                                             onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
@@ -411,9 +420,9 @@ fun MultiEventHomeScreen(
                         }
                         if (intents.any { it.bunkerRequest != null }) {
                             EventNotificationConsumer(context).notificationManager().cancelAll()
-                            finishActivity(activity)
+                            finishActivity(activity, closeApp)
                         } else {
-                            finishActivity(activity)
+                            finishActivity(activity, closeApp)
                         }
                     } finally {
                         onLoading(false)
@@ -428,12 +437,56 @@ fun MultiEventHomeScreen(
                 containerColor = orange,
             ),
             onClick = {
+                var closeApp = true
+
+                for (intentData in intents) {
+                    val localAccount =
+                        if (intentData.currentAccount.isNotBlank()) {
+                            LocalPreferences.loadFromEncryptedStorage(
+                                context,
+                                intentData.currentAccount,
+                            )
+                        } else {
+                            accountParam
+                        } ?: continue
+
+                    val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+
+                    val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
+
+                    val application =
+                        database
+                            .applicationDao()
+                            .getByKey(key) ?: ApplicationWithPermissions(
+                            application = ApplicationEntity(
+                                key,
+                                "",
+                                listOf(),
+                                "",
+                                "",
+                                "",
+                                localAccount.signer.keyPair.pubKey.toHexKey(),
+                                true,
+                                intentData.bunkerRequest?.secret ?: "",
+                                intentData.bunkerRequest?.secret != null,
+                                localAccount.signPolicy,
+                                intentData.bunkerRequest?.closeApplication ?: true,
+                            ),
+                            permissions = mutableListOf(),
+                        )
+
+                    if (!application.application.closeApplication) {
+                        closeApp = false
+                        break
+                    }
+                }
+
                 val activity = context.getAppCompatActivity()
                 if (intents.any { it.bunkerRequest != null }) {
                     EventNotificationConsumer(context).notificationManager().cancelAll()
-                    finishActivity(activity)
+                    finishActivity(activity, closeApp)
                 } else {
-                    finishActivity(activity)
+                    finishActivity(activity, closeApp)
                 }
             },
             text = stringResource(R.string.discard_all_requests),
@@ -441,9 +494,11 @@ fun MultiEventHomeScreen(
     }
 }
 
-private fun finishActivity(activity: AppCompatActivity?) {
+private fun finishActivity(activity: AppCompatActivity?, closeApp: Boolean) {
     activity?.intent = null
-    activity?.finish()
+    if (closeApp) {
+        activity?.finish()
+    }
 }
 
 private fun sendResultIntent(

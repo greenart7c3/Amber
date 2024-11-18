@@ -173,6 +173,7 @@ fun sendResult(
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
                     account.signPolicy,
+                    intentData.bunkerRequest?.closeApplication ?: true,
                 ),
                 permissions = mutableListOf(),
             )
@@ -278,7 +279,9 @@ fun sendResult(
                     EventNotificationConsumer(context).notificationManager().cancelAll()
                     onRemoveIntentData(intentData)
                     activity?.intent = null
-                    activity?.finish()
+                    if (application.application.closeApplication || intentData.bunkerRequest.closeApplication) {
+                        activity?.finish()
+                    }
                 },
             )
         } else if (packageName != null) {

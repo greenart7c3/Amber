@@ -396,6 +396,7 @@ object LocalPreferences {
                     "",
                     false,
                     1,
+                    closeApplication = true,
                 ),
             )
             database.applicationDao().insertPermissions(

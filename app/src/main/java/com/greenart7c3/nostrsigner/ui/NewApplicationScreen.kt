@@ -42,6 +42,7 @@ fun NewApplicationScreen(
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = Uri.parse(it)
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                intent.putExtra("closeApplication", false)
                 context.getAppCompatActivity()?.startActivity(intent)
                 accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
             }

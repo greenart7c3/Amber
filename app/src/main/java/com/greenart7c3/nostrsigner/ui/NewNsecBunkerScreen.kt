@@ -223,6 +223,7 @@ fun NewNsecBunkerScreen(
                                 secret.value,
                                 true,
                                 account.signPolicy,
+                                true,
                             )
 
                         database.applicationDao().insertApplication(

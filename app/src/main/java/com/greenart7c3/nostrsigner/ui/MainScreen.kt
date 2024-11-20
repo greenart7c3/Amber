@@ -592,7 +592,19 @@ fun MainScreen(
                                 }
                             }
                         } else {
-                            title = routes.find { it.route == destinationRoute }?.title ?: ""
+                            launch(Dispatchers.IO) {
+                                if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
+                                    val application = database.applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
+                                    val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
+                                    title = if (titleTemp.isBlank()) {
+                                        routes.find { it.route == destinationRoute }?.title ?: ""
+                                    } else {
+                                        "$titleTemp - Request"
+                                    }
+                                } else {
+                                    title = routes.find { it.route == destinationRoute }?.title ?: ""
+                                }
+                            }
                         }
                     }
 

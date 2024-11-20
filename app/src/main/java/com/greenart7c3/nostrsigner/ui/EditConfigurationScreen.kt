@@ -51,6 +51,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -78,7 +79,7 @@ fun EditConfigurationScreen(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             application = database.applicationDao().getByKey(key)
-            name = TextFieldValue(AnnotatedString(application?.application?.name ?: ""))
+            name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
 
             application?.application?.relays?.forEach {
                 relays.add(

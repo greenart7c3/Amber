@@ -101,6 +101,7 @@ import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -570,17 +571,19 @@ fun MainScreen(
                         if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/")) {
                             launch(Dispatchers.IO) {
                                 navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
+                                    val application = database.applicationDao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${database.applicationDao().getByKey(packageName)?.application?.name ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                     } else {
-                                        database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
                                 navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
+                                    val application = database.applicationDao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${database.applicationDao().getByKey(packageName)?.application?.name ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                     } else {
-                                        database.applicationDao().getByKey(packageName)?.application?.name ?: packageName
+                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
                                 navBackStackEntry?.arguments?.getString("url")?.let { url ->

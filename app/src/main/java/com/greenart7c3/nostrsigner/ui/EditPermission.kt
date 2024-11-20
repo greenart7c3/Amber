@@ -262,7 +262,7 @@ fun EditPermission(
 
         if (permissions.isNotEmpty()) {
             AmberButton(
-                modifier = Modifier.padding(top = 60.dp, bottom = 20.dp),
+                modifier = Modifier.padding(top = 60.dp, bottom = 60.dp),
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = orange,
                 ),

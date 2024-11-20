@@ -16,6 +16,7 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -217,6 +218,9 @@ fun EditPermission(
                             },
                     ) {
                         Checkbox(
+                            colors = CheckboxDefaults.colors().copy(
+                                uncheckedBorderColor = Color.Gray,
+                            ),
                             checked = permission.acceptable,
                             onCheckedChange = {
                                 scope.launch(Dispatchers.IO) {
@@ -238,6 +242,7 @@ fun EditPermission(
                             modifier = Modifier.weight(1f),
                             text = message,
                             fontSize = 18.sp,
+                            color = if (permission.acceptable) Color.Unspecified else Color.Gray,
                         )
                     }
                     IconButton(

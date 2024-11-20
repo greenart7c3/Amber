@@ -966,13 +966,15 @@ fun MainScreen(
                         ActivityScreen(
                             database = database,
                             key = key,
+                            paddingValues = PaddingValues(
+                                top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                                bottom = padding.calculateBottomPadding(),
+                                start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                                end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                            ),
                             modifier =
                             Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(padding)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
+                                .fillMaxSize(),
                         )
                     }
                 },

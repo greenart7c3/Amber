@@ -1,13 +1,15 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
@@ -16,10 +18,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.mutableStateListOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,53 +30,41 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TimeUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Composable
 fun ActivityScreen(
     modifier: Modifier,
+    paddingValues: PaddingValues,
     database: AppDatabase,
     key: String,
 ) {
-    val activities =
-        remember {
-            mutableStateListOf<HistoryEntity>()
-        }
+    val activities = database.applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
 
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            activities.clear()
-            activities.addAll(
-                database.applicationDao().getAllHistory(key).toMutableStateList(),
-            )
-        }
-    }
-
-    Column(
-        modifier = modifier
-            .background(MaterialTheme.colorScheme.background)
-            .fillMaxSize(),
+    LazyColumn(
+        modifier = modifier,
+        contentPadding = paddingValues,
     ) {
-        if (activities.isEmpty()) {
-            Text(
-                stringResource(R.string.no_activities_found),
-                Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                fontWeight = FontWeight.Bold,
-                textAlign = TextAlign.Center,
-                fontSize = 18.sp,
-            )
+        item {
+            if (activities.value.isEmpty()) {
+                Text(
+                    stringResource(R.string.no_activities_found),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp),
+                    fontWeight = FontWeight.Bold,
+                    textAlign = TextAlign.Center,
+                    fontSize = 18.sp,
+                )
+            }
         }
 
-        activities.forEach { activity ->
+        items(activities.value) { activity ->
             val permission =
                 Permission(
                     activity.type.toLowerCase(Locale.current),

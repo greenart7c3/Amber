@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -375,6 +374,8 @@ fun PermissionsFloatingActionButton(
         horizontalAlignment = Alignment.End,
     ) {
         FloatingActionButton(
+            modifier = Modifier
+                .padding(end = 8.dp),
             elevation = FloatingActionButtonDefaults.elevation(
                 defaultElevation = 0.dp,
                 focusedElevation = 0.dp,
@@ -388,7 +389,6 @@ fun PermissionsFloatingActionButton(
                 Icons.Default.Add,
                 contentDescription = stringResource(R.string.connect_app),
                 tint = Color.Black,
-                modifier = Modifier.size(48.dp),
             )
         }
     }

@@ -44,9 +44,9 @@ private object PrefKeys {
     const val RATIONALE = "rationale"
     const val USE_PROXY = "use_proxy"
     const val PROXY_PORT = "proxy_port"
-    const val NOTIFICATION_TYPE = "notification_type"
     const val LANGUAGE_PREFS = "languagePreferences"
     const val DEFAULT_RELAYS = "default_relays"
+    const val DEFAULT_PROFILE_RELAYS = "default_profile_relays"
     const val ENDPOINT = "endpoint"
     const val PUSH_SERVER_MESSAGE = "push_server_message"
     const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
@@ -116,6 +116,7 @@ object LocalPreferences {
             putString(PrefKeys.ENDPOINT, settings.endpoint)
             putBoolean(PrefKeys.PUSH_SERVER_MESSAGE, settings.pushServerMessage)
             putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
+            putStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
             putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
             putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
             putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
@@ -175,12 +176,6 @@ object LocalPreferences {
         }.apply()
     }
 
-    suspend fun isNotificationTypeConfigured(): Boolean {
-        val context = NostrSigner.getInstance()
-        val prefs = encryptedPreferences(context)
-        return prefs.contains(PrefKeys.NOTIFICATION_TYPE)
-    }
-
     suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
         val context = NostrSigner.getInstance()
 
@@ -191,6 +186,12 @@ object LocalPreferences {
                 defaultRelays = getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
+                defaultProfileRelays = getStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, null)?.map {
+                    RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
+                } ?: listOf(
+                    RelaySetupInfo("wss://relay.nostr.band", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
+                    RelaySetupInfo("wss://purplepag.es", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
+                ),
                 lastBiometricsTime = getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0),
                 useAuth = getBoolean(PrefKeys.USE_AUTH, false),
                 biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
@@ -306,15 +307,6 @@ object LocalPreferences {
     fun updatePrefsForLogin(context: Context, account: Account) {
         setCurrentAccount(context, account)
         saveToEncryptedStorage(context, account)
-    }
-
-    suspend fun deleteSavedApps(
-        applications: List<ApplicationEntity>,
-        database: AppDatabase,
-    ) = withContext(Dispatchers.IO) {
-        applications.forEach {
-            database.applicationDao().delete(it)
-        }
     }
 
     fun saveToEncryptedStorage(context: Context, account: Account) {
@@ -461,13 +453,5 @@ object LocalPreferences {
             accountCache.put(npub, account)
             return account
         }
-    }
-
-    fun clearPin() {
-        val context = NostrSigner.getInstance()
-        encryptedPreferences(context).edit().apply {
-            remove(PrefKeys.USE_PIN)
-        }.apply()
-        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(usePin = false)
     }
 }

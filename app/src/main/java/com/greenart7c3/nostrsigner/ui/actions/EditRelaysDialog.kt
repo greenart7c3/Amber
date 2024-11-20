@@ -110,7 +110,7 @@ fun DefaultRelaysScreen(
         if (isLoading.value) {
             CenterCircularProgressIndicator(
                 Modifier,
-                text = "Testing relay...",
+                text = stringResource(R.string.testing_relay),
             )
         } else {
             Column(
@@ -118,6 +118,11 @@ fun DefaultRelaysScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .fillMaxSize(),
             ) {
+                Text(
+                    text = stringResource(R.string.manage_the_relays_used_for_communicating_with_external_applications),
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+
                 OutlinedTextField(
                     modifier = Modifier
                         .fillMaxWidth(),

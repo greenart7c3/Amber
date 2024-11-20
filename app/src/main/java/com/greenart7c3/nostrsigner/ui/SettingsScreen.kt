@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.Security
@@ -31,8 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -169,11 +170,11 @@ fun SettingsScreen(
                     .padding(vertical = 8.dp),
             ) {
                 IconRow(
-                    title = stringResource(R.string.default_relays),
-                    icon = Icons.Default.Hub,
+                    title = stringResource(R.string.relays),
+                    icon = ImageVector.vectorResource(R.drawable.relays),
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.DefaultRelays.route)
+                        navController.navigate(Route.RelaysScreen.route)
                     },
                 )
             }

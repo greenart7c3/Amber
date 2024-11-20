@@ -534,7 +534,7 @@ fun MainScreen(
         }
     }
 
-    val items = mutableListOf(Route.Applications, Route.IncomingRequest, Route.ActiveRelays, Route.Settings, Route.Accounts)
+    val items = mutableListOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
     @Suppress("KotlinConstantConditions")
     if (BuildConfig.FLAVOR == "offline") {
         items.remove(Route.ActiveRelays)
@@ -661,9 +661,7 @@ fun MainScreen(
                     }
                 }
             } else {
-                val localBackButtonTitle = remember {
-                    routes.find { it.route == navController.previousBackStackEntry?.destination?.route }?.title ?: ""
-                }
+                val localBackButtonTitle = routes.find { it.route == navController.previousBackStackEntry?.destination?.route }?.title ?: ""
                 if (localBackButtonTitle.isNotBlank()) {
                     BottomAppBar {
                         IconRow(
@@ -1061,6 +1059,37 @@ fun MainScreen(
                             .padding(padding)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),
+                    )
+                },
+            )
+
+            composable(
+                Route.RelaysScreen.route,
+                content = {
+                    RelaysScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(padding)
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
+                        navController = navController,
+                    )
+                },
+            )
+
+            composable(
+                Route.DefaultProfileRelaysScreen.route,
+                content = {
+                    DefaultProfileRelaysScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(padding)
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
+                        account = account,
+                        accountStateViewModel = accountStateViewModel,
                     )
                 },
             )

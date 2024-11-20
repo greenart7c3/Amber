@@ -428,4 +428,9 @@
     <string name="always_approve_this_permission">Always approve this permission</string>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s is requiring to sign these events related to %2$s permission.</string>
     <string name="relay_filter_failed">Relay does not support retrieving Bunker events. Would you like to add it anyway?</string>
+    <string name="active_relays">Active relays</string>
+    <string name="default_profile_relays">Default profile relays</string>
+    <string name="manage_the_relays_used_to_fetch_your_profile_data">Manage the relays used to fetch your profile data</string>
+    <string name="manage_the_relays_used_for_communicating_with_external_applications">Manage the relays used for communicating with external applications</string>
+    <string name="testing_relay">Testing relay...</string>
 </resources>

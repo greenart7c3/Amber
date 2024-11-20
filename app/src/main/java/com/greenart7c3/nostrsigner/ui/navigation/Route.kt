@@ -158,6 +158,20 @@ sealed class Route(
         icon = R.drawable.settings,
         selectedIcon = R.drawable.settings,
     )
+
+    data object RelaysScreen : Route(
+        title = NostrSigner.getInstance().getString(R.string.relays),
+        route = "RelaysScreen",
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
+    )
+
+    data object DefaultProfileRelaysScreen : Route(
+        title = NostrSigner.getInstance().getString(R.string.default_profile_relays),
+        route = "DefaultProfileRelaysScreen",
+        icon = R.drawable.settings,
+        selectedIcon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -182,4 +196,6 @@ val routes = listOf(
     Route.SetupPin,
     Route.ConfirmPin,
     Route.SeeDetails,
+    Route.RelaysScreen,
+    Route.DefaultProfileRelaysScreen,
 )

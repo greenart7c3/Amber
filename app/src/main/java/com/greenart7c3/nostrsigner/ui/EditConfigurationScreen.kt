@@ -94,7 +94,7 @@ fun EditConfigurationScreen(
         CenterCircularProgressIndicator(
             modifier,
             if (textFieldRelay.value.text.isNotBlank()) {
-                "Testing relay..."
+                stringResource(R.string.testing_relay)
             } else {
                 null
             },

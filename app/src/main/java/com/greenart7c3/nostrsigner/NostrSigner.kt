@@ -252,22 +252,15 @@ class NostrSigner : Application() {
                 },
             )
 
-            val relays = listOf(
+            val relays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays.map {
                 Relay(
-                    url = "wss://purplepag.es",
-                    read = true,
-                    write = false,
+                    url = it.url,
+                    read = it.read,
+                    write = it.write,
+                    activeTypes = it.feedTypes,
                     forceProxy = account.useProxy,
-                    activeTypes = COMMON_FEED_TYPES,
-                ),
-                Relay(
-                    url = "wss://relay.nostr.band",
-                    read = true,
-                    write = false,
-                    forceProxy = account.useProxy,
-                    activeTypes = COMMON_FEED_TYPES,
-                ),
-            )
+                )
+            }
 
             relays.forEach {
                 it.register(listener)

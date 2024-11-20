@@ -433,4 +433,5 @@
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Manage the relays used to fetch your profile data</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Manage the relays used for communicating with external applications</string>
     <string name="testing_relay">Testing relay...</string>
+    <string name="always_approve_these_permissions">Always approve these permissions</string>
 </resources>

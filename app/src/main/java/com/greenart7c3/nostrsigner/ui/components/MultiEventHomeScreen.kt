@@ -5,7 +5,6 @@ import android.content.Context
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -21,6 +20,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -32,6 +32,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -102,6 +103,7 @@ fun MultiEventHomeScreen(
     }
     var localAccount by remember { mutableStateOf("") }
     val key = intents.firstOrNull()?.bunkerRequest?.localKey ?: "$packageName"
+    var rememberMyChoice by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -153,8 +155,18 @@ fun MultiEventHomeScreen(
             )
         }
 
+        AlwaysApproveSwitch(
+            checked = rememberMyChoice,
+            onClick = {
+                rememberMyChoice = !rememberMyChoice
+                intents.forEach {
+                    it.rememberMyChoice.value = rememberMyChoice
+                }
+            },
+        )
+
         AmberButton(
-            Modifier.padding(vertical = 20.dp),
+            Modifier.padding(bottom = 40.dp),
             text = stringResource(R.string.approve_selected),
             onClick = {
                 onLoading(true)
@@ -432,7 +444,7 @@ fun MultiEventHomeScreen(
         )
 
         AmberButton(
-            Modifier.padding(vertical = 20.dp),
+            Modifier.padding(top = 20.dp, bottom = 40.dp),
             colors = ButtonDefaults.buttonColors().copy(
                 containerColor = orange,
             ),
@@ -617,5 +629,35 @@ fun PermissionCard(
                 }
             }
         }
+    }
+}
+
+@Composable
+fun AlwaysApproveSwitch(
+    checked: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .padding(vertical = 40.dp)
+            .clickable {
+                onClick()
+            },
+    ) {
+        Switch(
+            modifier = Modifier.scale(0.85f),
+            checked = checked,
+            onCheckedChange = {
+                onClick()
+            },
+        )
+        Text(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 8.dp),
+            text = stringResource(R.string.always_approve_these_permissions),
+        )
     }
 }

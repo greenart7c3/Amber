@@ -713,6 +713,31 @@ fun MainScreen(
                         navController.navigate(Route.NewApplication.route)
                     },
                 )
+            } else if (navBackStackEntry?.destination?.route == Route.ActiveRelays.route) {
+                Column(
+                    horizontalAlignment = Alignment.End,
+                ) {
+                    FloatingActionButton(
+                        modifier = Modifier
+                            .padding(end = 8.dp),
+                        elevation = FloatingActionButtonDefaults.elevation(
+                            defaultElevation = 0.dp,
+                            focusedElevation = 0.dp,
+                            hoveredElevation = 0.dp,
+                            pressedElevation = 0.dp,
+                        ),
+                        onClick = {
+                            navController.navigate(Route.DefaultRelays.route)
+                        },
+                        shape = RoundedCornerShape(24),
+                    ) {
+                        Icon(
+                            ImageVector.vectorResource(R.drawable.settings),
+                            contentDescription = stringResource(R.string.connect_app),
+                            tint = Color.Black,
+                        )
+                    }
+                }
             }
         },
     ) { padding ->

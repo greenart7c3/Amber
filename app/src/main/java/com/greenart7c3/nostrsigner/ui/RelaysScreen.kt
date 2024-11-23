@@ -28,13 +28,6 @@ fun RelaysScreen(
         )
 
         AmberButton(
-            text = stringResource(R.string.default_relays),
-            onClick = {
-                navController.navigate(Route.DefaultRelays.route)
-            },
-        )
-
-        AmberButton(
             text = stringResource(R.string.default_profile_relays),
             onClick = {
                 navController.navigate(Route.DefaultProfileRelaysScreen.route)

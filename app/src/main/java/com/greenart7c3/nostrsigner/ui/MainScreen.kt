@@ -80,6 +80,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import coil3.compose.AsyncImage
+import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -439,6 +440,7 @@ fun MainScreen(
     route: MutableState<String?>,
     database: AppDatabase,
     navController: NavHostController,
+    storageHelper: SimpleStorageHelper,
     onRemoveIntentData: (IntentData) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -553,6 +555,8 @@ fun MainScreen(
             sheetState = sheetState,
             account = account,
             accountStateViewModel = accountStateViewModel,
+            storageHelper = storageHelper,
+            navController = navController,
             onClose = {
                 scope.launch {
                     shouldShowBottomSheet = false

@@ -26,7 +26,7 @@
     <string name="invalid_key">Invalid key</string>
     <string name="key_is_required">Key is required</string>
     <string name="login">Login</string>
-    <string name="generate_a_new_key">Create a key</string>
+    <string name="generate_a_new_key">Create a new Nostr account</string>
     <string name="backup_keys">Backup Keys</string>
     <string name="read_your_public_key">Read your public key</string>
     <string name="no_permissions_granted">No permissions granted</string>
@@ -84,6 +84,14 @@
     <string name="connect_through_your_orbot_setup_markdown">
         ## Connect through Tor with Orbot
         \n\n1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
+        \n2. Start Orbot
+        \n3. In Orbot, check the Socks port. The default uses 9050
+        \n4. If necessary change the port in Orbot
+        \n5. Configure the Socks port in this screen
+        \n6. Press the Activate button to use Orbot as a proxy
+    </string>
+    <string name="connect_through_your_orbot_setup_markdown2">
+        1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
         \n2. Start Orbot
         \n3. In Orbot, check the Socks port. The default uses 9050
         \n4. If necessary change the port in Orbot
@@ -335,7 +343,7 @@
     <string name="nip_not_found">Nip %1$s not found</string>
     <string name="nip_not_found_for_the_event_kind">Nip not found for the event kind %1$s</string>
     <string name="use_secret_to_connect_to_the_application">Use secret to connect to the application</string>
-    <string name="add_a_key">Add a key</string>
+    <string name="add_a_key">Use your private key</string>
     <string name="next">Next</string>
     <string name="add_your_key">Add your key</string>
     <string name="sign_policy_basic">Approve basic actions</string>
@@ -434,4 +442,22 @@
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Manage the relays used for communicating with external applications</string>
     <string name="testing_relay">Testing relay...</string>
     <string name="always_approve_these_permissions">Always approve these permissions</string>
+    <string name="a_nostr_secure_signer">A NOSTR SECURE SIGNER</string>
+    <string name="go_back">Go back</string>
+    <string name="your_nostr_account_is_ready">Your Nostr account is ready!</string>
+    <string name="you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now">You will find it in your account section, so you don’t need to copy it right now.</string>
+    <string name="please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client">Please add a nickname, later you will able to personalise your full profile (bio, pic, etc) using your preferred Nostr client:</string>
+    <string name="nickname">Your nickname</string>
+    <string name="now_pick_a_password_we_will_use_it_to_encrypt_your_private_key_named_ncryptsec_so_you_can_store_it_safely">Now pick a password. We will use it to encrypt your private key (named ncryptsec) so you can store it safely:</string>
+    <string name="password">Pick a password</string>
+    <string name="continue_button">Continue</string>
+    <string name="please_download_your_account_backup_kit_containing_the_encrypted_private_key_and_store_it_in_a_couple_of_safe_places">Please download your account backup kit containing the encrypted private key and store it in a couple of safe places.</string>
+    <string name="please_enter_the_password_chosen_in_the_previous_step_this_prove_you_typed_and_remembered_it_correctly">Please enter the password chosen in the previous step, this prove you typed and remembered it correctly:</string>
+    <string name="download_backup_kit">Download your backup kit</string>
+    <string name="i_want_also_to_download_the_seed_version_of_my_private_key">I want also to download the seed version of my private key</string>
+    <string name="this_is_an_optional_additional_way_to_backup_your_private_key_write_down_on_paper_the_12_words_keeping_the_correct_order">This is an optional additional way to backup your private key, write down on paper the 12 words, keeping the correct order.</string>
+    <string name="backup_the_nostr_account">Backup the Nostr account</string>
+    <string name="permissions_and_connection">Permissions and connection</string>
+    <string name="setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code">Setup Amber with your Nostr private key. You can enter different versions: Nsec, Ncryptsec or Hex.\nYou can also scan it from a QR Code.</string>
+    <string name="check_the_code">Check the code</string>
 </resources>

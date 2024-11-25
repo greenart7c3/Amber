@@ -35,6 +35,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -59,6 +61,7 @@ fun AccountScreen(
     appName: String?,
     flow: MutableStateFlow<List<IntentData>>,
     navController: NavHostController,
+    storageHelper: SimpleStorageHelper,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val intents by flow.collectAsState(initial = emptyList())
@@ -72,7 +75,8 @@ fun AccountScreen(
         ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {
-                    MainLoginPage(accountStateViewModel)
+                    val newNavController = rememberNavController()
+                    MainLoginPage(accountStateViewModel, storageHelper, newNavController)
                 }
                 is AccountState.LoggedIn -> {
                     LaunchedEffect(intent, intents) {
@@ -133,6 +137,7 @@ fun AccountScreen(
                         localRoute,
                         database,
                         navController,
+                        storageHelper,
                         onRemoveIntentData = {
                             val oldIntents = intents.toMutableList()
                             oldIntents.remove(it)

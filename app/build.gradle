@@ -249,4 +249,6 @@ dependencies {
     implementation libs.coil.svg
     // enables network for coil
     implementation libs.coil.okhttp
+
+    implementation libs.storage
 }

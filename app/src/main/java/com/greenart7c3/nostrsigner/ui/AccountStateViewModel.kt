@@ -250,12 +250,13 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         proxyPort: Int,
         signPolicy: Int,
         seedWords: Set<String>,
+        name: String,
     ) {
         val key = seedWords.joinToString(separator = " ") { it }
         val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
         val account = Account(
             NostrSignerInternal(keyPair),
-            name = "",
+            name = name,
             useProxy = useProxy,
             proxyPort = proxyPort,
             language = null,

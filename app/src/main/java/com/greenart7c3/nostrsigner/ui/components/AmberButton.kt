@@ -87,6 +87,7 @@ fun AmberElevatedButton(
                 modifier = Modifier.scale(1.50f),
                 textAlign = textAlign,
                 maxLines = maxLines,
+                fontWeight = FontWeight.Normal,
             )
         }
     }

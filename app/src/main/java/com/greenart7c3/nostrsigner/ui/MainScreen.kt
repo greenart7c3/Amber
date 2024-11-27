@@ -235,15 +235,17 @@ fun sendResult(
         }
 
         if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
-            application.permissions.add(
-                ApplicationPermissionsEntity(
-                    null,
-                    key,
-                    SignerType.GET_PUBLIC_KEY.toString(),
-                    null,
-                    true,
-                ),
-            )
+            if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
+                application.permissions.add(
+                    ApplicationPermissionsEntity(
+                        null,
+                        key,
+                        SignerType.GET_PUBLIC_KEY.toString(),
+                        null,
+                        true,
+                    ),
+                )
+            }
         }
 
         if (intentData.bunkerRequest != null) {

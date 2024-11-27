@@ -97,7 +97,9 @@ fun AccountScreen(
                         data?.bunkerRequest?.let {
                             if (it.currentAccount.isNotBlank()) {
                                 if (LocalPreferences.currentAccount(context) != it.currentAccount) {
-                                    accountStateViewModel.switchUser(it.currentAccount, null)
+                                    if (LocalPreferences.containsAccount(context, it.currentAccount)) {
+                                        accountStateViewModel.switchUser(it.currentAccount, null)
+                                    }
                                 }
                             }
                         }

@@ -218,10 +218,14 @@ class MainActivity : AppCompatActivity() {
                                 val currentAccount = LocalPreferences.currentAccount(context)
                                 if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
                                     if (npub.startsWith("npub")) {
-                                        accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
+                                        if (LocalPreferences.containsAccount(context, npub)) {
+                                            accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
+                                        }
                                     } else {
                                         val localNpub = Hex.decode(npub).toNpub()
-                                        accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                        if (LocalPreferences.containsAccount(context, npub)) {
+                                            accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                        }
                                     }
                                 }
                             }

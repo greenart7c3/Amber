@@ -594,7 +594,10 @@ fun PermissionCard(
                 Row(
                     Modifier
                         .fillMaxWidth()
-                        .padding(end = 8.dp),
+                        .clickable {
+                            onDetailsClick(item.second)
+                        }
+                        .padding(end = 8.dp, top = 8.dp),
                     horizontalArrangement = Arrangement.SpaceBetween,
                 ) {
                     Text(

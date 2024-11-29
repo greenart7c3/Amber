@@ -223,7 +223,7 @@ class MainActivity : AppCompatActivity() {
                                         }
                                     } else {
                                         val localNpub = Hex.decode(npub).toNpub()
-                                        if (LocalPreferences.containsAccount(context, npub)) {
+                                        if (LocalPreferences.containsAccount(context, localNpub)) {
                                             accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
                                         }
                                     }

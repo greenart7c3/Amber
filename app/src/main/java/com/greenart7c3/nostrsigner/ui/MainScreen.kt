@@ -101,12 +101,14 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
+import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.IconRow
@@ -1183,6 +1185,43 @@ fun MainScreen(
                             .padding(top = verticalPadding * 1.5f),
                         account = account,
                         accountStateViewModel = accountStateViewModel,
+                    )
+                },
+            )
+
+            composable(
+                Route.TorSettings.route,
+                content = {
+                    ConnectOrbotScreen(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .verticalScroll(rememberScrollState())
+                            .padding(padding)
+                            .padding(horizontal = verticalPadding)
+                            .padding(top = verticalPadding * 1.5f),
+                        onPost = {
+                            LocalPreferences.updateProxy(context, true, it)
+                            scope.launch(Dispatchers.IO) {
+                                NotificationDataSource.stopSync()
+                                NostrSigner.getInstance().checkForNewRelays()
+                                NotificationDataSource.start()
+                                scope.launch {
+                                    navController.navigate(Route.Settings.route) {
+                                        popUpTo(0)
+                                    }
+                                }
+                            }
+                        },
+                        onError = {
+                            scope.launch {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.could_not_connect_to_tor),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                        },
+                        account = account,
                     )
                 },
             )

@@ -53,7 +53,6 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
@@ -153,13 +152,13 @@ fun SettingsScreen(
                     icon = R.drawable.ic_tor,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onLongClick = {
-                        conectOrbotDialogOpen = true
+                        navController.navigate(Route.TorSettings.route)
                     },
                     onClick = {
                         if (checked) {
                             disconnectTorDialog = true
                         } else {
-                            conectOrbotDialogOpen = true
+                            navController.navigate(Route.TorSettings.route)
                         }
                     },
                 )
@@ -276,33 +275,6 @@ fun SettingsScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 24.dp),
-        )
-    }
-
-    if (conectOrbotDialogOpen) {
-        ConnectOrbotDialog(
-            onClose = { conectOrbotDialogOpen = false },
-            onPost = {
-                conectOrbotDialogOpen = false
-                disconnectTorDialog = false
-                checked = true
-                LocalPreferences.updateProxy(context, true, proxyPort.value.toInt())
-                scope.launch(Dispatchers.IO) {
-                    NotificationDataSource.stopSync()
-                    NostrSigner.getInstance().checkForNewRelays()
-                    NotificationDataSource.start()
-                }
-            },
-            onError = {
-                scope.launch {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.could_not_connect_to_tor),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-            },
-            proxyPort,
         )
     }
 

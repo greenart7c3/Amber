@@ -238,6 +238,7 @@ fun MainLoginPage(
                     scope = scope,
                     navController = navController,
                     storageHelper = storageHelper,
+                    onFinish = {},
                 )
             },
         )
@@ -248,6 +249,7 @@ fun MainLoginPage(
                 LoginPage(
                     accountViewModel = accountViewModel,
                     navController = navController,
+                    onFinish = {},
                 )
             },
         )
@@ -261,6 +263,7 @@ fun SignUpPage(
     scope: CoroutineScope,
     navController: NavController,
     storageHelper: SimpleStorageHelper,
+    onFinish: () -> Unit,
 ) {
     var loading by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
@@ -785,6 +788,8 @@ fun SignUpPage(
                                         seedWords = seedWords,
                                         name = nickname.text,
                                     )
+
+                                    onFinish()
                                 },
                                 text = stringResource(R.string.finish),
                             )
@@ -801,6 +806,7 @@ fun SignUpPage(
 fun LoginPage(
     accountViewModel: AccountStateViewModel,
     navController: NavController,
+    onFinish: () -> Unit,
 ) {
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
@@ -1261,6 +1267,8 @@ fun LoginPage(
                                     signPolicy = selectedOption,
                                     proxyPort = proxyPort.text.toInt(),
                                 )
+
+                                onFinish()
                             },
                             text = stringResource(R.string.finish),
                         )

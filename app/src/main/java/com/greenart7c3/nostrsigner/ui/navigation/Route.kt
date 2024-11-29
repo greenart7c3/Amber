@@ -12,6 +12,13 @@ sealed class Route(
     @DrawableRes val icon: Int,
     @DrawableRes val selectedIcon: Int,
 ) {
+    data object Login : Route(
+        title = "",
+        route = "login",
+        icon = R.drawable.incoming_request,
+        selectedIcon = R.drawable.incoming_request,
+    )
+
     data object IncomingRequest : Route(
         title = NostrSigner.getInstance().getString(R.string.incoming_request),
         route = "IncomingRequest",

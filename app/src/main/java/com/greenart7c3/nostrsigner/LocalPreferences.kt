@@ -289,7 +289,7 @@ object LocalPreferences {
      * condition and the file will probably not be deleted
      */
     @SuppressLint("ApplySharedPref")
-    fun updatePrefsForLogout(npub: String, context: Context) {
+    fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         accountCache.remove(npub)
         val userPrefs = encryptedPreferences(context, npub)
         userPrefs.edit().clear().commit()
@@ -298,10 +298,13 @@ object LocalPreferences {
 
         if (savedAccounts(context).isEmpty()) {
             val appPrefs = encryptedPreferences(context)
-            appPrefs.edit().clear().apply()
+            appPrefs.edit().clear().commit()
+            return true
         } else if (currentAccount(context) == npub) {
             updateCurrentAccount(context, savedAccounts(context).elementAt(0))
+            return false
         }
+        return false
     }
 
     fun updatePrefsForLogin(context: Context, account: Account) {

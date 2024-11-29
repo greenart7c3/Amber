@@ -82,10 +82,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     private fun tryLoginExistingAccount(
         route: String?,
         npub: String?,
+        forceLogout: Boolean = false,
     ) {
         var currentUser = npub ?: LocalPreferences.currentAccount(NostrSigner.getInstance())
-        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.getInstance(), currentUser)) {
+        val allAccounts = LocalPreferences.allSavedAccounts(NostrSigner.getInstance())
+        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.getInstance(), currentUser) && allAccounts.any { it.npub == currentUser }) {
             currentUser = LocalPreferences.currentAccount(NostrSigner.getInstance())
+        }
+        if (forceLogout) {
+            currentUser = null
         }
         LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), currentUser)?.let {
             startUI(it, route)
@@ -111,8 +116,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        LocalPreferences.updatePrefsForLogout(npub, NostrSigner.getInstance())
-        tryLoginExistingAccount(null, null)
+        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, NostrSigner.getInstance())
+        tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
     }
 
     fun switchUser(

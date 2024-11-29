@@ -557,7 +557,6 @@ fun MainScreen(
             sheetState = sheetState,
             account = account,
             accountStateViewModel = accountStateViewModel,
-            storageHelper = storageHelper,
             navController = navController,
             onClose = {
                 scope.launch {
@@ -570,53 +569,55 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            CenterAlignedTopAppBar(
-                title = {
-                    var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
-                    LaunchedEffect(destinationRoute) {
-                        if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/")) {
-                            launch(Dispatchers.IO) {
-                                navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                    val application = database.applicationDao().getByKey(packageName)?.application
-                                    title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
-                                    } else {
-                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
+            if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
+                CenterAlignedTopAppBar(
+                    title = {
+                        var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
+                        LaunchedEffect(destinationRoute) {
+                            if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/")) {
+                                launch(Dispatchers.IO) {
+                                    navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
+                                        val application = database.applicationDao().getByKey(packageName)?.application
+                                        title = if (destinationRoute.startsWith("Activity/")) {
+                                            "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                                        } else {
+                                            application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        }
+                                    }
+                                    navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
+                                        val application = database.applicationDao().getByKey(packageName)?.application
+                                        title = if (destinationRoute.startsWith("Activity/")) {
+                                            "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                                        } else {
+                                            application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        }
+                                    }
+                                    navBackStackEntry?.arguments?.getString("url")?.let { url ->
+                                        val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
+                                        title = localUrl
                                     }
                                 }
-                                navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                    val application = database.applicationDao().getByKey(packageName)?.application
-                                    title = if (destinationRoute.startsWith("Activity/")) {
-                                        "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
+                            } else {
+                                launch(Dispatchers.IO) {
+                                    if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
+                                        val application = database.applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
+                                        val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
+                                        title = if (titleTemp.isBlank()) {
+                                            routes.find { it.route == destinationRoute }?.title ?: ""
+                                        } else {
+                                            "$titleTemp - Request"
+                                        }
                                     } else {
-                                        application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
+                                        title = routes.find { it.route == destinationRoute }?.title ?: ""
                                     }
-                                }
-                                navBackStackEntry?.arguments?.getString("url")?.let { url ->
-                                    val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
-                                    title = localUrl
-                                }
-                            }
-                        } else {
-                            launch(Dispatchers.IO) {
-                                if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
-                                    val application = database.applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
-                                    val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
-                                    title = if (titleTemp.isBlank()) {
-                                        routes.find { it.route == destinationRoute }?.title ?: ""
-                                    } else {
-                                        "$titleTemp - Request"
-                                    }
-                                } else {
-                                    title = routes.find { it.route == destinationRoute }?.title ?: ""
                                 }
                             }
                         }
-                    }
 
-                    Text(title)
-                },
-            )
+                        Text(title)
+                    },
+                )
+            }
         },
         bottomBar = {
             if (destinationRoute in items.map { it.route }) {
@@ -681,13 +682,15 @@ fun MainScreen(
                         }
                     }
                 }
-            } else {
+            } else if (destinationRoute != "create" && destinationRoute != "loginPage") {
                 val localBackButtonTitle = routes.find { it.route == navController.previousBackStackEntry?.destination?.route }?.title ?: ""
                 if (localBackButtonTitle.isNotBlank()) {
                     BottomAppBar {
                         IconRow(
                             center = true,
-                            title = if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
+                            title = if (destinationRoute.startsWith("login")) {
+                                stringResource(R.string.go_back)
+                            } else if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
                                 stringResource(R.string.back_to, localBackButtonTitle)
                             } else {
                                 if (destinationRoute == "NewNsecBunker") {
@@ -753,6 +756,48 @@ fun MainScreen(
             enterTransition = { fadeIn(animationSpec = tween(200)) },
             exitTransition = { fadeOut(animationSpec = tween(200)) },
         ) {
+            composable(
+                "login",
+                content = {
+                    MainPage(
+                        scope = scope,
+                        navController = navController,
+                    )
+                },
+            )
+
+            composable(
+                "create",
+                content = {
+                    SignUpPage(
+                        accountViewModel = accountStateViewModel,
+                        scope = scope,
+                        navController = navController,
+                        storageHelper = storageHelper,
+                        onFinish = {
+                            navController.navigate(Route.Applications.route) {
+                                popUpTo(0)
+                            }
+                        },
+                    )
+                },
+            )
+
+            composable(
+                "loginPage",
+                content = {
+                    LoginPage(
+                        accountViewModel = accountStateViewModel,
+                        navController = navController,
+                        onFinish = {
+                            navController.navigate(Route.Applications.route) {
+                                popUpTo(0)
+                            }
+                        },
+                    )
+                },
+            )
+
             composable(
                 Route.IncomingRequest.route,
                 content = {

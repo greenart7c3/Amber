@@ -23,8 +23,20 @@ interface ApplicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertNotification(notificationEntity: NotificationEntity): Long?
 
-    @Query("SELECT * FROM application where pubKey = :pubKey")
+    @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     fun getAll(pubKey: String): List<ApplicationEntity>
+
+    @Query(
+        """
+    SELECT a.*, MAX(h.time) as latestTime
+    FROM application a
+    LEFT JOIN history h ON a.`key` = h.pkKey
+    AND a.pubKey = :pubKey
+    GROUP BY a.`key`, a.description, a.icon, a.isConnected, a.name, a.pubKey, a.secret, a.signPolicy, a.url
+    ORDER BY latestTime DESC
+    """,
+    )
+    fun getAllFlow(pubKey: String): Flow<List<ApplicationWithLatestHistory>>
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
@@ -129,7 +141,7 @@ interface ApplicationDao {
     }
 
     @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
-    fun getAllHistory(pk: String): List<HistoryEntity>
+    fun getAllHistory(pk: String): Flow<List<HistoryEntity>>
 
     @Insert
     fun insertLog(logEntity: LogEntity)
@@ -142,4 +154,7 @@ interface ApplicationDao {
 
     @Query("DELETE FROM amber_log")
     fun clearLogs()
+
+    @Delete
+    fun deletePermission(permission: ApplicationPermissionsEntity)
 }

@@ -9,24 +9,16 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Key
-import androidx.compose.material.icons.filled.QrCode
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -60,6 +52,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -67,9 +60,9 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
-import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
@@ -133,10 +126,6 @@ fun AccountBackupScreen(
                 .fillMaxSize(),
         ) {
             Column(
-                modifier =
-                Modifier
-                    .padding(horizontal = 30.dp)
-                    .verticalScroll(rememberScrollState()),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 val content = stringResource(R.string.account_backup_tips_md)
@@ -148,6 +137,7 @@ fun AccountBackupScreen(
 
                 RichText(
                     style = RichTextStyle().resolveDefaults(),
+                    modifier = Modifier.padding(top = 16.dp),
                 ) {
                     BasicMarkdown(astNode)
                 }
@@ -163,7 +153,7 @@ fun AccountBackupScreen(
                         }
                     val context = LocalContext.current
 
-                    Button(
+                    AmberButton(
                         onClick = {
                             authenticate(
                                 title = context.getString(R.string.show_seed_words),
@@ -181,18 +171,8 @@ fun AccountBackupScreen(
                                 },
                             )
                         },
-                    ) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            Icon(
-                                Icons.AutoMirrored.Filled.List,
-                                contentDescription = stringResource(R.string.show_seed_words),
-                            )
-                            Text(text = stringResource(R.string.show_seed_words))
-                        }
-                    }
+                        text = stringResource(R.string.show_seed_words),
+                    )
                 }
                 NSecCopyButton(account)
                 NSecQrButton(account)
@@ -228,6 +208,7 @@ fun AccountBackupScreen(
 
                 OutlinedTextField(
                     modifier = Modifier
+                        .fillMaxWidth()
                         .onGloballyPositioned { coordinates ->
                             autofillNode.boundingBox = coordinates.boundsInWindow()
                         }
@@ -303,7 +284,7 @@ private fun NSecQrButton(account: Account) {
 
     if (showDialog) {
         QrCodeDialog(
-            content = account.keyPair.privKey!!.toNsec(),
+            content = account.signer.keyPair.privKey!!.toNsec(),
         ) {
             showDialog = false
         }
@@ -316,8 +297,7 @@ private fun NSecQrButton(account: Account) {
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.show_qr_code),
@@ -337,20 +317,8 @@ private fun NSecQrButton(account: Account) {
                 },
             )
         },
-        shape = ButtonBorder,
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.QrCode,
-            contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(
-            stringResource(id = R.string.show_qr_code),
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
+        text = stringResource(id = R.string.show_qr_code),
+    )
 }
 
 @Composable
@@ -412,8 +380,7 @@ private fun NSecCopyButton(account: Account) {
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -433,17 +400,8 @@ private fun NSecCopyButton(account: Account) {
                 },
             )
         },
-        shape = ButtonBorder,
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.Key,
-            contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(stringResource(id = R.string.copy_my_secret_key), color = MaterialTheme.colorScheme.onPrimary)
-    }
+        text = stringResource(id = R.string.copy_my_secret_key),
+    )
 }
 
 private fun copyNSec(
@@ -452,7 +410,7 @@ private fun copyNSec(
     account: Account,
     clipboardManager: ClipboardManager,
 ) {
-    account.keyPair.privKey?.let {
+    account.signer.keyPair.privKey?.let {
         clipboardManager.setText(AnnotatedString(it.toNsec()))
         scope.launch {
             Toast.makeText(
@@ -481,8 +439,7 @@ private fun EncryptNSecCopyButton(
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -500,24 +457,11 @@ private fun EncryptNSecCopyButton(
                 },
             )
         },
-        shape = ButtonBorder,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-        ),
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
         enabled = password.value.text.isNotBlank(),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.Key,
-            contentDescription = stringResource(R.string.copies_the_nsec_id_your_password_to_the_clipboard_for_backup),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(
-            stringResource(id = R.string.encrypt_and_copy_my_secret_key),
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
+        text = stringResource(id = R.string.encrypt_and_copy_my_secret_key),
+        maxLines = 1,
+        textAlign = TextAlign.Center,
+    )
 }
 
 @Composable
@@ -534,7 +478,7 @@ private fun EncryptNSecQRButton(
 
     if (showDialog) {
         QrCodeDialog(
-            content = CryptoUtils.encryptNIP49(account.keyPair.privKey!!.toHexKey(), password.value.text),
+            content = CryptoUtils.encryptNIP49(account.signer.keyPair.privKey!!.toHexKey(), password.value.text),
         ) {
             showDialog = false
         }
@@ -548,8 +492,7 @@ private fun EncryptNSecQRButton(
             }
         }
 
-    Button(
-        modifier = Modifier.padding(horizontal = 3.dp),
+    AmberButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -567,24 +510,9 @@ private fun EncryptNSecQRButton(
                 },
             )
         },
-        shape = ButtonBorder,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = MaterialTheme.colorScheme.primary,
-        ),
-        contentPadding = PaddingValues(vertical = 6.dp, horizontal = 16.dp),
         enabled = password.value.text.isNotBlank(),
-    ) {
-        Icon(
-            tint = MaterialTheme.colorScheme.onPrimary,
-            imageVector = Icons.Default.QrCode,
-            contentDescription = stringResource(R.string.shows_qr_code_with_you_private_key),
-            modifier = Modifier.padding(end = 5.dp),
-        )
-        Text(
-            stringResource(id = R.string.show_qr_code),
-            color = MaterialTheme.colorScheme.onPrimary,
-        )
-    }
+        text = stringResource(id = R.string.show_qr_code),
+    )
 }
 
 private fun encryptCopyNSec(
@@ -604,7 +532,7 @@ private fun encryptCopyNSec(
                 .show()
         }
     } else {
-        account.keyPair.privKey?.let {
+        account.signer.keyPair.privKey?.let {
             try {
                 val key = CryptoUtils.encryptNIP49(it.toHexKey(), password.value.text)
                 clipboardManager.setText(AnnotatedString(key))

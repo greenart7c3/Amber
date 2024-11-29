@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.theme
 
 import android.app.Activity
+import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -31,10 +32,11 @@ val Size35dp = 35.dp
 val ButtonBorder = RoundedCornerShape(20.dp)
 val Size20Modifier = Modifier.size(20.dp)
 
-val primaryColor = Color(0xFFF16F26)
+val primaryColor = Color(0xFFFFCA62)
 val primaryVariant = Color(0xFFC8541A)
-val secondaryColor = Color(0xFFFF8E4C)
-
+val secondaryColor = Color(0xFFFFCA62)
+val orange = Color(0xFFFF6B00)
+val defaultPadding = 35.dp
 val RichTextDefaults = RichTextStyle().resolveDefaults()
 
 private val DarkColorPalette =
@@ -54,18 +56,22 @@ private val LightColorPalette =
         tertiary = secondaryColor,
         primaryContainer = secondaryColor,
         secondaryContainer = secondaryColor,
+        surface = Color(0xFFFFDE9E),
+        surfaceContainer = Color(0xFFFFDE9E),
     )
 
+@Suppress("DEPRECATION")
 @Composable
 fun NostrSignerTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     content: @Composable () -> Unit,
 ) {
     val colors = if (darkTheme) DarkColorPalette else LightColorPalette
+    val typography = if (darkTheme) TypographyDark else Typography
 
     MaterialTheme(
         colorScheme = colors,
-        typography = Typography,
+        typography = typography,
         shapes = Shapes,
         content = content,
     )
@@ -75,12 +81,14 @@ fun NostrSignerTheme(
         SideEffect {
             val window = (view.context as Activity).window
             val insetsController = WindowCompat.getInsetsController(window, view)
-            if (darkTheme) {
-                window.statusBarColor = colors.background.toArgb()
-            } else {
-                window.statusBarColor = colors.primary.toArgb()
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.VANILLA_ICE_CREAM) {
+                if (darkTheme) {
+                    window.statusBarColor = colors.background.toArgb()
+                } else {
+                    window.statusBarColor = colors.surface.toArgb()
+                }
+                window.navigationBarColor = colors.surface.toArgb()
             }
-            window.navigationBarColor = colors.background.toArgb()
             insetsController.isAppearanceLightNavigationBars = !darkTheme
         }
     }

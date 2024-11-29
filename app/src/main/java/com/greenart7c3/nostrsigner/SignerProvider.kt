@@ -57,7 +57,7 @@ class SignerProvider : ContentProvider() {
                 val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val permission =
                     database
@@ -86,7 +86,7 @@ class SignerProvider : ContentProvider() {
                     return cursor
                 }
 
-                val result = CryptoUtils.signString(message, account.keyPair.privKey!!).toHexKey()
+                val result = CryptoUtils.signString(message, account.signer.keyPair.privKey!!).toHexKey()
                 database.applicationDao().addHistory(
                     HistoryEntity(
                         0,
@@ -117,7 +117,7 @@ class SignerProvider : ContentProvider() {
                     return null
                 }
 
-                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
                 var permission =
                     database
                         .applicationDao()
@@ -223,7 +223,7 @@ class SignerProvider : ContentProvider() {
                 val stringType = uri.toString().replace("content://$appId.", "")
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
                 var permission =
                     database
                         .applicationDao()
@@ -314,7 +314,7 @@ class SignerProvider : ContentProvider() {
             "content://$appId.GET_PUBLIC_KEY" -> {
                 val packageName = callingPackage ?: return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!) ?: return null
-                val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
                 val permission =
                     database
                         .applicationDao()
@@ -357,7 +357,8 @@ class SignerProvider : ContentProvider() {
                 )
 
                 val cursor = MatrixCursor(arrayOf("signature", "result"))
-                cursor.addRow(arrayOf<Any>(account.keyPair.pubKey.toNpub(), account.keyPair.pubKey.toNpub()))
+                val result = if (sortOrder == null) account.signer.keyPair.pubKey.toNpub() else account.signer.keyPair.pubKey.toHexKey()
+                cursor.addRow(arrayOf<Any>(result, result))
                 return cursor
             }
 

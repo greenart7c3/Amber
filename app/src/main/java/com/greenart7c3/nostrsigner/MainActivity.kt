@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -26,16 +27,24 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.compose.rememberNavController
+import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
+import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import com.vitorpamplona.ammolite.service.HttpClientManager
+import com.vitorpamplona.quartz.encoders.toNpub
+import fr.acinq.secp256k1.Hex
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
@@ -48,16 +57,15 @@ fun Intent.isLaunchFromHistory(): Boolean =
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mainViewModel: MainViewModel
+    private val storageHelper = SimpleStorageHelper(this@MainActivity)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        WindowCompat.setDecorFitsSystemWindows(window, true)
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         mainViewModel = MainViewModel(applicationContext)
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
-
         setContent {
             if (intent.isLaunchFromHistory()) {
                 Log.d("isLaunchFromHistory", "Cleared intent history")
@@ -74,7 +82,10 @@ class MainActivity : AppCompatActivity() {
                 }
 
             NostrSignerTheme {
+                val navController = rememberNavController()
+                mainViewModel.navController = navController
                 var isAuthenticated by remember { mutableStateOf(false) }
+                var showPinDialog by remember { mutableStateOf(false) }
                 val keyguardLauncher =
                     rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                         if (result.resultCode == Activity.RESULT_OK) {
@@ -86,43 +97,48 @@ class MainActivity : AppCompatActivity() {
 
                 LaunchedEffect(Unit) {
                     launch(Dispatchers.IO) {
-                        val lastAuthTime = NostrSigner.getInstance().settings.lastBiometricsTime
-                        val whenToAsk = NostrSigner.getInstance().settings.biometricsTimeType
+                        val settings = NostrSigner.getInstance().settings
+                        val lastAuthTime = settings.lastBiometricsTime
+                        val whenToAsk = settings.biometricsTimeType
                         val isTimeToAsk = when (whenToAsk) {
                             BiometricsTimeType.EVERY_TIME -> true
                             BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
                             BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
                             BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
                         }
-                        val shouldAuthenticate = NostrSigner.getInstance().settings.useAuth && isTimeToAsk
+                        val shouldAuthenticate = (settings.useAuth || settings.usePin) && isTimeToAsk
                         if (!shouldAuthenticate) {
                             isAuthenticated = true
                         } else {
                             if (!isAuthenticated) {
                                 launch(Dispatchers.Main) {
-                                    Biometrics.authenticate(
-                                        getString(R.string.authenticate),
-                                        this@MainActivity,
-                                        keyguardLauncher,
-                                        {
-                                            NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
-                                                lastBiometricsTime = System.currentTimeMillis(),
-                                            )
+                                    if (settings.usePin) {
+                                        showPinDialog = true
+                                    } else {
+                                        Biometrics.authenticate(
+                                            getString(R.string.authenticate),
+                                            this@MainActivity,
+                                            keyguardLauncher,
+                                            {
+                                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                    lastBiometricsTime = System.currentTimeMillis(),
+                                                )
 
-                                            LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                            isAuthenticated = true
-                                        },
-                                        { _, message ->
-                                            this@MainActivity.finish()
-                                            scope.launch {
-                                                Toast.makeText(
-                                                    context,
-                                                    message,
-                                                    Toast.LENGTH_SHORT,
-                                                ).show()
-                                            }
-                                        },
-                                    )
+                                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                                isAuthenticated = true
+                                            },
+                                            { _, message ->
+                                                this@MainActivity.finish()
+                                                scope.launch {
+                                                    Toast.makeText(
+                                                        context,
+                                                        message,
+                                                        Toast.LENGTH_SHORT,
+                                                    ).show()
+                                                }
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -133,6 +149,55 @@ class MainActivity : AppCompatActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background,
                 ) {
+                    if (showPinDialog) {
+                        Dialog(
+                            properties = DialogProperties(usePlatformDefaultWidth = false),
+                            onDismissRequest = {
+                                showPinDialog = false
+                                this@MainActivity.finish()
+                                scope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        getString(R.string.pin_does_not_match),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            },
+                        ) {
+                            Surface(
+                                modifier = Modifier
+                                    .fillMaxSize(),
+                                color = MaterialTheme.colorScheme.background,
+                            ) {
+                                Box(
+                                    Modifier.padding(40.dp),
+                                ) {
+                                    RandomPinInput(
+                                        text = getString(R.string.enter_pin),
+                                        onPinEntered = {
+                                            val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                            if (it == pin) {
+                                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                    lastBiometricsTime = System.currentTimeMillis(),
+                                                )
+
+                                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                                isAuthenticated = true
+                                                showPinDialog = false
+                                            } else {
+                                                Toast.makeText(
+                                                    context,
+                                                    getString(R.string.pin_does_not_match),
+                                                    Toast.LENGTH_SHORT,
+                                                ).show()
+                                            }
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    }
+
                     if (!isAuthenticated) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
@@ -149,6 +214,21 @@ class MainActivity : AppCompatActivity() {
                             }
 
                         LaunchedEffect(Unit) {
+                            launch(Dispatchers.IO) {
+                                val currentAccount = LocalPreferences.currentAccount(context)
+                                if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
+                                    if (npub.startsWith("npub")) {
+                                        if (LocalPreferences.containsAccount(context, npub)) {
+                                            accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
+                                        }
+                                    } else {
+                                        val localNpub = Hex.decode(npub).toNpub()
+                                        if (LocalPreferences.containsAccount(context, localNpub)) {
+                                            accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                        }
+                                    }
+                                }
+                            }
                             launch {
                                 IntentUtils.state
                                     .receiveAsFlow()
@@ -158,7 +238,7 @@ class MainActivity : AppCompatActivity() {
                             }
                         }
 
-                        AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents)
+                        AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController, storageHelper)
                     }
                 }
             }

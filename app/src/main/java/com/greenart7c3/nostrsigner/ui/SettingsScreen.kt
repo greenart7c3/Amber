@@ -10,15 +10,11 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Hub
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SurroundSound
 import androidx.compose.material3.AlertDialog
@@ -34,8 +30,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -54,15 +52,12 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotDialog
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
@@ -92,34 +87,31 @@ fun SettingsScreen(
             },
             onConfirm = {
                 logoutDialog = false
-                accountStateViewModel.logOff(account.keyPair.pubKey.toNpub())
+                accountStateViewModel.logOff(account.signer.keyPair.pubKey.toNpub())
             },
         )
     }
 
     Column(
-        modifier
-            .verticalScroll(rememberScrollState()),
+        modifier,
     ) {
-        if (Biometrics.isFingerprintAvailable(context)) {
-            Box(
-                Modifier
-                    .padding(8.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.security),
-                    icon = Icons.Default.Security,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        navController.navigate(Route.Security.route)
-                    },
-                )
-            }
+        Box(
+            Modifier
+                .padding(bottom = 8.dp),
+        ) {
+            IconRow(
+                title = stringResource(R.string.security),
+                icon = Icons.Default.Security,
+                tint = MaterialTheme.colorScheme.onBackground,
+                onClick = {
+                    navController.navigate(Route.Security.route)
+                },
+            )
         }
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.backup_keys),
@@ -133,7 +125,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.language),
@@ -149,21 +141,7 @@ fun SettingsScreen(
         if (BuildConfig.FLAVOR != "offline") {
             Box(
                 Modifier
-                    .padding(8.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.notification_type),
-                    icon = Icons.Default.Notifications,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        navController.navigate(Route.NotificationType.route)
-                    },
-                )
-            }
-
-            Box(
-                Modifier
-                    .padding(8.dp),
+                    .padding(vertical = 8.dp),
             ) {
                 IconRow(
                     title = if (checked) {
@@ -174,14 +152,51 @@ fun SettingsScreen(
                     icon = R.drawable.ic_tor,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onLongClick = {
-                        conectOrbotDialogOpen = true
+                        navController.navigate(Route.TorSettings.route)
                     },
                     onClick = {
                         if (checked) {
                             disconnectTorDialog = true
                         } else {
-                            conectOrbotDialogOpen = true
+                            navController.navigate(Route.TorSettings.route)
                         }
+                    },
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.relays),
+                    icon = ImageVector.vectorResource(R.drawable.relays),
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.RelaysScreen.route)
+                    },
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
+                    title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
+                    icon = Icons.Default.SurroundSound,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        allowNewConnections = !allowNewConnections
+                        account.allowNewConnections = allowNewConnections
+                        LocalPreferences.saveToEncryptedStorage(context, account)
+                    },
+                    onLongClick = {
+                        Toast.makeText(
+                            context,
+                            if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
+                            Toast.LENGTH_LONG,
+                        ).show()
                     },
                 )
             }
@@ -189,37 +204,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.default_relays),
-                icon = Icons.Default.Hub,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.DefaultRelays.route)
-                },
-            )
-        }
-
-        Box(
-            Modifier
-                .padding(8.dp),
-        ) {
-            IconRow(
-                title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
-                icon = Icons.Default.SurroundSound,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    allowNewConnections = !allowNewConnections
-                    account.allowNewConnections = allowNewConnections
-                    LocalPreferences.saveToEncryptedStorage(context, account)
-                },
-            )
-        }
-
-        Box(
-            Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.logs),
@@ -233,7 +218,7 @@ fun SettingsScreen(
 
         Box(
             Modifier
-                .padding(8.dp),
+                .padding(vertical = 8.dp),
         ) {
             IconRow(
                 title = stringResource(R.string.sign_policy),
@@ -293,37 +278,6 @@ fun SettingsScreen(
         )
     }
 
-    if (conectOrbotDialogOpen) {
-        ConnectOrbotDialog(
-            onClose = { conectOrbotDialogOpen = false },
-            onPost = {
-                conectOrbotDialogOpen = false
-                disconnectTorDialog = false
-                checked = true
-                LocalPreferences.updateProxy(context, true, proxyPort.value.toInt())
-                scope.launch(Dispatchers.IO) {
-                    NotificationDataSource.stopSync()
-                    if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
-                        RelayPool.disconnect()
-                    } else {
-                        NostrSigner.getInstance().checkForNewRelays()
-                        NotificationDataSource.start()
-                    }
-                }
-            },
-            onError = {
-                scope.launch {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.could_not_connect_to_tor),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-            },
-            proxyPort,
-        )
-    }
-
     if (disconnectTorDialog) {
         AlertDialog(
             title = { Text(text = stringResource(R.string.do_you_really_want_to_disable_tor_title)) },
@@ -337,12 +291,8 @@ fun SettingsScreen(
                         LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                         scope.launch(Dispatchers.IO) {
                             NotificationDataSource.stopSync()
-                            if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
-                                RelayPool.disconnect()
-                            } else {
-                                NostrSigner.getInstance().checkForNewRelays()
-                                NotificationDataSource.start()
-                            }
+                            NostrSigner.getInstance().checkForNewRelays()
+                            NotificationDataSource.start()
                         }
                     },
                 ) {
@@ -402,11 +352,6 @@ fun SettingsRow(
     }
 }
 
-enum class NotificationType(val screenCode: Int, val resourceId: Int) {
-    PUSH(0, R.string.push_notifications),
-    DIRECT(1, R.string.direct_connection),
-}
-
 enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {
     EVERY_TIME(0, R.string.every_time),
     ONE_MINUTE(1, R.string.one_minute),
@@ -421,16 +366,6 @@ fun parseBiometricsTimeType(screenCode: Int): BiometricsTimeType {
         BiometricsTimeType.TEN_MINUTES.screenCode -> BiometricsTimeType.TEN_MINUTES
         else -> {
             BiometricsTimeType.EVERY_TIME
-        }
-    }
-}
-
-fun parseNotificationType(screenCode: Int): NotificationType {
-    return when (screenCode) {
-        NotificationType.PUSH.screenCode -> NotificationType.PUSH
-        NotificationType.DIRECT.screenCode -> NotificationType.DIRECT
-        else -> {
-            NotificationType.PUSH
         }
     }
 }

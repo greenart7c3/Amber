@@ -42,12 +42,10 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.ui.NotificationType
+import com.vitorpamplona.quartz.crypto.nip04.Nip04
 import com.vitorpamplona.quartz.encoders.Hex
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.GiftWrapEvent
-import com.vitorpamplona.quartz.events.SealedGossipEvent
 
 class EventNotificationConsumer(private val applicationContext: Context) {
 
@@ -63,67 +61,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    fun consume(event: GiftWrapEvent) {
-        if (!notificationManager().areNotificationsEnabled()) return
-        if (!event.hasCorrectIDHash()) return
-        if (!event.hasVerifiedSignature()) return
-
-        // PushNotification Wraps don't include a receiver.
-        // Test with all logged in accounts
-        LocalPreferences.allSavedAccounts(applicationContext).forEach {
-            if (it.hasPrivKey) {
-                LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.PUSH) {
-                        consumeIfMatchesAccount(event, acc)
-                    }
-                }
-            }
-        }
-    }
-
-    private fun consumeIfMatchesAccount(
-        pushWrappedEvent: GiftWrapEvent,
-        account: Account,
-    ) {
-        pushWrappedEvent.unwrap(account.signer) { notificationEvent ->
-            unwrapAndConsume(notificationEvent, account) { innerEvent ->
-                if (innerEvent.kind == 24133) {
-                    if (innerEvent.hasCorrectIDHash()) {
-                        if (innerEvent.hasVerifiedSignature()) {
-                            notify(innerEvent, account)
-                        }
-                    }
-                }
-            }
-        }
-    }
-
-    private fun unwrapAndConsume(
-        event: Event,
-        account: Account,
-        onReady: (Event) -> Unit,
-    ) {
-        when (event) {
-            is GiftWrapEvent -> {
-                event.unwrap(account.signer) { unwrapAndConsume(it, account, onReady) }
-            }
-            is SealedGossipEvent -> {
-                event.unseal(account.signer) {
-                    onReady(it)
-                }
-            }
-            else -> {
-                onReady(event)
-            }
-        }
-    }
-
     private fun notify(
         event: Event,
         acc: Account,
     ) {
         if (event.content.isEmpty()) return
-        if (IntentUtils.isNip04(event.content)) {
+        if (Nip04.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
                 notify(event, acc, it, EncryptionType.NIP04)
             }
@@ -140,19 +83,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         request: String,
         encryptionType: EncryptionType,
     ) {
+        val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
+        val notification = dao.getNotification(event.id)
+        if (notification != null) return
+        dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+
         if (BuildConfig.DEBUG) {
             Log.d("bunker", event.toJson())
             Log.d("bunker", request)
         }
 
-        val dao = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub()).applicationDao()
-        val notification = dao.getNotification(event.id)
-        if (notification != null) return
-        dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
-
         val bunkerRequest = BunkerRequest.mapper.readValue(request, BunkerRequest::class.java)
         bunkerRequest.localKey = event.pubKey
-        bunkerRequest.currentAccount = acc.keyPair.pubKey.toNpub()
+        bunkerRequest.currentAccount = acc.signer.keyPair.pubKey.toNpub()
         bunkerRequest.encryptionType = encryptionType
 
         val type = IntentUtils.getTypeFromBunker(bunkerRequest)
@@ -170,7 +113,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-        val database = NostrSigner.getInstance().getDatabase(acc.keyPair.pubKey.toNpub())
+        val database = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub())
 
         val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
         if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
@@ -189,7 +132,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 applicationContext,
                 acc,
                 bunkerRequest,
-                BunkerResponse(bunkerRequest.id, "ack", null),
+                BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
                 permission.application.relays,
                 onLoading = {},
                 onDone = {},
@@ -244,7 +187,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val cursor =
             applicationContext.contentResolver.query(
                 Uri.parse("content://${BuildConfig.APPLICATION_ID}.$type"),
-                arrayOf(data, pubKey, acc.keyPair.pubKey.toNpub()),
+                arrayOf(data, pubKey, acc.signer.keyPair.pubKey.toNpub()),
                 "1",
                 null,
                 bunkerRequest.localKey,
@@ -305,7 +248,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             onDone = { },
                         )
                     } else {
-                        val index = localCursor.getColumnIndex("event")
+                        var index = localCursor.getColumnIndex("event")
+                        if (index == -1) {
+                            index = localCursor.getColumnIndex("result")
+                        }
                         val result = localCursor.getString(index)
 
                         IntentUtils.sendBunkerResponse(

@@ -8,8 +8,11 @@
     </queries>
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
+        android:largeHeap="true"
         android:name=".NostrSigner"
         android:allowBackup="false"
         android:configChanges="orientation|screenSize|screenLayout"
@@ -45,7 +48,8 @@
             android:name=".SignerProvider"
             android:authorities="${applicationId}.SIGN_MESSAGE;${applicationId}.SIGN_EVENT;${applicationId}.NIP04_ENCRYPT;${applicationId}.NIP04_DECRYPT;${applicationId}.NIP44_ENCRYPT;${applicationId}.NIP44_DECRYPT;${applicationId}.GET_PUBLIC_KEY;${applicationId}.DECRYPT_ZAP_EVENT"
             android:enabled="true"
-            android:exported="true" />
+            android:exported="true"
+            tools:ignore="ExportedContentProvider" />
 
         <activity
             android:name=".MainActivity"
@@ -72,7 +76,8 @@
         <activity
             android:name="com.journeyapps.barcodescanner.CaptureActivity"
             android:screenOrientation="fullSensor"
-            tools:replace="screenOrientation" />
+            tools:replace="screenOrientation"
+            tools:ignore="DiscouragedApi" />
     </application>
 
 </manifest>

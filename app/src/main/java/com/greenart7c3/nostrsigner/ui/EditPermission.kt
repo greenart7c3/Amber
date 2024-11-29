@@ -1,27 +1,24 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
-import android.widget.Toast
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ContentPaste
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Info
-import androidx.compose.material.icons.filled.QrCode
-import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -34,40 +31,30 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.toLowerCase
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.kindToNipUrl
-import com.greenart7c3.nostrsigner.models.nipToUrl
-import com.greenart7c3.nostrsigner.ui.actions.ActivityDialog
-import com.greenart7c3.nostrsigner.ui.actions.DeleteDialog
-import com.greenart7c3.nostrsigner.ui.actions.EditRelaysDialog
-import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
-import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -76,26 +63,20 @@ import kotlinx.coroutines.launch
 fun EditPermission(
     modifier: Modifier,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     selectedPackage: String,
     navController: NavController,
     database: AppDatabase,
 ) {
-    val uriHandler = LocalUriHandler.current
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
-    val localAccount = LocalPreferences.loadFromEncryptedStorage(context, account.keyPair.pubKey.toNpub())!!
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
     var applicationData by remember {
-        mutableStateOf(ApplicationEntity(selectedPackage, "", emptyList(), "", "", "", "", true, "", false, 1))
-    }
-    var textFieldvalue by remember(applicationData.name) {
-        mutableStateOf(TextFieldValue(applicationData.name))
+        mutableStateOf(ApplicationEntity.empty())
     }
 
-    var wantsToDelete by remember { mutableStateOf(false) }
+    var wantsToRemovePermissions by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
 
     var checked by remember {
@@ -104,10 +85,7 @@ fun EditPermission(
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
         val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
-        mutableStateOf("bunker://${account.keyPair.pubKey.toHexKey()}?$relayString$secret")
-    }
-    var editRelaysDialog by remember {
-        mutableStateOf(false)
+        mutableStateOf("bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relayString$secret")
     }
 
     LaunchedEffect(Unit) {
@@ -117,226 +95,101 @@ fun EditPermission(
             checked = applicationData.useSecret
             val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+            bunkerUri = "bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relays$localSecret"
         }
     }
 
-    LaunchedEffect(bunkerUri) {
-        launch(Dispatchers.IO) {
-            if (!applicationData.isConnected) {
-                clipboardManager.setText(AnnotatedString(bunkerUri))
-            }
-        }
-    }
-
-    if (editRelaysDialog) {
-        EditRelaysDialog(
-            applicationData = applicationData,
-            accountStateViewModel = accountStateViewModel,
-            account = account,
-            onClose = {
-                editRelaysDialog = false
-            },
-        ) { relays2 ->
-            applicationData =
-                applicationData.copy(
-                    relays = relays2.map { it },
-                )
-            val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-            bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$secret"
-            editRelaysDialog = false
-        }
-    }
-
-    if (wantsToDelete) {
-        DeleteDialog(
+    if (wantsToRemovePermissions) {
+        RemoveAllPermissionsDialog(
             onCancel = {
-                wantsToDelete = false
+                wantsToRemovePermissions = false
             },
         ) {
             scope.launch(Dispatchers.IO) {
                 database
                     .applicationDao()
-                    .delete(applicationData)
+                    .deletePermissions(applicationData.key)
 
-                if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                    NostrSigner.getInstance().checkForNewRelays()
-                }
+                permissions.clear()
+                wantsToRemovePermissions = false
             }
-
-            scope.launch(Dispatchers.Main) {
-                navController.navigateUp()
-                accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
-            }
-        }
-    }
-
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-
-    var showActivityDialog by remember {
-        mutableStateOf(false)
-    }
-
-    if (showActivityDialog) {
-        ActivityDialog(
-            database = database,
-            key = selectedPackage,
-            onClose = {
-                showActivityDialog = false
-            },
-        )
-    }
-
-    if (showDialog) {
-        QrCodeDialog(
-            content = bunkerUri,
-        ) {
-            showDialog = false
         }
     }
 
     Column(
         modifier = modifier,
     ) {
-        Text(
-            stringResource(R.string.permissions),
-            Modifier
-                .fillMaxWidth()
-                .padding(8.dp),
-            fontWeight = FontWeight.Bold,
-            textAlign = TextAlign.Center,
-            fontSize = 18.sp,
+        if (!applicationData.isConnected) {
+            Text(
+                bunkerUri,
+                Modifier
+                    .padding(bottom = 8.dp),
+                textAlign = TextAlign.Start,
+                fontSize = 18.sp,
+            )
+
+            AmberButton(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(bunkerUri))
+                },
+                text = stringResource(R.string.copy_to_clipboard),
+            )
+
+            Spacer(Modifier.height(12.dp))
+        }
+
+        AmberButton(
+            modifier = Modifier.padding(top = 20.dp),
+            onClick = {
+                navController.navigate("Activity/${applicationData.key}")
+            },
+            text = stringResource(R.string.activity),
         )
 
-        if (!applicationData.isConnected) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    bunkerUri,
-                    Modifier
-                        .weight(0.9f)
-                        .padding(8.dp),
-                    fontWeight = FontWeight.Bold,
-                    textAlign = TextAlign.Center,
-                    fontSize = 18.sp,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-                IconButton(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(bunkerUri))
-                    },
-                ) {
-                    Icon(Icons.Default.ContentPaste, stringResource(R.string.copy_to_clipboard))
-                }
-                IconButton(
-                    onClick = {
-                        showDialog = true
-                    },
-                ) {
-                    Icon(Icons.Default.QrCode, stringResource(R.string.show_qr_code))
-                }
-            }
+        AmberButton(
+            modifier = Modifier.padding(bottom = 20.dp),
+            onClick = {
+                navController.navigate("EditConfiguration/${applicationData.key}")
+            },
+            text = stringResource(R.string.edit_configuration),
+        )
 
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .padding(horizontal = 8.dp)
-                    .clickable {
-                        checked = !checked
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                    },
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.use_secret_to_connect_to_the_application),
-                )
-                Switch(
-                    checked = checked,
-                    onCheckedChange = {
-                        checked = !checked
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-                        bunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                    },
-                )
-            }
-        }
-        OutlinedTextField(
+        Text(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp),
-            value = textFieldvalue.text,
-            keyboardOptions = KeyboardOptions(
-                imeAction = ImeAction.Done,
-            ),
-            onValueChange = {
-                textFieldvalue = TextFieldValue(it)
-            },
-            label = {
-                Text("Name")
-            },
+                .padding(bottom = 20.dp),
+            text = stringResource(R.string.edit_permissions_description),
         )
 
-        Row(
-            Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-        ) {
-            if (applicationData.secret.isNotEmpty() || applicationData.relays.isNotEmpty()) {
-                Row(
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Button(
-                        onClick = {
-                            editRelaysDialog = true
-                        },
-                        Modifier.padding(6.dp),
-                    ) {
-                        Text(stringResource(R.string.relays))
-                    }
-                }
-            }
+        permissions.forEachIndexed { _, permission ->
+            val localPermission =
+                Permission(
+                    permission.type.toLowerCase(Locale.current),
+                    permission.kind,
+                )
 
-            Row(
-                horizontalArrangement = Arrangement.Center,
+            val message =
+                if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
+                    stringResource(R.string.sign, localPermission.toLocalizedString(context))
+                } else {
+                    localPermission.toLocalizedString(context)
+                }
+
+            Card(
+                modifier = Modifier
+                    .padding(vertical = 4.dp)
+                    .fillMaxWidth(),
+                border = BorderStroke(1.dp, Color.LightGray),
+                colors = CardDefaults.cardColors().copy(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
             ) {
-                Button(
-                    onClick = {
-                        showActivityDialog = true
-                    },
-                    Modifier.padding(6.dp),
-                ) {
-                    Text(stringResource(R.string.activity))
-                }
-            }
-        }
-
-        LazyColumn(
-            Modifier.weight(1f),
-        ) {
-            itemsIndexed(permissions, { index, _ -> index }) { _, permission ->
-                val localPermission =
-                    Permission(
-                        permission.type.toLowerCase(Locale.current),
-                        permission.kind,
-                    )
-
-                val message =
-                    if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
-                        stringResource(R.string.sign, localPermission.toLocalizedString(context))
-                    } else {
-                        localPermission.toLocalizedString(context)
-                    }
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
-                        .padding(vertical = 8.dp, horizontal = 25.dp)
+                        .padding(vertical = 8.dp, horizontal = 8.dp)
                         .fillMaxWidth(),
                 ) {
                     Row(
@@ -346,166 +199,124 @@ fun EditPermission(
                             .weight(1f)
                             .padding(end = 8.dp)
                             .clickable {
-                                val localPermissions =
-                                    permissions.map {
-                                        if (it.id == permission.id) {
-                                            it.copy(acceptable = !permission.acceptable)
-                                        } else {
-                                            it.copy()
+                                scope.launch(Dispatchers.IO) {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
                                         }
-                                    }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                    database
+                                        .applicationDao()
+                                        .insertPermissions(localPermissions)
+                                }
                             },
                     ) {
+                        Checkbox(
+                            colors = CheckboxDefaults.colors().copy(
+                                uncheckedBorderColor = Color.Gray,
+                            ),
+                            checked = permission.acceptable,
+                            onCheckedChange = {
+                                scope.launch(Dispatchers.IO) {
+                                    val localPermissions =
+                                        permissions.map {
+                                            if (it.id == permission.id) {
+                                                it.copy(acceptable = !permission.acceptable)
+                                            } else {
+                                                it.copy()
+                                            }
+                                        }
+                                    permissions.clear()
+                                    permissions.addAll(localPermissions)
+                                    database.applicationDao().insertPermissions(localPermissions)
+                                }
+                            },
+                        )
                         Text(
                             modifier = Modifier.weight(1f),
                             text = message,
                             fontSize = 18.sp,
-                        )
-                        Switch(
-                            checked = permission.acceptable,
-                            onCheckedChange = {
-                                val localPermissions =
-                                    permissions.map {
-                                        if (it.id == permission.id) {
-                                            it.copy(acceptable = !permission.acceptable)
-                                        } else {
-                                            it.copy()
-                                        }
-                                    }
-                                permissions.clear()
-                                permissions.addAll(localPermissions)
-                            },
+                            color = if (permission.acceptable) Color.Unspecified else Color.Gray,
                         )
                     }
                     IconButton(
                         content = {
                             Icon(
-                                Icons.Default.Delete,
+                                ImageVector.vectorResource(R.drawable.delete),
                                 stringResource(R.string.remove_permission),
                                 modifier = Modifier
                                     .fillMaxHeight(),
-                                tint = Color.Red,
                             )
                         },
                         onClick = {
-                            permissions.remove(permission)
-                        },
-                    )
-                    IconButton(
-                        content = {
-                            Icon(
-                                Icons.Default.Info,
-                                stringResource(R.string.more_info),
-                                modifier = Modifier
-                                    .fillMaxHeight(),
-                            )
-                        },
-                        onClick = {
-                            if (permission.type.toLowerCase(Locale.current) == "sign_event") {
-                                val nip = permission.kind?.kindToNipUrl()
-                                if (nip == null) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.nip_not_found_for_the_event_kind, permission.kind.toString()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@IconButton
-                                }
-                                uriHandler.openUri(nip)
-                            } else if (permission.type.toLowerCase(Locale.current) == "nip") {
-                                val nip = permission.kind?.nipToUrl()
-                                if (nip == null) {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.nip_not_found, permission.kind.toString()),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                    return@IconButton
-                                }
-                                uriHandler.openUri(nip)
-                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP04_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP04_DECRYPT")) {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/04.md")
-                            } else if ((permission.type.toUpperCase(Locale.current) == "NIP44_ENCRYPT") || (permission.type.toUpperCase(Locale.current) == "NIP44_DECRYPT")) {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/44.md")
-                            } else if (permission.type.toLowerCase(Locale.current) == "decrypt_zap_event") {
-                                uriHandler.openUri("https://github.com/nostr-protocol/nips/blob/master/57.md")
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.no_information_available_for, localPermission.toLocalizedString(context)),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                            scope.launch(Dispatchers.IO) {
+                                permissions.remove(permission)
+                                database.applicationDao().deletePermission(permission)
                             }
                         },
                     )
                 }
             }
         }
-        Row(
-            Modifier
-                .fillMaxWidth(),
-            Arrangement.Center,
-        ) {
-            Button(
+
+        if (permissions.isNotEmpty()) {
+            AmberButton(
+                modifier = Modifier.padding(top = 60.dp, bottom = 60.dp),
+                colors = ButtonDefaults.buttonColors().copy(
+                    containerColor = orange,
+                ),
                 onClick = {
-                    wantsToDelete = true
+                    wantsToRemovePermissions = true
                 },
-                Modifier.padding(6.dp),
-            ) {
-                Text(stringResource(R.string.delete_application))
-            }
+                text = stringResource(R.string.remove_all_permissions),
+                textColor = Color.White,
+            )
         }
+    }
+}
 
+@Composable
+fun RelayCard(
+    modifier: Modifier = Modifier,
+    relay: String,
+    onClick: () -> Unit,
+) {
+    Card(
+        Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp),
+        border = BorderStroke(1.dp, Color.LightGray),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+    ) {
         Row(
-            Modifier
+            modifier
                 .fillMaxWidth(),
-            Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
         ) {
-            Button(
-                onClick = {
-                    if (!applicationData.isConnected) {
-                        val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-                        val localSecret = if (applicationData.useSecret) "&secret=${applicationData.secret}" else ""
-                        val localBunkerUri = "bunker://${account.keyPair.pubKey.toHexKey()}?$relays$localSecret"
-                        clipboardManager.setText(AnnotatedString(localBunkerUri))
-                    }
-
-                    navController.navigateUp()
-                },
-                Modifier.padding(6.dp),
+            Text(
+                relay,
+                Modifier
+                    .weight(0.9f)
+                    .padding(8.dp)
+                    .padding(start = 8.dp),
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            IconButton(
+                onClick = onClick,
             ) {
-                Text(stringResource(id = R.string.cancel))
-            }
-            Button(
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        val localApplicationData =
-                            applicationData.copy(
-                                name = textFieldvalue.text,
-                                useSecret = checked,
-                            )
-                        database.applicationDao().delete(applicationData)
-                        database.applicationDao().insertApplicationWithPermissions(
-                            ApplicationWithPermissions(
-                                localApplicationData,
-                                permissions,
-                            ),
-                        )
-                        if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
-                            NostrSigner.getInstance().checkForNewRelays()
-                        }
-
-                        scope.launch(Dispatchers.Main) {
-                            navController.navigateUp()
-                            accountStateViewModel.switchUser(localAccount.keyPair.pubKey.toNpub(), Route.Permissions.route)
-                        }
-                    }
-                },
-                Modifier.padding(6.dp),
-            ) {
-                Text(stringResource(id = R.string.confirm))
+                Icon(
+                    ImageVector.vectorResource(R.drawable.delete),
+                    stringResource(R.string.delete),
+                )
             }
         }
     }

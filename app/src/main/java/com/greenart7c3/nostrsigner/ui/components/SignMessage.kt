@@ -2,11 +2,15 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -34,6 +38,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SignMessage(
+    paddingValues: PaddingValues,
     content: String,
     shouldRunOnAccept: Boolean?,
     remember: MutableState<Boolean>,
@@ -54,7 +59,8 @@ fun SignMessage(
     Column(
         Modifier
             .fillMaxSize()
-            .padding(8.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(paddingValues),
     ) {
         val message = stringResource(R.string.sign_message)
 
@@ -112,7 +118,7 @@ fun SignMessage(
             RawJson(
                 content,
                 "",
-                Modifier.weight(1f),
+                Modifier.height(200.dp),
                 stringResource(R.string.content),
                 type,
             ) {

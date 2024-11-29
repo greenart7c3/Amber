@@ -34,7 +34,6 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.RelayPool
@@ -173,7 +172,7 @@ object IntentUtils {
                 SignerType.SIGN_EVENT -> {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
-                    if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                    if (unsignedEvent.pubKey != account.signer.keyPair.pubKey.toHexKey()) {
                         LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                             localAccount = it
                         }
@@ -388,15 +387,11 @@ object IntentUtils {
             GlobalScope.launch(Dispatchers.IO) {
                 if (RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
-                        NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
                         newRelays = relays.toSet(),
                     )
                 }
 
                 val success = Client.sendAndWaitForResponse(it, relayList = relays)
-                if (NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT) {
-                    RelayPool.unregister(Client)
-                }
                 if (success) {
                     onDone()
                 }
@@ -543,7 +538,7 @@ object IntentUtils {
             SignerType.GET_PUBLIC_KEY -> {
                 onReady(
                     IntentData(
-                        account.keyPair.pubKey.toNpub(),
+                        account.signer.keyPair.pubKey.toNpub(),
                         "",
                         type,
                         pubKey,
@@ -638,7 +633,7 @@ object IntentUtils {
             SignerType.SIGN_EVENT -> {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
-                if (unsignedEvent.pubKey != account.keyPair.pubKey.toHexKey()) {
+                if (unsignedEvent.pubKey != account.signer.keyPair.pubKey.toHexKey()) {
                     LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                         localAccount = it
                     }
@@ -804,6 +799,7 @@ object IntentUtils {
             val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
             val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()
+            var nostrConnectSecret = ""
             splitParsedData.forEach {
                 val internalSplit = it.split("=")
                 val paramName = internalSplit.first()
@@ -811,12 +807,18 @@ object IntentUtils {
                     if (index == 0) null else s
                 }.joinToString { data -> data }
                 if (paramName == "relay") {
+                    var relayUrl = json
+                    if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
                     relays.add(
-                        RelaySetupInfo(json, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
+                        RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
                     )
                 }
                 if (paramName == "name") {
                     name = json
+                }
+
+                if (paramName == "secret") {
+                    nostrConnectSecret = json
                 }
 
                 if (paramName == "perms") {
@@ -892,8 +894,10 @@ object IntentUtils {
                         pubKey,
                         relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         "",
-                        account.keyPair.pubKey.toNpub(),
+                        account.signer.keyPair.pubKey.toNpub(),
                         EncryptionType.NIP04,
+                        nostrConnectSecret,
+                        intent.getBooleanExtra("closeApplication", true),
                     ),
                     route,
                     null,
@@ -902,7 +906,7 @@ object IntentUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
-            NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+            NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
                 LogEntity(
                     0,
                     "nostrconnect",
@@ -972,7 +976,7 @@ object IntentUtils {
     ): Event {
         val event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
-            event.pubKey = account.keyPair.pubKey.toHexKey()
+            event.pubKey = account.signer.keyPair.pubKey.toHexKey()
         }
         if (event.id.isEmpty()) {
             event.id =
@@ -986,11 +990,5 @@ object IntentUtils {
         }
 
         return AmberEvent.toEvent(event)
-    }
-
-    fun isNip04(content: String): Boolean {
-        if (!content.contains("?iv=")) return false
-        if (content.length < 28) return false
-        return content[content.length - 28] == '?' && content[content.length - 27] == 'i' && content[content.length - 26] == 'v' && content[content.length - 25] == '='
     }
 }

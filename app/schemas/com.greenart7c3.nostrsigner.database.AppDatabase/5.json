@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 5,
-    "identityHash": "ffb55f8c910a34676fa829322921d260",
+    "identityHash": "3d67ebb3b84f49af6a6823444e1a28e9",
     "entities": [
       {
         "tableName": "application",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` TEXT NOT NULL, `name` TEXT NOT NULL, `relays` TEXT NOT NULL, `url` TEXT NOT NULL, `icon` TEXT NOT NULL, `description` TEXT NOT NULL, `pubKey` TEXT NOT NULL, `isConnected` INTEGER NOT NULL, `secret` TEXT NOT NULL, `useSecret` INTEGER NOT NULL, `signPolicy` INTEGER NOT NULL, PRIMARY KEY(`key`))",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`key` TEXT NOT NULL, `name` TEXT NOT NULL, `relays` TEXT NOT NULL, `url` TEXT NOT NULL, `icon` TEXT NOT NULL, `description` TEXT NOT NULL, `pubKey` TEXT NOT NULL, `isConnected` INTEGER NOT NULL, `secret` TEXT NOT NULL, `useSecret` INTEGER NOT NULL, `signPolicy` INTEGER NOT NULL, `closeApplication` INTEGER NOT NULL, PRIMARY KEY(`key`))",
         "fields": [
           {
             "fieldPath": "key",
@@ -71,6 +71,12 @@
           {
             "fieldPath": "signPolicy",
             "columnName": "signPolicy",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "closeApplication",
+            "columnName": "closeApplication",
             "affinity": "INTEGER",
             "notNull": true
           }
@@ -341,7 +347,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'ffb55f8c910a34676fa829322921d260')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '3d67ebb3b84f49af6a6823444e1a28e9')"
     ]
   }
 }

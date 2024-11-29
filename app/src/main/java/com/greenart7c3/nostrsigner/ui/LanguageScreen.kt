@@ -5,14 +5,11 @@ import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.unit.dp
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -35,29 +32,25 @@ fun LanguageScreen(
     val languageList = remember { languageEntries.keys.map { TitleExplainer(it) }.toImmutableList() }
     val languageIndex = getLanguageIndex(languageEntries, account.language)
 
-    Surface(
-        modifier.fillMaxSize(),
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
     ) {
-        Column(
-            modifier = Modifier.padding(10.dp),
-        ) {
-            Column {
-                Box(
-                    Modifier
-                        .padding(8.dp),
+        Column {
+            Box(
+                Modifier,
+            ) {
+                SettingsRow(
+                    R.string.language,
+                    R.string.language_description,
+                    languageList,
+                    languageIndex,
                 ) {
-                    SettingsRow(
-                        R.string.language,
-                        R.string.language_description,
-                        languageList,
-                        languageIndex,
-                    ) {
-                        account.language = languageEntries[languageList[it].title]
-                        LocalPreferences.saveToEncryptedStorage(context, account)
-                        AppCompatDelegate.setApplicationLocales(
-                            LocaleListCompat.forLanguageTags(account.language),
-                        )
-                    }
+                    account.language = languageEntries[languageList[it].title]
+                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    AppCompatDelegate.setApplicationLocales(
+                        LocaleListCompat.forLanguageTags(account.language),
+                    )
                 }
             }
         }

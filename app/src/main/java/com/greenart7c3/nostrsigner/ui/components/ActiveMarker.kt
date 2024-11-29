@@ -21,7 +21,7 @@ fun ActiveMarker(
 ) {
     val isCurrentUser by remember(account) {
         derivedStateOf {
-            account.keyPair.pubKey.toNpub() == acc.npub
+            account.signer.keyPair.pubKey.toNpub() == acc.npub
         }
     }
 
@@ -29,7 +29,7 @@ fun ActiveMarker(
         Icon(
             imageVector = Icons.Default.RadioButtonChecked,
             contentDescription = stringResource(R.string.active_account),
-            tint = MaterialTheme.colorScheme.secondary,
+            tint = MaterialTheme.colorScheme.primary,
         )
     }
 }

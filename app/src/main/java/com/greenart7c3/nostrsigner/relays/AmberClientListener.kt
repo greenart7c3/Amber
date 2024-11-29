@@ -73,7 +73,11 @@ class AmberClientListener(
             )
         }
         if (!success) {
-            accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
+            if (msg.isNotBlank()) {
+                accountStateViewModel?.toast("Error", "Failed to send event.\n$msg")
+            } else {
+                accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
+            }
         }
     }
 
@@ -96,6 +100,7 @@ class AmberClientListener(
     }
 
     override fun onError(error: Error, subscriptionId: String, relay: Relay) {
+        if (error.message?.trim()?.equals("Relay sent notice:") == true) return
         LocalPreferences.currentAccount(context)?.let { account ->
             NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
                 LogEntity(

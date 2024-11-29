@@ -6,8 +6,8 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -26,8 +26,9 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -45,15 +46,18 @@ fun SecurityScreen(
             TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
         )
     var enableBiometrics by remember { mutableStateOf(NostrSigner.getInstance().settings.useAuth) }
+    val setupPin by remember { mutableStateOf(NostrSigner.getInstance().settings.usePin) }
     var biometricsIndex by remember {
         mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
-    Surface(modifier.fillMaxSize()) {
+    Surface(
+        modifier.fillMaxSize(),
+        color = MaterialTheme.colorScheme.background,
+    ) {
         Column(
             modifier = Modifier
-                .fillMaxSize()
-                .padding(10.dp),
+                .fillMaxSize(),
         ) {
             Column(
                 Modifier.weight(1f),
@@ -78,6 +82,38 @@ fun SecurityScreen(
                         },
                     )
                 }
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            if (setupPin) {
+                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+                            } else {
+                                navController.navigate(Route.SetupPin.route)
+                            }
+                        },
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = stringResource(R.string.setup_pin),
+                    )
+                    Switch(
+                        checked = setupPin,
+                        onCheckedChange = {
+                            if (setupPin) {
+                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+                            } else {
+                                navController.navigate(Route.SetupPin.route)
+                            }
+                        },
+                    )
+                }
+
                 Box(
                     Modifier
                         .padding(8.dp),
@@ -92,12 +128,9 @@ fun SecurityScreen(
                     }
                 }
             }
-            Row(
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                PostButton(isActive = true) {
+
+            AmberButton(
+                onClick = {
                     scope.launch(Dispatchers.IO) {
                         NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
                             useAuth = enableBiometrics,
@@ -108,8 +141,9 @@ fun SecurityScreen(
                             navController.navigateUp()
                         }
                     }
-                }
-            }
+                },
+                text = stringResource(R.string.save),
+            )
         }
     }
 }

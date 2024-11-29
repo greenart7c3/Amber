@@ -9,18 +9,16 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonColors
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,14 +26,17 @@ import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.navigation.NavHostController
+import androidx.navigation.compose.rememberNavController
+import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -45,7 +46,6 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.PushNotificationUtils
 import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -60,6 +60,8 @@ fun AccountScreen(
     packageName: String?,
     appName: String?,
     flow: MutableStateFlow<List<IntentData>>,
+    navController: NavHostController,
+    storageHelper: SimpleStorageHelper,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val intents by flow.collectAsState(initial = emptyList())
@@ -73,109 +75,77 @@ fun AccountScreen(
         ) { state ->
             when (state) {
                 is AccountState.LoggedOff -> {
-                    MainLoginPage(accountStateViewModel)
+                    val newNavController = rememberNavController()
+                    MainLoginPage(accountStateViewModel, storageHelper, newNavController)
                 }
                 is AccountState.LoggedIn -> {
-                    var isLoading by remember { mutableStateOf(true) }
-                    var isNotificationsConfigured by remember {
-                        mutableStateOf(false)
-                    }
-                    LaunchedEffect(Unit) {
-                        launch(Dispatchers.IO) {
-                            isNotificationsConfigured = LocalPreferences.isNotificationTypeConfigured()
-                            isLoading = false
-                        }
-                    }
-
-                    if (isLoading) {
-                        Scaffold { innerPadding ->
-                            CenterCircularProgressIndicator(
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(innerPadding),
-                            )
-                        }
-                    } else {
-                        if (isNotificationsConfigured) {
-                            var intentData by remember {
-                                mutableStateOf<IntentData?>(null)
-                            }
-                            LaunchedEffect(intent, intents) {
-                                IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
-                                    intentData = it
-                                }
-                                val data =
-                                    intents.firstOrNull {
-                                        it.currentAccount.isNotBlank()
-                                    }
-
-                                data?.bunkerRequest?.let {
-                                    if (it.currentAccount.isNotBlank()) {
-                                        if (LocalPreferences.currentAccount(context) != it.currentAccount) {
-                                            accountStateViewModel.switchUser(it.currentAccount, null)
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (intentData != null) {
-                                if (intents.none { item -> item.id == intentData!!.id }) {
+                    LaunchedEffect(intent, intents) {
+                        IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
+                            it?.let { intentData ->
+                                if (intents.none { item -> item.id == intentData.id }) {
                                     val oldIntents = intents.toMutableList()
-                                    oldIntents.add(intentData!!)
+                                    oldIntents.add(intentData)
                                     flow.value = oldIntents
                                 }
                             }
+                        }
+                        val data =
+                            intents.firstOrNull {
+                                it.currentAccount.isNotBlank()
+                            }
 
-                            val newIntents =
-                                intents.ifEmpty {
-                                    if (intentData == null) {
-                                        listOf()
-                                    } else {
-                                        listOf(intentData)
-                                    }
-                                }.mapNotNull { it }
-                            val database = NostrSigner.getInstance().getDatabase(state.account.keyPair.pubKey.toNpub())
-                            val localRoute = mutableStateOf(newIntents.firstNotNullOfOrNull { it.route } ?: state.route)
-
-                            SideEffect {
-                                NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
-                                    PushNotificationUtils.accountState = accountStateViewModel
-                                    try {
-                                        NostrSigner.getInstance().applicationContext.startForegroundService(
-                                            Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
-                                        )
-                                    } catch (e: Exception) {
-                                        Log.d("NostrSigner", "Failed to start ConnectivityService", e)
-                                    }
-
-                                    @Suppress("KotlinConstantConditions")
-                                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT && BuildConfig.FLAVOR != "offline") {
-                                        NostrSigner.getInstance().checkForNewRelays()
-                                        NotificationDataSource.start()
-                                        delay(5000)
+                        data?.bunkerRequest?.let {
+                            if (it.currentAccount.isNotBlank()) {
+                                if (LocalPreferences.currentAccount(context) != it.currentAccount) {
+                                    if (LocalPreferences.containsAccount(context, it.currentAccount)) {
+                                        accountStateViewModel.switchUser(it.currentAccount, null)
                                     }
                                 }
                             }
+                        }
+                    }
 
-                            AmberListenerSingleton.accountStateViewModel = accountStateViewModel
+                    val database = NostrSigner.getInstance().getDatabase(state.account.signer.keyPair.pubKey.toNpub())
+                    val localRoute = mutableStateOf(intents.firstNotNullOfOrNull { it.route } ?: state.route)
 
-                            DisplayErrorMessages(accountStateViewModel)
-                            MainScreen(state.account, accountStateViewModel, newIntents, packageName, appName, localRoute, database)
-                        } else {
-                            AmberListenerSingleton.accountStateViewModel = accountStateViewModel
-                            DisplayErrorMessages(accountStateViewModel)
-                            Scaffold { innerPadding ->
-                                NotificationTypeScreen(
-                                    Modifier
-                                        .fillMaxSize()
-                                        .padding(innerPadding),
-                                    onDone = {
-                                        isNotificationsConfigured = true
-                                    },
+                    SideEffect {
+                        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                            try {
+                                NostrSigner.getInstance().applicationContext.startForegroundService(
+                                    Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
                                 )
+                            } catch (e: Exception) {
+                                Log.d("NostrSigner", "Failed to start ConnectivityService", e)
+                            }
+
+                            @Suppress("KotlinConstantConditions")
+                            if (BuildConfig.FLAVOR != "offline") {
+                                NostrSigner.getInstance().checkForNewRelays()
+                                NotificationDataSource.start()
+                                delay(5000)
                             }
                         }
                     }
+
+                    AmberListenerSingleton.accountStateViewModel = accountStateViewModel
+
+                    DisplayErrorMessages(accountStateViewModel)
+                    MainScreen(
+                        state.account,
+                        accountStateViewModel,
+                        intents,
+                        packageName,
+                        appName,
+                        localRoute,
+                        database,
+                        navController,
+                        storageHelper,
+                        onRemoveIntentData = {
+                            val oldIntents = intents.toMutableList()
+                            oldIntents.remove(it)
+                            flow.value = oldIntents
+                        },
+                    )
                 }
             }
         }
@@ -221,8 +191,74 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                     obj.onOk()
                     accountViewModel.clearToasts()
                 }
+            is AcceptRejectToastMsg ->
+                InformationDialog(
+                    obj.title,
+                    obj.msg,
+                    onAccept = {
+                        obj.onAccept()
+                        accountViewModel.clearToasts()
+                    },
+                    onReject = {
+                        obj.onReject()
+                        accountViewModel.clearToasts()
+                    },
+                )
         }
     }
+}
+
+@Composable
+fun InformationDialog(
+    title: String,
+    textContent: String,
+    buttonColors: ButtonColors = ButtonDefaults.buttonColors(),
+    onAccept: () -> Unit,
+    onReject: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onReject,
+        title = { Text(title) },
+        text = { SelectionContainer { Text(textContent) } },
+        dismissButton = {
+            Button(
+                onClick = onReject,
+                colors = buttonColors,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Close,
+                        contentDescription = null,
+                        tint = Color.Black,
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(R.string.no))
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = onAccept,
+                colors = buttonColors,
+                contentPadding = PaddingValues(horizontal = 16.dp),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.Done,
+                        contentDescription = null,
+                        tint = Color.Black,
+                    )
+                    Spacer(Modifier.width(5.dp))
+                    Text(stringResource(R.string.yes))
+                }
+            }
+        },
+    )
 }
 
 @Composable
@@ -248,6 +284,7 @@ fun InformationDialog(
                     Icon(
                         imageVector = Icons.Outlined.Done,
                         contentDescription = null,
+                        tint = Color.Black,
                     )
                     Spacer(Modifier.width(5.dp))
                     Text(stringResource(R.string.ok))

@@ -68,11 +68,11 @@ fun RawJson(
         }
     }
     Row(
-        Modifier.fillMaxWidth(),
+        Modifier
+            .fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
-        Button(
-            shape = ButtonBorder,
+        AmberButton(
             onClick = {
                 if (onCopy != null) {
                     onCopy()
@@ -88,8 +88,7 @@ fun RawJson(
                     }
                 }
             },
-        ) {
-            Text(stringResource(R.string.copy) + label)
-        }
+            text = (stringResource(R.string.copy) + label),
+        )
     }
 }

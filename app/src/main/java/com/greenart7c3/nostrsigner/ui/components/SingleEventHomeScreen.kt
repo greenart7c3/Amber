@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -36,7 +37,6 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.bechToBytes
@@ -49,11 +49,13 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SingleEventHomeScreen(
+    paddingValues: PaddingValues,
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
     account: Account,
     database: AppDatabase,
+    onRemoveIntentData: (IntentData) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     var applicationEntity by remember {
@@ -95,6 +97,9 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
+                paddingValues,
+                remember,
+                intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
                 account,
                 packageName,
                 appName,
@@ -103,11 +108,11 @@ fun SingleEventHomeScreen(
                 { permissions, signPolicy ->
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
-                            "ack"
+                            intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
                         } else if (intentData.bunkerRequest != null) {
-                            account.keyPair.pubKey.toHexKey()
+                            account.signer.keyPair.pubKey.toHexKey()
                         } else {
-                            account.keyPair.pubKey.toNpub()
+                            account.signer.keyPair.pubKey.toNpub()
                         }
                     coroutineScope.launch {
                         sendResult(
@@ -126,6 +131,7 @@ fun SingleEventHomeScreen(
                             database = database,
                             onLoading = onLoading,
                             signPolicy = signPolicy,
+                            onRemoveIntentData = onRemoveIntentData,
                         )
                     }
                     return@LoginWithPubKey
@@ -138,19 +144,22 @@ fun SingleEventHomeScreen(
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
 
                             NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
+                                newRelays = relays.toSet(),
                             )
 
                             AmberUtils.sendBunkerError(
+                                intentData,
                                 account,
                                 intentData.bunkerRequest,
                                 applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
                                 context,
+                                closeApplication = intentData.bunkerRequest.closeApplication,
                                 onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
                             )
                         }
                     } else {
+                        onRemoveIntentData(intentData)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
@@ -175,6 +184,7 @@ fun SingleEventHomeScreen(
                     packageName
                 }
             SignMessage(
+                paddingValues,
                 intentData.data,
                 permission?.acceptable,
                 remember,
@@ -184,7 +194,7 @@ fun SingleEventHomeScreen(
                 intentData.type,
                 {
                     coroutineScope.launch(Dispatchers.IO) {
-                        val result = CryptoUtils.signString(intentData.data, account.keyPair.privKey!!).toHexKey()
+                        val result = CryptoUtils.signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
                         sendResult(
                             context,
@@ -199,12 +209,15 @@ fun SingleEventHomeScreen(
                             null,
                             database,
                             onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
                         )
                     }
                 },
                 {
                     coroutineScope.launch(Dispatchers.IO) {
                         if (key == "null") {
+                            context.getAppCompatActivity()?.intent = null
+                            context.getAppCompatActivity()?.finish()
                             return@launch
                         }
 
@@ -220,11 +233,12 @@ fun SingleEventHomeScreen(
                                     "",
                                     "",
                                     "",
-                                    account.keyPair.pubKey.toHexKey(),
+                                    account.signer.keyPair.pubKey.toHexKey(),
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
                                     account.signPolicy,
+                                    intentData.bunkerRequest?.closeApplication ?: true,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -242,8 +256,7 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
+                                newRelays = relays.toSet(),
                             )
                         }
 
@@ -262,15 +275,21 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             AmberUtils.sendBunkerError(
+                                intentData,
                                 account,
                                 intentData.bunkerRequest,
                                 relays,
                                 context,
-                                onLoading,
+                                closeApplication = application.application.closeApplication,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
                             )
                         } else {
+                            onRemoveIntentData(intentData)
                             context.getAppCompatActivity()?.intent = null
-                            context.getAppCompatActivity()?.finish()
+                            if (application.application.closeApplication) {
+                                context.getAppCompatActivity()?.finish()
+                            }
                         }
                     }
                 },
@@ -306,6 +325,7 @@ fun SingleEventHomeScreen(
                     packageName
                 }
             EncryptDecryptData(
+                paddingValues,
                 intentData.data,
                 intentData.encryptedData ?: "",
                 permission?.acceptable,
@@ -335,7 +355,8 @@ fun SingleEventHomeScreen(
                             intentData,
                             null,
                             database,
-                            onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                            onLoading = onLoading,
                         )
                     }
                 },
@@ -357,11 +378,12 @@ fun SingleEventHomeScreen(
                                     "",
                                     "",
                                     "",
-                                    account.keyPair.pubKey.toHexKey(),
+                                    account.signer.keyPair.pubKey.toHexKey(),
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
                                     account.signPolicy,
+                                    intentData.bunkerRequest?.closeApplication ?: true,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -378,8 +400,7 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             NostrSigner.getInstance().checkForNewRelays(
-                                NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                relays.toSet(),
+                                newRelays = relays.toSet(),
                             )
                         }
 
@@ -398,15 +419,21 @@ fun SingleEventHomeScreen(
 
                         if (intentData.bunkerRequest != null) {
                             AmberUtils.sendBunkerError(
+                                intentData,
                                 account,
                                 intentData.bunkerRequest,
                                 relays,
                                 context,
+                                closeApplication = application.application.closeApplication,
+                                onRemoveIntentData = onRemoveIntentData,
                                 onLoading,
                             )
                         } else {
+                            onRemoveIntentData(intentData)
                             context.getAppCompatActivity()?.intent = null
-                            context.getAppCompatActivity()?.finish()
+                            if (application.application.closeApplication) {
+                                context.getAppCompatActivity()?.finish()
+                            }
                         }
                     }
                 },
@@ -451,6 +478,7 @@ fun SingleEventHomeScreen(
                         packageName
                     }
                 EventData(
+                    paddingValues,
                     permission?.acceptable,
                     remember,
                     localPackageName,
@@ -460,7 +488,7 @@ fun SingleEventHomeScreen(
                     event.toJson(),
                     intentData.type,
                     {
-                        if (event.pubKey != account.keyPair.pubKey.toHexKey() && !isPrivateEvent(event.kind, event.tags)) {
+                        if (event.pubKey != account.signer.keyPair.pubKey.toHexKey() && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
@@ -495,6 +523,7 @@ fun SingleEventHomeScreen(
                             event.kind,
                             database,
                             onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
                         )
                     },
                     {
@@ -517,19 +546,19 @@ fun SingleEventHomeScreen(
                                         "",
                                         "",
                                         "",
-                                        account.keyPair.pubKey.toHexKey(),
+                                        account.signer.keyPair.pubKey.toHexKey(),
                                         true,
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
                                         account.signPolicy,
+                                        intentData.bunkerRequest?.closeApplication ?: true,
                                     ),
                                     permissions = mutableListOf(),
                                 )
 
                             if (intentData.bunkerRequest != null) {
                                 NostrSigner.getInstance().checkForNewRelays(
-                                    NostrSigner.getInstance().settings.notificationType != NotificationType.DIRECT,
-                                    relays.toSet(),
+                                    newRelays = relays.toSet(),
                                 )
                             }
 
@@ -559,15 +588,21 @@ fun SingleEventHomeScreen(
 
                             if (intentData.bunkerRequest != null) {
                                 AmberUtils.sendBunkerError(
+                                    intentData,
                                     account,
                                     intentData.bunkerRequest,
                                     relays,
                                     context,
-                                    onLoading,
+                                    closeApplication = application.application.closeApplication,
+                                    onLoading = onLoading,
+                                    onRemoveIntentData = onRemoveIntentData,
                                 )
                             } else {
+                                onRemoveIntentData(intentData)
                                 context.getAppCompatActivity()?.intent = null
-                                context.getAppCompatActivity()?.finish()
+                                if (application.application.closeApplication) {
+                                    context.getAppCompatActivity()?.finish()
+                                }
                             }
                         }
                     },

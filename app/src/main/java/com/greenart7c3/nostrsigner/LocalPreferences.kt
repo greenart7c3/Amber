@@ -11,7 +11,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
-import com.greenart7c3.nostrsigner.ui.parseNotificationType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
@@ -19,6 +18,7 @@ import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.jni.BuildConfig
 import java.io.File
 import kotlinx.coroutines.Dispatchers
@@ -33,6 +33,8 @@ private const val DEBUG_PLAINTEXT_PREFERENCES = false
 private const val DEBUG_PREFERENCES_NAME = "debug_prefs"
 
 private object PrefKeys {
+    const val PIN = "pin"
+    const val USE_PIN = "use_pin"
     const val CURRENT_ACCOUNT = "currently_logged_in_account"
     const val SAVED_ACCOUNTS = "all_saved_accounts"
     const val NOSTR_PRIVKEY = "nostr_privkey"
@@ -42,9 +44,9 @@ private object PrefKeys {
     const val RATIONALE = "rationale"
     const val USE_PROXY = "use_proxy"
     const val PROXY_PORT = "proxy_port"
-    const val NOTIFICATION_TYPE = "notification_type"
     const val LANGUAGE_PREFS = "languagePreferences"
     const val DEFAULT_RELAYS = "default_relays"
+    const val DEFAULT_PROFILE_RELAYS = "default_profile_relays"
     const val ENDPOINT = "endpoint"
     const val PUSH_SERVER_MESSAGE = "push_server_message"
     const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
@@ -53,6 +55,9 @@ private object PrefKeys {
     const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
     const val SIGN_POLICY = "default_sign_policy"
     const val SEED_WORDS2 = "seed_words"
+    const val PROFILE_URL = "profile_url"
+    const val LAST_METADATA_UPDATE = "last_metadata_update"
+    const val LAST_CHECK = "last_check"
 }
 
 @Immutable
@@ -99,7 +104,7 @@ object LocalPreferences {
         return encryptedPreferences(context).getBoolean(PrefKeys.RATIONALE, true)
     }
 
-    fun updateShoulShowRationale(context: Context, value: Boolean) {
+    fun updateShouldShowRationale(context: Context, value: Boolean) {
         encryptedPreferences(context).edit().apply {
             putBoolean(PrefKeys.RATIONALE, value)
         }.apply()
@@ -111,17 +116,64 @@ object LocalPreferences {
             putString(PrefKeys.ENDPOINT, settings.endpoint)
             putBoolean(PrefKeys.PUSH_SERVER_MESSAGE, settings.pushServerMessage)
             putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
+            putStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
             putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
             putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
-            putInt(PrefKeys.NOTIFICATION_TYPE, settings.notificationType.screenCode)
             putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
+            putBoolean(PrefKeys.USE_PIN, settings.usePin)
         }.apply()
     }
 
-    suspend fun isNotificationTypeConfigured(): Boolean {
+    fun getLastCheck(context: Context, npub: String): Long {
+        return encryptedPreferences(context, npub).getLong(PrefKeys.LAST_CHECK, 0)
+    }
+
+    fun setLastCheck(context: Context, npub: String, time: Long) {
+        encryptedPreferences(context, npub).edit().apply {
+            putLong(PrefKeys.LAST_CHECK, time)
+        }.apply()
+    }
+
+    fun getLastMetadataUpdate(context: Context, npub: String): Long {
+        return encryptedPreferences(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE, 0)
+    }
+
+    fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
+        encryptedPreferences(context, npub).edit().apply {
+            putLong(PrefKeys.LAST_METADATA_UPDATE, time)
+        }.apply()
+    }
+
+    fun loadPinFromEncryptedStorage(): String? {
         val context = NostrSigner.getInstance()
-        val prefs = encryptedPreferences(context)
-        return prefs.contains(PrefKeys.NOTIFICATION_TYPE)
+        return encryptedPreferences(context).getString(PrefKeys.PIN, null)
+    }
+
+    fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
+        val context = NostrSigner.getInstance()
+        return encryptedPreferences(context, npub).getString(PrefKeys.PROFILE_URL, null)
+    }
+
+    fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
+        val context = NostrSigner.getInstance()
+        encryptedPreferences(context, npub).edit().apply {
+            if (profileUrl == null) {
+                remove(PrefKeys.PROFILE_URL)
+            } else {
+                putString(PrefKeys.PROFILE_URL, profileUrl)
+            }
+        }.apply()
+    }
+
+    fun savePinToEncryptedStorage(pin: String?) {
+        val context = NostrSigner.getInstance()
+        encryptedPreferences(context).edit().apply {
+            if (pin == null) {
+                remove(PrefKeys.PIN)
+            } else {
+                putString(PrefKeys.PIN, pin)
+            }
+        }.apply()
     }
 
     suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
@@ -134,10 +186,16 @@ object LocalPreferences {
                 defaultRelays = getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
+                defaultProfileRelays = getStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, null)?.map {
+                    RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
+                } ?: listOf(
+                    RelaySetupInfo("wss://relay.nostr.band", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
+                    RelaySetupInfo("wss://purplepag.es", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
+                ),
                 lastBiometricsTime = getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0),
                 useAuth = getBoolean(PrefKeys.USE_AUTH, false),
-                notificationType = parseNotificationType(getInt(PrefKeys.NOTIFICATION_TYPE, 1)),
                 biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
+                usePin = getBoolean(PrefKeys.USE_PIN, false),
             )
         }
     }
@@ -175,7 +233,7 @@ object LocalPreferences {
     }
 
     private fun setCurrentAccount(context: Context, account: Account) {
-        val npub = account.keyPair.pubKey.toNpub()
+        val npub = account.signer.keyPair.pubKey.toNpub()
         updateCurrentAccount(context, npub)
         addAccount(context, npub)
     }
@@ -231,7 +289,7 @@ object LocalPreferences {
      * condition and the file will probably not be deleted
      */
     @SuppressLint("ApplySharedPref")
-    fun updatePrefsForLogout(npub: String, context: Context) {
+    fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         accountCache.remove(npub)
         val userPrefs = encryptedPreferences(context, npub)
         userPrefs.edit().clear().commit()
@@ -240,10 +298,13 @@ object LocalPreferences {
 
         if (savedAccounts(context).isEmpty()) {
             val appPrefs = encryptedPreferences(context)
-            appPrefs.edit().clear().apply()
+            appPrefs.edit().clear().commit()
+            return true
         } else if (currentAccount(context) == npub) {
             updateCurrentAccount(context, savedAccounts(context).elementAt(0))
+            return false
         }
+        return false
     }
 
     fun updatePrefsForLogin(context: Context, account: Account) {
@@ -251,20 +312,11 @@ object LocalPreferences {
         saveToEncryptedStorage(context, account)
     }
 
-    suspend fun deleteSavedApps(
-        applications: List<ApplicationEntity>,
-        database: AppDatabase,
-    ) = withContext(Dispatchers.IO) {
-        applications.forEach {
-            database.applicationDao().delete(it)
-        }
-    }
-
     fun saveToEncryptedStorage(context: Context, account: Account) {
-        val prefs = encryptedPreferences(context = context, account.keyPair.pubKey.toNpub())
+        val prefs = encryptedPreferences(context = context, account.signer.keyPair.pubKey.toNpub())
         prefs.edit().apply {
-            account.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
-            account.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
+            account.signer.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
+            account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
             putBoolean(PrefKeys.USE_PROXY, account.useProxy)
             putInt(PrefKeys.PROXY_PORT, account.proxyPort)
             putString(PrefKeys.ACCOUNT_NAME, account.name)
@@ -339,6 +391,7 @@ object LocalPreferences {
                     "",
                     false,
                     1,
+                    closeApplication = true,
                 ),
             )
             database.applicationDao().insertPermissions(
@@ -391,7 +444,7 @@ object LocalPreferences {
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =
                 Account(
-                    keyPair = KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray()),
+                    signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
                     name = name,
                     useProxy = useProxy,
                     proxyPort = proxyPort,

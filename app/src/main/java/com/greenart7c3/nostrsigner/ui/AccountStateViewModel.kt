@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.bechToBytes
+import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,9 @@ class StringToastMsg(val title: String, val msg: String) : ToastMsg()
 
 @Immutable
 class ConfirmationToastMsg(val title: String, val msg: String, val onOk: () -> Unit) : ToastMsg()
+
+@Immutable
+class AcceptRejectToastMsg(val title: String, val msg: String, val onAccept: () -> Unit, val onReject: () -> Unit) : ToastMsg()
 
 @Immutable
 class ResourceToastMsg(
@@ -66,16 +70,33 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         viewModelScope.launch { toasts.emit(ConfirmationToastMsg(title, message, onOk)) }
     }
 
+    fun toast(
+        title: String,
+        message: String,
+        onAccept: () -> Unit,
+        onReject: () -> Unit,
+    ) {
+        viewModelScope.launch { toasts.emit(AcceptRejectToastMsg(title, message, onAccept, onReject)) }
+    }
+
     private fun tryLoginExistingAccount(
         route: String?,
         npub: String?,
+        forceLogout: Boolean = false,
     ) {
         var currentUser = npub ?: LocalPreferences.currentAccount(NostrSigner.getInstance())
-        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.getInstance(), currentUser)) {
+        val allAccounts = LocalPreferences.allSavedAccounts(NostrSigner.getInstance())
+        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.getInstance(), currentUser) && allAccounts.any { it.npub == currentUser }) {
             currentUser = LocalPreferences.currentAccount(NostrSigner.getInstance())
+        }
+        if (forceLogout) {
+            currentUser = null
         }
         LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), currentUser)?.let {
             startUI(it, route)
+        }
+        if (currentUser == null) {
+            _accountContent.update { AccountState.LoggedOff }
         }
     }
 
@@ -95,8 +116,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        LocalPreferences.updatePrefsForLogout(npub, NostrSigner.getInstance())
-        tryLoginExistingAccount(null, null)
+        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, NostrSigner.getInstance())
+        tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
     }
 
     fun switchUser(
@@ -116,7 +137,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         CryptoUtils.decryptNIP49(key, password)
                             ?: throw Exception("Could not decrypt key with provided password")
                     Account(
-                        KeyPair(Hex.decode(newKey)),
+                        signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -127,7 +148,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     )
                 } else if (key.startsWith("nsec")) {
                     Account(
-                        KeyPair(privKey = key.bechToBytes()),
+                        signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -139,7 +160,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
                     val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
                     Account(
-                        keyPair,
+                        signer = NostrSignerInternal(keyPair),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -150,7 +171,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     )
                 } else {
                     Account(
-                        KeyPair(Hex.decode(key)),
+                        signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
                         name = "",
                         useProxy = false,
                         proxyPort = 0,
@@ -160,7 +181,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         seedWords = emptySet(),
                     )
                 }
-            return account.keyPair.privKey != null
+            return account.signer.keyPair.privKey != null
         } catch (e: Exception) {
             return false
         }
@@ -180,7 +201,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     CryptoUtils.decryptNIP49(key, password)
                         ?: throw Exception("Could not decrypt key with provided password")
                 Account(
-                    KeyPair(Hex.decode(newKey)),
+                    signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -191,7 +212,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 )
             } else if (key.startsWith("nsec")) {
                 Account(
-                    KeyPair(privKey = key.bechToBytes()),
+                    signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -203,7 +224,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
                 val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
                 Account(
-                    keyPair,
+                    signer = NostrSignerInternal(keyPair),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -214,7 +235,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 )
             } else {
                 Account(
-                    KeyPair(Hex.decode(key)),
+                    signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
                     name = "",
                     useProxy = useProxy,
                     proxyPort = proxyPort,
@@ -234,12 +255,13 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         proxyPort: Int,
         signPolicy: Int,
         seedWords: Set<String>,
+        name: String,
     ) {
         val key = seedWords.joinToString(separator = " ") { it }
         val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
         val account = Account(
-            keyPair,
-            name = "",
+            NostrSignerInternal(keyPair),
+            name = name,
             useProxy = useProxy,
             proxyPort = proxyPort,
             language = null,

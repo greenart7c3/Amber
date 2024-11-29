@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -58,18 +57,13 @@ fun SeedWordsPage(
 
             Spacer(modifier = Modifier.height(20.dp))
 
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center,
-            ) {
-                Button(
-                    onClick = {
-                        clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
-                    },
-                ) {
-                    Text(text = stringResource(R.string.copy_to_clipboard))
-                }
-            }
+            AmberButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
+                },
+                text = stringResource(R.string.copy_to_clipboard),
+            )
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.Center,
@@ -129,19 +123,10 @@ fun SeedWordsPage(
                 }
             }
             if (showNextButton) {
-                Row(
-                    Modifier
-                        .fillMaxWidth(),
-                    horizontalArrangement = Arrangement.Center,
-                ) {
-                    Button(
-                        modifier = Modifier
-                            .height(50.dp),
-                        onClick = onNextPage,
-                    ) {
-                        Text(text = stringResource(R.string.next))
-                    }
-                }
+                AmberButton(
+                    onClick = onNextPage,
+                    text = stringResource(R.string.next),
+                )
             }
         }
     }

@@ -13,10 +13,8 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.ui.NotificationType
 import com.vitorpamplona.ammolite.relays.RelayPool
 import java.util.Timer
 import java.util.TimerTask
@@ -40,7 +38,7 @@ class ConnectivityService : Service() {
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
 
-                if (lastNetwork != null && lastNetwork != network && NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                if (lastNetwork != null && lastNetwork != network) {
                     scope.launch(Dispatchers.IO) {
                         NotificationDataSource.stopSync()
                         delay(1000)
@@ -66,7 +64,7 @@ class ConnectivityService : Service() {
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${NostrSigner.getInstance().isOnMobileDataState.value} hasWifi ${NostrSigner.getInstance().isOnWifiDataState.value}",
                     )
-                    if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities) && NostrSigner.getInstance().settings.notificationType == NotificationType.DIRECT) {
+                    if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities)) {
                         NotificationDataSource.stopSync()
                         delay(1000)
                         NotificationDataSource.start()
@@ -90,8 +88,7 @@ class ConnectivityService : Service() {
             NotificationCompat.Builder(this, channelId)
                 .setContentTitle(getString(R.string.amber_is_running_in_background))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
-                .setSmallIcon(R.mipmap.ic_launcher_foreground)
-                .setColor(0xFFBF00)
+                .setSmallIcon(R.drawable.ic_notification)
 
         return notificationBuilder.build()
     }
@@ -101,11 +98,6 @@ class ConnectivityService : Service() {
 
         isStarted = true
         startForeground(1, createNotification())
-
-        scope.launch(Dispatchers.IO) {
-            PushNotificationUtils.hasInit = false
-            PushNotificationUtils.init(LocalPreferences.allSavedAccounts(this@ConnectivityService))
-        }
 
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
@@ -120,9 +112,11 @@ class ConnectivityService : Service() {
         timer.schedule(
             object : TimerTask() {
                 override fun run() {
-                    if (NostrSigner.getInstance().settings.notificationType == NotificationType.PUSH) return
+                    @Suppress("KotlinConstantConditions")
+                    if (BuildConfig.FLAVOR == "offline") {
+                        return
+                    }
 
-                    Log.d("ConnectivityService", "Checking connectivity...")
                     RelayPool.getAll().forEach {
                         if (!it.isConnected()) {
                             Log.d(

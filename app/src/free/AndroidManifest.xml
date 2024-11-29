@@ -26,19 +26,6 @@
                 />
         </service>
 
-        <receiver
-            android:exported="true"
-            android:enabled="true"
-            android:name=".service.PushMessageReceiver">
-            <intent-filter>
-                <action android:name="org.unifiedpush.android.connector.MESSAGE"/>
-                <action android:name="org.unifiedpush.android.connector.UNREGISTERED"/>
-                <action android:name="org.unifiedpush.android.connector.NEW_ENDPOINT"/>
-                <action android:name="org.unifiedpush.android.connector.REGISTRATION_FAILED"/>
-                <action android:name="org.unifiedpush.android.connector.REGISTRATION_REFUSED"/>
-            </intent-filter>
-        </receiver>
-
         <activity
             android:name=".MainActivity"
             android:exported="true">

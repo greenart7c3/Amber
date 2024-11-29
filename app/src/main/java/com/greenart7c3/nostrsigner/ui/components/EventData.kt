@@ -1,11 +1,15 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -32,6 +36,7 @@ import com.vitorpamplona.quartz.events.Event
 
 @Composable
 fun EventData(
+    paddingValues: PaddingValues,
     shouldAcceptOrReject: Boolean?,
     remember: MutableState<Boolean>,
     packageName: String?,
@@ -51,7 +56,8 @@ fun EventData(
     Column(
         Modifier
             .fillMaxSize()
-            .padding(8.dp),
+            .verticalScroll(rememberScrollState())
+            .padding(paddingValues),
     ) {
         val permission = Permission("sign_event", event.kind)
         val text = stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
@@ -106,7 +112,7 @@ fun EventData(
             if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details),
         )
         if (showMore) {
-            RawJson(rawJson, "", Modifier.weight(1f), type = type)
+            RawJson(rawJson, "", Modifier.height(200.dp), type = type)
         } else {
             Spacer(modifier = Modifier.weight(1f))
         }

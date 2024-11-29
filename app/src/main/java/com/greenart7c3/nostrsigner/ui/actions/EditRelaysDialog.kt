@@ -5,8 +5,9 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -14,13 +15,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Circle
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -28,52 +23,53 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.RelayListener
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
-import com.greenart7c3.nostrsigner.ui.components.PostButton
+import com.greenart7c3.nostrsigner.ui.RelayCard
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.ammolite.relays.RelayStats
+import com.vitorpamplona.ammolite.relays.TypedFilter
+import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.RelayUrlFormatter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
+import java.util.Base64
+import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -82,166 +78,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 @Composable
-fun EditRelaysDialog(
-    applicationData: ApplicationEntity,
-    accountStateViewModel: AccountStateViewModel,
-    account: Account,
-    onClose: () -> Unit,
-    onPost: (SnapshotStateList<RelaySetupInfo>) -> Unit,
-) {
-    val scope = rememberCoroutineScope()
-    val context = LocalContext.current
-    val textFieldRelay = remember {
-        mutableStateOf(TextFieldValue(""))
-    }
-    val isLoading = remember {
-        mutableStateOf(false)
-    }
-    val relays2 =
-        remember {
-            val localRelays = mutableStateListOf<RelaySetupInfo>()
-            applicationData.relays.forEach {
-                localRelays.add(
-                    it.copy(),
-                )
-            }
-            localRelays
-        }
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(
-            modifier = Modifier
-                .fillMaxSize(),
-        ) {
-            if (isLoading.value) {
-                CenterCircularProgressIndicator(Modifier)
-            } else {
-                Column(
-                    modifier = Modifier
-                        .background(MaterialTheme.colorScheme.background)
-                        .fillMaxSize(),
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(10.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        CloseButton {
-                            onClose()
-                        }
-                        PostButton(
-                            isActive = !applicationData.isConnected,
-                            onPost = {
-                                onPost(relays2)
-                            },
-                        )
-                    }
-                    LazyColumn(
-                        Modifier
-                            .fillMaxWidth(),
-                    ) {
-                        items(relays2.size) {
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    relays2[it].url,
-                                    Modifier
-                                        .weight(0.9f)
-                                        .padding(8.dp),
-                                    fontWeight = FontWeight.Bold,
-                                    fontSize = 18.sp,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                )
-                                IconButton(
-                                    onClick = {
-                                        relays2.removeAt(it)
-                                    },
-                                ) {
-                                    Icon(
-                                        Icons.Default.Delete,
-                                        stringResource(R.string.delete),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    Row(
-                        Modifier.fillMaxWidth(),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        OutlinedTextField(
-                            enabled = !applicationData.isConnected,
-                            modifier = Modifier
-                                .fillMaxWidth(0.9f)
-                                .padding(horizontal = 16.dp),
-                            value = textFieldRelay.value.text,
-                            keyboardOptions = KeyboardOptions(
-                                imeAction = ImeAction.Done,
-                            ),
-                            onValueChange = {
-                                textFieldRelay.value = TextFieldValue(it)
-                            },
-                            keyboardActions = KeyboardActions(
-                                onDone = {
-                                    if (applicationData.isConnected) return@KeyboardActions
-
-                                    scope.launch(Dispatchers.IO) {
-                                        onAddRelay(
-                                            textFieldRelay,
-                                            isLoading,
-                                            relays2,
-                                            scope,
-                                            accountStateViewModel,
-                                            account,
-                                            context,
-                                        )
-                                    }
-                                },
-                            ),
-                            label = {
-                                Text("Relay")
-                            },
-                        )
-                        IconButton(
-                            onClick = {
-                                if (applicationData.isConnected) return@IconButton
-                                scope.launch(Dispatchers.IO) {
-                                    onAddRelay(
-                                        textFieldRelay,
-                                        isLoading,
-                                        relays2,
-                                        scope,
-                                        accountStateViewModel,
-                                        account,
-                                        context,
-                                    )
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.Add,
-                                null,
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
 fun DefaultRelaysScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
-    navController: NavController,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -263,53 +103,40 @@ fun DefaultRelaysScreen(
         }
 
     Surface(
+        color = MaterialTheme.colorScheme.background,
         modifier = modifier
             .fillMaxSize(),
     ) {
         if (isLoading.value) {
-            CenterCircularProgressIndicator(Modifier)
+            CenterCircularProgressIndicator(
+                Modifier,
+                text = stringResource(R.string.testing_relay),
+            )
         } else {
             Column(
                 modifier = Modifier
                     .background(MaterialTheme.colorScheme.background)
                     .fillMaxSize(),
             ) {
-                Row(
-                    Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    OutlinedTextField(
-                        modifier = Modifier
-                            .fillMaxWidth(0.9f)
-                            .padding(horizontal = 16.dp),
-                        value = textFieldRelay.value.text,
-                        keyboardOptions = KeyboardOptions(
-                            imeAction = ImeAction.Done,
-                        ),
-                        onValueChange = {
-                            textFieldRelay.value = TextFieldValue(it)
-                        },
-                        keyboardActions = KeyboardActions(
-                            onDone = {
-                                scope.launch(Dispatchers.IO) {
-                                    onAddRelay(
-                                        textFieldRelay,
-                                        isLoading,
-                                        relays2,
-                                        scope,
-                                        accountStateViewModel,
-                                        account,
-                                        context,
-                                    )
-                                }
-                            },
-                        ),
-                        label = {
-                            Text("Relay")
-                        },
-                    )
-                    IconButton(
-                        onClick = {
+                Text(
+                    text = stringResource(R.string.manage_the_relays_used_for_communicating_with_external_applications),
+                    modifier = Modifier.padding(bottom = 8.dp),
+                )
+
+                OutlinedTextField(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                    value = textFieldRelay.value.text,
+                    keyboardOptions = KeyboardOptions(
+                        capitalization = KeyboardCapitalization.None,
+                        autoCorrectEnabled = false,
+                        imeAction = ImeAction.Done,
+                    ),
+                    onValueChange = {
+                        textFieldRelay.value = TextFieldValue(it)
+                    },
+                    keyboardActions = KeyboardActions(
+                        onDone = {
                             scope.launch(Dispatchers.IO) {
                                 onAddRelay(
                                     textFieldRelay,
@@ -319,71 +146,99 @@ fun DefaultRelaysScreen(
                                     accountStateViewModel,
                                     account,
                                     context,
+                                    onDone = {
+                                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                            defaultRelays = relays2,
+                                        )
+                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                        scope.launch(Dispatchers.IO) {
+                                            @Suppress("KotlinConstantConditions")
+                                            if (BuildConfig.FLAVOR != "offline") {
+                                                NostrSigner.getInstance().checkForNewRelays()
+                                                NotificationDataSource.stop()
+                                                delay(2000)
+                                                NotificationDataSource.start()
+                                                isLoading.value = false
+                                            } else {
+                                                isLoading.value = false
+                                            }
+                                        }
+                                    },
                                 )
                             }
                         },
-                    ) {
-                        Icon(
-                            Icons.Default.Add,
-                            null,
-                        )
-                    }
-                }
+                    ),
+                    label = {
+                        Text("Relay")
+                    },
+                )
 
-                Row(
+                AmberButton(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    PostButton(
-                        isActive = relays2.isNotEmpty(),
-                        onPost = {
-                            scope.launch(Dispatchers.IO) {
-                                if (relays2.isNotEmpty()) {
+                        .fillMaxWidth(),
+                    onClick = {
+                        scope.launch(Dispatchers.IO) {
+                            onAddRelay(
+                                textFieldRelay,
+                                isLoading,
+                                relays2,
+                                scope,
+                                accountStateViewModel,
+                                account,
+                                context,
+                                onDone = {
+                                    isLoading.value = true
                                     NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
                                         defaultRelays = relays2,
                                     )
                                     LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
-                                }
-                                scope.launch(Dispatchers.Main) {
-                                    navController.navigateUp()
-                                }
-                            }
-                        },
-                    )
-                }
+                                    scope.launch(Dispatchers.IO) {
+                                        @Suppress("KotlinConstantConditions")
+                                        if (BuildConfig.FLAVOR != "offline") {
+                                            NostrSigner.getInstance().checkForNewRelays()
+                                            NotificationDataSource.stop()
+                                            delay(2000)
+                                            NotificationDataSource.start()
+                                            isLoading.value = false
+                                        } else {
+                                            isLoading.value = false
+                                        }
+                                    }
+                                },
+                            )
+                        }
+                    },
+                    text = stringResource(R.string.add),
+                )
 
                 LazyColumn(
                     Modifier
                         .weight(1f),
                 ) {
                     items(relays2.size) {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Text(
-                                relays2[it].url,
-                                Modifier
-                                    .weight(0.9f)
-                                    .padding(8.dp),
-                                fontWeight = FontWeight.Bold,
-                                fontSize = 18.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                            IconButton(
-                                onClick = {
-                                    relays2.removeAt(it)
-                                },
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    stringResource(R.string.delete),
+                        RelayCard(
+                            relay = relays2[it].url,
+                            onClick = {
+                                isLoading.value = true
+                                relays2.removeAt(it)
+                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    defaultRelays = relays2,
                                 )
-                            }
-                        }
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                scope.launch(Dispatchers.IO) {
+                                    @Suppress("KotlinConstantConditions")
+                                    if (BuildConfig.FLAVOR != "offline") {
+                                        NostrSigner.getInstance().checkForNewRelays()
+                                        NotificationDataSource.stop()
+                                        delay(2000)
+                                        NotificationDataSource.start()
+                                        isLoading.value = false
+                                    } else {
+                                        isLoading.value = false
+                                    }
+                                }
+                            },
+                        )
                     }
                 }
             }
@@ -391,7 +246,7 @@ fun DefaultRelaysScreen(
     }
 }
 
-private suspend fun onAddRelay(
+suspend fun onAddRelay(
     textFieldRelay: MutableState<TextFieldValue>,
     isLoading: MutableState<Boolean>,
     relays2: SnapshotStateList<RelaySetupInfo>,
@@ -399,6 +254,7 @@ private suspend fun onAddRelay(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
     context: Context,
+    onDone: () -> Unit,
 ) {
     val url = textFieldRelay.value.text
     if (url.isNotBlank() && url != "/") {
@@ -406,8 +262,8 @@ private suspend fun onAddRelay(
         var addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                 // TODO: How to identify relays on the local network?
-                val isLocalHost = url.contains("127.0.0.1") || url.contains("localhost")
-                if (url.endsWith(".onion") || url.endsWith(".onion/") || isLocalHost) {
+                val isPrivateIp = NostrSigner.getInstance().isPrivateIp(url)
+                if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
                     "ws://$url"
                 } else {
                     "wss://$url"
@@ -463,28 +319,71 @@ private suspend fun onAddRelay(
                                 it,
                             )
 
+                            val isPrivateIp = NostrSigner.getInstance().isPrivateIp(addedWSS)
+
                             event?.let { signedEvent ->
+                                AmberListenerSingleton.setListener(context, accountStateViewModel)
+                                AmberListenerSingleton.getListener()?.let { listener ->
+                                    Client.subscribe(listener)
+                                }
                                 val relay = Relay(
                                     addedWSS,
                                     read = true,
                                     write = true,
-                                    activeTypes = setOf(),
+                                    activeTypes = COMMON_FEED_TYPES,
+                                    forceProxy = if (isPrivateIp) false else account.useProxy,
                                 )
                                 RelayPool.addRelay(
                                     relay,
                                 )
+                                var filterResult = false
+                                val listener2 = RelayListener(
+                                    account,
+                                    onReceiveEvent = { _, _, event ->
+                                        if (event.kind == 24133 && event.id == signedEvent.id) {
+                                            filterResult = true
+                                        }
+                                    },
+                                )
+                                relay.register(
+                                    listener2,
+                                )
                                 relay.connect()
-                                delay(2000)
+                                delay(3000)
                                 val result = Client.sendAndWaitForResponse(
                                     signedEvent = signedEvent,
                                     relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
                                 )
+                                if (result) {
+                                    relay.sendFilter(
+                                        UUID.randomUUID().toString().substring(0, 4),
+                                        filters = listOf(
+                                            TypedFilter(
+                                                types = COMMON_FEED_TYPES,
+                                                filter = SincePerRelayFilter(
+                                                    ids = listOf(event.id),
+                                                ),
+                                            ),
+                                        ),
+                                    )
+                                    var count = 0
+                                    while (!filterResult && count < 10) {
+                                        delay(1000)
+                                        count++
+                                    }
+                                } else {
+                                    filterResult = true
+                                }
+
+                                AmberListenerSingleton.getListener()?.let { listener ->
+                                    Client.unsubscribe(listener)
+                                }
                                 RelayPool.getRelay(addedWSS)?.disconnect()
                                 RelayPool.removeRelay(
                                     relay,
                                 )
 
-                                if (result) {
+                                if (result && filterResult) {
                                     relays2.add(
                                         RelaySetupInfo(
                                             addedWSS,
@@ -493,12 +392,26 @@ private suspend fun onAddRelay(
                                             feedTypes = COMMON_FEED_TYPES,
                                         ),
                                     )
-                                } else {
+                                    onDone()
+                                } else if (!filterResult) {
                                     accountStateViewModel.toast(
                                         context.getString(R.string.relay),
-                                        context.getString(R.string.failed_to_send_event),
+                                        context.getString(R.string.relay_filter_failed),
+                                        onAccept = {
+                                            relays2.add(
+                                                RelaySetupInfo(
+                                                    addedWSS,
+                                                    read = true,
+                                                    write = true,
+                                                    feedTypes = COMMON_FEED_TYPES,
+                                                ),
+                                            )
+                                            onDone()
+                                        },
+                                        onReject = {},
                                     )
                                 }
+
                                 textFieldRelay.value = TextFieldValue("")
                             }
                             isLoading.value = false
@@ -550,80 +463,54 @@ private suspend fun onAddRelay(
 }
 
 @Composable
-fun RelayLogDialog(
+fun RelayLogScreen(
+    paddingValues: PaddingValues,
     url: String,
-    onClose: () -> Unit,
 ) {
     val context = LocalContext.current
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
+
+    val flows = LocalPreferences.allSavedAccounts(context).map {
+        NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+    }.merge()
+
+    val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
+
+    LazyColumn(
+        Modifier.fillMaxSize(),
+        contentPadding = paddingValues,
     ) {
-        Surface(Modifier.fillMaxSize()) {
-            Column(
-                modifier = Modifier.padding(10.dp),
+        itemsIndexed(logs.value) { _, log ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
+                Column(
+                    verticalArrangement = Arrangement.Center,
                 ) {
-                    CloseButton(
-                        onCancel = onClose,
+                    Text(
+                        modifier = Modifier.padding(top = 16.dp),
+                        text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
+                        fontSize = 14.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
                     )
-                }
+                    Text(
+                        modifier = Modifier.padding(top = 4.dp),
+                        text = log.type,
+                        fontSize = 20.sp,
+                    )
+                    Text(
+                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                        text = log.message,
+                        fontSize = 20.sp,
+                    )
 
-                val flows = LocalPreferences.allSavedAccounts(context).map {
-                    NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
-                }.merge()
-
-                val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
-
-                LazyColumn(
-                    Modifier.weight(1f),
-                ) {
-                    itemsIndexed(logs.value) { _, log ->
-                        Card(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(6.dp),
-                        ) {
-                            Column(Modifier.padding(6.dp)) {
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Date: ")
-                                        }
-                                        append(TimeUtils.convertLongToDateTime(log.time))
-                                    },
-                                )
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("URL: ")
-                                        }
-                                        append(log.url)
-                                    },
-                                )
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Type: ")
-                                        }
-                                        append(log.type)
-                                    },
-                                )
-                                Text(
-                                    buildAnnotatedString {
-                                        withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                                            append("Message: ")
-                                        }
-                                        append(log.message)
-                                    },
-                                )
-                            }
-                        }
-                    }
+                    Spacer(Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }
@@ -633,15 +520,12 @@ fun RelayLogDialog(
 @Composable
 fun ActiveRelaysScreen(
     modifier: Modifier,
+    navController: NavController,
 ) {
     val relays2 =
         remember {
             mutableStateListOf<RelaySetupInfo>()
         }
-
-    var relayLogUrl by remember {
-        mutableStateOf("")
-    }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
@@ -649,54 +533,55 @@ fun ActiveRelaysScreen(
         }
     }
 
-    if (relayLogUrl.isNotBlank()) {
-        RelayLogDialog(
-            url = relayLogUrl,
-            onClose = {
-                relayLogUrl = ""
-            },
-        )
-    }
-
-    Surface(
+    Column(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        Column(
-            modifier = Modifier
-                .background(MaterialTheme.colorScheme.background)
-                .fillMaxSize(),
-        ) {
-            LazyColumn(
-                Modifier
-                    .fillMaxHeight(0.9f)
-                    .fillMaxWidth(),
-            ) {
-                items(relays2.size) {
-                    Row(
-                        Modifier
-                            .padding(6.dp)
-                            .clickable {
-                                relayLogUrl = relays2[it].url
-                            },
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Circle,
-                            contentDescription = "Active Relay",
-                            tint = if (RelayPool.getRelay(relays2[it].url)?.isConnected() == true) Color.Green else Color.Red,
+        relays2.forEach { relay ->
+            Row(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(vertical = 4.dp)
+                    .clickable {
+                        navController.navigate(
+                            "RelayLogScreen/${
+                                Base64
+                                    .getEncoder()
+                                    .encodeToString(relay.url.toByteArray())
+                            }",
                         )
+                    },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Column(
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Text(
+                        modifier = Modifier.padding(top = 16.dp),
+                        text = relay.url,
+                        fontSize = 24.sp,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        color = if (RelayPool.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                    ) {
                         Text(
-                            relays2[it].url,
-                            Modifier
-                                .weight(0.9f)
-                                .padding(8.dp),
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                            text = if (RelayPool.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
+                            fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
+                            color = if (RelayPool.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                         )
                     }
+
+                    Spacer(Modifier.weight(1f))
+                    HorizontalDivider(
+                        color = MaterialTheme.colorScheme.primary,
+                    )
                 }
             }
         }

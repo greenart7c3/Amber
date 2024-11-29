@@ -40,8 +40,8 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                     account?.let {
-                        val database = NostrSigner.getInstance().getDatabase(account.keyPair.pubKey.toNpub())
-                        val permissions = database.applicationDao().getAll(it.keyPair.pubKey.toHexKey())
+                        val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                        val permissions = database.applicationDao().getAll(it.signer.keyPair.pubKey.toHexKey())
                         permissions.forEach { app ->
                             database.applicationDao().delete(app)
                         }

@@ -38,12 +38,12 @@
     <string name="encrypt_decrypt">criptografar/descriptografar</string>
     <string name="show_details">Mostrar detalhes</string>
     <string name="hide_details">Ocultar detalhes</string>
-    <string name="copy_raw_json">Mostrar json</string>
+    <string name="copy_raw_json">json</string>
     <string name="add_new_account">Adicionar nova conta</string>
     <string name="select_account">Selecionar conta</string>
     <string name="active_account">Conta ativa</string>
     <string name="edit_name">Editar nome</string>
-    <string name="copy">"Copiar"</string>
+    <string name="copy">"Copiar "</string>
     <string name="encrypted_decrypted_data">Dados criptografados/descriptografados</string>
     <string name="data_copied_to_the_clipboard">Dados copiados para a área de transferência</string>
     <string name="connect_app">Conectar aplicativo</string>

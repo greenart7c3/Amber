@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -21,6 +22,7 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun IconRow(
+    center: Boolean = false,
     title: String,
     icon: ImageVector,
     tint: Color,
@@ -38,8 +40,9 @@ fun IconRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 25.dp),
+                .padding(vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = if (center) Arrangement.Center else Arrangement.Start,
         ) {
             Icon(
                 icon,
@@ -78,7 +81,7 @@ fun IconRow(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 15.dp, horizontal = 25.dp),
+                .padding(vertical = 15.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Icon(

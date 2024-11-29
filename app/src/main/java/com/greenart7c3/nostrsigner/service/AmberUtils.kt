@@ -34,28 +34,28 @@ object AmberUtils {
             SignerType.NIP04_DECRYPT -> {
                 CryptoUtils.decryptNIP04(
                     data,
-                    account.keyPair.privKey!!,
+                    account.signer.keyPair.privKey!!,
                     Hex.decode(pubKey),
                 )
             }
             SignerType.NIP04_ENCRYPT -> {
                 CryptoUtils.encryptNIP04(
                     data,
-                    account.keyPair.privKey!!,
+                    account.signer.keyPair.privKey!!,
                     Hex.decode(pubKey),
                 )
             }
             SignerType.NIP44_ENCRYPT -> {
                 CryptoUtils.encryptNIP44(
                     data,
-                    account.keyPair.privKey!!,
+                    account.signer.keyPair.privKey!!,
                     pubKey.hexToByteArray(),
                 ).encodePayload()
             }
             else -> {
                 CryptoUtils.decryptNIP44(
                     data,
-                    account.keyPair.privKey!!,
+                    account.signer.keyPair.privKey!!,
                     pubKey.hexToByteArray(),
                 )
             }
@@ -68,12 +68,12 @@ object AmberUtils {
     ): String? {
         val event = Event.fromJson(data) as LnZapRequestEvent
 
-        val loggedInPrivateKey = account.keyPair.privKey
+        val loggedInPrivateKey = account.signer.keyPair.privKey
 
         return if (event.isPrivateZap()) {
             val recipientPK = event.zappedAuthor().firstOrNull()
             val recipientPost = event.zappedPost().firstOrNull()
-            if (recipientPK == account.keyPair.pubKey.toHexKey()) {
+            if (recipientPK == account.signer.keyPair.pubKey.toHexKey()) {
                 // if the receiver is logged in, these are the params.
                 val pubkeyToUse = event.pubKey
 
@@ -121,10 +121,13 @@ object AmberUtils {
     }
 
     fun sendBunkerError(
+        intentData: IntentData,
         account: Account,
         bunkerRequest: BunkerRequest,
         relays: List<RelaySetupInfo>,
         context: Context,
+        closeApplication: Boolean,
+        onRemoveIntentData: (IntentData) -> Unit,
         onLoading: (Boolean) -> Unit,
     ) {
         IntentUtils.sendBunkerResponse(
@@ -135,8 +138,11 @@ object AmberUtils {
             relays,
             onLoading = onLoading,
             onDone = {
+                onRemoveIntentData(intentData)
                 context.getAppCompatActivity()?.intent = null
-                context.getAppCompatActivity()?.finish()
+                if (closeApplication) {
+                    context.getAppCompatActivity()?.finish()
+                }
             },
         )
     }

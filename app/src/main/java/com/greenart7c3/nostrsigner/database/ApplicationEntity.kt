@@ -37,7 +37,29 @@ data class ApplicationEntity(
     val secret: String,
     val useSecret: Boolean,
     var signPolicy: Int,
-)
+    var closeApplication: Boolean,
+) {
+    companion object {
+        fun empty() = ApplicationEntity(
+            key = "",
+            name = "",
+            relays = emptyList(),
+            url = "",
+            icon = "",
+            description = "",
+            pubKey = "",
+            isConnected = false,
+            secret = "",
+            useSecret = false,
+            signPolicy = 0,
+            closeApplication = true,
+        )
+    }
+
+    fun shouldShowRelays(): Boolean {
+        return (secret.isNotEmpty() || relays.isNotEmpty()) && !isConnected
+    }
+}
 
 data class ApplicationWithPermissions(
     @Embedded val application: ApplicationEntity,
@@ -66,3 +88,8 @@ class Converters {
         }
     }
 }
+
+data class ApplicationWithLatestHistory(
+    @Embedded val application: ApplicationEntity,
+    val latestTime: Long?,
+)

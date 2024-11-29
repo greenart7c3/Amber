@@ -22,7 +22,6 @@
  */
 package com.greenart7c3.nostrsigner.ui.actions
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -30,29 +29,24 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
-import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
@@ -61,122 +55,78 @@ import com.halilibo.richtext.ui.material3.RichText
 import kotlinx.coroutines.CancellationException
 
 @Composable
-fun ConnectOrbotDialog(
-    onClose: () -> Unit,
-    onPost: () -> Unit,
+fun ConnectOrbotScreen(
+    modifier: Modifier,
+    account: Account,
+    onPost: (Int) -> Unit,
     onError: (String) -> Unit,
-    portNumber: MutableState<String>,
 ) {
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false),
+    val portNumber = remember { mutableStateOf(account.proxyPort.toString()) }
+
+    Column(
+        modifier = modifier,
     ) {
-        Surface {
-            Column(
-                modifier = Modifier.padding(10.dp),
+        val myMarkDownStyle =
+            RichTextDefaults.copy(
+                stringStyle = RichTextDefaults.stringStyle?.copy(
+                    linkStyle =
+                    SpanStyle(
+                        textDecoration = TextDecoration.Underline,
+                        color = MaterialTheme.colorScheme.primary,
+                    ),
+                ),
+            )
+
+        Row {
+            val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown)
+
+            val astNode1 =
+                remember {
+                    CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                }
+
+            RichText(
+                style = myMarkDownStyle,
+                renderer = null,
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    CloseButton {
-                        onClose()
-                    }
-
-                    val toastMessage = stringResource(R.string.invalid_port_number)
-
-                    UseOrbotButton(
-                        onPost = {
-                            try {
-                                Integer.parseInt(portNumber.value)
-                            } catch (e: Exception) {
-                                if (e is CancellationException) throw e
-                                onError(toastMessage)
-                                return@UseOrbotButton
-                            }
-
-                            onPost()
-                        },
-                        isActive = true,
-                    )
-                }
-
-                Column(
-                    modifier = Modifier.padding(30.dp),
-                ) {
-                    val myMarkDownStyle =
-                        RichTextDefaults.copy(
-                            stringStyle = RichTextDefaults.stringStyle?.copy(
-                                linkStyle =
-                                SpanStyle(
-                                    textDecoration = TextDecoration.Underline,
-                                    color = MaterialTheme.colorScheme.primary,
-                                ),
-                            ),
-                        )
-
-                    Row {
-                        val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown)
-
-                        val astNode1 =
-                            remember {
-                                CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                            }
-
-                        RichText(
-                            style = myMarkDownStyle,
-                            renderer = null,
-                        ) {
-                            BasicMarkdown(astNode1)
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(15.dp))
-
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.Center,
-                    ) {
-                        OutlinedTextField(
-                            value = portNumber.value,
-                            onValueChange = { portNumber.value = it },
-                            keyboardOptions = KeyboardOptions.Default.copy(
-                                capitalization = KeyboardCapitalization.None,
-                                keyboardType = KeyboardType.Number,
-                            ),
-                            label = { Text(text = stringResource(R.string.orbot_socks_port)) },
-                            placeholder = {
-                                Text(
-                                    text = "9050",
-                                )
-                            },
-                        )
-                    }
-                }
+                BasicMarkdown(astNode1)
             }
         }
-    }
-}
 
-@Composable
-fun UseOrbotButton(
-    modifier: Modifier = Modifier,
-    onPost: () -> Unit = {},
-    isActive: Boolean,
-) {
-    Button(
-        modifier = modifier,
-        onClick = {
-            if (isActive) {
-                onPost()
-            }
-        },
-        shape = ButtonBorder,
-        colors = ButtonDefaults.buttonColors(
-            containerColor = if (isActive) MaterialTheme.colorScheme.primary else Color.Gray,
-        ),
-    ) {
-        Text(text = stringResource(R.string.use_orbot), color = Color.White)
+        Spacer(modifier = Modifier.height(16.dp))
+
+        OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
+            value = portNumber.value,
+            onValueChange = { portNumber.value = it },
+            keyboardOptions = KeyboardOptions.Default.copy(
+                capitalization = KeyboardCapitalization.None,
+                keyboardType = KeyboardType.Number,
+            ),
+            label = { Text(text = stringResource(R.string.orbot_socks_port)) },
+            placeholder = {
+                Text(
+                    text = "9050",
+                )
+            },
+        )
+
+        val toastMessage = stringResource(R.string.invalid_port_number)
+
+        AmberButton(
+            modifier = Modifier.padding(top = 20.dp),
+            onClick = {
+                try {
+                    Integer.parseInt(portNumber.value)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    onError(toastMessage)
+                    return@AmberButton
+                }
+
+                onPost(portNumber.value.toInt())
+            },
+            text = stringResource(R.string.use_orbot),
+        )
     }
 }

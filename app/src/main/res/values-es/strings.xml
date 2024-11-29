@@ -84,6 +84,13 @@
         \n5. Configure the Socks port in this screen
         \n6. Press the Activate button to use Orbot as a proxy
     </string>
+    <string name="connect_through_your_orbot_setup_markdown2">        1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
+        \n2. Start Orbot
+        \n3. In Orbot, check the Socks port. The default uses 9050
+        \n4. If necessary change the port in Orbot
+        \n5. Configure the Socks port in this screen
+        \n6. Press the Activate button to use Orbot as a proxy
+    </string>
     <string name="orbot_socks_port">Puerto Orbot Socks</string>
     <string name="invalid_port_number">Número de puerto no válido</string>
     <string name="use_orbot">Usar Orbot</string>
@@ -374,4 +381,75 @@
     <string name="relay_information_document_error_http_status">%1$s failed with code %2$s</string>
     <string name="unable_to_download_relay_document">Download relay document unavailable</string>
     <string name="failed_to_send_event">Failed to send event to relay</string>
+    <string name="accounts">Accounts</string>
+    <string name="applications">Applications</string>
+    <string name="incoming_request">Incoming Request</string>
+    <string name="back_to">Back to %1$s</string>
+    <string name="scan_qr_code">Scan a QR Code</string>
+    <string name="add_a_nsecbunker">Add a nsecbunker</string>
+    <string name="nsecbunker_description">This option allow to add a nsecbunker manually, and use with whichever app supports Nostr Connect (NIP-46)</string>
+    <string name="nostr_connect_qr_description">If your app offers you a Nostr Connect QR Code you can scan it from here. Usually this login mode it is offered by web apps.</string>
+    <string name="nostr_connect_description">If your app offers you a Nostr Connect URL, you can paste it here. Usually this login mode it is offered by web apps.</string>
+    <string name="new_app_description">Usually Nostr applications have a “Login with Amber” option that permits to use Amber as external signer; when you press that button Amber is launched and you are asked to approve some permissions.\n\nBut you have other options to use Amber:</string>
+    <string name="add_a_new_application">Add a new application</string>
+    <string name="account_backup">Account backup</string>
+    <string name="create_nsecbunker_description">To create a new nsecbunker you need to give it a name and select one or more relays, that’s all!</string>
+    <string name="create">Create</string>
+    <string name="name">Name</string>
+    <string name="no_relays_added">No relays added</string>
+    <string name="wss">wss://...</string>
+    <string name="name_cannot_be_empty">"Name can't be empty "</string>
+    <string name="your_nsec_bunker_has_been_created">Your nsecbunker is ready!</string>
+    <string name="use_this_url_in_your_app">Use this url in your app:</string>
+    <string name="edit_configuration">Edit configuration</string>
+    <string name="edit_permissions_description">Manage the app permissions by temporarily disabling or completely reverting them. New permission are added by the app when required.</string>
+    <string name="remove_all_permissions">Remove all permissions</string>
+    <string name="remove">Remove</string>
+    <string name="activity_title">Activity</string>
+    <string name="edit_configuration_description">To create a new nsecbunker you need to give it a name and select one or more relays, that’s all!</string>
+    <string name="update">Update</string>
+    <string name="add">Add</string>
+    <string name="setup_pin">Setup PIN</string>
+    <string name="pin">Pin</string>
+    <string name="pin_does_not_match">Pin does not match</string>
+    <string name="confirm_pin">Confirm Pin</string>
+    <string name="enter_pin">Enter PIN</string>
+    <string name="permission_needed">Permission Needed</string>
+    <string name="notifications_are_needed_to_use_amber_as_a_nsec_bunker">Notifications are needed to use Amber as a nsec bunker.</string>
+    <string name="allow">Allow</string>
+    <string name="deny">Deny</string>
+    <string name="never">Never</string>
+    <string name="warning">Warning</string>
+    <string name="approve_selected">Approve selected</string>
+    <string name="discard_all_requests">Discard all requests</string>
+    <string name="of_events">%1$s of %2$s events</string>
+    <string name="see_details">See details</string>
+    <string name="is_requiring_some_permissions_please_review_them">%1$s is requiring some permissions, please review them.</string>
+    <string name="always_approve_this_permission">Always approve this permission</string>
+    <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s is requiring to sign these events related to %2$s permission.</string>
+    <string name="relay_filter_failed">Relay does not support retrieving Bunker events. Would you like to add it anyway?</string>
+    <string name="active_relays">Active relays</string>
+    <string name="default_profile_relays">Default profile relays</string>
+    <string name="manage_the_relays_used_to_fetch_your_profile_data">Manage the relays used to fetch your profile data</string>
+    <string name="manage_the_relays_used_for_communicating_with_external_applications">Manage the relays used for communicating with external applications</string>
+    <string name="testing_relay">Testing relay...</string>
+    <string name="always_approve_these_permissions">Always approve these permissions</string>
+    <string name="a_nostr_secure_signer">A NOSTR SECURE SIGNER</string>
+    <string name="go_back">Go back</string>
+    <string name="your_nostr_account_is_ready">Your Nostr account is ready!</string>
+    <string name="you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now">You will find it in your account section, so you don’t need to copy it right now.</string>
+    <string name="please_add_a_nickname_later_you_will_able_to_personalise_your_full_profile_bio_pic_etc_using_your_preferred_nostr_client">Please add a nickname, later you will able to personalise your full profile (bio, pic, etc) using your preferred Nostr client:</string>
+    <string name="nickname">Your nickname</string>
+    <string name="now_pick_a_password_we_will_use_it_to_encrypt_your_private_key_named_ncryptsec_so_you_can_store_it_safely">Now pick a password. We will use it to encrypt your private key (named ncryptsec) so you can store it safely:</string>
+    <string name="password">Pick a password</string>
+    <string name="continue_button">Continue</string>
+    <string name="please_download_your_account_backup_kit_containing_the_encrypted_private_key_and_store_it_in_a_couple_of_safe_places">Please download your account backup kit containing the encrypted private key and store it in a couple of safe places.</string>
+    <string name="please_enter_the_password_chosen_in_the_previous_step_this_prove_you_typed_and_remembered_it_correctly">Please enter the password chosen in the previous step, this prove you typed and remembered it correctly:</string>
+    <string name="download_backup_kit">Download your backup kit</string>
+    <string name="i_want_also_to_download_the_seed_version_of_my_private_key">I want also to download the seed version of my private key</string>
+    <string name="this_is_an_optional_additional_way_to_backup_your_private_key_write_down_on_paper_the_12_words_keeping_the_correct_order">This is an optional additional way to backup your private key, write down on paper the 12 words, keeping the correct order.</string>
+    <string name="backup_the_nostr_account">Backup the Nostr account</string>
+    <string name="permissions_and_connection">Permissions and connection</string>
+    <string name="setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code">Setup Amber with your Nostr private key. You can enter different versions: Nsec, Ncryptsec or Hex.\nYou can also scan it from a QR Code.</string>
+    <string name="check_the_code">Check the code</string>
 </resources>

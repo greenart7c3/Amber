@@ -282,19 +282,23 @@ fun SignUpPage(
     var seedWords by remember { mutableStateOf(setOf<String>()) }
     var enabled by remember { mutableStateOf(false) }
     storageHelper.onFolderSelected = { _, folder ->
-        val ncryptsec = CryptoUtils.nip49.encrypt(keyPair.privKey!!.toHexKey(), password.text)
-        val ncryptsecFile = folder.makeFile(
-            context,
-            mimeType = "application/text",
-            name = "${nickname.text}.ncryptsec",
-            mode = CreateMode.REPLACE,
-        )
-        ncryptsecFile?.let {
-            it.openOutputStream(context, append = false).use { stream ->
-                stream?.write(ncryptsec.toByteArray())
+        scope.launch(Dispatchers.IO) {
+            loading = true
+            val ncryptsec = CryptoUtils.nip49.encrypt(keyPair.privKey!!.toHexKey(), password.text)
+            val ncryptsecFile = folder.makeFile(
+                context,
+                mimeType = "application/text",
+                name = "${nickname.text}.ncryptsec",
+                mode = CreateMode.REPLACE,
+            )
+            ncryptsecFile?.let {
+                it.openOutputStream(context, append = false).use { stream ->
+                    stream?.write(ncryptsec.toByteArray())
+                }
             }
+            enabled = true
+            loading = false
         }
-        enabled = true
     }
 
     LaunchedEffect(Unit) {

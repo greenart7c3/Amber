@@ -206,7 +206,7 @@ class MainActivity : AppCompatActivity() {
                             CircularProgressIndicator()
                         }
                     } else {
-                        val npub = intent.getStringExtra("current_user") ?: mainViewModel.getAccount()
+                        val npub = intent.getStringExtra("current_user")?.ifBlank { mainViewModel.getAccount() } ?: mainViewModel.getAccount()
 
                         val accountStateViewModel: AccountStateViewModel =
                             viewModel {

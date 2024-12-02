@@ -288,7 +288,7 @@ fun SignUpPage(
             val ncryptsecFile = folder.makeFile(
                 context,
                 mimeType = "application/text",
-                name = "${nickname.text}.ncryptsec",
+                name = "${keyPair.pubKey.toNpub()}.ncryptsec",
                 mode = CreateMode.REPLACE,
             )
             ncryptsecFile?.let {

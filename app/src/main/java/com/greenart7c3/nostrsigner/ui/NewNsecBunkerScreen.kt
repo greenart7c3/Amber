@@ -270,8 +270,8 @@ fun NewNsecBunkerCreatedScreen(
         val bunkerUri = "bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relays$localSecret"
 
         LaunchedEffect(Unit) {
-            launch(Dispatchers.IO) {
-                NostrSigner.getInstance().checkForNewRelays()
+            NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                NostrSigner.getInstance().checkForNewRelays(shouldReconnect = true)
                 NotificationDataSource.stop()
                 delay(2000)
                 NotificationDataSource.start()

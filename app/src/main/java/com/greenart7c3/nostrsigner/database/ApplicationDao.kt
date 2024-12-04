@@ -125,7 +125,12 @@ interface ApplicationDao {
     }
 
     @Delete
+    @Transaction
     fun delete(entity: ApplicationEntity)
+
+    @Query("DELETE FROM application WHERE `key` = :key")
+    @Transaction
+    fun delete(key: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun innerAddHistory(entity: HistoryEntity)

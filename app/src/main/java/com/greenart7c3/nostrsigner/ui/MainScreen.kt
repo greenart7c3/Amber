@@ -154,11 +154,16 @@ fun sendResult(
                 )
                 val tempApp2 = ApplicationWithPermissions(
                     application = tempApplication,
-                    permissions = savedApplication.permissions,
+                    permissions = savedApplication.permissions.map {
+                        it.copy()
+                    }.toMutableList(),
                 )
+
+                database.applicationDao().delete(intentData.bunkerRequest.secret)
                 database.applicationDao().insertApplicationWithPermissions(tempApp2)
             }
         }
+        savedApplication = database.applicationDao().getByKey(key)
         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
         if (intentData.bunkerRequest != null) {
             NostrSigner.getInstance().checkForNewRelays(

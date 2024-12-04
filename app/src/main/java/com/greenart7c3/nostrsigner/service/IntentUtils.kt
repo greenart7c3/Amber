@@ -342,12 +342,13 @@ object IntentUtils {
                     bunkerRequest.localKey,
                 ) { encryptedContent ->
                     sendBunkerResponse(
-                        account,
-                        bunkerRequest.localKey,
-                        encryptedContent,
-                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
-                        onLoading,
-                        onDone,
+                        bunkerRequest = bunkerRequest,
+                        account = account,
+                        localKey = bunkerRequest.localKey,
+                        encryptedContent = encryptedContent,
+                        relays = relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
+                        onLoading = onLoading,
+                        onDone = onDone,
                     )
                 }
             }
@@ -357,12 +358,13 @@ object IntentUtils {
                     bunkerRequest.localKey,
                 ) { encryptedContent ->
                     sendBunkerResponse(
-                        account,
-                        bunkerRequest.localKey,
-                        encryptedContent,
-                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
-                        onLoading,
-                        onDone,
+                        bunkerRequest = bunkerRequest,
+                        account = account,
+                        localKey = bunkerRequest.localKey,
+                        encryptedContent = encryptedContent,
+                        relays = relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
+                        onLoading = onLoading,
+                        onDone = onDone,
                     )
                 }
             }
@@ -371,6 +373,7 @@ object IntentUtils {
 
     @OptIn(DelicateCoroutinesApi::class)
     private fun sendBunkerResponse(
+        bunkerRequest: BunkerRequest? = null,
         account: Account,
         localKey: String,
         encryptedContent: String,
@@ -385,7 +388,7 @@ object IntentUtils {
             encryptedContent,
         ) {
             GlobalScope.launch(Dispatchers.IO) {
-                Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }}")
+                Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
 
                 if (RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
@@ -395,10 +398,10 @@ object IntentUtils {
 
                 val success = Client.sendAndWaitForResponse(it, relayList = relays)
                 if (success) {
-                    Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }}")
+                    Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                     onDone()
                 } else {
-                    Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }}")
+                    Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                 }
                 AmberListenerSingleton.getListener()?.let {
                     Client.unsubscribe(it)

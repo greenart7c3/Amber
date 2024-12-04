@@ -160,6 +160,12 @@ sealed class Route(
         route = "DefaultProfileRelaysScreen",
         icon = R.drawable.settings,
     )
+
+    data object EditProfile : Route(
+        title = NostrSigner.getInstance().getString(R.string.edit_profile),
+        route = "EditProfile/{key}",
+        icon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -187,4 +193,5 @@ val routes = listOf(
     Route.RelaysScreen,
     Route.DefaultProfileRelaysScreen,
     Route.TorSettings,
+    Route.EditProfile,
 )

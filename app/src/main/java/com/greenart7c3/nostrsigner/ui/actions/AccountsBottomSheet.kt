@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -18,16 +17,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.SheetState
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
@@ -35,9 +28,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -45,10 +36,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
-import com.greenart7c3.nostrsigner.ui.components.CloseButton
-import com.greenart7c3.nostrsigner.ui.components.PostButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.quartz.encoders.toNpub
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -70,8 +58,6 @@ fun AccountsBottomSheet(
         val context = LocalContext.current
         val accounts = LocalPreferences.allSavedAccounts(context)
         val scrollState = rememberScrollState()
-        var showNameDialog by remember { mutableStateOf(false) }
-        var currentNpub by remember { mutableStateOf("") }
 
         Column(modifier = Modifier.verticalScroll(scrollState)) {
             Row(
@@ -114,19 +100,6 @@ fun AccountsBottomSheet(
                         }
                     }
 
-                    if (showNameDialog) {
-                        EditAccountDialog(
-                            npub = currentNpub,
-                            onClose = { showNameDialog = false },
-                            onPost = {
-                                LocalPreferences.setAccountName(context, currentNpub, it)
-                                showNameDialog = false
-                                currentNpub = ""
-                                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.Settings.route)
-                            },
-                        )
-                    }
-
                     IconButton(
                         onClick = {
                             clipboardManager.setText(AnnotatedString(acc.npub))
@@ -141,8 +114,8 @@ fun AccountsBottomSheet(
 
                     IconButton(
                         onClick = {
-                            showNameDialog = true
-                            currentNpub = acc.npub
+                            onClose()
+                            navController.navigate("EditProfile/${acc.npub}")
                         },
                     ) {
                         Icon(
@@ -170,70 +143,6 @@ fun AccountsBottomSheet(
                         Text(stringResource(R.string.add_new_account))
                     },
                 )
-            }
-        }
-    }
-}
-
-@Composable
-fun EditAccountDialog(
-    npub: String,
-    onClose: () -> Unit,
-    onPost: (String) -> Unit,
-) {
-    val context = LocalContext.current
-    val name = LocalPreferences.getAccountName(context, npub)
-    var textFieldvalue by remember {
-        mutableStateOf(TextFieldValue(name))
-    }
-    Dialog(
-        onDismissRequest = {
-            onClose()
-        },
-    ) {
-        Surface {
-            Column(
-                modifier = Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxWidth()
-                    .padding(8.dp),
-            ) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CloseButton(
-                        onCancel = {
-                            onClose()
-                        },
-                    )
-                    PostButton(
-                        isActive = true,
-                        onPost = {
-                            onPost(textFieldvalue.text)
-                        },
-                    )
-                }
-
-                Column(
-                    modifier = Modifier
-                        .padding(horizontal = 30.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    OutlinedTextField(
-                        value = textFieldvalue.text,
-                        onValueChange = {
-                            textFieldvalue = TextFieldValue(it)
-                        },
-                        label = {
-                            Text("Name")
-                        },
-                    )
-                }
             }
         }
     }

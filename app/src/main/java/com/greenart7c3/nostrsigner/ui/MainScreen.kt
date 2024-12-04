@@ -1225,6 +1225,26 @@ fun MainScreen(
                     )
                 },
             )
+
+            composable(
+                Route.EditProfile.route,
+                arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                content = {
+                    it.arguments?.getString("key")?.let { key ->
+                        EditProfileScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                            npub = key,
+                        )
+                    }
+                },
+            )
         }
     }
 }

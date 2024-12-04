@@ -385,6 +385,8 @@ object IntentUtils {
             encryptedContent,
         ) {
             GlobalScope.launch(Dispatchers.IO) {
+                Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }}")
+
                 if (RelayPool.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
                         newRelays = relays.toSet(),
@@ -393,7 +395,10 @@ object IntentUtils {
 
                 val success = Client.sendAndWaitForResponse(it, relayList = relays)
                 if (success) {
+                    Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }}")
                     onDone()
+                } else {
+                    Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }}")
                 }
                 AmberListenerSingleton.getListener()?.let {
                     Client.unsubscribe(it)

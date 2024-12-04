@@ -306,6 +306,22 @@ suspend fun onAddRelay(
                             return@secondLaunch
                         }
 
+                        val relays = NostrSigner.getInstance().getSavedRelays()
+                        if (relays.any { it.url == addedWSS }) {
+                            relays2.add(
+                                RelaySetupInfo(
+                                    addedWSS,
+                                    read = true,
+                                    write = true,
+                                    feedTypes = COMMON_FEED_TYPES,
+                                ),
+                            )
+                            onDone()
+                            textFieldRelay.value = TextFieldValue("")
+                            isLoading.value = false
+                            return@secondLaunch
+                        }
+
                         val signer = NostrSignerInternal(KeyPair())
                         val encryptedContent = signer.signerSync.nip04Encrypt(
                             "Test bunker event",

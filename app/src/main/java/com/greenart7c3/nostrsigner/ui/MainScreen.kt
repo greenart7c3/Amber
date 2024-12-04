@@ -145,7 +145,20 @@ fun sendResult(
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
         val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
-        val savedApplication = database.applicationDao().getByKey(key)
+        var savedApplication = database.applicationDao().getByKey(key)
+        if (savedApplication == null && intentData.bunkerRequest?.secret != null) {
+            savedApplication = database.applicationDao().getByKey(intentData.bunkerRequest.secret)
+            if (savedApplication != null) {
+                val tempApplication = savedApplication.application.copy(
+                    key = key,
+                )
+                val tempApp2 = ApplicationWithPermissions(
+                    application = tempApplication,
+                    permissions = savedApplication.permissions,
+                )
+                database.applicationDao().insertApplicationWithPermissions(tempApp2)
+            }
+        }
         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
         if (intentData.bunkerRequest != null) {
             NostrSigner.getInstance().checkForNewRelays(
@@ -256,16 +269,10 @@ fun sendResult(
                 account,
                 intentData.bunkerRequest,
                 BunkerResponse(intentData.bunkerRequest.id, event, null),
-                relays,
+                application.application.relays.ifEmpty { relays },
                 onLoading,
                 onDone = {
                     EventNotificationConsumer(context).notificationManager().cancelAll()
-                    if (intentData.bunkerRequest.secret.isNotBlank()) {
-                        val secretApplication = database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
-                        secretApplication?.let {
-                            database.applicationDao().delete(it.application)
-                        }
-                    }
                     if (intentData.type == SignerType.CONNECT) {
                         database.applicationDao().deletePermissions(key)
                     }

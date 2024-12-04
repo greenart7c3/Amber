@@ -95,7 +95,7 @@ data class BunkerRequest(
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
                 encryptionType = encryptionType,
                 nostrConnectSecret = jsonObject.get("nostrConnectSecret")?.asText()?.intern() ?: "",
-                closeApplication = jsonObject.get("closeApplication")?.asBoolean() ?: false,
+                closeApplication = jsonObject.get("closeApplication")?.asBoolean() ?: true,
             )
         }
 

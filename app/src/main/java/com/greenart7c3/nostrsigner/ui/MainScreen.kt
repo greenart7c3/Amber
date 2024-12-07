@@ -385,7 +385,7 @@ fun sendResult(
 }
 
 @Composable
-fun PermissionsFloatingActionButton(
+fun NewBunkerFloatingButton(
     onClick: () -> Unit,
 ) {
     Column(
@@ -732,7 +732,7 @@ fun MainScreen(
         floatingActionButton = {
             @Suppress("KotlinConstantConditions")
             if (navBackStackEntry?.destination?.route == Route.Applications.route && BuildConfig.FLAVOR != "offline") {
-                PermissionsFloatingActionButton(
+                NewBunkerFloatingButton(
                     onClick = {
                         navController.navigate(Route.NewApplication.route)
                     },

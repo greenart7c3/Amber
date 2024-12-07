@@ -730,7 +730,8 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            if (navBackStackEntry?.destination?.route == Route.Applications.route) {
+            @Suppress("KotlinConstantConditions")
+            if (navBackStackEntry?.destination?.route == Route.Applications.route && BuildConfig.FLAVOR != "offline") {
                 PermissionsFloatingActionButton(
                     onClick = {
                         navController.navigate(Route.NewApplication.route)

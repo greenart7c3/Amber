@@ -21,7 +21,6 @@ import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
@@ -38,11 +37,19 @@ class ConnectivityService : Service() {
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
 
-                if (lastNetwork != null && lastNetwork != network) {
+                val hasAnyRelayDisconnected = RelayPool.getAll().any { !it.isConnected() }
+
+                if (lastNetwork != null && lastNetwork != network && hasAnyRelayDisconnected) {
                     scope.launch(Dispatchers.IO) {
-                        NotificationDataSource.stopSync()
-                        delay(1000)
-                        NotificationDataSource.start()
+                        RelayPool.getAll().forEach {
+                            if (!it.isConnected()) {
+                                Log.d(
+                                    "ConnectivityService",
+                                    "Relay ${it.url} is not connected, reconnecting...",
+                                )
+                                it.connectAndSendFiltersIfDisconnected()
+                            }
+                        }
                     }
                 }
 
@@ -64,10 +71,19 @@ class ConnectivityService : Service() {
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${NostrSigner.getInstance().isOnMobileDataState.value} hasWifi ${NostrSigner.getInstance().isOnWifiDataState.value}",
                     )
-                    if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities)) {
-                        NotificationDataSource.stopSync()
-                        delay(1000)
-                        NotificationDataSource.start()
+
+                    val hasAnyRelayDisconnected = RelayPool.getAll().any { !it.isConnected() }
+
+                    if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
+                        RelayPool.getAll().forEach {
+                            if (!it.isConnected()) {
+                                Log.d(
+                                    "ConnectivityService",
+                                    "Relay ${it.url} is not connected, reconnecting...",
+                                )
+                                it.connectAndSendFiltersIfDisconnected()
+                            }
+                        }
                     }
                 }
             }

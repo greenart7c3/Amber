@@ -462,4 +462,7 @@
     <string name="check_the_code">Check the code</string>
     <string name="edit_profile">Edit profile</string>
     <string name="your_nostr_account_explainer">This is your public key, a sort of username that you can share with anyone to let it find you on Nostr:</string>
+    <string name="congratulations_your_new_account_is_ready">Congratulations, your new account is ready!\n</string>
+    <string name="your_account_is_ready_to_use">Now you can start using apps that support Amber, when needed Amber will open and ask you to confirm permissions.\nIn this view you will find all the apps that have active permissions.\n\nDiscover all Nostr apps for android at </string>
+    <string name="nostr_app">nostrapps.com</string>
 </resources>

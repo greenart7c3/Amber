@@ -15,7 +15,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -40,13 +47,29 @@ fun PermissionsScreen(
         modifier,
     ) {
         if (applications.value.isEmpty()) {
-            Column(
-                Modifier.fillMaxSize(),
-                Arrangement.Center,
-                Alignment.CenterHorizontally,
-            ) {
-                Text(stringResource(R.string.no_permissions_granted))
-            }
+            Text(
+                text = stringResource(R.string.congratulations_your_new_account_is_ready),
+                fontSize = 20.sp,
+                fontWeight = FontWeight.Bold,
+            )
+
+            Text(
+                buildAnnotatedString {
+                    append(stringResource(R.string.your_account_is_ready_to_use))
+                    withLink(
+                        LinkAnnotation.Url(
+                            "https://" + stringResource(R.string.nostr_app),
+                            styles = TextLinkStyles(
+                                style = SpanStyle(
+                                    textDecoration = TextDecoration.Underline,
+                                ),
+                            ),
+                        ),
+                    ) {
+                        append(" " + stringResource(R.string.nostr_app))
+                    }
+                },
+            )
         } else {
             applications.value.forEach { applicationWithHistory ->
                 Row(

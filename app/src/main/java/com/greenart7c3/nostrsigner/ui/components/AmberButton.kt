@@ -67,12 +67,16 @@ fun AmberElevatedButton(
     text: String,
     textAlign: TextAlign? = null,
     maxLines: Int = Int.MAX_VALUE,
+    contentColor: Color = Color.Unspecified,
 ) {
     Row(
         modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.Center,
     ) {
         ElevatedButton(
+            colors = ButtonDefaults.elevatedButtonColors(
+                containerColor = contentColor,
+            ),
             shape = RoundedCornerShape(20),
             enabled = enabled,
             onClick = onClick,

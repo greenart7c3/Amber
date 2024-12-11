@@ -149,7 +149,8 @@ fun MainPage(
                 )
 
                 Image(
-                    ImageVector.vectorResource(R.drawable.frame),
+                    modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
+                    imageVector = ImageVector.vectorResource(R.drawable.frame),
                     contentDescription = "Logo",
                 )
 
@@ -158,6 +159,8 @@ fun MainPage(
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
                     AmberElevatedButton(
+                        contentColor = Color(0xFF4C4C4C),
+                        textColor = MaterialTheme.colorScheme.primary,
                         onClick = {
                             scope.launch {
                                 navController.navigate("loginPage")

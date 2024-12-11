@@ -927,7 +927,12 @@ fun LoginPage(
                                 .padding(vertical = 20.dp),
                             shape = RoundedCornerShape(18.dp),
                             value = key.value,
-                            onValueChange = { key.value = it },
+                            onValueChange = {
+                                key.value = it
+                                if (errorMessage.isNotEmpty()) {
+                                    errorMessage = ""
+                                }
+                            },
                             keyboardOptions = KeyboardOptions(
                                 autoCorrectEnabled = false,
                                 keyboardType = KeyboardType.Password,
@@ -993,13 +998,6 @@ fun LoginPage(
                                 },
                             ),
                         )
-                        if (errorMessage.isNotBlank()) {
-                            Text(
-                                text = errorMessage,
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodySmall,
-                            )
-                        }
 
                         if (needsPassword.value) {
                             OutlinedTextField(
@@ -1077,7 +1075,15 @@ fun LoginPage(
                             )
                         }
 
+                        if (errorMessage.isNotBlank()) {
+                            Text(
+                                text = errorMessage,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+
                         AmberButton(
+                            enabled = key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank()),
                             onClick = {
                                 if (key.value.text.isBlank()) {
                                     errorMessage = context.getString(R.string.key_is_required)

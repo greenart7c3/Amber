@@ -94,6 +94,8 @@ import com.anggrayudi.storage.SimpleStorageHelper
 import com.anggrayudi.storage.file.CreateMode
 import com.anggrayudi.storage.file.makeFile
 import com.anggrayudi.storage.file.openOutputStream
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
@@ -454,12 +456,13 @@ fun SignUpPage(
                                     capitalization = KeyboardCapitalization.None,
                                     keyboardType = KeyboardType.Password,
                                     autoCorrectEnabled = false,
-                                    imeAction = ImeAction.Next,
+                                    imeAction = ImeAction.Done,
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
                             )
 
                             AmberButton(
+                                enabled = nickname.text.isNotBlank() && password.text.isNotBlank(),
                                 modifier = Modifier.padding(vertical = 40.dp),
                                 onClick = {
                                     if (nickname.text.isBlank()) {
@@ -489,6 +492,7 @@ fun SignUpPage(
 
                     1 -> {
                         var showPassword by remember { mutableStateOf(false) }
+                        var errorMessage by remember { mutableStateOf("") }
                         Column(
                             Modifier
                                 .fillMaxSize()
@@ -505,6 +509,9 @@ fun SignUpPage(
                                 value = password2,
                                 onValueChange = { value ->
                                     password2 = value
+                                    if (errorMessage.isNotBlank()) {
+                                        errorMessage = ""
+                                    }
                                 },
                                 trailingIcon = {
                                     Row {
@@ -539,11 +546,7 @@ fun SignUpPage(
                             AmberButton(
                                 onClick = {
                                     if (password2.text != password.text) {
-                                        Toast.makeText(
-                                            context,
-                                            "Passwords do not match",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
+                                        errorMessage = "Passwords do not match"
                                         return@AmberButton
                                     }
                                     storageHelper.openFolderPicker()
@@ -615,9 +618,27 @@ fun SignUpPage(
                                     }
                                 }
                             }
+
+                            if (errorMessage.isNotBlank()) {
+                                Text(
+                                    text = errorMessage,
+                                    color = Color.Red,
+                                )
+                            }
+
                             AmberButton(
-                                enabled = enabled,
+                                enabled = password2.text.isNotBlank(),
                                 onClick = {
+                                    if (password2.text.isBlank()) {
+                                        errorMessage = "Password is required"
+                                        return@AmberButton
+                                    }
+
+                                    if (password2.text != password.text) {
+                                        errorMessage = "Passwords do not match"
+                                        return@AmberButton
+                                    }
+
                                     scope.launch {
                                         state.animateScrollToPage(2)
                                     }
@@ -799,6 +820,14 @@ fun SignUpPage(
                                         seedWords = seedWords,
                                         name = nickname.text,
                                     )
+
+                                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                                        LocalPreferences.saveNcryptsec(
+                                            keyPair.pubKey.toNpub(),
+                                            keyPair.privKey!!.toHexKey(),
+                                            password.text,
+                                        )
+                                    }
 
                                     onFinish()
                                 },

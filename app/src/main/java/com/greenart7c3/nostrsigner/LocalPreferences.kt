@@ -14,7 +14,9 @@ import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.service.HttpClientManager
+import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.crypto.KeyPair
+import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -58,6 +60,7 @@ private object PrefKeys {
     const val PROFILE_URL = "profile_url"
     const val LAST_METADATA_UPDATE = "last_metadata_update"
     const val LAST_CHECK = "last_check"
+    const val NCRYPT_SEC = "ncrypt_sec"
 }
 
 @Immutable
@@ -348,6 +351,18 @@ object LocalPreferences {
         encryptedPreferences(context, npub).apply {
             return getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
         }
+    }
+
+    suspend fun saveNcryptsec(
+        npub: String,
+        privateKeyHex: HexKey,
+        password: String,
+    ) {
+        val context = NostrSigner.getInstance()
+        val ncryptsec = CryptoUtils.nip49.encrypt(privateKeyHex, password)
+        encryptedPreferences(context, npub).edit().apply {
+            putString(PrefKeys.NCRYPT_SEC, ncryptsec)
+        }.apply()
     }
 
     fun updateProxy(

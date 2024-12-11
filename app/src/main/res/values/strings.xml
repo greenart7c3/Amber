@@ -461,4 +461,5 @@
     <string name="setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code">Setup Amber with your Nostr private key. You can enter different versions: Nsec, Ncryptsec or Hex.\nYou can also scan it from a QR Code.</string>
     <string name="check_the_code">Check the code</string>
     <string name="edit_profile">Edit profile</string>
+    <string name="your_nostr_account_explainer">This is your public key, a sort of username that you can share with anyone to let it find you on Nostr:</string>
 </resources>

@@ -381,6 +381,10 @@ fun SignUpPage(
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(bottom = 8.dp),
                             )
+                            Text(
+                                text = stringResource(R.string.your_nostr_account_explainer),
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
                             Box(
                                 modifier = Modifier
                                     .fillMaxWidth()

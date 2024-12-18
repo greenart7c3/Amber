@@ -140,9 +140,17 @@ fun AccountScreen(
                         database,
                         navController,
                         storageHelper,
-                        onRemoveIntentData = {
+                        onRemoveIntentData = { intentData, type ->
                             val oldIntents = intents.toMutableList()
-                            oldIntents.remove(it)
+                            when (type) {
+                                IntentResultType.ADD -> {
+                                    oldIntents.add(intentData)
+                                }
+                                IntentResultType.REMOVE -> {
+                                    oldIntents.remove(intentData)
+                                }
+                            }
+
                             flow.value = oldIntents
                         },
                     )

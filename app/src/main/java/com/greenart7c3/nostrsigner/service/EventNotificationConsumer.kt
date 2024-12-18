@@ -135,7 +135,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
                 permission.application.relays,
                 onLoading = {},
-                onDone = {},
+                onDone = {
+                    if (!it) {
+                        IntentUtils.sendBunkerResponse(
+                            applicationContext,
+                            acc,
+                            bunkerRequest,
+                            BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
+                            permission.application.relays,
+                            onLoading = {},
+                            onDone = {},
+                        )
+                    }
+                },
             )
             return
         }
@@ -169,7 +181,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         BunkerResponse(bunkerRequest.id, "", message),
                         applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList(),
                         onLoading = { },
-                        onDone = { },
+                        onDone = {
+                            if (!it) {
+                                IntentUtils.sendBunkerResponse(
+                                    applicationContext,
+                                    acc,
+                                    bunkerRequest,
+                                    BunkerResponse(bunkerRequest.id, "", message),
+                                    applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList(),
+                                    onLoading = { },
+                                    onDone = { },
+                                )
+                            }
+                        },
                     )
                     return
                 }
@@ -218,7 +242,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 BunkerResponse(bunkerRequest.id, "", "no permission"),
                 relays,
                 onLoading = { },
-                onDone = {},
+                onDone = {
+                    if (!it) {
+                        IntentUtils.sendBunkerResponse(
+                            applicationContext,
+                            acc,
+                            bunkerRequest,
+                            BunkerResponse(bunkerRequest.id, "", "no permission"),
+                            relays,
+                            onLoading = { },
+                            onDone = {},
+                        )
+                    }
+                },
             )
             return
         }
@@ -245,7 +281,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             BunkerResponse(bunkerRequest.id, "", "user rejected"),
                             relays,
                             onLoading = { },
-                            onDone = { },
+                            onDone = {
+                                if (!it) {
+                                    IntentUtils.sendBunkerResponse(
+                                        applicationContext,
+                                        acc,
+                                        bunkerRequest,
+                                        BunkerResponse(bunkerRequest.id, "", "user rejected"),
+                                        relays,
+                                        onLoading = { },
+                                        onDone = { },
+                                    )
+                                }
+                            },
                         )
                     } else {
                         var index = localCursor.getColumnIndex("event")
@@ -261,7 +309,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             BunkerResponse(bunkerRequest.id, result, null),
                             relays,
                             onLoading = { },
-                            onDone = { },
+                            onDone = {
+                                if (!it) {
+                                    IntentUtils.sendBunkerResponse(
+                                        applicationContext,
+                                        acc,
+                                        bunkerRequest,
+                                        BunkerResponse(bunkerRequest.id, result, null),
+                                        relays,
+                                        onLoading = { },
+                                        onDone = { },
+                                    )
+                                }
+                            },
                         )
                     }
                 } else {

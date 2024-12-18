@@ -322,7 +322,7 @@ object IntentUtils {
         bunkerResponse: BunkerResponse,
         relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
-        onDone: () -> Unit,
+        onDone: (Boolean) -> Unit,
     ) {
         AmberListenerSingleton.getListener()?.let {
             Client.unsubscribe(it)
@@ -379,7 +379,7 @@ object IntentUtils {
         encryptedContent: String,
         relays: List<RelaySetupInfo>,
         onLoading: (Boolean) -> Unit,
-        onDone: () -> Unit,
+        onDone: (Boolean) -> Unit,
     ) {
         account.signer.sign<Event>(
             TimeUtils.now(),
@@ -399,8 +399,9 @@ object IntentUtils {
                 val success = Client.sendAndWaitForResponse(it, relayList = relays)
                 if (success) {
                     Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
-                    onDone()
+                    onDone(true)
                 } else {
+                    onDone(false)
                     Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                 }
                 AmberListenerSingleton.getListener()?.let {

@@ -140,7 +140,7 @@ fun sendResult(
     permissions: List<Permission>? = null,
     appName: String? = null,
     signPolicy: Int? = null,
-    onRemoveIntentData: (IntentData) -> Unit,
+    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
 ) {
     onLoading(true)
     GlobalScope.launch(Dispatchers.IO) {
@@ -254,7 +254,10 @@ fun sendResult(
             )
         }
 
-        if (intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) {
+        if (intentData.type == SignerType.CONNECT) {
+            database.applicationDao().deletePermissions(key)
+        }
+        if ((intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) || (intentData.bunkerRequest != null && intentData.type == SignerType.CONNECT)) {
             if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
                 application.permissions.add(
                     ApplicationPermissionsEntity(
@@ -269,6 +272,25 @@ fun sendResult(
         }
 
         if (intentData.bunkerRequest != null) {
+            val localIntentData = intentData.copy()
+
+            // assume that everything worked and try to revert it if it fails
+            EventNotificationConsumer(context).notificationManager().cancelAll()
+            database.applicationDao().insertApplicationWithPermissions(application)
+            database.applicationDao().addHistory(
+                HistoryEntity(
+                    0,
+                    key,
+                    intentData.type.toString(),
+                    kind,
+                    TimeUtils.now(),
+                    true,
+                ),
+            )
+
+            EventNotificationConsumer(context).notificationManager().cancelAll()
+            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+
             IntentUtils.sendBunkerResponse(
                 context,
                 account,
@@ -277,27 +299,21 @@ fun sendResult(
                 application.application.relays.ifEmpty { relays },
                 onLoading,
                 onDone = {
-                    EventNotificationConsumer(context).notificationManager().cancelAll()
-                    if (intentData.type == SignerType.CONNECT) {
-                        database.applicationDao().deletePermissions(key)
-                    }
-                    database.applicationDao().insertApplicationWithPermissions(application)
-                    database.applicationDao().addHistory(
-                        HistoryEntity(
-                            0,
-                            key,
-                            intentData.type.toString(),
-                            kind,
-                            TimeUtils.now(),
-                            true,
-                        ),
-                    )
-
-                    EventNotificationConsumer(context).notificationManager().cancelAll()
-                    onRemoveIntentData(intentData)
-                    activity?.intent = null
-                    if (application.application.closeApplication || intentData.bunkerRequest.closeApplication) {
-                        activity?.finish()
+                    if (!it) {
+                        if (intentData.type == SignerType.SIGN_EVENT) {
+                            kind?.let {
+                                database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)
+                            }
+                        } else {
+                            database.applicationDao().deletePermissions(key, intentData.type.toString())
+                        }
+                        onLoading(false)
+                        onRemoveIntentData(localIntentData, IntentResultType.ADD)
+                    } else {
+                        activity?.intent = null
+                        if (application.application.closeApplication || intentData.bunkerRequest.closeApplication) {
+                            activity?.finish()
+                        }
                     }
                 },
             )
@@ -323,7 +339,7 @@ fun sendResult(
                 intent.putExtra("package", BuildConfig.APPLICATION_ID)
             }
             activity?.setResult(RESULT_OK, intent)
-            onRemoveIntentData(intentData)
+            onRemoveIntentData(intentData, IntentResultType.REMOVE)
             activity?.intent = null
             activity?.finish()
         } else if (!intentData.callBackUrl.isNullOrBlank()) {
@@ -351,7 +367,7 @@ fun sendResult(
                     context.startActivity(intent)
                 }
             }
-            onRemoveIntentData(intentData)
+            onRemoveIntentData(intentData, IntentResultType.REMOVE)
             activity?.intent = null
             activity?.finish()
         } else {
@@ -377,7 +393,7 @@ fun sendResult(
                     Toast.LENGTH_SHORT,
                 ).show()
             }
-            onRemoveIntentData(intentData)
+            onRemoveIntentData(intentData, IntentResultType.REMOVE)
             activity?.intent = null
             activity?.finish()
         }
@@ -445,6 +461,11 @@ fun Color.Companion.fromHex(colorString: String) = try {
     Unspecified
 }
 
+enum class IntentResultType {
+    REMOVE,
+    ADD,
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
@@ -457,7 +478,7 @@ fun MainScreen(
     database: AppDatabase,
     navController: NavHostController,
     storageHelper: SimpleStorageHelper,
-    onRemoveIntentData: (IntentData) -> Unit,
+    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""

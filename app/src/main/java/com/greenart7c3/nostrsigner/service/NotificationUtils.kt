@@ -92,7 +92,7 @@ object NotificationUtils {
         bunkerRequest: BunkerRequest,
     ) {
         val notId = id.hashCode()
-        val notifications: Array<StatusBarNotification> = getActiveNotifications()
+        val notifications: Array<StatusBarNotification> = activeNotifications
         for (notification in notifications) {
             if (notification.id == notId) {
                 return

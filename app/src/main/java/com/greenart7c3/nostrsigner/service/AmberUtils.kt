@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
+import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.HexKey
@@ -127,7 +128,7 @@ object AmberUtils {
         relays: List<RelaySetupInfo>,
         context: Context,
         closeApplication: Boolean,
-        onRemoveIntentData: (IntentData) -> Unit,
+        onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
         onLoading: (Boolean) -> Unit,
     ) {
         IntentUtils.sendBunkerResponse(
@@ -137,11 +138,15 @@ object AmberUtils {
             BunkerResponse(bunkerRequest.id, "", "user rejected"),
             relays,
             onLoading = onLoading,
-            onDone = {
-                onRemoveIntentData(intentData)
-                context.getAppCompatActivity()?.intent = null
-                if (closeApplication) {
-                    context.getAppCompatActivity()?.finish()
+            onDone = { result ->
+                if (!result) {
+                    onLoading(false)
+                } else {
+                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                    context.getAppCompatActivity()?.intent = null
+                    if (closeApplication) {
+                        context.getAppCompatActivity()?.finish()
+                    }
                 }
             },
         )

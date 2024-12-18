@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.bechToBytes
@@ -55,7 +56,7 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account,
     database: AppDatabase,
-    onRemoveIntentData: (IntentData) -> Unit,
+    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     var applicationEntity by remember {
@@ -158,7 +159,7 @@ fun SingleEventHomeScreen(
                             )
                         }
                     } else {
-                        onRemoveIntentData(intentData)
+                        onRemoveIntentData(intentData, IntentResultType.REMOVE)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                     }
@@ -284,7 +285,7 @@ fun SingleEventHomeScreen(
                                 onRemoveIntentData = onRemoveIntentData,
                             )
                         } else {
-                            onRemoveIntentData(intentData)
+                            onRemoveIntentData(intentData, IntentResultType.REMOVE)
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
@@ -428,7 +429,7 @@ fun SingleEventHomeScreen(
                                 onLoading,
                             )
                         } else {
-                            onRemoveIntentData(intentData)
+                            onRemoveIntentData(intentData, IntentResultType.REMOVE)
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
@@ -597,7 +598,7 @@ fun SingleEventHomeScreen(
                                     onRemoveIntentData = onRemoveIntentData,
                                 )
                             } else {
-                                onRemoveIntentData(intentData)
+                                onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                 context.getAppCompatActivity()?.intent = null
                                 if (application.application.closeApplication) {
                                     context.getAppCompatActivity()?.finish()

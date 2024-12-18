@@ -67,6 +67,7 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
@@ -84,7 +85,7 @@ fun MultiEventHomeScreen(
     packageName: String?,
     accountParam: Account,
     navController: NavController,
-    onRemoveIntentData: (IntentData) -> Unit,
+    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -254,7 +255,9 @@ fun MultiEventHomeScreen(
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
-                                                onRemoveIntentData(intentData)
+                                                if (it) {
+                                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                }
                                             },
                                         )
                                     } else {
@@ -333,7 +336,9 @@ fun MultiEventHomeScreen(
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
-                                                onRemoveIntentData(intentData)
+                                                if (it) {
+                                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                }
                                             },
                                         )
                                     } else {
@@ -397,7 +402,9 @@ fun MultiEventHomeScreen(
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
-                                                onRemoveIntentData(intentData)
+                                                if (it) {
+                                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                }
                                             },
                                         )
                                     } else {

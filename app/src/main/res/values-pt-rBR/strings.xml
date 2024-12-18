@@ -457,4 +457,5 @@
     <string name="nostr_app">nostrapps.com</string>
     <string name="service">Service</string>
     <string name="service_description">Service background notification</string>
+    <string name="close_application">Close application when accepting or rejecting a permission</string>
 </resources>

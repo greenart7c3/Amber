@@ -368,17 +368,6 @@ fun MultiEventHomeScreen(
                                 if (savedApplication != null) {
                                     onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                 } else {
-                                    if (intentData.rememberMyChoice.value && intentData.checked.value) {
-                                        AmberUtils.acceptOrRejectPermission(
-                                            application,
-                                            key,
-                                            intentData,
-                                            null,
-                                            intentData.rememberMyChoice.value,
-                                            database,
-                                        )
-                                    }
-
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
                                     database.applicationDao().addHistory(

@@ -192,11 +192,10 @@ fun MultiEventHomeScreen(
                             val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
                             val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
+                            val savedApplication = database.applicationDao().getByKey(key)
 
                             val application =
-                                database
-                                    .applicationDao()
-                                    .getByKey(key) ?: ApplicationWithPermissions(
+                                savedApplication ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(
                                         key,
                                         "",
@@ -363,6 +362,74 @@ fun MultiEventHomeScreen(
                                                 id = intentData.id,
                                             ),
                                         )
+                                    }
+                                }
+                            } else if (intentData.type == SignerType.CONNECT) {
+                                if (savedApplication != null) {
+                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                } else {
+                                    if (intentData.rememberMyChoice.value && intentData.checked.value) {
+                                        AmberUtils.acceptOrRejectPermission(
+                                            application,
+                                            key,
+                                            intentData,
+                                            null,
+                                            intentData.rememberMyChoice.value,
+                                            database,
+                                        )
+                                    }
+
+                                    database.applicationDao().insertApplicationWithPermissions(application)
+
+                                    database.applicationDao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            key,
+                                            intentData.type.toString(),
+                                            null,
+                                            TimeUtils.now(),
+                                            intentData.checked.value,
+                                        ),
+                                    )
+
+                                    if (intentData.bunkerRequest != null) {
+                                        if (intentData.checked.value) {
+                                            IntentUtils.sendBunkerResponse(
+                                                context,
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                BunkerResponse(intentData.bunkerRequest.id, "", null),
+                                                application.application.relays,
+                                                onLoading = {},
+                                                onDone = {
+                                                    if (it) {
+                                                        onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                    }
+                                                },
+                                            )
+                                        } else {
+                                            AmberUtils.sendBunkerError(
+                                                intentData,
+                                                localAccount,
+                                                intentData.bunkerRequest,
+                                                relays = application.application.relays,
+                                                context = context,
+                                                closeApplication = application.application.closeApplication,
+                                                onRemoveIntentData = onRemoveIntentData,
+                                                onLoading = {},
+                                            )
+                                        }
+                                    } else {
+                                        if (intentData.checked.value) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = "",
+                                                    result = "",
+                                                    id = intentData.id,
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
                             } else {

@@ -61,6 +61,13 @@ Android intents and browser urls have limitations, so if you are using the `retu
     window.href = `nostrsigner:${eventJson}?compressionType=none&returnType=signature&type=decrypt_zap_event&callbackUrl=https://example.com/?event=`;
     ```
 
+## Extra parameters
+
+- **appName**
+    ```js
+    window.href = `nostrsigner:...&appName=Title of your web app`;
+    ```
+
 ## Example
 
 ```js

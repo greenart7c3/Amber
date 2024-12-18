@@ -110,10 +110,11 @@ fun SingleEventHomeScreen(
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
                             intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
-                        } else {
+                        } else if (intentData.bunkerRequest != null) {
                             account.signer.keyPair.pubKey.toHexKey()
+                        } else {
+                            account.signer.keyPair.pubKey.toNpub()
                         }
-
                     coroutineScope.launch {
                         sendResult(
                             context,

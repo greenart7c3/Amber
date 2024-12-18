@@ -300,13 +300,16 @@ fun sendResult(
                 onLoading,
                 onDone = {
                     if (!it) {
-                        if (intentData.type == SignerType.SIGN_EVENT) {
-                            kind?.let {
-                                database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)
+                        if (rememberChoice) {
+                            if (intentData.type == SignerType.SIGN_EVENT) {
+                                kind?.let {
+                                    database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)
+                                }
+                            } else {
+                                database.applicationDao().deletePermissions(key, intentData.type.toString())
                             }
-                        } else {
-                            database.applicationDao().deletePermissions(key, intentData.type.toString())
                         }
+
                         onLoading(false)
                         onRemoveIntentData(localIntentData, IntentResultType.ADD)
                     } else {

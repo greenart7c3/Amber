@@ -258,6 +258,7 @@ fun sendResult(
             database.applicationDao().deletePermissions(key)
         }
         if ((intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) || (intentData.bunkerRequest != null && intentData.type == SignerType.CONNECT)) {
+            application.application.isConnected = true
             if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
                 application.permissions.add(
                     ApplicationPermissionsEntity(
@@ -314,7 +315,7 @@ fun sendResult(
                         onRemoveIntentData(localIntentData, IntentResultType.ADD)
                     } else {
                         activity?.intent = null
-                        if (application.application.closeApplication || intentData.bunkerRequest.closeApplication) {
+                        if (application.application.closeApplication) {
                             activity?.finish()
                         }
                     }

@@ -40,6 +40,7 @@ import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.crypto.nip04.Nip04
@@ -116,7 +117,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val database = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub())
 
         val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
-        if (permission != null && permission.application.isConnected && type == SignerType.CONNECT) {
+        if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             database.applicationDao()
                 .addHistory(
                     HistoryEntity(
@@ -124,7 +125,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         permission.application.key,
                         type.toString().toLowerCase(Locale.current),
                         amberEvent?.kind,
-                        System.currentTimeMillis(),
+                        TimeUtils.now(),
                         true,
                     ),
                 )

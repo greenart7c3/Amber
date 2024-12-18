@@ -502,14 +502,14 @@ fun SingleEventHomeScreen(
                         val eventJson = event.toJson()
 
                         sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            remember.value,
-                            clipboardManager,
-                            event.toJson(),
-                            if (event is LnZapRequestEvent &&
+                            context = context,
+                            packageName = packageName,
+                            account = account,
+                            key = key,
+                            rememberChoice = remember.value,
+                            clipboardManager = clipboardManager,
+                            event = event.toJson(),
+                            value = if (event is LnZapRequestEvent &&
                                 event.tags.any {
                                         tag ->
                                     tag.any { t -> t == "anon" }
@@ -519,11 +519,14 @@ fun SingleEventHomeScreen(
                             } else {
                                 event.sig
                             },
-                            intentData,
-                            event.kind,
-                            database,
-                            onLoading,
+                            intentData = intentData,
+                            kind = event.kind,
+                            database = database,
+                            onLoading = onLoading,
                             onRemoveIntentData = onRemoveIntentData,
+                            signPolicy = null,
+                            appName = null,
+                            permissions = null,
                         )
                     },
                     {

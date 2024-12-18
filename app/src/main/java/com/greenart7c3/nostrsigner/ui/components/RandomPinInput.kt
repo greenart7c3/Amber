@@ -1,7 +1,9 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.view.WindowManager
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -94,19 +96,25 @@ fun RandomPinInput(
                 Spacer(modifier = Modifier.height(8.dp))
             }
 
-            Text(
-                text = if (!obscureText) selectedPin else selectedPin.map { '*' }.joinToString(""),
-            )
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(40.dp)
+                    .border(1.dp, Color.LightGray, RoundedCornerShape(20)),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(
+                    text = if (!obscureText) selectedPin else selectedPin.map { '*' }.joinToString(""),
+                )
+            }
 
-            if (selectedPin.isNotEmpty()) {
-                IconButton(
-                    onClick = { obscureText = !obscureText },
-                ) {
-                    Icon(
-                        imageVector = if (obscureText) Icons.Default.Visibility else Icons.Default.VisibilityOff,
-                        contentDescription = "Show/Hide",
-                    )
-                }
+            IconButton(
+                onClick = { obscureText = !obscureText },
+            ) {
+                Icon(
+                    imageVector = if (obscureText) Icons.Default.Visibility else Icons.Default.VisibilityOff,
+                    contentDescription = "Show/Hide",
+                )
             }
         }
 
@@ -140,7 +148,9 @@ fun RandomPinInput(
                             selectedPin = selectedPin.dropLast(1) // Remove last digit
                         }
                     },
-                    modifier = Modifier.weight(1f).padding(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp),
                 ) {
                     Icon(
                         Icons.AutoMirrored.Filled.Backspace,
@@ -158,7 +168,9 @@ fun RandomPinInput(
                             selectedPin += randomNumbers.last().toString()
                         }
                     },
-                    modifier = Modifier.weight(1f).padding(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp),
                 ) {
                     Text(
                         randomNumbers.last().toString(),
@@ -177,7 +189,9 @@ fun RandomPinInput(
                             onPinEntered(selectedPin) // Confirm the PIN
                         }
                     },
-                    modifier = Modifier.weight(1f).padding(8.dp),
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(8.dp),
                 ) {
                     Icon(
                         Icons.Default.Done,

@@ -133,6 +133,7 @@ object IntentUtils {
             var compressionType = CompressionType.NONE
             var callbackUrl: String? = null
             var returnType = ReturnType.SIGNATURE
+            var appName = ""
             parameters.joinToString("?").split("&").forEach {
                 val params = it.split("=").toMutableList()
                 val parameter = params.removeAt(0)
@@ -166,6 +167,9 @@ object IntentUtils {
                         returnType = ReturnType.EVENT
                     }
                 }
+                if (parameter == "appName") {
+                    appName = parameterData
+                }
             }
 
             when (type) {
@@ -186,7 +190,7 @@ object IntentUtils {
                         onReady(
                             IntentData(
                                 localData,
-                                "",
+                                appName,
                                 type,
                                 pubKey,
                                 "",
@@ -221,7 +225,7 @@ object IntentUtils {
                     onReady(
                         IntentData(
                             localData,
-                            "",
+                            appName,
                             type,
                             pubKey,
                             "",
@@ -243,7 +247,7 @@ object IntentUtils {
                     onReady(
                         IntentData(
                             localData,
-                            "",
+                            appName,
                             type,
                             pubKey,
                             "",
@@ -265,7 +269,7 @@ object IntentUtils {
                     onReady(
                         IntentData(
                             localData,
-                            "",
+                            appName,
                             type,
                             pubKey,
                             "",
@@ -624,7 +628,10 @@ object IntentUtils {
             }
 
         val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
-        val name = if (callbackUrl.isNotBlank()) Uri.parse(callbackUrl).host ?: "" else ""
+        var name = if (callbackUrl.isNotBlank()) Uri.parse(callbackUrl).host ?: "" else ""
+        if (name.isBlank()) {
+            name = intent.extras?.getString("appName") ?: ""
+        }
         val pubKey = intent.extras?.getString("pubKey") ?: intent.extras?.getString("pubkey") ?: ""
         val id = intent.extras?.getString("id") ?: ""
 

@@ -112,6 +112,8 @@ fun SingleEventHomeScreen(
                             intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
                         } else if (intentData.bunkerRequest != null) {
                             account.signer.keyPair.pubKey.toHexKey()
+                        } else if (packageName == null) {
+                            account.signer.keyPair.pubKey.toHexKey()
                         } else {
                             account.signer.keyPair.pubKey.toNpub()
                         }

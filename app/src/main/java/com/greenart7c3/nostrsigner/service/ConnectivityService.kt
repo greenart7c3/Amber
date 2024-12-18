@@ -1,17 +1,18 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.app.Notification
-import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.Service
-import android.content.Context
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.NotificationChannelCompat
+import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
+import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
@@ -95,13 +96,24 @@ class ConnectivityService : Service() {
 
     private fun createNotification(): Notification {
         val channelId = "ServiceChannel"
-        val channel = NotificationChannel(channelId, getString(R.string.checking_connectivity), NotificationManager.IMPORTANCE_DEFAULT)
-        channel.setSound(null, null)
-        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val group = NotificationChannelGroupCompat.Builder("ServiceGroup")
+            .setName(getString(R.string.service))
+            .setDescription(getString(R.string.service_description))
+            .build()
+        val channel = NotificationChannelCompat.Builder(channelId, NotificationManager.IMPORTANCE_DEFAULT)
+            .setName(getString(R.string.service))
+            .setDescription(getString(R.string.amber_is_running_in_background))
+            .setSound(null, null)
+            .setGroup(group.id)
+            .build()
+
+        val notificationManager = NotificationManagerCompat.from(this)
+        notificationManager.createNotificationChannelGroup(group)
         notificationManager.createNotificationChannel(channel)
 
         val notificationBuilder =
             NotificationCompat.Builder(this, channelId)
+                .setGroup(group.id)
                 .setContentTitle(getString(R.string.amber_is_running_in_background))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)

@@ -1,8 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -23,6 +22,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -76,10 +76,12 @@ fun EditConfigurationScreen(
     val relays = remember { mutableStateListOf<RelaySetupInfo>() }
     val textFieldRelay = remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val isLoading = remember { mutableStateOf(true) }
+    var closeApp by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             application = database.applicationDao().getByKey(key)
             name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
+            closeApp = application?.application?.closeApplication ?: true
 
             application?.application?.relays?.forEach {
                 relays.add(
@@ -122,6 +124,27 @@ fun EditConfigurationScreen(
                 label = { Text(stringResource(R.string.name)) },
                 modifier = Modifier.fillMaxWidth(),
             )
+
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .padding(vertical = 8.dp)
+                    .clickable {
+                        closeApp = !closeApp
+                    },
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = stringResource(R.string.close_application),
+                )
+                Switch(
+                    checked = closeApp,
+                    onCheckedChange = {
+                        closeApp = it
+                    },
+                )
+            }
 
             Spacer(modifier = Modifier.height(16.dp))
             if (application?.application?.shouldShowRelays() == true) {
@@ -237,6 +260,7 @@ fun EditConfigurationScreen(
                                 it.application.copy(
                                     name = name.text,
                                     relays = relays,
+                                    closeApplication = closeApp,
                                 )
                             database.applicationDao().delete(it.application)
                             database.applicationDao().insertApplicationWithPermissions(

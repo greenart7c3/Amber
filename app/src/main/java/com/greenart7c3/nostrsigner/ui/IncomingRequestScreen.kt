@@ -46,9 +46,10 @@ fun IncomingRequestScreen(
     database: AppDatabase,
     navController: NavController,
     onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
 ) {
-    var loading by remember { mutableStateOf(false) }
     val context = LocalContext.current
+    var loading by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -96,9 +97,8 @@ fun IncomingRequestScreen(
                 account,
                 database,
                 onRemoveIntentData,
-            ) {
-                loading = it
-            }
+                onLoading,
+            )
         } else {
             MultiEventHomeScreen(
                 paddingValues = paddingValues,
@@ -107,9 +107,8 @@ fun IncomingRequestScreen(
                 account,
                 navController,
                 onRemoveIntentData,
-            ) {
-                loading = it
-            }
+                onLoading,
+            )
         }
     }
 }

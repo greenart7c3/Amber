@@ -793,499 +793,507 @@ fun MainScreen(
             }
         },
     ) { padding ->
-        NavHost(
-            navController,
-            startDestination = localRoute,
-            enterTransition = { fadeIn(animationSpec = tween(200)) },
-            exitTransition = { fadeOut(animationSpec = tween(200)) },
-        ) {
-            composable(
-                "login",
-                content = {
-                    MainPage(
-                        scope = scope,
-                        navController = navController,
-                    )
-                },
-            )
-
-            composable(
-                "create",
-                content = {
-                    SignUpPage(
-                        accountViewModel = accountStateViewModel,
-                        scope = scope,
-                        navController = navController,
-                        storageHelper = storageHelper,
-                        onFinish = {
-                            navController.navigate(Route.Applications.route) {
-                                popUpTo(0)
-                            }
-                        },
-                    )
-                },
-            )
-
-            composable(
-                "loginPage",
-                content = {
-                    LoginPage(
-                        accountViewModel = accountStateViewModel,
-                        navController = navController,
-                        onFinish = {
-                            navController.navigate(Route.Applications.route) {
-                                popUpTo(0)
-                            }
-                        },
-                    )
-                },
-            )
-
-            composable(
-                Route.IncomingRequest.route,
-                content = {
-                    IncomingRequestScreen(
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        paddingValues = PaddingValues(
-                            top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
-                            bottom = padding.calculateBottomPadding(),
-                            start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
-                            end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
-                        ),
-                        intents,
-                        packageName,
-                        appName,
-                        account,
-                        database,
-                        navController,
-                        onRemoveIntentData,
-                    )
-                },
-            )
-
-            composable(
-                Route.Applications.route,
-                content = {
-                    PermissionsScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        account = account,
-                        navController = navController,
-                        database = database,
-                    )
-                },
-            )
-
-            composable(
-                Route.Settings.route,
-                content = {
-                    SettingsScreen(
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        accountStateViewModel,
-                        account,
-                        navController,
-                    )
-                },
-            )
-
-            composable(
-                Route.AccountBackup.route,
-                content = {
-                    AccountBackupScreen(
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        account,
-                    )
-                },
-            )
-
-            composable(
-                Route.Permission.route,
-                arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("packageName")?.let { packageName ->
-                        EditPermission(
-                            modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(padding)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
-                            account = account,
-                            selectedPackage = packageName,
+        var isLoading by remember { mutableStateOf(false) }
+        if (isLoading) {
+            CenterCircularProgressIndicator(Modifier.padding(padding))
+        } else {
+            NavHost(
+                navController,
+                startDestination = localRoute,
+                enterTransition = { fadeIn(animationSpec = tween(200)) },
+                exitTransition = { fadeOut(animationSpec = tween(200)) },
+            ) {
+                composable(
+                    "login",
+                    content = {
+                        MainPage(
+                            scope = scope,
                             navController = navController,
-                            database = database,
                         )
-                    }
-                },
-            )
+                    },
+                )
 
-            composable(
-                Route.Logs.route,
-                content = {
-                    LogsScreen(
-                        PaddingValues(
-                            top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
-                            bottom = padding.calculateBottomPadding(),
-                            start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
-                            end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
-                        ),
-                        account = account,
-                    )
-                },
-            )
+                composable(
+                    "create",
+                    content = {
+                        SignUpPage(
+                            accountViewModel = accountStateViewModel,
+                            scope = scope,
+                            navController = navController,
+                            storageHelper = storageHelper,
+                            onFinish = {
+                                navController.navigate(Route.Applications.route) {
+                                    popUpTo(0)
+                                }
+                            },
+                        )
+                    },
+                )
 
-            composable(
-                Route.ActiveRelays.route,
-                content = {
-                    ActiveRelaysScreen(
-                        navController = navController,
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                    )
-                },
-            )
+                composable(
+                    "loginPage",
+                    content = {
+                        LoginPage(
+                            accountViewModel = accountStateViewModel,
+                            navController = navController,
+                            onFinish = {
+                                navController.navigate(Route.Applications.route) {
+                                    popUpTo(0)
+                                }
+                            },
+                        )
+                    },
+                )
 
-            composable(
-                Route.Language.route,
-                content = {
-                    LanguageScreen(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        account = account,
-                    )
-                },
-            )
-
-            composable(
-                Route.DefaultRelays.route,
-                content = {
-                    DefaultRelaysScreen(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        accountStateViewModel = accountStateViewModel,
-                        account = account,
-                    )
-                },
-            )
-
-            composable(
-                Route.SignPolicy.route,
-                content = {
-                    SignPolicySettingsScreen(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        account = account,
-                        navController = navController,
-                    )
-                },
-            )
-
-            composable(
-                Route.Security.route,
-                content = {
-                    SecurityScreen(
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        navController = navController,
-                    )
-                },
-            )
-
-            composable(
-                Route.NewApplication.route,
-                content = {
-                    NewApplicationScreen(
-                        account = account,
-                        accountStateViewModel = accountStateViewModel,
-                        navController = navController,
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                    )
-                },
-            )
-
-            composable(
-                Route.NewNsecBunker.route,
-                content = {
-                    NewNsecBunkerScreen(
-                        database = database,
-                        account = account,
-                        accountStateViewModel = accountStateViewModel,
-                        navController = navController,
-                        modifier =
-                        Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                    )
-                },
-            )
-
-            composable(
-                Route.NSecBunkerCreated.route,
-                arguments = listOf(navArgument("key") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("key")?.let { key ->
-                        NewNsecBunkerCreatedScreen(
-                            database = database,
-                            account = account,
-                            key = key,
-                            modifier =
+                composable(
+                    Route.IncomingRequest.route,
+                    content = {
+                        IncomingRequestScreen(
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                        )
-                    }
-                },
-            )
-
-            composable(
-                Route.Activity.route,
-                arguments = listOf(navArgument("key") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("key")?.let { key ->
-                        ActivityScreen(
-                            database = database,
-                            key = key,
                             paddingValues = PaddingValues(
                                 top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
                                 bottom = padding.calculateBottomPadding(),
                                 start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
                                 end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
                             ),
-                            modifier =
-                            Modifier
-                                .fillMaxSize(),
+                            intents,
+                            packageName,
+                            appName,
+                            account,
+                            database,
+                            navController,
+                            onRemoveIntentData,
+                            onLoading = {
+                                isLoading = it
+                            },
                         )
-                    }
-                },
-            )
+                    },
+                )
 
-            composable(
-                Route.RelayLogScreen.route,
-                arguments = listOf(navArgument("url") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("url")?.let { url ->
-                        val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
-                        RelayLogScreen(
-                            url = localUrl,
-                            paddingValues = PaddingValues(
-                                top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
-                                bottom = padding.calculateBottomPadding(),
-                                start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
-                                end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
-                            ),
-                        )
-                    }
-                },
-            )
-
-            composable(
-                Route.EditConfiguration.route,
-                arguments = listOf(navArgument("key") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("key")?.let { key ->
-                        EditConfigurationScreen(
+                composable(
+                    Route.Applications.route,
+                    content = {
+                        PermissionsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .verticalScroll(rememberScrollState())
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            database = database,
-                            key = key,
-                            accountStateViewModel = accountStateViewModel,
                             account = account,
                             navController = navController,
+                            database = database,
                         )
-                    }
-                },
-            )
+                    },
+                )
 
-            composable(
-                Route.SetupPin.route,
-                content = {
-                    SetupPinScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        navController = navController,
-                    )
-                },
-            )
+                composable(
+                    Route.Settings.route,
+                    content = {
+                        SettingsScreen(
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            accountStateViewModel,
+                            account,
+                            navController,
+                        )
+                    },
+                )
 
-            composable(
-                Route.ConfirmPin.route,
-                arguments = listOf(navArgument("pin") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("pin")?.let { pin ->
-                        ConfirmPinScreen(
-                            modifier = Modifier
+                composable(
+                    Route.AccountBackup.route,
+                    content = {
+                        AccountBackupScreen(
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.Permission.route,
+                    arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("packageName")?.let { packageName ->
+                            EditPermission(
+                                modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                account = account,
+                                selectedPackage = packageName,
+                                navController = navController,
+                                database = database,
+                            )
+                        }
+                    },
+                )
+
+                composable(
+                    Route.Logs.route,
+                    content = {
+                        LogsScreen(
+                            PaddingValues(
+                                top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                                bottom = padding.calculateBottomPadding(),
+                                start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                                end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                            ),
+                            account = account,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.ActiveRelays.route,
+                    content = {
+                        ActiveRelaysScreen(
+                            navController = navController,
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                        )
+                    },
+                )
+
+                composable(
+                    Route.Language.route,
+                    content = {
+                        LanguageScreen(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account = account,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.DefaultRelays.route,
+                    content = {
+                        DefaultRelaysScreen(
+                            modifier =
+                            Modifier
                                 .fillMaxSize()
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             accountStateViewModel = accountStateViewModel,
-                            pin = pin,
+                            account = account,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.SignPolicy.route,
+                    content = {
+                        SignPolicySettingsScreen(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account = account,
                             navController = navController,
                         )
-                    }
-                },
-            )
+                    },
+                )
 
-            composable(
-                Route.SeeDetails.route,
-                content = {
-                    SeeDetailsScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                    )
-                },
-            )
+                composable(
+                    Route.Security.route,
+                    content = {
+                        SecurityScreen(
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            navController = navController,
+                        )
+                    },
+                )
 
-            composable(
-                Route.RelaysScreen.route,
-                content = {
-                    RelaysScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        navController = navController,
-                    )
-                },
-            )
+                composable(
+                    Route.NewApplication.route,
+                    content = {
+                        NewApplicationScreen(
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                            navController = navController,
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                        )
+                    },
+                )
 
-            composable(
-                Route.DefaultProfileRelaysScreen.route,
-                content = {
-                    DefaultProfileRelaysScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        account = account,
-                        accountStateViewModel = accountStateViewModel,
-                    )
-                },
-            )
+                composable(
+                    Route.NewNsecBunker.route,
+                    content = {
+                        NewNsecBunkerScreen(
+                            database = database,
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                            navController = navController,
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                        )
+                    },
+                )
 
-            composable(
-                Route.TorSettings.route,
-                content = {
-                    ConnectOrbotScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
-                            .padding(padding)
-                            .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
-                        onPost = {
-                            LocalPreferences.updateProxy(context, true, it)
-                            scope.launch(Dispatchers.IO) {
-                                NotificationDataSource.stopSync()
-                                NostrSigner.getInstance().checkForNewRelays()
-                                NotificationDataSource.start()
-                                scope.launch {
-                                    navController.navigate(Route.Settings.route) {
-                                        popUpTo(0)
+                composable(
+                    Route.NSecBunkerCreated.route,
+                    arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("key")?.let { key ->
+                            NewNsecBunkerCreatedScreen(
+                                database = database,
+                                account = account,
+                                key = key,
+                                modifier =
+                                Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                            )
+                        }
+                    },
+                )
+
+                composable(
+                    Route.Activity.route,
+                    arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("key")?.let { key ->
+                            ActivityScreen(
+                                database = database,
+                                key = key,
+                                paddingValues = PaddingValues(
+                                    top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                                    bottom = padding.calculateBottomPadding(),
+                                    start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                                    end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                                ),
+                                modifier =
+                                Modifier
+                                    .fillMaxSize(),
+                            )
+                        }
+                    },
+                )
+
+                composable(
+                    Route.RelayLogScreen.route,
+                    arguments = listOf(navArgument("url") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("url")?.let { url ->
+                            val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
+                            RelayLogScreen(
+                                url = localUrl,
+                                paddingValues = PaddingValues(
+                                    top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                                    bottom = padding.calculateBottomPadding(),
+                                    start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                                    end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                                ),
+                            )
+                        }
+                    },
+                )
+
+                composable(
+                    Route.EditConfiguration.route,
+                    arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("key")?.let { key ->
+                            EditConfigurationScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                database = database,
+                                key = key,
+                                accountStateViewModel = accountStateViewModel,
+                                account = account,
+                                navController = navController,
+                            )
+                        }
+                    },
+                )
+
+                composable(
+                    Route.SetupPin.route,
+                    content = {
+                        SetupPinScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            navController = navController,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.ConfirmPin.route,
+                    arguments = listOf(navArgument("pin") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("pin")?.let { pin ->
+                            ConfirmPinScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                accountStateViewModel = accountStateViewModel,
+                                pin = pin,
+                                navController = navController,
+                            )
+                        }
+                    },
+                )
+
+                composable(
+                    Route.SeeDetails.route,
+                    content = {
+                        SeeDetailsScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                        )
+                    },
+                )
+
+                composable(
+                    Route.RelaysScreen.route,
+                    content = {
+                        RelaysScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            navController = navController,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.DefaultProfileRelaysScreen.route,
+                    content = {
+                        DefaultProfileRelaysScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.TorSettings.route,
+                    content = {
+                        ConnectOrbotScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(rememberScrollState())
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            onPost = {
+                                LocalPreferences.updateProxy(context, true, it)
+                                scope.launch(Dispatchers.IO) {
+                                    NotificationDataSource.stopSync()
+                                    NostrSigner.getInstance().checkForNewRelays()
+                                    NotificationDataSource.start()
+                                    scope.launch {
+                                        navController.navigate(Route.Settings.route) {
+                                            popUpTo(0)
+                                        }
                                     }
                                 }
-                            }
-                        },
-                        onError = {
-                            scope.launch {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.could_not_connect_to_tor),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
-                        },
-                        account = account,
-                    )
-                },
-            )
-
-            composable(
-                Route.EditProfile.route,
-                arguments = listOf(navArgument("key") { type = NavType.StringType }),
-                content = {
-                    it.arguments?.getString("key")?.let { key ->
-                        EditProfileScreen(
-                            modifier = Modifier
-                                .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
-                                .padding(padding)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
+                            },
+                            onError = {
+                                scope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.could_not_connect_to_tor),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                            },
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
-                            npub = key,
                         )
-                    }
-                },
-            )
+                    },
+                )
+
+                composable(
+                    Route.EditProfile.route,
+                    arguments = listOf(navArgument("key") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("key")?.let { key ->
+                            EditProfileScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .verticalScroll(rememberScrollState())
+                                    .padding(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                account = account,
+                                accountStateViewModel = accountStateViewModel,
+                                npub = key,
+                            )
+                        }
+                    },
+                )
+            }
         }
     }
 }

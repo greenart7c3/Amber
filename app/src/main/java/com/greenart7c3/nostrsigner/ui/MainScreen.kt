@@ -275,6 +275,8 @@ fun sendResult(
         if (intentData.bunkerRequest != null) {
             val localIntentData = intentData.copy()
 
+            IntentUtils.clearRequests()
+
             // assume that everything worked and try to revert it if it fails
             EventNotificationConsumer(context).notificationManager().cancelAll()
             database.applicationDao().insertApplicationWithPermissions(application)
@@ -312,7 +314,8 @@ fun sendResult(
                         }
 
                         onLoading(false)
-                        onRemoveIntentData(localIntentData, IntentResultType.ADD)
+                        IntentUtils.addRequest(localIntentData.bunkerRequest!!.id, localIntentData.bunkerRequest)
+//                        onRemoveIntentData(localIntentData, IntentResultType.ADD)
                     } else {
                         activity?.intent = null
                         if (application.application.closeApplication) {

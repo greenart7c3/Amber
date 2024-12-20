@@ -245,6 +245,9 @@ fun MultiEventHomeScreen(
                                 )
 
                                 if (intentData.bunkerRequest != null) {
+                                    val localIntentData = intentData.copy()
+                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+
                                     if (intentData.checked.value) {
                                         IntentUtils.sendBunkerResponse(
                                             context,
@@ -254,8 +257,8 @@ fun MultiEventHomeScreen(
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
-                                                if (it) {
-                                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                if (!it) {
+                                                    IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
                                                 }
                                             },
                                         )
@@ -326,6 +329,9 @@ fun MultiEventHomeScreen(
                                 val signedMessage = CryptoUtils.signString(intentData.data, localAccount.signer.keyPair.privKey!!).toHexKey()
 
                                 if (intentData.bunkerRequest != null) {
+                                    val localIntentData = intentData.copy()
+                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+
                                     if (intentData.checked.value) {
                                         IntentUtils.sendBunkerResponse(
                                             context,
@@ -335,8 +341,8 @@ fun MultiEventHomeScreen(
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
-                                                if (it) {
-                                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                if (!it) {
+                                                    IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
                                                 }
                                             },
                                         )
@@ -382,6 +388,8 @@ fun MultiEventHomeScreen(
                                     )
 
                                     if (intentData.bunkerRequest != null) {
+                                        val localIntentData = intentData.copy()
+                                        onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                         if (intentData.checked.value) {
                                             IntentUtils.sendBunkerResponse(
                                                 context,
@@ -391,8 +399,8 @@ fun MultiEventHomeScreen(
                                                 application.application.relays,
                                                 onLoading = {},
                                                 onDone = {
-                                                    if (it) {
-                                                        onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                    if (!it) {
+                                                        IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
                                                     }
                                                 },
                                             )
@@ -449,6 +457,8 @@ fun MultiEventHomeScreen(
                                 val signature = intentData.encryptedData ?: continue
 
                                 if (intentData.bunkerRequest != null) {
+                                    val localIntentData = intentData.copy()
+                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                     if (intentData.checked.value) {
                                         IntentUtils.sendBunkerResponse(
                                             context,
@@ -458,8 +468,8 @@ fun MultiEventHomeScreen(
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
-                                                if (it) {
-                                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                                if (!it) {
+                                                    IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
                                                 }
                                             },
                                         )

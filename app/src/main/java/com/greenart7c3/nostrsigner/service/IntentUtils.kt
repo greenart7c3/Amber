@@ -104,6 +104,11 @@ object IntentUtils {
         return bunkerRequests
     }
 
+    private fun decodeData(data: String, replace: Boolean = true): String {
+        if (!replace) return URLDecoder.decode(data.replace("nostrsigner:", ""), "utf-8")
+        return URLDecoder.decode(data.replace("nostrsigner:", "").replace("+", "%2b"), "utf-8")
+    }
+
     private fun getIntentDataWithoutExtras(
         context: Context,
         data: String,
@@ -120,8 +125,9 @@ object IntentUtils {
         } else {
             content = ""
         }
-        val localData = content.ifEmpty { URLDecoder.decode(data.replace("nostrsigner:", "").split("?").first().replace("+", "%2b"), "utf-8") }
-        val parameters = if (content.isEmpty()) data.replace("nostrsigner:", "").split("?").toMutableList() else data.replace(content, "").replace("nostrsigner:", "").split("?").toMutableList()
+        val decoded = decodeData(data)
+        val localData = content.ifEmpty { decoded.split("?").first() }
+        val parameters = if (content.isEmpty()) decoded.split("?").toMutableList() else decodeData(content, false).split("?").toMutableList()
         parameters.removeAt(0)
         parameters.removeIf { it.isBlank() }
 
@@ -618,11 +624,7 @@ object IntentUtils {
 
         val data =
             try {
-                if (packageName == null) {
-                    URLDecoder.decode(intent.data?.toString()?.replace("+", "%2b") ?: "", "utf-8").replace("nostrsigner:", "")
-                } else {
-                    intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
-                }
+                decodeData(intent.data?.toString() ?: "", packageName == null)
             } catch (e: Exception) {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
             }
@@ -812,7 +814,7 @@ object IntentUtils {
             val relays: MutableList<RelaySetupInfo> = mutableListOf()
             var name = ""
             val pubKey = split.first()
-            val parsedData = URLDecoder.decode(split.drop(1).joinToString { it }.replace("+", "%2b"), "utf-8")
+            val parsedData = decodeData(split.drop(1).joinToString { it })
             val splitParsedData = parsedData.split("&")
             val permissions = mutableListOf<Permission>()
             var nostrConnectSecret = ""

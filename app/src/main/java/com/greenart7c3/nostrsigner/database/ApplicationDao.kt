@@ -27,6 +27,7 @@ interface ApplicationDao {
     fun getAll(pubKey: String): List<ApplicationEntity>
 
     @Query("SELECT * FROM application where isConnected = 0")
+    @Transaction
     fun getAllNotConnected(): List<ApplicationWithPermissions>
 
     @Query(

@@ -26,6 +26,9 @@ interface ApplicationDao {
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     fun getAll(pubKey: String): List<ApplicationEntity>
 
+    @Query("SELECT * FROM application where isConnected = 0")
+    fun getAllNotConnected(): List<ApplicationWithPermissions>
+
     @Query(
         """
     SELECT a.*, MAX(h.time) as latestTime
@@ -66,7 +69,7 @@ interface ApplicationDao {
         type: String,
     ): ApplicationPermissionsEntity?
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
     fun insertApplication(event: ApplicationEntity): Long?
 
     @Query("UPDATE application SET name = :name WHERE `key` = :key")

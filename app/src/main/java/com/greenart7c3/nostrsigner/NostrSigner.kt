@@ -40,6 +40,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
@@ -87,6 +88,14 @@ class NostrSigner : Application() {
 
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
+            applicationIOScope.launch {
+                databases[it.npub]?.applicationDao()?.getAllNotConnected()?.forEach { app ->
+                    if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
+                        app.application.isConnected = true
+                        databases[it.npub]?.applicationDao()?.insertApplicationWithPermissions(app)
+                    }
+                }
+            }
         }
 
         runBlocking {

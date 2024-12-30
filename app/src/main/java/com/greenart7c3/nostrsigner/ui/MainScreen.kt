@@ -118,12 +118,9 @@ import com.vitorpamplona.quartz.encoders.toHexKey
 import java.io.ByteArrayOutputStream
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 
-@OptIn(DelicateCoroutinesApi::class)
 fun sendResult(
     context: Context,
     packageName: String?,
@@ -394,7 +391,7 @@ fun sendResult(
 
             clipboardManager.setText(AnnotatedString(result))
 
-            GlobalScope.launch(Dispatchers.Main) {
+            NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
                 Toast.makeText(
                     context,
                     message,
@@ -436,7 +433,7 @@ fun NewBunkerFloatingButton(
     }
 }
 
-private suspend fun askNotificationPermission(
+private fun askNotificationPermission(
     context: Context,
     requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
     onShouldShowRequestPermissionRationale: () -> Unit,

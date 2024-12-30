@@ -12,9 +12,7 @@ import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.bechToBytes
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.Hex
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -100,11 +98,10 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private fun prepareLogoutOrSwitch() {
         when (val state = accountContent.value) {
             is AccountState.LoggedIn -> {
-                GlobalScope.launch(Dispatchers.Main) {
+                NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
                     state.account.saveable.removeObserver(saveListener)
                 }
             }
@@ -273,21 +270,19 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         startUI(account, null)
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     fun startUI(
         account: Account,
         route: String?,
     ) {
         _accountContent.update { AccountState.LoggedIn(account, route) }
 
-        GlobalScope.launch(Dispatchers.Main) {
+        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
             account.saveable.observeForever(saveListener)
         }
     }
 
-    @OptIn(DelicateCoroutinesApi::class)
     private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
-        GlobalScope.launch(Dispatchers.IO) {
+        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
             LocalPreferences.saveToEncryptedStorage(NostrSigner.getInstance(), it.account)
         }
     }

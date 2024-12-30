@@ -99,8 +99,8 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.basicPermissions
+import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
-import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -272,7 +272,7 @@ fun sendResult(
         if (intentData.bunkerRequest != null) {
             val localIntentData = intentData.copy()
 
-            IntentUtils.clearRequests()
+            BunkerRequestUtils.clearRequests()
 
             // assume that everything worked and try to revert it if it fails
             EventNotificationConsumer(context).notificationManager().cancelAll()
@@ -291,7 +291,7 @@ fun sendResult(
             EventNotificationConsumer(context).notificationManager().cancelAll()
             onRemoveIntentData(intentData, IntentResultType.REMOVE)
 
-            IntentUtils.sendBunkerResponse(
+            BunkerRequestUtils.sendBunkerResponse(
                 context,
                 account,
                 intentData.bunkerRequest,
@@ -312,7 +312,7 @@ fun sendResult(
                             }
 
                             onLoading(false)
-                            IntentUtils.addRequest(localIntentData.bunkerRequest!!)
+                            BunkerRequestUtils.addRequest(localIntentData.bunkerRequest!!)
                         } else {
                             activity?.intent = null
                             if (application.application.closeApplication) {

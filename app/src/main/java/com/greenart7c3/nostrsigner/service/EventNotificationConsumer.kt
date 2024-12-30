@@ -118,8 +118,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         bunkerRequest.currentAccount = acc.signer.keyPair.pubKey.toNpub()
         bunkerRequest.encryptionType = encryptionType
 
-        val type = IntentUtils.getTypeFromBunker(bunkerRequest)
-        val data = IntentUtils.getDataFromBunker(bunkerRequest)
+        val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
+        val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
 
         var amberEvent: AmberEvent? = null
 
@@ -150,7 +150,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         ),
                     )
             }
-            IntentUtils.sendBunkerResponse(
+            BunkerRequestUtils.sendBunkerResponse(
                 applicationContext,
                 acc,
                 bunkerRequest,
@@ -159,7 +159,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 onLoading = {},
                 onDone = {
                     if (!it) {
-                        IntentUtils.sendBunkerResponse(
+                        BunkerRequestUtils.sendBunkerResponse(
                             applicationContext,
                             acc,
                             bunkerRequest,
@@ -196,7 +196,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     } else {
                         "secret not in use"
                     }
-                    IntentUtils.sendBunkerResponse(
+                    BunkerRequestUtils.sendBunkerResponse(
                         applicationContext,
                         acc,
                         bunkerRequest,
@@ -205,7 +205,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         onLoading = { },
                         onDone = {
                             if (!it) {
-                                IntentUtils.sendBunkerResponse(
+                                BunkerRequestUtils.sendBunkerResponse(
                                     applicationContext,
                                     acc,
                                     bunkerRequest,
@@ -257,7 +257,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList()
 
         if (permission == null && applicationWithSecret == null && !acc.allowNewConnections) {
-            IntentUtils.sendBunkerResponse(
+            BunkerRequestUtils.sendBunkerResponse(
                 applicationContext,
                 acc,
                 bunkerRequest,
@@ -266,7 +266,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 onLoading = { },
                 onDone = {
                     if (!it) {
-                        IntentUtils.sendBunkerResponse(
+                        BunkerRequestUtils.sendBunkerResponse(
                             applicationContext,
                             acc,
                             bunkerRequest,
@@ -296,7 +296,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             } else {
                 if (localCursor.moveToFirst()) {
                     if (localCursor.getColumnIndex("rejected") > -1) {
-                        IntentUtils.sendBunkerResponse(
+                        BunkerRequestUtils.sendBunkerResponse(
                             applicationContext,
                             acc,
                             bunkerRequest,
@@ -305,7 +305,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             onLoading = { },
                             onDone = {
                                 if (!it) {
-                                    IntentUtils.sendBunkerResponse(
+                                    BunkerRequestUtils.sendBunkerResponse(
                                         applicationContext,
                                         acc,
                                         bunkerRequest,
@@ -324,7 +324,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         }
                         val result = localCursor.getString(index)
 
-                        IntentUtils.sendBunkerResponse(
+                        BunkerRequestUtils.sendBunkerResponse(
                             applicationContext,
                             acc,
                             bunkerRequest,
@@ -333,7 +333,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             onLoading = { },
                             onDone = {
                                 if (!it) {
-                                    IntentUtils.sendBunkerResponse(
+                                    BunkerRequestUtils.sendBunkerResponse(
                                         applicationContext,
                                         acc,
                                         bunkerRequest,

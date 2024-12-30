@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -35,7 +36,7 @@ class MainViewModel(val context: Context) : ViewModel() {
 
     fun showBunkerRequests(callingPackage: String?) {
         val requests =
-            IntentUtils.getBunkerRequests().map {
+            BunkerRequestUtils.getBunkerRequests().map {
                 it.value.copy()
             }
 
@@ -80,7 +81,7 @@ class MainViewModel(val context: Context) : ViewModel() {
 
             viewModelScope.launch(Dispatchers.IO) {
                 delay(10000)
-                IntentUtils.clearRequests()
+                BunkerRequestUtils.clearRequests()
             }
         }
     }

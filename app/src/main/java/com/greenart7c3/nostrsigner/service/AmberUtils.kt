@@ -131,7 +131,7 @@ object AmberUtils {
         onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
         onLoading: (Boolean) -> Unit,
     ) {
-        IntentUtils.sendBunkerResponse(
+        BunkerRequestUtils.sendBunkerResponse(
             context,
             account,
             bunkerRequest,

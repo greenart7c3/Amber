@@ -35,7 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.service.Biometrics
-import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
@@ -230,7 +230,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
                             launch {
-                                IntentUtils.state
+                                BunkerRequestUtils.state
                                     .receiveAsFlow()
                                     .collectLatest {
                                         mainViewModel.showBunkerRequests(null)

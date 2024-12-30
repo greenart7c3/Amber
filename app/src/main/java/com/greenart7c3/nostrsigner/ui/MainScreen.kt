@@ -143,7 +143,7 @@ fun sendResult(
     onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
 ) {
     onLoading(true)
-    GlobalScope.launch(Dispatchers.IO) {
+    NostrSigner.getInstance().applicationIOScope.launch {
         val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
         var savedApplication = database.applicationDao().getByKey(key)
         if (savedApplication == null && intentData.bunkerRequest?.secret != null) {
@@ -302,24 +302,25 @@ fun sendResult(
                 application.application.relays.ifEmpty { relays },
                 onLoading,
                 onDone = {
-                    if (!it) {
-                        if (rememberChoice) {
-                            if (intentData.type == SignerType.SIGN_EVENT) {
-                                kind?.let {
-                                    database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)
+                    NostrSigner.getInstance().applicationIOScope.launch {
+                        if (!it) {
+                            if (rememberChoice) {
+                                if (intentData.type == SignerType.SIGN_EVENT) {
+                                    kind?.let {
+                                        database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)
+                                    }
+                                } else {
+                                    database.applicationDao().deletePermissions(key, intentData.type.toString())
                                 }
-                            } else {
-                                database.applicationDao().deletePermissions(key, intentData.type.toString())
                             }
-                        }
 
-                        onLoading(false)
-                        IntentUtils.addRequest(localIntentData.bunkerRequest!!.id, localIntentData.bunkerRequest)
-//                        onRemoveIntentData(localIntentData, IntentResultType.ADD)
-                    } else {
-                        activity?.intent = null
-                        if (application.application.closeApplication) {
-                            activity?.finish()
+                            onLoading(false)
+                            IntentUtils.addRequest(localIntentData.bunkerRequest!!)
+                        } else {
+                            activity?.intent = null
+                            if (application.application.closeApplication) {
+                                activity?.finish()
+                            }
                         }
                     }
                 },

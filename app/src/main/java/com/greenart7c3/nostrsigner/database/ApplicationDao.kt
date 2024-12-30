@@ -18,17 +18,17 @@ interface ApplicationDao {
     fun getLatestNotification(): Long?
 
     @Query("SELECT * FROM notification WHERE eventId = :eventId")
-    fun getNotification(eventId: String): NotificationEntity?
+    suspend fun getNotification(eventId: String): NotificationEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertNotification(notificationEntity: NotificationEntity): Long?
+    suspend fun insertNotification(notificationEntity: NotificationEntity): Long?
 
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
-    fun getAll(pubKey: String): List<ApplicationEntity>
+    suspend fun getAll(pubKey: String): List<ApplicationEntity>
 
     @Query("SELECT * FROM application where isConnected = 0")
     @Transaction
-    fun getAllNotConnected(): List<ApplicationWithPermissions>
+    suspend fun getAllNotConnected(): List<ApplicationWithPermissions>
 
     @Query(
         """
@@ -44,14 +44,14 @@ interface ApplicationDao {
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
-    fun getByKey(key: String): ApplicationWithPermissions?
+    suspend fun getByKey(key: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM application WHERE secret = :secret")
     @Transaction
-    fun getBySecret(secret: String): ApplicationWithPermissions?
+    suspend fun getBySecret(secret: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
-    fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
+    suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
 
     @Query("SELECT * FROM application")
     @Transaction
@@ -71,17 +71,12 @@ interface ApplicationDao {
     ): ApplicationPermissionsEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertApplication(event: ApplicationEntity): Long?
-
-    @Query("UPDATE application SET name = :name WHERE `key` = :key")
-    fun changeApplicationName(
-        key: String,
-        name: String,
-    )
+    @Transaction
+    suspend fun insertApplication(event: ApplicationEntity): Long?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
-    fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
+    suspend fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
         permissions.forEach {
             if (it.kind != null) {
                 deletePermissions(it.pkKey, it.type, it.kind)
@@ -94,22 +89,22 @@ interface ApplicationDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>?
+    suspend fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>?
 
     @Query("DELETE FROM applicationPermission WHERE pkKey = :key")
     @Transaction
-    fun deletePermissions(key: String)
+    suspend fun deletePermissions(key: String)
 
     @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type")
     @Transaction
-    fun deletePermissions(
+    suspend fun deletePermissions(
         key: String,
         type: String,
     )
 
     @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type and kind = :kind")
     @Transaction
-    fun deletePermissions(
+    suspend fun deletePermissions(
         key: String,
         type: String,
         kind: Int,
@@ -117,7 +112,7 @@ interface ApplicationDao {
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    fun insertApplicationWithPermissions(application: ApplicationWithPermissions) {
+    suspend fun insertApplicationWithPermissions(application: ApplicationWithPermissions) {
         deletePermissions(application.application.key)
         insertApplication(application.application)?.let {
             application.permissions.forEach {
@@ -130,18 +125,19 @@ interface ApplicationDao {
 
     @Delete
     @Transaction
-    fun delete(entity: ApplicationEntity)
+    suspend fun delete(entity: ApplicationEntity)
 
     @Query("DELETE FROM application WHERE `key` = :key")
     @Transaction
-    fun delete(key: String)
+    suspend fun delete(key: String)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun innerAddHistory(entity: HistoryEntity)
+    @Transaction
+    suspend fun innerAddHistory(entity: HistoryEntity)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    fun addHistory(entity: HistoryEntity) {
+    suspend fun addHistory(entity: HistoryEntity) {
         try {
             innerAddHistory(entity)
         } catch (e: Exception) {
@@ -153,7 +149,8 @@ interface ApplicationDao {
     fun getAllHistory(pk: String): Flow<List<HistoryEntity>>
 
     @Insert
-    fun insertLog(logEntity: LogEntity)
+    @Transaction
+    suspend fun insertLog(logEntity: LogEntity)
 
     @Query("SELECT * FROM amber_log ORDER BY time DESC")
     fun getLogs(): Flow<List<LogEntity>>
@@ -162,8 +159,10 @@ interface ApplicationDao {
     fun getLogsByUrl(url: String): Flow<List<LogEntity>>
 
     @Query("DELETE FROM amber_log")
-    fun clearLogs()
+    @Transaction
+    suspend fun clearLogs()
 
     @Delete
-    fun deletePermission(permission: ApplicationPermissionsEntity)
+    @Transaction
+    suspend fun deletePermission(permission: ApplicationPermissionsEntity)
 }

@@ -17,8 +17,14 @@ import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 class SignerProvider : ContentProvider() {
+    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     override fun delete(
         uri: Uri,
         selection: String?,
@@ -68,16 +74,18 @@ class SignerProvider : ContentProvider() {
                         )
                 val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
-                    database.applicationDao().addHistory(
-                        HistoryEntity(
-                            0,
-                            sortOrder ?: packageName,
-                            uri.toString().replace("content://$appId.", ""),
-                            null,
-                            TimeUtils.now(),
-                            false,
-                        ),
-                    )
+                    scope.launch {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                    }
                     val cursor =
                         MatrixCursor(arrayOf("rejected")).also {
                             it.addRow(arrayOf("true"))
@@ -87,16 +95,18 @@ class SignerProvider : ContentProvider() {
                 }
 
                 val result = CryptoUtils.signString(message, account.signer.keyPair.privKey!!).toHexKey()
-                database.applicationDao().addHistory(
-                    HistoryEntity(
-                        0,
-                        sortOrder ?: packageName,
-                        "SIGN_MESSAGE",
-                        null,
-                        TimeUtils.now(),
-                        true,
-                    ),
-                )
+                scope.launch {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            "SIGN_MESSAGE",
+                            null,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
+                }
 
                 val localCursor = MatrixCursor(arrayOf("signature", "event", "result")).also {
                     it.addRow(arrayOf(result, result, result))
@@ -145,16 +155,18 @@ class SignerProvider : ContentProvider() {
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
-                    database.applicationDao().addHistory(
-                        HistoryEntity(
-                            0,
-                            sortOrder ?: packageName,
-                            uri.toString().replace("content://$appId.", ""),
-                            event.kind,
-                            TimeUtils.now(),
-                            false,
-                        ),
-                    )
+                    scope.launch {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                event.kind,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                    }
 
                     val cursor =
                         MatrixCursor(arrayOf("rejected")).also {
@@ -168,6 +180,22 @@ class SignerProvider : ContentProvider() {
 
                 if (signedEvent == null) {
                     Log.d("SignerProvider", "Failed to sign event from $packageName")
+                    scope.launch {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                "SIGN_EVENT",
+                                event.kind,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                    }
+                    return null
+                }
+
+                scope.launch {
                     database.applicationDao().addHistory(
                         HistoryEntity(
                             0,
@@ -175,22 +203,10 @@ class SignerProvider : ContentProvider() {
                             "SIGN_EVENT",
                             event.kind,
                             TimeUtils.now(),
-                            false,
+                            true,
                         ),
                     )
-                    return null
                 }
-
-                database.applicationDao().addHistory(
-                    HistoryEntity(
-                        0,
-                        sortOrder ?: packageName,
-                        "SIGN_EVENT",
-                        event.kind,
-                        TimeUtils.now(),
-                        true,
-                    ),
-                )
 
                 val cursor =
                     MatrixCursor(arrayOf("signature", "event", "result")).also {
@@ -254,16 +270,18 @@ class SignerProvider : ContentProvider() {
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
-                    database.applicationDao().addHistory(
-                        HistoryEntity(
-                            0,
-                            sortOrder ?: packageName,
-                            uri.toString().replace("content://$appId.", ""),
-                            null,
-                            TimeUtils.now(),
-                            false,
-                        ),
-                    )
+                    scope.launch {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                    }
 
                     val cursor =
                         MatrixCursor(arrayOf("rejected")).also {
@@ -295,16 +313,18 @@ class SignerProvider : ContentProvider() {
                         "Could not decrypt the message"
                     }
 
-                database.applicationDao().addHistory(
-                    HistoryEntity(
-                        0,
-                        sortOrder ?: packageName,
-                        uri.toString().replace("content://$appId.", ""),
-                        null,
-                        TimeUtils.now(),
-                        true,
-                    ),
-                )
+                scope.launch {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            null,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
+                }
 
                 val cursor = MatrixCursor(arrayOf("signature", "event", "result"))
                 cursor.addRow(arrayOf<Any>(result, result, result))
@@ -326,16 +346,18 @@ class SignerProvider : ContentProvider() {
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
                 if (!isRemembered) {
-                    database.applicationDao().addHistory(
-                        HistoryEntity(
-                            0,
-                            sortOrder ?: packageName,
-                            uri.toString().replace("content://$appId.", ""),
-                            null,
-                            TimeUtils.now(),
-                            false,
-                        ),
-                    )
+                    scope.launch {
+                        database.applicationDao().addHistory(
+                            HistoryEntity(
+                                0,
+                                sortOrder ?: packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
+                        )
+                    }
 
                     val cursor =
                         MatrixCursor(arrayOf("rejected")).also {
@@ -345,16 +367,18 @@ class SignerProvider : ContentProvider() {
                     return cursor
                 }
 
-                database.applicationDao().addHistory(
-                    HistoryEntity(
-                        0,
-                        sortOrder ?: packageName,
-                        uri.toString().replace("content://$appId.", ""),
-                        null,
-                        TimeUtils.now(),
-                        true,
-                    ),
-                )
+                scope.launch {
+                    database.applicationDao().addHistory(
+                        HistoryEntity(
+                            0,
+                            sortOrder ?: packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            null,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
+                }
 
                 val cursor = MatrixCursor(arrayOf("signature", "result"))
                 val result = if (sortOrder == null) account.signer.keyPair.pubKey.toNpub() else account.signer.keyPair.pubKey.toHexKey()

@@ -171,7 +171,7 @@ fun MultiEventHomeScreen(
             text = stringResource(R.string.approve_selected),
             onClick = {
                 onLoading(true)
-                coroutineScope.launch(Dispatchers.IO) {
+                NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
                     try {
                         val activity = context.getAppCompatActivity()
                         val results = mutableListOf<Result>()
@@ -247,6 +247,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
                                     onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                    IntentUtils.remove(intentData.bunkerRequest.id)
 
                                     if (intentData.checked.value) {
                                         IntentUtils.sendBunkerResponse(
@@ -258,7 +259,7 @@ fun MultiEventHomeScreen(
                                             onLoading = {},
                                             onDone = {
                                                 if (!it) {
-                                                    IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
+                                                    IntentUtils.addRequest(localIntentData.bunkerRequest!!)
                                                 }
                                             },
                                         )
@@ -331,6 +332,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
                                     onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                    IntentUtils.remove(intentData.bunkerRequest.id)
 
                                     if (intentData.checked.value) {
                                         IntentUtils.sendBunkerResponse(
@@ -342,7 +344,7 @@ fun MultiEventHomeScreen(
                                             onLoading = {},
                                             onDone = {
                                                 if (!it) {
-                                                    IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
+                                                    IntentUtils.addRequest(localIntentData.bunkerRequest!!)
                                                 }
                                             },
                                         )
@@ -390,6 +392,7 @@ fun MultiEventHomeScreen(
                                     if (intentData.bunkerRequest != null) {
                                         val localIntentData = intentData.copy()
                                         onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                        IntentUtils.remove(intentData.bunkerRequest.id)
                                         if (intentData.checked.value) {
                                             IntentUtils.sendBunkerResponse(
                                                 context,
@@ -400,7 +403,7 @@ fun MultiEventHomeScreen(
                                                 onLoading = {},
                                                 onDone = {
                                                     if (!it) {
-                                                        IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
+                                                        IntentUtils.addRequest(localIntentData.bunkerRequest!!)
                                                     }
                                                 },
                                             )
@@ -459,6 +462,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
                                     onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                    IntentUtils.remove(intentData.bunkerRequest.id)
                                     if (intentData.checked.value) {
                                         IntentUtils.sendBunkerResponse(
                                             context,
@@ -469,7 +473,7 @@ fun MultiEventHomeScreen(
                                             onLoading = {},
                                             onDone = {
                                                 if (!it) {
-                                                    IntentUtils.addRequest(localIntentData.id, localIntentData.bunkerRequest!!)
+                                                    IntentUtils.addRequest(localIntentData.bunkerRequest!!)
                                                 }
                                             },
                                         )
@@ -522,56 +526,58 @@ fun MultiEventHomeScreen(
                 containerColor = orange,
             ),
             onClick = {
-                var closeApp = true
+                NostrSigner.getInstance().applicationIOScope.launch {
+                    var closeApp = true
 
-                for (intentData in intents) {
-                    val localAccount =
-                        if (intentData.currentAccount.isNotBlank()) {
-                            LocalPreferences.loadFromEncryptedStorage(
-                                context,
-                                intentData.currentAccount,
+                    for (intentData in intents) {
+                        val localAccount =
+                            if (intentData.currentAccount.isNotBlank()) {
+                                LocalPreferences.loadFromEncryptedStorage(
+                                    context,
+                                    intentData.currentAccount,
+                                )
+                            } else {
+                                accountParam
+                            } ?: continue
+
+                        val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+
+                        val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
+
+                        val application =
+                            database
+                                .applicationDao()
+                                .getByKey(key) ?: ApplicationWithPermissions(
+                                application = ApplicationEntity(
+                                    key,
+                                    "",
+                                    listOf(),
+                                    "",
+                                    "",
+                                    "",
+                                    localAccount.signer.keyPair.pubKey.toHexKey(),
+                                    true,
+                                    intentData.bunkerRequest?.secret ?: "",
+                                    intentData.bunkerRequest?.secret != null,
+                                    localAccount.signPolicy,
+                                    intentData.bunkerRequest?.closeApplication ?: true,
+                                ),
+                                permissions = mutableListOf(),
                             )
-                        } else {
-                            accountParam
-                        } ?: continue
 
-                    val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
-
-                    val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
-
-                    val application =
-                        database
-                            .applicationDao()
-                            .getByKey(key) ?: ApplicationWithPermissions(
-                            application = ApplicationEntity(
-                                key,
-                                "",
-                                listOf(),
-                                "",
-                                "",
-                                "",
-                                localAccount.signer.keyPair.pubKey.toHexKey(),
-                                true,
-                                intentData.bunkerRequest?.secret ?: "",
-                                intentData.bunkerRequest?.secret != null,
-                                localAccount.signPolicy,
-                                intentData.bunkerRequest?.closeApplication ?: true,
-                            ),
-                            permissions = mutableListOf(),
-                        )
-
-                    if (!application.application.closeApplication) {
-                        closeApp = false
-                        break
+                        if (!application.application.closeApplication) {
+                            closeApp = false
+                            break
+                        }
                     }
-                }
 
-                val activity = context.getAppCompatActivity()
-                if (intents.any { it.bunkerRequest != null }) {
-                    EventNotificationConsumer(context).notificationManager().cancelAll()
-                    finishActivity(activity, closeApp)
-                } else {
-                    finishActivity(activity, closeApp)
+                    val activity = context.getAppCompatActivity()
+                    if (intents.any { it.bunkerRequest != null }) {
+                        EventNotificationConsumer(context).notificationManager().cancelAll()
+                        finishActivity(activity, closeApp)
+                    } else {
+                        finishActivity(activity, closeApp)
+                    }
                 }
             },
             text = stringResource(R.string.discard_all_requests),

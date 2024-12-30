@@ -10,6 +10,10 @@ import com.vitorpamplona.ammolite.relays.Client
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak")
 object AmberListenerSingleton {
@@ -32,45 +36,52 @@ class AmberClientListener(
     val context: Context,
     val accountStateViewModel: AccountStateViewModel?,
 ) : Client.Listener {
+    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     override fun onAuth(relay: Relay, challenge: String) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onAuth",
-                    message = "Authenticating",
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onAuth",
+                        message = "Authenticating",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 
     override fun onBeforeSend(relay: Relay, event: EventInterface) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onBeforeSend",
-                    message = "Sending event ${event.id()}",
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onBeforeSend",
+                        message = "Sending event ${event.id()}",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 
     override fun onSend(relay: Relay, msg: String, success: Boolean) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onSend",
-                    message = "message: $msg success: $success",
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onSend",
+                        message = "message: $msg success: $success",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
         if (!success) {
             if (msg.isNotBlank()) {
@@ -82,16 +93,18 @@ class AmberClientListener(
     }
 
     override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onSendResponse",
-                    message = "Success: $success Message: $message",
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onSendResponse",
+                        message = "Success: $success Message: $message",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
 
         if (!success) {
@@ -101,60 +114,68 @@ class AmberClientListener(
 
     override fun onError(error: Error, subscriptionId: String, relay: Relay) {
         if (error.message?.trim()?.equals("Relay sent notice:") == true) return
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onError",
-                    message = "${error.message}",
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onError",
+                        message = "${error.message}",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
 
         accountStateViewModel?.toast("Error", error.message ?: "Unknown error")
     }
 
     override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onEvent",
-                    message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onEvent",
+                        message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 
     override fun onNotify(relay: Relay, description: String) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onNotify",
-                    message = description,
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onNotify",
+                        message = description,
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 
     override fun onRelayStateChange(type: Relay.StateType, relay: Relay, subscriptionId: String?) {
-        LocalPreferences.currentAccount(context)?.let { account ->
-            NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                LogEntity(
-                    id = 0,
-                    url = relay.url,
-                    type = "onRelayStateChange",
-                    message = type.name,
-                    time = System.currentTimeMillis(),
-                ),
-            )
+        scope.launch {
+            LocalPreferences.currentAccount(context)?.let { account ->
+                NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "onRelayStateChange",
+                        message = type.name,
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
         }
     }
 }

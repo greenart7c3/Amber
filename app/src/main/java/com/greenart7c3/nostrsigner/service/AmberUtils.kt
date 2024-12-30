@@ -152,7 +152,7 @@ object AmberUtils {
         )
     }
 
-    fun acceptOrRejectPermission(
+    suspend fun acceptOrRejectPermission(
         application: ApplicationWithPermissions,
         key: String,
         intentData: IntentData,

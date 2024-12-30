@@ -46,8 +46,6 @@ import java.net.URLDecoder
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.launch
 
@@ -90,13 +88,18 @@ object IntentUtils {
     val state = Channel<String>(Channel.CONFLATED)
     private val bunkerRequests = ConcurrentHashMap<String, BunkerRequest>()
 
-    fun addRequest(key: String, request: BunkerRequest) {
-        bunkerRequests[key] = request
+    fun addRequest(request: BunkerRequest) {
+        bunkerRequests[request.id] = request
         state.trySend("")
     }
 
     fun clearRequests() {
         bunkerRequests.clear()
+        state.trySend("")
+    }
+
+    fun remove(id: String) {
+        bunkerRequests.remove(id)
         state.trySend("")
     }
 
@@ -397,7 +400,7 @@ object IntentUtils {
             arrayOf(arrayOf("p", localKey)),
             encryptedContent,
         ) {
-            GlobalScope.launch(Dispatchers.IO) {
+            NostrSigner.getInstance().applicationIOScope.launch {
                 Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
 
                 if (RelayPool.getAll().any { !it.isConnected() }) {
@@ -924,15 +927,17 @@ object IntentUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
-            NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
-                LogEntity(
-                    0,
-                    "nostrconnect",
-                    "nostrconnect",
-                    e.message ?: "",
-                    System.currentTimeMillis(),
-                ),
-            )
+            NostrSigner.getInstance().applicationIOScope.launch {
+                NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                    LogEntity(
+                        0,
+                        "nostrconnect",
+                        "nostrconnect",
+                        e.message ?: "",
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
             onReady(null)
         }
     }

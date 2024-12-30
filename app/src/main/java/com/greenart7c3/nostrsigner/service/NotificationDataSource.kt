@@ -52,16 +52,18 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 afterEOSE: Boolean,
             ) {
-                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = relay.url,
-                            type = "onEvent",
-                            message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
+                scope.launch {
+                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                            LogEntity(
+                                id = 0,
+                                url = relay.url,
+                                type = "onEvent",
+                                message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
+                                time = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -70,16 +72,18 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 subscriptionId: String?,
             ) {
-                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = relay.url,
-                            type = "onRelayStateChange",
-                            message = type.name,
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
+                scope.launch {
+                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                            LogEntity(
+                                id = 0,
+                                url = relay.url,
+                                type = "onRelayStateChange",
+                                message = type.name,
+                                time = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -89,16 +93,18 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 message: String,
                 relay: Relay,
             ) {
-                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = relay.url,
-                            type = "onSendResponse",
-                            message = "Success: $success Message: $message",
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
+                scope.launch {
+                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                            LogEntity(
+                                id = 0,
+                                url = relay.url,
+                                type = "onSendResponse",
+                                message = "Success: $success Message: $message",
+                                time = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
                 }
             }
 
@@ -106,16 +112,18 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 challenge: String,
             ) {
-                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = relay.url,
-                            type = "onAuth",
-                            message = "Authenticating",
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
+                scope.launch {
+                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                            LogEntity(
+                                id = 0,
+                                url = relay.url,
+                                type = "onAuth",
+                                message = "Authenticating",
+                                time = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
                 }
                 auth(relay, challenge)
             }
@@ -124,16 +132,18 @@ object NotificationDataSource : NostrDataSource("AccountData") {
                 relay: Relay,
                 description: String,
             ) {
-                LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                    NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = relay.url,
-                            type = "onNotify",
-                            message = description,
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
+                scope.launch {
+                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                            LogEntity(
+                                id = 0,
+                                url = relay.url,
+                                type = "onNotify",
+                                message = description,
+                                time = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
                 }
                 notify(relay, description)
             }

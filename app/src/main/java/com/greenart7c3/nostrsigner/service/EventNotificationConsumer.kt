@@ -23,7 +23,6 @@ package com.greenart7c3.nostrsigner.service
 import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
@@ -33,6 +32,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
@@ -47,6 +47,7 @@ import com.vitorpamplona.quartz.crypto.nip04.Nip04
 import com.vitorpamplona.quartz.encoders.Hex
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
+import kotlinx.coroutines.launch
 
 class EventNotificationConsumer(private val applicationContext: Context) {
 
@@ -69,16 +70,20 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (event.content.isEmpty()) return
         if (Nip04.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
-                notify(event, acc, it, EncryptionType.NIP04)
+                NostrSigner.getInstance().applicationIOScope.launch {
+                    notify(event, acc, it, EncryptionType.NIP04)
+                }
             }
         } else {
             acc.signer.nip44Decrypt(event.content, event.pubKey) {
-                notify(event, acc, it, EncryptionType.NIP44)
+                NostrSigner.getInstance().applicationIOScope.launch {
+                    notify(event, acc, it, EncryptionType.NIP44)
+                }
             }
         }
     }
 
-    private fun notify(
+    private suspend fun notify(
         event: Event,
         acc: Account,
         request: String,
@@ -88,11 +93,25 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val notification = dao.getNotification(event.id)
         if (notification != null) return
         dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+        dao.insertLog(
+            LogEntity(
+                0,
+                "nostrsigner",
+                "bunker request json",
+                event.toJson(),
+                TimeUtils.now(),
+            ),
+        )
 
-        if (BuildConfig.DEBUG) {
-            Log.d("bunker", event.toJson())
-            Log.d("bunker", request)
-        }
+        dao.insertLog(
+            LogEntity(
+                0,
+                "nostrsigner",
+                "bunker request",
+                request,
+                TimeUtils.now(),
+            ),
+        )
 
         val bunkerRequest = BunkerRequest.mapper.readValue(request, BunkerRequest::class.java)
         bunkerRequest.localKey = event.pubKey
@@ -118,17 +137,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
-            database.applicationDao()
-                .addHistory(
-                    HistoryEntity(
-                        0,
-                        permission.application.key,
-                        type.toString().toLowerCase(Locale.current),
-                        amberEvent?.kind,
-                        TimeUtils.now(),
-                        true,
-                    ),
-                )
+            NostrSigner.getInstance().applicationIOScope.launch {
+                database.applicationDao()
+                    .addHistory(
+                        HistoryEntity(
+                            0,
+                            permission.application.key,
+                            type.toString().toLowerCase(Locale.current),
+                            amberEvent?.kind,
+                            TimeUtils.now(),
+                            true,
+                        ),
+                    )
+            }
             IntentUtils.sendBunkerResponse(
                 applicationContext,
                 acc,

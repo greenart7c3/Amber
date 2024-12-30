@@ -78,11 +78,6 @@ class MainViewModel(val context: Context) : ViewModel() {
                     }
                 }
             }
-
-            viewModelScope.launch(Dispatchers.IO) {
-                delay(10000)
-                BunkerRequestUtils.clearRequests()
-            }
         }
     }
 

@@ -248,6 +248,36 @@ fun EditConfigurationScreen(
                         }
                     }
                 }
+            } else {
+                relays.forEachIndexed { _, relay ->
+                    Card(
+                        Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        border = BorderStroke(1.dp, Color.LightGray),
+                        colors = CardDefaults.cardColors().copy(
+                            containerColor = MaterialTheme.colorScheme.background,
+                        ),
+                    ) {
+                        Row(
+                            Modifier
+                                .fillMaxWidth(),
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            Text(
+                                relay.url,
+                                Modifier
+                                    .weight(0.9f)
+                                    .padding(8.dp)
+                                    .padding(start = 8.dp),
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                color = Color.LightGray,
+                            )
+                        }
+                    }
+                }
             }
 
             AmberButton(

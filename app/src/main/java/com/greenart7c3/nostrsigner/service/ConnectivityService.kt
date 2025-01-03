@@ -124,6 +124,8 @@ class ConnectivityService : Service() {
     override fun onCreate() {
         if (isStarted) return
 
+        Log.d("ConnectivityService", "onCreate")
+
         isStarted = true
         startForeground(1, createNotification())
 
@@ -176,5 +178,10 @@ class ConnectivityService : Service() {
             }
         }
         super.onDestroy()
+    }
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        Log.d("ConnectivityService", "onStartCommand")
+        return START_STICKY
     }
 }

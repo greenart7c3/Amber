@@ -66,7 +66,7 @@ class Nip11Retriever {
                         ) {
                             checkNotInMainThread()
                             response.use {
-                                val body = it.body.string()
+                                val body = it.body?.string() ?: ""
                                 try {
                                     if (it.isSuccessful) {
                                         onInfo(Nip11RelayInformation.fromJson(body))

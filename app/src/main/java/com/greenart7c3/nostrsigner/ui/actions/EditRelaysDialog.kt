@@ -45,9 +45,10 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.RelayListener
+import com.greenart7c3.nostrsigner.RelayListener2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -56,10 +57,9 @@ import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.Client
-import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.ammolite.relays.RelayPool
+import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.RelayStats
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
@@ -339,21 +339,26 @@ suspend fun onAddRelay(
 
                             event?.let { signedEvent ->
                                 AmberListenerSingleton.setListener(context, accountStateViewModel)
-                                AmberListenerSingleton.getListener()?.let { listener ->
-                                    Client.subscribe(listener)
-                                }
-                                val relay = Relay(
-                                    addedWSS,
-                                    read = true,
-                                    write = true,
-                                    activeTypes = COMMON_FEED_TYPES,
-                                    forceProxy = if (isPrivateIp) false else account.useProxy,
+                                val socket = OkHttpWebSocket.Builder()
+                                val client = NostrClient(
+                                    socket,
                                 )
-                                RelayPool.addRelay(
-                                    relay,
+                                AmberListenerSingleton.getListener()?.let { listener ->
+                                    client.subscribe(listener)
+                                }
+                                client.reconnect(
+                                    arrayOf(
+                                        RelaySetupInfoToConnect(
+                                            addedWSS,
+                                            read = true,
+                                            write = true,
+                                            feedTypes = COMMON_FEED_TYPES,
+                                            forceProxy = if (isPrivateIp) false else account.useProxy,
+                                        ),
+                                    ),
                                 )
                                 var filterResult = false
-                                val listener2 = RelayListener(
+                                val listener2 = RelayListener2(
                                     account,
                                     onReceiveEvent = { _, _, event ->
                                         if (event.kind == 24133 && event.id == signedEvent.id) {
@@ -361,12 +366,13 @@ suspend fun onAddRelay(
                                         }
                                     },
                                 )
-                                relay.register(
+                                val relay = client.getRelay(addedWSS) ?: return@secondLaunch
+                                client.subscribe(
                                     listener2,
                                 )
                                 relay.connect()
                                 delay(3000)
-                                val result = Client.sendAndWaitForResponse(
+                                val result = client.sendAndWaitForResponse(
                                     signedEvent = signedEvent,
                                     relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
                                 )
@@ -392,12 +398,10 @@ suspend fun onAddRelay(
                                 }
 
                                 AmberListenerSingleton.getListener()?.let { listener ->
-                                    Client.unsubscribe(listener)
+                                    client.unsubscribe(listener)
                                 }
-                                RelayPool.getRelay(addedWSS)?.disconnect()
-                                RelayPool.removeRelay(
-                                    relay,
-                                )
+                                client.unsubscribe(listener2)
+                                client.getRelay(addedWSS)?.disconnect()
 
                                 if (result && filterResult) {
                                     relays2.add(
@@ -578,7 +582,7 @@ fun ActiveRelaysScreen(
                         fontSize = 24.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (RelayPool.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                        color = if (NostrSigner.getInstance().client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -586,11 +590,11 @@ fun ActiveRelaysScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (RelayPool.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
+                            text = if (NostrSigner.getInstance().client.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = if (RelayPool.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                            color = if (NostrSigner.getInstance().client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                         )
                     }
 

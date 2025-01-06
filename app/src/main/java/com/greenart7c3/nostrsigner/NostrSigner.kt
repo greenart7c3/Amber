@@ -16,17 +16,18 @@ import coil3.util.DebugLogger
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
+import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.Client
+import com.vitorpamplona.ammolite.relays.MutableSubscriptionManager
+import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
-import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
@@ -44,6 +45,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
+    val client: NostrClient = NostrClient(OkHttpWebSocket.Builder())
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
@@ -152,7 +154,7 @@ class NostrSigner : Application() {
         }
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
-            Client.reconnect(
+            client.reconnect(
                 savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
@@ -183,7 +185,7 @@ class NostrSigner : Application() {
 
     private suspend fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {
         Log.d("NostrSigner", "Checking if relays are connected")
-        RelayPool.getAll().forEach { relay ->
+        client.getAll().forEach { relay ->
             if (!relay.isConnected()) {
                 relay.connectAndRun {
                     val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
@@ -195,11 +197,11 @@ class NostrSigner : Application() {
             }
         }
         var count = 0
-        while (RelayPool.getAll().any { !it.isConnected() } && count < 10) {
+        while (client.getAll().any { !it.isConnected() } && count < 10) {
             count++
             delay(1000)
         }
-        if (RelayPool.getAll().any { !it.isConnected() } && tryAgain) {
+        if (client.getAll().any { !it.isConnected() } && tryAgain) {
             checkIfRelaysAreConnected(false)
         }
     }
@@ -267,7 +269,9 @@ class NostrSigner : Application() {
                     read = it.read,
                     write = it.write,
                     activeTypes = it.feedTypes,
+                    socketBuilder = OkHttpWebSocket.Builder(),
                     forceProxy = account.useProxy,
+                    subs = MutableSubscriptionManager(),
                 )
             }
 
@@ -343,6 +347,44 @@ class RelayListener(
     }
 
     override fun onSendResponse(relay: Relay, eventId: String, success: Boolean, message: String) {
+        Log.d("RelayListener", "Sent response to event $eventId to relay ${relay.url} success: $success message: $message")
+    }
+}
+
+class RelayListener2(
+    val account: Account,
+    val onReceiveEvent: (relay: Relay, subscriptionId: String, event: Event) -> Unit,
+) : NostrClient.Listener {
+    override fun onAuth(relay: Relay, challenge: String) {
+        Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
+    }
+
+    override fun onBeforeSend(relay: Relay, event: EventInterface) {
+        Log.d("RelayListener", "Sending event ${event.id()} to relay ${relay.url}")
+    }
+
+    override fun onError(error: Error, subscriptionId: String, relay: Relay) {
+        Log.d("RelayListener", "Received error $error from subscription $subscriptionId")
+    }
+
+    override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
+        Log.d("RelayListener", "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
+        onReceiveEvent(relay, subscriptionId, event)
+    }
+
+    override fun onNotify(relay: Relay, description: String) {
+        Log.d("RelayListener", "Received notify $description from relay ${relay.url}")
+    }
+
+    override fun onRelayStateChange(type: Relay.StateType, relay: Relay, subscriptionId: String?) {
+        Log.d("RelayListener", "Relay ${relay.url} state changed to $type")
+    }
+
+    override fun onSend(relay: Relay, msg: String, success: Boolean) {
+        Log.d("RelayListener", "Sent message $msg to relay ${relay.url} success: $success")
+    }
+
+    override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
         Log.d("RelayListener", "Sent response to event $eventId to relay ${relay.url} success: $success message: $message")
     }
 }

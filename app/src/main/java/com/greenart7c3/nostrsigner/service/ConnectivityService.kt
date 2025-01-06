@@ -16,7 +16,6 @@ import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.vitorpamplona.ammolite.relays.RelayPool
 import java.util.Timer
 import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
@@ -38,11 +37,11 @@ class ConnectivityService : Service() {
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
 
-                val hasAnyRelayDisconnected = RelayPool.getAll().any { !it.isConnected() }
+                val hasAnyRelayDisconnected = NostrSigner.getInstance().client.getAll().any { !it.isConnected() }
 
                 if (lastNetwork != null && lastNetwork != network && hasAnyRelayDisconnected) {
                     scope.launch(Dispatchers.IO) {
-                        RelayPool.getAll().forEach {
+                        NostrSigner.getInstance().client.getAll().forEach {
                             if (!it.isConnected()) {
                                 Log.d(
                                     "ConnectivityService",
@@ -73,10 +72,10 @@ class ConnectivityService : Service() {
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${NostrSigner.getInstance().isOnMobileDataState.value} hasWifi ${NostrSigner.getInstance().isOnWifiDataState.value}",
                     )
 
-                    val hasAnyRelayDisconnected = RelayPool.getAll().any { !it.isConnected() }
+                    val hasAnyRelayDisconnected = NostrSigner.getInstance().client.getAll().any { !it.isConnected() }
 
                     if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
-                        RelayPool.getAll().forEach {
+                        NostrSigner.getInstance().client.getAll().forEach {
                             if (!it.isConnected()) {
                                 Log.d(
                                     "ConnectivityService",
@@ -147,7 +146,7 @@ class ConnectivityService : Service() {
                         return
                     }
 
-                    RelayPool.getAll().forEach {
+                    NostrSigner.getInstance().client.getAll().forEach {
                         if (!it.isConnected()) {
                             Log.d(
                                 "ConnectivityService",

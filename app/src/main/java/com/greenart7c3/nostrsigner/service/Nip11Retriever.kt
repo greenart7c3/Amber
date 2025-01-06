@@ -22,7 +22,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.checkNotInMainThread
-import com.vitorpamplona.ammolite.service.HttpClientManager
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.vitorpamplona.quartz.encoders.Nip11RelayInformation
 import java.io.IOException
 import kotlinx.coroutines.CancellationException

@@ -6,7 +6,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.vitorpamplona.ammolite.relays.Client
+import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
@@ -35,7 +35,7 @@ object AmberListenerSingleton {
 class AmberClientListener(
     val context: Context,
     val accountStateViewModel: AccountStateViewModel?,
-) : Client.Listener {
+) : NostrClient.Listener {
     val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     override fun onAuth(relay: Relay, challenge: String) {
         scope.launch {

@@ -34,6 +34,7 @@ import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.anggrayudi.storage.SimpleStorageHelper
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
@@ -42,7 +43,6 @@ import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
-import com.vitorpamplona.ammolite.service.HttpClientManager
 import com.vitorpamplona.quartz.encoders.toNpub
 import fr.acinq.secp256k1.Hex
 import java.time.Duration

@@ -21,8 +21,6 @@ import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils.getUnsignedEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.vitorpamplona.ammolite.relays.Client
-import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
@@ -63,13 +61,13 @@ object BunkerRequestUtils {
         onDone: (Boolean) -> Unit,
     ) {
         AmberListenerSingleton.getListener()?.let {
-            Client.unsubscribe(it)
+            NostrSigner.getInstance().client.unsubscribe(it)
         }
         AmberListenerSingleton.setListener(
             context,
             AmberListenerSingleton.accountStateViewModel,
         )
-        Client.subscribe(
+        NostrSigner.getInstance().client.subscribe(
             AmberListenerSingleton.getListener()!!,
         )
 
@@ -127,13 +125,13 @@ object BunkerRequestUtils {
             NostrSigner.getInstance().applicationIOScope.launch {
                 Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
 
-                if (RelayPool.getAll().any { !it.isConnected() }) {
+                if (NostrSigner.getInstance().client.getAll().any { !it.isConnected() }) {
                     NostrSigner.getInstance().checkForNewRelays(
                         newRelays = relays.toSet(),
                     )
                 }
 
-                val success = Client.sendAndWaitForResponse(it, relayList = relays)
+                val success = NostrSigner.getInstance().client.sendAndWaitForResponse(it, relayList = relays)
                 if (success) {
                     Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                     onDone(true)
@@ -142,7 +140,7 @@ object BunkerRequestUtils {
                     Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                 }
                 AmberListenerSingleton.getListener()?.let {
-                    Client.unsubscribe(it)
+                    NostrSigner.getInstance().client.unsubscribe(it)
                 }
                 onLoading(false)
             }

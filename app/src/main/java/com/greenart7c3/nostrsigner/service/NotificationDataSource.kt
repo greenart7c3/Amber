@@ -26,10 +26,9 @@ import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.Client
+import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.NostrDataSource
 import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.ammolite.relays.RelayPool
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.EOSETime
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
@@ -40,12 +39,12 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-object NotificationDataSource : NostrDataSource("AccountData") {
+object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client, "AccountData") {
     private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.getInstance())
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val clientListener =
-        object : Client.Listener {
+        object : NostrClient.Listener {
             override fun onEvent(
                 event: Event,
                 subscriptionId: String,
@@ -152,20 +151,20 @@ object NotificationDataSource : NostrDataSource("AccountData") {
     init {
         scope.launch {
             LocalPreferences.loadSettingsFromEncryptedStorage()
-            Client.subscribe(clientListener)
+            client.subscribe(clientListener)
         }
     }
 
     override fun start() {
-        if (!Client.isSubscribed(clientListener)) {
-            Client.subscribe(clientListener)
+        if (!client.isSubscribed(clientListener)) {
+            client.subscribe(clientListener)
         }
         super.start()
     }
 
     override fun stop() {
         super.stop()
-        Client.unsubscribe(clientListener)
+        client.unsubscribe(clientListener)
     }
 
     private fun createNotificationsFilter(): TypedFilter {
@@ -184,7 +183,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
             }
 
         val eoses =
-            RelayPool.getAll().associate {
+            NostrSigner.getInstance().client.getAll().associate {
                 Pair(it.url, EOSETime(since))
             }
 
@@ -226,7 +225,7 @@ object NotificationDataSource : NostrDataSource("AccountData") {
         LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
             val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub) ?: return@forEach
             account.createAuthEvent(relay.url, challenge) { authEvent ->
-                Client.sendIfExists(authEvent, relay)
+                NostrSigner.getInstance().client.sendIfExists(authEvent, relay)
             }
         }
     }

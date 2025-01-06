@@ -117,31 +117,31 @@ fun SingleEventHomeScreen(
                         } else {
                             account.signer.keyPair.pubKey.toNpub()
                         }
-                    coroutineScope.launch {
-                        sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            remember.value,
-                            clipboardManager,
-                            sig,
-                            sig,
-                            intentData,
-                            null,
-                            permissions = permissions,
-                            appName = applicationName ?: appName,
-                            database = database,
-                            onLoading = onLoading,
-                            signPolicy = signPolicy,
-                            onRemoveIntentData = onRemoveIntentData,
-                        )
-                    }
+
+                    sendResult(
+                        context,
+                        packageName,
+                        account,
+                        key,
+                        remember.value,
+                        clipboardManager,
+                        sig,
+                        sig,
+                        intentData,
+                        null,
+                        permissions = permissions,
+                        appName = applicationName ?: appName,
+                        database = database,
+                        onLoading = onLoading,
+                        signPolicy = signPolicy,
+                        onRemoveIntentData = onRemoveIntentData,
+                    )
+
                     return@LoginWithPubKey
                 },
                 {
                     if (intentData.bunkerRequest != null) {
-                        coroutineScope.launch(Dispatchers.IO) {
+                        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
                             val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
                             val savedApplication = database.applicationDao().getByKey(key)
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
@@ -165,6 +165,7 @@ fun SingleEventHomeScreen(
                         onRemoveIntentData(intentData, IntentResultType.REMOVE)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
+                        onLoading(false)
                     }
                 },
             )
@@ -196,7 +197,7 @@ fun SingleEventHomeScreen(
                 appName,
                 intentData.type,
                 {
-                    coroutineScope.launch(Dispatchers.IO) {
+                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
                         val result = CryptoUtils.signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
                         sendResult(
@@ -217,7 +218,7 @@ fun SingleEventHomeScreen(
                     }
                 },
                 {
-                    coroutineScope.launch(Dispatchers.IO) {
+                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
                         if (key == "null") {
                             context.getAppCompatActivity()?.intent = null
                             context.getAppCompatActivity()?.finish()
@@ -293,6 +294,7 @@ fun SingleEventHomeScreen(
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
                             }
+                            onLoading(false)
                         }
                     }
                 },
@@ -338,33 +340,31 @@ fun SingleEventHomeScreen(
                 appName,
                 intentData.type,
                 {
-                    coroutineScope.launch(Dispatchers.IO) {
-                        val result =
-                            if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                                ""
-                            } else {
-                                intentData.encryptedData ?: ""
-                            }
+                    val result =
+                        if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                            ""
+                        } else {
+                            intentData.encryptedData ?: ""
+                        }
 
-                        sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            remember.value,
-                            clipboardManager,
-                            result,
-                            result,
-                            intentData,
-                            null,
-                            database,
-                            onRemoveIntentData = onRemoveIntentData,
-                            onLoading = onLoading,
-                        )
-                    }
+                    sendResult(
+                        context,
+                        packageName,
+                        account,
+                        key,
+                        remember.value,
+                        clipboardManager,
+                        result,
+                        result,
+                        intentData,
+                        null,
+                        database,
+                        onRemoveIntentData = onRemoveIntentData,
+                        onLoading = onLoading,
+                    )
                 },
                 {
-                    coroutineScope.launch(Dispatchers.IO) {
+                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
                         if (key == "null") {
                             return@launch
                         }
@@ -437,6 +437,7 @@ fun SingleEventHomeScreen(
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
                             }
+                            onLoading(false)
                         }
                     }
                 },
@@ -534,7 +535,7 @@ fun SingleEventHomeScreen(
                     },
                     {
                         onLoading(true)
-                        coroutineScope.launch(Dispatchers.IO) {
+                        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
                             if (key == "null") {
                                 return@launch
                             }
@@ -609,6 +610,7 @@ fun SingleEventHomeScreen(
                                 if (application.application.closeApplication) {
                                     context.getAppCompatActivity()?.finish()
                                 }
+                                onLoading(false)
                             }
                         }
                     },

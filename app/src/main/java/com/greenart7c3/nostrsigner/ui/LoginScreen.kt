@@ -394,7 +394,8 @@ fun SignUpPage(
                             ) {
                                 Text(
                                     text = keyPair.pubKey.toNpub(),
-                                    Modifier.padding(10.dp),
+                                    modifier = Modifier.padding(10.dp),
+                                    color = Color.Black,
                                 )
                             }
                             Spacer(Modifier.height(8.dp))

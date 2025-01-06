@@ -243,7 +243,10 @@ fun InformationDialog(
                         tint = Color.Black,
                     )
                     Spacer(Modifier.width(5.dp))
-                    Text(stringResource(R.string.no))
+                    Text(
+                        text = stringResource(R.string.no),
+                        color = Color.Black,
+                    )
                 }
             }
         },
@@ -262,7 +265,10 @@ fun InformationDialog(
                         tint = Color.Black,
                     )
                     Spacer(Modifier.width(5.dp))
-                    Text(stringResource(R.string.yes))
+                    Text(
+                        text = stringResource(R.string.yes),
+                        color = Color.Black,
+                    )
                 }
             }
         },
@@ -295,7 +301,10 @@ fun InformationDialog(
                         tint = Color.Black,
                     )
                     Spacer(Modifier.width(5.dp))
-                    Text(stringResource(R.string.ok))
+                    Text(
+                        text = stringResource(R.string.ok),
+                        color = Color.Black,
+                    )
                 }
             }
         },

@@ -56,7 +56,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         NostrSigner.getInstance().applicationIOScope.launch {
             val accounts = LocalPreferences.allSavedAccounts(applicationContext)
             accounts.forEach {
-                val acc = LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
+                LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
                     val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
                     dao.insertLog(
                         LogEntity(

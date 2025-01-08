@@ -23,6 +23,7 @@ package com.greenart7c3.nostrsigner.service
 import android.app.NotificationManager
 import android.content.Context
 import android.net.Uri
+import android.util.Log
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
@@ -50,12 +51,46 @@ import com.vitorpamplona.quartz.events.Event
 import kotlinx.coroutines.launch
 
 class EventNotificationConsumer(private val applicationContext: Context) {
+    private fun saveLog(text: String) {
+        Log.d("EventNotificationConsumer", text)
+        NostrSigner.getInstance().applicationIOScope.launch {
+            val accounts = LocalPreferences.allSavedAccounts(applicationContext)
+            accounts.forEach {
+                val acc = LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
+                    val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
+                    dao.insertLog(
+                        LogEntity(
+                            0,
+                            "nostrsigner",
+                            "bunker request",
+                            text,
+                            TimeUtils.now(),
+                        ),
+                    )
+                }
+            }
+        }
+    }
 
     fun consume(event: Event) {
-        if (!notificationManager().areNotificationsEnabled()) return
-        if (event.kind() != 24133) return
-        if (!event.hasCorrectIDHash()) return
-        if (!event.hasVerifiedSignature()) return
+        saveLog("New event ${event.toJson()}")
+
+        if (!notificationManager().areNotificationsEnabled()) {
+            saveLog("notifications disabled")
+            return
+        }
+        if (event.kind() != 24133) {
+            saveLog("Not a bunker request")
+            return
+        }
+        if (!event.hasCorrectIDHash()) {
+            saveLog("Invalid id hash")
+            return
+        }
+        if (!event.hasVerifiedSignature()) {
+            saveLog("Invalid signature")
+            return
+        }
 
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
         LocalPreferences.loadFromEncryptedStorage(applicationContext, Hex.decode(taggedKey).toNpub())?.let { acc ->
@@ -68,6 +103,20 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         acc: Account,
     ) {
         if (event.content.isEmpty()) return
+
+        val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
+        NostrSigner.getInstance().applicationIOScope.launch {
+            dao.insertLog(
+                LogEntity(
+                    0,
+                    "nostrsigner",
+                    "bunker request json",
+                    event.toJson(),
+                    TimeUtils.now(),
+                ),
+            )
+        }
+
         if (Nip04.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
                 NostrSigner.getInstance().applicationIOScope.launch {
@@ -93,15 +142,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val notification = dao.getNotification(event.id)
         if (notification != null) return
         dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
-        dao.insertLog(
-            LogEntity(
-                0,
-                "nostrsigner",
-                "bunker request json",
-                event.toJson(),
-                TimeUtils.now(),
-            ),
-        )
 
         dao.insertLog(
             LogEntity(

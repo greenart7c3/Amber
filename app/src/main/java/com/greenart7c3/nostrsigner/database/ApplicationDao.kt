@@ -168,13 +168,13 @@ interface ApplicationDao {
 
     @Query("DELETE FROM history WHERE time < :time")
     @Transaction
-    suspend fun deleteHistoryBefore(time: Long): Int
+    suspend fun deleteHistoryBefore(time: Long)
 
     @Query("DELETE FROM notification WHERE time < :time")
     @Transaction
-    suspend fun deleteNotificationBefore(time: Long): Int
+    suspend fun deleteNotificationBefore(time: Long)
 
     @Query("DELETE FROM amber_log WHERE time < :time")
     @Transaction
-    suspend fun deleteLogsBefore(time: Long): Int
+    suspend fun deleteLogsBefore(time: Long)
 }

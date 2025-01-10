@@ -95,34 +95,6 @@ class NostrSigner : Application() {
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         instance = this
 
-        timer?.cancel()
-        timer = Timer()
-        timer?.schedule(
-            object : TimerTask() {
-                override fun run() {
-                    job?.cancelChildren()
-                    job?.cancel()
-                    job = applicationIOScope.launch {
-                        LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
-                            val database = AppDatabase.getDatabase(this@NostrSigner, it.npub)
-                            val oneWeek = System.currentTimeMillis() - ONE_WEEK
-                            database.applicationDao().deleteHistoryBefore(TimeUtils.oneWeekAgo()).let { count ->
-                                Log.d("NostrSigner", "Deleted $count history entries")
-                            }
-                            database.applicationDao().deleteNotificationBefore(TimeUtils.oneWeekAgo()).let { count ->
-                                Log.d("NostrSigner", "Deleted $count notification entries")
-                            }
-                            database.applicationDao().deleteLogsBefore(oneWeek).let { count ->
-                                Log.d("NostrSigner", "Deleted $count log entries")
-                            }
-                        }
-                    }
-                }
-            },
-            0,
-            3_600_000,
-        )
-
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
             applicationIOScope.launch {
@@ -134,6 +106,29 @@ class NostrSigner : Application() {
                 }
             }
         }
+
+        timer?.cancel()
+        timer = Timer()
+        timer?.schedule(
+            object : TimerTask() {
+                override fun run() {
+                    job?.cancelChildren()
+                    job?.cancel()
+                    job = applicationIOScope.launch {
+                        LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
+                            databases[it.npub]?.let { database ->
+                                val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                                database.applicationDao().deleteHistoryBefore(TimeUtils.oneWeekAgo())
+                                database.applicationDao().deleteNotificationBefore(TimeUtils.oneWeekAgo())
+                                database.applicationDao().deleteLogsBefore(oneWeek)
+                            }
+                        }
+                    }
+                }
+            },
+            0,
+            3_600_000,
+        )
 
         runBlocking {
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()

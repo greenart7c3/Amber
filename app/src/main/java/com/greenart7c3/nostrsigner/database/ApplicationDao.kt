@@ -166,15 +166,39 @@ interface ApplicationDao {
     @Transaction
     suspend fun deletePermission(permission: ApplicationPermissionsEntity)
 
-    @Query("DELETE FROM history WHERE time < :time")
+    @Query("SELECT COUNT(*) FROM history WHERE time < :time")
     @Transaction
-    suspend fun deleteHistoryBefore(time: Long)
+    suspend fun countOldHistory(time: Long): Long
 
-    @Query("DELETE FROM notification WHERE time < :time")
+    @Query("SELECT * FROM history WHERE time < :time LIMIT 100")
     @Transaction
-    suspend fun deleteNotificationBefore(time: Long)
+    suspend fun getOldHistory(time: Long): List<HistoryEntity>
 
-    @Query("DELETE FROM amber_log WHERE time < :time")
+    @Delete
     @Transaction
-    suspend fun deleteLogsBefore(time: Long)
+    suspend fun deleteHistory(historyEntity: HistoryEntity)
+
+    @Query("SELECT COUNT(*) FROM notification WHERE time < :time")
+    @Transaction
+    suspend fun countOldNotification(time: Long): Long
+
+    @Query("SELECT * FROM notification WHERE time < :time LIMIT 100")
+    @Transaction
+    suspend fun getOldNotification(time: Long): List<NotificationEntity>
+
+    @Delete
+    @Transaction
+    suspend fun deleteNotification(notificationEntity: NotificationEntity)
+
+    @Query("SELECT COUNT(*) FROM amber_log WHERE time < :time")
+    @Transaction
+    suspend fun countOldLog(time: Long): Long
+
+    @Query("SELECT * FROM amber_log WHERE time < :time LIMIT 100")
+    @Transaction
+    suspend fun getOldLog(time: Long): List<LogEntity>
+
+    @Delete
+    @Transaction
+    suspend fun deleteLog(logEntity: LogEntity)
 }

@@ -39,6 +39,7 @@ import java.util.Timer
 import java.util.TimerTask
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -46,6 +47,7 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
@@ -56,6 +58,7 @@ class NostrSigner : Application() {
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
     var job: Job? = null
+    val status = MutableStateFlow("")
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
@@ -117,10 +120,54 @@ class NostrSigner : Application() {
                     job = applicationIOScope.launch {
                         LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
                             databases[it.npub]?.let { database ->
-                                val oneWeek = System.currentTimeMillis() - ONE_WEEK
-                                database.applicationDao().deleteHistoryBefore(TimeUtils.oneWeekAgo())
-                                database.applicationDao().deleteNotificationBefore(TimeUtils.oneWeekAgo())
-                                database.applicationDao().deleteLogsBefore(oneWeek)
+                                try {
+                                    status.value = "Deleting old log entries from ${it.npub}"
+                                    val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                                    val oneWeekAgo = TimeUtils.oneWeekAgo()
+                                    val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
+                                    if (countHistory > 0) {
+                                        status.value = "Deleting $countHistory old history entries"
+                                        var logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                        while (logs.isNotEmpty()) {
+                                            status.value = "Deleting 100/$countHistory old history entries"
+                                            logs.forEach { history ->
+                                                database.applicationDao().deleteHistory(history)
+                                            }
+                                            logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                        }
+                                    }
+
+                                    val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
+                                    if (countNotification > 0) {
+                                        status.value = "Deleting $countNotification old notification entries"
+                                        var logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                        while (logs.isNotEmpty()) {
+                                            status.value = "Deleting 100/$countNotification old notification entries"
+                                            logs.forEach { history ->
+                                                database.applicationDao().deleteNotification(history)
+                                            }
+                                            logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                        }
+                                    }
+
+                                    val countLog = database.applicationDao().countOldLog(oneWeek)
+                                    if (countLog > 0) {
+                                        status.value = "Deleting $countLog old notification entries"
+                                        var logs = database.applicationDao().getOldLog(oneWeek)
+                                        while (logs.isNotEmpty()) {
+                                            status.value = "Deleting 100/$countLog old log entries"
+                                            logs.forEach { history ->
+                                                database.applicationDao().deleteLog(history)
+                                            }
+                                            logs = database.applicationDao().getOldLog(oneWeek)
+                                        }
+                                    }
+                                    status.value = ""
+                                } catch (e: Exception) {
+                                    if (e is CancellationException) throw e
+                                    Log.e("NostrSigner", "Error deleting old log entries", e)
+                                    status.value = ""
+                                }
                             }
                         }
                     }

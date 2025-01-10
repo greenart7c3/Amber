@@ -60,7 +60,8 @@ fun PermissionsScreen(
     }
 
     if (isLoading) {
-        CenterCircularProgressIndicator(modifier)
+        val status = NostrSigner.getInstance().status.collectAsStateWithLifecycle()
+        CenterCircularProgressIndicator(modifier, status.value)
     } else {
         val applications = database.applicationDao().getAllFlow(account.signer.keyPair.pubKey.toHexKey()).collectAsStateWithLifecycle(emptyList())
 

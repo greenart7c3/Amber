@@ -12,6 +12,11 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,12 +32,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.vitorpamplona.quartz.encoders.toHexKey
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun PermissionsScreen(
@@ -41,80 +49,94 @@ fun PermissionsScreen(
     navController: NavController,
     database: AppDatabase,
 ) {
-    val applications = database.applicationDao().getAllFlow(account.signer.keyPair.pubKey.toHexKey()).collectAsStateWithLifecycle(emptyList())
+    var isLoading by remember { mutableStateOf(false) }
 
-    Column(
-        modifier,
-    ) {
-        if (applications.value.isEmpty()) {
-            Text(
-                text = stringResource(R.string.congratulations_your_new_account_is_ready),
-                fontSize = 20.sp,
-                fontWeight = FontWeight.Bold,
-            )
+    LaunchedEffect(Unit) {
+        isLoading = true
+        launch(Dispatchers.IO) {
+            NostrSigner.getInstance().job?.join()
+            isLoading = false
+        }
+    }
 
-            Text(
-                buildAnnotatedString {
-                    append(stringResource(R.string.your_account_is_ready_to_use))
-                    withLink(
-                        LinkAnnotation.Url(
-                            "https://" + stringResource(R.string.nostr_app),
-                            styles = TextLinkStyles(
-                                style = SpanStyle(
-                                    textDecoration = TextDecoration.Underline,
+    if (isLoading) {
+        CenterCircularProgressIndicator(modifier)
+    } else {
+        val applications = database.applicationDao().getAllFlow(account.signer.keyPair.pubKey.toHexKey()).collectAsStateWithLifecycle(emptyList())
+
+        Column(
+            modifier,
+        ) {
+            if (applications.value.isEmpty()) {
+                Text(
+                    text = stringResource(R.string.congratulations_your_new_account_is_ready),
+                    fontSize = 20.sp,
+                    fontWeight = FontWeight.Bold,
+                )
+
+                Text(
+                    buildAnnotatedString {
+                        append(stringResource(R.string.your_account_is_ready_to_use))
+                        withLink(
+                            LinkAnnotation.Url(
+                                "https://" + stringResource(R.string.nostr_app),
+                                styles = TextLinkStyles(
+                                    style = SpanStyle(
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
                                 ),
                             ),
-                        ),
+                        ) {
+                            append(" " + stringResource(R.string.nostr_app))
+                        }
+                    },
+                )
+            } else {
+                applications.value.forEach { applicationWithHistory ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(vertical = 4.dp)
+                            .clickable {
+                                navController.navigate("Permission/${applicationWithHistory.application.key}")
+                            },
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        append(" " + stringResource(R.string.nostr_app))
-                    }
-                },
-            )
-        } else {
-            applications.value.forEach { applicationWithHistory ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(vertical = 4.dp)
-                        .clickable {
-                            navController.navigate("Permission/${applicationWithHistory.application.key}")
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(
-                        verticalArrangement = Arrangement.Center,
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(top = 16.dp),
-                            text = applicationWithHistory.application.name.ifBlank { applicationWithHistory.application.key.toShortenHex() },
-                            fontSize = 24.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
+                        Column(
+                            verticalArrangement = Arrangement.Center,
                         ) {
                             Text(
-                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                text = applicationWithHistory.application.key.toShortenHex(),
-                                fontSize = 16.sp,
+                                modifier = Modifier.padding(top = 16.dp),
+                                text = applicationWithHistory.application.name.ifBlank { applicationWithHistory.application.key.toShortenHex() },
+                                fontSize = 24.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
-                            Text(
-                                modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                text = if (applicationWithHistory.latestTime == null) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.latestTime * 1000),
-                                fontSize = 16.sp,
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                            ) {
+                                Text(
+                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                    text = applicationWithHistory.application.key.toShortenHex(),
+                                    fontSize = 16.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                                Text(
+                                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                                    text = if (applicationWithHistory.latestTime == null) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.latestTime * 1000),
+                                    fontSize = 16.sp,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+
+                            Spacer(Modifier.weight(1f))
+                            HorizontalDivider(
+                                color = MaterialTheme.colorScheme.primary,
                             )
                         }
-
-                        Spacer(Modifier.weight(1f))
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.primary,
-                        )
                     }
                 }
             }

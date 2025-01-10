@@ -86,27 +86,6 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 }
             }
 
-            override fun onSendResponse(
-                eventId: String,
-                success: Boolean,
-                message: String,
-                relay: Relay,
-            ) {
-                scope.launch {
-                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
-                            LogEntity(
-                                id = 0,
-                                url = relay.url,
-                                type = "onSendResponse",
-                                message = "Success: $success Message: $message",
-                                time = System.currentTimeMillis(),
-                            ),
-                        )
-                    }
-                }
-            }
-
             override fun onAuth(
                 relay: Relay,
                 challenge: String,

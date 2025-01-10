@@ -34,7 +34,9 @@ import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import com.vitorpamplona.quartz.events.MetadataEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import java.util.Timer
+import java.util.TimerTask
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
@@ -90,31 +92,31 @@ class NostrSigner : Application() {
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         instance = this
 
-//        timer?.cancel()
-//        timer = Timer()
-//        timer?.schedule(
-//            object : TimerTask() {
-//                override fun run() {
-//                    LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
-//                        val database = AppDatabase.getDatabase(this@NostrSigner, it.npub)
-//                        applicationIOScope.launch {
-//                            val oneWeek = System.currentTimeMillis() - ONE_WEEK
-//                            database.applicationDao().deleteHistoryBefore(TimeUtils.oneWeekAgo()).let { count ->
-//                                Log.d("NostrSigner", "Deleted $count history entries")
-//                            }
-//                            database.applicationDao().deleteNotificationBefore(TimeUtils.oneWeekAgo()).let { count ->
-//                                Log.d("NostrSigner", "Deleted $count notification entries")
-//                            }
-//                            database.applicationDao().deleteLogsBefore(oneWeek).let { count ->
-//                                Log.d("NostrSigner", "Deleted $count log entries")
-//                            }
-//                        }
-//                    }
-//                }
-//            },
-//            0,
-//            3_600_000,
-//        )
+        timer?.cancel()
+        timer = Timer()
+        timer?.schedule(
+            object : TimerTask() {
+                override fun run() {
+                    LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
+                        val database = AppDatabase.getDatabase(this@NostrSigner, it.npub)
+                        applicationIOScope.launch {
+                            val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                            database.applicationDao().deleteHistoryBefore(TimeUtils.oneWeekAgo()).let { count ->
+                                Log.d("NostrSigner", "Deleted $count history entries")
+                            }
+                            database.applicationDao().deleteNotificationBefore(TimeUtils.oneWeekAgo()).let { count ->
+                                Log.d("NostrSigner", "Deleted $count notification entries")
+                            }
+                            database.applicationDao().deleteLogsBefore(oneWeek).let { count ->
+                                Log.d("NostrSigner", "Deleted $count log entries")
+                            }
+                        }
+                    }
+                }
+            },
+            0,
+            3_600_000,
+        )
 
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)

@@ -157,7 +157,7 @@ object BunkerRequestUtils {
             "nip04_decrypt" -> SignerType.NIP04_DECRYPT
             "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
             "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-            else -> SignerType.SIGN_EVENT
+            else -> SignerType.INVALID
         }
     }
 
@@ -182,6 +182,11 @@ object BunkerRequestUtils {
         onReady: (IntentData?) -> Unit,
     ) {
         val type = getTypeFromBunker(bunkerRequest)
+        if (type == SignerType.INVALID) {
+            Log.d("IntentUtils", "Invalid type ${bunkerRequest.method}")
+            onReady(null)
+            return
+        }
         val data = getDataFromBunker(bunkerRequest)
         val account = LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)!!
 
@@ -353,6 +358,10 @@ object BunkerRequestUtils {
                         null,
                     ),
                 )
+            }
+
+            SignerType.INVALID -> {
+                onReady(null)
             }
         }
     }

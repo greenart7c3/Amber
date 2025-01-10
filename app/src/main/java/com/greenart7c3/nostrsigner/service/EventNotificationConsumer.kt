@@ -64,7 +64,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             "nostrsigner",
                             "bunker request",
                             text,
-                            TimeUtils.now(),
+                            System.currentTimeMillis(),
                         ),
                     )
                 }
@@ -295,6 +295,20 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList()
+
+        if (type == SignerType.INVALID) {
+            Log.d("EventNotificationConsumer", "Invalid request method ${bunkerRequest.method}")
+            dao.insertLog(
+                LogEntity(
+                    0,
+                    "nostrsigner",
+                    "bunker request",
+                    "Invalid request method ${bunkerRequest.method}",
+                    System.currentTimeMillis(),
+                ),
+            )
+            return
+        }
 
         if (permission == null && applicationWithSecret == null && !acc.allowNewConnections) {
             BunkerRequestUtils.sendBunkerResponse(

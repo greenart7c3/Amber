@@ -10,4 +10,5 @@ enum class SignerType {
     NIP44_DECRYPT,
     GET_PUBLIC_KEY,
     DECRYPT_ZAP_EVENT,
+    INVALID,
 }

@@ -59,6 +59,8 @@ import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
+import java.io.File
+import java.text.DecimalFormat
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -234,6 +236,23 @@ fun SettingsScreen(
 
         val primaryColor = MaterialTheme.colorScheme.primary
 
+        val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+        val df = DecimalFormat("#.###")
+        val sizeInMBFormatted: String = df.format(dbFile.length() / (1024.0 * 1024.0))
+
+        val sharedPrefsDir = File(context.applicationInfo.dataDir + "/shared_prefs")
+        val sharedPrefsFiles = sharedPrefsDir.listFiles()
+        var totalSize = 0L
+        if (sharedPrefsFiles != null) {
+            for (file in sharedPrefsFiles) {
+                if (file.isFile) {
+                    totalSize += file.length()
+                }
+            }
+        }
+
+        Text("Database size: $sizeInMBFormatted MB", color = Color.Gray)
+        Text("Shared Prefs size: ${df.format(totalSize / (1024.0 * 1024.0))} MB", color = Color.Gray)
         Text(
             buildAnnotatedString {
                 withStyle(

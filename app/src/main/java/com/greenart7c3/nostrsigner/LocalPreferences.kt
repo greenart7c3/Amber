@@ -5,9 +5,6 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.LruCache
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.database.AppDatabase
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -23,10 +20,6 @@ import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.jni.BuildConfig
 import java.io.File
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
-import org.json.JSONObject
 
 // Release mode (!BuildConfig.DEBUG) always uses encrypted preferences
 // To use plaintext SharedPreferences for debugging, set this to true
@@ -116,8 +109,8 @@ object LocalPreferences {
     fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
         val context = NostrSigner.getInstance()
         encryptedPreferences(context).edit().apply {
-            putString(PrefKeys.ENDPOINT, settings.endpoint)
-            putBoolean(PrefKeys.PUSH_SERVER_MESSAGE, settings.pushServerMessage)
+            remove(PrefKeys.ENDPOINT)
+            remove(PrefKeys.PUSH_SERVER_MESSAGE)
             putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
             putStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
             putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
@@ -184,8 +177,6 @@ object LocalPreferences {
 
         encryptedPreferences(context).apply {
             return AmberSettings(
-                endpoint = getString(PrefKeys.ENDPOINT, "") ?: "",
-                pushServerMessage = getBoolean(PrefKeys.PUSH_SERVER_MESSAGE, false),
                 defaultRelays = getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
@@ -382,47 +373,6 @@ object LocalPreferences {
         HttpClientManager.setDefaultProxyOnPort(port)
     }
 
-    private suspend fun convertToDatabase(
-        map: MutableMap<String, Boolean>,
-        pubKey: String,
-        database: AppDatabase,
-    ) = withContext(Dispatchers.IO) {
-        map.forEach {
-            val splitData = it.key.split("-")
-            database.applicationDao().deletePermissions(splitData.first())
-        }
-        map.forEach {
-            val splitData = it.key.split("-")
-            database.applicationDao().insertApplication(
-                ApplicationEntity(
-                    splitData.first(),
-                    splitData.first(),
-                    emptyList(),
-                    "",
-                    "",
-                    "",
-                    pubKey,
-                    true,
-                    "",
-                    false,
-                    1,
-                    closeApplication = true,
-                ),
-            )
-            database.applicationDao().insertPermissions(
-                listOf(
-                    ApplicationPermissionsEntity(
-                        id = null,
-                        pkKey = splitData.first(),
-                        type = splitData[1],
-                        kind = runCatching { splitData[2].toInt() }.getOrNull(),
-                        acceptable = it.value,
-                    ),
-                ),
-            )
-        }
-    }
-
     fun loadFromEncryptedStorage(context: Context, npub: String?): Account? {
         if (npub != null && accountCache.get(npub) != null) {
             return accountCache.get(npub)
@@ -431,19 +381,6 @@ object LocalPreferences {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
 
-            val jsonString = getString(PrefKeys.REMEMBER_APPS, null)
-            val outputMap = mutableMapOf<String, Boolean>()
-            if (jsonString != null) {
-                val jsonObject = JSONObject(jsonString)
-                val keysItr: Iterator<String> = jsonObject.keys()
-                while (keysItr.hasNext()) {
-                    val key = keysItr.next()
-                    val value: Boolean = jsonObject.getBoolean(key)
-                    outputMap[key] = value
-                }
-            }
-            val localNpub = pubKey.hexToByteArray().toNpub()
-            runBlocking { convertToDatabase(outputMap, pubKey, NostrSigner.getInstance().getDatabase(localNpub)) }
             this.edit().apply {
                 remove(PrefKeys.REMEMBER_APPS)
             }.apply()

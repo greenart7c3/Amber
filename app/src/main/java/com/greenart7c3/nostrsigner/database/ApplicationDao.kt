@@ -165,4 +165,16 @@ interface ApplicationDao {
     @Delete
     @Transaction
     suspend fun deletePermission(permission: ApplicationPermissionsEntity)
+
+    @Query("DELETE FROM history WHERE time < :time")
+    @Transaction
+    suspend fun deleteHistoryBefore(time: Long): Int
+
+    @Query("DELETE FROM notification WHERE time < :time")
+    @Transaction
+    suspend fun deleteNotificationBefore(time: Long): Int
+
+    @Query("DELETE FROM amber_log WHERE time < :time")
+    @Transaction
+    suspend fun deleteLogsBefore(time: Long): Int
 }

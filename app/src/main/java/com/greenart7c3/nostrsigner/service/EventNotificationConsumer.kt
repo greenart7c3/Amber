@@ -112,7 +112,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     "nostrsigner",
                     "bunker request json",
                     event.toJson(),
-                    TimeUtils.now(),
+                    System.currentTimeMillis(),
                 ),
             )
         }
@@ -149,7 +149,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 "nostrsigner",
                 "bunker request",
                 request,
-                TimeUtils.now(),
+                System.currentTimeMillis(),
             ),
         )
 

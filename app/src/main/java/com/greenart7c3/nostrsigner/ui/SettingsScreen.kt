@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -76,11 +77,18 @@ fun SettingsScreen(
     val context = LocalContext.current
     var checked by remember { mutableStateOf(account.useProxy) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
-    var conectOrbotDialogOpen by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
-
     val scope = rememberCoroutineScope()
+    var isLoading by remember { mutableStateOf(false) }
+
+    LaunchedEffect(Unit) {
+        isLoading = true
+        launch(Dispatchers.IO) {
+            NostrSigner.getInstance().job?.join()
+            isLoading = false
+        }
+    }
 
     if (logoutDialog) {
         LogoutDialog(
@@ -94,74 +102,22 @@ fun SettingsScreen(
         )
     }
 
-    Column(
-        modifier,
-    ) {
-        Box(
-            Modifier
-                .padding(bottom = 8.dp),
+    if (isLoading) {
+        CenterCircularProgressIndicator(modifier)
+    } else {
+        Column(
+            modifier,
         ) {
-            IconRow(
-                title = stringResource(R.string.security),
-                icon = Icons.Default.Security,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.Security.route)
-                },
-            )
-        }
-
-        Box(
-            Modifier
-                .padding(vertical = 8.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.backup_keys),
-                icon = Icons.Default.Key,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.AccountBackup.route)
-                },
-            )
-        }
-
-        Box(
-            Modifier
-                .padding(vertical = 8.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.language),
-                icon = Icons.Default.Language,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.Language.route)
-                },
-            )
-        }
-
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR != "offline") {
             Box(
                 Modifier
-                    .padding(vertical = 8.dp),
+                    .padding(bottom = 8.dp),
             ) {
                 IconRow(
-                    title = if (checked) {
-                        stringResource(R.string.disconnect_from_your_orbot_setup)
-                    } else {
-                        stringResource(R.string.connect_via_tor_short)
-                    },
-                    icon = R.drawable.ic_tor,
+                    title = stringResource(R.string.security),
+                    icon = Icons.Default.Security,
                     tint = MaterialTheme.colorScheme.onBackground,
-                    onLongClick = {
-                        navController.navigate(Route.TorSettings.route)
-                    },
                     onClick = {
-                        if (checked) {
-                            disconnectTorDialog = true
-                        } else {
-                            navController.navigate(Route.TorSettings.route)
-                        }
+                        navController.navigate(Route.Security.route)
                     },
                 )
             }
@@ -171,11 +127,11 @@ fun SettingsScreen(
                     .padding(vertical = 8.dp),
             ) {
                 IconRow(
-                    title = stringResource(R.string.relays),
-                    icon = ImageVector.vectorResource(R.drawable.relays),
+                    title = stringResource(R.string.backup_keys),
+                    icon = Icons.Default.Key,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.RelaysScreen.route)
+                        navController.navigate(Route.AccountBackup.route)
                     },
                 )
             }
@@ -185,116 +141,172 @@ fun SettingsScreen(
                     .padding(vertical = 8.dp),
             ) {
                 IconRow(
-                    title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
-                    icon = Icons.Default.SurroundSound,
+                    title = stringResource(R.string.language),
+                    icon = Icons.Default.Language,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        allowNewConnections = !allowNewConnections
-                        account.allowNewConnections = allowNewConnections
-                        LocalPreferences.saveToEncryptedStorage(context, account)
-                    },
-                    onLongClick = {
-                        Toast.makeText(
-                            context,
-                            if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
-                            Toast.LENGTH_LONG,
-                        ).show()
+                        navController.navigate(Route.Language.route)
                     },
                 )
             }
-        }
 
-        Box(
-            Modifier
-                .padding(vertical = 8.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.logs),
-                icon = Icons.Default.FilterList,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.Logs.route)
-                },
-            )
-        }
-
-        Box(
-            Modifier
-                .padding(vertical = 8.dp),
-        ) {
-            IconRow(
-                title = stringResource(R.string.sign_policy),
-                icon = Icons.Default.Draw,
-                tint = MaterialTheme.colorScheme.onBackground,
-                onClick = {
-                    navController.navigate(Route.SignPolicy.route)
-                },
-            )
-        }
-
-        Spacer(modifier = Modifier.weight(1f))
-
-        val primaryColor = MaterialTheme.colorScheme.primary
-
-        val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
-        val df = DecimalFormat("#.###")
-        val sizeInMBFormatted: String = df.format(dbFile.length() / (1024.0 * 1024.0))
-
-        val sharedPrefsDir = File(context.applicationInfo.dataDir + "/shared_prefs")
-        val sharedPrefsFiles = sharedPrefsDir.listFiles()
-        var totalSize = 0L
-        if (sharedPrefsFiles != null) {
-            for (file in sharedPrefsFiles) {
-                if (file.isFile) {
-                    totalSize += file.length()
-                }
-            }
-        }
-
-        Text("Database size: $sizeInMBFormatted MB", color = Color.Gray)
-        Text("Shared Prefs size: ${df.format(totalSize / (1024.0 * 1024.0))} MB", color = Color.Gray)
-        Text(
-            buildAnnotatedString {
-                withStyle(
-                    style = ParagraphStyle(
-                        textAlign = TextAlign.Center,
-                    ),
+            @Suppress("KotlinConstantConditions")
+            if (BuildConfig.FLAVOR != "offline") {
+                Box(
+                    Modifier
+                        .padding(vertical = 8.dp),
                 ) {
-                    append("v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n")
-                    withLink(
-                        LinkAnnotation.Url(
-                            context.getString(R.string.amber_github_uri),
-                            styles = TextLinkStyles(
-                                style = SpanStyle(
-                                    color = primaryColor,
-                                    textDecoration = TextDecoration.Underline,
-                                ),
-                            ),
-                        ),
-                    ) {
-                        append("${context.getString(R.string.source_code)}\n\n")
-                    }
-                    withLink(
-                        LinkAnnotation.Url(
-                            context.getString(R.string.support_development_uri),
-                            styles = TextLinkStyles(
-                                style = SpanStyle(
-                                    color = primaryColor,
-                                    textDecoration = TextDecoration.Underline,
-                                ),
-                            ),
-                        ),
-                    ) {
-                        append(context.getString(R.string.support_development))
+                    IconRow(
+                        title = if (checked) {
+                            stringResource(R.string.disconnect_from_your_orbot_setup)
+                        } else {
+                            stringResource(R.string.connect_via_tor_short)
+                        },
+                        icon = R.drawable.ic_tor,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        onLongClick = {
+                            navController.navigate(Route.TorSettings.route)
+                        },
+                        onClick = {
+                            if (checked) {
+                                disconnectTorDialog = true
+                            } else {
+                                navController.navigate(Route.TorSettings.route)
+                            }
+                        },
+                    )
+                }
+
+                Box(
+                    Modifier
+                        .padding(vertical = 8.dp),
+                ) {
+                    IconRow(
+                        title = stringResource(R.string.relays),
+                        icon = ImageVector.vectorResource(R.drawable.relays),
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        onClick = {
+                            navController.navigate(Route.RelaysScreen.route)
+                        },
+                    )
+                }
+
+                Box(
+                    Modifier
+                        .padding(vertical = 8.dp),
+                ) {
+                    IconRow(
+                        title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
+                        icon = Icons.Default.SurroundSound,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        onClick = {
+                            allowNewConnections = !allowNewConnections
+                            account.allowNewConnections = allowNewConnections
+                            LocalPreferences.saveToEncryptedStorage(context, account)
+                        },
+                        onLongClick = {
+                            Toast.makeText(
+                                context,
+                                if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
+                                Toast.LENGTH_LONG,
+                            ).show()
+                        },
+                    )
+                }
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.logs),
+                    icon = Icons.Default.FilterList,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.Logs.route)
+                    },
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.sign_policy),
+                    icon = Icons.Default.Draw,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.SignPolicy.route)
+                    },
+                )
+            }
+
+            Spacer(modifier = Modifier.weight(1f))
+
+            val primaryColor = MaterialTheme.colorScheme.primary
+
+            val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+            val df = DecimalFormat("#.###")
+            val sizeInMBFormatted: String = df.format(dbFile.length() / (1024.0 * 1024.0))
+
+            val sharedPrefsDir = File(context.applicationInfo.dataDir + "/shared_prefs")
+            val sharedPrefsFiles = sharedPrefsDir.listFiles()
+            var totalSize = 0L
+            if (sharedPrefsFiles != null) {
+                for (file in sharedPrefsFiles) {
+                    if (file.isFile) {
+                        totalSize += file.length()
                     }
                 }
-                toAnnotatedString()
-            },
-            fontSize = 18.sp,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 24.dp),
-        )
+            }
+
+            Text("Database size: $sizeInMBFormatted MB", color = Color.Gray)
+            Text("Shared Prefs size: ${df.format(totalSize / (1024.0 * 1024.0))} MB", color = Color.Gray)
+            Text(
+                buildAnnotatedString {
+                    withStyle(
+                        style = ParagraphStyle(
+                            textAlign = TextAlign.Center,
+                        ),
+                    ) {
+                        append("v${BuildConfig.VERSION_NAME}-${BuildConfig.FLAVOR}\n\n")
+                        withLink(
+                            LinkAnnotation.Url(
+                                context.getString(R.string.amber_github_uri),
+                                styles = TextLinkStyles(
+                                    style = SpanStyle(
+                                        color = primaryColor,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
+                                ),
+                            ),
+                        ) {
+                            append("${context.getString(R.string.source_code)}\n\n")
+                        }
+                        withLink(
+                            LinkAnnotation.Url(
+                                context.getString(R.string.support_development_uri),
+                                styles = TextLinkStyles(
+                                    style = SpanStyle(
+                                        color = primaryColor,
+                                        textDecoration = TextDecoration.Underline,
+                                    ),
+                                ),
+                            ),
+                        ) {
+                            append(context.getString(R.string.support_development))
+                        }
+                    }
+                    toAnnotatedString()
+                },
+                fontSize = 18.sp,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 24.dp),
+            )
+        }
     }
 
     if (disconnectTorDialog) {

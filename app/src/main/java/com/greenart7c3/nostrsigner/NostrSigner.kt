@@ -41,8 +41,10 @@ import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -53,6 +55,7 @@ class NostrSigner : Application() {
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
+    var job: Job? = null
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
@@ -97,9 +100,11 @@ class NostrSigner : Application() {
         timer?.schedule(
             object : TimerTask() {
                 override fun run() {
-                    LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
-                        val database = AppDatabase.getDatabase(this@NostrSigner, it.npub)
-                        applicationIOScope.launch {
+                    job?.cancelChildren()
+                    job?.cancel()
+                    job = applicationIOScope.launch {
+                        LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
+                            val database = AppDatabase.getDatabase(this@NostrSigner, it.npub)
                             val oneWeek = System.currentTimeMillis() - ONE_WEEK
                             database.applicationDao().deleteHistoryBefore(TimeUtils.oneWeekAgo()).let { count ->
                                 Log.d("NostrSigner", "Deleted $count history entries")

@@ -99,7 +99,7 @@ object IntentUtils {
         if (parameters.isEmpty() || parameters.toString() == "[]") {
             getIntentDataFromIntent(context, intent, packageName, route, account, onReady)
         } else {
-            var type = SignerType.SIGN_EVENT
+            var type = SignerType.INVALID
             var pubKey = ""
             var compressionType = CompressionType.NONE
             var callbackUrl: String? = null
@@ -119,7 +119,7 @@ object IntentUtils {
                             "nip04_decrypt" -> SignerType.NIP04_DECRYPT
                             "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
                             "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-                            else -> SignerType.SIGN_EVENT
+                            else -> SignerType.INVALID
                         }
                 }
                 if (parameter.toLowerCase(Locale.current) == "pubkey") {
@@ -141,6 +141,11 @@ object IntentUtils {
                 if (parameter == "appName") {
                     appName = parameterData
                 }
+            }
+
+            if (type == SignerType.INVALID) {
+                onReady(null)
+                return
             }
 
             when (type) {
@@ -281,8 +286,13 @@ object IntentUtils {
                 "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
                 "get_public_key" -> SignerType.GET_PUBLIC_KEY
                 "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-                else -> SignerType.SIGN_EVENT
+                else -> SignerType.INVALID
             }
+
+        if (type == SignerType.INVALID) {
+            onReady(null)
+            return
+        }
 
         val data =
             try {

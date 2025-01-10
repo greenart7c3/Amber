@@ -128,8 +128,10 @@ class NostrSigner : Application() {
                                     if (countHistory > 0) {
                                         status.value = "Deleting $countHistory old history entries"
                                         var logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                        var count = 0
                                         while (logs.isNotEmpty()) {
-                                            status.value = "Deleting 100/$countHistory old history entries"
+                                            count++
+                                            status.value = "Deleting ${100 * count}/$countHistory old history entries"
                                             logs.forEach { history ->
                                                 database.applicationDao().deleteHistory(history)
                                             }
@@ -141,8 +143,10 @@ class NostrSigner : Application() {
                                     if (countNotification > 0) {
                                         status.value = "Deleting $countNotification old notification entries"
                                         var logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                        var count = 0
                                         while (logs.isNotEmpty()) {
-                                            status.value = "Deleting 100/$countNotification old notification entries"
+                                            count++
+                                            status.value = "Deleting ${100 * count}/$countNotification old notification entries"
                                             logs.forEach { history ->
                                                 database.applicationDao().deleteNotification(history)
                                             }
@@ -154,8 +158,10 @@ class NostrSigner : Application() {
                                     if (countLog > 0) {
                                         status.value = "Deleting $countLog old notification entries"
                                         var logs = database.applicationDao().getOldLog(oneWeek)
+                                        var count = 0
                                         while (logs.isNotEmpty()) {
-                                            status.value = "Deleting 100/$countLog old log entries"
+                                            count++
+                                            status.value = "Deleting ${100 * count}/$countLog old log entries"
                                             logs.forEach { history ->
                                                 database.applicationDao().deleteLog(history)
                                             }

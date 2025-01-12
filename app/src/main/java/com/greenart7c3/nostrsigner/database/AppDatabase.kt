@@ -47,6 +47,14 @@ val MIGRATION_5_6 =
         }
     }
 
+val MIGRATION_6_7 =
+    object : Migration(6, 7) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_eventId` ON `notification` (`eventId`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `index_notification_time` ON `notification` (`time`)")
+        }
+    }
+
 @Database(
     entities = [
         ApplicationEntity::class,
@@ -55,7 +63,7 @@ val MIGRATION_5_6 =
         HistoryEntity::class,
         LogEntity::class,
     ],
-    version = 6,
+    version = 7,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -78,6 +86,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_3_4)
                         .addMigrations(MIGRATION_4_5)
                         .addMigrations(MIGRATION_5_6)
+                        .addMigrations(MIGRATION_6_7)
                         .build()
                 instance
             }

@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -21,7 +22,19 @@ interface ApplicationDao {
     suspend fun getNotification(eventId: String): NotificationEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    suspend fun insertNotification(notificationEntity: NotificationEntity): Long?
+    @Transaction
+    suspend fun insertNotification(notificationEntity: NotificationEntity): Long? {
+        deleteNotification(TimeUtils.oneDayAgo())
+        return innerInsertNotification(notificationEntity)
+    }
+
+    @Query("DELETE FROM notification WHERE time <= :time")
+    @Transaction
+    suspend fun deleteNotification(time: Long)
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    @Transaction
+    suspend fun innerInsertNotification(notificationEntity: NotificationEntity): Long?
 
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     suspend fun getAll(pubKey: String): List<ApplicationEntity>
@@ -182,7 +195,7 @@ interface ApplicationDao {
     @Transaction
     suspend fun countOldNotification(time: Long): Long
 
-    @Query("SELECT * FROM notification WHERE time < :time LIMIT 100")
+    @Query("SELECT * FROM notification WHERE time <= :time ORDER BY TIME DESC LIMIT 100")
     @Transaction
     suspend fun getOldNotification(time: Long): List<NotificationEntity>
 

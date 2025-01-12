@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 6,
-    "identityHash": "437f7ffd0c8160d9af569118ec489368",
+    "version": 7,
+    "identityHash": "e33ced3a06fb3f42b864b74040933487",
     "entities": [
       {
         "tableName": "application",
@@ -218,12 +218,12 @@
         "indices": [
           {
             "name": "index_notification_eventId",
-            "unique": true,
+            "unique": false,
             "columnNames": [
               "eventId"
             ],
             "orders": [],
-            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_notification_eventId` ON `${TABLE_NAME}` (`eventId`)"
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_notification_eventId` ON `${TABLE_NAME}` (`eventId`)"
           },
           {
             "name": "index_notification_time",
@@ -366,7 +366,7 @@
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '437f7ffd0c8160d9af569118ec489368')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'e33ced3a06fb3f42b864b74040933487')"
     ]
   }
 }

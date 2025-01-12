@@ -458,4 +458,13 @@
     <string name="service">Serviço</string>
     <string name="service_description">Notificação de segundo plano</string>
     <string name="close_application">Fechar aplicativo quando aceitar ou rejeitar uma permissão</string>
+    <string name="clear_logs_and_activity">Clear logs and activity</string>
+    <string name="deleting_old_log_entries_from">Deleting old log entries from %1$s</string>
+    <string name="deleting_old_history_entries">Deleting %1$d old history entries</string>
+    <string name="deleting_old_history_entries_2">Deleting %1$d/%2$d old history entries</string>
+    <string name="deleting_old_notification_entries">Deleting %1$d old notification entries</string>
+    <string name="deleting_old_notification_entries_2">Deleting %1$d/%2$d old notification entries</string>
+    <string name="deleting_old_log_entries">Deleting %1$d old log entries</string>
+    <string name="deleting_old_log_entries_2">Deleting %1$d/%2$d old log entries</string>
+    <string name="database_size_mb">Database size: %1$s MB</string>
 </resources>

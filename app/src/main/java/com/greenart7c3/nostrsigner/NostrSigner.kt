@@ -34,31 +34,21 @@ import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import com.vitorpamplona.quartz.events.MetadataEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
-import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
-import java.util.Timer
-import java.util.TimerTask
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.cancelChildren
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
-    private var timer: Timer? = null
     val client: NostrClient = NostrClient(OkHttpWebSocket.Builder())
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
-    var job: Job? = null
-    val status = MutableStateFlow("")
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
@@ -109,79 +99,6 @@ class NostrSigner : Application() {
                 }
             }
         }
-
-        timer?.cancel()
-        timer = Timer()
-        timer?.schedule(
-            object : TimerTask() {
-                override fun run() {
-                    job?.cancelChildren()
-                    job?.cancel()
-                    job = applicationIOScope.launch {
-                        LocalPreferences.allSavedAccounts(this@NostrSigner).forEach {
-                            databases[it.npub]?.let { database ->
-                                try {
-                                    status.value = "Deleting old log entries from ${it.npub}"
-                                    val oneWeek = System.currentTimeMillis() - ONE_WEEK
-                                    val oneWeekAgo = TimeUtils.oneWeekAgo()
-                                    val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
-                                    if (countHistory > 0) {
-                                        status.value = "Deleting $countHistory old history entries"
-                                        var logs = database.applicationDao().getOldHistory(oneWeekAgo)
-                                        var count = 0
-                                        while (logs.isNotEmpty()) {
-                                            count++
-                                            status.value = "Deleting ${100 * count}/$countHistory old history entries"
-                                            logs.forEach { history ->
-                                                database.applicationDao().deleteHistory(history)
-                                            }
-                                            logs = database.applicationDao().getOldHistory(oneWeekAgo)
-                                        }
-                                    }
-
-                                    val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
-                                    if (countNotification > 0) {
-                                        status.value = "Deleting $countNotification old notification entries"
-                                        var logs = database.applicationDao().getOldNotification(oneWeekAgo)
-                                        var count = 0
-                                        while (logs.isNotEmpty()) {
-                                            count++
-                                            status.value = "Deleting ${100 * count}/$countNotification old notification entries"
-                                            logs.forEach { history ->
-                                                database.applicationDao().deleteNotification(history)
-                                            }
-                                            logs = database.applicationDao().getOldNotification(oneWeekAgo)
-                                        }
-                                    }
-
-                                    val countLog = database.applicationDao().countOldLog(oneWeek)
-                                    if (countLog > 0) {
-                                        status.value = "Deleting $countLog old notification entries"
-                                        var logs = database.applicationDao().getOldLog(oneWeek)
-                                        var count = 0
-                                        while (logs.isNotEmpty()) {
-                                            count++
-                                            status.value = "Deleting ${100 * count}/$countLog old log entries"
-                                            logs.forEach { history ->
-                                                database.applicationDao().deleteLog(history)
-                                            }
-                                            logs = database.applicationDao().getOldLog(oneWeek)
-                                        }
-                                    }
-                                    status.value = ""
-                                } catch (e: Exception) {
-                                    if (e is CancellationException) throw e
-                                    Log.e("NostrSigner", "Error deleting old log entries", e)
-                                    status.value = ""
-                                }
-                            }
-                        }
-                    }
-                }
-            },
-            0,
-            3_600_000,
-        )
 
         runBlocking {
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()

@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,7 +48,6 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -56,13 +56,16 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.encoders.toNpub
-import java.io.File
+import com.vitorpamplona.quartz.utils.TimeUtils
+import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import java.text.DecimalFormat
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -82,11 +85,15 @@ fun SettingsScreen(
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
+    var sizeInMBFormatted by remember { mutableStateOf("") }
+    var status by remember { mutableStateOf("") }
 
     LaunchedEffect(Unit) {
         isLoading = true
         launch(Dispatchers.IO) {
-            NostrSigner.getInstance().job?.join()
+            val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+            val df = DecimalFormat("#.###")
+            sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
             isLoading = false
         }
     }
@@ -104,8 +111,7 @@ fun SettingsScreen(
     }
 
     if (isLoading) {
-        val status = NostrSigner.getInstance().status.collectAsStateWithLifecycle()
-        CenterCircularProgressIndicator(modifier, status.value)
+        CenterCircularProgressIndicator(modifier, status)
     } else {
         Column(
             modifier,
@@ -249,23 +255,92 @@ fun SettingsScreen(
 
             val primaryColor = MaterialTheme.colorScheme.primary
 
-            val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
-            val df = DecimalFormat("#.###")
-            val sizeInMBFormatted: String = df.format(dbFile.length() / (1024.0 * 1024.0))
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+            ) {
+                Text("Database size: $sizeInMBFormatted MB", color = Color.Gray)
+                AmberButton(
+                    modifier = Modifier.fillMaxWidth(),
+                    text = "Clear logs and activity",
+                    onClick = {
+                        NostrSigner.getInstance().applicationIOScope.launch {
+                            NotificationDataSource.stopSync()
+                            isLoading = true
+                            LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
+                                NostrSigner.getInstance().getDatabase(it.npub).let { database ->
+                                    try {
+                                        status = "Deleting old log entries from ${it.npub}"
+                                        val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                                        val oneWeekAgo = TimeUtils.oneWeekAgo()
+                                        val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
+                                        if (countHistory > 0) {
+                                            status = "Deleting $countHistory old history entries"
+                                            var logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                            var count = 0
+                                            while (logs.isNotEmpty()) {
+                                                count++
+                                                status = "Deleting ${100 * count}/$countHistory old history entries"
+                                                logs.forEach { history ->
+                                                    database.applicationDao().deleteHistory(history)
+                                                }
+                                                logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                            }
+                                        }
 
-            val sharedPrefsDir = File(context.applicationInfo.dataDir + "/shared_prefs")
-            val sharedPrefsFiles = sharedPrefsDir.listFiles()
-            var totalSize = 0L
-            if (sharedPrefsFiles != null) {
-                for (file in sharedPrefsFiles) {
-                    if (file.isFile) {
-                        totalSize += file.length()
-                    }
-                }
+                                        val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
+                                        if (countNotification > 0) {
+                                            status = "Deleting $countNotification old notification entries"
+                                            var logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                            var count = 0
+                                            while (logs.isNotEmpty()) {
+                                                count++
+                                                status = "Deleting ${100 * count}/$countNotification old notification entries"
+                                                logs.forEach { history ->
+                                                    database.applicationDao().deleteNotification(history)
+                                                }
+                                                logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                            }
+                                        }
+
+                                        val countLog = database.applicationDao().countOldLog(oneWeek)
+                                        if (countLog > 0) {
+                                            status = "Deleting $countLog old log entries"
+                                            var logs = database.applicationDao().getOldLog(oneWeek)
+                                            var count = 0
+                                            while (logs.isNotEmpty()) {
+                                                count++
+                                                status = "Deleting ${100 * count}/$countLog old log entries"
+                                                logs.forEach { history ->
+                                                    database.applicationDao().deleteLog(history)
+                                                }
+                                                logs = database.applicationDao().getOldLog(oneWeek)
+                                            }
+                                        }
+                                        val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+                                        val df = DecimalFormat("#.###")
+                                        sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+                                        status = ""
+                                        isLoading = false
+                                        NotificationDataSource.start()
+                                    } catch (e: Exception) {
+                                        isLoading = false
+                                        if (e is CancellationException) throw e
+                                        Log.e("NostrSigner", "Error deleting old log entries", e)
+                                        val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+                                        val df = DecimalFormat("#.###")
+                                        sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+                                        status = ""
+                                        NotificationDataSource.start()
+                                    }
+                                }
+                            }
+                        }
+                    },
+                )
             }
 
-            Text("Database size: $sizeInMBFormatted MB", color = Color.Gray)
-            Text("Shared Prefs size: ${df.format(totalSize / (1024.0 * 1024.0))} MB", color = Color.Gray)
             Text(
                 buildAnnotatedString {
                     withStyle(

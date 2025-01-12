@@ -260,10 +260,10 @@ fun SettingsScreen(
                     .fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                Text("Database size: $sizeInMBFormatted MB", color = Color.Gray)
+                Text(stringResource(R.string.database_size_mb, sizeInMBFormatted), color = Color.Gray)
                 AmberButton(
                     modifier = Modifier.fillMaxWidth(),
-                    text = "Clear logs and activity",
+                    text = stringResource(R.string.clear_logs_and_activity),
                     onClick = {
                         NostrSigner.getInstance().applicationIOScope.launch {
                             NotificationDataSource.stopSync()
@@ -271,17 +271,17 @@ fun SettingsScreen(
                             LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
                                 NostrSigner.getInstance().getDatabase(it.npub).let { database ->
                                     try {
-                                        status = "Deleting old log entries from ${it.npub}"
+                                        status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
                                         val oneWeek = System.currentTimeMillis() - ONE_WEEK
                                         val oneWeekAgo = TimeUtils.oneWeekAgo()
                                         val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
                                         if (countHistory > 0) {
-                                            status = "Deleting $countHistory old history entries"
+                                            status = context.getString(R.string.deleting_old_history_entries, countHistory)
                                             var logs = database.applicationDao().getOldHistory(oneWeekAgo)
                                             var count = 0
                                             while (logs.isNotEmpty()) {
                                                 count++
-                                                status = "Deleting ${100 * count}/$countHistory old history entries"
+                                                status = context.getString(R.string.deleting_old_history_entries_2, 100 * count, countHistory)
                                                 logs.forEach { history ->
                                                     database.applicationDao().deleteHistory(history)
                                                 }
@@ -291,12 +291,12 @@ fun SettingsScreen(
 
                                         val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
                                         if (countNotification > 0) {
-                                            status = "Deleting $countNotification old notification entries"
+                                            status = context.getString(R.string.deleting_old_notification_entries, countNotification)
                                             var logs = database.applicationDao().getOldNotification(oneWeekAgo)
                                             var count = 0
                                             while (logs.isNotEmpty()) {
                                                 count++
-                                                status = "Deleting ${100 * count}/$countNotification old notification entries"
+                                                status = context.getString(R.string.deleting_old_notification_entries_2, 100 * count, countNotification)
                                                 logs.forEach { history ->
                                                     database.applicationDao().deleteNotification(history)
                                                 }
@@ -306,12 +306,12 @@ fun SettingsScreen(
 
                                         val countLog = database.applicationDao().countOldLog(oneWeek)
                                         if (countLog > 0) {
-                                            status = "Deleting $countLog old log entries"
+                                            status = context.getString(R.string.deleting_old_log_entries, countLog)
                                             var logs = database.applicationDao().getOldLog(oneWeek)
                                             var count = 0
                                             while (logs.isNotEmpty()) {
                                                 count++
-                                                status = "Deleting ${100 * count}/$countLog old log entries"
+                                                status = context.getString(R.string.deleting_old_log_entries_2, 100 * count, countLog)
                                                 logs.forEach { history ->
                                                     database.applicationDao().deleteLog(history)
                                                 }

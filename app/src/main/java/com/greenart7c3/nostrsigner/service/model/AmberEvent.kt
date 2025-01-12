@@ -11,9 +11,9 @@ import com.google.gson.JsonObject
 import com.google.gson.JsonSerializationContext
 import com.google.gson.JsonSerializer
 import com.google.gson.annotations.SerializedName
-import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.utils.TimeUtils
 import java.lang.reflect.Type
 
 @Immutable

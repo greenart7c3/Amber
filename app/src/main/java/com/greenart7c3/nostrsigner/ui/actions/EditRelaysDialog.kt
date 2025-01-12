@@ -47,7 +47,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.RelayListener2
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
@@ -68,6 +68,7 @@ import com.vitorpamplona.quartz.encoders.RelayUrlFormatter
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.Base64
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -511,7 +512,7 @@ fun RelayLogScreen(
                 ) {
                     Text(
                         modifier = Modifier.padding(top = 16.dp),
-                        text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
+                        text = formatLongToCustomDateTimeWithSeconds(log.time),
                         fontSize = 14.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,

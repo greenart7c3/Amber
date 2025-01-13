@@ -137,7 +137,7 @@ fun sendResult(
     permissions: List<Permission>? = null,
     appName: String? = null,
     signPolicy: Int? = null,
-    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
 ) {
     onLoading(true)
     NostrSigner.getInstance().applicationIOScope.launch {
@@ -289,7 +289,7 @@ fun sendResult(
             )
 
             EventNotificationConsumer(context).notificationManager().cancelAll()
-            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
 
             BunkerRequestUtils.sendBunkerResponse(
                 context,
@@ -344,7 +344,7 @@ fun sendResult(
                 intent.putExtra("package", BuildConfig.APPLICATION_ID)
             }
             activity?.setResult(RESULT_OK, intent)
-            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
             activity?.intent = null
             activity?.finish()
         } else if (!intentData.callBackUrl.isNullOrBlank()) {
@@ -372,7 +372,7 @@ fun sendResult(
                     context.startActivity(intent)
                 }
             }
-            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
             activity?.intent = null
             activity?.finish()
         } else {
@@ -398,7 +398,7 @@ fun sendResult(
                     Toast.LENGTH_SHORT,
                 ).show()
             }
-            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
             activity?.intent = null
             activity?.finish()
         }
@@ -483,7 +483,7 @@ fun MainScreen(
     database: AppDatabase,
     navController: NavHostController,
     storageHelper: SimpleStorageHelper,
-    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""

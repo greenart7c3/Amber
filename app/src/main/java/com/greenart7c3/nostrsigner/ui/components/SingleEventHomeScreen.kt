@@ -56,7 +56,7 @@ fun SingleEventHomeScreen(
     intentData: IntentData,
     account: Account,
     database: AppDatabase,
-    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     var applicationEntity by remember {
@@ -162,7 +162,7 @@ fun SingleEventHomeScreen(
                             )
                         }
                     } else {
-                        onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                        onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                         onLoading(false)
@@ -289,7 +289,7 @@ fun SingleEventHomeScreen(
                                 onRemoveIntentData = onRemoveIntentData,
                             )
                         } else {
-                            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
@@ -432,7 +432,7 @@ fun SingleEventHomeScreen(
                                 onLoading,
                             )
                         } else {
-                            onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
@@ -605,7 +605,7 @@ fun SingleEventHomeScreen(
                                     onRemoveIntentData = onRemoveIntentData,
                                 )
                             } else {
-                                onRemoveIntentData(intentData, IntentResultType.REMOVE)
+                                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                                 context.getAppCompatActivity()?.intent = null
                                 if (application.application.closeApplication) {
                                     context.getAppCompatActivity()?.finish()

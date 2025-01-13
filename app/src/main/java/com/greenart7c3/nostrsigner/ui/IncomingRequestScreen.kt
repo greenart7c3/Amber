@@ -45,7 +45,7 @@ fun IncomingRequestScreen(
     account: Account,
     database: AppDatabase,
     navController: NavController,
-    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current

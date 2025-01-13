@@ -84,7 +84,7 @@ fun MultiEventHomeScreen(
     packageName: String?,
     accountParam: Account,
     navController: NavController,
-    onRemoveIntentData: (IntentData, IntentResultType) -> Unit,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
@@ -176,6 +176,9 @@ fun MultiEventHomeScreen(
                         reconnectToRelays(intents)
                         var closeApp = true
 
+                        BunkerRequestUtils.clearRequests()
+                        onRemoveIntentData(intents, IntentResultType.REMOVE)
+
                         for (intentData in intents) {
                             val localAccount =
                                 if (intentData.currentAccount.isNotBlank()) {
@@ -244,7 +247,6 @@ fun MultiEventHomeScreen(
 
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
-                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                     BunkerRequestUtils.remove(intentData.bunkerRequest.id)
 
                                     if (intentData.checked.value) {
@@ -329,7 +331,6 @@ fun MultiEventHomeScreen(
 
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
-                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                     BunkerRequestUtils.remove(intentData.bunkerRequest.id)
 
                                     if (intentData.checked.value) {
@@ -371,9 +372,7 @@ fun MultiEventHomeScreen(
                                     }
                                 }
                             } else if (intentData.type == SignerType.CONNECT) {
-                                if (savedApplication != null) {
-                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
-                                } else {
+                                if (savedApplication == null) {
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
                                     database.applicationDao().addHistory(
@@ -389,7 +388,6 @@ fun MultiEventHomeScreen(
 
                                     if (intentData.bunkerRequest != null) {
                                         val localIntentData = intentData.copy()
-                                        onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                         BunkerRequestUtils.remove(intentData.bunkerRequest.id)
                                         if (intentData.checked.value) {
                                             BunkerRequestUtils.sendBunkerResponse(
@@ -459,7 +457,6 @@ fun MultiEventHomeScreen(
 
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
-                                    onRemoveIntentData(intentData, IntentResultType.REMOVE)
                                     BunkerRequestUtils.remove(intentData.bunkerRequest.id)
                                     if (intentData.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
@@ -526,7 +523,8 @@ fun MultiEventHomeScreen(
             onClick = {
                 NostrSigner.getInstance().applicationIOScope.launch {
                     var closeApp = true
-
+                    BunkerRequestUtils.clearRequests()
+                    onRemoveIntentData(intents, IntentResultType.REMOVE)
                     for (intentData in intents) {
                         val localAccount =
                             if (intentData.currentAccount.isNotBlank()) {
@@ -565,7 +563,6 @@ fun MultiEventHomeScreen(
 
                         if (!application.application.closeApplication) {
                             closeApp = false
-                            break
                         }
                     }
 

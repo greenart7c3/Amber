@@ -466,4 +466,11 @@
     <string name="deleting_old_log_entries">Deleting %1$d old log entries</string>
     <string name="deleting_old_log_entries_2">Deleting %1$d/%2$d old log entries</string>
     <string name="database_size_mb">Database size: %1$s MB</string>
+    <string name="connected">connected</string>
+    <string name="disconnected">disconnected</string>
+    <string name="ping_ms">Ping: %1$dms</string>
+    <string name="sent">" Sent: %1$d"</string>
+    <string name="received">" Received: %1$d"</string>
+    <string name="rejected_by_relay">" Rejected by relay: %1$d"</string>
+    <string name="error">" Error: %1$d"</string>
 </resources>

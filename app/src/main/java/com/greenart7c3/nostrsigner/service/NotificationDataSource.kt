@@ -20,10 +20,12 @@
  */
 package com.greenart7c3.nostrsigner.service
 
+import android.util.Log
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.NostrDataSource
@@ -71,6 +73,8 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 relay: Relay,
                 subscriptionId: String?,
             ) {
+                Log.d("NotificationDataSource", "onRelayStateChange: $type")
+                AmberRelayStats.updateNotification()
                 scope.launch {
                     LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
                         NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
@@ -125,6 +129,15 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 }
                 notify(relay, description)
             }
+
+            override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
+                if (success) {
+                    AmberRelayStats.addSent(relay.url)
+                } else {
+                    AmberRelayStats.addFailed(relay.url)
+                }
+                super.onSendResponse(eventId, success, message, relay)
+            }
         }
 
     init {
@@ -149,11 +162,15 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
     private fun createNotificationsFilter(): TypedFilter {
         var since = TimeUtils.now()
         val accounts = LocalPreferences.allSavedAccounts(NostrSigner.getInstance())
+        var localLatest = 0L
         accounts.forEach {
             val latest = NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLatestNotification()
-            if (latest != null) {
-                since = latest
+            if (latest != null && latest > localLatest) {
+                localLatest = latest + 1
             }
+        }
+        if (localLatest > 0) {
+            since = localLatest
         }
 
         val pubKeys =
@@ -183,6 +200,7 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
     ) {
         checkNotInMainThread()
         NotificationUtils.getOrCreateDMChannel(NostrSigner.getInstance().applicationContext)
+        AmberRelayStats.addReceived(relay.url)
         eventNotificationConsumer.consume(event)
     }
 

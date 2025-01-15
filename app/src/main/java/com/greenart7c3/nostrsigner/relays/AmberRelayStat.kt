@@ -46,24 +46,26 @@ object AmberRelayStats {
         notificationManager.createNotificationChannel(channel)
 
         val message = NostrSigner.getInstance().client.getAll().joinToString("\n") {
-            "${it.url} ${if (it.isConnected()) "connected" else "disconnected"}\n" +
-                "Ping: ${RelayStats.get(it.url).pingInMs}ms" +
-                if (get(it.url).sent > 0) {
-                    " Sent: ${get(it.url).sent}"
-                } else {
-                    "" +
-                        if (get(it.url).received > 0) {
-                            " Received: ${get(it.url).received}"
-                        } else {
-                            "" +
-                                if (get(it.url).failed > 0) {
-                                    " Rejected by relay: ${get(it.url).failed}"
-                                } else {
-                                    "" +
-                                        if (RelayStats.get(it.url).errorCounter > 0) " Error: ${RelayStats.get(it.url).errorCounter}" else ""
-                                }
-                        }
-                }
+            val connected = "${it.url} ${if (it.isConnected()) NostrSigner.getInstance().getString(R.string.connected) else NostrSigner.getInstance().getString(R.string.disconnected)}\n"
+            val ping = NostrSigner.getInstance().getString(R.string.ping_ms, RelayStats.get(it.url).pingInMs)
+            val sent = if (get(it.url).sent > 0) {
+                NostrSigner.getInstance().getString(R.string.sent, get(it.url).sent)
+            } else {
+                ""
+            }
+            val received = if (get(it.url).received > 0) {
+                NostrSigner.getInstance().getString(R.string.received, get(it.url).received)
+            } else {
+                ""
+            }
+            val failed = if (get(it.url).failed > 0) {
+                NostrSigner.getInstance().getString(R.string.rejected_by_relay, get(it.url).failed)
+            } else {
+                ""
+            }
+            val error = if (RelayStats.get(it.url).errorCounter > 0) NostrSigner.getInstance().getString(R.string.error, RelayStats.get(it.url).errorCounter) else ""
+
+            connected + ping + sent + received + failed + error
         }
 
         val notificationBuilder =

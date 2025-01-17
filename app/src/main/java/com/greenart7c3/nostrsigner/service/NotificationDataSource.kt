@@ -90,6 +90,23 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 }
             }
 
+            override fun onError(error: Error, subscriptionId: String, relay: Relay) {
+                scope.launch {
+                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
+                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                            LogEntity(
+                                id = 0,
+                                url = relay.url,
+                                type = "onError",
+                                message = error.message ?: "Unknown error",
+                                time = System.currentTimeMillis(),
+                            ),
+                        )
+                    }
+                }
+                super.onError(error, subscriptionId, relay)
+            }
+
             override fun onAuth(
                 relay: Relay,
                 challenge: String,

@@ -26,6 +26,7 @@ fun IconRow(
     title: String,
     icon: ImageVector,
     tint: Color,
+    fontColor: Color = Color.Unspecified,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
 ) {
@@ -56,6 +57,7 @@ fun IconRow(
                 fontSize = 18.sp,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+                color = fontColor,
             )
         }
     }

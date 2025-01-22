@@ -16,8 +16,9 @@ import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.SurroundSound
+import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -204,8 +205,8 @@ fun SettingsScreen(
                         .padding(vertical = 8.dp),
                 ) {
                     IconRow(
-                        title = if (allowNewConnections) stringResource(R.string.disable_listening_for_new_connections) else stringResource(R.string.enable_listening_for_new_connections),
-                        icon = Icons.Default.SurroundSound,
+                        title = if (!allowNewConnections) stringResource(R.string.enable_listening_for_new_connections) else stringResource(R.string.disable_listening_for_new_connections),
+                        icon = if (allowNewConnections) Icons.Default.Stop else Icons.Default.PlayArrow,
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = {
                             allowNewConnections = !allowNewConnections

@@ -474,4 +474,27 @@
     <string name="received">" Received: %1$d"</string>
     <string name="rejected_by_relay">" Rejected by relay: %1$d"</string>
     <string name="error">" Error: %1$d"</string>
+    <string name="event_kind_22456">Push notification settings</string>
+    <string name="event_kind_1111">Comment</string>
+    <string name="event_kind_1068">Poll</string>
+    <string name="event_kind_9321">Nutzap</string>
+    <string name="event_kind_7376">Cashu Wallet History</string>
+    <string name="event_kind_7375">Cashu Wallet Tokens</string>
+    <string name="event_kind_7374">Reserved Cashu Wallet Tokens</string>
+    <string name="event_kind_2003">Torrent</string>
+    <string name="event_kind_2004">Torrent Comment</string>
+    <string name="event_kind_2022">Coinjoin Pool</string>
+    <string name="event_kind_1630_1633">Status</string>
+    <string name="event_kind_1622">Replies</string>
+    <string name="event_kind_1621">Issues</string>
+    <string name="event_kind_1617">Comment</string>
+    <string name="event_kind_64">Chess (PGN)</string>
+    <string name="event_kind_818">Merge Requests</string>
+    <string name="event_kind_1018">Poll Response</string>
+    <string name="event_kind_17">Reaction to a website</string>
+    <string name="event_kind_20">Picture</string>
+    <string name="event_kind_38383">Peer-to-peer Order events</string>
+    <string name="event_kind_37375">Cashu Wallet Event</string>
+    <string name="event_kind_34236">Short-form Portrait Video Event</string>
+    <string name="event_kind_34235">Video Event</string>
 </resources>

@@ -188,6 +188,7 @@ fun SingleEventHomeScreen(
                     packageName
                 }
             SignMessage(
+                account,
                 paddingValues,
                 intentData.data,
                 permission?.acceptable,
@@ -330,6 +331,7 @@ fun SingleEventHomeScreen(
                     packageName
                 }
             EncryptDecryptData(
+                account,
                 paddingValues,
                 intentData.data,
                 intentData.encryptedData ?: "",
@@ -482,6 +484,7 @@ fun SingleEventHomeScreen(
                         packageName
                     }
                 EventData(
+                    account,
                     paddingValues,
                     permission?.acceptable,
                     remember,

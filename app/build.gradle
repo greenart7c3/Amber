@@ -205,6 +205,8 @@ dependencies {
 
     implementation libs.appcompat
     implementation libs.work.runtime.ktx
+    implementation libs.material3.window
+    implementation libs.adaptive.android
 
     testImplementation libs.junit
     testImplementation libs.mockk

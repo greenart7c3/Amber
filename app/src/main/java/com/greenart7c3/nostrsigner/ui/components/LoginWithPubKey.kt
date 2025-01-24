@@ -10,15 +10,18 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -27,7 +30,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -37,6 +42,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -44,9 +50,76 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.window.core.layout.WindowWidthSizeClass
+import coil3.compose.AsyncImage
+import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.fromHex
+import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.encoders.toHexKey
+import com.vitorpamplona.quartz.encoders.toNpub
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+
+@Composable
+fun ProfilePicture(account: Account) {
+    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
+    if (windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT) {
+        var profileUrl by remember { mutableStateOf<String?>(null) }
+        LaunchedEffect(Unit) {
+            launch(Dispatchers.IO) {
+                NostrSigner.getInstance().fetchProfileData(
+                    account = account,
+                    onPictureFound = {
+                        profileUrl = it
+                    },
+                )
+            }
+        }
+        Column(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            @Suppress("KotlinConstantConditions")
+            if (!profileUrl.isNullOrBlank() && BuildConfig.FLAVOR != "offline") {
+                AsyncImage(
+                    profileUrl,
+                    Route.Accounts.route,
+                    Modifier
+                        .clip(
+                            RoundedCornerShape(50),
+                        )
+                        .height(120.dp)
+                        .width(120.dp),
+                )
+            } else {
+                Icon(
+                    Icons.Outlined.Person,
+                    Route.Accounts.route,
+                    modifier = Modifier
+                        .border(
+                            2.dp,
+                            Color.fromHex(account.signer.keyPair.pubKey.toHexKey().slice(0..5)),
+                            CircleShape,
+                        )
+                        .height(120.dp)
+                        .width(120.dp),
+                )
+            }
+            Text(
+                account.name.ifBlank { account.signer.keyPair.pubKey.toNpub().toShortenHex() },
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center,
+            )
+        }
+    }
+}
 
 @Composable
 fun LoginWithPubKey(
@@ -76,6 +149,8 @@ fun LoginWithPubKey(
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues),
         ) {
+            ProfilePicture(account)
+
             packageName?.let {
                 Text(
                     modifier = Modifier
@@ -146,6 +221,8 @@ fun LoginWithPubKey(
                 .verticalScroll(rememberScrollState())
                 .padding(paddingValues),
         ) {
+            ProfilePicture(account)
+
             packageName?.let {
                 Text(
                     modifier = Modifier

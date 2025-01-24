@@ -33,11 +33,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
 import kotlinx.coroutines.launch
 
 @Composable
 fun EncryptDecryptData(
+    account: Account,
     paddingValues: PaddingValues,
     content: String,
     encryptedData: String,
@@ -63,6 +65,8 @@ fun EncryptDecryptData(
             .verticalScroll(rememberScrollState())
             .padding(paddingValues),
     ) {
+        ProfilePicture(account)
+
         val message =
             when (type) {
                 SignerType.NIP44_ENCRYPT -> stringResource(R.string.encrypt_nip44)

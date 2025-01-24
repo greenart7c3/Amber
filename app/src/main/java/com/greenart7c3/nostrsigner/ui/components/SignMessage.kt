@@ -33,11 +33,13 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
 import kotlinx.coroutines.launch
 
 @Composable
 fun SignMessage(
+    account: Account,
     paddingValues: PaddingValues,
     content: String,
     shouldRunOnAccept: Boolean?,
@@ -62,6 +64,8 @@ fun SignMessage(
             .verticalScroll(rememberScrollState())
             .padding(paddingValues),
     ) {
+        ProfilePicture(account)
+
         val message = stringResource(R.string.sign_message)
 
         packageName?.let {

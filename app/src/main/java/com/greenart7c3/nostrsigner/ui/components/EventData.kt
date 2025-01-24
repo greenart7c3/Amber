@@ -29,6 +29,7 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -36,6 +37,7 @@ import com.vitorpamplona.quartz.events.Event
 
 @Composable
 fun EventData(
+    account: Account,
     paddingValues: PaddingValues,
     shouldAcceptOrReject: Boolean?,
     remember: MutableState<Boolean>,
@@ -59,6 +61,8 @@ fun EventData(
             .verticalScroll(rememberScrollState())
             .padding(paddingValues),
     ) {
+        ProfilePicture(account)
+
         val permission = Permission("sign_event", event.kind)
         val text = stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
         packageName?.let {

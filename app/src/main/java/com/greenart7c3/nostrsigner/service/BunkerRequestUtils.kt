@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerResponse
@@ -70,6 +71,20 @@ object BunkerRequestUtils {
         NostrSigner.getInstance().client.subscribe(
             AmberListenerSingleton.getListener()!!,
         )
+
+        NostrSigner.getInstance().applicationIOScope.launch {
+            relays.forEach { relay ->
+                NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = relay.url,
+                        type = "bunker response",
+                        message = ObjectMapper().writeValueAsString(bunkerResponse),
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
+        }
 
         when (bunkerRequest.encryptionType) {
             EncryptionType.NIP04 -> {

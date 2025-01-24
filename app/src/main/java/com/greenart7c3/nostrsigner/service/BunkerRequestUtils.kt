@@ -61,6 +61,26 @@ object BunkerRequestUtils {
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
+        if (relays.isEmpty()) {
+            onDone(true)
+            onLoading(false)
+            NostrSigner.getInstance().applicationIOScope.launch {
+                relays.forEach { relay ->
+                    NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = relay.url,
+                            type = "bunker response",
+                            message = "No relays specified for the bunker response",
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
+            }
+
+            return
+        }
+
         AmberListenerSingleton.getListener()?.let {
             NostrSigner.getInstance().client.unsubscribe(it)
         }

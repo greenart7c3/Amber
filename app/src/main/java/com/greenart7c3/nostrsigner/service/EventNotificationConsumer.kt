@@ -241,7 +241,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc,
                         bunkerRequest,
                         BunkerResponse(bunkerRequest.id, "", message),
-                        applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList(),
+                        applicationWithSecret?.application?.relays ?: emptyList(),
                         onLoading = { },
                         onDone = {
                             if (!it) {
@@ -250,7 +250,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                     acc,
                                     bunkerRequest,
                                     BunkerResponse(bunkerRequest.id, "", message),
-                                    applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList(),
+                                    applicationWithSecret?.application?.relays ?: emptyList(),
                                     onLoading = { },
                                     onDone = { },
                                 )
@@ -294,7 +294,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (type == SignerType.CONNECT) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
-        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: NostrSigner.getInstance().getSavedRelays().toList()
+        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: emptyList()
 
         if (type == SignerType.INVALID) {
             Log.d("EventNotificationConsumer", "Invalid request method ${bunkerRequest.method}")

@@ -218,7 +218,7 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
         checkNotInMainThread()
         NotificationUtils.getOrCreateDMChannel(NostrSigner.getInstance().applicationContext)
         AmberRelayStats.addReceived(relay.url)
-        eventNotificationConsumer.consume(event)
+        eventNotificationConsumer.consume(event, relay)
     }
 
     private val accountChannel =

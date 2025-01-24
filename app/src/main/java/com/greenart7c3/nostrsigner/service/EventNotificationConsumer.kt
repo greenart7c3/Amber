@@ -43,6 +43,9 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
+import com.vitorpamplona.ammolite.relays.Relay
+import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.crypto.nip04.Nip04
 import com.vitorpamplona.quartz.encoders.Hex
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -72,7 +75,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    fun consume(event: Event) {
+    fun consume(event: Event, relay: Relay) {
         saveLog("New event ${event.toJson()}")
 
         if (!notificationManager().areNotificationsEnabled()) {
@@ -94,13 +97,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
         LocalPreferences.loadFromEncryptedStorage(applicationContext, Hex.decode(taggedKey).toNpub())?.let { acc ->
-            notify(event, acc)
+            notify(event, acc, relay)
         }
     }
 
     private fun notify(
         event: Event,
         acc: Account,
+        relay: Relay,
     ) {
         if (event.content.isEmpty()) return
 
@@ -120,13 +124,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (Nip04.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
                 NostrSigner.getInstance().applicationIOScope.launch {
-                    notify(event, acc, it, EncryptionType.NIP04)
+                    notify(event, acc, it, EncryptionType.NIP04, relay)
                 }
             }
         } else {
             acc.signer.nip44Decrypt(event.content, event.pubKey) {
                 NostrSigner.getInstance().applicationIOScope.launch {
-                    notify(event, acc, it, EncryptionType.NIP44)
+                    notify(event, acc, it, EncryptionType.NIP44, relay)
                 }
             }
         }
@@ -137,7 +141,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         acc: Account,
         request: String,
         encryptionType: EncryptionType,
+        relay: Relay,
     ) {
+        val responseRelay = listOf(RelaySetupInfo(relay.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES))
         val dao = NostrSigner.getInstance().getDatabase(acc.signer.keyPair.pubKey.toNpub()).applicationDao()
         val notification = dao.getNotification(event.id)
         if (notification != null) return
@@ -241,7 +247,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         acc,
                         bunkerRequest,
                         BunkerResponse(bunkerRequest.id, "", message),
-                        applicationWithSecret?.application?.relays ?: emptyList(),
+                        applicationWithSecret?.application?.relays ?: responseRelay,
                         onLoading = { },
                         onDone = {
                             if (!it) {
@@ -250,7 +256,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                                     acc,
                                     bunkerRequest,
                                     BunkerResponse(bunkerRequest.id, "", message),
-                                    applicationWithSecret?.application?.relays ?: emptyList(),
+                                    applicationWithSecret?.application?.relays ?: responseRelay,
                                     onLoading = { },
                                     onDone = { },
                                 )
@@ -294,7 +300,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (type == SignerType.CONNECT) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
-        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: emptyList()
+        val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
 
         if (type == SignerType.INVALID) {
             Log.d("EventNotificationConsumer", "Invalid request method ${bunkerRequest.method}")

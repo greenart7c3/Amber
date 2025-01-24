@@ -93,6 +93,15 @@ class ConnectivityService : Service() {
         Log.d("ConnectivityService", "onCreate")
 
         isStarted = true
+
+        @Suppress("KotlinConstantConditions")
+        if (BuildConfig.FLAVOR != "offline" && NostrSigner.getInstance().client.getAll().isEmpty()) {
+            NostrSigner.getInstance().applicationIOScope.launch {
+                NostrSigner.getInstance().checkForNewRelays()
+                NotificationDataSource.start()
+            }
+        }
+
         startForeground(1, AmberRelayStats.createNotification())
 
         @Suppress("KotlinConstantConditions")

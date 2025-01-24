@@ -65,17 +65,15 @@ object BunkerRequestUtils {
             onDone(true)
             onLoading(false)
             NostrSigner.getInstance().applicationIOScope.launch {
-                relays.forEach { relay ->
-                    NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = relay.url,
-                            type = "bunker response",
-                            message = "No relays specified for the bunker response",
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
-                }
+                NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = bunkerRequest.localKey,
+                        type = "bunker response",
+                        message = "No permission created for this client. Please logout from the client and create a new bunker connection",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
             }
 
             return

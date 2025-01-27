@@ -499,4 +499,8 @@
     <string name="event_kind_37375">Cashu Wallet Event</string>
     <string name="event_kind_34236">Short-form Portrait Video Event</string>
     <string name="event_kind_34235">Video Event</string>
+    <string name="following">"Following: "</string>
+    <string name="communities">"Communities: "</string>
+    <string name="hashtags">"Hashtags: "</string>
+    <string name="relays_text">"Relays: "</string>
 </resources>

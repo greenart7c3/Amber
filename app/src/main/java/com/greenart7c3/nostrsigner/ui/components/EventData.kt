@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -33,6 +34,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.vitorpamplona.quartz.events.ContactListEvent
 import com.vitorpamplona.quartz.events.Event
 
 @Composable
@@ -94,21 +96,41 @@ fun EventData(
                     .fillMaxWidth(),
             ) {
                 Column(Modifier.padding(16.dp)) {
-                    Text(
-                        "Event content",
-                        fontWeight = FontWeight.Bold,
-                    )
-                    Text(
-                        content,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                    )
+                    if (event is ContactListEvent) {
+                        ContactListDetail(
+                            title = stringResource(R.string.following),
+                            text = "${event.verifiedFollowKeySet().size}",
+                        )
+                        ContactListDetail(
+                            title = stringResource(R.string.communities),
+                            text = "${event.verifiedFollowAddressSet().size}",
+                        )
+                        ContactListDetail(
+                            title = stringResource(R.string.hashtags),
+                            text = "${event.countFollowTags()}",
+                        )
+                        ContactListDetail(
+                            title = stringResource(R.string.relays_text),
+                            text = "${event.relays()?.keys?.size ?: 0}",
+                        )
+                    } else {
+                        Text(
+                            "Event content",
+                            fontWeight = FontWeight.Bold,
+                        )
+                        Text(
+                            content,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                        )
+                    }
                 }
             }
         }
+
         RawJsonButton(
             onCLick = {
                 showMore = !showMore
@@ -135,6 +157,21 @@ fun EventData(
         AcceptRejectButtons(
             onAccept,
             onReject,
+        )
+    }
+}
+
+@Composable
+fun ContactListDetail(title: String, text: String) {
+    Row(
+        modifier = Modifier.padding(horizontal = 6.dp),
+    ) {
+        Text(
+            title,
+            fontWeight = FontWeight.Bold,
+        )
+        Text(
+            text,
         )
     }
 }

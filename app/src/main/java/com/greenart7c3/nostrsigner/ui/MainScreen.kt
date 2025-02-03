@@ -98,6 +98,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
+import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -502,6 +503,8 @@ fun MainScreen(
                 if (LocalPreferences.shouldShowRationale(context) == null) {
                     LocalPreferences.updateShouldShowRationale(context, true)
                 }
+            } else {
+                AmberRelayStats.updateNotification()
             }
         }
 

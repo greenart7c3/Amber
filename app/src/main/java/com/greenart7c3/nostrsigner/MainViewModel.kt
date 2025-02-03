@@ -24,14 +24,47 @@ class MainViewModel(val context: Context) : ViewModel() {
     val intents = MutableStateFlow<List<IntentData>>(listOf())
     var navController: NavHostController? = null
 
-    fun getAccount(): String? {
+    fun getAccount(userFromIntent: String?): String? {
+        val currentAccount = LocalPreferences.currentAccount(context)
+        if (userFromIntent != null) {
+            if (userFromIntent.startsWith("npub")) {
+                if (LocalPreferences.containsAccount(context, userFromIntent)) {
+                    Log.d("MainViewModel", "getAccount: $userFromIntent")
+                    return userFromIntent
+                }
+            } else {
+                val localNpub = Hex.decode(userFromIntent).toNpub()
+                if (LocalPreferences.containsAccount(context, localNpub)) {
+                    Log.d("MainViewModel", "getAccount: $localNpub")
+                    return localNpub
+                }
+            }
+        }
+
         val pubKeys =
             intents.value.mapNotNull {
-                it.event?.pubKey
+                it.event?.pubKey ?: it.bunkerRequest?.currentAccount
+            }.filter { it.isNotBlank() }
+
+        if (pubKeys.isEmpty()) {
+            if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {
+                Log.d("MainViewModel", "getAccount: $currentAccount")
+                return currentAccount
             }
 
-        if (pubKeys.isEmpty()) return null
-        return Hex.decode(pubKeys.first()).toNpub()
+            val acc = LocalPreferences.allSavedAccounts(context).firstOrNull()
+            if (acc != null) {
+                Log.d("MainViewModel", "getAccount: ${acc.npub}")
+                return acc.npub
+            } else {
+                Log.d("MainViewModel", "getAccount: null")
+                return null
+            }
+        }
+
+        val npub = Hex.decode(pubKeys.first()).toNpub()
+        Log.d("MainViewModel", "getAccount: $npub")
+        return npub
     }
 
     fun showBunkerRequests(callingPackage: String?) {

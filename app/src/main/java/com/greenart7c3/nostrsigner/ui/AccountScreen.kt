@@ -38,7 +38,6 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -86,20 +85,6 @@ fun AccountScreen(
                                     val oldIntents = intents.toMutableList()
                                     oldIntents.add(intentData)
                                     flow.value = oldIntents
-                                }
-                            }
-                        }
-                        val data =
-                            intents.firstOrNull {
-                                it.currentAccount.isNotBlank()
-                            }
-
-                        data?.bunkerRequest?.let {
-                            if (it.currentAccount.isNotBlank()) {
-                                if (LocalPreferences.currentAccount(context) != it.currentAccount) {
-                                    if (LocalPreferences.containsAccount(context, it.currentAccount)) {
-                                        accountStateViewModel.switchUser(it.currentAccount, null)
-                                    }
                                 }
                             }
                         }

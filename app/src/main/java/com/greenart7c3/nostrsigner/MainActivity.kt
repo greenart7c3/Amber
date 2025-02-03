@@ -206,7 +206,7 @@ class MainActivity : AppCompatActivity() {
                             CircularProgressIndicator()
                         }
                     } else {
-                        val npub = intent.getStringExtra("current_user")?.ifBlank { mainViewModel.getAccount() } ?: mainViewModel.getAccount()
+                        val npub = mainViewModel.getAccount(intent.getStringExtra("current_user"))
 
                         val accountStateViewModel: AccountStateViewModel =
                             viewModel {
@@ -218,11 +218,13 @@ class MainActivity : AppCompatActivity() {
                                 val currentAccount = LocalPreferences.currentAccount(context)
                                 if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
                                     if (npub.startsWith("npub")) {
+                                        Log.d("Account", "Switching account to $npub")
                                         if (LocalPreferences.containsAccount(context, npub)) {
                                             accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
                                         }
                                     } else {
                                         val localNpub = Hex.decode(npub).toNpub()
+                                        Log.d("Account", "Switching account to $localNpub")
                                         if (LocalPreferences.containsAccount(context, localNpub)) {
                                             accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
                                         }

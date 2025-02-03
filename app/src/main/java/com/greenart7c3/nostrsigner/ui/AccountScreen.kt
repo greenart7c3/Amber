@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import android.content.Intent
-import android.util.Log
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
@@ -22,7 +21,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.SideEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -37,19 +35,13 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.anggrayudi.storage.SimpleStorageHelper
-import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
-import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.vitorpamplona.quartz.encoders.toNpub
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
@@ -92,25 +84,6 @@ fun AccountScreen(
 
                     val database = NostrSigner.getInstance().getDatabase(state.account.signer.keyPair.pubKey.toNpub())
                     val localRoute = mutableStateOf(intents.firstNotNullOfOrNull { it.route } ?: state.route)
-
-                    SideEffect {
-                        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
-                            try {
-                                NostrSigner.getInstance().applicationContext.startForegroundService(
-                                    Intent(NostrSigner.getInstance().applicationContext, ConnectivityService::class.java),
-                                )
-                            } catch (e: Exception) {
-                                Log.d("NostrSigner", "Failed to start ConnectivityService", e)
-                            }
-
-                            @Suppress("KotlinConstantConditions")
-                            if (BuildConfig.FLAVOR != "offline") {
-                                NostrSigner.getInstance().checkForNewRelays()
-                                NotificationDataSource.start()
-                                delay(5000)
-                            }
-                        }
-                    }
 
                     AmberListenerSingleton.accountStateViewModel = accountStateViewModel
 

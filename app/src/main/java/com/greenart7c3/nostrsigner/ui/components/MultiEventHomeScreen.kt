@@ -561,6 +561,17 @@ fun MultiEventHomeScreen(
                                 permissions = mutableListOf(),
                             )
 
+                        if (intentData.rememberMyChoice.value && intentData.checked.value) {
+                            AmberUtils.acceptOrRejectPermission(
+                                application,
+                                key,
+                                intentData,
+                                null,
+                                false,
+                                database,
+                            )
+                        }
+
                         if (!application.application.closeApplication) {
                             closeApp = false
                         }

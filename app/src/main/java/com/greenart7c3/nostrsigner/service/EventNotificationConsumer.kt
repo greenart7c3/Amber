@@ -265,14 +265,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     )
                     return
                 }
-            } else {
-                applicationWithSecret =
-                    database.applicationDao().getAllApplications().firstOrNull { localApp ->
-                        !localApp.application.useSecret && localApp.application.secret == localApp.application.key
-                    }
-
-                bunkerRequest.secret = applicationWithSecret?.application?.secret ?: ""
-                bunkerRequest.relays = applicationWithSecret?.application?.relays ?: bunkerRequest.relays
             }
         }
 

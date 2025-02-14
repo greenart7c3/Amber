@@ -501,4 +501,5 @@
     <string name="communities">"Communities: "</string>
     <string name="hashtags">"Hashtags: "</string>
     <string name="relays_text">"Relays: "</string>
+    <string name="connected_app_warning">Some applications may not work if you try to reuse your bunker URI. Delete this application and create a new one in case the login is not working.</string>
 </resources>

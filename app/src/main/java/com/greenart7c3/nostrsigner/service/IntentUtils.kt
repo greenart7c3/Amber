@@ -69,7 +69,11 @@ data class BunkerMetadata(
 }
 
 object IntentUtils {
-    fun decodeData(data: String, replace: Boolean = true): String {
+    fun decodeData(data: String, replace: Boolean = true, decodeData: Boolean = true): String {
+        if (!decodeData) {
+            if (!replace) return data.replace("nostrsigner:", "")
+            return data.replace("nostrsigner:", "").replace("+", "%2b")
+        }
         if (!replace) return URLDecoder.decode(data.replace("nostrsigner:", ""), "utf-8")
         return URLDecoder.decode(data.replace("nostrsigner:", "").replace("+", "%2b"), "utf-8")
     }
@@ -296,7 +300,7 @@ object IntentUtils {
 
         val data =
             try {
-                decodeData(intent.data?.toString() ?: "", packageName == null)
+                decodeData(intent.data?.toString() ?: "", packageName == null, packageName == null)
             } catch (e: Exception) {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
             }

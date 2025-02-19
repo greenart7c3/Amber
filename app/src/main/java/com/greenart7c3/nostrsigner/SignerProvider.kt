@@ -7,6 +7,7 @@ import android.database.MatrixCursor
 import android.net.Uri
 import android.util.Log
 import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -310,6 +311,17 @@ class SignerProvider : ContentProvider() {
                             pubkey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
+                        scope.launch {
+                            database.applicationDao().insertLog(
+                                LogEntity(
+                                    0,
+                                    sortOrder ?: packageName,
+                                    uri.toString().replace("content://$appId.", ""),
+                                    e.message ?: "Could not decrypt the message",
+                                    System.currentTimeMillis(),
+                                ),
+                            )
+                        }
                         "Could not decrypt the message"
                     }
 

@@ -18,6 +18,8 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.CompressionType
@@ -32,6 +34,7 @@ import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import fr.acinq.secp256k1.Hex
 import java.net.URLDecoder
+import kotlinx.coroutines.launch
 
 data class BunkerMetadata(
     val name: String,
@@ -199,6 +202,18 @@ object IntentUtils {
                                 pubKey,
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
+                            NostrSigner.getInstance().applicationIOScope.launch {
+                                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                                database.applicationDao().insertLog(
+                                    LogEntity(
+                                        0,
+                                        packageName ?: "",
+                                        type.toString(),
+                                        e.message ?: "Could not decrypt the message",
+                                        System.currentTimeMillis(),
+                                    ),
+                                )
+                            }
                             "Could not decrypt the message"
                         }
 
@@ -376,6 +391,18 @@ object IntentUtils {
                             pubKey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
+                        NostrSigner.getInstance().applicationIOScope.launch {
+                            val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                            database.applicationDao().insertLog(
+                                LogEntity(
+                                    0,
+                                    packageName ?: "",
+                                    type.toString(),
+                                    e.message ?: "Could not decrypt the message",
+                                    System.currentTimeMillis(),
+                                ),
+                            )
+                        }
                         "Could not decrypt the message"
                     }
 

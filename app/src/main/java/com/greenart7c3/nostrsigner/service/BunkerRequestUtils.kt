@@ -322,6 +322,18 @@ object BunkerRequestUtils {
                             pubKey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
+                        NostrSigner.getInstance().applicationIOScope.launch {
+                            val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                            database.applicationDao().insertLog(
+                                LogEntity(
+                                    0,
+                                    bunkerRequest.localKey,
+                                    type.toString(),
+                                    e.message ?: "Could not decrypt the message",
+                                    System.currentTimeMillis(),
+                                ),
+                            )
+                        }
                         "Could not decrypt the message"
                     }
 

@@ -180,7 +180,7 @@ fun MultiEventHomeScreen(
                         onRemoveIntentData(intents, IntentResultType.REMOVE)
 
                         for (intentData in intents) {
-                            val localAccount =
+                            val thisAccount =
                                 if (intentData.currentAccount.isNotBlank()) {
                                     LocalPreferences.loadFromEncryptedStorage(
                                         context,
@@ -190,25 +190,25 @@ fun MultiEventHomeScreen(
                                     accountParam
                                 } ?: continue
 
-                            val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+                            val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                            val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
-                            val savedApplication = database.applicationDao().getByKey(key)
+                            val database = NostrSigner.getInstance().getDatabase(thisAccount.signer.keyPair.pubKey.toNpub())
+                            val savedApplication = database.applicationDao().getByKey(localKey)
 
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(
-                                        key,
+                                        localKey,
                                         "",
                                         listOf(),
                                         "",
                                         "",
                                         "",
-                                        localAccount.signer.keyPair.pubKey.toHexKey(),
+                                        thisAccount.signer.keyPair.pubKey.toHexKey(),
                                         true,
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
-                                        localAccount.signPolicy,
+                                        thisAccount.signPolicy,
                                         intentData.bunkerRequest?.closeApplication ?: true,
                                     ),
                                     permissions = mutableListOf(),
@@ -224,7 +224,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.rememberMyChoice.value && intentData.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
-                                        key,
+                                        localKey,
                                         intentData,
                                         localEvent.kind,
                                         intentData.rememberMyChoice.value,
@@ -237,7 +237,7 @@ fun MultiEventHomeScreen(
                                 database.applicationDao().addHistory(
                                     HistoryEntity(
                                         0,
-                                        key,
+                                        localKey,
                                         intentData.type.toString(),
                                         localEvent.kind,
                                         TimeUtils.now(),
@@ -252,7 +252,7 @@ fun MultiEventHomeScreen(
                                     if (intentData.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
-                                            localAccount,
+                                            thisAccount,
                                             intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
                                             application.application.relays,
@@ -266,7 +266,7 @@ fun MultiEventHomeScreen(
                                     } else {
                                         AmberUtils.sendBunkerError(
                                             intentData,
-                                            localAccount,
+                                            thisAccount,
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
@@ -307,7 +307,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.rememberMyChoice.value && intentData.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
-                                        key,
+                                        localKey,
                                         intentData,
                                         null,
                                         intentData.rememberMyChoice.value,
@@ -319,7 +319,7 @@ fun MultiEventHomeScreen(
                                 database.applicationDao().addHistory(
                                     HistoryEntity(
                                         0,
-                                        key,
+                                        localKey,
                                         intentData.type.toString(),
                                         null,
                                         TimeUtils.now(),
@@ -327,7 +327,7 @@ fun MultiEventHomeScreen(
                                     ),
                                 )
 
-                                val signedMessage = CryptoUtils.signString(intentData.data, localAccount.signer.keyPair.privKey!!).toHexKey()
+                                val signedMessage = CryptoUtils.signString(intentData.data, thisAccount.signer.keyPair.privKey!!).toHexKey()
 
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()
@@ -336,7 +336,7 @@ fun MultiEventHomeScreen(
                                     if (intentData.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
-                                            localAccount,
+                                            thisAccount,
                                             intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
                                             application.application.relays,
@@ -350,7 +350,7 @@ fun MultiEventHomeScreen(
                                     } else {
                                         AmberUtils.sendBunkerError(
                                             intentData,
-                                            localAccount,
+                                            thisAccount,
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
@@ -378,7 +378,7 @@ fun MultiEventHomeScreen(
                                     database.applicationDao().addHistory(
                                         HistoryEntity(
                                             0,
-                                            key,
+                                            localKey,
                                             intentData.type.toString(),
                                             null,
                                             TimeUtils.now(),
@@ -392,7 +392,7 @@ fun MultiEventHomeScreen(
                                         if (intentData.checked.value) {
                                             BunkerRequestUtils.sendBunkerResponse(
                                                 context,
-                                                localAccount,
+                                                thisAccount,
                                                 intentData.bunkerRequest,
                                                 BunkerResponse(intentData.bunkerRequest.id, "", null),
                                                 application.application.relays,
@@ -406,7 +406,7 @@ fun MultiEventHomeScreen(
                                         } else {
                                             AmberUtils.sendBunkerError(
                                                 intentData,
-                                                localAccount,
+                                                thisAccount,
                                                 intentData.bunkerRequest,
                                                 relays = application.application.relays,
                                                 context = context,
@@ -432,7 +432,7 @@ fun MultiEventHomeScreen(
                                 if (intentData.rememberMyChoice.value && intentData.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
-                                        key,
+                                        localKey,
                                         intentData,
                                         null,
                                         intentData.rememberMyChoice.value,
@@ -445,7 +445,7 @@ fun MultiEventHomeScreen(
                                 database.applicationDao().addHistory(
                                     HistoryEntity(
                                         0,
-                                        key,
+                                        localKey,
                                         intentData.type.toString(),
                                         null,
                                         TimeUtils.now(),
@@ -461,7 +461,7 @@ fun MultiEventHomeScreen(
                                     if (intentData.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
-                                            localAccount,
+                                            thisAccount,
                                             intentData.bunkerRequest,
                                             BunkerResponse(intentData.bunkerRequest.id, signature, null),
                                             application.application.relays,
@@ -475,7 +475,7 @@ fun MultiEventHomeScreen(
                                     } else {
                                         AmberUtils.sendBunkerError(
                                             intentData,
-                                            localAccount,
+                                            thisAccount,
                                             intentData.bunkerRequest,
                                             relays = application.application.relays,
                                             context = context,
@@ -526,7 +526,7 @@ fun MultiEventHomeScreen(
                     BunkerRequestUtils.clearRequests()
                     onRemoveIntentData(intents, IntentResultType.REMOVE)
                     for (intentData in intents) {
-                        val localAccount =
+                        val thisAccount =
                             if (intentData.currentAccount.isNotBlank()) {
                                 LocalPreferences.loadFromEncryptedStorage(
                                     context,
@@ -536,26 +536,26 @@ fun MultiEventHomeScreen(
                                 accountParam
                             } ?: continue
 
-                        val key = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+                        val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                        val database = NostrSigner.getInstance().getDatabase(localAccount.signer.keyPair.pubKey.toNpub())
+                        val database = NostrSigner.getInstance().getDatabase(thisAccount.signer.keyPair.pubKey.toNpub())
 
                         val application =
                             database
                                 .applicationDao()
-                                .getByKey(key) ?: ApplicationWithPermissions(
+                                .getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
-                                    key,
+                                    localKey,
                                     "",
                                     listOf(),
                                     "",
                                     "",
                                     "",
-                                    localAccount.signer.keyPair.pubKey.toHexKey(),
+                                    thisAccount.signer.keyPair.pubKey.toHexKey(),
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
-                                    localAccount.signPolicy,
+                                    thisAccount.signPolicy,
                                     intentData.bunkerRequest?.closeApplication ?: true,
                                 ),
                                 permissions = mutableListOf(),
@@ -564,7 +564,7 @@ fun MultiEventHomeScreen(
                         if (intentData.rememberMyChoice.value && intentData.checked.value) {
                             AmberUtils.acceptOrRejectPermission(
                                 application,
-                                key,
+                                localKey,
                                 intentData,
                                 null,
                                 false,

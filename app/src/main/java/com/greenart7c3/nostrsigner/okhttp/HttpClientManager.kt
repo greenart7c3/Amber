@@ -21,8 +21,6 @@
 package com.greenart7c3.nostrsigner.okhttp
 
 import android.util.Log
-import com.vitorpamplona.amethyst.service.okhttp.LoggingInterceptor
-import com.vitorpamplona.quartz.crypto.nip17.NostrCipher
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
@@ -48,7 +46,7 @@ object HttpClientManager {
 
     private val cache = EncryptionKeyCache()
 
-    fun setDefaultProxy(proxy: Proxy?) {
+    private fun setDefaultProxy(proxy: Proxy?) {
         if (currentProxy != proxy) {
             Log.d("HttpClient", "Changing proxy to: ${proxy != null}")
             currentProxy = proxy
@@ -57,8 +55,6 @@ object HttpClientManager {
             defaultHttpClient = buildHttpClient(currentProxy, defaultTimeout)
         }
     }
-
-    fun getCurrentProxy(): Proxy? = currentProxy
 
     fun setDefaultTimeout(timeout: Duration) {
         Log.d("HttpClient", "Changing timeout to: $timeout")
@@ -98,13 +94,6 @@ object HttpClientManager {
             .build()
     }
 
-    fun getCurrentProxyPort(useProxy: Boolean): Int? =
-        if (useProxy) {
-            (currentProxy?.address() as? InetSocketAddress)?.port
-        } else {
-            null
-        }
-
     fun getHttpClient(useProxy: Boolean): OkHttpClient =
         if (useProxy) {
             if (defaultHttpClient == null) {
@@ -121,9 +110,4 @@ object HttpClientManager {
     fun setDefaultProxyOnPort(port: Int) {
         setDefaultProxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", port)))
     }
-
-    fun addCipherToCache(
-        url: String,
-        cipher: NostrCipher,
-    ) = cache.add(url, cipher)
 }

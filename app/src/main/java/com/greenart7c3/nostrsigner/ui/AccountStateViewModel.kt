@@ -270,7 +270,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         startUI(account, null)
     }
 
-    fun startUI(
+    private fun startUI(
         account: Account,
         route: String?,
     ) {

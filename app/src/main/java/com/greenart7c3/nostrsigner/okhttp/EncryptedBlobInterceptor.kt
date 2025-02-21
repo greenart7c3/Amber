@@ -28,7 +28,7 @@ import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody
 
 class EncryptedBlobInterceptor(
-    val cache: EncryptionKeyCache,
+    private val cache: EncryptionKeyCache,
 ) : Interceptor {
     fun Response.decrypt(cipher: NostrCipher): Response {
         val body = peekBody(Long.MAX_VALUE)
@@ -37,7 +37,7 @@ class EncryptedBlobInterceptor(
         return newBuilder().body(newBody).build()
     }
 
-    fun Response.decryptOrNull(cipher: NostrCipher): Response? =
+    private fun Response.decryptOrNull(cipher: NostrCipher): Response? =
         try {
             decrypt(cipher)
         } catch (e: Exception) {

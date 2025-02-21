@@ -28,13 +28,13 @@ import okhttp3.Response
 
 class OkHttpWebSocket(
     val url: String,
-    val forceProxy: Boolean,
+    private val forceProxy: Boolean,
     val out: WebSocketListener,
 ) : WebSocket {
     private val listener = OkHttpWebsocketListener()
     private var socket: okhttp3.WebSocket? = null
 
-    fun buildRequest() = Request.Builder().url(url.trim()).build()
+    private fun buildRequest() = Request.Builder().url(url.trim()).build()
 
     override fun connect() {
         socket = HttpClientManager.getHttpClient(forceProxy).newWebSocket(buildRequest(), listener)
@@ -46,7 +46,7 @@ class OkHttpWebSocket(
             response: Response,
         ) = out.onOpen(
             response.receivedResponseAtMillis - response.sentRequestAtMillis,
-            response.headers.get("Sec-WebSocket-Extensions")?.contains("permessage-deflate") ?: false,
+            response.headers["Sec-WebSocket-Extensions"]?.contains("permessage-deflate") ?: false,
         )
 
         override fun onMessage(

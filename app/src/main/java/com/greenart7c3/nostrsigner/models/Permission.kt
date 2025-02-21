@@ -256,11 +256,6 @@ fun nipToLocalizedString(context: Context, permission: Permission, shouldReturnE
 
 data class KindNip(val kind: IntRange, val nip: String)
 
-fun Int.kindToNipUrl(): String? =
-    kindsByNip.firstOrNull { it.kind.contains(this) }?.let {
-        return if (it.nip.startsWith("http")) it.nip else "https://github.com/nostr-protocol/nips/blob/master/${it.nip}.md"
-    }
-
 fun Int.containsNip(): Boolean = kindsByNip.any {
     val nip = if (this < 10) {
         this.toString().padStart(2, '0')
@@ -271,9 +266,6 @@ fun Int.containsNip(): Boolean = kindsByNip.any {
 }
 
 fun Int.kindToNip(): String? = kindsByNip.firstOrNull { it.kind.contains(this) }?.nip
-
-fun Int.nipToUrl(): String? = kindsByNip.firstOrNull { it.nip.toIntOrNull() == this }
-    ?.nip?.let { nip -> if (nip.startsWith("http")) nip else "https://github.com/nostr-protocol/nips/blob/master/$nip.md" }
 
 val kindsByNip = listOf(
     KindNip(0..2, "01"),

@@ -397,6 +397,8 @@ fun SettingsScreen(
                     onClick = {
                         disconnectTorDialog = false
                         checked = false
+                        account.proxyPort = proxyPort.value.toInt()
+                        account.useProxy = false
                         LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                         scope.launch(Dispatchers.IO) {
                             NotificationDataSource.stopSync()

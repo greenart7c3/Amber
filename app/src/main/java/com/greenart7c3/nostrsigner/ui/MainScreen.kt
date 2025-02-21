@@ -1249,6 +1249,8 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             onPost = {
+                                account.useProxy = true
+                                account.proxyPort = it
                                 LocalPreferences.updateProxy(context, true, it)
                                 scope.launch(Dispatchers.IO) {
                                     NotificationDataSource.stopSync()

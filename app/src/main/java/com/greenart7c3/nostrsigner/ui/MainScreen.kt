@@ -567,26 +567,18 @@ fun MainScreen(
     }
 
     var localRoute by remember { mutableStateOf(route.value ?: if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route) }
-
-    @Suppress("KotlinConstantConditions")
-    if (BuildConfig.FLAVOR != "offline") {
-        LaunchedEffect(Unit, route.value, intents) {
-            launch(Dispatchers.Main) {
-                if (route.value != null) {
-                    localRoute = route.value!!
-                    route.value = null
-                } else {
-                    localRoute = if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
-                }
+    LaunchedEffect(Unit, route.value, intents) {
+        launch(Dispatchers.Main) {
+            if (route.value != null) {
+                localRoute = route.value!!
+                route.value = null
+            } else {
+                localRoute = if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
             }
         }
     }
 
     val items = mutableListOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
-    @Suppress("KotlinConstantConditions")
-    if (BuildConfig.FLAVOR == "offline") {
-        items.remove(Route.ActiveRelays)
-    }
 
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
     val sheetState =

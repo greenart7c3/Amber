@@ -24,6 +24,7 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
@@ -870,10 +871,13 @@ fun MainScreen(
                 composable(
                     Route.Applications.route,
                     content = {
+                        val scrollState = rememberScrollState()
+
                         PermissionsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -887,10 +891,12 @@ fun MainScreen(
                 composable(
                     Route.Settings.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         SettingsScreen(
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -904,10 +910,12 @@ fun MainScreen(
                 composable(
                     Route.AccountBackup.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         AccountBackupScreen(
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -921,14 +929,17 @@ fun MainScreen(
                     arguments = listOf(navArgument("packageName") { type = NavType.StringType }),
                     content = {
                         it.arguments?.getString("packageName")?.let { packageName ->
+                            val scrollState = rememberScrollState()
                             EditPermission(
                                 modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
                                     .padding(padding)
                                     .padding(horizontal = verticalPadding)
-                                    .padding(top = verticalPadding * 1.5f),
+                                    .padding(top = verticalPadding * 1.5f)
+                                    .imePadding(),
                                 account = account,
                                 selectedPackage = packageName,
                                 navController = navController,
@@ -956,12 +967,14 @@ fun MainScreen(
                 composable(
                     Route.ActiveRelays.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         ActiveRelaysScreen(
                             navController = navController,
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1034,6 +1047,7 @@ fun MainScreen(
                 composable(
                     Route.NewApplication.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         NewApplicationScreen(
                             account = account,
                             accountStateViewModel = accountStateViewModel,
@@ -1041,7 +1055,8 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1052,6 +1067,7 @@ fun MainScreen(
                 composable(
                     Route.NewNsecBunker.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         NewNsecBunkerScreen(
                             database = database,
                             account = account,
@@ -1060,7 +1076,9 @@ fun MainScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .imePadding()
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1073,6 +1091,7 @@ fun MainScreen(
                     arguments = listOf(navArgument("key") { type = NavType.StringType }),
                     content = {
                         it.arguments?.getString("key")?.let { key ->
+                            val scrollState = rememberScrollState()
                             NewNsecBunkerCreatedScreen(
                                 database = database,
                                 account = account,
@@ -1080,7 +1099,8 @@ fun MainScreen(
                                 modifier =
                                 Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
                                     .padding(padding)
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
@@ -1135,13 +1155,16 @@ fun MainScreen(
                     arguments = listOf(navArgument("key") { type = NavType.StringType }),
                     content = {
                         it.arguments?.getString("key")?.let { key ->
+                            val scrollState = rememberScrollState()
                             EditConfigurationScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
                                     .padding(padding)
                                     .padding(horizontal = verticalPadding)
-                                    .padding(top = verticalPadding * 1.5f),
+                                    .padding(top = verticalPadding * 1.5f)
+                                    .imePadding(),
                                 database = database,
                                 key = key,
                                 accountStateViewModel = accountStateViewModel,
@@ -1188,10 +1211,12 @@ fun MainScreen(
                 composable(
                     Route.SeeDetails.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         SeeDetailsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1202,10 +1227,12 @@ fun MainScreen(
                 composable(
                     Route.RelaysScreen.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         RelaysScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1217,10 +1244,12 @@ fun MainScreen(
                 composable(
                     Route.DefaultProfileRelaysScreen.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         DefaultProfileRelaysScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1233,10 +1262,12 @@ fun MainScreen(
                 composable(
                     Route.TorSettings.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         ConnectOrbotScreen(
                             modifier = Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -1274,10 +1305,12 @@ fun MainScreen(
                     arguments = listOf(navArgument("key") { type = NavType.StringType }),
                     content = {
                         it.arguments?.getString("key")?.let { key ->
+                            val scrollState = rememberScrollState()
                             EditProfileScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
-                                    .verticalScroll(rememberScrollState())
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
                                     .padding(padding)
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),

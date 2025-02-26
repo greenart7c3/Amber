@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.pager.HorizontalPager
@@ -62,6 +63,7 @@ import androidx.compose.ui.platform.LocalAutofill
 import androidx.compose.ui.platform.LocalAutofillTree
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
@@ -370,13 +372,17 @@ fun SignUpPage(
                 when (page) {
                     0 -> {
                         var showPassword by remember { mutableStateOf(false) }
+                        val scrollState = rememberScrollState()
+                        val keyboardController = LocalSoftwareKeyboardController.current
                         Column(
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(it)
                                 .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
+                                .padding(top = verticalPadding * 1.5f)
+                                .imePadding(),
                         ) {
                             Text(
                                 text = stringResource(R.string.your_nostr_account_is_ready),
@@ -482,6 +488,7 @@ fun SignUpPage(
                                         ).show()
                                         return@AmberButton
                                     }
+                                    keyboardController?.hide()
                                     scope.launch {
                                         state.animateScrollToPage(1)
                                     }
@@ -494,13 +501,17 @@ fun SignUpPage(
                     1 -> {
                         var showPassword by remember { mutableStateOf(false) }
                         var errorMessage by remember { mutableStateOf("") }
+                        val scrollState = rememberScrollState()
+                        val keyboardController = LocalSoftwareKeyboardController.current
                         Column(
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(it)
                                 .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
+                                .padding(top = verticalPadding * 1.5f)
+                                .imePadding(),
                         ) {
                             Text(stringResource(R.string.please_download_your_account_backup_kit_containing_the_encrypted_private_key_and_store_it_in_a_couple_of_safe_places))
                             Spacer(Modifier.height(8.dp))
@@ -640,6 +651,7 @@ fun SignUpPage(
                                         return@AmberButton
                                     }
 
+                                    keyboardController?.hide()
                                     scope.launch {
                                         state.animateScrollToPage(2)
                                     }
@@ -650,6 +662,7 @@ fun SignUpPage(
                     }
 
                     2 -> {
+                        val scrollState = rememberScrollState()
                         val radioOptions = listOf(
                             TitleExplainer(
                                 title = stringResource(R.string.sign_policy_basic),
@@ -666,7 +679,8 @@ fun SignUpPage(
                         Column(
                             Modifier
                                 .fillMaxSize()
-                                .verticalScroll(rememberScrollState())
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(it)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
@@ -909,13 +923,17 @@ fun LoginPage(
         ) { page ->
             when (page) {
                 0 -> {
+                    val scrollState = rememberScrollState()
+                    val keyboardController = LocalSoftwareKeyboardController.current
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .verticalScrollbar(scrollState)
+                            .verticalScroll(scrollState)
                             .padding(it)
                             .padding(horizontal = verticalPadding)
-                            .padding(top = verticalPadding * 1.5f),
+                            .padding(top = verticalPadding * 1.5f)
+                            .imePadding(),
                     ) {
                         var showPassword by remember {
                             mutableStateOf(false)
@@ -1129,6 +1147,7 @@ fun LoginPage(
 
                                 if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
                                     if (accountViewModel.isValidKey(key.value.text, password.value.text)) {
+                                        keyboardController?.hide()
                                         scope.launch {
                                             pageState.animateScrollToPage(1)
                                         }
@@ -1155,10 +1174,13 @@ fun LoginPage(
                     var selectedOption by remember { mutableIntStateOf(0) }
                     var useProxy by remember { mutableStateOf(false) }
                     var proxyPort by remember { mutableStateOf(TextFieldValue("9050")) }
+                    val scrollState = rememberScrollState()
+
                     Column(
                         Modifier
                             .fillMaxSize()
-                            .verticalScroll(rememberScrollState())
+                            .verticalScrollbar(scrollState)
+                            .verticalScroll(scrollState)
                             .padding(it)
                             .padding(horizontal = verticalPadding)
                             .padding(top = verticalPadding * 1.5f),

@@ -19,12 +19,15 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -76,7 +79,7 @@ import com.vitorpamplona.quartz.encoders.toNsec
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalComposeUiApi::class)
+@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
 fun AccountBackupScreen(
     modifier: Modifier,
@@ -84,11 +87,11 @@ fun AccountBackupScreen(
 ) {
     var showSeedWords by remember { mutableStateOf(false) }
     if (showSeedWords) {
-        Dialog(
+        ModalBottomSheet(
             onDismissRequest = {
                 showSeedWords = false
             },
-            properties = DialogProperties(usePlatformDefaultWidth = false),
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
             Column(
                 modifier =
@@ -96,16 +99,6 @@ fun AccountBackupScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .fillMaxSize(),
             ) {
-                Row(
-                    modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .padding(10.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    CloseButton(onCancel = { showSeedWords = false })
-                }
                 SeedWordsPage(
                     seedWords = account.seedWords,
                     showNextButton = false,

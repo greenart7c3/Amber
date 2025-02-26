@@ -34,6 +34,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.events.ContactListEvent
 import com.vitorpamplona.quartz.events.Event
 
@@ -56,11 +57,13 @@ fun EventData(
         mutableStateOf(false)
     }
     val context = LocalContext.current
+    val scrollState = rememberScrollState()
 
     Column(
         Modifier
             .fillMaxSize()
-            .verticalScroll(rememberScrollState())
+            .verticalScrollbar(scrollState)
+            .verticalScroll(scrollState)
             .padding(paddingValues),
     ) {
         ProfilePicture(account)

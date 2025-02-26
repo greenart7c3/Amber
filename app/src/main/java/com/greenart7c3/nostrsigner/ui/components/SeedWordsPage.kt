@@ -24,6 +24,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 
 @Composable
 fun SeedWordsPage(
@@ -32,13 +33,16 @@ fun SeedWordsPage(
     onNextPage: () -> Unit,
 ) {
     val clipboardManager = LocalClipboardManager.current
+    val scrollState = rememberScrollState()
 
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .verticalScroll(rememberScrollState()),
+                .verticalScrollbar(scrollState)
+                .verticalScroll(scrollState)
+                .padding(16.dp),
             verticalArrangement = Arrangement.Center,
         ) {
             Text(

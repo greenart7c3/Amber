@@ -69,6 +69,7 @@ import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.encoders.toNpub
@@ -114,10 +115,12 @@ fun MultiEventHomeScreen(
     }
 
     val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
+    val scrollState = rememberScrollState()
 
     Column(
         Modifier
-            .verticalScroll(rememberScrollState())
+            .verticalScrollbar(scrollState)
+            .verticalScroll(scrollState)
             .padding(paddingValues),
     ) {
         Text(

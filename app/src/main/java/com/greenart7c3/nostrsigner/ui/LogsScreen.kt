@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -38,8 +39,10 @@ fun LogsScreen(
     val scope = rememberCoroutineScope()
     val logsFlow = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().getLogs()
     val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val state = rememberLazyListState()
 
     LazyColumn(
+        state = state,
         modifier = Modifier
             .fillMaxSize(),
         contentPadding = paddingValues,

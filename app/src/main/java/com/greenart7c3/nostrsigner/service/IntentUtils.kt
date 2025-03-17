@@ -2,11 +2,11 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.provider.Browser
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
+import androidx.core.net.toUri
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
 import com.fasterxml.jackson.databind.DeserializationFeature
@@ -159,7 +159,7 @@ object IntentUtils {
                 SignerType.SIGN_EVENT -> {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
-                    if (unsignedEvent.pubKey != account.signer.keyPair.pubKey.toHexKey()) {
+                    if (unsignedEvent.pubKey != account.hexKey) {
                         LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                             localAccount = it
                         }
@@ -203,7 +203,7 @@ object IntentUtils {
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
                             NostrSigner.getInstance().applicationIOScope.launch {
-                                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                                val database = NostrSigner.getInstance().getDatabase(account.npub)
                                 database.applicationDao().insertLog(
                                     LogEntity(
                                         0,
@@ -321,7 +321,7 @@ object IntentUtils {
             }
 
         val callbackUrl = intent.extras?.getString("callbackUrl") ?: ""
-        var name = if (callbackUrl.isNotBlank()) Uri.parse(callbackUrl).host ?: "" else ""
+        var name = if (callbackUrl.isNotBlank()) callbackUrl.toUri().host ?: "" else ""
         if (name.isBlank()) {
             name = intent.extras?.getString("appName") ?: ""
         }
@@ -342,7 +342,7 @@ object IntentUtils {
             SignerType.SIGN_EVENT -> {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
-                if (unsignedEvent.pubKey != account.signer.keyPair.pubKey.toHexKey()) {
+                if (unsignedEvent.pubKey != account.hexKey) {
                     LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                         localAccount = it
                     }
@@ -356,7 +356,7 @@ object IntentUtils {
                 ) {
                     var npub = intent.getStringExtra("current_user")
                     if (npub != null) {
-                        npub = parsePubKey(npub!!)
+                        npub = parsePubKey(npub)
                     }
 
                     onReady(
@@ -392,7 +392,7 @@ object IntentUtils {
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
                         NostrSigner.getInstance().applicationIOScope.launch {
-                            val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                            val database = NostrSigner.getInstance().getDatabase(account.npub)
                             database.applicationDao().insertLog(
                                 LogEntity(
                                     0,
@@ -408,7 +408,7 @@ object IntentUtils {
 
                 var npub = intent.getStringExtra("current_user")
                 if (npub != null) {
-                    npub = parsePubKey(npub!!)
+                    npub = parsePubKey(npub)
                 }
 
                 onReady(
@@ -435,7 +435,7 @@ object IntentUtils {
             SignerType.GET_PUBLIC_KEY -> {
                 var npub = intent.getStringExtra("current_user")
                 if (npub != null) {
-                    npub = parsePubKey(npub!!)
+                    npub = parsePubKey(npub)
                 }
 
                 onReady(
@@ -462,7 +462,7 @@ object IntentUtils {
             SignerType.SIGN_MESSAGE -> {
                 var npub = intent.getStringExtra("current_user")
                 if (npub != null) {
-                    npub = parsePubKey(npub!!)
+                    npub = parsePubKey(npub)
                 }
 
                 onReady(
@@ -558,7 +558,7 @@ object IntentUtils {
     ): Event {
         val event = AmberEvent.fromJson(data)
         if (event.pubKey.isEmpty()) {
-            event.pubKey = account.signer.keyPair.pubKey.toHexKey()
+            event.pubKey = account.hexKey
         }
         if (event.id.isEmpty()) {
             event.id =

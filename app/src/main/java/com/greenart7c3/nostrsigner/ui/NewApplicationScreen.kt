@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Intent
-import android.net.Uri
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -16,13 +15,13 @@ import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.core.net.toUri
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.quartz.encoders.toNpub
 
 @Composable
 fun NewApplicationScreen(
@@ -40,12 +39,12 @@ fun NewApplicationScreen(
             dialogOpen = false
             if (!it.isNullOrEmpty()) {
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(it)
+                intent.data = it.toUri()
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 intent.putExtra("closeApplication", false)
                 intent.`package` = context.packageName
                 context.getAppCompatActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+                accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
             }
         }
     }
@@ -87,11 +86,11 @@ fun NewApplicationScreen(
                 }
 
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(clipboardText.text)
+                intent.data = clipboardText.text.toUri()
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 intent.`package` = context.packageName
                 context.getAppCompatActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.IncomingRequest.route)
+                accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
             },
             text = stringResource(R.string.paste_from_clipboard),
         )

@@ -74,7 +74,7 @@ object AmberUtils {
         return if (event.isPrivateZap()) {
             val recipientPK = event.zappedAuthor().firstOrNull()
             val recipientPost = event.zappedPost().firstOrNull()
-            if (recipientPK == account.signer.keyPair.pubKey.toHexKey()) {
+            if (recipientPK == account.hexKey) {
                 // if the receiver is logged in, these are the params.
                 val pubkeyToUse = event.pubKey
 

@@ -22,7 +22,6 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils.getUnsignedEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.ConcurrentHashMap
@@ -65,7 +64,7 @@ object BunkerRequestUtils {
             onDone(true)
             onLoading(false)
             NostrSigner.getInstance().applicationIOScope.launch {
-                NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                NostrSigner.getInstance().getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
                         url = bunkerRequest.localKey,
@@ -92,7 +91,7 @@ object BunkerRequestUtils {
 
         NostrSigner.getInstance().applicationIOScope.launch {
             relays.forEach { relay ->
-                NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                NostrSigner.getInstance().getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url,
@@ -323,7 +322,7 @@ object BunkerRequestUtils {
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
                         NostrSigner.getInstance().applicationIOScope.launch {
-                            val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                            val database = NostrSigner.getInstance().getDatabase(account.npub)
                             database.applicationDao().insertLog(
                                 LogEntity(
                                     0,
@@ -362,7 +361,7 @@ object BunkerRequestUtils {
             SignerType.GET_PUBLIC_KEY -> {
                 onReady(
                     IntentData(
-                        account.signer.keyPair.pubKey.toNpub(),
+                        account.npub,
                         "",
                         type,
                         pubKey,

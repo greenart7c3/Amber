@@ -39,7 +39,6 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
@@ -81,7 +80,7 @@ fun AccountScreen(
                         }
                     }
 
-                    val database = NostrSigner.getInstance().getDatabase(state.account.signer.keyPair.pubKey.toNpub())
+                    val database = NostrSigner.getInstance().getDatabase(state.account.npub)
                     val localRoute = mutableStateOf(intents.firstNotNullOfOrNull { it.route } ?: state.route)
 
                     AmberListenerSingleton.accountStateViewModel = accountStateViewModel

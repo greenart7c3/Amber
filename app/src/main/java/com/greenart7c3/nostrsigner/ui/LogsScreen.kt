@@ -27,7 +27,6 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -37,7 +36,7 @@ fun LogsScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val logsFlow = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().getLogs()
+    val logsFlow = NostrSigner.getInstance().getDatabase(account.npub).applicationDao().getLogs()
     val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val state = rememberLazyListState()
 
@@ -52,7 +51,7 @@ fun LogsScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().clearLogs()
+                        NostrSigner.getInstance().getDatabase(account.npub).applicationDao().clearLogs()
                     }
                 },
                 text = stringResource(R.string.clear_logs),

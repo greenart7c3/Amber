@@ -28,8 +28,6 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.EventInterface
 import com.vitorpamplona.quartz.events.MetadataEvent
@@ -146,7 +144,7 @@ class NostrSigner : Application() {
         val savedRelays = getSavedRelays() + newRelays
 
         val useProxy = LocalPreferences.allSavedAccounts(this).any {
-            LocalPreferences.loadFromEncryptedStorage(this, it.npub)?.useProxy ?: false
+            LocalPreferences.loadFromEncryptedStorage(this, it.npub)?.useProxy == true
         }
 
         if (shouldReconnect) {
@@ -236,13 +234,13 @@ class NostrSigner : Application() {
                 .build()
         }
 
-        val lastMetaData = LocalPreferences.getLastMetadataUpdate(this, account.signer.keyPair.pubKey.toNpub())
-        val lastCheck = LocalPreferences.getLastCheck(this, account.signer.keyPair.pubKey.toNpub())
+        val lastMetaData = LocalPreferences.getLastMetadataUpdate(this, account.npub)
+        val lastCheck = LocalPreferences.getLastCheck(this, account.npub)
         val oneDayAgo = TimeUtils.oneDayAgo()
         val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
         if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
-            Log.d("NostrSigner", "Fetching profile data for ${account.signer.keyPair.pubKey.toNpub()}")
-            LocalPreferences.setLastCheck(this, account.signer.keyPair.pubKey.toNpub(), TimeUtils.now())
+            Log.d("NostrSigner", "Fetching profile data for ${account.npub}")
+            LocalPreferences.setLastCheck(this, account.npub, TimeUtils.now())
             val listener = RelayListener(
                 account = account,
                 onReceiveEvent = { _, _, event ->
@@ -254,8 +252,8 @@ class NostrSigner : Application() {
                             }
 
                             metadata.profilePicture()?.let { url ->
-                                LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.signer.keyPair.pubKey.toNpub())
-                                LocalPreferences.setLastMetadataUpdate(this, account.signer.keyPair.pubKey.toNpub(), TimeUtils.now())
+                                LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.npub)
+                                LocalPreferences.setLastMetadataUpdate(this, account.npub, TimeUtils.now())
                                 onPictureFound(url)
                             }
                         }
@@ -285,7 +283,7 @@ class NostrSigner : Application() {
                                 types = COMMON_FEED_TYPES,
                                 filter = SincePerRelayFilter(
                                     kinds = listOf(MetadataEvent.KIND),
-                                    authors = listOf(account.signer.keyPair.pubKey.toHexKey()),
+                                    authors = listOf(account.hexKey),
                                     limit = 1,
                                 ),
                             ),
@@ -294,8 +292,8 @@ class NostrSigner : Application() {
                 }
             }
         } else {
-            Log.d("NostrSigner", "Using cached profile data for ${account.signer.keyPair.pubKey.toNpub()}")
-            LocalPreferences.loadProfileUrlFromEncryptedStorage(account.signer.keyPair.pubKey.toNpub())?.let {
+            Log.d("NostrSigner", "Using cached profile data for ${account.npub}")
+            LocalPreferences.loadProfileUrlFromEncryptedStorage(account.npub)?.let {
                 onPictureFound(it)
                 return
             }

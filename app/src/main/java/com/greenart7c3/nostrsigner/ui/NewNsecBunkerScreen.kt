@@ -52,7 +52,6 @@ import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.encoders.toHexKey
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -233,7 +232,7 @@ fun NewNsecBunkerScreen(
                                 "",
                                 "",
                                 "",
-                                account.signer.keyPair.pubKey.toHexKey(),
+                                account.hexKey,
                                 false,
                                 secret.value,
                                 true,
@@ -280,7 +279,7 @@ fun NewNsecBunkerCreatedScreen(
     } else {
         val relays = application.relays.joinToString(separator = "&") { "relay=${it.url}" }
         val localSecret = "&secret=${application.secret}"
-        val bunkerUri = "bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+        val bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
 
         LaunchedEffect(Unit) {
             NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {

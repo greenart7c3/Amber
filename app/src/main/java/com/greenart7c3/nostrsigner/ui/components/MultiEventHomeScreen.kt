@@ -72,7 +72,6 @@ import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -110,7 +109,7 @@ fun MultiEventHomeScreen(
             localAccount = LocalPreferences.loadFromEncryptedStorage(
                 context,
                 intents.firstOrNull()?.currentAccount ?: "",
-            )?.signer?.keyPair?.pubKey?.toNpub()?.toShortenHex() ?: ""
+            )?.npub?.toShortenHex() ?: ""
         }
     }
 
@@ -195,7 +194,7 @@ fun MultiEventHomeScreen(
 
                             val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                            val database = NostrSigner.getInstance().getDatabase(thisAccount.signer.keyPair.pubKey.toNpub())
+                            val database = NostrSigner.getInstance().getDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
 
                             val application =
@@ -207,7 +206,7 @@ fun MultiEventHomeScreen(
                                         "",
                                         "",
                                         "",
-                                        thisAccount.signer.keyPair.pubKey.toHexKey(),
+                                        thisAccount.hexKey,
                                         true,
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
@@ -541,7 +540,7 @@ fun MultiEventHomeScreen(
 
                         val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                        val database = NostrSigner.getInstance().getDatabase(thisAccount.signer.keyPair.pubKey.toNpub())
+                        val database = NostrSigner.getInstance().getDatabase(thisAccount.npub)
 
                         val application =
                             database
@@ -554,7 +553,7 @@ fun MultiEventHomeScreen(
                                     "",
                                     "",
                                     "",
-                                    thisAccount.signer.keyPair.pubKey.toHexKey(),
+                                    thisAccount.hexKey,
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,

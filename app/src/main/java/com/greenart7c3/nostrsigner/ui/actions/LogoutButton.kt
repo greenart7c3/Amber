@@ -18,8 +18,6 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -40,8 +38,8 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                     account?.let {
-                        val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
-                        val permissions = database.applicationDao().getAll(it.signer.keyPair.pubKey.toHexKey())
+                        val database = NostrSigner.getInstance().getDatabase(it.npub)
+                        val permissions = database.applicationDao().getAll(it.hexKey)
                         permissions.forEach { app ->
                             database.applicationDao().delete(app)
                         }

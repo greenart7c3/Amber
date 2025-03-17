@@ -5,6 +5,7 @@ import android.content.Context
 import android.content.SharedPreferences
 import android.util.LruCache
 import androidx.compose.runtime.Immutable
+import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -16,7 +17,6 @@ import com.vitorpamplona.quartz.crypto.KeyPair
 import com.vitorpamplona.quartz.encoders.HexKey
 import com.vitorpamplona.quartz.encoders.hexToByteArray
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.signers.NostrSignerInternal
 import fr.acinq.secp256k1.jni.BuildConfig
 import java.io.File
@@ -87,9 +87,11 @@ object LocalPreferences {
         if (currentAccount != npub) {
             currentAccount = npub
 
-            encryptedPreferences(context).edit().apply {
-                putString(PrefKeys.CURRENT_ACCOUNT, npub)
-            }.apply()
+            encryptedPreferences(context).edit {
+                apply {
+                    putString(PrefKeys.CURRENT_ACCOUNT, npub)
+                }
+            }
         }
     }
 
@@ -101,23 +103,27 @@ object LocalPreferences {
     }
 
     fun updateShouldShowRationale(context: Context, value: Boolean) {
-        encryptedPreferences(context).edit().apply {
-            putBoolean(PrefKeys.RATIONALE, value)
-        }.apply()
+        encryptedPreferences(context).edit {
+            apply {
+                putBoolean(PrefKeys.RATIONALE, value)
+            }
+        }
     }
 
     fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
         val context = NostrSigner.getInstance()
-        encryptedPreferences(context).edit().apply {
-            remove(PrefKeys.ENDPOINT)
-            remove(PrefKeys.PUSH_SERVER_MESSAGE)
-            putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
-            putStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
-            putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
-            putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
-            putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
-            putBoolean(PrefKeys.USE_PIN, settings.usePin)
-        }.apply()
+        encryptedPreferences(context).edit {
+            apply {
+                remove(PrefKeys.ENDPOINT)
+                remove(PrefKeys.PUSH_SERVER_MESSAGE)
+                putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
+                putStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
+                putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
+                putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
+                putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
+                putBoolean(PrefKeys.USE_PIN, settings.usePin)
+            }
+        }
     }
 
     fun getLastCheck(context: Context, npub: String): Long {
@@ -125,9 +131,11 @@ object LocalPreferences {
     }
 
     fun setLastCheck(context: Context, npub: String, time: Long) {
-        encryptedPreferences(context, npub).edit().apply {
-            putLong(PrefKeys.LAST_CHECK, time)
-        }.apply()
+        encryptedPreferences(context, npub).edit {
+            apply {
+                putLong(PrefKeys.LAST_CHECK, time)
+            }
+        }
     }
 
     fun getLastMetadataUpdate(context: Context, npub: String): Long {
@@ -135,9 +143,11 @@ object LocalPreferences {
     }
 
     fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
-        encryptedPreferences(context, npub).edit().apply {
-            putLong(PrefKeys.LAST_METADATA_UPDATE, time)
-        }.apply()
+        encryptedPreferences(context, npub).edit {
+            apply {
+                putLong(PrefKeys.LAST_METADATA_UPDATE, time)
+            }
+        }
     }
 
     fun loadPinFromEncryptedStorage(): String? {
@@ -152,24 +162,28 @@ object LocalPreferences {
 
     fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
         val context = NostrSigner.getInstance()
-        encryptedPreferences(context, npub).edit().apply {
-            if (profileUrl == null) {
-                remove(PrefKeys.PROFILE_URL)
-            } else {
-                putString(PrefKeys.PROFILE_URL, profileUrl)
+        encryptedPreferences(context, npub).edit {
+            apply {
+                if (profileUrl == null) {
+                    remove(PrefKeys.PROFILE_URL)
+                } else {
+                    putString(PrefKeys.PROFILE_URL, profileUrl)
+                }
             }
-        }.apply()
+        }
     }
 
     fun savePinToEncryptedStorage(pin: String?) {
         val context = NostrSigner.getInstance()
-        encryptedPreferences(context).edit().apply {
-            if (pin == null) {
-                remove(PrefKeys.PIN)
-            } else {
-                putString(PrefKeys.PIN, pin)
+        encryptedPreferences(context).edit {
+            apply {
+                if (pin == null) {
+                    remove(PrefKeys.PIN)
+                } else {
+                    putString(PrefKeys.PIN, pin)
+                }
             }
-        }.apply()
+        }
     }
 
     suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
@@ -208,9 +222,11 @@ object LocalPreferences {
         if (savedAccounts != accounts) {
             savedAccounts = accounts
 
-            encryptedPreferences(context).edit().apply {
-                putString(PrefKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
-            }.apply()
+            encryptedPreferences(context).edit {
+                apply {
+                    putString(PrefKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
+                }
+            }
         }
     }
 
@@ -227,9 +243,8 @@ object LocalPreferences {
     }
 
     private fun setCurrentAccount(context: Context, account: Account) {
-        val npub = account.signer.keyPair.pubKey.toNpub()
-        updateCurrentAccount(context, npub)
-        addAccount(context, npub)
+        updateCurrentAccount(context, account.npub)
+        addAccount(context, account.npub)
     }
 
     fun switchToAccount(context: Context, npub: String) {
@@ -286,13 +301,13 @@ object LocalPreferences {
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         accountCache.remove(npub)
         val userPrefs = encryptedPreferences(context, npub)
-        userPrefs.edit().clear().commit()
+        userPrefs.edit(commit = true) { clear() }
         removeAccount(context, npub)
         deleteUserPreferenceFile(context, npub)
 
         if (savedAccounts(context).isEmpty()) {
             val appPrefs = encryptedPreferences(context)
-            appPrefs.edit().clear().commit()
+            appPrefs.edit(commit = true) { clear() }
             return true
         } else if (currentAccount(context) == npub) {
             updateCurrentAccount(context, savedAccounts(context).elementAt(0))
@@ -307,18 +322,20 @@ object LocalPreferences {
     }
 
     fun saveToEncryptedStorage(context: Context, account: Account) {
-        val prefs = encryptedPreferences(context = context, account.signer.keyPair.pubKey.toNpub())
-        prefs.edit().apply {
-            account.signer.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
-            account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
-            putBoolean(PrefKeys.USE_PROXY, account.useProxy)
-            putInt(PrefKeys.PROXY_PORT, account.proxyPort)
-            putString(PrefKeys.ACCOUNT_NAME, account.name)
-            putString(PrefKeys.LANGUAGE_PREFS, account.language)
-            putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
-            putInt(PrefKeys.SIGN_POLICY, account.signPolicy)
-            putString(PrefKeys.SEED_WORDS2, account.seedWords.joinToString(separator = " ") { it })
-        }.apply()
+        val prefs = encryptedPreferences(context = context, account.npub)
+        prefs.edit {
+            apply {
+                account.signer.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
+                account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
+                putBoolean(PrefKeys.USE_PROXY, account.useProxy)
+                putInt(PrefKeys.PROXY_PORT, account.proxyPort)
+                putString(PrefKeys.ACCOUNT_NAME, account.name)
+                putString(PrefKeys.LANGUAGE_PREFS, account.language)
+                putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
+                putInt(PrefKeys.SIGN_POLICY, account.signPolicy)
+                putString(PrefKeys.SEED_WORDS2, account.seedWords.joinToString(separator = " ") { it })
+            }
+        }
     }
 
     fun loadFromEncryptedStorage(context: Context): Account? {
@@ -330,9 +347,11 @@ object LocalPreferences {
         npub: String,
         value: String,
     ) {
-        encryptedPreferences(context, npub).edit().apply {
-            putString(PrefKeys.ACCOUNT_NAME, value)
-        }.apply()
+        encryptedPreferences(context, npub).edit {
+            apply {
+                putString(PrefKeys.ACCOUNT_NAME, value)
+            }
+        }
         accountCache.get(npub)?.let {
             it.name = value
         }
@@ -351,9 +370,11 @@ object LocalPreferences {
     ) {
         val context = NostrSigner.getInstance()
         val ncryptsec = CryptoUtils.nip49.encrypt(privateKeyHex, password)
-        encryptedPreferences(context, npub).edit().apply {
-            putString(PrefKeys.NCRYPT_SEC, ncryptsec)
-        }.apply()
+        encryptedPreferences(context, npub).edit {
+            apply {
+                putString(PrefKeys.NCRYPT_SEC, ncryptsec)
+            }
+        }
     }
 
     fun updateProxy(
@@ -362,10 +383,12 @@ object LocalPreferences {
         port: Int,
     ) {
         val npub = currentAccount(context) ?: return
-        encryptedPreferences(context, npub).edit().apply {
-            putBoolean(PrefKeys.USE_PROXY, useProxy)
-            putInt(PrefKeys.PROXY_PORT, port)
-        }.apply()
+        encryptedPreferences(context, npub).edit {
+            apply {
+                putBoolean(PrefKeys.USE_PROXY, useProxy)
+                putInt(PrefKeys.PROXY_PORT, port)
+            }
+        }
         accountCache.get(npub)?.let {
             it.useProxy = useProxy
             it.proxyPort = port
@@ -381,9 +404,11 @@ object LocalPreferences {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
 
-            this.edit().apply {
-                remove(PrefKeys.REMEMBER_APPS)
-            }.apply()
+            this.edit {
+                apply {
+                    remove(PrefKeys.REMEMBER_APPS)
+                }
+            }
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
             val useProxy = getBoolean(PrefKeys.USE_PROXY, false)
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)

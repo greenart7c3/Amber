@@ -14,7 +14,6 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.vitorpamplona.quartz.crypto.CryptoUtils
 import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.events.Event
 import com.vitorpamplona.quartz.events.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -64,7 +63,7 @@ class SignerProvider : ContentProvider() {
                 val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                 if (!LocalPreferences.containsAccount(context!!, npub)) return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.npub)
                 val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                 val permission =
                     database
@@ -128,7 +127,7 @@ class SignerProvider : ContentProvider() {
                     return null
                 }
 
-                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.npub)
                 var permission =
                     database
                         .applicationDao()
@@ -240,7 +239,7 @@ class SignerProvider : ContentProvider() {
                 val stringType = uri.toString().replace("content://$appId.", "")
                 val pubkey = projection[1]
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.npub)
                 var permission =
                     database
                         .applicationDao()
@@ -346,7 +345,7 @@ class SignerProvider : ContentProvider() {
             "content://$appId.GET_PUBLIC_KEY" -> {
                 val packageName = callingPackage ?: return null
                 val account = LocalPreferences.loadFromEncryptedStorage(context!!) ?: return null
-                val database = NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub())
+                val database = NostrSigner.getInstance().getDatabase(account.npub)
                 val permission =
                     database
                         .applicationDao()
@@ -393,7 +392,7 @@ class SignerProvider : ContentProvider() {
                 }
 
                 val cursor = MatrixCursor(arrayOf("signature", "result"))
-                val result = if (sortOrder == null) account.signer.keyPair.pubKey.toNpub() else account.signer.keyPair.pubKey.toHexKey()
+                val result = if (sortOrder == null) account.npub else account.hexKey
                 cursor.addRow(arrayOf<Any>(result, result))
                 return cursor
             }

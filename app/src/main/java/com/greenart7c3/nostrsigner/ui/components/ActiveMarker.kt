@@ -12,7 +12,6 @@ import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.vitorpamplona.quartz.encoders.toNpub
 
 @Composable
 fun ActiveMarker(
@@ -21,7 +20,7 @@ fun ActiveMarker(
 ) {
     val isCurrentUser by remember(account) {
         derivedStateOf {
-            account.signer.keyPair.pubKey.toNpub() == acc.npub
+            account.npub == acc.npub
         }
     }
 

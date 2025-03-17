@@ -16,7 +16,6 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.encoders.toNpub
 import java.util.UUID
 import kotlinx.coroutines.launch
 
@@ -135,7 +134,7 @@ object NostrConnectUtils {
                         pubKey,
                         relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
                         "",
-                        account.signer.keyPair.pubKey.toNpub(),
+                        account.npub,
                         EncryptionType.NIP04,
                         nostrConnectSecret,
                         intent.getBooleanExtra("closeApplication", true),
@@ -148,7 +147,7 @@ object NostrConnectUtils {
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
             NostrSigner.getInstance().applicationIOScope.launch {
-                NostrSigner.getInstance().getDatabase(account.signer.keyPair.pubKey.toNpub()).applicationDao().insertLog(
+                NostrSigner.getInstance().getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         0,
                         "nostrconnect",

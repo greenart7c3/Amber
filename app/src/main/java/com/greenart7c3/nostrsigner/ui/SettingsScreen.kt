@@ -62,7 +62,6 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.quartz.encoders.toNpub
 import com.vitorpamplona.quartz.utils.TimeUtils
 import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import java.text.DecimalFormat
@@ -92,7 +91,7 @@ fun SettingsScreen(
     LaunchedEffect(Unit) {
         isLoading = true
         launch(Dispatchers.IO) {
-            val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+            val dbFile = context.getDatabasePath("amber_db_${account.npub}")
             val df = DecimalFormat("#.###")
             sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
             isLoading = false
@@ -106,7 +105,7 @@ fun SettingsScreen(
             },
             onConfirm = {
                 logoutDialog = false
-                accountStateViewModel.logOff(account.signer.keyPair.pubKey.toNpub())
+                accountStateViewModel.logOff(account.npub)
             },
         )
     }
@@ -319,7 +318,7 @@ fun SettingsScreen(
                                                 logs = database.applicationDao().getOldLog(oneWeek)
                                             }
                                         }
-                                        val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+                                        val dbFile = context.getDatabasePath("amber_db_${account.npub}")
                                         val df = DecimalFormat("#.###")
                                         sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
                                         status = ""
@@ -329,7 +328,7 @@ fun SettingsScreen(
                                         isLoading = false
                                         if (e is CancellationException) throw e
                                         Log.e("NostrSigner", "Error deleting old log entries", e)
-                                        val dbFile = context.getDatabasePath("amber_db_${account.signer.keyPair.pubKey.toNpub()}")
+                                        val dbFile = context.getDatabasePath("amber_db_${account.npub}")
                                         val df = DecimalFormat("#.###")
                                         sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
                                         status = ""

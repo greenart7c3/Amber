@@ -16,6 +16,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -94,41 +95,43 @@ fun EventData(
 
         val content = if (event.kind == 22242) AmberEvent.relay(event) else event.content
         if (content.isNotBlank()) {
-            Card(
-                modifier = Modifier
-                    .fillMaxWidth(),
-            ) {
-                Column(Modifier.padding(16.dp)) {
-                    if (event is ContactListEvent) {
-                        ContactListDetail(
-                            title = stringResource(R.string.following),
-                            text = "${event.verifiedFollowKeySet().size}",
-                        )
-                        ContactListDetail(
-                            title = stringResource(R.string.communities),
-                            text = "${event.verifiedFollowAddressSet().size}",
-                        )
-                        ContactListDetail(
-                            title = stringResource(R.string.hashtags),
-                            text = "${event.countFollowTags()}",
-                        )
-                        ContactListDetail(
-                            title = stringResource(R.string.relays_text),
-                            text = "${event.relays()?.keys?.size ?: 0}",
-                        )
-                    } else {
-                        Text(
-                            "Event content",
-                            fontWeight = FontWeight.Bold,
-                        )
-                        Text(
-                            content,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                        )
+            key("event-data-card") {
+                Card(
+                    modifier = Modifier
+                        .fillMaxWidth(),
+                ) {
+                    Column(Modifier.padding(16.dp)) {
+                        if (event is ContactListEvent) {
+                            ContactListDetail(
+                                title = stringResource(R.string.following),
+                                text = "${event.verifiedFollowKeySet().size}",
+                            )
+                            ContactListDetail(
+                                title = stringResource(R.string.communities),
+                                text = "${event.verifiedFollowAddressSet().size}",
+                            )
+                            ContactListDetail(
+                                title = stringResource(R.string.hashtags),
+                                text = "${event.countFollowTags()}",
+                            )
+                            ContactListDetail(
+                                title = stringResource(R.string.relays_text),
+                                text = "${event.relays()?.keys?.size ?: 0}",
+                            )
+                        } else {
+                            Text(
+                                "Event content",
+                                fontWeight = FontWeight.Bold,
+                            )
+                            Text(
+                                content,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                            )
+                        }
                     }
                 }
             }

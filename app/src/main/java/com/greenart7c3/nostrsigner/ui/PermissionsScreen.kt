@@ -32,7 +32,6 @@ import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.vitorpamplona.quartz.encoders.toHexKey
 
 @Composable
 fun PermissionsScreen(
@@ -41,7 +40,7 @@ fun PermissionsScreen(
     navController: NavController,
     database: AppDatabase,
 ) {
-    val applications = database.applicationDao().getAllFlow(account.signer.keyPair.pubKey.toHexKey()).collectAsStateWithLifecycle(emptyList())
+    val applications = database.applicationDao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
 
     Column(
         modifier,

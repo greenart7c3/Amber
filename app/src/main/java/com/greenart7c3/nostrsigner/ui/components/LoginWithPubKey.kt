@@ -61,8 +61,6 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.fromHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -105,7 +103,7 @@ fun ProfilePicture(account: Account) {
                     modifier = Modifier
                         .border(
                             2.dp,
-                            Color.fromHex(account.signer.keyPair.pubKey.toHexKey().slice(0..5)),
+                            Color.fromHex(account.hexKey.slice(0..5)),
                             CircleShape,
                         )
                         .height(120.dp)
@@ -113,7 +111,7 @@ fun ProfilePicture(account: Account) {
                 )
             }
             Text(
-                account.name.ifBlank { account.signer.keyPair.pubKey.toNpub().toShortenHex() },
+                account.name.ifBlank { account.npub.toShortenHex() },
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,

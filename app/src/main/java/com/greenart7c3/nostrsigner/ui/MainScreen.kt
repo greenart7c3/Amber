@@ -115,7 +115,6 @@ import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
-import com.vitorpamplona.quartz.encoders.toHexKey
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
 import java.util.Base64
@@ -188,7 +187,7 @@ fun sendResult(
                     "",
                     "",
                     "",
-                    account.signer.keyPair.pubKey.toHexKey(),
+                    account.hexKey,
                     true,
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
@@ -701,7 +700,7 @@ fun MainScreen(
                                                 it.route,
                                                 modifier = Modifier.border(
                                                     2.dp,
-                                                    Color.fromHex(account.signer.keyPair.pubKey.toHexKey().slice(0..5)),
+                                                    Color.fromHex(account.hexKey.slice(0..5)),
                                                     CircleShape,
                                                 ),
                                             )

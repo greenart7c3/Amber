@@ -54,7 +54,6 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.orange
-import com.vitorpamplona.quartz.encoders.toHexKey
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -85,7 +84,7 @@ fun EditPermission(
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
         val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
-        mutableStateOf("bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relayString$secret")
+        mutableStateOf("bunker://${account.hexKey}?$relayString$secret")
     }
 
     LaunchedEffect(Unit) {
@@ -95,7 +94,7 @@ fun EditPermission(
             checked = applicationData.useSecret
             val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-            bunkerUri = "bunker://${account.signer.keyPair.pubKey.toHexKey()}?$relays$localSecret"
+            bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
         }
     }
 

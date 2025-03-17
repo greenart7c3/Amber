@@ -111,11 +111,11 @@ fun SingleEventHomeScreen(
                         if (intentData.type == SignerType.CONNECT) {
                             intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
                         } else if (intentData.bunkerRequest != null) {
-                            account.signer.keyPair.pubKey.toHexKey()
+                            account.hexKey
                         } else if (packageName == null) {
-                            account.signer.keyPair.pubKey.toHexKey()
+                            account.hexKey
                         } else {
-                            account.signer.keyPair.pubKey.toNpub()
+                            account.npub
                         }
 
                     sendResult(
@@ -238,7 +238,7 @@ fun SingleEventHomeScreen(
                                     "",
                                     "",
                                     "",
-                                    account.signer.keyPair.pubKey.toHexKey(),
+                                    account.hexKey,
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
@@ -383,7 +383,7 @@ fun SingleEventHomeScreen(
                                     "",
                                     "",
                                     "",
-                                    account.signer.keyPair.pubKey.toHexKey(),
+                                    account.hexKey,
                                     true,
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
@@ -495,7 +495,7 @@ fun SingleEventHomeScreen(
                     event.toJson(),
                     intentData.type,
                     {
-                        if (event.pubKey != account.signer.keyPair.pubKey.toHexKey() && !isPrivateEvent(event.kind, event.tags)) {
+                        if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {
                                 Toast.makeText(
                                     context,
@@ -556,7 +556,7 @@ fun SingleEventHomeScreen(
                                         "",
                                         "",
                                         "",
-                                        account.signer.keyPair.pubKey.toHexKey(),
+                                        account.hexKey,
                                         true,
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,

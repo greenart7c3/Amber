@@ -19,7 +19,6 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.quartz.encoders.toNpub
 
 @Composable
 fun EditProfileScreen(
@@ -50,7 +49,7 @@ fun EditProfileScreen(
             modifier = Modifier.padding(vertical = 40.dp),
             onClick = {
                 LocalPreferences.setAccountName(context, npub, textFieldvalue.text)
-                accountStateViewModel.switchUser(account.signer.keyPair.pubKey.toNpub(), Route.Settings.route)
+                accountStateViewModel.switchUser(account.npub, Route.Settings.route)
             },
             text = stringResource(R.string.save),
         )

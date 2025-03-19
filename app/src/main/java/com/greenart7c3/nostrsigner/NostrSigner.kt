@@ -28,9 +28,9 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
-import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.EventInterface
-import com.vitorpamplona.quartz.events.MetadataEvent
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
+import com.vitorpamplona.quartz.nip01Core.relay.RelayState
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -43,7 +43,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
-    val client: NostrClient = NostrClient(OkHttpWebSocket.Builder())
+    val client: NostrClient = NostrClient(OkHttpWebSocket.BuilderFactory())
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
@@ -185,7 +185,7 @@ class NostrSigner : Application() {
         Log.d("NostrSigner", "Checking if relays are connected")
         client.getAll().forEach { relay ->
             if (!relay.isConnected()) {
-                relay.connectAndRun {
+                relay.connectAndRunAfterSync {
                     val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
                     val inputData = Data.Builder()
                     inputData.putString("relay", relay.url)
@@ -267,7 +267,7 @@ class NostrSigner : Application() {
                     read = it.read,
                     write = it.write,
                     activeTypes = it.feedTypes,
-                    socketBuilder = OkHttpWebSocket.Builder(),
+                    socketBuilderFactory = OkHttpWebSocket.BuilderFactory(),
                     forceProxy = account.useProxy,
                     subs = MutableSubscriptionManager(),
                 )
@@ -275,8 +275,8 @@ class NostrSigner : Application() {
 
             relays.forEach {
                 it.register(listener)
-                it.connectAndRun { relay ->
-                    relay.sendFilter(
+                it.connectAndRunAfterSync {
+                    it.sendFilter(
                         UUID.randomUUID().toString().substring(0, 4),
                         filters = listOf(
                             TypedFilter(
@@ -319,8 +319,8 @@ class RelayListener(
         Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
     }
 
-    override fun onBeforeSend(relay: Relay, event: EventInterface) {
-        Log.d("RelayListener", "Sending event ${event.id()} to relay ${relay.url}")
+    override fun onBeforeSend(relay: Relay, event: Event) {
+        Log.d("RelayListener", "Sending event ${event.id} to relay ${relay.url}")
     }
 
     override fun onError(relay: Relay, subscriptionId: String, error: Error) {
@@ -332,11 +332,15 @@ class RelayListener(
         onReceiveEvent(relay, subscriptionId, event)
     }
 
+    override fun onEOSE(relay: Relay, subscriptionId: String) {
+        Log.d("RelayListener", "Received EOSE from subscription $subscriptionId")
+    }
+
     override fun onNotify(relay: Relay, description: String) {
         Log.d("RelayListener", "Received notify $description from relay ${relay.url}")
     }
 
-    override fun onRelayStateChange(relay: Relay, type: Relay.StateType, channel: String?) {
+    override fun onRelayStateChange(relay: Relay, type: RelayState) {
         Log.d("RelayListener", "Relay ${relay.url} state changed to $type")
     }
 
@@ -357,8 +361,8 @@ class RelayListener2(
         Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
     }
 
-    override fun onBeforeSend(relay: Relay, event: EventInterface) {
-        Log.d("RelayListener", "Sending event ${event.id()} to relay ${relay.url}")
+    override fun onBeforeSend(relay: Relay, event: Event) {
+        Log.d("RelayListener", "Sending event ${event.id} to relay ${relay.url}")
     }
 
     override fun onError(error: Error, subscriptionId: String, relay: Relay) {
@@ -374,7 +378,7 @@ class RelayListener2(
         Log.d("RelayListener", "Received notify $description from relay ${relay.url}")
     }
 
-    override fun onRelayStateChange(type: Relay.StateType, relay: Relay, subscriptionId: String?) {
+    override fun onRelayStateChange(type: RelayState, relay: Relay) {
         Log.d("RelayListener", "Relay ${relay.url} state changed to $type")
     }
 

@@ -76,9 +76,9 @@ import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
 import com.halilibo.richtext.ui.resolveDefaults
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNsec
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip19Bech32.toNsec
+import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -481,7 +481,7 @@ private fun EncryptNSecQRButton(
 
     if (showDialog) {
         QrCodeDialog(
-            content = CryptoUtils.encryptNIP49(account.signer.keyPair.privKey!!.toHexKey(), password.value.text),
+            content = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text),
         ) {
             showDialog = false
         }
@@ -537,7 +537,7 @@ private fun encryptCopyNSec(
     } else {
         account.signer.keyPair.privKey?.let {
             try {
-                val key = CryptoUtils.encryptNIP49(it.toHexKey(), password.value.text)
+                val key = Nip49().encrypt(it.toHexKey(), password.value.text)
                 clipboardManager.setText(AnnotatedString(key))
                 scope.launch {
                     Toast.makeText(

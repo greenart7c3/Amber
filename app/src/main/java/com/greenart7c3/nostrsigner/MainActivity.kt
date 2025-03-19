@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner
 
-import android.app.Activity
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
@@ -46,7 +45,7 @@ import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
-import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import fr.acinq.secp256k1.Hex
 import java.time.Duration
 import java.time.Instant
@@ -97,7 +96,7 @@ class MainActivity : AppCompatActivity() {
                     var showPinDialog by remember { mutableStateOf(false) }
                     val keyguardLauncher =
                         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-                            if (result.resultCode == Activity.RESULT_OK) {
+                            if (result.resultCode == RESULT_OK) {
                                 isAuthenticated = true
                             }
                         }

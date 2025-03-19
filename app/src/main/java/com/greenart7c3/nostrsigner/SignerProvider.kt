@@ -12,10 +12,10 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip55AndroidSigner.signString
+import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -94,7 +94,7 @@ class SignerProvider : ContentProvider() {
                     return cursor
                 }
 
-                val result = CryptoUtils.signString(message, account.signer.keyPair.privKey!!).toHexKey()
+                val result = signString(message, account.signer.keyPair.privKey!!).toHexKey()
                 scope.launch {
                     database.applicationDao().addHistory(
                         HistoryEntity(

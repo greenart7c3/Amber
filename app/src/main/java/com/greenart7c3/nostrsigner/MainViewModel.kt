@@ -3,8 +3,8 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.net.Uri
 import android.util.Log
+import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
@@ -12,7 +12,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -96,7 +96,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                 requests.forEach {
                     val contentIntent =
                         Intent(NostrSigner.getInstance(), MainActivity::class.java).apply {
-                            data = Uri.parse("nostrsigner:")
+                            data = "nostrsigner:".toUri()
                         }
                     contentIntent.putExtra("bunker", it.toJson())
                     contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)

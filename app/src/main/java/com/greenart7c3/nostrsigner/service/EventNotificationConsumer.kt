@@ -46,10 +46,10 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.crypto.nip04.Nip04
-import com.vitorpamplona.quartz.encoders.Hex
-import com.vitorpamplona.quartz.encoders.toNpub
-import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
+import com.vitorpamplona.quartz.nip01Core.verify
+import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.launch
 
@@ -82,21 +82,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("notifications disabled")
             return
         }
-        if (event.kind() != 24133) {
+        if (event.kind != 24133) {
             saveLog("Not a bunker request")
             return
         }
-        if (!event.hasCorrectIDHash()) {
-            saveLog("Invalid id hash")
-            return
-        }
-        if (!event.hasVerifiedSignature()) {
-            saveLog("Invalid signature")
+        if (!event.verify()) {
+            saveLog("Invalid id hash or signature")
             return
         }
 
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
-        LocalPreferences.loadFromEncryptedStorage(applicationContext, Hex.decode(taggedKey).toNpub())?.let { acc ->
+        LocalPreferences.loadFromEncryptedStorage(applicationContext, taggedKey.toNPub())?.let { acc ->
             notify(event, acc, relay)
         }
     }
@@ -121,7 +117,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
         }
 
-        if (Nip04.isNIP04(event.content)) {
+        if (EncryptedInfo.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
                 NostrSigner.getInstance().applicationIOScope.launch {
                     notify(event, acc, it, EncryptionType.NIP04, relay)
@@ -147,7 +143,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val dao = NostrSigner.getInstance().getDatabase(acc.npub).applicationDao()
         val notification = dao.getNotification(event.id)
         if (notification != null) return
-        dao.insertNotification(NotificationEntity(0, event.id(), event.createdAt))
+        dao.insertNotification(NotificationEntity(0, event.id, event.createdAt))
 
         dao.insertLog(
             LogEntity(

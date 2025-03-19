@@ -8,8 +8,8 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.EventInterface
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.relay.RelayState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -53,7 +53,7 @@ class AmberClientListener(
         }
     }
 
-    override fun onBeforeSend(relay: Relay, event: EventInterface) {
+    override fun onBeforeSend(relay: Relay, event: Event) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
@@ -61,7 +61,7 @@ class AmberClientListener(
                         id = 0,
                         url = relay.url,
                         type = "onBeforeSend",
-                        message = "Sending event ${event.id()}",
+                        message = "Sending event ${event.id}",
                         time = System.currentTimeMillis(),
                     ),
                 )
@@ -139,7 +139,7 @@ class AmberClientListener(
                         id = 0,
                         url = relay.url,
                         type = "onEvent",
-                        message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
+                        message = "Received event ${event.id} from subscription $subscriptionId afterEOSE: $afterEOSE",
                         time = System.currentTimeMillis(),
                     ),
                 )
@@ -163,7 +163,7 @@ class AmberClientListener(
         }
     }
 
-    override fun onRelayStateChange(type: Relay.StateType, relay: Relay, subscriptionId: String?) {
+    override fun onRelayStateChange(type: RelayState, relay: Relay) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(

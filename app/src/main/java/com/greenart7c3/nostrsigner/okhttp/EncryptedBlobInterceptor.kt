@@ -21,8 +21,8 @@
 package com.greenart7c3.nostrsigner.okhttp
 
 import android.util.Log
-import com.vitorpamplona.quartz.crypto.nip17.AESGCM
-import com.vitorpamplona.quartz.crypto.nip17.NostrCipher
+import com.vitorpamplona.quartz.nip17Dm.files.encryption.AESGCM
+import com.vitorpamplona.quartz.nip17Dm.files.encryption.NostrCipher
 import okhttp3.Interceptor
 import okhttp3.Response
 import okhttp3.ResponseBody.Companion.toResponseBody

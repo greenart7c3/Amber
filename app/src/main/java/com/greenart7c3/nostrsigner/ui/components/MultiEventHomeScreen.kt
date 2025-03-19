@@ -70,9 +70,9 @@ import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip55AndroidSigner.signString
+import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -329,7 +329,7 @@ fun MultiEventHomeScreen(
                                     ),
                                 )
 
-                                val signedMessage = CryptoUtils.signString(intentData.data, thisAccount.signer.keyPair.privKey!!).toHexKey()
+                                val signedMessage = signString(intentData.data, thisAccount.signer.keyPair.privKey!!).toHexKey()
 
                                 if (intentData.bunkerRequest != null) {
                                     val localIntentData = intentData.copy()

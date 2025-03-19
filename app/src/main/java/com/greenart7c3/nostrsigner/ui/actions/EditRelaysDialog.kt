@@ -63,11 +63,11 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.RelayStats
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
-import com.vitorpamplona.quartz.crypto.KeyPair
-import com.vitorpamplona.quartz.encoders.RelayUrlFormatter
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip65RelayList.RelayUrlFormatter
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.Base64
 import java.util.UUID
@@ -340,7 +340,7 @@ suspend fun onAddRelay(
 
                             event?.let { signedEvent ->
                                 AmberListenerSingleton.setListener(context, accountStateViewModel)
-                                val socket = OkHttpWebSocket.Builder()
+                                val socket = OkHttpWebSocket.BuilderFactory()
                                 val client = NostrClient(
                                     socket,
                                 )

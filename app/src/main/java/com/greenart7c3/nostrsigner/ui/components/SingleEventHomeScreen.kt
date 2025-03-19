@@ -38,11 +38,11 @@ import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.greenart7c3.nostrsigner.ui.sendResult
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.encoders.bechToBytes
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
-import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
+import com.vitorpamplona.quartz.nip55AndroidSigner.signString
+import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
@@ -199,7 +199,7 @@ fun SingleEventHomeScreen(
                 intentData.type,
                 {
                     NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
-                        val result = CryptoUtils.signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
+                        val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
                         sendResult(
                             context,

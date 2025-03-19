@@ -13,12 +13,15 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.encoders.HexKey
-import com.vitorpamplona.quartz.encoders.hexToByteArray
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.events.Event
-import com.vitorpamplona.quartz.events.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.HexKey
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.Nip01
+import com.vitorpamplona.quartz.nip04Dm.crypto.Nip04
+import com.vitorpamplona.quartz.nip44Encryption.Nip44
+import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.nip57Zaps.PrivateZapEncryption
 import fr.acinq.secp256k1.Hex
 
 object AmberUtils {
@@ -33,28 +36,28 @@ object AmberUtils {
                 decryptZapEvent(data, account)
             }
             SignerType.NIP04_DECRYPT -> {
-                CryptoUtils.decryptNIP04(
+                Nip04.decrypt(
                     data,
                     account.signer.keyPair.privKey!!,
                     Hex.decode(pubKey),
                 )
             }
             SignerType.NIP04_ENCRYPT -> {
-                CryptoUtils.encryptNIP04(
+                Nip04.encrypt(
                     data,
                     account.signer.keyPair.privKey!!,
                     Hex.decode(pubKey),
                 )
             }
             SignerType.NIP44_ENCRYPT -> {
-                CryptoUtils.encryptNIP44(
+                Nip44.encrypt(
                     data,
                     account.signer.keyPair.privKey!!,
                     pubKey.hexToByteArray(),
                 ).encodePayload()
             }
             else -> {
-                CryptoUtils.decryptNIP44(
+                Nip44.decrypt(
                     data,
                     account.signer.keyPair.privKey!!,
                     pubKey.hexToByteArray(),
@@ -83,13 +86,13 @@ object AmberUtils {
                 // if the sender is logged in, these are the params
                 val altPrivateKeyToUse =
                     if (recipientPost != null) {
-                        LnZapRequestEvent.createEncryptionPrivateKey(
+                        PrivateZapEncryption.createEncryptionPrivateKey(
                             loggedInPrivateKey!!.toHexKey(),
                             recipientPost,
                             event.createdAt,
                         )
                     } else if (recipientPK != null) {
-                        LnZapRequestEvent.createEncryptionPrivateKey(
+                        PrivateZapEncryption.createEncryptionPrivateKey(
                             loggedInPrivateKey!!.toHexKey(),
                             recipientPK,
                             event.createdAt,
@@ -100,7 +103,7 @@ object AmberUtils {
 
                 try {
                     if (altPrivateKeyToUse != null && recipientPK != null) {
-                        val altPubKeyFromPrivate = CryptoUtils.pubkeyCreate(altPrivateKeyToUse).toHexKey()
+                        val altPubKeyFromPrivate = Nip01.pubKeyCreate(altPrivateKeyToUse).toHexKey()
 
                         if (altPubKeyFromPrivate == event.pubKey) {
                             val result = event.getPrivateZapEvent(altPrivateKeyToUse, recipientPK)

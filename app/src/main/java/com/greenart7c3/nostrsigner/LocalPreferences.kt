@@ -12,13 +12,12 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.crypto.KeyPair
-import com.vitorpamplona.quartz.encoders.HexKey
-import com.vitorpamplona.quartz.encoders.hexToByteArray
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.signers.NostrSignerInternal
-import fr.acinq.secp256k1.jni.BuildConfig
+import com.vitorpamplona.quartz.nip01Core.core.HexKey
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import java.io.File
 
 // Release mode (!BuildConfig.DEBUG) always uses encrypted preferences
@@ -369,7 +368,7 @@ object LocalPreferences {
         password: String,
     ) {
         val context = NostrSigner.getInstance()
-        val ncryptsec = CryptoUtils.nip49.encrypt(privateKeyHex, password)
+        val ncryptsec = Nip49().encrypt(privateKeyHex, password)
         encryptedPreferences(context, npub).edit {
             apply {
                 putString(PrefKeys.NCRYPT_SEC, ncryptsec)

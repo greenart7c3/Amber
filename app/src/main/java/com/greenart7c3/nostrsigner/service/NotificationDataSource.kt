@@ -33,8 +33,9 @@ import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.EOSETime
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.relay.RelayState
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -60,7 +61,7 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                                 id = 0,
                                 url = relay.url,
                                 type = "onEvent",
-                                message = "Received event ${event.id()} from subscription $subscriptionId afterEOSE: $afterEOSE",
+                                message = "Received event ${event.id} from subscription $subscriptionId afterEOSE: $afterEOSE",
                                 time = System.currentTimeMillis(),
                             ),
                         )
@@ -68,11 +69,7 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 }
             }
 
-            override fun onRelayStateChange(
-                type: Relay.StateType,
-                relay: Relay,
-                subscriptionId: String?,
-            ) {
+            override fun onRelayStateChange(type: RelayState, relay: Relay) {
                 Log.d("NotificationDataSource", "onRelayStateChange: $type")
                 AmberRelayStats.updateNotification()
                 scope.launch {

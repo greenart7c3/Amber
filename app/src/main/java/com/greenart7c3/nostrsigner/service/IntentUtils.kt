@@ -29,9 +29,9 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
-import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import fr.acinq.secp256k1.Hex
 import java.net.URLDecoder
 import kotlinx.coroutines.launch
@@ -316,7 +316,7 @@ object IntentUtils {
         val data =
             try {
                 decodeData(intent.data?.toString() ?: "", packageName == null, packageName == null)
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
             }
 
@@ -496,7 +496,7 @@ object IntentUtils {
         }
         return try {
             Hex.decode(key).toNpub()
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             null
         }
     }
@@ -562,13 +562,13 @@ object IntentUtils {
         }
         if (event.id.isEmpty()) {
             event.id =
-                Event.generateId(
+                EventHasher.hashId(
                     event.pubKey,
                     event.createdAt,
                     event.kind,
                     event.tags,
                     event.content,
-                ).toHexKey()
+                )
         }
 
         return AmberEvent.toEvent(event)

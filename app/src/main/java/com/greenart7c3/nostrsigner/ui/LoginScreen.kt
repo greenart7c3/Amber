@@ -108,12 +108,13 @@ import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
 import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.material3.RichText
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.crypto.CryptoUtils.random
-import com.vitorpamplona.quartz.crypto.KeyPair
-import com.vitorpamplona.quartz.crypto.nip06.Bip39Mnemonics
-import com.vitorpamplona.quartz.encoders.toHexKey
-import com.vitorpamplona.quartz.encoders.toNpub
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
+import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
+import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
+import com.vitorpamplona.quartz.utils.RandomInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -291,7 +292,7 @@ fun SignUpPage(
     storageHelper.onFolderSelected = { _, folder ->
         scope.launch(Dispatchers.IO) {
             loading = true
-            val ncryptsec = CryptoUtils.nip49.encrypt(keyPair.privKey!!.toHexKey(), password.text)
+            val ncryptsec = Nip49().encrypt(keyPair.privKey!!.toHexKey(), password.text)
             val ncryptsecFile = folder.makeFile(
                 context,
                 mimeType = "application/text",
@@ -312,9 +313,9 @@ fun SignUpPage(
         launch(Dispatchers.IO) {
             loading = true
             while (seedWords.size < 12) {
-                val entropy = random(16)
+                val entropy = RandomInstance.bytes(16)
                 seedWords = Bip39Mnemonics.toMnemonics(entropy).toSet()
-                keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(seedWords.joinToString(" ")))
+                keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(seedWords.joinToString(" ")))
             }
             loading = false
         }

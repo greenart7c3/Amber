@@ -7,10 +7,11 @@ import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
-import com.vitorpamplona.quartz.crypto.CryptoUtils
-import com.vitorpamplona.quartz.crypto.KeyPair
-import com.vitorpamplona.quartz.encoders.bechToBytes
-import com.vitorpamplona.quartz.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
+import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
+import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import fr.acinq.secp256k1.Hex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.BufferOverflow
@@ -130,9 +131,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         try {
             val account =
                 if (key.startsWith("ncryptsec")) {
-                    val newKey =
-                        CryptoUtils.decryptNIP49(key, password)
-                            ?: throw Exception("Could not decrypt key with provided password")
+                    val newKey = Nip49().decrypt(key, password)
+
                     Account(
                         signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                         name = "",
@@ -154,8 +154,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         signPolicy = 0,
                         seedWords = emptySet(),
                     )
-                } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
-                    val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
+                } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
+                    val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
                     Account(
                         signer = NostrSignerInternal(keyPair),
                         name = "",
@@ -179,7 +179,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     )
                 }
             return account.signer.keyPair.privKey != null
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             return false
         }
     }
@@ -194,9 +194,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     ) {
         val account =
             if (key.startsWith("ncryptsec")) {
-                val newKey =
-                    CryptoUtils.decryptNIP49(key, password)
-                        ?: throw Exception("Could not decrypt key with provided password")
+                val newKey = Nip49().decrypt(key, password)
                 Account(
                     signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                     name = "",
@@ -218,8 +216,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
                 )
-            } else if (key.contains(" ") && CryptoUtils.isValidMnemonic(key)) {
-                val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
+            } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
+                val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
                 Account(
                     signer = NostrSignerInternal(keyPair),
                     name = "",
@@ -255,7 +253,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         name: String,
     ) {
         val key = seedWords.joinToString(separator = " ") { it }
-        val keyPair = KeyPair(privKey = CryptoUtils.privateKeyFromMnemonic(key))
+        val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
         val account = Account(
             NostrSignerInternal(keyPair),
             name = name,

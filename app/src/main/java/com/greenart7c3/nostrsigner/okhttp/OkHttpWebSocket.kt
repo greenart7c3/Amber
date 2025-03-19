@@ -20,21 +20,22 @@
  */
 package com.greenart7c3.nostrsigner.okhttp
 
-import com.vitorpamplona.ammolite.sockets.WebSocket
-import com.vitorpamplona.ammolite.sockets.WebSocketListener
-import com.vitorpamplona.ammolite.sockets.WebsocketBuilder
+import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocket
+import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocketListener
+import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilder
+import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebsocketBuilderFactory
 import okhttp3.Request
 import okhttp3.Response
 
 class OkHttpWebSocket(
     val url: String,
-    private val forceProxy: Boolean,
+    val forceProxy: Boolean,
     val out: WebSocketListener,
 ) : WebSocket {
     private val listener = OkHttpWebsocketListener()
     private var socket: okhttp3.WebSocket? = null
 
-    private fun buildRequest() = Request.Builder().url(url.trim()).build()
+    fun buildRequest() = Request.Builder().url(url.trim()).build()
 
     override fun connect() {
         socket = HttpClientManager.getHttpClient(forceProxy).newWebSocket(buildRequest(), listener)
@@ -46,7 +47,7 @@ class OkHttpWebSocket(
             response: Response,
         ) = out.onOpen(
             response.receivedResponseAtMillis - response.sentRequestAtMillis,
-            response.headers["Sec-WebSocket-Extensions"]?.contains("permessage-deflate") ?: false,
+            response.headers.get("Sec-WebSocket-Extensions")?.contains("permessage-deflate") ?: false,
         )
 
         override fun onMessage(
@@ -73,12 +74,17 @@ class OkHttpWebSocket(
         ) = out.onFailure(t, response?.message)
     }
 
-    class Builder : WebsocketBuilder {
+    class Builder(
+        val forceProxy: Boolean,
+    ) : WebsocketBuilder {
         override fun build(
             url: String,
-            forceProxy: Boolean,
             out: WebSocketListener,
         ) = OkHttpWebSocket(url, forceProxy, out)
+    }
+
+    class BuilderFactory : WebsocketBuilderFactory {
+        override fun build(forceProxy: Boolean) = Builder(forceProxy)
     }
 
     override fun cancel() {

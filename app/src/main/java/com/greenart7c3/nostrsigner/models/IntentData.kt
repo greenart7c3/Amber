@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.models
 
 import androidx.compose.runtime.MutableState
-import com.vitorpamplona.quartz.encoders.HexKey
-import com.vitorpamplona.quartz.events.Event
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.HexKey
 
 data class IntentData(
     val data: String,

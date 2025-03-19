@@ -12,11 +12,13 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 
 @Composable
@@ -46,14 +48,20 @@ fun AmberButton(
                 .padding(vertical = 6.dp),
             contentPadding = PaddingValues(vertical = 14.dp),
         ) {
-            Text(
-                text = text,
-                color = textColor,
-                modifier = Modifier.scale(1.50f),
-                textAlign = textAlign,
-                maxLines = maxLines,
-                fontWeight = FontWeight.Normal,
-            )
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    LocalDensity.current.density,
+                    1.5f,
+                ),
+            ) {
+                Text(
+                    text = text,
+                    color = textColor,
+                    textAlign = textAlign,
+                    maxLines = maxLines,
+                    fontWeight = FontWeight.Normal,
+                )
+            }
         }
     }
 }
@@ -85,14 +93,20 @@ fun AmberElevatedButton(
                 .padding(vertical = 6.dp),
             contentPadding = PaddingValues(vertical = 14.dp),
         ) {
-            Text(
-                text = text,
-                color = textColor,
-                modifier = Modifier.scale(1.50f),
-                textAlign = textAlign,
-                maxLines = maxLines,
-                fontWeight = FontWeight.Normal,
-            )
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    LocalDensity.current.density,
+                    1.5f,
+                ),
+            ) {
+                Text(
+                    text = text,
+                    color = textColor,
+                    textAlign = textAlign,
+                    maxLines = maxLines,
+                    fontWeight = FontWeight.Normal,
+                )
+            }
         }
     }
 }

@@ -21,13 +21,16 @@ import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -55,94 +58,101 @@ fun AccountsBottomSheet(
             onClose()
         },
     ) {
-        val context = LocalContext.current
-        val accounts = LocalPreferences.allSavedAccounts(context)
-        val scrollState = rememberScrollState()
+        CompositionLocalProvider(
+            LocalDensity provides Density(
+                LocalDensity.current.density,
+                1f,
+            ),
+        ) {
+            val context = LocalContext.current
+            val accounts = LocalPreferences.allSavedAccounts(context)
+            val scrollState = rememberScrollState()
 
-        Column(modifier = Modifier.verticalScroll(scrollState)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
-            }
-            accounts.forEach { acc ->
-                val name = LocalPreferences.getAccountName(context, acc.npub)
+            Column(modifier = Modifier.verticalScroll(scrollState)) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .clickable {
-                            accountStateViewModel.switchUser(acc.npub, null)
-                        }
-                        .padding(16.dp, 16.dp),
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
+                    Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
+                }
+                accounts.forEach { acc ->
+                    val name = LocalPreferences.getAccountName(context, acc.npub)
                     Row(
-                        modifier = Modifier.weight(1f),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                accountStateViewModel.switchUser(acc.npub, null)
+                            }
+                            .padding(16.dp, 16.dp),
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Row(
                             modifier = Modifier.weight(1f),
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
-                            Column(modifier = Modifier.weight(1f)) {
-                                if (name.isNotBlank()) {
-                                    Text(name)
+                            Row(
+                                modifier = Modifier.weight(1f),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Column(modifier = Modifier.weight(1f)) {
+                                    if (name.isNotBlank()) {
+                                        Text(name)
+                                    }
+                                    Text(acc.npub.toShortenHex())
                                 }
-                                Text(acc.npub.toShortenHex())
-                            }
-                            Column(modifier = Modifier.width(32.dp)) {
-                                ActiveMarker(acc, account)
+                                Column(modifier = Modifier.width(32.dp)) {
+                                    ActiveMarker(acc, account)
+                                }
                             }
                         }
-                    }
 
-                    IconButton(
-                        onClick = {
-                            clipboardManager.setText(AnnotatedString(acc.npub))
-                        },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.ContentCopy,
-                            contentDescription = stringResource(R.string.copy_to_clipboard),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
+                        IconButton(
+                            onClick = {
+                                clipboardManager.setText(AnnotatedString(acc.npub))
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.ContentCopy,
+                                contentDescription = stringResource(R.string.copy_to_clipboard),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
 
-                    IconButton(
+                        IconButton(
+                            onClick = {
+                                onClose()
+                                navController.navigate("EditProfile/${acc.npub}")
+                            },
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.edit_name),
+                                tint = MaterialTheme.colorScheme.onSurface,
+                            )
+                        }
+                        LogoutButton(acc, accountStateViewModel)
+                    }
+                }
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    TextButton(
                         onClick = {
                             onClose()
-                            navController.navigate("EditProfile/${acc.npub}")
+                            navController.navigate(Route.Login.route)
                         },
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.edit_name),
-                            tint = MaterialTheme.colorScheme.onSurface,
-                        )
-                    }
-                    LogoutButton(acc, accountStateViewModel)
+                        content = {
+                            Text(stringResource(R.string.add_new_account))
+                        },
+                    )
                 }
-            }
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                horizontalArrangement = Arrangement.Center,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                TextButton(
-                    onClick = {
-                        onClose()
-                        navController.navigate(Route.Login.route)
-                    },
-                    content = {
-                        Text(stringResource(R.string.add_new_account))
-                    },
-                )
             }
         }
     }

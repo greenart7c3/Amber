@@ -2,7 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import android.util.Log
-import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
@@ -161,7 +161,7 @@ object AmberUtils {
         intentData: IntentData,
         kind: Int?,
         value: Boolean,
-        database: AppDatabase,
+        account: Account,
     ) {
         val noPermission = application.permissions.none {
             val nip = it.kind?.kindToNip()?.toIntOrNull()
@@ -178,7 +178,7 @@ object AmberUtils {
                 ),
             )
 
-            database
+            NostrSigner.instance.getDatabase(account.npub)
                 .applicationDao()
                 .insertApplicationWithPermissions(application)
         }

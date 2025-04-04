@@ -27,8 +27,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -38,9 +38,8 @@ fun PermissionsScreen(
     modifier: Modifier,
     account: Account,
     navController: NavController,
-    database: AppDatabase,
 ) {
-    val applications = database.applicationDao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
+    val applications = NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
 
     Column(
         modifier,

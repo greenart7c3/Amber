@@ -83,15 +83,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         npub: String?,
         forceLogout: Boolean = false,
     ) {
-        var currentUser = npub ?: LocalPreferences.currentAccount(NostrSigner.getInstance())
-        val allAccounts = LocalPreferences.allSavedAccounts(NostrSigner.getInstance())
-        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.getInstance(), currentUser) && allAccounts.any { it.npub == currentUser }) {
-            currentUser = LocalPreferences.currentAccount(NostrSigner.getInstance())
+        var currentUser = npub ?: LocalPreferences.currentAccount(NostrSigner.instance)
+        val allAccounts = LocalPreferences.allSavedAccounts(NostrSigner.instance)
+        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.instance, currentUser) && allAccounts.any { it.npub == currentUser }) {
+            currentUser = LocalPreferences.currentAccount(NostrSigner.instance)
         }
         if (forceLogout) {
             currentUser = null
         }
-        LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), currentUser)?.let {
+        LocalPreferences.loadFromEncryptedStorage(NostrSigner.instance, currentUser)?.let {
             startUI(it, route)
         }
         if (currentUser == null) {
@@ -102,7 +102,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     private fun prepareLogoutOrSwitch() {
         when (val state = accountContent.value) {
             is AccountState.LoggedIn -> {
-                NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
+                NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
                     state.account.saveable.removeObserver(saveListener)
                 }
             }
@@ -114,7 +114,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, NostrSigner.getInstance())
+        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, NostrSigner.instance)
         tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
     }
 
@@ -123,7 +123,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         route: String?,
     ) {
         prepareLogoutOrSwitch()
-        LocalPreferences.switchToAccount(NostrSigner.getInstance(), npub)
+        LocalPreferences.switchToAccount(NostrSigner.instance, npub)
         tryLoginExistingAccount(route, npub)
     }
 
@@ -241,7 +241,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 )
             }
 
-        LocalPreferences.updatePrefsForLogin(NostrSigner.getInstance(), account)
+        LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
         startUI(account, route)
     }
 
@@ -264,7 +264,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             signPolicy = signPolicy,
             seedWords = seedWords,
         )
-        LocalPreferences.updatePrefsForLogin(NostrSigner.getInstance(), account)
+        LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
         startUI(account, null)
     }
 
@@ -274,14 +274,14 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     ) {
         _accountContent.update { AccountState.LoggedIn(account, route) }
 
-        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
+        NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
             account.saveable.observeForever(saveListener)
         }
     }
 
     private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
-        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
-            LocalPreferences.saveToEncryptedStorage(NostrSigner.getInstance(), it.account)
+        NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+            LocalPreferences.saveToEncryptedStorage(NostrSigner.instance, it.account)
         }
     }
 }

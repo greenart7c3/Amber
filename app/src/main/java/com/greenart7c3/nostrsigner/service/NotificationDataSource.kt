@@ -42,8 +42,8 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client, "AccountData") {
-    private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.getInstance())
+object NotificationDataSource : NostrDataSource(NostrSigner.instance.client, "AccountData") {
+    private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.instance)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     private val clientListener =
@@ -55,8 +55,8 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 afterEOSE: Boolean,
             ) {
                 scope.launch {
-                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LocalPreferences.currentAccount(NostrSigner.instance)?.let { account ->
+                        NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
                             LogEntity(
                                 id = 0,
                                 url = relay.url,
@@ -73,8 +73,8 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 Log.d("NotificationDataSource", "onRelayStateChange: $type")
                 AmberRelayStats.updateNotification()
                 scope.launch {
-                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LocalPreferences.currentAccount(NostrSigner.instance)?.let { account ->
+                        NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
                             LogEntity(
                                 id = 0,
                                 url = relay.url,
@@ -89,8 +89,8 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
 
             override fun onError(error: Error, subscriptionId: String, relay: Relay) {
                 scope.launch {
-                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LocalPreferences.currentAccount(NostrSigner.instance)?.let { account ->
+                        NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
                             LogEntity(
                                 id = 0,
                                 url = relay.url,
@@ -109,8 +109,8 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 challenge: String,
             ) {
                 scope.launch {
-                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LocalPreferences.currentAccount(NostrSigner.instance)?.let { account ->
+                        NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
                             LogEntity(
                                 id = 0,
                                 url = relay.url,
@@ -129,8 +129,8 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
                 description: String,
             ) {
                 scope.launch {
-                    LocalPreferences.currentAccount(NostrSigner.getInstance())?.let { account ->
-                        NostrSigner.getInstance().getDatabase(account).applicationDao().insertLog(
+                    LocalPreferences.currentAccount(NostrSigner.instance)?.let { account ->
+                        NostrSigner.instance.getDatabase(account).applicationDao().insertLog(
                             LogEntity(
                                 id = 0,
                                 url = relay.url,
@@ -175,10 +175,10 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
 
     private fun createNotificationsFilter(): TypedFilter {
         var since = TimeUtils.now()
-        val accounts = LocalPreferences.allSavedAccounts(NostrSigner.getInstance())
+        val accounts = LocalPreferences.allSavedAccounts(NostrSigner.instance)
         var localLatest = 0L
         accounts.forEach {
-            val latest = NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLatestNotification()
+            val latest = NostrSigner.instance.getDatabase(it.npub).applicationDao().getLatestNotification()
             if (latest != null && latest > localLatest) {
                 localLatest = latest + 1
             }
@@ -189,11 +189,11 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
 
         val pubKeys =
             accounts.mapNotNull {
-                LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub)?.signer?.keyPair?.pubKey?.toHexKey()
+                LocalPreferences.loadFromEncryptedStorage(NostrSigner.instance, it.npub)?.signer?.keyPair?.pubKey?.toHexKey()
             }
 
         val eoses =
-            NostrSigner.getInstance().client.getAll().associate {
+            NostrSigner.instance.client.getAll().associate {
                 Pair(it.url, EOSETime(since))
             }
 
@@ -213,7 +213,7 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
         relay: Relay,
     ) {
         checkNotInMainThread()
-        NotificationUtils.getOrCreateDMChannel(NostrSigner.getInstance().applicationContext)
+        NotificationUtils.getOrCreateDMChannel(NostrSigner.instance.applicationContext)
         AmberRelayStats.addReceived(relay.url)
         eventNotificationConsumer.consume(event, relay)
     }
@@ -233,10 +233,10 @@ object NotificationDataSource : NostrDataSource(NostrSigner.getInstance().client
     ) {
         super.auth(relay, challenge)
 
-        LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
-            val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.getInstance(), it.npub) ?: return@forEach
+        LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
+            val account = LocalPreferences.loadFromEncryptedStorage(NostrSigner.instance, it.npub) ?: return@forEach
             account.createAuthEvent(relay.url, challenge) { authEvent ->
-                NostrSigner.getInstance().client.sendIfExists(authEvent, relay)
+                NostrSigner.instance.client.sendIfExists(authEvent, relay)
             }
         }
     }

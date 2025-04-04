@@ -34,7 +34,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.anggrayudi.storage.SimpleStorageHelper
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -80,7 +79,6 @@ fun AccountScreen(
                         }
                     }
 
-                    val database = NostrSigner.getInstance().getDatabase(state.account.npub)
                     val localRoute = mutableStateOf(intents.firstNotNullOfOrNull { it.route } ?: state.route)
 
                     AmberListenerSingleton.accountStateViewModel = accountStateViewModel
@@ -93,7 +91,6 @@ fun AccountScreen(
                         packageName,
                         appName,
                         localRoute,
-                        database,
                         navController,
                         storageHelper,
                         onRemoveIntentData = { results, type ->

@@ -22,10 +22,10 @@ class RelayDisconnectService(ctx: Context, params: WorkerParameters) : Worker(ct
                 val url = inputData.getString("relay")
                 delay(60000)
                 url?.let {
-                    val relay = NostrSigner.getInstance().client.getRelay(it)
+                    val relay = NostrSigner.instance.client.getRelay(it)
                     if (relay != null && relay.isConnected()) {
                         LocalPreferences.currentAccount(applicationContext)?.let { npub ->
-                            NostrSigner.getInstance().getDatabase(npub).applicationDao().insertLog(
+                            NostrSigner.instance.getDatabase(npub).applicationDao().insertLog(
                                 LogEntity(
                                     id = 0,
                                     url = relay.url,

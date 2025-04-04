@@ -265,11 +265,11 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.clear_logs_and_activity),
                     onClick = {
-                        NostrSigner.getInstance().applicationIOScope.launch {
+                        NostrSigner.instance.applicationIOScope.launch {
                             NotificationDataSource.stopSync()
                             isLoading = true
-                            LocalPreferences.allSavedAccounts(NostrSigner.getInstance()).forEach {
-                                NostrSigner.getInstance().getDatabase(it.npub).let { database ->
+                            LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
+                                NostrSigner.instance.getDatabase(it.npub).let { database ->
                                     try {
                                         status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
                                         val oneWeek = System.currentTimeMillis() - ONE_WEEK
@@ -401,7 +401,7 @@ fun SettingsScreen(
                         LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                         scope.launch(Dispatchers.IO) {
                             NotificationDataSource.stopSync()
-                            NostrSigner.getInstance().checkForNewRelays()
+                            NostrSigner.instance.checkForNewRelays()
                             NotificationDataSource.start()
                         }
                     },

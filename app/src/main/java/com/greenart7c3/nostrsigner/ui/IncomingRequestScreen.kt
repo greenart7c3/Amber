@@ -25,7 +25,6 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
@@ -43,7 +42,6 @@ fun IncomingRequestScreen(
     packageName: String?,
     applicationName: String?,
     account: Account,
-    database: AppDatabase,
     navController: NavController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
@@ -56,7 +54,7 @@ fun IncomingRequestScreen(
             loading = true
             try {
                 LocalPreferences.allSavedAccounts(context).forEach { account ->
-                    NostrSigner.getInstance().getDatabase(account.npub).applicationDao().getAllApplications().forEach {
+                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllApplications().forEach {
                         if (it.application.name.isNotBlank()) {
                             ApplicationNameCache.names["${account.npub.toShortenHex()}-${it.application.key}"] = it.application.name
                         }
@@ -95,7 +93,6 @@ fun IncomingRequestScreen(
                 applicationName,
                 intents.first(),
                 account,
-                database,
                 onRemoveIntentData,
                 onLoading,
             )

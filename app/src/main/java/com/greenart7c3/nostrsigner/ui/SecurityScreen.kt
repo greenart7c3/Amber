@@ -45,10 +45,10 @@ fun SecurityScreen(
             TitleExplainer(stringResource(BiometricsTimeType.FIVE_MINUTES.resourceId)),
             TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
         )
-    var enableBiometrics by remember { mutableStateOf(NostrSigner.getInstance().settings.useAuth) }
-    val setupPin by remember { mutableStateOf(NostrSigner.getInstance().settings.usePin) }
+    var enableBiometrics by remember { mutableStateOf(NostrSigner.instance.settings.useAuth) }
+    val setupPin by remember { mutableStateOf(NostrSigner.instance.settings.usePin) }
     var biometricsIndex by remember {
-        mutableIntStateOf(NostrSigner.getInstance().settings.biometricsTimeType.screenCode)
+        mutableIntStateOf(NostrSigner.instance.settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
     Surface(
@@ -132,11 +132,11 @@ fun SecurityScreen(
             AmberButton(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                             useAuth = enableBiometrics,
                             biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
                         )
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                         scope.launch(Dispatchers.Main) {
                             navController.navigateUp()
                         }

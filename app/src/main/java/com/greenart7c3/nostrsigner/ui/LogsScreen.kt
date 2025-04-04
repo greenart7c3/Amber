@@ -36,7 +36,7 @@ fun LogsScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val logsFlow = NostrSigner.getInstance().getDatabase(account.npub).applicationDao().getLogs()
+    val logsFlow = NostrSigner.instance.getDatabase(account.npub).applicationDao().getLogs()
     val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val state = rememberLazyListState()
 
@@ -51,7 +51,7 @@ fun LogsScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        NostrSigner.getInstance().getDatabase(account.npub).applicationDao().clearLogs()
+                        NostrSigner.instance.getDatabase(account.npub).applicationDao().clearLogs()
                     }
                 },
                 text = stringResource(R.string.clear_logs),

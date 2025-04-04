@@ -54,7 +54,7 @@ fun DefaultProfileRelaysScreen(
     val relays2 =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            NostrSigner.getInstance().settings.defaultProfileRelays.forEach {
+            NostrSigner.instance.settings.defaultProfileRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -107,14 +107,14 @@ fun DefaultProfileRelaysScreen(
                                     account,
                                     context,
                                     onDone = {
-                                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                             defaultProfileRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
                                             if (BuildConfig.FLAVOR != "offline") {
-                                                NostrSigner.getInstance().checkForNewRelays()
+                                                NostrSigner.instance.checkForNewRelays()
                                                 NotificationDataSource.stop()
                                                 delay(2000)
                                                 NotificationDataSource.start()
@@ -148,14 +148,14 @@ fun DefaultProfileRelaysScreen(
                                 context,
                                 onDone = {
                                     isLoading.value = true
-                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                         defaultProfileRelays = relays2,
                                     )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
                                         if (BuildConfig.FLAVOR != "offline") {
-                                            NostrSigner.getInstance().checkForNewRelays()
+                                            NostrSigner.instance.checkForNewRelays()
                                             NotificationDataSource.stop()
                                             delay(2000)
                                             NotificationDataSource.start()
@@ -181,14 +181,14 @@ fun DefaultProfileRelaysScreen(
                             onClick = {
                                 isLoading.value = true
                                 relays2.removeAt(it)
-                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                     defaultProfileRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                 scope.launch(Dispatchers.IO) {
                                     @Suppress("KotlinConstantConditions")
                                     if (BuildConfig.FLAVOR != "offline") {
-                                        NostrSigner.getInstance().checkForNewRelays()
+                                        NostrSigner.instance.checkForNewRelays()
                                         NotificationDataSource.stop()
                                         delay(2000)
                                         NotificationDataSource.start()

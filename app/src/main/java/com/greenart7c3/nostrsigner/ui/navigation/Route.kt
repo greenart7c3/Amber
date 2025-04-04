@@ -12,7 +12,7 @@ sealed class Route(
     @DrawableRes val icon: Int,
 ) {
     data object TorSettings : Route(
-        title = NostrSigner.getInstance().getString(R.string.connect_via_tor_short),
+        title = NostrSigner.instance.getString(R.string.connect_via_tor_short),
         route = "TorSettings",
         icon = R.drawable.incoming_request,
     )
@@ -24,145 +24,145 @@ sealed class Route(
     )
 
     data object IncomingRequest : Route(
-        title = NostrSigner.getInstance().getString(R.string.incoming_request),
+        title = NostrSigner.instance.getString(R.string.incoming_request),
         route = "IncomingRequest",
         icon = R.drawable.incoming_request,
     )
 
     data object Applications : Route(
         route = "Applications",
-        title = NostrSigner.getInstance().getString(R.string.applications),
+        title = NostrSigner.instance.getString(R.string.applications),
         icon = R.drawable.applications,
     )
 
     data object Settings : Route(
-        title = NostrSigner.getInstance().getString(R.string.settings),
+        title = NostrSigner.instance.getString(R.string.settings),
         route = "Settings",
         icon = R.drawable.settings,
     )
 
     data object Permission : Route(
-        title = NostrSigner.getInstance().getString(R.string.permissions),
+        title = NostrSigner.instance.getString(R.string.permissions),
         route = "Permission/{packageName}",
         icon = R.drawable.settings,
     )
 
     data object AccountBackup : Route(
-        title = NostrSigner.getInstance().getString(R.string.account_backup),
+        title = NostrSigner.instance.getString(R.string.account_backup),
         route = "AccountBackup",
         icon = R.drawable.settings,
     )
 
     data object Logs : Route(
-        title = NostrSigner.getInstance().getString(R.string.logs),
+        title = NostrSigner.instance.getString(R.string.logs),
         route = "Logs",
         icon = R.drawable.settings,
     )
 
     data object ActiveRelays : Route(
-        title = NostrSigner.getInstance().getString(R.string.relays),
+        title = NostrSigner.instance.getString(R.string.relays),
         route = "ActiveRelays",
         icon = R.drawable.relays,
     )
 
     data object Language : Route(
-        title = NostrSigner.getInstance().getString(R.string.language),
+        title = NostrSigner.instance.getString(R.string.language),
         route = "Language",
         icon = R.drawable.settings,
     )
 
     data object DefaultRelays : Route(
-        title = NostrSigner.getInstance().getString(R.string.default_relays),
+        title = NostrSigner.instance.getString(R.string.default_relays),
         route = "DefaultRelays",
         icon = R.drawable.settings,
     )
 
     data object SignPolicy : Route(
-        title = NostrSigner.getInstance().getString(R.string.sign_policy),
+        title = NostrSigner.instance.getString(R.string.sign_policy),
         route = "SignPolicy",
         icon = R.drawable.settings,
     )
 
     data object Security : Route(
-        title = NostrSigner.getInstance().getString(R.string.security),
+        title = NostrSigner.instance.getString(R.string.security),
         route = "Security",
         icon = R.drawable.settings,
     )
 
     data object Accounts : Route(
-        title = NostrSigner.getInstance().getString(R.string.accounts),
+        title = NostrSigner.instance.getString(R.string.accounts),
         route = "Accounts",
         icon = R.drawable.settings,
     )
 
     data object NewApplication : Route(
-        title = NostrSigner.getInstance().getString(R.string.add_a_new_application),
+        title = NostrSigner.instance.getString(R.string.add_a_new_application),
         route = "NewApplication",
         icon = R.drawable.settings,
     )
 
     data object NewNsecBunker : Route(
-        title = NostrSigner.getInstance().getString(R.string.add_a_nsecbunker),
+        title = NostrSigner.instance.getString(R.string.add_a_nsecbunker),
         route = "NewNsecBunker",
         icon = R.drawable.settings,
     )
 
     data object NSecBunkerCreated : Route(
-        title = NostrSigner.getInstance().getString(R.string.add_a_nsecbunker),
+        title = NostrSigner.instance.getString(R.string.add_a_nsecbunker),
         route = "NewNsecBunkerCreated/{key}",
         icon = R.drawable.settings,
     )
 
     data object Activity : Route(
-        title = NostrSigner.getInstance().getString(R.string.activity_title),
+        title = NostrSigner.instance.getString(R.string.activity_title),
         route = "Activity/{key}",
         icon = R.drawable.settings,
     )
 
     data object RelayLogScreen : Route(
-        title = NostrSigner.getInstance().getString(R.string.logs),
+        title = NostrSigner.instance.getString(R.string.logs),
         route = "RelayLogScreen/{url}",
         icon = R.drawable.settings,
     )
 
     data object EditConfiguration : Route(
-        title = NostrSigner.getInstance().getString(R.string.edit_configuration),
+        title = NostrSigner.instance.getString(R.string.edit_configuration),
         route = "EditConfiguration/{key}",
         icon = R.drawable.settings,
     )
 
     data object SetupPin : Route(
-        title = NostrSigner.getInstance().getString(R.string.setup_pin),
+        title = NostrSigner.instance.getString(R.string.setup_pin),
         route = "SetupPin",
         icon = R.drawable.settings,
     )
 
     data object ConfirmPin : Route(
-        title = NostrSigner.getInstance().getString(R.string.confirm_pin),
+        title = NostrSigner.instance.getString(R.string.confirm_pin),
         route = "ConfirmPin/{pin}",
         icon = R.drawable.settings,
     )
 
     data object SeeDetails : Route(
-        title = NostrSigner.getInstance().getString(R.string.incoming_request),
+        title = NostrSigner.instance.getString(R.string.incoming_request),
         route = "SeeDetails",
         icon = R.drawable.settings,
     )
 
     data object RelaysScreen : Route(
-        title = NostrSigner.getInstance().getString(R.string.relays),
+        title = NostrSigner.instance.getString(R.string.relays),
         route = "RelaysScreen",
         icon = R.drawable.settings,
     )
 
     data object DefaultProfileRelaysScreen : Route(
-        title = NostrSigner.getInstance().getString(R.string.default_profile_relays),
+        title = NostrSigner.instance.getString(R.string.default_profile_relays),
         route = "DefaultProfileRelaysScreen",
         icon = R.drawable.settings,
     )
 
     data object EditProfile : Route(
-        title = NostrSigner.getInstance().getString(R.string.edit_profile),
+        title = NostrSigner.instance.getString(R.string.edit_profile),
         route = "EditProfile/{key}",
         icon = R.drawable.settings,
     )

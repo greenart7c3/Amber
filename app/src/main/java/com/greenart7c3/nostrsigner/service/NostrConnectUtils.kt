@@ -132,7 +132,7 @@ object NostrConnectUtils {
                         "connect",
                         arrayOf(pubKey),
                         pubKey,
-                        relays.ifEmpty { NostrSigner.getInstance().getSavedRelays().toList() },
+                        relays.ifEmpty { NostrSigner.instance.getSavedRelays().toList() },
                         "",
                         account.npub,
                         EncryptionType.NIP04,
@@ -146,8 +146,8 @@ object NostrConnectUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
-            NostrSigner.getInstance().applicationIOScope.launch {
-                NostrSigner.getInstance().getDatabase(account.npub).applicationDao().insertLog(
+            NostrSigner.instance.applicationIOScope.launch {
+                NostrSigner.instance.getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         0,
                         "nostrconnect",

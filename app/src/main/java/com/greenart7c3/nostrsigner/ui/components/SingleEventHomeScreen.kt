@@ -25,7 +25,6 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -55,7 +54,6 @@ fun SingleEventHomeScreen(
     applicationName: String?,
     intentData: IntentData,
     account: Account,
-    database: AppDatabase,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
@@ -73,9 +71,9 @@ fun SingleEventHomeScreen(
         launch(Dispatchers.IO) {
             applicationEntity =
                 if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                    database.applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getBySecret(intentData.bunkerRequest.secret)
                 } else {
-                    database.applicationDao().getByKey(key)
+                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                 }
         }
     }
@@ -131,7 +129,6 @@ fun SingleEventHomeScreen(
                         null,
                         permissions = permissions,
                         appName = applicationName ?: appName,
-                        database = database,
                         onLoading = onLoading,
                         signPolicy = signPolicy,
                         onRemoveIntentData = onRemoveIntentData,
@@ -141,12 +138,12 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (intentData.bunkerRequest != null) {
-                        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
-                            val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
-                            val savedApplication = database.applicationDao().getByKey(key)
+                        NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val defaultRelays = NostrSigner.instance.settings.defaultRelays
+                            val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
 
-                            NostrSigner.getInstance().checkForNewRelays(
+                            NostrSigner.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
 
@@ -198,7 +195,7 @@ fun SingleEventHomeScreen(
                 appName,
                 intentData.type,
                 {
-                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
                         val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
                         sendResult(
@@ -212,22 +209,21 @@ fun SingleEventHomeScreen(
                             result,
                             intentData,
                             null,
-                            database,
                             onLoading,
                             onRemoveIntentData = onRemoveIntentData,
                         )
                     }
                 },
                 {
-                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
                         if (key == "null") {
                             context.getAppCompatActivity()?.intent = null
                             context.getAppCompatActivity()?.finish()
                             return@launch
                         }
 
-                        val savedApplication = database.applicationDao().getByKey(key)
-                        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
+                        val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                        val defaultRelays = NostrSigner.instance.settings.defaultRelays
                         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
@@ -255,19 +251,19 @@ fun SingleEventHomeScreen(
                                 intentData,
                                 null,
                                 false,
-                                database,
+                                account,
                             )
                         }
 
                         if (intentData.bunkerRequest != null) {
-                            NostrSigner.getInstance().checkForNewRelays(
+                            NostrSigner.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
                         }
 
-                        database.applicationDao().insertApplicationWithPermissions(application)
+                        NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
-                        database.applicationDao().addHistory(
+                        NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
                             HistoryEntity(
                                 0,
                                 key,
@@ -360,19 +356,18 @@ fun SingleEventHomeScreen(
                         result,
                         intentData,
                         null,
-                        database,
                         onRemoveIntentData = onRemoveIntentData,
                         onLoading = onLoading,
                     )
                 },
                 {
-                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
                         if (key == "null") {
                             return@launch
                         }
 
-                        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
-                        val savedApplication = database.applicationDao().getByKey(key)
+                        val defaultRelays = NostrSigner.instance.settings.defaultRelays
+                        val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
@@ -399,19 +394,19 @@ fun SingleEventHomeScreen(
                                 intentData,
                                 null,
                                 false,
-                                database,
+                                account,
                             )
                         }
 
                         if (intentData.bunkerRequest != null) {
-                            NostrSigner.getInstance().checkForNewRelays(
+                            NostrSigner.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
                         }
 
-                        database.applicationDao().insertApplicationWithPermissions(application)
+                        NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
-                        database.applicationDao().addHistory(
+                        NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
                             HistoryEntity(
                                 0,
                                 key,
@@ -528,7 +523,6 @@ fun SingleEventHomeScreen(
                             },
                             intentData = intentData,
                             kind = event.kind,
-                            database = database,
                             onLoading = onLoading,
                             onRemoveIntentData = onRemoveIntentData,
                             signPolicy = null,
@@ -538,13 +532,13 @@ fun SingleEventHomeScreen(
                     },
                     {
                         onLoading(true)
-                        NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                        NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
                             if (key == "null") {
                                 return@launch
                             }
 
-                            val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
-                            val savedApplication = database.applicationDao().getByKey(key)
+                            val defaultRelays = NostrSigner.instance.settings.defaultRelays
+                            val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
 
                             val application =
@@ -567,7 +561,7 @@ fun SingleEventHomeScreen(
                                 )
 
                             if (intentData.bunkerRequest != null) {
-                                NostrSigner.getInstance().checkForNewRelays(
+                                NostrSigner.instance.checkForNewRelays(
                                     newRelays = relays.toSet(),
                                 )
                             }
@@ -579,13 +573,13 @@ fun SingleEventHomeScreen(
                                     intentData,
                                     event.kind,
                                     false,
-                                    database,
+                                    account,
                                 )
                             }
 
-                            database.applicationDao().insertApplicationWithPermissions(application)
+                            NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
-                            database.applicationDao().addHistory(
+                            NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
                                 HistoryEntity(
                                     0,
                                     key,

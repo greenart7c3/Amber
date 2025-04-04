@@ -110,7 +110,7 @@ object LocalPreferences {
     }
 
     fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
         encryptedPreferences(context).edit {
             apply {
                 remove(PrefKeys.ENDPOINT)
@@ -150,17 +150,17 @@ object LocalPreferences {
     }
 
     fun loadPinFromEncryptedStorage(): String? {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
         return encryptedPreferences(context).getString(PrefKeys.PIN, null)
     }
 
     fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
         return encryptedPreferences(context, npub).getString(PrefKeys.PROFILE_URL, null)
     }
 
     fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
         encryptedPreferences(context, npub).edit {
             apply {
                 if (profileUrl == null) {
@@ -173,7 +173,7 @@ object LocalPreferences {
     }
 
     fun savePinToEncryptedStorage(pin: String?) {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
         encryptedPreferences(context).edit {
             apply {
                 if (pin == null) {
@@ -186,7 +186,7 @@ object LocalPreferences {
     }
 
     suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
 
         encryptedPreferences(context).apply {
             return AmberSettings(
@@ -367,7 +367,7 @@ object LocalPreferences {
         privateKeyHex: HexKey,
         password: String,
     ) {
-        val context = NostrSigner.getInstance()
+        val context = NostrSigner.instance
         val ncryptsec = Nip49().encrypt(privateKeyHex, password)
         encryptedPreferences(context, npub).edit {
             apply {

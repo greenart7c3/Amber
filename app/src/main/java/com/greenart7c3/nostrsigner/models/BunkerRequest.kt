@@ -90,7 +90,7 @@ data class BunkerRequest(
                     var relayUrl = it.asText().intern()
                     if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
                     RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
-                } ?: NostrSigner.getInstance().getSavedRelays().toList(),
+                } ?: NostrSigner.instance.getSavedRelays().toList(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
                 encryptionType = encryptionType,

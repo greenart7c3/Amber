@@ -171,7 +171,7 @@ fun MultiEventHomeScreen(
             text = stringResource(R.string.approve_selected),
             onClick = {
                 onLoading(true)
-                NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
                     try {
                         val activity = context.getAppCompatActivity()
                         val results = mutableListOf<Result>()
@@ -194,7 +194,7 @@ fun MultiEventHomeScreen(
 
                             val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                            val database = NostrSigner.getInstance().getDatabase(thisAccount.npub)
+                            val database = NostrSigner.instance.getDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
 
                             val application =
@@ -230,7 +230,7 @@ fun MultiEventHomeScreen(
                                         intentData,
                                         localEvent.kind,
                                         intentData.rememberMyChoice.value,
-                                        database,
+                                        thisAccount,
                                     )
                                 }
 
@@ -313,7 +313,7 @@ fun MultiEventHomeScreen(
                                         intentData,
                                         null,
                                         intentData.rememberMyChoice.value,
-                                        database,
+                                        thisAccount,
                                     )
                                 }
 
@@ -438,7 +438,7 @@ fun MultiEventHomeScreen(
                                         intentData,
                                         null,
                                         intentData.rememberMyChoice.value,
-                                        database,
+                                        thisAccount,
                                     )
                                 }
 
@@ -523,7 +523,7 @@ fun MultiEventHomeScreen(
                 containerColor = orange,
             ),
             onClick = {
-                NostrSigner.getInstance().applicationIOScope.launch {
+                NostrSigner.instance.applicationIOScope.launch {
                     var closeApp = true
                     BunkerRequestUtils.clearRequests()
                     onRemoveIntentData(intents, IntentResultType.REMOVE)
@@ -540,7 +540,7 @@ fun MultiEventHomeScreen(
 
                         val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                        val database = NostrSigner.getInstance().getDatabase(thisAccount.npub)
+                        val database = NostrSigner.instance.getDatabase(thisAccount.npub)
 
                         val application =
                             database
@@ -570,7 +570,7 @@ fun MultiEventHomeScreen(
                                 intentData,
                                 null,
                                 false,
-                                database,
+                                thisAccount,
                             )
                         }
 
@@ -614,7 +614,7 @@ private fun sendResultIntent(
 private suspend fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    NostrSigner.getInstance().checkForNewRelays()
+    NostrSigner.instance.checkForNewRelays()
 }
 
 @Composable

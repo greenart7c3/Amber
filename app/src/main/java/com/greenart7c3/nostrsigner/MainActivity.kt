@@ -105,7 +105,7 @@ class MainActivity : AppCompatActivity() {
 
                     LaunchedEffect(Unit) {
                         launch(Dispatchers.IO) {
-                            val settings = NostrSigner.getInstance().settings
+                            val settings = NostrSigner.instance.settings
                             val lastAuthTime = settings.lastBiometricsTime
                             val whenToAsk = settings.biometricsTimeType
                             val isTimeToAsk = when (whenToAsk) {
@@ -128,11 +128,11 @@ class MainActivity : AppCompatActivity() {
                                                 this@MainActivity,
                                                 keyguardLauncher,
                                                 {
-                                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                                         lastBiometricsTime = System.currentTimeMillis(),
                                                     )
 
-                                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                                     isAuthenticated = true
                                                 },
                                                 { _, message ->
@@ -185,11 +185,11 @@ class MainActivity : AppCompatActivity() {
                                             onPinEntered = {
                                                 val pin = LocalPreferences.loadPinFromEncryptedStorage()
                                                 if (it == pin) {
-                                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                                         lastBiometricsTime = System.currentTimeMillis(),
                                                     )
 
-                                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                                     isAuthenticated = true
                                                     showPinDialog = false
                                                 } else {
@@ -214,7 +214,7 @@ class MainActivity : AppCompatActivity() {
                                 CircularProgressIndicator()
                             }
                         } else {
-                            val npub = mainViewModel.getAccount(intent.getStringExtra("current_user"))
+                            var npub = remember { mainViewModel.getAccount(intent.getStringExtra("current_user")) }
 
                             val accountStateViewModel: AccountStateViewModel =
                                 viewModel {
@@ -243,7 +243,7 @@ class MainActivity : AppCompatActivity() {
                                     BunkerRequestUtils.state
                                         .receiveAsFlow()
                                         .collectLatest {
-                                            mainViewModel.showBunkerRequests(null)
+                                            mainViewModel.showBunkerRequests(null, accountStateViewModel)
                                         }
                                 }
                             }
@@ -263,7 +263,7 @@ class MainActivity : AppCompatActivity() {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                NostrSigner.getInstance().updateNetworkCapabilities(it)
+                NostrSigner.instance.updateNetworkCapabilities(it)
             }
         }
         super.onResume()

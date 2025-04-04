@@ -71,7 +71,7 @@ fun ProfilePicture(account: Account) {
         var profileUrl by remember { mutableStateOf<String?>(null) }
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
-                NostrSigner.getInstance().fetchProfileData(
+                NostrSigner.instance.fetchProfileData(
                     account = account,
                     onPictureFound = {
                         profileUrl = it

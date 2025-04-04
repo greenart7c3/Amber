@@ -95,7 +95,7 @@ fun DefaultRelaysScreen(
     val relays2 =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            NostrSigner.getInstance().settings.defaultRelays.forEach {
+            NostrSigner.instance.settings.defaultRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -148,14 +148,14 @@ fun DefaultRelaysScreen(
                                     account,
                                     context,
                                     onDone = {
-                                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                             defaultRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
                                             if (BuildConfig.FLAVOR != "offline") {
-                                                NostrSigner.getInstance().checkForNewRelays()
+                                                NostrSigner.instance.checkForNewRelays()
                                                 NotificationDataSource.stop()
                                                 delay(2000)
                                                 NotificationDataSource.start()
@@ -189,14 +189,14 @@ fun DefaultRelaysScreen(
                                 context,
                                 onDone = {
                                     isLoading.value = true
-                                    NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                         defaultRelays = relays2,
                                     )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
                                         if (BuildConfig.FLAVOR != "offline") {
-                                            NostrSigner.getInstance().checkForNewRelays()
+                                            NostrSigner.instance.checkForNewRelays()
                                             NotificationDataSource.stop()
                                             delay(2000)
                                             NotificationDataSource.start()
@@ -222,14 +222,14 @@ fun DefaultRelaysScreen(
                             onClick = {
                                 isLoading.value = true
                                 relays2.removeAt(it)
-                                NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(
+                                NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
                                     defaultRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                                 scope.launch(Dispatchers.IO) {
                                     @Suppress("KotlinConstantConditions")
                                     if (BuildConfig.FLAVOR != "offline") {
-                                        NostrSigner.getInstance().checkForNewRelays()
+                                        NostrSigner.instance.checkForNewRelays()
                                         NotificationDataSource.stop()
                                         delay(2000)
                                         NotificationDataSource.start()
@@ -263,7 +263,7 @@ suspend fun onAddRelay(
         var addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                 // TODO: How to identify relays on the local network?
-                val isPrivateIp = NostrSigner.getInstance().isPrivateIp(url)
+                val isPrivateIp = NostrSigner.instance.isPrivateIp(url)
                 if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
                     "ws://$url"
                 } else {
@@ -307,7 +307,7 @@ suspend fun onAddRelay(
                             return@secondLaunch
                         }
 
-                        val relays = NostrSigner.getInstance().getSavedRelays()
+                        val relays = NostrSigner.instance.getSavedRelays()
                         if (relays.any { it.url == addedWSS }) {
                             relays2.add(
                                 RelaySetupInfo(
@@ -336,7 +336,7 @@ suspend fun onAddRelay(
                                 it,
                             )
 
-                            val isPrivateIp = NostrSigner.getInstance().isPrivateIp(addedWSS)
+                            val isPrivateIp = NostrSigner.instance.isPrivateIp(addedWSS)
 
                             event?.let { signedEvent ->
                                 AmberListenerSingleton.setListener(context, accountStateViewModel)
@@ -491,7 +491,7 @@ fun RelayLogScreen(
     val context = LocalContext.current
 
     val flows = LocalPreferences.allSavedAccounts(context).map {
-        NostrSigner.getInstance().getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+        NostrSigner.instance.getDatabase(it.npub).applicationDao().getLogsByUrl(url)
     }.merge()
 
     val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -550,7 +550,7 @@ fun ActiveRelaysScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            relays2.addAll(NostrSigner.getInstance().getSavedRelays())
+            relays2.addAll(NostrSigner.instance.getSavedRelays())
         }
     }
 
@@ -583,7 +583,7 @@ fun ActiveRelaysScreen(
                         fontSize = 24.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (NostrSigner.getInstance().client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                        color = if (NostrSigner.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -591,11 +591,11 @@ fun ActiveRelaysScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (NostrSigner.getInstance().client.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
+                            text = if (NostrSigner.instance.client.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = if (NostrSigner.getInstance().client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                            color = if (NostrSigner.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                         )
                     }
 

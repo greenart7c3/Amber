@@ -837,7 +837,7 @@ fun SignUpPage(
                                         name = nickname.text,
                                     )
 
-                                    NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
+                                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
                                         LocalPreferences.saveNcryptsec(
                                             keyPair.pubKey.toNpub(),
                                             keyPair.privKey!!.toHexKey(),

@@ -31,11 +31,11 @@ class ConnectivityService : Service() {
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
 
-                val hasAnyRelayDisconnected = NostrSigner.getInstance().client.getAll().any { !it.isConnected() }
+                val hasAnyRelayDisconnected = NostrSigner.instance.client.getAll().any { !it.isConnected() }
 
                 if (lastNetwork != null && lastNetwork != network && hasAnyRelayDisconnected) {
                     scope.launch(Dispatchers.IO) {
-                        NostrSigner.getInstance().client.getAll().forEach {
+                        NostrSigner.instance.client.getAll().forEach {
                             if (!it.isConnected()) {
                                 Log.d(
                                     "ConnectivityService",
@@ -63,13 +63,13 @@ class ConnectivityService : Service() {
                 scope.launch(Dispatchers.IO) {
                     Log.d(
                         "ServiceManager NetworkCallback",
-                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${NostrSigner.getInstance().isOnMobileDataState.value} hasWifi ${NostrSigner.getInstance().isOnWifiDataState.value}",
+                        "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${NostrSigner.instance.isOnMobileDataState.value} hasWifi ${NostrSigner.instance.isOnWifiDataState.value}",
                     )
 
-                    val hasAnyRelayDisconnected = NostrSigner.getInstance().client.getAll().any { !it.isConnected() }
+                    val hasAnyRelayDisconnected = NostrSigner.instance.client.getAll().any { !it.isConnected() }
 
-                    if (NostrSigner.getInstance().updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
-                        NostrSigner.getInstance().client.getAll().forEach {
+                    if (NostrSigner.instance.updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
+                        NostrSigner.instance.client.getAll().forEach {
                             if (!it.isConnected()) {
                                 Log.d(
                                     "ConnectivityService",
@@ -95,9 +95,9 @@ class ConnectivityService : Service() {
         isStarted = true
 
         @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR != "offline" && NostrSigner.getInstance().client.getAll().isEmpty()) {
-            NostrSigner.getInstance().applicationIOScope.launch {
-                NostrSigner.getInstance().checkForNewRelays()
+        if (BuildConfig.FLAVOR != "offline" && NostrSigner.instance.client.getAll().isEmpty()) {
+            NostrSigner.instance.applicationIOScope.launch {
+                NostrSigner.instance.checkForNewRelays()
                 NotificationDataSource.start()
             }
         }
@@ -110,7 +110,7 @@ class ConnectivityService : Service() {
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.registerDefaultNetworkCallback(networkCallback)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                NostrSigner.getInstance().updateNetworkCapabilities(it)
+                NostrSigner.instance.updateNetworkCapabilities(it)
             }
         }
 
@@ -122,7 +122,7 @@ class ConnectivityService : Service() {
                         return
                     }
 
-                    NostrSigner.getInstance().client.getAll().forEach {
+                    NostrSigner.instance.client.getAll().forEach {
                         if (!it.isConnected()) {
                             Log.d(
                                 "ConnectivityService",

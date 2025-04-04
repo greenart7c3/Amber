@@ -84,7 +84,7 @@ class NostrSigner : Application() {
         super.onCreate()
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
-        instance = this
+        _instance = this
 
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
@@ -190,7 +190,7 @@ class NostrSigner : Application() {
                     val inputData = Data.Builder()
                     inputData.putString("relay", relay.url)
                     builder.setInputData(inputData.build())
-                    WorkManager.getInstance(getInstance()).enqueue(builder.build())
+                    WorkManager.getInstance(instance).enqueue(builder.build())
                 }
             }
         }
@@ -302,11 +302,10 @@ class NostrSigner : Application() {
 
     companion object {
         @Volatile
-        private var instance: NostrSigner? = null
-
-        fun getInstance(): NostrSigner =
-            instance ?: synchronized(this) {
-                instance ?: NostrSigner().also { instance = it }
+        private var _instance: NostrSigner? = null
+        val instance: NostrSigner get() =
+            _instance ?: synchronized(this) {
+                _instance ?: NostrSigner().also { _instance = it }
             }
     }
 }

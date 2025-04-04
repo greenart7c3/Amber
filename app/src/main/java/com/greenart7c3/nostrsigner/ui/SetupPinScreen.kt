@@ -41,10 +41,10 @@ fun ConfirmPinScreen(
                 if (enteredPin != pin) {
                     accountStateViewModel.toast(context.getString(R.string.pin), context.getString(R.string.pin_does_not_match))
                 } else {
-                    val usePin = NostrSigner.getInstance().settings.usePin
+                    val usePin = NostrSigner.instance.settings.usePin
                     if (usePin) {
-                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(usePin = false)
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(usePin = false)
+                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                         LocalPreferences.savePinToEncryptedStorage(null)
                         navController.navigate(Route.Security.route) {
                             popUpTo(Route.Security.route) {
@@ -52,8 +52,8 @@ fun ConfirmPinScreen(
                             }
                         }
                     } else {
-                        NostrSigner.getInstance().settings = NostrSigner.getInstance().settings.copy(usePin = true)
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.getInstance().settings)
+                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(usePin = true)
+                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
                         LocalPreferences.savePinToEncryptedStorage(pin)
                         navController.navigate(Route.Security.route) {
                             popUpTo(Route.Security.route) {

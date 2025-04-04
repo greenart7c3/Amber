@@ -48,7 +48,6 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -63,7 +62,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun EditConfigurationScreen(
     modifier: Modifier = Modifier,
-    database: AppDatabase,
     key: String,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
@@ -79,7 +77,7 @@ fun EditConfigurationScreen(
     var closeApp by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            application = database.applicationDao().getByKey(key)
+            application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
             name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
             closeApp = application?.application?.closeApplication ?: true
 
@@ -292,14 +290,14 @@ fun EditConfigurationScreen(
                                     relays = relays,
                                     closeApplication = closeApp,
                                 )
-                            database.applicationDao().delete(it.application)
-                            database.applicationDao().insertApplicationWithPermissions(
+                            NostrSigner.instance.getDatabase(account.npub).applicationDao().delete(it.application)
+                            NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     localApplicationData,
                                     it.permissions,
                                 ),
                             )
-                            NostrSigner.getInstance().checkForNewRelays()
+                            NostrSigner.instance.checkForNewRelays()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {
@@ -321,9 +319,9 @@ fun EditConfigurationScreen(
                 onClick = {
                     application?.let {
                         scope.launch(Dispatchers.IO) {
-                            database.applicationDao().delete(it.application)
+                            NostrSigner.instance.getDatabase(account.npub).applicationDao().delete(it.application)
 
-                            NostrSigner.getInstance().checkForNewRelays()
+                            NostrSigner.instance.checkForNewRelays()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {

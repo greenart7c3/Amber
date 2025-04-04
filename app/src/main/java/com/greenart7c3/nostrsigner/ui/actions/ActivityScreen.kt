@@ -31,8 +31,9 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TimeUtils
 
@@ -40,10 +41,10 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 fun ActivityScreen(
     modifier: Modifier,
     paddingValues: PaddingValues,
-    database: AppDatabase,
+    account: Account,
     key: String,
 ) {
-    val activities = database.applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
+    val activities = NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
 
     LazyColumn(

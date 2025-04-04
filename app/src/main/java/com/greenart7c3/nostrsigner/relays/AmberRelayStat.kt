@@ -19,8 +19,8 @@ object AmberRelayStats {
     var connected = 0
     var available = 0
     init {
-        NostrSigner.getInstance().applicationIOScope.launch {
-            NostrSigner.getInstance().client.relayStatusFlow().collect {
+        NostrSigner.instance.applicationIOScope.launch {
+            NostrSigner.instance.client.relayStatusFlow().collect {
                 connected = it.connected
                 available = it.available
             }
@@ -31,45 +31,45 @@ object AmberRelayStats {
     fun createNotification(): Notification {
         val channelId = "ServiceChannel"
         val group = NotificationChannelGroupCompat.Builder("ServiceGroup")
-            .setName(NostrSigner.getInstance().getString(R.string.service))
-            .setDescription(NostrSigner.getInstance().getString(R.string.service_description))
+            .setName(NostrSigner.instance.getString(R.string.service))
+            .setDescription(NostrSigner.instance.getString(R.string.service_description))
             .build()
         val channel = NotificationChannelCompat.Builder(channelId, NotificationManager.IMPORTANCE_DEFAULT)
-            .setName(NostrSigner.getInstance().getString(R.string.service))
-            .setDescription(NostrSigner.getInstance().getString(R.string.amber_is_running_in_background))
+            .setName(NostrSigner.instance.getString(R.string.service))
+            .setDescription(NostrSigner.instance.getString(R.string.amber_is_running_in_background))
             .setSound(null, null)
             .setGroup(group.id)
             .build()
 
-        val notificationManager = NotificationManagerCompat.from(NostrSigner.getInstance())
+        val notificationManager = NotificationManagerCompat.from(NostrSigner.instance)
         notificationManager.createNotificationChannelGroup(group)
         notificationManager.createNotificationChannel(channel)
 
-        val message = NostrSigner.getInstance().client.getAll().joinToString("\n") {
-            val connected = "${it.url} ${if (it.isConnected()) NostrSigner.getInstance().getString(R.string.connected) else NostrSigner.getInstance().getString(R.string.disconnected)}\n"
-            val ping = NostrSigner.getInstance().getString(R.string.ping_ms, RelayStats.get(it.url).pingInMs)
+        val message = NostrSigner.instance.client.getAll().joinToString("\n") {
+            val connected = "${it.url} ${if (it.isConnected()) NostrSigner.instance.getString(R.string.connected) else NostrSigner.instance.getString(R.string.disconnected)}\n"
+            val ping = NostrSigner.instance.getString(R.string.ping_ms, RelayStats.get(it.url).pingInMs)
             val sent = if (get(it.url).sent > 0) {
-                NostrSigner.getInstance().getString(R.string.sent, get(it.url).sent)
+                NostrSigner.instance.getString(R.string.sent, get(it.url).sent)
             } else {
                 ""
             }
             val received = if (get(it.url).received > 0) {
-                NostrSigner.getInstance().getString(R.string.received, get(it.url).received)
+                NostrSigner.instance.getString(R.string.received, get(it.url).received)
             } else {
                 ""
             }
             val failed = if (get(it.url).failed > 0) {
-                NostrSigner.getInstance().getString(R.string.rejected_by_relay, get(it.url).failed)
+                NostrSigner.instance.getString(R.string.rejected_by_relay, get(it.url).failed)
             } else {
                 ""
             }
-            val error = if (RelayStats.get(it.url).errorCounter > 0) NostrSigner.getInstance().getString(R.string.error, RelayStats.get(it.url).errorCounter) else ""
+            val error = if (RelayStats.get(it.url).errorCounter > 0) NostrSigner.instance.getString(R.string.error, RelayStats.get(it.url).errorCounter) else ""
 
             connected + ping + sent + received + failed + error
         }
 
         val notificationBuilder =
-            NotificationCompat.Builder(NostrSigner.getInstance(), channelId)
+            NotificationCompat.Builder(NostrSigner.instance, channelId)
                 .setGroup(group.id)
                 .setContentTitle("$connected of $available connected relays")
                 .setStyle(
@@ -84,8 +84,8 @@ object AmberRelayStats {
 
     fun updateNotification() {
         Log.d("ConnectivityService", "updateNotification")
-        val notificationManager = NotificationManagerCompat.from(NostrSigner.getInstance())
-        if (ActivityCompat.checkSelfPermission(NostrSigner.getInstance(), Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+        val notificationManager = NotificationManagerCompat.from(NostrSigner.instance)
+        if (ActivityCompat.checkSelfPermission(NostrSigner.instance, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             notificationManager.notify(1, createNotification())
         }
     }

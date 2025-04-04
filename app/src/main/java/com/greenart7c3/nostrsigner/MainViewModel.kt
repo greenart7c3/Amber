@@ -11,9 +11,12 @@ import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import fr.acinq.secp256k1.Hex
+import kotlin.text.isNotBlank
+import kotlin.text.startsWith
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -84,7 +87,7 @@ class MainViewModel(val context: Context) : ViewModel() {
         }
     }
 
-    fun showBunkerRequests(callingPackage: String?) {
+    fun showBunkerRequests(callingPackage: String?, accountStateViewModel: AccountStateViewModel? = null) {
         val requests =
             BunkerRequestUtils.getBunkerRequests().map {
                 it.value.copy()
@@ -95,12 +98,13 @@ class MainViewModel(val context: Context) : ViewModel() {
             account?.let { acc ->
                 requests.forEach {
                     val contentIntent =
-                        Intent(NostrSigner.getInstance(), MainActivity::class.java).apply {
+                        Intent(NostrSigner.instance, MainActivity::class.java).apply {
                             data = "nostrsigner:".toUri()
                         }
                     contentIntent.putExtra("bunker", it.toJson())
                     contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
                     IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.IncomingRequest.route, acc) { intentData ->
+                        contentIntent.putExtra("current_account", acc.npub)
                         if (intentData != null) {
                             if (intents.value.none { item -> item.id == intentData.id }) {
                                 intents.value += listOf(intentData)
@@ -111,19 +115,19 @@ class MainViewModel(val context: Context) : ViewModel() {
             }
 
             if (requests.isNotEmpty()) {
-                viewModelScope.launch(Dispatchers.Main) {
-                    var error = true
-                    var count = 0
-                    while (error && count < 10) {
-                        delay(100)
-                        count++
-                        try {
-                            navController?.navigate(Route.IncomingRequest.route) {
-                                popUpTo(0)
-                            }
-                            error = false
-                        } catch (e: Exception) {
-                            Log.e("MainViewModel", "Error showing bunker requests", e)
+                val npub = getAccount(null)
+                val currentAccount = LocalPreferences.currentAccount(context)
+                if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
+                    if (npub.startsWith("npub")) {
+                        Log.d("Account", "Switching account to $npub")
+                        if (LocalPreferences.containsAccount(context, npub)) {
+                            accountStateViewModel?.switchUser(npub, Route.IncomingRequest.route)
+                        }
+                    } else {
+                        val localNpub = Hex.decode(npub).toNpub()
+                        Log.d("Account", "Switching account to $localNpub")
+                        if (LocalPreferences.containsAccount(context, localNpub)) {
+                            accountStateViewModel?.switchUser(localNpub, Route.IncomingRequest.route)
                         }
                     }
                 }

@@ -202,8 +202,8 @@ object IntentUtils {
                                 pubKey,
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
-                            NostrSigner.getInstance().applicationIOScope.launch {
-                                val database = NostrSigner.getInstance().getDatabase(account.npub)
+                            NostrSigner.instance.applicationIOScope.launch {
+                                val database = NostrSigner.instance.getDatabase(account.npub)
                                 database.applicationDao().insertLog(
                                     LogEntity(
                                         0,
@@ -391,8 +391,8 @@ object IntentUtils {
                             pubKey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
-                        NostrSigner.getInstance().applicationIOScope.launch {
-                            val database = NostrSigner.getInstance().getDatabase(account.npub)
+                        NostrSigner.instance.applicationIOScope.launch {
+                            val database = NostrSigner.instance.getDatabase(account.npub)
                             database.applicationDao().insertLog(
                                 LogEntity(
                                     0,

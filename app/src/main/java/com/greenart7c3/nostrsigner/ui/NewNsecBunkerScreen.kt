@@ -45,7 +45,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -63,7 +62,6 @@ fun NewNsecBunkerScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
     navController: NavController,
-    database: AppDatabase,
 ) {
     val secret = remember { mutableStateOf(UUID.randomUUID().toString().substring(0, 6)) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
@@ -72,7 +70,7 @@ fun NewNsecBunkerScreen(
     val relays =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            NostrSigner.getInstance().settings.defaultRelays.forEach {
+            NostrSigner.instance.settings.defaultRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -240,7 +238,7 @@ fun NewNsecBunkerScreen(
                                 true,
                             )
 
-                        database.applicationDao().insertApplication(
+                        NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplication(
                             application,
                         )
                         scope.launch(Dispatchers.Main) {
@@ -255,7 +253,6 @@ fun NewNsecBunkerScreen(
 
 @Composable
 fun NewNsecBunkerCreatedScreen(
-    database: AppDatabase,
     modifier: Modifier = Modifier,
     account: Account,
     key: String,
@@ -267,7 +264,7 @@ fun NewNsecBunkerCreatedScreen(
     LaunchedEffect(Unit) {
         isLoading.value = true
         launch(Dispatchers.IO) {
-            application = database.applicationDao().getByKey(key)?.application ?: ApplicationEntity.empty()
+            application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)?.application ?: ApplicationEntity.empty()
             isLoading.value = false
         }
     }
@@ -282,8 +279,8 @@ fun NewNsecBunkerCreatedScreen(
         val bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
 
         LaunchedEffect(Unit) {
-            NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.IO) {
-                NostrSigner.getInstance().checkForNewRelays(shouldReconnect = true)
+            NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                NostrSigner.instance.checkForNewRelays(shouldReconnect = true)
                 NotificationDataSource.stop()
                 delay(2000)
                 NotificationDataSource.start()

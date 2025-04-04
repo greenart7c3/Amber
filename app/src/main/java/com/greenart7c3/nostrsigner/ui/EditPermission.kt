@@ -46,7 +46,6 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -64,7 +63,6 @@ fun EditPermission(
     account: Account,
     selectedPackage: String,
     navController: NavController,
-    database: AppDatabase,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -83,14 +81,14 @@ fun EditPermission(
     }
     val secret = if (checked) "&secret=${applicationData.secret}" else ""
     var bunkerUri by remember {
-        val relayString = NostrSigner.getInstance().settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
+        val relayString = NostrSigner.instance.settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
         mutableStateOf("bunker://${account.hexKey}?$relayString$secret")
     }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            permissions.addAll(database.applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            applicationData = database.applicationDao().getByKey(selectedPackage)!!.application
+            permissions.addAll(NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
+            applicationData = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(selectedPackage)!!.application
             checked = applicationData.useSecret
             val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
@@ -105,7 +103,7 @@ fun EditPermission(
             },
         ) {
             scope.launch(Dispatchers.IO) {
-                database
+                NostrSigner.instance.getDatabase(account.npub)
                     .applicationDao()
                     .deletePermissions(applicationData.key)
 
@@ -214,7 +212,7 @@ fun EditPermission(
                                         }
                                     permissions.clear()
                                     permissions.addAll(localPermissions)
-                                    database
+                                    NostrSigner.instance.getDatabase(account.npub)
                                         .applicationDao()
                                         .insertPermissions(localPermissions)
                                 }
@@ -237,7 +235,7 @@ fun EditPermission(
                                         }
                                     permissions.clear()
                                     permissions.addAll(localPermissions)
-                                    database.applicationDao().insertPermissions(localPermissions)
+                                    NostrSigner.instance.getDatabase(account.npub).applicationDao().insertPermissions(localPermissions)
                                 }
                             },
                         )
@@ -260,7 +258,7 @@ fun EditPermission(
                         onClick = {
                             scope.launch(Dispatchers.IO) {
                                 permissions.remove(permission)
-                                database.applicationDao().deletePermission(permission)
+                                NostrSigner.instance.getDatabase(account.npub).applicationDao().deletePermission(permission)
                             }
                         },
                     )

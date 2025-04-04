@@ -74,6 +74,8 @@ import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.graphics.toColorInt
+import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -86,7 +88,6 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -133,7 +134,6 @@ fun sendResult(
     value: String,
     intentData: IntentData,
     kind: Int?,
-    database: AppDatabase,
     onLoading: (Boolean) -> Unit,
     permissions: List<Permission>? = null,
     appName: String? = null,
@@ -141,8 +141,9 @@ fun sendResult(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
 ) {
     onLoading(true)
-    NostrSigner.getInstance().applicationIOScope.launch {
-        val defaultRelays = NostrSigner.getInstance().settings.defaultRelays
+    NostrSigner.instance.applicationIOScope.launch {
+        val database = NostrSigner.instance.getDatabase(account.npub)
+        val defaultRelays = NostrSigner.instance.settings.defaultRelays
         var savedApplication = database.applicationDao().getByKey(key)
         if (savedApplication == null && intentData.bunkerRequest?.secret != null) {
             savedApplication = database.applicationDao().getByKey(intentData.bunkerRequest.secret)
@@ -164,7 +165,7 @@ fun sendResult(
         savedApplication = database.applicationDao().getByKey(key)
         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
         if (intentData.bunkerRequest != null) {
-            NostrSigner.getInstance().checkForNewRelays(
+            NostrSigner.instance.checkForNewRelays(
                 newRelays = relays.toSet(),
             )
         }
@@ -300,7 +301,7 @@ fun sendResult(
                 application.application.relays.ifEmpty { relays },
                 onLoading,
                 onDone = {
-                    NostrSigner.getInstance().applicationIOScope.launch {
+                    NostrSigner.instance.applicationIOScope.launch {
                         if (!it) {
                             if (rememberChoice) {
                                 if (intentData.type == SignerType.SIGN_EVENT) {
@@ -351,7 +352,7 @@ fun sendResult(
         } else if (!intentData.callBackUrl.isNullOrBlank()) {
             if (intentData.returnType == ReturnType.SIGNATURE) {
                 val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(value))
+                intent.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
                 context.startActivity(intent)
             } else {
                 if (intentData.compression == CompressionType.GZIP) {
@@ -365,11 +366,11 @@ fun sendResult(
                     val compressedData = byteArrayOutputStream.toByteArray()
                     val encodedString = Base64.getEncoder().encodeToString(compressedData)
                     val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse(intentData.callBackUrl + Uri.encode("Signer1$encodedString"))
+                    intent.data = (intentData.callBackUrl + Uri.encode("Signer1$encodedString")).toUri()
                     context.startActivity(intent)
                 } else {
                     val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = Uri.parse(intentData.callBackUrl + Uri.encode(event))
+                    intent.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
                     context.startActivity(intent)
                 }
             }
@@ -392,7 +393,7 @@ fun sendResult(
 
             clipboardManager.setText(AnnotatedString(result))
 
-            NostrSigner.getInstance().applicationIOScope.launch(Dispatchers.Main) {
+            NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
                 Toast.makeText(
                     context,
                     message,
@@ -461,7 +462,7 @@ private fun askNotificationPermission(
 }
 
 fun Color.Companion.fromHex(colorString: String) = try {
-    Color(android.graphics.Color.parseColor("#$colorString"))
+    Color("#$colorString".toColorInt())
 } catch (e: Exception) {
     Log.e("Color", "Failed to parse color: $colorString", e)
     Unspecified
@@ -481,7 +482,6 @@ fun MainScreen(
     packageName: String?,
     appName: String?,
     route: MutableState<String?>,
-    database: AppDatabase,
     navController: NavHostController,
     storageHelper: SimpleStorageHelper,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
@@ -522,7 +522,7 @@ fun MainScreen(
                     },
                 )
 
-                NostrSigner.getInstance().fetchProfileData(
+                NostrSigner.instance.fetchProfileData(
                     account = account,
                     onPictureFound = {
                         profileUrl = it
@@ -612,7 +612,7 @@ fun MainScreen(
                             if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/")) {
                                 launch(Dispatchers.IO) {
                                     navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                        val application = database.applicationDao().getByKey(packageName)?.application
+                                        val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
                                         title = if (destinationRoute.startsWith("Activity/")) {
                                             "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                         } else {
@@ -620,7 +620,7 @@ fun MainScreen(
                                         }
                                     }
                                     navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                        val application = database.applicationDao().getByKey(packageName)?.application
+                                        val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
                                         title = if (destinationRoute.startsWith("Activity/")) {
                                             "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                         } else {
@@ -635,7 +635,7 @@ fun MainScreen(
                             } else {
                                 launch(Dispatchers.IO) {
                                     if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
-                                        val application = database.applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
+                                        val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
                                         val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
                                         title = if (titleTemp.isBlank()) {
                                             routes.find { it.route == destinationRoute }?.title ?: ""
@@ -857,7 +857,6 @@ fun MainScreen(
                             packageName,
                             appName,
                             account,
-                            database,
                             navController,
                             onRemoveIntentData,
                             onLoading = {
@@ -882,7 +881,6 @@ fun MainScreen(
                                 .padding(top = verticalPadding * 1.5f),
                             account = account,
                             navController = navController,
-                            database = database,
                         )
                     },
                 )
@@ -942,7 +940,6 @@ fun MainScreen(
                                 account = account,
                                 selectedPackage = packageName,
                                 navController = navController,
-                                database = database,
                             )
                         }
                     },
@@ -1068,7 +1065,6 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
                         NewNsecBunkerScreen(
-                            database = database,
                             account = account,
                             accountStateViewModel = accountStateViewModel,
                             navController = navController,
@@ -1092,7 +1088,6 @@ fun MainScreen(
                         it.arguments?.getString("key")?.let { key ->
                             val scrollState = rememberScrollState()
                             NewNsecBunkerCreatedScreen(
-                                database = database,
                                 account = account,
                                 key = key,
                                 modifier =
@@ -1114,7 +1109,7 @@ fun MainScreen(
                     content = {
                         it.arguments?.getString("key")?.let { key ->
                             ActivityScreen(
-                                database = database,
+                                account = account,
                                 key = key,
                                 paddingValues = PaddingValues(
                                     top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
@@ -1164,7 +1159,6 @@ fun MainScreen(
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f)
                                     .imePadding(),
-                                database = database,
                                 key = key,
                                 accountStateViewModel = accountStateViewModel,
                                 account = account,
@@ -1276,7 +1270,7 @@ fun MainScreen(
                                 LocalPreferences.updateProxy(context, true, it)
                                 scope.launch(Dispatchers.IO) {
                                     NotificationDataSource.stopSync()
-                                    NostrSigner.getInstance().checkForNewRelays()
+                                    NostrSigner.instance.checkForNewRelays()
                                     NotificationDataSource.start()
                                     scope.launch {
                                         navController.navigate(Route.Settings.route) {

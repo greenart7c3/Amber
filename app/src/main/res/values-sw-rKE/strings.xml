@@ -504,4 +504,6 @@
     <string name="zapstore">Zapstore</string>
     <string name="zapstore_website">https://zapstore.dev</string>
     <string name="discover_more">Discover more Nostr apps for android at</string>
+    <string name="backup">Backup</string>
+    <string name="qrCode">QR Code</string>
 </resources>

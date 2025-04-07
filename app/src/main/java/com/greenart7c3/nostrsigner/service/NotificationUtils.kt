@@ -26,7 +26,6 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.graphics.drawable.BitmapDrawable
-import android.net.Uri
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
@@ -64,7 +63,6 @@ object NotificationUtils {
         id: String,
         messageBody: String,
         messageTitle: String,
-        uri: String,
         channelId: String,
         applicationContext: Context,
         bunkerRequest: BunkerRequest,
@@ -74,7 +72,6 @@ object NotificationUtils {
             messageBody = messageBody,
             messageTitle = messageTitle,
             picture = null,
-            uri = uri,
             channelId,
             applicationContext = applicationContext,
             bunkerRequest,
@@ -86,7 +83,6 @@ object NotificationUtils {
         messageBody: String,
         messageTitle: String,
         picture: BitmapDrawable?,
-        uri: String,
         channelId: String,
         applicationContext: Context,
         bunkerRequest: BunkerRequest,
@@ -99,8 +95,7 @@ object NotificationUtils {
             }
         }
 
-        val contentIntent = Intent(applicationContext, MainActivity::class.java).apply { data = Uri.parse(uri) }
-        contentIntent.putExtra("bunker", bunkerRequest.toJson())
+        val contentIntent = Intent(applicationContext, MainActivity::class.java)
         contentIntent.putExtra("route", Route.IncomingRequest.route)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val contentPendingIntent =

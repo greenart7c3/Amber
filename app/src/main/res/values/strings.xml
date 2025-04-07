@@ -512,4 +512,7 @@
     <string name="hashtags">"Hashtags: "</string>
     <string name="relays_text">"Relays: "</string>
     <string name="connected_app_warning">Some applications may not work if you try to reuse your bunker URI. Delete this application and create a new one in case the login is not working.</string>
+    <string name="zapstore">Zapstore</string>
+    <string name="zapstore_website">https://zapstore.dev</string>
+    <string name="discover_more">Discover more Nostr apps for android at</string>
 </resources>

@@ -5,6 +5,7 @@
     <queries>
         <package android:name="com.greenart7c3.nostrsigner.debug"/>
         <package android:name="com.greenart7c3.nostrsigner"/>
+        <package android:name="dev.zapstore.app"/>
     </queries>
 
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />

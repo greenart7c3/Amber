@@ -14,9 +14,16 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -120,7 +127,39 @@ fun NewApplicationScreen(
         )
 
         Text(
-            stringResource(R.string.nsecbunker_description),
+            modifier = Modifier.padding(bottom = 20.dp),
+            text = stringResource(R.string.nsecbunker_description),
+        )
+
+        Text(
+            buildAnnotatedString {
+                append(stringResource(R.string.discover_more))
+                withLink(
+                    LinkAnnotation.Url(
+                        "https://" + stringResource(R.string.nostr_app),
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                textDecoration = TextDecoration.Underline,
+                            ),
+                        ),
+                    ),
+                ) {
+                    append(" " + stringResource(R.string.nostr_app))
+                }
+                append(" or ")
+                withLink(
+                    LinkAnnotation.Url(
+                        if (NostrSigner.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
+                        styles = TextLinkStyles(
+                            style = SpanStyle(
+                                textDecoration = TextDecoration.Underline,
+                            ),
+                        ),
+                    ),
+                ) {
+                    append(stringResource(R.string.zapstore))
+                }
+            },
         )
     }
 }

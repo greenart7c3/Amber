@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Context
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -66,6 +67,19 @@ fun PermissionsScreen(
                     ) {
                         append(" " + stringResource(R.string.nostr_app))
                     }
+                    append(" or ")
+                    withLink(
+                        LinkAnnotation.Url(
+                            if (NostrSigner.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
+                            styles = TextLinkStyles(
+                                style = SpanStyle(
+                                    textDecoration = TextDecoration.Underline,
+                                ),
+                            ),
+                        ),
+                    ) {
+                        append(stringResource(R.string.zapstore))
+                    }
                 },
             )
         } else {
@@ -117,5 +131,14 @@ fun PermissionsScreen(
                 }
             }
         }
+    }
+}
+
+fun Context.isZapstoreInstalled(): Boolean {
+    return try {
+        packageManager.getPackageInfo("dev.zapstore.app", 0)
+        true
+    } catch (_: Exception) {
+        false
     }
 }

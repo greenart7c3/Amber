@@ -10,7 +10,6 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
-import com.greenart7c3.nostrsigner.models.BunkerResponse
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -23,6 +22,8 @@ import com.greenart7c3.nostrsigner.service.IntentUtils.getUnsignedEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.channels.Channel
@@ -106,7 +107,7 @@ object BunkerRequestUtils {
         when (bunkerRequest.encryptionType) {
             EncryptionType.NIP04 -> {
                 account.signer.nip04Encrypt(
-                    ObjectMapper().writeValueAsString(bunkerResponse),
+                    EventMapper.mapper.writeValueAsString(bunkerResponse),
                     bunkerRequest.localKey,
                 ) { encryptedContent ->
                     sendBunkerResponse(
@@ -122,7 +123,7 @@ object BunkerRequestUtils {
             }
             EncryptionType.NIP44 -> {
                 account.signer.nip44Encrypt(
-                    ObjectMapper().writeValueAsString(bunkerResponse),
+                    EventMapper.mapper.writeValueAsString(bunkerResponse),
                     bunkerRequest.localKey,
                 ) { encryptedContent ->
                     sendBunkerResponse(

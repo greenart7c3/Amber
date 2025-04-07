@@ -3,6 +3,8 @@ package com.greenart7c3.nostrsigner.relays
 import android.Manifest
 import android.app.Notification
 import android.app.NotificationManager
+import android.app.PendingIntent
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
 import androidx.core.app.ActivityCompat
@@ -10,6 +12,7 @@ import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.vitorpamplona.ammolite.relays.RelayStats
@@ -45,6 +48,13 @@ object AmberRelayStats {
         notificationManager.createNotificationChannelGroup(group)
         notificationManager.createNotificationChannel(channel)
 
+        val localConnected = NostrSigner.instance.client.connectedRelays()
+        val localAvailable = NostrSigner.instance.client.getAll().size
+        if (localAvailable != available || localConnected != connected) {
+            available = localAvailable
+            connected = localConnected
+        }
+
         val message = NostrSigner.instance.client.getAll().joinToString("\n") {
             val connected = "${it.url} ${if (it.isConnected()) NostrSigner.instance.getString(R.string.connected) else NostrSigner.instance.getString(R.string.disconnected)}\n"
             val ping = NostrSigner.instance.getString(R.string.ping_ms, RelayStats.get(it.url).pingInMs)
@@ -68,6 +78,16 @@ object AmberRelayStats {
             connected + ping + sent + received + failed + error
         }
 
+        val contentIntent = Intent(NostrSigner.instance, MainActivity::class.java)
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val contentPendingIntent =
+            PendingIntent.getActivity(
+                NostrSigner.instance,
+                0,
+                contentIntent,
+                PendingIntent.FLAG_MUTABLE,
+            )
+
         val notificationBuilder =
             NotificationCompat.Builder(NostrSigner.instance, channelId)
                 .setGroup(group.id)
@@ -78,6 +98,7 @@ object AmberRelayStats {
                 )
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)
+                .setContentIntent(contentPendingIntent)
 
         return notificationBuilder.build()
     }

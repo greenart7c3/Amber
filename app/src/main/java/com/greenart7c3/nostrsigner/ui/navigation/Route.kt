@@ -59,6 +59,12 @@ sealed class Route(
         icon = R.drawable.settings,
     )
 
+    data object QrCode : Route(
+        title = NostrSigner.instance.getString(R.string.qrCode),
+        route = "qrcode/{content}",
+        icon = R.drawable.settings,
+    )
+
     data object ActiveRelays : Route(
         title = NostrSigner.instance.getString(R.string.relays),
         route = "ActiveRelays",

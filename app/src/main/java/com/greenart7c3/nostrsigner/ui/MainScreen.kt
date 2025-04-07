@@ -83,7 +83,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import coil3.compose.AsyncImage
-import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -111,6 +110,7 @@ import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
+import com.greenart7c3.nostrsigner.ui.actions.QrCodeScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -483,7 +483,6 @@ fun MainScreen(
     appName: String?,
     route: MutableState<String?>,
     navController: NavHostController,
-    storageHelper: SimpleStorageHelper,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
 ) {
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -609,8 +608,11 @@ fun MainScreen(
                     title = {
                         var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
                         LaunchedEffect(destinationRoute) {
-                            if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/")) {
+                            if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/") || destinationRoute.startsWith("qrcode/")) {
                                 launch(Dispatchers.IO) {
+                                    navBackStackEntry?.arguments?.getString("content")?.let {
+                                        title = Route.QrCode.title
+                                    }
                                     navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
                                         val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
                                         title = if (destinationRoute.startsWith("Activity/")) {
@@ -813,7 +815,6 @@ fun MainScreen(
                             accountViewModel = accountStateViewModel,
                             scope = scope,
                             navController = navController,
-                            storageHelper = storageHelper,
                             onFinish = {
                                 navController.navigate(Route.Applications.route) {
                                     popUpTo(0)
@@ -867,6 +868,23 @@ fun MainScreen(
                 )
 
                 composable(
+                    Route.QrCode.route,
+                    arguments = listOf(navArgument("content") { type = NavType.StringType }),
+                    content = {
+                        it.arguments?.getString("content")?.let {
+                            QrCodeScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                content = it,
+                            )
+                        }
+                    },
+                )
+
+                composable(
                     Route.Applications.route,
                     content = {
                         val scrollState = rememberScrollState()
@@ -915,8 +933,10 @@ fun MainScreen(
                                 .verticalScroll(scrollState)
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f),
+                                .padding(top = verticalPadding * 1.5f)
+                                .imePadding(),
                             account,
+                            navController,
                         )
                     },
                 )

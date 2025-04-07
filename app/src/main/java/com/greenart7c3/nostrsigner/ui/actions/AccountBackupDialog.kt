@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Visibility
@@ -50,6 +51,7 @@ import androidx.compose.ui.platform.LocalAutofillTree
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
@@ -62,13 +64,18 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.NavHostController
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
+import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
@@ -80,6 +87,7 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
@@ -87,7 +95,9 @@ import kotlinx.coroutines.launch
 fun AccountBackupScreen(
     modifier: Modifier,
     account: Account,
+    navController: NavHostController,
 ) {
+    var isLoading by remember { mutableStateOf(false) }
     var showSeedWords by remember { mutableStateOf(false) }
     if (showSeedWords) {
         ModalBottomSheet(
@@ -131,147 +141,162 @@ fun AccountBackupScreen(
             Column(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                val content = stringResource(R.string.account_backup_tips_md)
+                if (isLoading) {
+                    CenterCircularProgressIndicator(Modifier)
+                } else {
+                    val content = stringResource(R.string.account_backup_tips_md)
 
-                val astNode =
-                    remember {
-                        CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content)
+                    val astNode =
+                        remember {
+                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content)
+                        }
+
+                    RichText(
+                        style = RichTextStyle().resolveDefaults(),
+                        modifier = Modifier.padding(top = 16.dp),
+                    ) {
+                        BasicMarkdown(astNode)
                     }
 
-                RichText(
-                    style = RichTextStyle().resolveDefaults(),
-                    modifier = Modifier.padding(top = 16.dp),
-                ) {
-                    BasicMarkdown(astNode)
-                }
+                    Spacer(modifier = Modifier.height(30.dp))
 
-                Spacer(modifier = Modifier.height(30.dp))
-
-                if (account.seedWords.isNotEmpty()) {
-                    val keyguardLauncher =
-                        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-                            if (result.resultCode == Activity.RESULT_OK) {
-                                showSeedWords = true
-                            }
-                        }
-                    val context = LocalContext.current
-
-                    AmberButton(
-                        onClick = {
-                            authenticate(
-                                title = context.getString(R.string.show_seed_words),
-                                context = context,
-                                keyguardLauncher = keyguardLauncher,
-                                onApproved = {
+                    if (account.seedWords.isNotEmpty()) {
+                        val keyguardLauncher =
+                            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                                if (result.resultCode == Activity.RESULT_OK) {
                                     showSeedWords = true
-                                },
-                                onError = { _, message ->
-                                    Toast.makeText(
-                                        context,
-                                        message,
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                },
+                                }
+                            }
+                        val context = LocalContext.current
+
+                        AmberButton(
+                            onClick = {
+                                authenticate(
+                                    title = context.getString(R.string.show_seed_words),
+                                    context = context,
+                                    keyguardLauncher = keyguardLauncher,
+                                    onApproved = {
+                                        showSeedWords = true
+                                        account.didBackup = true
+                                        LocalPreferences.saveToEncryptedStorage(context, account)
+                                    },
+                                    onError = { _, message ->
+                                        Toast.makeText(
+                                            context,
+                                            message,
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    },
+                                )
+                            },
+                            text = stringResource(R.string.show_seed_words),
+                        )
+                    }
+                    NSecCopyButton(account)
+                    NSecQrButton(account)
+
+                    Spacer(modifier = Modifier.height(30.dp))
+
+                    val content1 = stringResource(R.string.account_backup_tips3_md)
+
+                    val astNode1 =
+                        remember {
+                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                        }
+
+                    RichText(
+                        style = RichTextStyle().resolveDefaults(),
+                    ) {
+                        BasicMarkdown(astNode1)
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    val password = remember { mutableStateOf(TextFieldValue("")) }
+                    var errorMessage by remember { mutableStateOf("") }
+                    var showCharsPassword by remember { mutableStateOf(false) }
+
+                    val autofillNode =
+                        AutofillNode(
+                            autofillTypes = listOf(AutofillType.Password),
+                            onFill = { password.value = TextFieldValue(it) },
+                        )
+                    val autofill = LocalAutofill.current
+                    LocalAutofillTree.current += autofillNode
+                    val keyboardController = LocalSoftwareKeyboardController.current
+
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .onGloballyPositioned { coordinates ->
+                                autofillNode.boundingBox = coordinates.boundsInWindow()
+                            }
+                            .onFocusChanged { focusState ->
+                                autofill?.run {
+                                    if (focusState.isFocused) {
+                                        requestAutofillForNode(autofillNode)
+                                    } else {
+                                        cancelAutofillForNode(autofillNode)
+                                    }
+                                }
+                            },
+                        value = password.value,
+                        onValueChange = {
+                            password.value = it
+                            if (errorMessage.isNotEmpty()) {
+                                errorMessage = ""
+                            }
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            autoCorrectEnabled = false,
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Done,
+                        ),
+                        keyboardActions = KeyboardActions(
+                            onDone = {
+                                if (password.value.text.isBlank()) {
+                                    errorMessage = NostrSigner.instance.getString(R.string.password_is_required)
+                                }
+                                keyboardController?.hide()
+                            },
+                        ),
+                        placeholder = {
+                            Text(
+                                text = stringResource(R.string.ncryptsec_password),
                             )
                         },
-                        text = stringResource(R.string.show_seed_words),
-                    )
-                }
-                NSecCopyButton(account)
-                NSecQrButton(account)
-
-                Spacer(modifier = Modifier.height(30.dp))
-
-                val content1 = stringResource(R.string.account_backup_tips3_md)
-
-                val astNode1 =
-                    remember {
-                        CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                    }
-
-                RichText(
-                    style = RichTextStyle().resolveDefaults(),
-                ) {
-                    BasicMarkdown(astNode1)
-                }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                val password = remember { mutableStateOf(TextFieldValue("")) }
-                var errorMessage by remember { mutableStateOf("") }
-                var showCharsPassword by remember { mutableStateOf(false) }
-
-                val autofillNode =
-                    AutofillNode(
-                        autofillTypes = listOf(AutofillType.Password),
-                        onFill = { password.value = TextFieldValue(it) },
-                    )
-                val autofill = LocalAutofill.current
-                LocalAutofillTree.current += autofillNode
-
-                OutlinedTextField(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .onGloballyPositioned { coordinates ->
-                            autofillNode.boundingBox = coordinates.boundsInWindow()
-                        }
-                        .onFocusChanged { focusState ->
-                            autofill?.run {
-                                if (focusState.isFocused) {
-                                    requestAutofillForNode(autofillNode)
-                                } else {
-                                    cancelAutofillForNode(autofillNode)
+                        trailingIcon = {
+                            Row {
+                                IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                    Icon(
+                                        imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                        contentDescription = if (showCharsPassword) {
+                                            stringResource(R.string.show_password)
+                                        } else {
+                                            stringResource(
+                                                R.string.hide_password,
+                                            )
+                                        },
+                                    )
                                 }
                             }
                         },
-                    value = password.value,
-                    onValueChange = {
-                        password.value = it
-                        if (errorMessage.isNotEmpty()) {
-                            errorMessage = ""
-                        }
-                    },
-                    keyboardOptions = KeyboardOptions(
-                        autoCorrectEnabled = false,
-                        keyboardType = KeyboardType.Password,
-                        imeAction = ImeAction.Go,
-                    ),
-                    placeholder = {
-                        Text(
-                            text = stringResource(R.string.ncryptsec_password),
-                        )
-                    },
-                    trailingIcon = {
-                        Row {
-                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
-                                Icon(
-                                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                    contentDescription = if (showCharsPassword) {
-                                        stringResource(R.string.show_password)
-                                    } else {
-                                        stringResource(
-                                            R.string.hide_password,
-                                        )
-                                    },
-                                )
-                            }
-                        }
-                    },
-                    visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                )
-
-                if (errorMessage.isNotBlank()) {
-                    Text(
-                        text = errorMessage,
-                        color = MaterialTheme.colorScheme.error,
-                        style = MaterialTheme.typography.bodySmall,
+                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
                     )
+
+                    if (errorMessage.isNotBlank()) {
+                        Text(
+                            text = errorMessage,
+                            color = MaterialTheme.colorScheme.error,
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(10.dp))
+
+                    EncryptNSecCopyButton(account, password, onLoading = { isLoading = it })
+                    EncryptNSecQRButton(account, password, onLoading = { isLoading = it }, navController = navController)
                 }
-
-                Spacer(modifier = Modifier.height(10.dp))
-
-                EncryptNSecCopyButton(account, password)
-                EncryptNSecQRButton(account, password)
             }
         }
     }
@@ -289,6 +314,8 @@ private fun NSecQrButton(account: Account) {
         QrCodeDialog(
             content = account.signer.keyPair.privKey!!.toNsec(),
         ) {
+            account.didBackup = true
+            LocalPreferences.saveToEncryptedStorage(context, account)
             showDialog = false
         }
     }
@@ -322,6 +349,33 @@ private fun NSecQrButton(account: Account) {
         },
         text = stringResource(id = R.string.show_qr_code),
     )
+}
+
+@Composable
+fun QrCodeScreen(
+    modifier: Modifier,
+    content: String,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxSize(),
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = Size35dp),
+            ) {
+                QrCodeDrawer(content, Modifier.fillMaxSize())
+            }
+        }
+    }
 }
 
 @Composable
@@ -390,6 +444,8 @@ private fun NSecCopyButton(account: Account) {
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
+                    account.didBackup = true
+                    LocalPreferences.saveToEncryptedStorage(context, account)
                     copyNSec(context, scope, account, clipboardManager)
                 },
                 onError = { _, message ->
@@ -414,6 +470,8 @@ private fun copyNSec(
     clipboardManager: ClipboardManager,
 ) {
     account.signer.keyPair.privKey?.let {
+        account.didBackup = true
+        LocalPreferences.saveToEncryptedStorage(context, account)
         clipboardManager.setText(AnnotatedString(it.toNsec()))
         scope.launch {
             Toast.makeText(
@@ -429,6 +487,7 @@ private fun copyNSec(
 private fun EncryptNSecCopyButton(
     account: Account,
     password: MutableState<TextFieldValue>,
+    onLoading: (Boolean) -> Unit,
 ) {
     val clipboardManager = LocalClipboardManager.current
     val context = LocalContext.current
@@ -438,7 +497,7 @@ private fun EncryptNSecCopyButton(
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                encryptCopyNSec(password, context, scope, account, clipboardManager)
+                encryptCopyNSec(password, context, scope, account, clipboardManager, onLoading)
             }
         }
 
@@ -448,7 +507,7 @@ private fun EncryptNSecCopyButton(
                 title = context.getString(R.string.copy_my_secret_key),
                 context = context,
                 keyguardLauncher = keyguardLauncher,
-                onApproved = { encryptCopyNSec(password, context, scope, account, clipboardManager) },
+                onApproved = { encryptCopyNSec(password, context, scope, account, clipboardManager, onLoading) },
                 onError = { _, message ->
                     scope.launch {
                         Toast.makeText(
@@ -471,27 +530,25 @@ private fun EncryptNSecCopyButton(
 private fun EncryptNSecQRButton(
     account: Account,
     password: MutableState<TextFieldValue>,
+    onLoading: (Boolean) -> Unit,
+    navController: NavHostController,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    var showDialog by remember {
-        mutableStateOf(false)
-    }
-
-    if (showDialog) {
-        QrCodeDialog(
-            content = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text),
-        ) {
-            showDialog = false
-        }
-    }
-
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                showDialog = true
+                scope.launch(Dispatchers.IO) {
+                    onLoading(true)
+                    val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
+                    account.didBackup = true
+                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
+                    }
+                    onLoading(false)
+                }
             }
         }
 
@@ -501,7 +558,18 @@ private fun EncryptNSecQRButton(
                 title = context.getString(R.string.copy_my_secret_key),
                 context = context,
                 keyguardLauncher = keyguardLauncher,
-                onApproved = { showDialog = true },
+                onApproved = {
+                    scope.launch(Dispatchers.IO) {
+                        onLoading(true)
+                        val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
+                        account.didBackup = true
+                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+                            navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
+                        }
+                        onLoading(false)
+                    }
+                },
                 onError = { _, message ->
                     scope.launch {
                         Toast.makeText(
@@ -524,6 +592,7 @@ private fun encryptCopyNSec(
     scope: CoroutineScope,
     account: Account,
     clipboardManager: ClipboardManager,
+    onLoading: (Boolean) -> Unit,
 ) {
     if (password.value.text.isBlank()) {
         scope.launch {
@@ -535,24 +604,31 @@ private fun encryptCopyNSec(
                 .show()
         }
     } else {
-        account.signer.keyPair.privKey?.let {
-            try {
-                val key = Nip49().encrypt(it.toHexKey(), password.value.text)
-                clipboardManager.setText(AnnotatedString(key))
-                scope.launch {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.secret_key_copied_to_clipboard),
-                        Toast.LENGTH_SHORT,
-                    ).show()
-                }
-            } catch (e: Exception) {
-                scope.launch {
-                    Toast.makeText(
-                        context,
-                        context.getString(R.string.failed_to_encrypt_key),
-                        Toast.LENGTH_SHORT,
-                    ).show()
+        scope.launch(Dispatchers.IO) {
+            onLoading(true)
+            account.signer.keyPair.privKey?.let {
+                try {
+                    val key = Nip49().encrypt(it.toHexKey(), password.value.text)
+                    account.didBackup = true
+                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    clipboardManager.setText(AnnotatedString(key))
+                    scope.launch {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.secret_key_copied_to_clipboard),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                    onLoading(false)
+                } catch (_: Exception) {
+                    onLoading(false)
+                    scope.launch {
+                        Toast.makeText(
+                            context,
+                            context.getString(R.string.failed_to_encrypt_key),
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
                 }
             }
         }

@@ -142,6 +142,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         allowNewConnections = false,
                         signPolicy = 0,
                         seedWords = emptySet(),
+                        didBackup = false,
                     )
                 } else if (key.startsWith("nsec")) {
                     Account(
@@ -153,6 +154,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         allowNewConnections = false,
                         signPolicy = 0,
                         seedWords = emptySet(),
+                        didBackup = false,
                     )
                 } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
                     val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
@@ -165,6 +167,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         allowNewConnections = false,
                         signPolicy = 0,
                         seedWords = emptySet(),
+                        didBackup = false,
                     )
                 } else {
                     Account(
@@ -176,6 +179,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         allowNewConnections = false,
                         signPolicy = 0,
                         seedWords = emptySet(),
+                        didBackup = false,
                     )
                 }
             return account.signer.keyPair.privKey != null
@@ -204,6 +208,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     allowNewConnections = false,
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
+                    didBackup = false,
                 )
             } else if (key.startsWith("nsec")) {
                 Account(
@@ -215,6 +220,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     allowNewConnections = false,
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
+                    didBackup = false,
                 )
             } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
                 val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
@@ -227,6 +233,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     allowNewConnections = false,
                     signPolicy = signPolicy,
                     seedWords = key.split(" ").toSet(),
+                    didBackup = false,
                 )
             } else {
                 Account(
@@ -238,6 +245,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     allowNewConnections = false,
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
+                    didBackup = false,
                 )
             }
 
@@ -263,6 +271,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             allowNewConnections = false,
             signPolicy = signPolicy,
             seedWords = seedWords,
+            didBackup = false,
         )
         LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
         startUI(account, null)

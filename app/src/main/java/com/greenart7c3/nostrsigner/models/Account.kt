@@ -19,6 +19,7 @@ class Account(
     var allowNewConnections: Boolean,
     var signPolicy: Int,
     var seedWords: Set<String>,
+    var didBackup: Boolean,
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
     val hexKey: HexKey = signer.keyPair.pubKey.toHexKey()

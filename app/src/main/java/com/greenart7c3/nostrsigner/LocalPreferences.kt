@@ -53,6 +53,7 @@ private object PrefKeys {
     const val LAST_METADATA_UPDATE = "last_metadata_update"
     const val LAST_CHECK = "last_check"
     const val NCRYPT_SEC = "ncrypt_sec"
+    const val DID_BACKUP = "did_backup"
 }
 
 @Immutable
@@ -333,6 +334,7 @@ object LocalPreferences {
                 putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
                 putInt(PrefKeys.SIGN_POLICY, account.signPolicy)
                 putString(PrefKeys.SEED_WORDS2, account.seedWords.joinToString(separator = " ") { it })
+                putBoolean(PrefKeys.DID_BACKUP, account.didBackup)
             }
         }
     }
@@ -416,6 +418,7 @@ object LocalPreferences {
             val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
             val savedSeedWords = getString(PrefKeys.SEED_WORDS2, null)
             val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
+            val didBackup = getBoolean(PrefKeys.DID_BACKUP, false)
 
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =
@@ -428,6 +431,7 @@ object LocalPreferences {
                     allowNewConnections = allowNewConnections,
                     signPolicy = signPolicy,
                     seedWords = seedWords,
+                    didBackup = didBackup,
                 )
             accountCache.put(npub, account)
             return account

@@ -92,12 +92,6 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import com.anggrayudi.storage.SimpleStorageHelper
-import com.anggrayudi.storage.file.CreateMode
-import com.anggrayudi.storage.file.makeFile
-import com.anggrayudi.storage.file.openOutputStream
-import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
@@ -108,12 +102,10 @@ import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
 import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.material3.RichText
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.RandomInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -219,7 +211,6 @@ fun MainPage(
 @Composable
 fun MainLoginPage(
     accountViewModel: AccountStateViewModel,
-    storageHelper: SimpleStorageHelper,
     navController: NavHostController,
 ) {
     val scope = rememberCoroutineScope()
@@ -245,7 +236,6 @@ fun MainLoginPage(
                     accountViewModel = accountViewModel,
                     scope = scope,
                     navController = navController,
-                    storageHelper = storageHelper,
                     onFinish = {},
                 )
             },
@@ -270,7 +260,6 @@ fun SignUpPage(
     accountViewModel: AccountStateViewModel,
     scope: CoroutineScope,
     navController: NavController,
-    storageHelper: SimpleStorageHelper,
     onFinish: () -> Unit,
 ) {
     var loading by remember { mutableStateOf(false) }
@@ -279,35 +268,12 @@ fun SignUpPage(
     val percentage = (screenWidthDp * 0.93f)
     val verticalPadding = (screenWidthDp - percentage)
     var nickname by remember { mutableStateOf(TextFieldValue()) }
-    var password by remember { mutableStateOf(TextFieldValue()) }
-    var password2 by remember { mutableStateOf(TextFieldValue()) }
     var keyPair by remember { mutableStateOf(KeyPair()) }
     val state = rememberPagerState {
-        3
+        2
     }
     val context = LocalContext.current
-    var checked by remember { mutableStateOf(false) }
     var seedWords by remember { mutableStateOf(setOf<String>()) }
-    var enabled by remember { mutableStateOf(false) }
-    storageHelper.onFolderSelected = { _, folder ->
-        scope.launch(Dispatchers.IO) {
-            loading = true
-            val ncryptsec = Nip49().encrypt(keyPair.privKey!!.toHexKey(), password.text)
-            val ncryptsecFile = folder.makeFile(
-                context,
-                mimeType = "application/text",
-                name = "${keyPair.pubKey.toNpub()}.ncryptsec",
-                mode = CreateMode.REPLACE,
-            )
-            ncryptsecFile?.let {
-                it.openOutputStream(context, append = false).use { stream ->
-                    stream?.write(ncryptsec.toByteArray())
-                }
-            }
-            enabled = true
-            loading = false
-        }
-    }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -328,9 +294,6 @@ fun SignUpPage(
                     when (state.currentPage) {
                         0 -> {
                             Text(text = stringResource(R.string.generate_a_new_key))
-                        }
-                        1 -> {
-                            Text(text = stringResource(R.string.backup_the_nostr_account))
                         }
                         else -> {
                             Text(text = stringResource(R.string.permissions_and_connection))
@@ -372,7 +335,6 @@ fun SignUpPage(
             ) { page ->
                 when (page) {
                     0 -> {
-                        var showPassword by remember { mutableStateOf(false) }
                         val scrollState = rememberScrollState()
                         val keyboardController = LocalSoftwareKeyboardController.current
                         Column(
@@ -426,65 +388,24 @@ fun SignUpPage(
                                 keyboardOptions = KeyboardOptions(
                                     capitalization = KeyboardCapitalization.None,
                                     autoCorrectEnabled = false,
-                                    imeAction = ImeAction.Next,
-                                ),
-                                modifier = Modifier.fillMaxWidth(),
-                            )
-                            Text(
-                                text = stringResource(R.string.now_pick_a_password_we_will_use_it_to_encrypt_your_private_key_named_ncryptsec_so_you_can_store_it_safely),
-                                modifier = Modifier.padding(top = 20.dp, bottom = 8.dp),
-                            )
-                            OutlinedTextField(
-                                value = password,
-                                onValueChange = { value ->
-                                    password = value
-                                },
-                                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                trailingIcon = {
-                                    Row {
-                                        IconButton(onClick = { showPassword = !showPassword }) {
-                                            Icon(
-                                                imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                                contentDescription = if (showPassword) {
-                                                    stringResource(R.string.show_password)
-                                                } else {
-                                                    stringResource(R.string.hide_password)
-                                                },
-                                            )
-                                        }
-                                    }
-                                },
-                                placeholder = {
-                                    Text(
-                                        stringResource(R.string.password),
-                                        color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    capitalization = KeyboardCapitalization.None,
-                                    keyboardType = KeyboardType.Password,
-                                    autoCorrectEnabled = false,
                                     imeAction = ImeAction.Done,
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onDone = {
+                                        keyboardController?.hide()
+                                    },
                                 ),
                                 modifier = Modifier.fillMaxWidth(),
                             )
 
                             AmberButton(
-                                enabled = nickname.text.isNotBlank() && password.text.isNotBlank(),
+                                enabled = nickname.text.isNotBlank(),
                                 modifier = Modifier.padding(vertical = 40.dp),
                                 onClick = {
                                     if (nickname.text.isBlank()) {
                                         Toast.makeText(
                                             context,
                                             "Nickname is required",
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                        return@AmberButton
-                                    }
-                                    if (password.text.isBlank()) {
-                                        Toast.makeText(
-                                            context,
-                                            "Password is required",
                                             Toast.LENGTH_SHORT,
                                         ).show()
                                         return@AmberButton
@@ -500,169 +421,6 @@ fun SignUpPage(
                     }
 
                     1 -> {
-                        var showPassword by remember { mutableStateOf(false) }
-                        var errorMessage by remember { mutableStateOf("") }
-                        val scrollState = rememberScrollState()
-                        val keyboardController = LocalSoftwareKeyboardController.current
-                        Column(
-                            Modifier
-                                .fillMaxSize()
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
-                                .padding(it)
-                                .padding(horizontal = verticalPadding)
-                                .padding(top = verticalPadding * 1.5f)
-                                .imePadding(),
-                        ) {
-                            Text(stringResource(R.string.please_download_your_account_backup_kit_containing_the_encrypted_private_key_and_store_it_in_a_couple_of_safe_places))
-                            Spacer(Modifier.height(8.dp))
-                            Text(stringResource(R.string.please_enter_the_password_chosen_in_the_previous_step_this_prove_you_typed_and_remembered_it_correctly))
-                            Spacer(Modifier.height(8.dp))
-                            OutlinedTextField(
-                                value = password2,
-                                onValueChange = { value ->
-                                    password2 = value
-                                    if (errorMessage.isNotBlank()) {
-                                        errorMessage = ""
-                                    }
-                                },
-                                trailingIcon = {
-                                    Row {
-                                        IconButton(onClick = { showPassword = !showPassword }) {
-                                            Icon(
-                                                imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                                contentDescription = if (showPassword) {
-                                                    stringResource(R.string.show_password)
-                                                } else {
-                                                    stringResource(R.string.hide_password)
-                                                },
-                                            )
-                                        }
-                                    }
-                                },
-                                placeholder = {
-                                    Text(
-                                        stringResource(R.string.password),
-                                        color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    capitalization = KeyboardCapitalization.None,
-                                    autoCorrectEnabled = false,
-                                    imeAction = ImeAction.Next,
-                                    keyboardType = KeyboardType.Password,
-                                ),
-                                modifier = Modifier.fillMaxWidth(),
-                                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                            )
-                            Spacer(Modifier.height(8.dp))
-                            AmberButton(
-                                onClick = {
-                                    if (password2.text != password.text) {
-                                        errorMessage = "Passwords do not match"
-                                        return@AmberButton
-                                    }
-                                    storageHelper.openFolderPicker()
-                                },
-                                text = stringResource(R.string.download_backup_kit),
-                            )
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .padding(vertical = 20.dp)
-                                    .clickable {
-                                        checked = !checked
-                                    },
-                            ) {
-                                Switch(
-                                    modifier = Modifier.scale(0.85f),
-                                    checked = checked,
-                                    onCheckedChange = {
-                                        checked = it
-                                    },
-                                )
-                                Text(
-                                    modifier = Modifier
-                                        .weight(1f)
-                                        .padding(start = 8.dp),
-                                    text = stringResource(R.string.i_want_also_to_download_the_seed_version_of_my_private_key),
-                                )
-                            }
-                            if (checked) {
-                                Text(
-                                    stringResource(R.string.this_is_an_optional_additional_way_to_backup_your_private_key_write_down_on_paper_the_12_words_keeping_the_correct_order),
-                                )
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.Center,
-                                ) {
-                                    val firstColumnWords = seedWords.filterIndexed { index, _ -> index % 2 == 0 }
-                                    val secondColumnWords = seedWords.filterIndexed { index, _ -> index % 2 != 0 }
-
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                    ) {
-                                        firstColumnWords.forEachIndexed { index, word ->
-                                            OutlinedTextField(
-                                                value = word,
-                                                onValueChange = {},
-                                                modifier = Modifier.padding(8.dp),
-                                                readOnly = true,
-                                                prefix = { Text("${index * 2 + 1} - ") },
-                                            )
-                                        }
-                                    }
-
-                                    Column(
-                                        modifier = Modifier.weight(1f),
-                                        horizontalAlignment = Alignment.CenterHorizontally,
-                                    ) {
-                                        secondColumnWords.forEachIndexed { index, word ->
-                                            OutlinedTextField(
-                                                value = word,
-                                                onValueChange = {},
-                                                modifier = Modifier.padding(8.dp),
-                                                readOnly = true,
-                                                prefix = { Text("${index * 2 + 2} - ") },
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-
-                            if (errorMessage.isNotBlank()) {
-                                Text(
-                                    text = errorMessage,
-                                    color = Color.Red,
-                                )
-                            }
-
-                            AmberButton(
-                                enabled = password2.text.isNotBlank(),
-                                onClick = {
-                                    if (password2.text.isBlank()) {
-                                        errorMessage = "Password is required"
-                                        return@AmberButton
-                                    }
-
-                                    if (password2.text != password.text) {
-                                        errorMessage = "Passwords do not match"
-                                        return@AmberButton
-                                    }
-
-                                    keyboardController?.hide()
-                                    scope.launch {
-                                        state.animateScrollToPage(2)
-                                    }
-                                },
-                                text = stringResource(R.string.continue_button),
-                            )
-                        }
-                    }
-
-                    2 -> {
                         val scrollState = rememberScrollState()
                         val radioOptions = listOf(
                             TitleExplainer(
@@ -836,14 +594,6 @@ fun SignUpPage(
                                         seedWords = seedWords,
                                         name = nickname.text,
                                     )
-
-                                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
-                                        LocalPreferences.saveNcryptsec(
-                                            keyPair.pubKey.toNpub(),
-                                            keyPair.privKey!!.toHexKey(),
-                                            password.text,
-                                        )
-                                    }
 
                                     onFinish()
                                 },

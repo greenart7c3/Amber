@@ -1,17 +1,21 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -33,6 +37,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 @Composable
 fun PermissionsScreen(
@@ -45,13 +50,40 @@ fun PermissionsScreen(
     Column(
         modifier,
     ) {
+        if (!account.didBackup) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .border(
+                        2.dp,
+                        MaterialTheme.colorScheme.primary,
+                    )
+                    .padding(8.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text("Backup your account to prevent losing it.", Modifier.wrapContentSize())
+                    TextButton(
+                        onClick = {
+                            navController.navigate(Route.AccountBackup.route)
+                        },
+                        content = {
+                            Text(text = stringResource(R.string.backup), fontWeight = FontWeight.Bold)
+                        },
+                    )
+                }
+            }
+        }
+
         if (applications.value.isEmpty()) {
             Text(
+                modifier = Modifier.padding(top = 8.dp),
                 text = stringResource(R.string.congratulations_your_new_account_is_ready),
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold,
             )
-
             Text(
                 buildAnnotatedString {
                     append(stringResource(R.string.your_account_is_ready_to_use))

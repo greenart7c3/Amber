@@ -35,7 +35,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
-import com.anggrayudi.storage.SimpleStorageHelper
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
@@ -59,7 +58,6 @@ fun Intent.isLaunchFromHistory(): Boolean =
 
 class MainActivity : AppCompatActivity() {
     private lateinit var mainViewModel: MainViewModel
-    private val storageHelper = SimpleStorageHelper(this@MainActivity)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         installSplashScreen()
@@ -248,7 +246,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             }
 
-                            AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController, storageHelper)
+                            AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController)
                         }
                     }
                 }

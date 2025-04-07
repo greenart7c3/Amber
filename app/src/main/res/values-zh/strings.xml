@@ -504,4 +504,7 @@
     <string name="hashtags">"标签： "</string>
     <string name="relays_text">"中继："</string>
     <string name="connected_app_warning">某些应用可能不支持重用 bunker URI。如果出现问题，需要删除该应用并重新创建新应用。</string>
+    <string name="zapstore">Zapstore</string>
+    <string name="zapstore_website">https://zapstore.dev</string>
+    <string name="discover_more">Discover more Nostr apps for android at</string>
 </resources>

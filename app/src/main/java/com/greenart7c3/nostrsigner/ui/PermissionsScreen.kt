@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -55,8 +56,9 @@ fun PermissionsScreen(
                 Modifier
                     .fillMaxWidth()
                     .border(
-                        2.dp,
-                        MaterialTheme.colorScheme.primary,
+                        width = 1.dp,
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(8.dp),
                     )
                     .padding(8.dp),
                 contentAlignment = Alignment.Center,

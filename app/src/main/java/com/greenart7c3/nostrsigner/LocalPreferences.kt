@@ -418,7 +418,7 @@ object LocalPreferences {
             val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
             val savedSeedWords = getString(PrefKeys.SEED_WORDS2, null)
             val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
-            val didBackup = getBoolean(PrefKeys.DID_BACKUP, false)
+            val didBackup = getBoolean(PrefKeys.DID_BACKUP, true)
 
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =

@@ -1137,6 +1137,7 @@ fun MainScreen(
                                     start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
                                     end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
                                 ),
+                                topPadding = padding.calculateTopPadding() + (verticalPadding * 1.5f),
                                 modifier =
                                 Modifier
                                     .fillMaxSize(),

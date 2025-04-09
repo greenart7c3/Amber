@@ -1,6 +1,8 @@
 package com.greenart7c3.nostrsigner
 
+import android.app.AlarmManager
 import android.app.Application
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -18,6 +20,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
+import com.greenart7c3.nostrsigner.service.BootReceiver
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
@@ -82,6 +85,23 @@ class NostrSigner : Application() {
 
     override fun onCreate() {
         super.onCreate()
+
+        val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
+        val intent = Intent(this, BootReceiver::class.java)
+        intent.action = "CLEAR_LOGS"
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+
+        // Set up the alarm to trigger every 24 hours
+        val interval: Long = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
+        val triggerAtMillis = System.currentTimeMillis()
+
+        // Set a repeating alarm
+        alarmManager.setRepeating(
+            AlarmManager.RTC_WAKEUP,
+            triggerAtMillis,
+            interval,
+            pendingIntent,
+        )
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         _instance = this

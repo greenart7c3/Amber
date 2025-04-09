@@ -7,6 +7,7 @@ import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import java.util.concurrent.Executors
 
 val MIGRATION_1_2 =
     object : Migration(1, 2) {
@@ -75,12 +76,17 @@ abstract class AppDatabase : RoomDatabase() {
             npub: String,
         ): AppDatabase {
             return synchronized(this) {
+                val executor = Executors.newCachedThreadPool()
+                val transactionExecutor = Executors.newCachedThreadPool()
+
                 val instance =
                     Room.databaseBuilder(
                         context,
                         AppDatabase::class.java,
                         "amber_db_$npub",
                     )
+                        .setQueryExecutor(executor)
+                        .setTransactionExecutor(transactionExecutor)
                         .addMigrations(MIGRATION_1_2)
                         .addMigrations(MIGRATION_2_3)
                         .addMigrations(MIGRATION_3_4)
@@ -88,6 +94,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_5_6)
                         .addMigrations(MIGRATION_6_7)
                         .build()
+                instance.openHelper.writableDatabase.execSQL("VACUUM")
                 instance
             }
         }

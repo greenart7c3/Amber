@@ -4,7 +4,15 @@ import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
+import android.util.Log
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.NostrSigner
+import com.vitorpamplona.quartz.utils.TimeUtils
+import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
+import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
@@ -37,6 +45,62 @@ class BootReceiver : BroadcastReceiver() {
                         ConnectivityService::class.java,
                     ),
                 )
+            }
+            "CLEAR_LOGS" -> {
+                NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
+                        NostrSigner.instance.getDatabase(it.npub).let { database ->
+                            try {
+                                val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                                val oneWeekAgo = TimeUtils.oneWeekAgo()
+                                val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
+                                Log.d("NostrSigner", "Deleting $countHistory old history entries")
+                                if (countHistory > 0) {
+                                    var logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                    var count = 0
+                                    while (logs.isNotEmpty()) {
+                                        count++
+                                        logs.forEach { history ->
+                                            database.applicationDao().deleteHistory(history)
+                                        }
+                                        logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                    }
+                                }
+
+                                val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
+                                Log.d("NostrSigner", "Deleting $countNotification old notification entries")
+                                if (countNotification > 0) {
+                                    var logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                    var count = 0
+                                    while (logs.isNotEmpty()) {
+                                        count++
+                                        logs.forEach { history ->
+                                            database.applicationDao().deleteNotification(history)
+                                        }
+                                        logs = database.applicationDao().getOldNotification(oneWeekAgo)
+                                    }
+                                }
+
+                                val countLog = database.applicationDao().countOldLog(oneWeek)
+                                Log.d("NostrSigner", "Deleting $countLog old log entries")
+                                if (countLog > 0) {
+                                    var logs = database.applicationDao().getOldLog(oneWeek)
+                                    var count = 0
+                                    while (logs.isNotEmpty()) {
+                                        count++
+                                        logs.forEach { history ->
+                                            database.applicationDao().deleteLog(history)
+                                        }
+                                        logs = database.applicationDao().getOldLog(oneWeek)
+                                    }
+                                }
+                            } catch (e: Exception) {
+                                if (e is CancellationException) throw e
+                                Log.e("NostrSigner", "Error deleting old log entries", e)
+                            }
+                        }
+                    }
+                }
             }
         }
     }

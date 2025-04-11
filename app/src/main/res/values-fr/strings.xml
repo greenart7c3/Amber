@@ -509,4 +509,5 @@
     <string name="discover_more">Discover more Nostr apps for android at</string>
     <string name="backup">Backup</string>
     <string name="qrCode">QR Code</string>
+    <string name="make_backup_message">Don\'t lose access to your Nostr account! Create a backup</string>
 </resources>

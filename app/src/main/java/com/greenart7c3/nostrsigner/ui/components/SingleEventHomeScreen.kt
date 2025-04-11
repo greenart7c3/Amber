@@ -27,7 +27,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -266,7 +266,7 @@ fun SingleEventHomeScreen(
                         NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
                         NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
-                            HistoryEntity(
+                            HistoryEntity2(
                                 0,
                                 key,
                                 intentData.type.toString(),
@@ -409,7 +409,7 @@ fun SingleEventHomeScreen(
                         NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
                         NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
-                            HistoryEntity(
+                            HistoryEntity2(
                                 0,
                                 key,
                                 intentData.type.toString(),
@@ -582,7 +582,7 @@ fun SingleEventHomeScreen(
                             NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
                             NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
-                                HistoryEntity(
+                                HistoryEntity2(
                                     0,
                                     key,
                                     intentData.type.toString(),

@@ -1,8 +1,8 @@
 {
   "formatVersion": 1,
   "database": {
-    "version": 7,
-    "identityHash": "9dd67b37373a7835e977a442d8f67cc4",
+    "version": 8,
+    "identityHash": "cfdf9a16e23cb231083a71a03c572c39",
     "entities": [
       {
         "tableName": "application",
@@ -239,7 +239,7 @@
       },
       {
         "tableName": "history",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pkKey` TEXT NOT NULL, `type` TEXT NOT NULL, `kind` INTEGER, `time` INTEGER NOT NULL, `accepted` INTEGER NOT NULL)",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pkKey` TEXT NOT NULL, `type` TEXT NOT NULL, `kind` INTEGER, `time` INTEGER NOT NULL, `accepted` INTEGER NOT NULL, FOREIGN KEY(`pkKey`) REFERENCES `application`(`key`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "id",
@@ -304,7 +304,19 @@
             "createSql": "CREATE INDEX IF NOT EXISTS `history_by_id` ON `${TABLE_NAME}` (`id`)"
           }
         ],
-        "foreignKeys": []
+        "foreignKeys": [
+          {
+            "table": "application",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "pkKey"
+            ],
+            "referencedColumns": [
+              "key"
+            ]
+          }
+        ]
       },
       {
         "tableName": "amber_log",
@@ -349,12 +361,81 @@
         },
         "indices": [],
         "foreignKeys": []
+      },
+      {
+        "tableName": "history2",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pkKey` TEXT NOT NULL, `type` TEXT NOT NULL, `kind` INTEGER, `time` INTEGER NOT NULL, `accepted` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "pkKey",
+            "columnName": "pkKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "INTEGER",
+            "notNull": false
+          },
+          {
+            "fieldPath": "time",
+            "columnName": "time",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "accepted",
+            "columnName": "accepted",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "history_by_pk_key2",
+            "unique": false,
+            "columnNames": [
+              "pkKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `history_by_pk_key2` ON `${TABLE_NAME}` (`pkKey`)"
+          },
+          {
+            "name": "history_by_id2",
+            "unique": false,
+            "columnNames": [
+              "id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `history_by_id2` ON `${TABLE_NAME}` (`id`)"
+          }
+        ],
+        "foreignKeys": []
       }
     ],
     "views": [],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '9dd67b37373a7835e977a442d8f67cc4')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'cfdf9a16e23cb231083a71a03c572c39')"
     ]
   }
 }

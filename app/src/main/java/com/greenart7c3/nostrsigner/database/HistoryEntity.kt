@@ -35,3 +35,26 @@ data class HistoryEntity(
     val time: Long,
     val accepted: Boolean,
 )
+
+@Entity(
+    tableName = "history2",
+    indices = [
+        Index(
+            value = ["pkKey"],
+            name = "history_by_pk_key2",
+        ),
+        Index(
+            value = ["id"],
+            name = "history_by_id2",
+        ),
+    ],
+)
+data class HistoryEntity2(
+    @PrimaryKey(autoGenerate = true)
+    val id: Int,
+    val pkKey: String,
+    val type: String,
+    val kind: Int?,
+    val time: Long,
+    val accepted: Boolean,
+)

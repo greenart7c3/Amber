@@ -156,8 +156,12 @@ fun ActivityScreen(
 
     // Filtered activities based on the search query
     var filteredActivities = activities.value.filter { activity ->
-        val permission = Permission(activity.type.toLowerCase(Locale.current), activity.kind)
-        permission.toLocalizedString(context, true).contains(searchQuery, ignoreCase = true)
+        if (searchQuery.isEmpty()) {
+            true
+        } else {
+            val permission = Permission(activity.type.toLowerCase(Locale.current), activity.kind)
+            permission.toLocalizedString(context, true).contains(searchQuery, ignoreCase = true)
+        }
     }
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
 

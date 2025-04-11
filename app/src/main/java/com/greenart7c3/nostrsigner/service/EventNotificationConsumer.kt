@@ -32,7 +32,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -182,7 +182,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             NostrSigner.instance.applicationIOScope.launch {
                 database.applicationDao()
                     .addHistory(
-                        HistoryEntity(
+                        HistoryEntity2(
                             0,
                             permission.application.key,
                             type.toString().toLowerCase(Locale.current),

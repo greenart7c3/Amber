@@ -52,7 +52,7 @@ import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
@@ -237,7 +237,7 @@ fun MultiEventHomeScreen(
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    HistoryEntity(
+                                    HistoryEntity2(
                                         0,
                                         localKey,
                                         intentData.type.toString(),
@@ -319,7 +319,7 @@ fun MultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
                                 database.applicationDao().addHistory(
-                                    HistoryEntity(
+                                    HistoryEntity2(
                                         0,
                                         localKey,
                                         intentData.type.toString(),
@@ -378,7 +378,7 @@ fun MultiEventHomeScreen(
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
                                     database.applicationDao().addHistory(
-                                        HistoryEntity(
+                                        HistoryEntity2(
                                             0,
                                             localKey,
                                             intentData.type.toString(),
@@ -445,7 +445,7 @@ fun MultiEventHomeScreen(
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    HistoryEntity(
+                                    HistoryEntity2(
                                         0,
                                         localKey,
                                         intentData.type.toString(),

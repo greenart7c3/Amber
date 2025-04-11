@@ -90,7 +90,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity
+import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -284,7 +284,7 @@ fun sendResult(
             EventNotificationConsumer(context).notificationManager().cancelAll()
             database.applicationDao().insertApplicationWithPermissions(application)
             database.applicationDao().addHistory(
-                HistoryEntity(
+                HistoryEntity2(
                     0,
                     key,
                     intentData.type.toString(),
@@ -331,7 +331,7 @@ fun sendResult(
         } else if (packageName != null) {
             database.applicationDao().insertApplicationWithPermissions(application)
             database.applicationDao().addHistory(
-                HistoryEntity(
+                HistoryEntity2(
                     0,
                     key,
                     intentData.type.toString(),
@@ -1144,7 +1144,8 @@ fun MainScreen(
                                 topPadding = padding.calculateTopPadding() + (verticalPadding * 1.5f),
                                 modifier =
                                 Modifier
-                                    .fillMaxSize(),
+                                    .fillMaxSize()
+                                    .imePadding(),
                             )
                         }
                     },

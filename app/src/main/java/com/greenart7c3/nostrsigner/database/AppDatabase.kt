@@ -56,6 +56,17 @@ val MIGRATION_6_7 =
         }
     }
 
+val MIGRATION_7_8 =
+    object : Migration(7, 8) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("CREATE TABLE IF NOT EXISTS `history2` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pkKey` TEXT NOT NULL, `type` TEXT NOT NULL, `kind` INTEGER, `time` INTEGER NOT NULL, `accepted` INTEGER NOT NULL)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_pk_key2` ON `history2` (`pkKey`)")
+            db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_id2` ON `history2` (`id`)")
+            db.execSQL("INSERT INTO history2 SELECT * FROM history")
+            db.execSQL("DELETE FROM history")
+        }
+    }
+
 @Database(
     entities = [
         ApplicationEntity::class,
@@ -63,8 +74,9 @@ val MIGRATION_6_7 =
         NotificationEntity::class,
         HistoryEntity::class,
         LogEntity::class,
+        HistoryEntity2::class,
     ],
-    version = 7,
+    version = 8,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -93,6 +105,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_4_5)
                         .addMigrations(MIGRATION_5_6)
                         .addMigrations(MIGRATION_6_7)
+                        .addMigrations(MIGRATION_7_8)
                         .build()
                 instance.openHelper.writableDatabase.execSQL("VACUUM")
                 instance

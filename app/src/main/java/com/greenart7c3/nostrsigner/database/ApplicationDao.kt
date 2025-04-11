@@ -47,7 +47,7 @@ interface ApplicationDao {
         """
     SELECT a.*, MAX(h.time) as latestTime
     FROM application a
-    LEFT JOIN history h ON a.`key` = h.pkKey
+    LEFT JOIN history2 h ON a.`key` = h.pkKey
     AND a.pubKey = :pubKey
     GROUP BY a.`key`, a.description, a.icon, a.isConnected, a.name, a.pubKey, a.secret, a.signPolicy, a.url
     ORDER BY latestTime DESC
@@ -146,11 +146,11 @@ interface ApplicationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
-    suspend fun innerAddHistory(entity: HistoryEntity)
+    suspend fun innerAddHistory(entity: HistoryEntity2)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    suspend fun addHistory(entity: HistoryEntity) {
+    suspend fun addHistory(entity: HistoryEntity2) {
         try {
             innerAddHistory(entity)
         } catch (e: Exception) {
@@ -158,8 +158,8 @@ interface ApplicationDao {
         }
     }
 
-    @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
-    fun getAllHistory(pk: String): Flow<List<HistoryEntity>>
+    @Query("SELECT * FROM history2 where pkKey = :pk ORDER BY time DESC")
+    fun getAllHistory(pk: String): Flow<List<HistoryEntity2>>
 
     @Insert
     @Transaction
@@ -179,17 +179,17 @@ interface ApplicationDao {
     @Transaction
     suspend fun deletePermission(permission: ApplicationPermissionsEntity)
 
-    @Query("SELECT COUNT(*) FROM history WHERE time < :time")
+    @Query("SELECT COUNT(*) FROM history2 WHERE time < :time")
     @Transaction
     suspend fun countOldHistory(time: Long): Long
 
-    @Query("SELECT * FROM history WHERE time < :time LIMIT 100")
+    @Query("SELECT * FROM history2 WHERE time < :time LIMIT 100")
     @Transaction
-    suspend fun getOldHistory(time: Long): List<HistoryEntity>
+    suspend fun getOldHistory(time: Long): List<HistoryEntity2>
 
     @Delete
     @Transaction
-    suspend fun deleteHistory(historyEntity: HistoryEntity)
+    suspend fun deleteHistory(historyEntity: HistoryEntity2)
 
     @Query("SELECT COUNT(*) FROM notification WHERE time < :time")
     @Transaction

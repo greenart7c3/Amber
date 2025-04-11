@@ -96,6 +96,7 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
+                applicationEntity?.application?.closeApplication ?: intentData.bunkerRequest?.closeApplication ?: false,
                 paddingValues,
                 remember,
                 intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
@@ -104,7 +105,7 @@ fun SingleEventHomeScreen(
                 appName,
                 applicationName,
                 intentData.permissions,
-                { permissions, signPolicy ->
+                { permissions, signPolicy, closeApplication ->
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
                             intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
@@ -132,6 +133,7 @@ fun SingleEventHomeScreen(
                         onLoading = onLoading,
                         signPolicy = signPolicy,
                         onRemoveIntentData = onRemoveIntentData,
+                        shouldCloseApplication = closeApplication,
                     )
 
                     return@LoginWithPubKey

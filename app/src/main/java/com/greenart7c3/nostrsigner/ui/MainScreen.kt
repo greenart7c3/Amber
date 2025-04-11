@@ -139,6 +139,7 @@ fun sendResult(
     appName: String? = null,
     signPolicy: Int? = null,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    shouldCloseApplication: Boolean? = null,
 ) {
     onLoading(true)
     NostrSigner.instance.applicationIOScope.launch {
@@ -193,7 +194,7 @@ fun sendResult(
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
                     account.signPolicy,
-                    intentData.bunkerRequest?.closeApplication ?: true,
+                    shouldCloseApplication ?: intentData.bunkerRequest?.closeApplication ?: true,
                 ),
                 permissions = mutableListOf(),
             )
@@ -258,6 +259,9 @@ fun sendResult(
         }
         if ((intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) || (intentData.bunkerRequest != null && intentData.type == SignerType.CONNECT)) {
             application.application.isConnected = true
+            shouldCloseApplication?.let {
+                application.application.closeApplication = it
+            }
             if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
                 application.permissions.add(
                     ApplicationPermissionsEntity(

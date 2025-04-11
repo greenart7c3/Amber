@@ -29,6 +29,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
@@ -122,6 +123,7 @@ fun ProfilePicture(account: Account) {
 
 @Composable
 fun LoginWithPubKey(
+    shouldCloseApp: Boolean,
     paddingValues: PaddingValues,
     remember: MutableState<Boolean>,
     isBunkerRequest: Boolean,
@@ -130,7 +132,7 @@ fun LoginWithPubKey(
     appName: String,
     applicationName: String?,
     permissions: List<Permission>?,
-    onAccept: (List<Permission>?, Int) -> Unit,
+    onAccept: (List<Permission>?, Int, Boolean?) -> Unit,
     onReject: () -> Unit,
 ) {
     val localPermissions = remember {
@@ -201,7 +203,7 @@ fun LoginWithPubKey(
                 AmberButton(
                     modifier = Modifier.padding(vertical = 20.dp),
                     onClick = {
-                        onAccept(localPermissions, 1)
+                        onAccept(localPermissions, 1, null)
                     },
                     text = stringResource(R.string.grant_permissions),
                 )
@@ -271,6 +273,30 @@ fun LoginWithPubKey(
             )
 
             Spacer(modifier = Modifier.size(8.dp))
+
+            var closeApp by remember { mutableStateOf(shouldCloseApp) }
+            if (packageName == null) {
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(vertical = 8.dp)
+                        .clickable {
+                            closeApp = !closeApp
+                        },
+                ) {
+                    Text(
+                        modifier = Modifier.weight(1f),
+                        text = stringResource(R.string.close_application),
+                    )
+                    Switch(
+                        checked = closeApp,
+                        onCheckedChange = {
+                            closeApp = it
+                        },
+                    )
+                }
+            }
 
             radioOptions.forEachIndexed { index, option ->
                 Row(
@@ -379,7 +405,7 @@ fun LoginWithPubKey(
                 AmberButton(
                     modifier = Modifier.padding(vertical = 20.dp),
                     onClick = {
-                        onAccept(localPermissions, selectedOption)
+                        onAccept(localPermissions, selectedOption, closeApp)
                     },
                     text = stringResource(R.string.grant_permissions),
                 )

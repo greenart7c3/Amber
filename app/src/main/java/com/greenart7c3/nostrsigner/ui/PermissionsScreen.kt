@@ -1,7 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
-import androidx.compose.foundation.border
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -20,6 +20,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -55,24 +56,31 @@ fun PermissionsScreen(
             Box(
                 Modifier
                     .fillMaxWidth()
-                    .border(
-                        width = 1.dp,
+                    .background(
                         color = MaterialTheme.colorScheme.primary,
                         shape = RoundedCornerShape(8.dp),
-                    )
-                    .padding(8.dp),
+                    ),
                 contentAlignment = Alignment.Center,
             ) {
                 Column(
+                    modifier = Modifier.padding(16.dp),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    Text("Backup your account to prevent losing it.", Modifier.wrapContentSize())
+                    Text(
+                        text = stringResource(R.string.make_backup_message),
+                        modifier = Modifier.wrapContentSize(),
+                        color = Color.Black,
+                    )
                     TextButton(
                         onClick = {
                             navController.navigate(Route.AccountBackup.route)
                         },
                         content = {
-                            Text(text = stringResource(R.string.backup), fontWeight = FontWeight.Bold)
+                            Text(
+                                text = stringResource(R.string.backup),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black,
+                            )
                         },
                     )
                 }

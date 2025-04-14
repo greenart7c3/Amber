@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerMetadata
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EncryptionType

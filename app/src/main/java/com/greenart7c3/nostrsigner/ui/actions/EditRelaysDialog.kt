@@ -45,12 +45,12 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.RelayListener2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
+import com.greenart7c3.nostrsigner.relays.BunkerValidationRelayListener
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -363,7 +363,7 @@ suspend fun onAddRelay(
                                     ),
                                 )
                                 var filterResult = false
-                                val listener2 = RelayListener2(
+                                val listener2 = BunkerValidationRelayListener(
                                     account,
                                     onReceiveEvent = { _, _, event ->
                                         if (event.kind == 24133 && event.id == signedEvent.id) {

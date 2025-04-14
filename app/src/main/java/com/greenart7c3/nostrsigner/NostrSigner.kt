@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
+import com.greenart7c3.nostrsigner.relays.MetadataRelayListener
 import com.greenart7c3.nostrsigner.service.BootReceiver
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
@@ -31,9 +32,7 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
-import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
-import com.vitorpamplona.quartz.nip01Core.relay.RelayState
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
@@ -264,7 +263,7 @@ class NostrSigner : Application() {
         if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
             Log.d("NostrSigner", "Fetching profile data for ${account.npub}")
             LocalPreferences.setLastCheck(this, account.npub, TimeUtils.now())
-            val listener = RelayListener(
+            val listener = MetadataRelayListener(
                 account = account,
                 onReceiveEvent = { _, _, event ->
                     if (event.kind == MetadataEvent.KIND) {
@@ -330,85 +329,5 @@ class NostrSigner : Application() {
             _instance ?: synchronized(this) {
                 _instance ?: NostrSigner().also { _instance = it }
             }
-    }
-}
-
-class RelayListener(
-    val account: Account,
-    val onReceiveEvent: (relay: Relay, subscriptionId: String, event: Event) -> Unit,
-) : Relay.Listener {
-    override fun onAuth(relay: Relay, challenge: String) {
-        Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
-    }
-
-    override fun onBeforeSend(relay: Relay, event: Event) {
-        Log.d("RelayListener", "Sending event ${event.id} to relay ${relay.url}")
-    }
-
-    override fun onError(relay: Relay, subscriptionId: String, error: Error) {
-        Log.d("RelayListener", "Received error $error from subscription $subscriptionId")
-    }
-
-    override fun onEvent(relay: Relay, subscriptionId: String, event: Event, afterEOSE: Boolean) {
-        Log.d("RelayListener", "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
-        onReceiveEvent(relay, subscriptionId, event)
-    }
-
-    override fun onEOSE(relay: Relay, subscriptionId: String) {
-        Log.d("RelayListener", "Received EOSE from subscription $subscriptionId")
-    }
-
-    override fun onNotify(relay: Relay, description: String) {
-        Log.d("RelayListener", "Received notify $description from relay ${relay.url}")
-    }
-
-    override fun onRelayStateChange(relay: Relay, type: RelayState) {
-        Log.d("RelayListener", "Relay ${relay.url} state changed to $type")
-    }
-
-    override fun onSend(relay: Relay, msg: String, success: Boolean) {
-        Log.d("RelayListener", "Sent message $msg to relay ${relay.url} success: $success")
-    }
-
-    override fun onSendResponse(relay: Relay, eventId: String, success: Boolean, message: String) {
-        Log.d("RelayListener", "Sent response to event $eventId to relay ${relay.url} success: $success message: $message")
-    }
-}
-
-class RelayListener2(
-    val account: Account,
-    val onReceiveEvent: (relay: Relay, subscriptionId: String, event: Event) -> Unit,
-) : NostrClient.Listener {
-    override fun onAuth(relay: Relay, challenge: String) {
-        Log.d("RelayListener", "Received auth challenge $challenge from relay ${relay.url}")
-    }
-
-    override fun onBeforeSend(relay: Relay, event: Event) {
-        Log.d("RelayListener", "Sending event ${event.id} to relay ${relay.url}")
-    }
-
-    override fun onError(error: Error, subscriptionId: String, relay: Relay) {
-        Log.d("RelayListener", "Received error $error from subscription $subscriptionId")
-    }
-
-    override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
-        Log.d("RelayListener", "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
-        onReceiveEvent(relay, subscriptionId, event)
-    }
-
-    override fun onNotify(relay: Relay, description: String) {
-        Log.d("RelayListener", "Received notify $description from relay ${relay.url}")
-    }
-
-    override fun onRelayStateChange(type: RelayState, relay: Relay) {
-        Log.d("RelayListener", "Relay ${relay.url} state changed to $type")
-    }
-
-    override fun onSend(relay: Relay, msg: String, success: Boolean) {
-        Log.d("RelayListener", "Sent message $msg to relay ${relay.url} success: $success")
-    }
-
-    override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
-        Log.d("RelayListener", "Sent response to event $eventId to relay ${relay.url} success: $success message: $message")
     }
 }

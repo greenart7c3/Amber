@@ -509,46 +509,63 @@ object IntentUtils {
         currentLoggedInAccount: Account,
         onReady: (IntentData?) -> Unit,
     ) {
-        if (intent.data == null) {
-            onReady(
-                null,
-            )
-            return
-        }
-
-        val bunkerRequest =
-            if (intent.getStringExtra("bunker") != null) {
-                BunkerRequest.mapper.readValue(
-                    intent.getStringExtra("bunker"),
-                    BunkerRequest::class.java,
+        try {
+            if (intent.data == null) {
+                onReady(
+                    null,
                 )
+                return
+            }
+
+            val bunkerRequest =
+                if (intent.getStringExtra("bunker") != null) {
+                    BunkerRequest.mapper.readValue(
+                        intent.getStringExtra("bunker"),
+                        BunkerRequest::class.java,
+                    )
+                } else {
+                    null
+                }
+
+            var localAccount = currentLoggedInAccount
+            if (bunkerRequest != null) {
+                LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)?.let {
+                    localAccount = it
+                }
+            } else if (intent.getStringExtra("current_user") != null) {
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub)
+                }
+                LocalPreferences.loadFromEncryptedStorage(context, npub)?.let {
+                    localAccount = it
+                }
+            }
+
+            if (intent.dataString?.startsWith("nostrconnect:") == true) {
+                NostrConnectUtils.getIntentFromNostrConnect(intent, route, localAccount, onReady)
+            } else if (bunkerRequest != null) {
+                BunkerRequestUtils.getIntentDataFromBunkerRequest(context, intent, bunkerRequest, route, onReady)
+            } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
+                getIntentDataFromIntent(context, intent, packageName, route, localAccount, onReady)
             } else {
-                null
+                getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
             }
-
-        var localAccount = currentLoggedInAccount
-        if (bunkerRequest != null) {
-            LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)?.let {
-                localAccount = it
+        } catch (e: Exception) {
+            NostrSigner.instance.applicationIOScope.launch {
+                LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
+                    NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = "IntentUtils",
+                            type = "Error",
+                            message = e.stackTraceToString(),
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
             }
-        } else if (intent.getStringExtra("current_user") != null) {
-            var npub = intent.getStringExtra("current_user")
-            if (npub != null) {
-                npub = parsePubKey(npub)
-            }
-            LocalPreferences.loadFromEncryptedStorage(context, npub)?.let {
-                localAccount = it
-            }
-        }
-
-        if (intent.dataString?.startsWith("nostrconnect:") == true) {
-            NostrConnectUtils.getIntentFromNostrConnect(intent, route, localAccount, onReady)
-        } else if (bunkerRequest != null) {
-            BunkerRequestUtils.getIntentDataFromBunkerRequest(context, intent, bunkerRequest, route, onReady)
-        } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-            getIntentDataFromIntent(context, intent, packageName, route, localAccount, onReady)
-        } else {
-            getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
+            onReady(null)
         }
     }
 

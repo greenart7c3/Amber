@@ -89,7 +89,7 @@ class NostrSigner : Application() {
         val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, BootReceiver::class.java)
         intent.action = "CLEAR_LOGS"
-        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT)
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_MUTABLE)
 
         // Set up the alarm to trigger every 24 hours
         val interval: Long = 24 * 60 * 60 * 1000 // 24 hours in milliseconds

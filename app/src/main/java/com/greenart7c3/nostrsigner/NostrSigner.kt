@@ -46,7 +46,10 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class NostrSigner : Application() {
-    val client: NostrClient = NostrClient(OkHttpWebSocket.BuilderFactory())
+    val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
+        HttpClientManager.getHttpClient(useProxy)
+    }
+    val client: NostrClient = NostrClient(factory)
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
@@ -287,7 +290,7 @@ class NostrSigner : Application() {
                     read = it.read,
                     write = it.write,
                     activeTypes = it.feedTypes,
-                    socketBuilderFactory = OkHttpWebSocket.BuilderFactory(),
+                    socketBuilderFactory = factory,
                     forceProxy = account.useProxy,
                     subs = MutableSubscriptionManager(),
                 )

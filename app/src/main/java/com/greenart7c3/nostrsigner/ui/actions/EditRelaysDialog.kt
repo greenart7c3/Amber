@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.RelayListener2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
@@ -337,10 +338,13 @@ suspend fun onAddRelay(
                             )
 
                             val isPrivateIp = NostrSigner.instance.isPrivateIp(addedWSS)
+                            val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
+                                HttpClientManager.getHttpClient(useProxy)
+                            }
 
                             event?.let { signedEvent ->
                                 AmberListenerSingleton.setListener(context, accountStateViewModel)
-                                val socket = OkHttpWebSocket.BuilderFactory()
+                                val socket = factory
                                 val client = NostrClient(
                                     socket,
                                 )

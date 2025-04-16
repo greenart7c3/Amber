@@ -790,7 +790,7 @@ fun LoginPage(
                                     }
 
                                     if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                        if (accountViewModel.isValidKey(key.value.text, password.value.text)) {
+                                        if (accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)) {
                                             scope.launch {
                                                 pageState.animateScrollToPage(1)
                                             }
@@ -865,7 +865,7 @@ fun LoginPage(
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            if (accountViewModel.isValidKey(key.value.text, password.value.text)) {
+                                            if (accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)) {
                                                 scope.launch {
                                                     pageState.animateScrollToPage(1)
                                                 }
@@ -897,7 +897,7 @@ fun LoginPage(
                                 }
 
                                 if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                    if (accountViewModel.isValidKey(key.value.text, password.value.text)) {
+                                    if (accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)) {
                                         keyboardController?.hide()
                                         scope.launch {
                                             pageState.animateScrollToPage(1)
@@ -1080,7 +1080,7 @@ fun LoginPage(
                                 }
 
                                 accountViewModel.startUI(
-                                    key = key.value.text,
+                                    key = key.value.text.toLowerCase(Locale.current).trim(),
                                     password = password.value.text,
                                     route = null,
                                     useProxy = useProxy,

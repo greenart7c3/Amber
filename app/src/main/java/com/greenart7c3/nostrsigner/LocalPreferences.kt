@@ -27,26 +27,13 @@ private const val DEBUG_PLAINTEXT_PREFERENCES = false
 private const val DEBUG_PREFERENCES_NAME = "debug_prefs"
 
 private object PrefKeys {
-    const val PIN = "pin"
-    const val USE_PIN = "use_pin"
-    const val CURRENT_ACCOUNT = "currently_logged_in_account"
-    const val SAVED_ACCOUNTS = "all_saved_accounts"
     const val NOSTR_PRIVKEY = "nostr_privkey"
     const val NOSTR_PUBKEY = "nostr_pubkey"
-    const val REMEMBER_APPS = "remember_apps"
     const val ACCOUNT_NAME = "account_name"
-    const val RATIONALE = "rationale"
     const val USE_PROXY = "use_proxy"
     const val PROXY_PORT = "proxy_port"
     const val LANGUAGE_PREFS = "languagePreferences"
-    const val DEFAULT_RELAYS = "default_relays"
-    const val DEFAULT_PROFILE_RELAYS = "default_profile_relays"
-    const val ENDPOINT = "endpoint"
-    const val PUSH_SERVER_MESSAGE = "push_server_message"
     const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
-    const val USE_AUTH = "use_auth"
-    const val BIOMETRICS_TYPE = "biometrics_type"
-    const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
     const val SIGN_POLICY = "default_sign_policy"
     const val SEED_WORDS2 = "seed_words"
     const val PROFILE_URL = "profile_url"
@@ -54,6 +41,19 @@ private object PrefKeys {
     const val LAST_CHECK = "last_check"
     const val NCRYPT_SEC = "ncrypt_sec"
     const val DID_BACKUP = "did_backup"
+}
+
+private object SettingsKeys {
+    const val DEFAULT_RELAYS = "default_relays"
+    const val DEFAULT_PROFILE_RELAYS = "default_profile_relays"
+    const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
+    const val USE_AUTH = "use_auth"
+    const val BIOMETRICS_TYPE = "biometrics_type"
+    const val USE_PIN = "use_pin"
+    const val RATIONALE = "rationale"
+    const val CURRENT_ACCOUNT = "currently_logged_in_account"
+    const val PIN = "pin"
+    const val SAVED_ACCOUNTS = "all_saved_accounts"
 }
 
 @Immutable
@@ -78,7 +78,7 @@ object LocalPreferences {
 
     fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
-            currentAccount = encryptedPreferences(context).getString(PrefKeys.CURRENT_ACCOUNT, null)
+            currentAccount = encryptedPreferences(context).getString(SettingsKeys.CURRENT_ACCOUNT, null)
         }
         return currentAccount
     }
@@ -89,23 +89,23 @@ object LocalPreferences {
 
             encryptedPreferences(context).edit {
                 apply {
-                    putString(PrefKeys.CURRENT_ACCOUNT, npub)
+                    putString(SettingsKeys.CURRENT_ACCOUNT, npub)
                 }
             }
         }
     }
 
     fun shouldShowRationale(context: Context): Boolean? {
-        if (!encryptedPreferences(context).contains(PrefKeys.RATIONALE)) {
+        if (!encryptedPreferences(context).contains(SettingsKeys.RATIONALE)) {
             return null
         }
-        return encryptedPreferences(context).getBoolean(PrefKeys.RATIONALE, true)
+        return encryptedPreferences(context).getBoolean(SettingsKeys.RATIONALE, true)
     }
 
     fun updateShouldShowRationale(context: Context, value: Boolean) {
         encryptedPreferences(context).edit {
             apply {
-                putBoolean(PrefKeys.RATIONALE, value)
+                putBoolean(SettingsKeys.RATIONALE, value)
             }
         }
     }
@@ -114,14 +114,12 @@ object LocalPreferences {
         val context = NostrSigner.instance
         encryptedPreferences(context).edit {
             apply {
-                remove(PrefKeys.ENDPOINT)
-                remove(PrefKeys.PUSH_SERVER_MESSAGE)
-                putStringSet(PrefKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
-                putStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
-                putLong(PrefKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
-                putBoolean(PrefKeys.USE_AUTH, settings.useAuth)
-                putInt(PrefKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
-                putBoolean(PrefKeys.USE_PIN, settings.usePin)
+                putStringSet(SettingsKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
+                putStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
+                putLong(SettingsKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
+                putBoolean(SettingsKeys.USE_AUTH, settings.useAuth)
+                putInt(SettingsKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
+                putBoolean(SettingsKeys.USE_PIN, settings.usePin)
             }
         }
     }
@@ -152,7 +150,7 @@ object LocalPreferences {
 
     fun loadPinFromEncryptedStorage(): String? {
         val context = NostrSigner.instance
-        return encryptedPreferences(context).getString(PrefKeys.PIN, null)
+        return encryptedPreferences(context).getString(SettingsKeys.PIN, null)
     }
 
     fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
@@ -178,9 +176,9 @@ object LocalPreferences {
         encryptedPreferences(context).edit {
             apply {
                 if (pin == null) {
-                    remove(PrefKeys.PIN)
+                    remove(SettingsKeys.PIN)
                 } else {
-                    putString(PrefKeys.PIN, pin)
+                    putString(SettingsKeys.PIN, pin)
                 }
             }
         }
@@ -191,19 +189,19 @@ object LocalPreferences {
 
         encryptedPreferences(context).apply {
             return AmberSettings(
-                defaultRelays = getStringSet(PrefKeys.DEFAULT_RELAYS, null)?.map {
+                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
-                defaultProfileRelays = getStringSet(PrefKeys.DEFAULT_PROFILE_RELAYS, null)?.map {
+                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS, null)?.map {
                     RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(
                     RelaySetupInfo("wss://relay.nostr.band", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
                     RelaySetupInfo("wss://purplepag.es", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
                 ),
-                lastBiometricsTime = getLong(PrefKeys.LAST_BIOMETRICS_TIME, 0),
-                useAuth = getBoolean(PrefKeys.USE_AUTH, false),
-                biometricsTimeType = parseBiometricsTimeType(getInt(PrefKeys.BIOMETRICS_TYPE, 0)),
-                usePin = getBoolean(PrefKeys.USE_PIN, false),
+                lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME, 0),
+                useAuth = getBoolean(SettingsKeys.USE_AUTH, false),
+                biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE, 0)),
+                usePin = getBoolean(SettingsKeys.USE_PIN, false),
             )
         }
     }
@@ -213,7 +211,7 @@ object LocalPreferences {
     private fun savedAccounts(context: Context): List<String> {
         if (savedAccounts == null) {
             savedAccounts = encryptedPreferences(context)
-                .getString(PrefKeys.SAVED_ACCOUNTS, null)?.split(COMMA) ?: listOf()
+                .getString(SettingsKeys.SAVED_ACCOUNTS, null)?.split(COMMA) ?: listOf()
         }
         return savedAccounts!!
     }
@@ -224,7 +222,7 @@ object LocalPreferences {
 
             encryptedPreferences(context).edit {
                 apply {
-                    putString(PrefKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
+                    putString(SettingsKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
                 }
             }
         }
@@ -404,12 +402,6 @@ object LocalPreferences {
         encryptedPreferences(context, npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
-
-            this.edit {
-                apply {
-                    remove(PrefKeys.REMEMBER_APPS)
-                }
-            }
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
             val useProxy = getBoolean(PrefKeys.USE_PROXY, false)
             val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)

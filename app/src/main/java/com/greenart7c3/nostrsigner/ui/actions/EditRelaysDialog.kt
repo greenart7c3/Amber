@@ -261,10 +261,10 @@ suspend fun onAddRelay(
     val url = textFieldRelay.value.text
     if (url.isNotBlank() && url != "/") {
         isLoading.value = true
+        val isPrivateIp = NostrSigner.instance.isPrivateIp(url)
         var addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                 // TODO: How to identify relays on the local network?
-                val isPrivateIp = NostrSigner.instance.isPrivateIp(url)
                 if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
                     "ws://$url"
                 } else {
@@ -285,7 +285,7 @@ suspend fun onAddRelay(
             retriever.loadRelayInfo(
                 httpsUrl,
                 addedWSS,
-                forceProxy = account.useProxy,
+                forceProxy = if (isPrivateIp) false else account.useProxy,
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
                         if (info.limitation?.payment_required == true) {

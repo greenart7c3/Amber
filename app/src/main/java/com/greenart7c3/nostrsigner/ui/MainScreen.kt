@@ -82,7 +82,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
@@ -690,7 +690,7 @@ fun MainScreen(
                                     if (it.route == Route.Accounts.route) {
                                         @Suppress("KotlinConstantConditions")
                                         if (!profileUrl.isNullOrBlank() && BuildConfig.FLAVOR != "offline") {
-                                            AsyncImage(
+                                            SubcomposeAsyncImage(
                                                 profileUrl,
                                                 it.route,
                                                 Modifier
@@ -699,6 +699,20 @@ fun MainScreen(
                                                     )
                                                     .height(28.dp)
                                                     .width(28.dp),
+                                                loading = {
+                                                    CenterCircularProgressIndicator(Modifier)
+                                                },
+                                                error = { error ->
+                                                    Icon(
+                                                        Icons.Outlined.Person,
+                                                        it.route,
+                                                        modifier = Modifier.border(
+                                                            2.dp,
+                                                            Color.fromHex(account.hexKey.slice(0..5)),
+                                                            CircleShape,
+                                                        ),
+                                                    )
+                                                },
                                             )
                                         } else {
                                             Icon(

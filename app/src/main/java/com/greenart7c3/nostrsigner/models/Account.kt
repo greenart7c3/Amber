@@ -13,8 +13,6 @@ import com.vitorpamplona.quartz.nip42RelayAuth.RelayAuthEvent
 class Account(
     val signer: NostrSignerInternal,
     var name: String,
-    var useProxy: Boolean,
-    var proxyPort: Int,
     var language: String?,
     var allowNewConnections: Boolean,
     var signPolicy: Int,

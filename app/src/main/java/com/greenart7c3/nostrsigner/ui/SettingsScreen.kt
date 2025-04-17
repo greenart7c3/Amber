@@ -79,9 +79,9 @@ fun SettingsScreen(
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var checked by remember { mutableStateOf(account.useProxy) }
+    var checked by remember { mutableStateOf(NostrSigner.instance.settings.useProxy) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
-    val proxyPort = remember { mutableStateOf(account.proxyPort.toString()) }
+    val proxyPort = remember { mutableStateOf(NostrSigner.instance.settings.proxyPort.toString()) }
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
@@ -396,10 +396,8 @@ fun SettingsScreen(
                     onClick = {
                         disconnectTorDialog = false
                         checked = false
-                        account.proxyPort = proxyPort.value.toInt()
-                        account.useProxy = false
-                        LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                         scope.launch(Dispatchers.IO) {
+                            LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                             NotificationDataSource.stopSync()
                             NostrSigner.instance.checkForNewRelays()
                             NotificationDataSource.start()

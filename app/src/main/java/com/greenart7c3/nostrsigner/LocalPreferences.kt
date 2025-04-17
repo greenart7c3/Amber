@@ -30,8 +30,6 @@ private object PrefKeys {
     const val NOSTR_PRIVKEY = "nostr_privkey"
     const val NOSTR_PUBKEY = "nostr_pubkey"
     const val ACCOUNT_NAME = "account_name"
-    const val USE_PROXY = "use_proxy"
-    const val PROXY_PORT = "proxy_port"
     const val LANGUAGE_PREFS = "languagePreferences"
     const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
     const val SIGN_POLICY = "default_sign_policy"
@@ -54,6 +52,8 @@ private object SettingsKeys {
     const val CURRENT_ACCOUNT = "currently_logged_in_account"
     const val PIN = "pin"
     const val SAVED_ACCOUNTS = "all_saved_accounts"
+    const val USE_PROXY = "use_proxy"
+    const val PROXY_PORT = "proxy_port"
 }
 
 @Immutable
@@ -120,6 +120,8 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.USE_AUTH, settings.useAuth)
                 putInt(SettingsKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
                 putBoolean(SettingsKeys.USE_PIN, settings.usePin)
+                putBoolean(SettingsKeys.USE_PROXY, settings.useProxy)
+                putInt(SettingsKeys.PROXY_PORT, settings.proxyPort)
             }
         }
     }
@@ -184,10 +186,11 @@ object LocalPreferences {
         }
     }
 
-    suspend fun loadSettingsFromEncryptedStorage(): AmberSettings {
-        val context = NostrSigner.instance
-
+    suspend fun loadSettingsFromEncryptedStorage(context: Context = NostrSigner.instance): AmberSettings {
         encryptedPreferences(context).apply {
+            val proxyPort = getInt(SettingsKeys.PROXY_PORT, 9050)
+            HttpClientManager.setDefaultProxyOnPort(proxyPort)
+
             return AmberSettings(
                 defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
@@ -202,6 +205,8 @@ object LocalPreferences {
                 useAuth = getBoolean(SettingsKeys.USE_AUTH, false),
                 biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE, 0)),
                 usePin = getBoolean(SettingsKeys.USE_PIN, false),
+                useProxy = getBoolean(SettingsKeys.USE_PROXY, false),
+                proxyPort = getInt(SettingsKeys.PROXY_PORT, 9050),
             )
         }
     }
@@ -325,8 +330,6 @@ object LocalPreferences {
             apply {
                 account.signer.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
                 account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
-                putBoolean(PrefKeys.USE_PROXY, account.useProxy)
-                putInt(PrefKeys.PROXY_PORT, account.proxyPort)
                 putString(PrefKeys.ACCOUNT_NAME, account.name)
                 putString(PrefKeys.LANGUAGE_PREFS, account.language)
                 putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
@@ -376,22 +379,18 @@ object LocalPreferences {
         }
     }
 
-    fun updateProxy(
+    suspend fun updateProxy(
         context: Context,
         useProxy: Boolean,
         port: Int,
     ) {
-        val npub = currentAccount(context) ?: return
-        encryptedPreferences(context, npub).edit {
+        encryptedPreferences(context).edit {
             apply {
-                putBoolean(PrefKeys.USE_PROXY, useProxy)
-                putInt(PrefKeys.PROXY_PORT, port)
+                putBoolean(SettingsKeys.USE_PROXY, useProxy)
+                putInt(SettingsKeys.PROXY_PORT, port)
             }
         }
-        accountCache.get(npub)?.let {
-            it.useProxy = useProxy
-            it.proxyPort = port
-        }
+        NostrSigner.instance.settings = loadSettingsFromEncryptedStorage()
         HttpClientManager.setDefaultProxyOnPort(port)
     }
 
@@ -403,8 +402,6 @@ object LocalPreferences {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
             val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
             val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
-            val useProxy = getBoolean(PrefKeys.USE_PROXY, false)
-            val proxyPort = getInt(PrefKeys.PROXY_PORT, 9050)
             val language = getString(PrefKeys.LANGUAGE_PREFS, null)
             val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
             val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
@@ -412,13 +409,10 @@ object LocalPreferences {
             val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
             val didBackup = getBoolean(PrefKeys.DID_BACKUP, true)
 
-            HttpClientManager.setDefaultProxyOnPort(proxyPort)
             val account =
                 Account(
                     signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
                     name = name,
-                    useProxy = useProxy,
-                    proxyPort = proxyPort,
                     language = language,
                     allowNewConnections = allowNewConnections,
                     signPolicy = signPolicy,
@@ -428,5 +422,24 @@ object LocalPreferences {
             accountCache.put(npub, account)
             return account
         }
+    }
+
+    suspend fun migrateTorSettings(context: Context) {
+        val useProxy = allSavedAccounts(context).any {
+            encryptedPreferences(context, it.npub).getBoolean(SettingsKeys.USE_PROXY, false)
+        }
+        val proxyPort: Int = allSavedAccounts(context).firstNotNullOfOrNull {
+            if (encryptedPreferences(context, it.npub).getBoolean(SettingsKeys.USE_PROXY, false)) {
+                encryptedPreferences(context, it.npub).getInt(SettingsKeys.PROXY_PORT, 9050)
+            } else {
+                null
+            }
+        } ?: 9050
+        saveSettingsToEncryptedStorage(
+            settings = loadSettingsFromEncryptedStorage(context).copy(
+                useProxy = useProxy,
+                proxyPort = proxyPort,
+            ),
+        )
     }
 }

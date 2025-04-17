@@ -1291,10 +1291,8 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             onPost = {
-                                account.useProxy = true
-                                account.proxyPort = it
-                                LocalPreferences.updateProxy(context, true, it)
                                 scope.launch(Dispatchers.IO) {
+                                    LocalPreferences.updateProxy(context, true, it)
                                     NotificationDataSource.stopSync()
                                     NostrSigner.instance.checkForNewRelays()
                                     NotificationDataSource.start()
@@ -1314,7 +1312,6 @@ fun MainScreen(
                                     ).show()
                                 }
                             },
-                            account = account,
                         )
                     },
                 )

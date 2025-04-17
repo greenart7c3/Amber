@@ -285,7 +285,7 @@ suspend fun onAddRelay(
             retriever.loadRelayInfo(
                 httpsUrl,
                 addedWSS,
-                forceProxy = if (isPrivateIp) false else account.useProxy,
+                forceProxy = if (isPrivateIp) false else NostrSigner.instance.settings.useProxy,
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
                         if (info.limitation?.payment_required == true) {
@@ -358,7 +358,7 @@ suspend fun onAddRelay(
                                             read = true,
                                             write = true,
                                             feedTypes = COMMON_FEED_TYPES,
-                                            forceProxy = if (isPrivateIp) false else account.useProxy,
+                                            forceProxy = if (isPrivateIp) false else NostrSigner.instance.settings.useProxy,
                                         ),
                                     ),
                                 )

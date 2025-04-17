@@ -136,8 +136,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     Account(
                         signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                         name = "",
-                        useProxy = false,
-                        proxyPort = 0,
                         language = null,
                         allowNewConnections = false,
                         signPolicy = 0,
@@ -148,8 +146,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     Account(
                         signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
                         name = "",
-                        useProxy = false,
-                        proxyPort = 0,
                         language = null,
                         allowNewConnections = false,
                         signPolicy = 0,
@@ -161,8 +157,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     Account(
                         signer = NostrSignerInternal(keyPair),
                         name = "",
-                        useProxy = false,
-                        proxyPort = 0,
                         language = null,
                         allowNewConnections = false,
                         signPolicy = 0,
@@ -173,8 +167,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     Account(
                         signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
                         name = "",
-                        useProxy = false,
-                        proxyPort = 0,
                         language = null,
                         allowNewConnections = false,
                         signPolicy = 0,
@@ -202,8 +194,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Account(
                     signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
                     name = "",
-                    useProxy = useProxy,
-                    proxyPort = proxyPort,
                     language = null,
                     allowNewConnections = false,
                     signPolicy = signPolicy,
@@ -214,8 +204,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Account(
                     signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
                     name = "",
-                    useProxy = useProxy,
-                    proxyPort = proxyPort,
                     language = null,
                     allowNewConnections = false,
                     signPolicy = signPolicy,
@@ -227,8 +215,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Account(
                     signer = NostrSignerInternal(keyPair),
                     name = "",
-                    useProxy = useProxy,
-                    proxyPort = proxyPort,
                     language = null,
                     allowNewConnections = false,
                     signPolicy = signPolicy,
@@ -239,8 +225,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Account(
                     signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
                     name = "",
-                    useProxy = useProxy,
-                    proxyPort = proxyPort,
                     language = null,
                     allowNewConnections = false,
                     signPolicy = signPolicy,
@@ -248,7 +232,13 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     didBackup = true,
                 )
             }
-
+        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+            useProxy = useProxy,
+            proxyPort = proxyPort,
+        )
+        LocalPreferences.saveSettingsToEncryptedStorage(
+            NostrSigner.instance.settings,
+        )
         LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
         startUI(account, route)
     }
@@ -265,8 +255,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         val account = Account(
             NostrSignerInternal(keyPair),
             name = name,
-            useProxy = useProxy,
-            proxyPort = proxyPort,
             language = null,
             allowNewConnections = false,
             signPolicy = signPolicy,
@@ -274,6 +262,13 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             didBackup = false,
         )
         LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
+        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+            useProxy = useProxy,
+            proxyPort = proxyPort,
+        )
+        LocalPreferences.saveSettingsToEncryptedStorage(
+            NostrSigner.instance.settings,
+        )
         startUI(account, null)
     }
 

@@ -121,6 +121,7 @@ class NostrSigner : Application() {
         }
 
         runBlocking {
+            LocalPreferences.migrateTorSettings(this@NostrSigner)
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }
 
@@ -165,17 +166,13 @@ class NostrSigner : Application() {
     ) {
         val savedRelays = getSavedRelays() + newRelays
 
-        val useProxy = LocalPreferences.allSavedAccounts(this).any {
-            LocalPreferences.loadFromEncryptedStorage(this, it.npub)?.useProxy == true
-        }
-
         if (shouldReconnect) {
             checkIfRelaysAreConnected()
         }
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
             client.reconnect(
-                savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
+                savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else settings.useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
         }
@@ -248,7 +245,7 @@ class NostrSigner : Application() {
                     add(
                         OkHttpNetworkFetcherFactory(
                             callFactory = {
-                                HttpClientManager.getHttpClient(account.useProxy)
+                                HttpClientManager.getHttpClient(settings.useProxy)
                             },
                         ),
                     )
@@ -290,7 +287,7 @@ class NostrSigner : Application() {
                     write = it.write,
                     activeTypes = it.feedTypes,
                     socketBuilderFactory = factory,
-                    forceProxy = account.useProxy,
+                    forceProxy = settings.useProxy,
                     subs = MutableSubscriptionManager(),
                 )
             }

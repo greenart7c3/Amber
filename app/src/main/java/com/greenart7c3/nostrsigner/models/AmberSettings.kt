@@ -14,4 +14,6 @@ data class AmberSettings(
     val useAuth: Boolean = false,
     val biometricsTimeType: BiometricsTimeType = BiometricsTimeType.EVERY_TIME,
     val usePin: Boolean = false,
+    val useProxy: Boolean = false,
+    val proxyPort: Int = 9050,
 )

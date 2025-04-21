@@ -92,6 +92,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
@@ -496,83 +497,86 @@ fun SignUpPage(
                                     }
                                 }
                             }
-                            Row(
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .padding(vertical = 20.dp)
-                                    .clickable {
-                                        useProxy = !useProxy
-                                    },
-                            ) {
-                                Switch(
-                                    modifier = Modifier.scale(0.85f),
-                                    checked = useProxy,
-                                    onCheckedChange = {
-                                        useProxy = it
-                                    },
-                                )
-                                Text(
+
+                            if (LocalPreferences.allSavedAccounts(context).isEmpty()) {
+                                Row(
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically,
                                     modifier = Modifier
-                                        .weight(1f)
-                                        .padding(start = 8.dp),
-                                    text = stringResource(R.string.connect_through_your_orbot_setup),
-                                )
-                            }
-
-                            if (useProxy) {
-                                val myMarkDownStyle =
-                                    RichTextDefaults.copy(
-                                        stringStyle = RichTextDefaults.stringStyle?.copy(
-                                            linkStyle =
-                                            SpanStyle(
-                                                textDecoration = TextDecoration.Underline,
-                                                color = MaterialTheme.colorScheme.primary,
-                                            ),
-                                        ),
-                                    )
-                                val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
-
-                                val astNode1 =
-                                    remember {
-                                        CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                                    }
-
-                                RichText(
-                                    modifier = Modifier.padding(vertical = 8.dp),
-                                    style = myMarkDownStyle,
-                                    renderer = null,
+                                        .padding(vertical = 20.dp)
+                                        .clickable {
+                                            useProxy = !useProxy
+                                        },
                                 ) {
-                                    BasicMarkdown(astNode1)
+                                    Switch(
+                                        modifier = Modifier.scale(0.85f),
+                                        checked = useProxy,
+                                        onCheckedChange = {
+                                            useProxy = it
+                                        },
+                                    )
+                                    Text(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .padding(start = 8.dp),
+                                        text = stringResource(R.string.connect_through_your_orbot_setup),
+                                    )
                                 }
 
-                                OutlinedTextField(
-                                    value = proxyPort,
-                                    onValueChange = { value ->
-                                        proxyPort = value
-                                    },
-                                    label = {
-                                        Text(
-                                            text = stringResource(R.string.orbot_socks_port),
-                                            color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
+                                if (useProxy) {
+                                    val myMarkDownStyle =
+                                        RichTextDefaults.copy(
+                                            stringStyle = RichTextDefaults.stringStyle?.copy(
+                                                linkStyle =
+                                                SpanStyle(
+                                                    textDecoration = TextDecoration.Underline,
+                                                    color = MaterialTheme.colorScheme.primary,
+                                                ),
+                                            ),
                                         )
-                                    },
-                                    placeholder = {
-                                        Text(
-                                            stringResource(R.string.orbot_socks_port),
-                                            color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                        )
-                                    },
-                                    keyboardOptions = KeyboardOptions(
-                                        capitalization = KeyboardCapitalization.None,
-                                        autoCorrectEnabled = false,
-                                        imeAction = ImeAction.Next,
-                                        keyboardType = KeyboardType.Number,
-                                    ),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(bottom = 20.dp),
-                                )
+                                    val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
+
+                                    val astNode1 =
+                                        remember {
+                                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                                        }
+
+                                    RichText(
+                                        modifier = Modifier.padding(vertical = 8.dp),
+                                        style = myMarkDownStyle,
+                                        renderer = null,
+                                    ) {
+                                        BasicMarkdown(astNode1)
+                                    }
+
+                                    OutlinedTextField(
+                                        value = proxyPort,
+                                        onValueChange = { value ->
+                                            proxyPort = value
+                                        },
+                                        label = {
+                                            Text(
+                                                text = stringResource(R.string.orbot_socks_port),
+                                                color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
+                                            )
+                                        },
+                                        placeholder = {
+                                            Text(
+                                                stringResource(R.string.orbot_socks_port),
+                                                color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
+                                            )
+                                        },
+                                        keyboardOptions = KeyboardOptions(
+                                            capitalization = KeyboardCapitalization.None,
+                                            autoCorrectEnabled = false,
+                                            imeAction = ImeAction.Next,
+                                            keyboardType = KeyboardType.Number,
+                                        ),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 20.dp),
+                                    )
+                                }
                             }
                             AmberButton(
                                 modifier = Modifier
@@ -988,83 +992,85 @@ fun LoginPage(
                                 }
                             }
                         }
-                        Row(
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .padding(vertical = 20.dp)
-                                .clickable {
-                                    useProxy = !useProxy
-                                },
-                        ) {
-                            Switch(
-                                modifier = Modifier.scale(0.85f),
-                                checked = useProxy,
-                                onCheckedChange = {
-                                    useProxy = it
-                                },
-                            )
-                            Text(
+                        if (LocalPreferences.allSavedAccounts(context).isEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
-                                    .weight(1f)
-                                    .padding(start = 8.dp),
-                                text = stringResource(R.string.connect_through_your_orbot_setup),
-                            )
-                        }
-
-                        if (useProxy) {
-                            val myMarkDownStyle =
-                                RichTextDefaults.copy(
-                                    stringStyle = RichTextDefaults.stringStyle?.copy(
-                                        linkStyle =
-                                        SpanStyle(
-                                            textDecoration = TextDecoration.Underline,
-                                            color = MaterialTheme.colorScheme.primary,
-                                        ),
-                                    ),
-                                )
-                            val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
-
-                            val astNode1 =
-                                remember {
-                                    CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                                }
-
-                            RichText(
-                                modifier = Modifier.padding(vertical = 8.dp),
-                                style = myMarkDownStyle,
-                                renderer = null,
+                                    .padding(vertical = 20.dp)
+                                    .clickable {
+                                        useProxy = !useProxy
+                                    },
                             ) {
-                                BasicMarkdown(astNode1)
+                                Switch(
+                                    modifier = Modifier.scale(0.85f),
+                                    checked = useProxy,
+                                    onCheckedChange = {
+                                        useProxy = it
+                                    },
+                                )
+                                Text(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(start = 8.dp),
+                                    text = stringResource(R.string.connect_through_your_orbot_setup),
+                                )
                             }
 
-                            OutlinedTextField(
-                                value = proxyPort,
-                                onValueChange = { value ->
-                                    proxyPort = value
-                                },
-                                label = {
-                                    Text(
-                                        text = stringResource(R.string.orbot_socks_port),
-                                        color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
+                            if (useProxy) {
+                                val myMarkDownStyle =
+                                    RichTextDefaults.copy(
+                                        stringStyle = RichTextDefaults.stringStyle?.copy(
+                                            linkStyle =
+                                            SpanStyle(
+                                                textDecoration = TextDecoration.Underline,
+                                                color = MaterialTheme.colorScheme.primary,
+                                            ),
+                                        ),
                                     )
-                                },
-                                placeholder = {
-                                    Text(
-                                        stringResource(R.string.orbot_socks_port),
-                                        color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
-                                    )
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    capitalization = KeyboardCapitalization.None,
-                                    autoCorrectEnabled = false,
-                                    imeAction = ImeAction.Next,
-                                    keyboardType = KeyboardType.Number,
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 20.dp),
-                            )
+                                val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
+
+                                val astNode1 =
+                                    remember {
+                                        CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                                    }
+
+                                RichText(
+                                    modifier = Modifier.padding(vertical = 8.dp),
+                                    style = myMarkDownStyle,
+                                    renderer = null,
+                                ) {
+                                    BasicMarkdown(astNode1)
+                                }
+
+                                OutlinedTextField(
+                                    value = proxyPort,
+                                    onValueChange = { value ->
+                                        proxyPort = value
+                                    },
+                                    label = {
+                                        Text(
+                                            text = stringResource(R.string.orbot_socks_port),
+                                            color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
+                                        )
+                                    },
+                                    placeholder = {
+                                        Text(
+                                            stringResource(R.string.orbot_socks_port),
+                                            color = TextFieldDefaults.colors().unfocusedPlaceholderColor,
+                                        )
+                                    },
+                                    keyboardOptions = KeyboardOptions(
+                                        capitalization = KeyboardCapitalization.None,
+                                        autoCorrectEnabled = false,
+                                        imeAction = ImeAction.Next,
+                                        keyboardType = KeyboardType.Number,
+                                    ),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(bottom = 20.dp),
+                                )
+                            }
                         }
                         AmberButton(
                             modifier = Modifier

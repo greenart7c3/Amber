@@ -232,13 +232,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     didBackup = true,
                 )
             }
-        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
-            useProxy = useProxy,
-            proxyPort = proxyPort,
-        )
-        LocalPreferences.saveSettingsToEncryptedStorage(
-            NostrSigner.instance.settings,
-        )
+        if (LocalPreferences.allSavedAccounts(NostrSigner.instance).isEmpty()) {
+            NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                useProxy = useProxy,
+                proxyPort = proxyPort,
+            )
+            LocalPreferences.saveSettingsToEncryptedStorage(
+                NostrSigner.instance.settings,
+            )
+        }
         LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
         startUI(account, route)
     }
@@ -261,14 +263,16 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             seedWords = seedWords,
             didBackup = false,
         )
+        if (LocalPreferences.allSavedAccounts(NostrSigner.instance).isEmpty()) {
+            NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                useProxy = useProxy,
+                proxyPort = proxyPort,
+            )
+            LocalPreferences.saveSettingsToEncryptedStorage(
+                NostrSigner.instance.settings,
+            )
+        }
         LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
-        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
-            useProxy = useProxy,
-            proxyPort = proxyPort,
-        )
-        LocalPreferences.saveSettingsToEncryptedStorage(
-            NostrSigner.instance.settings,
-        )
         startUI(account, null)
     }
 

@@ -169,13 +169,13 @@ object BunkerRequestUtils {
                     success = NostrSigner.instance.client.sendAndWaitForResponse(it, relayList = relays)
                     if (!success) {
                         errorCount++
-                    }
-                    relays.forEach {
-                        if (NostrSigner.instance.client.getRelay(it.url)?.isConnected() == false) {
-                            NostrSigner.instance.client.getRelay(it.url)?.connect()
+                        relays.forEach {
+                            if (NostrSigner.instance.client.getRelay(it.url)?.isConnected() == false) {
+                                NostrSigner.instance.client.getRelay(it.url)?.connect()
+                            }
                         }
+                        delay(1000)
                     }
-                    delay(1000)
                 }
                 if (success) {
                     Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")

@@ -19,24 +19,31 @@ import kotlinx.coroutines.launch
 object AmberListenerSingleton {
     var accountStateViewModel: AccountStateViewModel? = null
     private var listener: AmberClientListener? = null
+    val latestErrorMessages = mutableListOf<String>()
 
     fun setListener(
         context: Context,
-        accountStateViewModel: AccountStateViewModel?,
     ) {
-        listener = AmberClientListener(context, accountStateViewModel)
+        listener = AmberClientListener(context)
     }
 
     fun getListener(): AmberClientListener? {
         return listener
     }
+
+    fun showErrorMessage() {
+        if (latestErrorMessages.isEmpty()) return
+        if (latestErrorMessages.last().isBlank()) return
+        accountStateViewModel?.toast("Error", latestErrorMessages.last())
+        latestErrorMessages.clear()
+    }
 }
 
 class AmberClientListener(
     val context: Context,
-    val accountStateViewModel: AccountStateViewModel?,
 ) : NostrClient.Listener {
     val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
     override fun onAuth(relay: Relay, challenge: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
@@ -85,9 +92,9 @@ class AmberClientListener(
         }
         if (!success) {
             if (msg.isNotBlank()) {
-                accountStateViewModel?.toast("Error", "Failed to send event.\n$msg")
+                AmberListenerSingleton.latestErrorMessages.add("Failed to send event.\n$msg")
             } else {
-                accountStateViewModel?.toast("Error", "Failed to send event. Try again.")
+                AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
             }
         }
     }
@@ -108,7 +115,7 @@ class AmberClientListener(
         }
 
         if (!success) {
-            accountStateViewModel?.toast("Error", message)
+            AmberListenerSingleton.latestErrorMessages.add(message)
         }
     }
 
@@ -127,8 +134,11 @@ class AmberClientListener(
                 )
             }
         }
-
-        accountStateViewModel?.toast("Error", error.message ?: "Unknown error")
+        if (NostrSigner.instance.settings.useProxy && error.message?.contains("(port ${NostrSigner.instance.settings.proxyPort})") == true) {
+            AmberListenerSingleton.latestErrorMessages.add("Failed to connect to Tor/Orbot")
+        } else {
+            AmberListenerSingleton.latestErrorMessages.add(error.message ?: "Unknown error")
+        }
     }
 
     override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {

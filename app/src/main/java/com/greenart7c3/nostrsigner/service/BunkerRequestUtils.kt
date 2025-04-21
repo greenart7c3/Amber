@@ -4,7 +4,6 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import com.fasterxml.jackson.databind.ObjectMapper
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -27,6 +26,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object BunkerRequestUtils {
@@ -84,7 +84,6 @@ object BunkerRequestUtils {
         }
         AmberListenerSingleton.setListener(
             context,
-            AmberListenerSingleton.accountStateViewModel,
         )
         NostrSigner.instance.client.subscribe(
             AmberListenerSingleton.getListener()!!,
@@ -97,7 +96,7 @@ object BunkerRequestUtils {
                         id = 0,
                         url = relay.url,
                         type = "bunker response",
-                        message = ObjectMapper().writeValueAsString(bunkerResponse),
+                        message = EventMapper.mapper.writeValueAsString(bunkerResponse),
                         time = System.currentTimeMillis(),
                     ),
                 )
@@ -164,12 +163,26 @@ object BunkerRequestUtils {
                     )
                 }
 
-                val success = NostrSigner.instance.client.sendAndWaitForResponse(it, relayList = relays)
+                var success = false
+                var errorCount = 0
+                while (!success && errorCount < 3) {
+                    success = NostrSigner.instance.client.sendAndWaitForResponse(it, relayList = relays)
+                    if (!success) {
+                        errorCount++
+                    }
+                    relays.forEach {
+                        if (NostrSigner.instance.client.getRelay(it.url)?.isConnected() == false) {
+                            NostrSigner.instance.client.getRelay(it.url)?.connect()
+                        }
+                    }
+                    delay(1000)
+                }
                 if (success) {
                     Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                     onDone(true)
                 } else {
                     onDone(false)
+                    AmberListenerSingleton.showErrorMessage()
                     Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                 }
                 AmberListenerSingleton.getListener()?.let {

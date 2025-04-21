@@ -343,7 +343,7 @@ suspend fun onAddRelay(
                             }
 
                             event?.let { signedEvent ->
-                                AmberListenerSingleton.setListener(context, accountStateViewModel)
+                                AmberListenerSingleton.setListener(context)
                                 val socket = factory
                                 val client = NostrClient(
                                     socket,
@@ -399,6 +399,7 @@ suspend fun onAddRelay(
                                         count++
                                     }
                                 } else {
+                                    AmberListenerSingleton.showErrorMessage()
                                     filterResult = true
                                 }
 

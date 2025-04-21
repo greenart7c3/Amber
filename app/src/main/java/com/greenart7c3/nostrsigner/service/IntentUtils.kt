@@ -24,7 +24,7 @@ import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import fr.acinq.secp256k1.Hex
+import com.vitorpamplona.quartz.utils.Hex
 import java.net.URLDecoder
 import kotlinx.coroutines.launch
 

@@ -14,7 +14,7 @@ import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import fr.acinq.secp256k1.Hex
+import com.vitorpamplona.quartz.utils.Hex
 import kotlin.text.isNotBlank
 import kotlin.text.startsWith
 import kotlinx.coroutines.Dispatchers

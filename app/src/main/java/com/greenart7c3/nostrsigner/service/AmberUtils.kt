@@ -22,7 +22,7 @@ import com.vitorpamplona.quartz.nip44Encryption.Nip44
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapEncryption
-import fr.acinq.secp256k1.Hex
+import com.vitorpamplona.quartz.utils.Hex
 
 object AmberUtils {
     fun encryptOrDecryptData(

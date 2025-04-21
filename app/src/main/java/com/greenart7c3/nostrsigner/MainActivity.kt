@@ -45,7 +45,7 @@ import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import fr.acinq.secp256k1.Hex
+import com.vitorpamplona.quartz.utils.Hex
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers

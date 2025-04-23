@@ -794,7 +794,7 @@ fun LoginPage(
                                     }
 
                                     if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                        val isValid = accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)
+                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                         if (isValid.first) {
                                             scope.launch {
                                                 pageState.animateScrollToPage(1)
@@ -870,7 +870,7 @@ fun LoginPage(
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            val isValid = accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)
+                                            val isValid = accountViewModel.isValidKey(key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                             if (isValid.first) {
                                                 scope.launch {
                                                     pageState.animateScrollToPage(1)
@@ -903,7 +903,7 @@ fun LoginPage(
                                 }
 
                                 if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                    val isValid = accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)
+                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                     if (isValid.first) {
                                         keyboardController?.hide()
                                         scope.launch {
@@ -1089,7 +1089,7 @@ fun LoginPage(
                                 }
 
                                 accountViewModel.startUI(
-                                    key = key.value.text.toLowerCase(Locale.current).trim(),
+                                    key = key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(),
                                     password = password.value.text,
                                     route = null,
                                     useProxy = useProxy,

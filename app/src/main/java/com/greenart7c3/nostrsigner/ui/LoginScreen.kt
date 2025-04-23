@@ -794,12 +794,13 @@ fun LoginPage(
                                     }
 
                                     if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                        if (accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)) {
+                                        val isValid = accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)
+                                        if (isValid.first) {
                                             scope.launch {
                                                 pageState.animateScrollToPage(1)
                                             }
                                         } else {
-                                            errorMessage = context.getString(R.string.invalid_key)
+                                            errorMessage = isValid.second
                                         }
                                     }
                                 },
@@ -869,12 +870,13 @@ fun LoginPage(
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            if (accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)) {
+                                            val isValid = accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)
+                                            if (isValid.first) {
                                                 scope.launch {
                                                     pageState.animateScrollToPage(1)
                                                 }
                                             } else {
-                                                errorMessage = context.getString(R.string.invalid_key)
+                                                errorMessage = isValid.second
                                             }
                                         }
                                     },
@@ -901,13 +903,14 @@ fun LoginPage(
                                 }
 
                                 if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                    if (accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)) {
+                                    val isValid = accountViewModel.isValidKey(key.value.text.toLowerCase(Locale.current).trim(), password.value.text)
+                                    if (isValid.first) {
                                         keyboardController?.hide()
                                         scope.launch {
                                             pageState.animateScrollToPage(1)
                                         }
                                     } else {
-                                        errorMessage = context.getString(R.string.invalid_key)
+                                        errorMessage = isValid.second
                                     }
                                 }
                             },

@@ -127,7 +127,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         tryLoginExistingAccount(route, npub)
     }
 
-    fun isValidKey(key: String, password: String): Boolean {
+    fun isValidKey(key: String, password: String): Pair<Boolean, String> {
         try {
             val account =
                 if (key.startsWith("ncryptsec")) {
@@ -174,9 +174,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                         didBackup = true,
                     )
                 }
-            return account.signer.keyPair.privKey != null
-        } catch (_: Exception) {
-            return false
+            return Pair(account.signer.keyPair.privKey != null, "")
+        } catch (e: Exception) {
+            return Pair(false, e.message ?: "Unknown error")
         }
     }
 

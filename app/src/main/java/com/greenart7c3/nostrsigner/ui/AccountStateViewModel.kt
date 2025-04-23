@@ -128,11 +128,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     }
 
     fun isValidKey(key: String, password: String): Pair<Boolean, String> {
-        val bomChar = '\uFEFF'
-        val withBom = bomChar + "nsec1lfkarc7439n4l3uahr45ej8mrjc39dd879t0ps355550dj8j9uzs3rnw24"
-
-        println(withBom)
-        println("First char code: ${key.first().code}") // Should print 65279
         try {
             val account =
                 if (key.startsWith("ncryptsec")) {

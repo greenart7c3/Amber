@@ -84,6 +84,7 @@ import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
 import com.halilibo.richtext.ui.resolveDefaults
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import kotlinx.coroutines.CoroutineScope
@@ -160,7 +161,7 @@ fun AccountBackupScreen(
 
                     Spacer(modifier = Modifier.height(30.dp))
 
-                    if (account.seedWords.isNotEmpty()) {
+                    if (Nip06().isValidMnemonic(account.seedWords.joinToString(separator = " "))) {
                         val keyguardLauncher =
                             rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
                                 if (result.resultCode == Activity.RESULT_OK) {

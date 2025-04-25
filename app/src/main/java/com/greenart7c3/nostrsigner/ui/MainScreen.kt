@@ -1307,7 +1307,7 @@ fun MainScreen(
                             onPost = {
                                 scope.launch(Dispatchers.IO) {
                                     LocalPreferences.updateProxy(context, true, it)
-                                    NotificationDataSource.stopSync()
+                                    NotificationDataSource.stop()
                                     NostrSigner.instance.checkForNewRelays()
                                     NotificationDataSource.start()
                                     scope.launch {

@@ -266,7 +266,7 @@ fun SettingsScreen(
                     text = stringResource(R.string.clear_logs_and_activity),
                     onClick = {
                         NostrSigner.instance.applicationIOScope.launch {
-                            NotificationDataSource.stopSync()
+                            NotificationDataSource.stop()
                             isLoading = true
                             LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
                                 NostrSigner.instance.getDatabase(it.npub).let { database ->
@@ -398,7 +398,7 @@ fun SettingsScreen(
                         checked = false
                         scope.launch(Dispatchers.IO) {
                             LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
-                            NotificationDataSource.stopSync()
+                            NotificationDataSource.stop()
                             NostrSigner.instance.checkForNewRelays()
                             NotificationDataSource.start()
                         }

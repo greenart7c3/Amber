@@ -28,9 +28,9 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.NostrClient
-import com.vitorpamplona.ammolite.relays.NostrDataSource
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.TypedFilter
+import com.vitorpamplona.ammolite.relays.datasources.NostrDataSource
 import com.vitorpamplona.ammolite.relays.filters.EOSETime
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -42,7 +42,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-object NotificationDataSource : NostrDataSource(NostrSigner.instance.client, "AccountData") {
+object NotificationDataSource : NostrDataSource(NostrSigner.instance.client) {
     private val eventNotificationConsumer = EventNotificationConsumer(NostrSigner.instance)
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -219,13 +219,9 @@ object NotificationDataSource : NostrDataSource(NostrSigner.instance.client, "Ac
     }
 
     private val accountChannel =
-        requestNewChannel { _, _ ->
+        requestNewSubscription { _, _ ->
             invalidateFilters()
         }
-
-    override fun updateChannelFilters() {
-        accountChannel.typedFilters = listOf(createNotificationsFilter())
-    }
 
     override fun auth(
         relay: Relay,
@@ -239,5 +235,9 @@ object NotificationDataSource : NostrDataSource(NostrSigner.instance.client, "Ac
                 NostrSigner.instance.client.sendIfExists(authEvent, relay)
             }
         }
+    }
+
+    override fun updateSubscriptions() {
+        accountChannel.typedFilters = listOf(createNotificationsFilter())
     }
 }

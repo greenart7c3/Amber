@@ -11,24 +11,25 @@ junit = "4.13.2"
 junitVersion = "1.2.1"
 lifecycle_version = "2.8.7"
 material3 = "1.3.2"
-mockk = "1.13.17"
+mockk = "1.14.0"
 nav_version = "2.8.9"
-quartz = "e007a02d84"
-compose_ui = "1.7.8"
+quartz = "d25e89f41d"
+compose_ui = "1.8.0"
 richtextUi = "077a2cde64"
-roomKtx = "2.7.0"
+roomKtx = "2.7.1"
 securityCryptoKtx = "1.1.0-alpha07"
 zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.0.0-alpha.14"
 kotlin = "2.1.20"
-workRuntimeKtx = "2.10.0"
-agp = "8.9.1"
+workRuntimeKtx = "2.10.1"
+agp = "8.9.2"
 ktlint = "12.1.2"
 ksp = "2.1.20-1.0.32"
 coil = "3.1.0"
 storage = "2.0.0"
 jna = "5.17.0"
 adaptiveAndroid = "1.1.0"
+materialIconsExtended = "1.7.8"
 
 [libraries]
 jna = { module = "net.java.dev.jna:jna", version.ref = "jna" }
@@ -45,7 +46,7 @@ junit = { module = "junit:junit", version.ref = "junit" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle_version" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle_version" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle_version" }
-material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "compose_ui" }
+material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "nav_version" }

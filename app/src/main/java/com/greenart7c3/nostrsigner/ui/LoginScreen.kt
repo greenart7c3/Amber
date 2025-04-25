@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,22 +52,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillNode
-import androidx.compose.ui.autofill.AutofillType
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.LocalAutofill
-import androidx.compose.ui.platform.LocalAutofillTree
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -112,6 +109,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MainPage(
     scope: CoroutineScope,
@@ -255,6 +253,7 @@ fun MainLoginPage(
     }
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SignUpPage(
@@ -611,6 +610,7 @@ fun SignUpPage(
     }
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalComposeUiApi::class)
 @Composable
 fun LoginPage(
@@ -696,22 +696,6 @@ fun LoginPage(
 
                         var showCharsPassword by remember { mutableStateOf(false) }
 
-                        val autofillNodeKey =
-                            AutofillNode(
-                                autofillTypes = listOf(AutofillType.Password),
-                                onFill = { key.value = TextFieldValue(it) },
-                            )
-
-                        val autofillNodePassword =
-                            AutofillNode(
-                                autofillTypes = listOf(AutofillType.Password),
-                                onFill = { key.value = TextFieldValue(it) },
-                            )
-
-                        val autofill = LocalAutofill.current
-                        LocalAutofillTree.current += autofillNodeKey
-                        LocalAutofillTree.current += autofillNodePassword
-
                         Text(
                             stringResource(R.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
                         )
@@ -719,17 +703,8 @@ fun LoginPage(
                         OutlinedTextField(
                             modifier = Modifier
                                 .fillMaxWidth()
-                                .onGloballyPositioned { coordinates ->
-                                    autofillNodeKey.boundingBox = coordinates.boundsInWindow()
-                                }
-                                .onFocusChanged { focusState ->
-                                    autofill?.run {
-                                        if (focusState.isFocused) {
-                                            requestAutofillForNode(autofillNodeKey)
-                                        } else {
-                                            cancelAutofillForNode(autofillNodeKey)
-                                        }
-                                    }
+                                .semantics {
+                                    contentType = ContentType.Password
                                 }
                                 .padding(vertical = 20.dp),
                             shape = RoundedCornerShape(18.dp),
@@ -811,17 +786,8 @@ fun LoginPage(
                             OutlinedTextField(
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .onGloballyPositioned { coordinates ->
-                                        autofillNodePassword.boundingBox = coordinates.boundsInWindow()
-                                    }
-                                    .onFocusChanged { focusState ->
-                                        autofill?.run {
-                                            if (focusState.isFocused) {
-                                                requestAutofillForNode(autofillNodePassword)
-                                            } else {
-                                                cancelAutofillForNode(autofillNodePassword)
-                                            }
-                                        }
+                                    .semantics {
+                                        contentType = ContentType.Password
                                     }
                                     .padding(bottom = 20.dp),
                                 shape = RoundedCornerShape(18.dp),

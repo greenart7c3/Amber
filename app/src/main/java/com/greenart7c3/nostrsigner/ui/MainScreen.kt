@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.annotation.SuppressLint
 import android.app.Activity.RESULT_OK
 import android.content.ClipData
 import android.content.Context
@@ -482,6 +483,7 @@ enum class IntentResultType {
     ADD,
 }
 
+@SuppressLint("ConfigurationScreenWidthHeight")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(

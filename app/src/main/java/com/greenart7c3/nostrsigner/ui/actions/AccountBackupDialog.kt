@@ -41,20 +41,16 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.autofill.AutofillNode
-import androidx.compose.ui.autofill.AutofillType
-import androidx.compose.ui.focus.onFocusChanged
-import androidx.compose.ui.layout.boundsInWindow
-import androidx.compose.ui.layout.onGloballyPositioned
+import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.platform.LocalAutofill
-import androidx.compose.ui.platform.LocalAutofillTree
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentType
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -217,30 +213,13 @@ fun AccountBackupScreen(
                     val password = remember { mutableStateOf(TextFieldValue("")) }
                     var errorMessage by remember { mutableStateOf("") }
                     var showCharsPassword by remember { mutableStateOf(false) }
-
-                    val autofillNode =
-                        AutofillNode(
-                            autofillTypes = listOf(AutofillType.Password),
-                            onFill = { password.value = TextFieldValue(it) },
-                        )
-                    val autofill = LocalAutofill.current
-                    LocalAutofillTree.current += autofillNode
                     val keyboardController = LocalSoftwareKeyboardController.current
 
                     OutlinedTextField(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .onGloballyPositioned { coordinates ->
-                                autofillNode.boundingBox = coordinates.boundsInWindow()
-                            }
-                            .onFocusChanged { focusState ->
-                                autofill?.run {
-                                    if (focusState.isFocused) {
-                                        requestAutofillForNode(autofillNode)
-                                    } else {
-                                        cancelAutofillForNode(autofillNode)
-                                    }
-                                }
+                            .semantics {
+                                contentType = ContentType.Password
                             },
                         value = password.value,
                         onValueChange = {

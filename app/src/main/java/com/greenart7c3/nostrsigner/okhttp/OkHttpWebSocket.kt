@@ -49,7 +49,7 @@ class OkHttpWebSocket(
             response: Response,
         ) = out.onOpen(
             response.receivedResponseAtMillis - response.sentRequestAtMillis,
-            response.headers.get("Sec-WebSocket-Extensions")?.contains("permessage-deflate") ?: false,
+            response.headers["Sec-WebSocket-Extensions"]?.contains("permessage-deflate") == true,
         )
 
         override fun onMessage(
@@ -100,5 +100,5 @@ class OkHttpWebSocket(
         socket?.cancel()
     }
 
-    override fun send(msg: String): Boolean = socket?.send(msg) ?: false
+    override fun send(msg: String): Boolean = socket?.send(msg) == true
 }

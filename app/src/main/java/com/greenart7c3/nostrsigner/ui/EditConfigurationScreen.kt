@@ -79,7 +79,7 @@ fun EditConfigurationScreen(
         launch(Dispatchers.IO) {
             application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
             name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
-            closeApp = application?.application?.closeApplication ?: true
+            closeApp = application?.application?.closeApplication != false
 
             application?.application?.relays?.forEach {
                 relays.add(

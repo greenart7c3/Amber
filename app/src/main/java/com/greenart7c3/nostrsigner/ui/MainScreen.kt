@@ -196,7 +196,7 @@ fun sendResult(
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
                     account.signPolicy,
-                    shouldCloseApplication ?: intentData.bunkerRequest?.closeApplication ?: true,
+                    shouldCloseApplication ?: (intentData.bunkerRequest?.closeApplication != false),
                 ),
                 permissions = mutableListOf(),
             )

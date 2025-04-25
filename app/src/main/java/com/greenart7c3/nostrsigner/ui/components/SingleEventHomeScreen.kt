@@ -96,7 +96,7 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
-                applicationEntity?.application?.closeApplication ?: intentData.bunkerRequest?.closeApplication ?: false,
+                applicationEntity?.application?.closeApplication ?: (intentData.bunkerRequest?.closeApplication == true),
                 paddingValues,
                 remember,
                 intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
@@ -241,7 +241,7 @@ fun SingleEventHomeScreen(
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
                                     account.signPolicy,
-                                    intentData.bunkerRequest?.closeApplication ?: true,
+                                    intentData.bunkerRequest?.closeApplication != false,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -385,7 +385,7 @@ fun SingleEventHomeScreen(
                                     intentData.bunkerRequest?.secret ?: "",
                                     intentData.bunkerRequest?.secret != null,
                                     account.signPolicy,
-                                    intentData.bunkerRequest?.closeApplication ?: true,
+                                    intentData.bunkerRequest?.closeApplication != false,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -557,7 +557,7 @@ fun SingleEventHomeScreen(
                                         intentData.bunkerRequest?.secret ?: "",
                                         intentData.bunkerRequest?.secret != null,
                                         account.signPolicy,
-                                        intentData.bunkerRequest?.closeApplication ?: true,
+                                        intentData.bunkerRequest?.closeApplication != false,
                                     ),
                                     permissions = mutableListOf(),
                                 )

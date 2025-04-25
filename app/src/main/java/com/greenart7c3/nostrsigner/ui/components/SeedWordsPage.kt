@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -14,17 +15,19 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
+import kotlinx.coroutines.launch
 
 @Composable
 fun SeedWordsPage(
@@ -32,7 +35,8 @@ fun SeedWordsPage(
     showNextButton: Boolean = true,
     onNextPage: () -> Unit,
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
+    val scope = rememberCoroutineScope()
     val scrollState = rememberScrollState()
 
     Scaffold { innerPadding ->
@@ -63,7 +67,13 @@ fun SeedWordsPage(
 
             AmberButton(
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(seedWords.joinToString(" ")))
+                    scope.launch {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText("", seedWords.joinToString(" ")),
+                            ),
+                        )
+                    }
                 },
                 text = stringResource(R.string.copy_to_clipboard),
             )

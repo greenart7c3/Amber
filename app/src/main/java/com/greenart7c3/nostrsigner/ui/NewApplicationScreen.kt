@@ -9,9 +9,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
@@ -29,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import kotlinx.coroutines.launch
 
 @Composable
 fun NewApplicationScreen(
@@ -38,8 +40,9 @@ fun NewApplicationScreen(
     navController: NavController,
 ) {
     var dialogOpen by remember { mutableStateOf(false) }
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
 
     if (dialogOpen) {
         SimpleQrCodeScanner {
@@ -68,36 +71,38 @@ fun NewApplicationScreen(
 
         AmberButton(
             onClick = {
-                val clipboardText = clipboardManager.getText()
-                if (clipboardText == null) {
-                    accountStateViewModel.toast(
-                        context.getString(R.string.warning),
-                        context.getString(R.string.invalid_nostr_connect_uri),
-                    )
-                    return@AmberButton
-                }
+                scope.launch {
+                    val clipboardText = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)
+                    if (clipboardText == null) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.warning),
+                            context.getString(R.string.invalid_nostr_connect_uri),
+                        )
+                        return@launch
+                    }
 
-                if (clipboardText.text.isBlank()) {
-                    accountStateViewModel.toast(
-                        context.getString(R.string.warning),
-                        context.getString(R.string.invalid_nostr_connect_uri),
-                    )
-                    return@AmberButton
-                }
-                if (!clipboardText.text.startsWith("nostrconnect://")) {
-                    accountStateViewModel.toast(
-                        context.getString(R.string.warning),
-                        context.getString(R.string.invalid_nostr_connect_uri),
-                    )
-                    return@AmberButton
-                }
+                    if (clipboardText.text.isBlank()) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.warning),
+                            context.getString(R.string.invalid_nostr_connect_uri),
+                        )
+                        return@launch
+                    }
+                    if (!clipboardText.text.startsWith("nostrconnect://")) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.warning),
+                            context.getString(R.string.invalid_nostr_connect_uri),
+                        )
+                        return@launch
+                    }
 
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = clipboardText.text.toUri()
-                intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
-                intent.`package` = context.packageName
-                context.getAppCompatActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = clipboardText.text.toString().toUri()
+                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+                    intent.`package` = context.packageName
+                    context.getAppCompatActivity()?.startActivity(intent)
+                    accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
+                }
             },
             text = stringResource(R.string.paste_from_clipboard),
         )

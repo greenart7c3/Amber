@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
+import android.content.ClipData
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -32,11 +33,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -64,7 +65,7 @@ fun EditPermission(
     selectedPackage: String,
     navController: NavController,
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
@@ -135,7 +136,13 @@ fun EditPermission(
             modifier = Modifier
                 .fillMaxWidth(),
             onClick = {
-                clipboardManager.setText(AnnotatedString(bunkerUri))
+                scope.launch {
+                    clipboardManager.setClipEntry(
+                        ClipEntry(
+                            ClipData.newPlainText("", bunkerUri),
+                        ),
+                    )
+                }
             },
             text = stringResource(R.string.copy_to_clipboard),
         )

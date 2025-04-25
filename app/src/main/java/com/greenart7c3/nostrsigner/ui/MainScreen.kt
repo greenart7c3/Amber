@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.app.Activity.RESULT_OK
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -62,13 +63,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
-import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.LayoutDirection
@@ -129,7 +130,7 @@ fun sendResult(
     account: Account,
     key: String,
     rememberChoice: Boolean,
-    clipboardManager: ClipboardManager,
+    clipboardManager: Clipboard,
     event: String,
     value: String,
     intentData: IntentData,
@@ -395,9 +396,13 @@ fun sendResult(
                     context.getString(R.string.event_copied_to_the_clipboard)
                 }
 
-            clipboardManager.setText(AnnotatedString(result))
-
             NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+                clipboardManager.setClipEntry(
+                    ClipEntry(
+                        ClipData.newPlainText("", result),
+                    ),
+                )
+
                 Toast.makeText(
                     context,
                     message,

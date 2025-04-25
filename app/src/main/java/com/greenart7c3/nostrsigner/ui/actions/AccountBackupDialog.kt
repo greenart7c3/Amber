@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import android.app.Activity
+import android.content.ClipData
 import android.content.Context
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -45,15 +46,15 @@ import androidx.compose.ui.autofill.AutofillType
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.layout.boundsInWindow
 import androidx.compose.ui.layout.onGloballyPositioned
-import androidx.compose.ui.platform.ClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalAutofill
 import androidx.compose.ui.platform.LocalAutofillTree
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
@@ -427,7 +428,7 @@ fun QrCodeDialog(
 
 @Composable
 private fun NSecCopyButton(account: Account) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -468,13 +469,18 @@ private fun copyNSec(
     context: Context,
     scope: CoroutineScope,
     account: Account,
-    clipboardManager: ClipboardManager,
+    clipboardManager: Clipboard,
 ) {
     account.signer.keyPair.privKey?.let {
         account.didBackup = true
         LocalPreferences.saveToEncryptedStorage(context, account)
-        clipboardManager.setText(AnnotatedString(it.toNsec()))
         scope.launch {
+            clipboardManager.setClipEntry(
+                ClipEntry(
+                    ClipData.newPlainText("", it.toNsec()),
+                ),
+            )
+
             Toast.makeText(
                 context,
                 context.getString(R.string.secret_key_copied_to_clipboard),
@@ -490,7 +496,7 @@ private fun EncryptNSecCopyButton(
     password: MutableState<TextFieldValue>,
     onLoading: (Boolean) -> Unit,
 ) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
 
@@ -592,7 +598,7 @@ private fun encryptCopyNSec(
     context: Context,
     scope: CoroutineScope,
     account: Account,
-    clipboardManager: ClipboardManager,
+    clipboardManager: Clipboard,
     onLoading: (Boolean) -> Unit,
 ) {
     if (password.value.text.isBlank()) {
@@ -612,8 +618,13 @@ private fun encryptCopyNSec(
                     val key = Nip49().encrypt(it.toHexKey(), password.value.text)
                     account.didBackup = true
                     LocalPreferences.saveToEncryptedStorage(context, account)
-                    clipboardManager.setText(AnnotatedString(key))
                     scope.launch {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText("", key),
+                            ),
+                        )
+
                         Toast.makeText(
                             context,
                             context.getString(R.string.secret_key_copied_to_clipboard),

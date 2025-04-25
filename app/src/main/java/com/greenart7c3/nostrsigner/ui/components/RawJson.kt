@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.content.ClipData
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
@@ -14,10 +15,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.TextFieldValue
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -35,7 +36,7 @@ fun RawJson(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
     var currentContent by remember {
         mutableStateOf(rawJson)
     }
@@ -77,9 +78,13 @@ fun RawJson(
                 if (onCopy != null) {
                     onCopy()
                 } else {
-                    clipboardManager.setText(AnnotatedString(rawJson))
-
                     coroutineScope.launch {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText("", rawJson),
+                            ),
+                        )
+
                         Toast.makeText(
                             context,
                             context.getString(R.string.data_copied_to_the_clipboard),

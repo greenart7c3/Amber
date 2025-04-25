@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -32,7 +33,8 @@ import androidx.compose.ui.focus.FocusDirection
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.stringResource
@@ -259,7 +261,8 @@ fun NewNsecBunkerCreatedScreen(
 ) {
     val isLoading = remember { mutableStateOf(false) }
     var application by remember { mutableStateOf(ApplicationEntity.empty()) }
-    val clipboardManager = LocalClipboardManager.current
+    val clipboardManager = LocalClipboard.current
+    val scope = rememberCoroutineScope()
 
     LaunchedEffect(Unit) {
         isLoading.value = true
@@ -322,7 +325,13 @@ fun NewNsecBunkerCreatedScreen(
 
             AmberButton(
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(bunkerUri))
+                    scope.launch {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText("", bunkerUri),
+                            ),
+                        )
+                    }
                 },
                 text = stringResource(R.string.copy_to_clipboard),
             )

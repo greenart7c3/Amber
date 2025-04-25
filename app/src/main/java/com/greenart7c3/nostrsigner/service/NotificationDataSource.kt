@@ -156,7 +156,6 @@ object NotificationDataSource : NostrDataSource(NostrSigner.instance.client) {
 
     init {
         scope.launch {
-            LocalPreferences.loadSettingsFromEncryptedStorage()
             client.subscribe(clientListener)
         }
     }

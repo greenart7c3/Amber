@@ -39,7 +39,7 @@ class Nip11Retriever {
         FAIL_WITH_HTTP_STATUS,
     }
 
-    suspend fun loadRelayInfo(
+    fun loadRelayInfo(
         url: String,
         dirtyUrl: String,
         forceProxy: Boolean,
@@ -60,6 +60,7 @@ class Nip11Retriever {
                 .newCall(request)
                 .enqueue(
                     object : Callback {
+                        @Suppress("UNNECESSARY_SAFE_CALL")
                         override fun onResponse(
                             call: Call,
                             response: Response,

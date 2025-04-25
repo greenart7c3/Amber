@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -248,7 +249,7 @@ fun DefaultRelaysScreen(
     }
 }
 
-suspend fun onAddRelay(
+fun onAddRelay(
     textFieldRelay: MutableState<TextFieldValue>,
     isLoading: MutableState<Boolean>,
     relays2: SnapshotStateList<RelaySetupInfo>,
@@ -258,6 +259,7 @@ suspend fun onAddRelay(
     context: Context,
     onDone: () -> Unit,
 ) {
+    checkNotInMainThread()
     val url = textFieldRelay.value.text
     if (url.isNotBlank() && url != "/") {
         isLoading.value = true

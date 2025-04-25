@@ -12,12 +12,10 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
-import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import java.io.File
 
 // Release mode (!BuildConfig.DEBUG) always uses encrypted preferences
@@ -37,7 +35,6 @@ private object PrefKeys {
     const val PROFILE_URL = "profile_url"
     const val LAST_METADATA_UPDATE = "last_metadata_update"
     const val LAST_CHECK = "last_check"
-    const val NCRYPT_SEC = "ncrypt_sec"
     const val DID_BACKUP = "did_backup"
 }
 
@@ -186,7 +183,8 @@ object LocalPreferences {
         }
     }
 
-    suspend fun loadSettingsFromEncryptedStorage(context: Context = NostrSigner.instance): AmberSettings {
+    fun loadSettingsFromEncryptedStorage(context: Context = NostrSigner.instance): AmberSettings {
+        checkNotInMainThread()
         encryptedPreferences(context).apply {
             val proxyPort = getInt(SettingsKeys.PROXY_PORT, 9050)
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
@@ -280,6 +278,7 @@ object LocalPreferences {
         }
     }
 
+    @Suppress("KotlinConstantConditions")
     private fun encryptedPreferences(
         context: Context,
         npub: String? = null,
@@ -362,20 +361,6 @@ object LocalPreferences {
     fun getAccountName(context: Context, npub: String): String {
         encryptedPreferences(context, npub).apply {
             return getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
-        }
-    }
-
-    suspend fun saveNcryptsec(
-        npub: String,
-        privateKeyHex: HexKey,
-        password: String,
-    ) {
-        val context = NostrSigner.instance
-        val ncryptsec = Nip49().encrypt(privateKeyHex, password)
-        encryptedPreferences(context, npub).edit {
-            apply {
-                putString(PrefKeys.NCRYPT_SEC, ncryptsec)
-            }
         }
     }
 

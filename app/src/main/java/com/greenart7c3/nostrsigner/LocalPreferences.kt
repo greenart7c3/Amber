@@ -410,6 +410,8 @@ object LocalPreferences {
     }
 
     suspend fun migrateTorSettings(context: Context) {
+        if (encryptedPreferences(context).contains(SettingsKeys.USE_PROXY)) return
+
         val useProxy = allSavedAccounts(context).any {
             encryptedPreferences(context, it.npub).getBoolean(SettingsKeys.USE_PROXY, false)
         }

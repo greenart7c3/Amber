@@ -120,7 +120,7 @@ class NostrSigner : Application() {
             }
         }
 
-        runBlocking {
+        runBlocking(Dispatchers.IO) {
             LocalPreferences.migrateTorSettings(this@NostrSigner)
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }

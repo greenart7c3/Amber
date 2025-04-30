@@ -506,8 +506,8 @@
     <string name="connected_app_warning">某些应用可能不支持重用 bunker URI。如果出现问题，需要删除该应用并重新创建新应用。</string>
     <string name="zapstore">Zapstore</string>
     <string name="zapstore_website">https://zapstore.dev</string>
-    <string name="discover_more">Discover more Nostr apps for android at</string>
-    <string name="backup">Backup</string>
-    <string name="qrCode">QR Code</string>
-    <string name="make_backup_message">Don\'t lose access to your Nostr account! Create a backup</string>
+    <string name="discover_more">发现更多的 Nostr 应用</string>
+    <string name="backup">备份</string>
+    <string name="qrCode">二维码</string>
+    <string name="make_backup_message">不要失去 Nostr 账户的访问权限！创建一个备份</string>
 </resources>

@@ -47,8 +47,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.google.gson.GsonBuilder
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -171,7 +171,7 @@ fun MultiEventHomeScreen(
             text = stringResource(R.string.approve_selected),
             onClick = {
                 onLoading(true)
-                NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     try {
                         val activity = context.getAppCompatActivity()
                         val results = mutableListOf<Result>()
@@ -194,7 +194,7 @@ fun MultiEventHomeScreen(
 
                             val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                            val database = NostrSigner.instance.getDatabase(thisAccount.npub)
+                            val database = Amber.instance.getDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
 
                             val application =
@@ -523,7 +523,7 @@ fun MultiEventHomeScreen(
                 containerColor = orange,
             ),
             onClick = {
-                NostrSigner.instance.applicationIOScope.launch {
+                Amber.instance.applicationIOScope.launch {
                     var closeApp = true
                     BunkerRequestUtils.clearRequests()
                     onRemoveIntentData(intents, IntentResultType.REMOVE)
@@ -540,7 +540,7 @@ fun MultiEventHomeScreen(
 
                         val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
 
-                        val database = NostrSigner.instance.getDatabase(thisAccount.npub)
+                        val database = Amber.instance.getDatabase(thisAccount.npub)
 
                         val application =
                             database
@@ -614,7 +614,7 @@ private fun sendResultIntent(
 private suspend fun reconnectToRelays(intents: List<IntentData>) {
     if (!intents.any { it.bunkerRequest != null }) return
 
-    NostrSigner.instance.checkForNewRelays()
+    Amber.instance.checkForNewRelays()
 }
 
 @Composable

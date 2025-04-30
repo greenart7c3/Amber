@@ -22,7 +22,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
@@ -36,7 +36,7 @@ fun LogsScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val logsFlow = NostrSigner.instance.getDatabase(account.npub).applicationDao().getLogs()
+    val logsFlow = Amber.instance.getDatabase(account.npub).applicationDao().getLogs()
     val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val state = rememberLazyListState()
 
@@ -51,7 +51,7 @@ fun LogsScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        NostrSigner.instance.getDatabase(account.npub).applicationDao().clearLogs()
+                        Amber.instance.getDatabase(account.npub).applicationDao().clearLogs()
                     }
                 },
                 text = stringResource(R.string.clear_logs),

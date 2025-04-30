@@ -9,8 +9,8 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
@@ -159,8 +159,8 @@ object IntentUtils {
                                 pubKey,
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
-                            NostrSigner.instance.applicationIOScope.launch {
-                                val database = NostrSigner.instance.getDatabase(account.npub)
+                            Amber.instance.applicationIOScope.launch {
+                                val database = Amber.instance.getDatabase(account.npub)
                                 database.applicationDao().insertLog(
                                     LogEntity(
                                         0,
@@ -348,8 +348,8 @@ object IntentUtils {
                             pubKey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
-                        NostrSigner.instance.applicationIOScope.launch {
-                            val database = NostrSigner.instance.getDatabase(account.npub)
+                        Amber.instance.applicationIOScope.launch {
+                            val database = Amber.instance.getDatabase(account.npub)
                             database.applicationDao().insertLog(
                                 LogEntity(
                                     0,
@@ -509,9 +509,9 @@ object IntentUtils {
                 getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
             }
         } catch (e: Exception) {
-            NostrSigner.instance.applicationIOScope.launch {
-                LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
-                    NostrSigner.instance.getDatabase(it.npub).applicationDao().insertLog(
+            Amber.instance.applicationIOScope.launch {
+                LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                    Amber.instance.getDatabase(it.npub).applicationDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = "IntentUtils",

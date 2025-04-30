@@ -46,7 +46,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
@@ -77,7 +77,7 @@ fun EditConfigurationScreen(
     var closeApp by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+            application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
             name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
             closeApp = application?.application?.closeApplication != false
 
@@ -290,14 +290,14 @@ fun EditConfigurationScreen(
                                     relays = relays,
                                     closeApplication = closeApp,
                                 )
-                            NostrSigner.instance.getDatabase(account.npub).applicationDao().delete(it.application)
-                            NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(
+                            Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
+                            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     localApplicationData,
                                     it.permissions,
                                 ),
                             )
-                            NostrSigner.instance.checkForNewRelays()
+                            Amber.instance.checkForNewRelays()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {
@@ -319,9 +319,9 @@ fun EditConfigurationScreen(
                 onClick = {
                     application?.let {
                         scope.launch(Dispatchers.IO) {
-                            NostrSigner.instance.getDatabase(account.npub).applicationDao().delete(it.application)
+                            Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
 
-                            NostrSigner.instance.checkForNewRelays()
+                            Amber.instance.checkForNewRelays()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {

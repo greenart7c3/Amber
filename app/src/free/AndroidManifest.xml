@@ -13,7 +13,7 @@
     </queries>
 
     <application
-        android:name=".NostrSigner">
+        android:name=".Amber">
 
         <service
             android:name=".service.ConnectivityService"

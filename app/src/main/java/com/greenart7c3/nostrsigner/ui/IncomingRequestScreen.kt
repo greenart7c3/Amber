@@ -22,8 +22,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -54,7 +54,7 @@ fun IncomingRequestScreen(
             loading = true
             try {
                 LocalPreferences.allSavedAccounts(context).forEach { account ->
-                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllApplications().forEach {
+                    Amber.instance.getDatabase(account.npub).applicationDao().getAllApplications().forEach {
                         if (it.application.name.isNotBlank()) {
                             ApplicationNameCache.names["${account.npub.toShortenHex()}-${it.application.key}"] = it.application.name
                         }

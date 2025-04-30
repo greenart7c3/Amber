@@ -44,7 +44,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-class NostrSigner : Application() {
+class Amber : Application() {
     val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
         HttpClientManager.getHttpClient(useProxy)
     }
@@ -90,7 +90,7 @@ class NostrSigner : Application() {
 
         val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, BootReceiver::class.java)
-        intent.action = "CLEAR_LOGS"
+        intent.action = BootReceiver.CLEAR_LOGS_ACTION
         val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_MUTABLE)
 
         // Set up the alarm to trigger every 24 hours
@@ -121,7 +121,7 @@ class NostrSigner : Application() {
         }
 
         runBlocking(Dispatchers.IO) {
-            LocalPreferences.migrateTorSettings(this@NostrSigner)
+            LocalPreferences.migrateTorSettings(this@Amber)
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }
 
@@ -321,10 +321,10 @@ class NostrSigner : Application() {
 
     companion object {
         @Volatile
-        private var _instance: NostrSigner? = null
-        val instance: NostrSigner get() =
+        private var _instance: Amber? = null
+        val instance: Amber get() =
             _instance ?: synchronized(this) {
-                _instance ?: NostrSigner().also { _instance = it }
+                _instance ?: Amber().also { _instance = it }
             }
     }
 }

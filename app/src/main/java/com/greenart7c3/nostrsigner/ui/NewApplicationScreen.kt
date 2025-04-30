@@ -24,7 +24,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
@@ -154,7 +154,7 @@ fun NewApplicationScreen(
                 append(" or ")
                 withLink(
                     LinkAnnotation.Url(
-                        if (NostrSigner.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
+                        if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
                         styles = TextLinkStyles(
                             style = SpanStyle(
                                 textDecoration = TextDecoration.Underline,

@@ -22,8 +22,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -71,9 +71,9 @@ fun SingleEventHomeScreen(
         launch(Dispatchers.IO) {
             applicationEntity =
                 if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getBySecret(intentData.bunkerRequest.secret)
+                    Amber.instance.getDatabase(account.npub).applicationDao().getBySecret(intentData.bunkerRequest.secret)
                 } else {
-                    NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                    Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                 }
         }
     }
@@ -140,12 +140,12 @@ fun SingleEventHomeScreen(
                 },
                 {
                     if (intentData.bunkerRequest != null) {
-                        NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val defaultRelays = NostrSigner.instance.settings.defaultRelays
-                            val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val defaultRelays = Amber.instance.settings.defaultRelays
+                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
 
-                            NostrSigner.instance.checkForNewRelays(
+                            Amber.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
 
@@ -197,7 +197,7 @@ fun SingleEventHomeScreen(
                 appName,
                 intentData.type,
                 {
-                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
                         sendResult(
@@ -217,15 +217,15 @@ fun SingleEventHomeScreen(
                     }
                 },
                 {
-                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         if (key == "null") {
                             context.getAppCompatActivity()?.intent = null
                             context.getAppCompatActivity()?.finish()
                             return@launch
                         }
 
-                        val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
-                        val defaultRelays = NostrSigner.instance.settings.defaultRelays
+                        val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                        val defaultRelays = Amber.instance.settings.defaultRelays
                         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
@@ -258,14 +258,14 @@ fun SingleEventHomeScreen(
                         }
 
                         if (intentData.bunkerRequest != null) {
-                            NostrSigner.instance.checkForNewRelays(
+                            Amber.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
                         }
 
-                        NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+                        Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
-                        NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
+                        Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
                             HistoryEntity2(
                                 0,
                                 key,
@@ -363,13 +363,13 @@ fun SingleEventHomeScreen(
                     )
                 },
                 {
-                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         if (key == "null") {
                             return@launch
                         }
 
-                        val defaultRelays = NostrSigner.instance.settings.defaultRelays
-                        val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                        val defaultRelays = Amber.instance.settings.defaultRelays
+                        val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
                         val application =
                             savedApplication ?: ApplicationWithPermissions(
@@ -401,14 +401,14 @@ fun SingleEventHomeScreen(
                         }
 
                         if (intentData.bunkerRequest != null) {
-                            NostrSigner.instance.checkForNewRelays(
+                            Amber.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
                         }
 
-                        NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+                        Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
-                        NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
+                        Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
                             HistoryEntity2(
                                 0,
                                 key,
@@ -534,13 +534,13 @@ fun SingleEventHomeScreen(
                     },
                     {
                         onLoading(true)
-                        NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                             if (key == "null") {
                                 return@launch
                             }
 
-                            val defaultRelays = NostrSigner.instance.settings.defaultRelays
-                            val savedApplication = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                            val defaultRelays = Amber.instance.settings.defaultRelays
+                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
 
                             val application =
@@ -563,7 +563,7 @@ fun SingleEventHomeScreen(
                                 )
 
                             if (intentData.bunkerRequest != null) {
-                                NostrSigner.instance.checkForNewRelays(
+                                Amber.instance.checkForNewRelays(
                                     newRelays = relays.toSet(),
                                 )
                             }
@@ -579,9 +579,9 @@ fun SingleEventHomeScreen(
                                 )
                             }
 
-                            NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+                            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
 
-                            NostrSigner.instance.getDatabase(account.npub).applicationDao().addHistory(
+                            Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
                                 HistoryEntity2(
                                     0,
                                     key,

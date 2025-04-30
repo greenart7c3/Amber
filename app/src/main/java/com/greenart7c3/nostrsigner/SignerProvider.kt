@@ -64,7 +64,7 @@ class SignerProvider : ContentProvider() {
                     val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                     if (!LocalPreferences.containsAccount(context!!, npub)) return null
                     val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                    val database = NostrSigner.instance.getDatabase(account.npub)
+                    val database = Amber.instance.getDatabase(account.npub)
                     val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                     val permission =
                         database
@@ -128,7 +128,7 @@ class SignerProvider : ContentProvider() {
                         return null
                     }
 
-                    val database = NostrSigner.instance.getDatabase(account.npub)
+                    val database = Amber.instance.getDatabase(account.npub)
                     var permission =
                         database
                             .applicationDao()
@@ -240,7 +240,7 @@ class SignerProvider : ContentProvider() {
                     val stringType = uri.toString().replace("content://$appId.", "")
                     val pubkey = projection[1]
                     val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
-                    val database = NostrSigner.instance.getDatabase(account.npub)
+                    val database = Amber.instance.getDatabase(account.npub)
                     var permission =
                         database
                             .applicationDao()
@@ -346,7 +346,7 @@ class SignerProvider : ContentProvider() {
                 "content://$appId.GET_PUBLIC_KEY" -> {
                     val packageName = callingPackage ?: return null
                     val account = LocalPreferences.loadFromEncryptedStorage(context!!) ?: return null
-                    val database = NostrSigner.instance.getDatabase(account.npub)
+                    val database = Amber.instance.getDatabase(account.npub)
                     val permission =
                         database
                             .applicationDao()

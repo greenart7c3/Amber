@@ -3,7 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <application
-        android:name=".NostrSigner"
+        android:name=".Amber"
         android:allowBackup="false"
         android:configChanges="orientation|screenSize|screenLayout"
         android:dataExtractionRules="@xml/data_extraction_rules"

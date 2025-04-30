@@ -98,7 +98,7 @@ class MainViewModel(val context: Context) : ViewModel() {
             account?.let { acc ->
                 requests.forEach {
                     val contentIntent =
-                        Intent(NostrSigner.instance, MainActivity::class.java).apply {
+                        Intent(Amber.instance, MainActivity::class.java).apply {
                             data = "nostrsigner:".toUri()
                         }
                     contentIntent.putExtra("bunker", it.toJson())

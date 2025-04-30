@@ -41,9 +41,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.Account
@@ -97,7 +97,7 @@ fun DefaultRelaysScreen(
     val relays2 =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            NostrSigner.instance.settings.defaultRelays.forEach {
+            Amber.instance.settings.defaultRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -150,14 +150,14 @@ fun DefaultRelaysScreen(
                                     account,
                                     context,
                                     onDone = {
-                                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                        Amber.instance.settings = Amber.instance.settings.copy(
                                             defaultRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
                                             if (BuildConfig.FLAVOR != "offline") {
-                                                NostrSigner.instance.checkForNewRelays()
+                                                Amber.instance.checkForNewRelays()
                                                 NotificationDataSource.stop()
                                                 delay(2000)
                                                 NotificationDataSource.start()
@@ -191,14 +191,14 @@ fun DefaultRelaysScreen(
                                 context,
                                 onDone = {
                                     isLoading.value = true
-                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                    Amber.instance.settings = Amber.instance.settings.copy(
                                         defaultRelays = relays2,
                                     )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
                                         if (BuildConfig.FLAVOR != "offline") {
-                                            NostrSigner.instance.checkForNewRelays()
+                                            Amber.instance.checkForNewRelays()
                                             NotificationDataSource.stop()
                                             delay(2000)
                                             NotificationDataSource.start()
@@ -224,14 +224,14 @@ fun DefaultRelaysScreen(
                             onClick = {
                                 isLoading.value = true
                                 relays2.removeAt(it)
-                                NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                Amber.instance.settings = Amber.instance.settings.copy(
                                     defaultRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                 scope.launch(Dispatchers.IO) {
                                     @Suppress("KotlinConstantConditions")
                                     if (BuildConfig.FLAVOR != "offline") {
-                                        NostrSigner.instance.checkForNewRelays()
+                                        Amber.instance.checkForNewRelays()
                                         NotificationDataSource.stop()
                                         delay(2000)
                                         NotificationDataSource.start()
@@ -263,7 +263,7 @@ fun onAddRelay(
     val url = textFieldRelay.value.text
     if (url.isNotBlank() && url != "/") {
         isLoading.value = true
-        val isPrivateIp = NostrSigner.instance.isPrivateIp(url)
+        val isPrivateIp = Amber.instance.isPrivateIp(url)
         var addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
                 // TODO: How to identify relays on the local network?
@@ -287,7 +287,7 @@ fun onAddRelay(
             retriever.loadRelayInfo(
                 httpsUrl,
                 addedWSS,
-                forceProxy = if (isPrivateIp) false else NostrSigner.instance.settings.useProxy,
+                forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
                         if (info.limitation?.payment_required == true) {
@@ -310,7 +310,7 @@ fun onAddRelay(
                             return@secondLaunch
                         }
 
-                        val relays = NostrSigner.instance.getSavedRelays()
+                        val relays = Amber.instance.getSavedRelays()
                         if (relays.any { it.url == addedWSS }) {
                             relays2.add(
                                 RelaySetupInfo(
@@ -339,7 +339,7 @@ fun onAddRelay(
                                 it,
                             )
 
-                            val isPrivateIp = NostrSigner.instance.isPrivateIp(addedWSS)
+                            val isPrivateIp = Amber.instance.isPrivateIp(addedWSS)
                             val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
                                 HttpClientManager.getHttpClient(useProxy)
                             }
@@ -360,7 +360,7 @@ fun onAddRelay(
                                             read = true,
                                             write = true,
                                             feedTypes = COMMON_FEED_TYPES,
-                                            forceProxy = if (isPrivateIp) false else NostrSigner.instance.settings.useProxy,
+                                            forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
                                         ),
                                     ),
                                 )
@@ -498,7 +498,7 @@ fun RelayLogScreen(
     val context = LocalContext.current
 
     val flows = LocalPreferences.allSavedAccounts(context).map {
-        NostrSigner.instance.getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+        Amber.instance.getDatabase(it.npub).applicationDao().getLogsByUrl(url)
     }.merge()
 
     val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
@@ -557,7 +557,7 @@ fun ActiveRelaysScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            relays2.addAll(NostrSigner.instance.getSavedRelays())
+            relays2.addAll(Amber.instance.getSavedRelays())
         }
     }
 
@@ -590,7 +590,7 @@ fun ActiveRelaysScreen(
                         fontSize = 24.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (NostrSigner.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                        color = if (Amber.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -598,11 +598,11 @@ fun ActiveRelaysScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (NostrSigner.instance.client.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
+                            text = if (Amber.instance.client.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = if (NostrSigner.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                            color = if (Amber.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
                         )
                     }
 

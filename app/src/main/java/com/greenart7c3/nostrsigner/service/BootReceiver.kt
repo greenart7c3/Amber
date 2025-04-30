@@ -5,9 +5,9 @@ import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.util.Log
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.vitorpamplona.quartz.utils.TimeUtils
 import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import kotlin.coroutines.cancellation.CancellationException
@@ -15,6 +15,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
+    companion object {
+        const val CLEAR_LOGS_ACTION = "CLEAR_AMBER_LOGS"
+    }
+
     override fun onReceive(context: Context, intent: Intent) {
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR == "offline") return
@@ -46,10 +50,10 @@ class BootReceiver : BroadcastReceiver() {
                     ),
                 )
             }
-            "CLEAR_LOGS" -> {
-                NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
-                    LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
-                        NostrSigner.instance.getDatabase(it.npub).let { database ->
+            CLEAR_LOGS_ACTION -> {
+                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                        Amber.instance.getDatabase(it.npub).let { database ->
                             try {
                                 val oneWeek = System.currentTimeMillis() - ONE_WEEK
                                 val oneWeekAgo = TimeUtils.oneWeekAgo()

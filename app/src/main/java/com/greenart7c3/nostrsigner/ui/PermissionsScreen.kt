@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
@@ -47,7 +47,7 @@ fun PermissionsScreen(
     account: Account,
     navController: NavController,
 ) {
-    val applications = NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
+    val applications = Amber.instance.getDatabase(account.npub).applicationDao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
 
     Column(
         modifier,
@@ -112,7 +112,7 @@ fun PermissionsScreen(
                     append(" or ")
                     withLink(
                         LinkAnnotation.Url(
-                            if (NostrSigner.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
+                            if (Amber.instance.isZapstoreInstalled()) "zapstore://" else stringResource(R.string.zapstore_website),
                             styles = TextLinkStyles(
                                 style = SpanStyle(
                                     textDecoration = TextDecoration.Underline,

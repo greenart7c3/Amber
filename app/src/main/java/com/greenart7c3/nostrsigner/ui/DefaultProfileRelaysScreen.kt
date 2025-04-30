@@ -24,9 +24,9 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -54,7 +54,7 @@ fun DefaultProfileRelaysScreen(
     val relays2 =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            NostrSigner.instance.settings.defaultProfileRelays.forEach {
+            Amber.instance.settings.defaultProfileRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -107,14 +107,14 @@ fun DefaultProfileRelaysScreen(
                                     account,
                                     context,
                                     onDone = {
-                                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                        Amber.instance.settings = Amber.instance.settings.copy(
                                             defaultProfileRelays = relays2,
                                         )
-                                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
                                             if (BuildConfig.FLAVOR != "offline") {
-                                                NostrSigner.instance.checkForNewRelays()
+                                                Amber.instance.checkForNewRelays()
                                                 NotificationDataSource.stop()
                                                 delay(2000)
                                                 NotificationDataSource.start()
@@ -148,14 +148,14 @@ fun DefaultProfileRelaysScreen(
                                 context,
                                 onDone = {
                                     isLoading.value = true
-                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                    Amber.instance.settings = Amber.instance.settings.copy(
                                         defaultProfileRelays = relays2,
                                     )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
                                         if (BuildConfig.FLAVOR != "offline") {
-                                            NostrSigner.instance.checkForNewRelays()
+                                            Amber.instance.checkForNewRelays()
                                             NotificationDataSource.stop()
                                             delay(2000)
                                             NotificationDataSource.start()
@@ -181,14 +181,14 @@ fun DefaultProfileRelaysScreen(
                             onClick = {
                                 isLoading.value = true
                                 relays2.removeAt(it)
-                                NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                Amber.instance.settings = Amber.instance.settings.copy(
                                     defaultProfileRelays = relays2,
                                 )
-                                LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                 scope.launch(Dispatchers.IO) {
                                     @Suppress("KotlinConstantConditions")
                                     if (BuildConfig.FLAVOR != "offline") {
-                                        NostrSigner.instance.checkForNewRelays()
+                                        Amber.instance.checkForNewRelays()
                                         NotificationDataSource.stop()
                                         delay(2000)
                                         NotificationDataSource.start()

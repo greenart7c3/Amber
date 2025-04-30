@@ -108,7 +108,7 @@ object LocalPreferences {
     }
 
     fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
-        val context = NostrSigner.instance
+        val context = Amber.instance
         encryptedPreferences(context).edit {
             apply {
                 putStringSet(SettingsKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
@@ -148,17 +148,17 @@ object LocalPreferences {
     }
 
     fun loadPinFromEncryptedStorage(): String? {
-        val context = NostrSigner.instance
+        val context = Amber.instance
         return encryptedPreferences(context).getString(SettingsKeys.PIN, null)
     }
 
     fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
-        val context = NostrSigner.instance
+        val context = Amber.instance
         return encryptedPreferences(context, npub).getString(PrefKeys.PROFILE_URL, null)
     }
 
     fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
-        val context = NostrSigner.instance
+        val context = Amber.instance
         encryptedPreferences(context, npub).edit {
             apply {
                 if (profileUrl == null) {
@@ -171,7 +171,7 @@ object LocalPreferences {
     }
 
     fun savePinToEncryptedStorage(pin: String?) {
-        val context = NostrSigner.instance
+        val context = Amber.instance
         encryptedPreferences(context).edit {
             apply {
                 if (pin == null) {
@@ -183,7 +183,7 @@ object LocalPreferences {
         }
     }
 
-    fun loadSettingsFromEncryptedStorage(context: Context = NostrSigner.instance): AmberSettings {
+    fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
         encryptedPreferences(context).apply {
             val proxyPort = getInt(SettingsKeys.PROXY_PORT, 9050)
@@ -375,7 +375,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.PROXY_PORT, port)
             }
         }
-        NostrSigner.instance.settings = loadSettingsFromEncryptedStorage()
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
         HttpClientManager.setDefaultProxyOnPort(port)
     }
 

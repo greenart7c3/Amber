@@ -103,7 +103,7 @@ class MainActivity : AppCompatActivity() {
 
                     LaunchedEffect(Unit) {
                         launch(Dispatchers.IO) {
-                            val settings = NostrSigner.instance.settings
+                            val settings = Amber.instance.settings
                             val lastAuthTime = settings.lastBiometricsTime
                             val whenToAsk = settings.biometricsTimeType
                             val isTimeToAsk = when (whenToAsk) {
@@ -126,11 +126,11 @@ class MainActivity : AppCompatActivity() {
                                                 this@MainActivity,
                                                 keyguardLauncher,
                                                 {
-                                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                                    Amber.instance.settings = Amber.instance.settings.copy(
                                                         lastBiometricsTime = System.currentTimeMillis(),
                                                     )
 
-                                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                                     isAuthenticated = true
                                                 },
                                                 { _, message ->
@@ -183,11 +183,11 @@ class MainActivity : AppCompatActivity() {
                                             onPinEntered = {
                                                 val pin = LocalPreferences.loadPinFromEncryptedStorage()
                                                 if (it == pin) {
-                                                    NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                                                    Amber.instance.settings = Amber.instance.settings.copy(
                                                         lastBiometricsTime = System.currentTimeMillis(),
                                                     )
 
-                                                    LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                                     isAuthenticated = true
                                                     showPinDialog = false
                                                 } else {
@@ -261,7 +261,7 @@ class MainActivity : AppCompatActivity() {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-                NostrSigner.instance.updateNetworkCapabilities(it)
+                Amber.instance.updateNetworkCapabilities(it)
             }
         }
         super.onResume()

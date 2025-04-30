@@ -4,8 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
@@ -64,8 +64,8 @@ object BunkerRequestUtils {
         if (relays.isEmpty()) {
             onDone(true)
             onLoading(false)
-            NostrSigner.instance.applicationIOScope.launch {
-                NostrSigner.instance.getDatabase(account.npub).applicationDao().insertLog(
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
                         url = bunkerRequest.localKey,
@@ -80,18 +80,18 @@ object BunkerRequestUtils {
         }
 
         AmberListenerSingleton.getListener()?.let {
-            NostrSigner.instance.client.unsubscribe(it)
+            Amber.instance.client.unsubscribe(it)
         }
         AmberListenerSingleton.setListener(
             context,
         )
-        NostrSigner.instance.client.subscribe(
+        Amber.instance.client.subscribe(
             AmberListenerSingleton.getListener()!!,
         )
 
-        NostrSigner.instance.applicationIOScope.launch {
+        Amber.instance.applicationIOScope.launch {
             relays.forEach { relay ->
-                NostrSigner.instance.getDatabase(account.npub).applicationDao().insertLog(
+                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url,
@@ -114,7 +114,7 @@ object BunkerRequestUtils {
                         account = account,
                         localKey = bunkerRequest.localKey,
                         encryptedContent = encryptedContent,
-                        relays = relays.ifEmpty { NostrSigner.instance.getSavedRelays().toList() },
+                        relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
                         onLoading = onLoading,
                         onDone = onDone,
                     )
@@ -130,7 +130,7 @@ object BunkerRequestUtils {
                         account = account,
                         localKey = bunkerRequest.localKey,
                         encryptedContent = encryptedContent,
-                        relays = relays.ifEmpty { NostrSigner.instance.getSavedRelays().toList() },
+                        relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
                         onLoading = onLoading,
                         onDone = onDone,
                     )
@@ -154,11 +154,11 @@ object BunkerRequestUtils {
             arrayOf(arrayOf("p", localKey)),
             encryptedContent,
         ) {
-            NostrSigner.instance.applicationIOScope.launch {
+            Amber.instance.applicationIOScope.launch {
                 Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
 
-                if (NostrSigner.instance.client.getAll().any { !it.isConnected() }) {
-                    NostrSigner.instance.checkForNewRelays(
+                if (Amber.instance.client.getAll().any { !it.isConnected() }) {
+                    Amber.instance.checkForNewRelays(
                         newRelays = relays.toSet(),
                     )
                 }
@@ -166,12 +166,12 @@ object BunkerRequestUtils {
                 var success = false
                 var errorCount = 0
                 while (!success && errorCount < 3) {
-                    success = NostrSigner.instance.client.sendAndWaitForResponse(it, relayList = relays)
+                    success = Amber.instance.client.sendAndWaitForResponse(it, relayList = relays)
                     if (!success) {
                         errorCount++
                         relays.forEach {
-                            if (NostrSigner.instance.client.getRelay(it.url)?.isConnected() == false) {
-                                NostrSigner.instance.client.getRelay(it.url)?.connect()
+                            if (Amber.instance.client.getRelay(it.url)?.isConnected() == false) {
+                                Amber.instance.client.getRelay(it.url)?.connect()
                             }
                         }
                         delay(1000)
@@ -186,7 +186,7 @@ object BunkerRequestUtils {
                     Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                 }
                 AmberListenerSingleton.getListener()?.let {
-                    NostrSigner.instance.client.unsubscribe(it)
+                    Amber.instance.client.unsubscribe(it)
                 }
                 onLoading(false)
             }
@@ -335,8 +335,8 @@ object BunkerRequestUtils {
                             pubKey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
-                        NostrSigner.instance.applicationIOScope.launch {
-                            val database = NostrSigner.instance.getDatabase(account.npub)
+                        Amber.instance.applicationIOScope.launch {
+                            val database = Amber.instance.getDatabase(account.npub)
                             database.applicationDao().insertLog(
                                 LogEntity(
                                     0,

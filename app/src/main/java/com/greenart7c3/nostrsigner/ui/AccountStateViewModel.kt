@@ -4,8 +4,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -83,15 +83,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         npub: String?,
         forceLogout: Boolean = false,
     ) {
-        var currentUser = npub ?: LocalPreferences.currentAccount(NostrSigner.instance)
-        val allAccounts = LocalPreferences.allSavedAccounts(NostrSigner.instance)
-        if (currentUser != null && !LocalPreferences.containsAccount(NostrSigner.instance, currentUser) && allAccounts.any { it.npub == currentUser }) {
-            currentUser = LocalPreferences.currentAccount(NostrSigner.instance)
+        var currentUser = npub ?: LocalPreferences.currentAccount(Amber.instance)
+        val allAccounts = LocalPreferences.allSavedAccounts(Amber.instance)
+        if (currentUser != null && !LocalPreferences.containsAccount(Amber.instance, currentUser) && allAccounts.any { it.npub == currentUser }) {
+            currentUser = LocalPreferences.currentAccount(Amber.instance)
         }
         if (forceLogout) {
             currentUser = null
         }
-        LocalPreferences.loadFromEncryptedStorage(NostrSigner.instance, currentUser)?.let {
+        LocalPreferences.loadFromEncryptedStorage(Amber.instance, currentUser)?.let {
             startUI(it, route)
         }
         if (currentUser == null) {
@@ -102,7 +102,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     private fun prepareLogoutOrSwitch() {
         when (val state = accountContent.value) {
             is AccountState.LoggedIn -> {
-                NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     state.account.saveable.removeObserver(saveListener)
                 }
             }
@@ -114,7 +114,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun logOff(npub: String) {
         prepareLogoutOrSwitch()
-        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, NostrSigner.instance)
+        val shouldLogout = LocalPreferences.updatePrefsForLogout(npub, Amber.instance)
         tryLoginExistingAccount(null, null, forceLogout = shouldLogout)
     }
 
@@ -123,7 +123,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         route: String?,
     ) {
         prepareLogoutOrSwitch()
-        LocalPreferences.switchToAccount(NostrSigner.instance, npub)
+        LocalPreferences.switchToAccount(Amber.instance, npub)
         tryLoginExistingAccount(route, npub)
     }
 
@@ -232,16 +232,16 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                     didBackup = true,
                 )
             }
-        if (LocalPreferences.allSavedAccounts(NostrSigner.instance).isEmpty()) {
-            NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+        if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
+            Amber.instance.settings = Amber.instance.settings.copy(
                 useProxy = useProxy,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
-                NostrSigner.instance.settings,
+                Amber.instance.settings,
             )
         }
-        LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
+        LocalPreferences.updatePrefsForLogin(Amber.instance, account)
         startUI(account, route)
     }
 
@@ -263,16 +263,16 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             seedWords = seedWords,
             didBackup = false,
         )
-        if (LocalPreferences.allSavedAccounts(NostrSigner.instance).isEmpty()) {
-            NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+        if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
+            Amber.instance.settings = Amber.instance.settings.copy(
                 useProxy = useProxy,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
-                NostrSigner.instance.settings,
+                Amber.instance.settings,
             )
         }
-        LocalPreferences.updatePrefsForLogin(NostrSigner.instance, account)
+        LocalPreferences.updatePrefsForLogin(Amber.instance, account)
         startUI(account, null)
     }
 
@@ -282,14 +282,14 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     ) {
         _accountContent.update { AccountState.LoggedIn(account, route) }
 
-        NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
             account.saveable.observeForever(saveListener)
         }
     }
 
     private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
-        NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
-            LocalPreferences.saveToEncryptedStorage(NostrSigner.instance, it.account)
+        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+            LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account)
         }
     }
 }

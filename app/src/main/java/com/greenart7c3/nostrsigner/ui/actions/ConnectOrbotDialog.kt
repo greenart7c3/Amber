@@ -42,7 +42,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
@@ -58,7 +58,7 @@ fun ConnectOrbotScreen(
     onPost: (Int) -> Unit,
     onError: (String) -> Unit,
 ) {
-    val portNumber = remember { mutableStateOf(NostrSigner.instance.settings.proxyPort.toString()) }
+    val portNumber = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
 
     Column(
         modifier = modifier,

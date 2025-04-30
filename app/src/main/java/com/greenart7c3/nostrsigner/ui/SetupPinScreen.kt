@@ -5,8 +5,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -41,10 +41,10 @@ fun ConfirmPinScreen(
                 if (enteredPin != pin) {
                     accountStateViewModel.toast(context.getString(R.string.pin), context.getString(R.string.pin_does_not_match))
                 } else {
-                    val usePin = NostrSigner.instance.settings.usePin
+                    val usePin = Amber.instance.settings.usePin
                     if (usePin) {
-                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(usePin = false)
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                        Amber.instance.settings = Amber.instance.settings.copy(usePin = false)
+                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                         LocalPreferences.savePinToEncryptedStorage(null)
                         navController.navigate(Route.Security.route) {
                             popUpTo(Route.Security.route) {
@@ -52,8 +52,8 @@ fun ConfirmPinScreen(
                             }
                         }
                     } else {
-                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(usePin = true)
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                        Amber.instance.settings = Amber.instance.settings.copy(usePin = true)
+                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                         LocalPreferences.savePinToEncryptedStorage(pin)
                         navController.navigate(Route.Security.route) {
                             popUpTo(Route.Security.route) {

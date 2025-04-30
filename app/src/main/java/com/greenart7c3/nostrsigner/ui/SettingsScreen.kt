@@ -50,9 +50,9 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
@@ -79,9 +79,9 @@ fun SettingsScreen(
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var checked by remember { mutableStateOf(NostrSigner.instance.settings.useProxy) }
+    var checked by remember { mutableStateOf(Amber.instance.settings.useProxy) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
-    val proxyPort = remember { mutableStateOf(NostrSigner.instance.settings.proxyPort.toString()) }
+    val proxyPort = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
     var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
@@ -265,11 +265,11 @@ fun SettingsScreen(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.clear_logs_and_activity),
                     onClick = {
-                        NostrSigner.instance.applicationIOScope.launch {
+                        Amber.instance.applicationIOScope.launch {
                             NotificationDataSource.stop()
                             isLoading = true
-                            LocalPreferences.allSavedAccounts(NostrSigner.instance).forEach {
-                                NostrSigner.instance.getDatabase(it.npub).let { database ->
+                            LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                                Amber.instance.getDatabase(it.npub).let { database ->
                                     try {
                                         status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
                                         val oneWeek = System.currentTimeMillis() - ONE_WEEK
@@ -399,7 +399,7 @@ fun SettingsScreen(
                         scope.launch(Dispatchers.IO) {
                             LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
                             NotificationDataSource.stop()
-                            NostrSigner.instance.checkForNewRelays()
+                            Amber.instance.checkForNewRelays()
                             NotificationDataSource.start()
                         }
                     },

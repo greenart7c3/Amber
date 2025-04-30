@@ -11,7 +11,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 
@@ -90,7 +90,7 @@ data class BunkerRequest(
                     var relayUrl = it.asText().intern()
                     if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
                     RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
-                } ?: NostrSigner.instance.getSavedRelays().toList(),
+                } ?: Amber.instance.getSavedRelays().toList(),
                 secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
                 encryptionType = encryptionType,

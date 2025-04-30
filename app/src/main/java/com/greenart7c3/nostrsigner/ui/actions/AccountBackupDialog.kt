@@ -62,8 +62,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
@@ -236,7 +236,7 @@ fun AccountBackupScreen(
                         keyboardActions = KeyboardActions(
                             onDone = {
                                 if (password.value.text.isBlank()) {
-                                    errorMessage = NostrSigner.instance.getString(R.string.password_is_required)
+                                    errorMessage = Amber.instance.getString(R.string.password_is_required)
                                 }
                                 keyboardController?.hide()
                             },
@@ -530,7 +530,7 @@ private fun EncryptNSecQRButton(
                     val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
                     account.didBackup = true
                     LocalPreferences.saveToEncryptedStorage(context, account)
-                    NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                         navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
                     }
                     onLoading(false)
@@ -550,7 +550,7 @@ private fun EncryptNSecQRButton(
                         val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
                         account.didBackup = true
                         LocalPreferences.saveToEncryptedStorage(context, account)
-                        NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                             navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
                         }
                         onLoading(false)

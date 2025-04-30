@@ -27,9 +27,9 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
@@ -56,11 +56,11 @@ import kotlinx.coroutines.launch
 class EventNotificationConsumer(private val applicationContext: Context) {
     private fun saveLog(text: String) {
         Log.d("EventNotificationConsumer", text)
-        NostrSigner.instance.applicationIOScope.launch {
+        Amber.instance.applicationIOScope.launch {
             val accounts = LocalPreferences.allSavedAccounts(applicationContext)
             accounts.forEach {
                 LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    val dao = NostrSigner.instance.getDatabase(acc.npub).applicationDao()
+                    val dao = Amber.instance.getDatabase(acc.npub).applicationDao()
                     dao.insertLog(
                         LogEntity(
                             0,
@@ -104,8 +104,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     ) {
         if (event.content.isEmpty()) return
 
-        val dao = NostrSigner.instance.getDatabase(acc.npub).applicationDao()
-        NostrSigner.instance.applicationIOScope.launch {
+        val dao = Amber.instance.getDatabase(acc.npub).applicationDao()
+        Amber.instance.applicationIOScope.launch {
             dao.insertLog(
                 LogEntity(
                     0,
@@ -119,13 +119,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         if (EncryptedInfo.isNIP04(event.content)) {
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
-                NostrSigner.instance.applicationIOScope.launch {
+                Amber.instance.applicationIOScope.launch {
                     notify(event, acc, it, EncryptionType.NIP04, relay)
                 }
             }
         } else {
             acc.signer.nip44Decrypt(event.content, event.pubKey) {
-                NostrSigner.instance.applicationIOScope.launch {
+                Amber.instance.applicationIOScope.launch {
                     notify(event, acc, it, EncryptionType.NIP44, relay)
                 }
             }
@@ -140,7 +140,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         relay: Relay,
     ) {
         val responseRelay = listOf(RelaySetupInfo(relay.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES))
-        val dao = NostrSigner.instance.getDatabase(acc.npub).applicationDao()
+        val dao = Amber.instance.getDatabase(acc.npub).applicationDao()
         val notification = dao.getNotification(event.id)
         if (notification != null) return
         dao.insertNotification(NotificationEntity(0, event.id, event.createdAt))
@@ -175,11 +175,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-        val database = NostrSigner.instance.getDatabase(acc.npub)
+        val database = Amber.instance.getDatabase(acc.npub)
 
         val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
-            NostrSigner.instance.applicationIOScope.launch {
+            Amber.instance.applicationIOScope.launch {
                 database.applicationDao()
                     .addHistory(
                         HistoryEntity2(

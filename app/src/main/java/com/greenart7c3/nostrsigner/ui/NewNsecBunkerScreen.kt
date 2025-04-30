@@ -45,7 +45,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -72,7 +72,7 @@ fun NewNsecBunkerScreen(
     val relays =
         remember {
             val localRelays = mutableStateListOf<RelaySetupInfo>()
-            NostrSigner.instance.settings.defaultRelays.forEach {
+            Amber.instance.settings.defaultRelays.forEach {
                 localRelays.add(
                     it.copy(),
                 )
@@ -240,7 +240,7 @@ fun NewNsecBunkerScreen(
                                 true,
                             )
 
-                        NostrSigner.instance.getDatabase(account.npub).applicationDao().insertApplication(
+                        Amber.instance.getDatabase(account.npub).applicationDao().insertApplication(
                             application,
                         )
                         scope.launch(Dispatchers.Main) {
@@ -267,7 +267,7 @@ fun NewNsecBunkerCreatedScreen(
     LaunchedEffect(Unit) {
         isLoading.value = true
         launch(Dispatchers.IO) {
-            application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(key)?.application ?: ApplicationEntity.empty()
+            application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)?.application ?: ApplicationEntity.empty()
             isLoading.value = false
         }
     }
@@ -282,8 +282,8 @@ fun NewNsecBunkerCreatedScreen(
         val bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
 
         LaunchedEffect(Unit) {
-            NostrSigner.instance.applicationIOScope.launch(Dispatchers.IO) {
-                NostrSigner.instance.checkForNewRelays(shouldReconnect = true)
+            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                Amber.instance.checkForNewRelays(shouldReconnect = true)
                 NotificationDataSource.stop()
                 delay(2000)
                 NotificationDataSource.start()

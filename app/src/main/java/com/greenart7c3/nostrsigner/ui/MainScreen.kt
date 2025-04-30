@@ -85,9 +85,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import coil3.compose.SubcomposeAsyncImage
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -144,9 +144,9 @@ fun sendResult(
     shouldCloseApplication: Boolean? = null,
 ) {
     onLoading(true)
-    NostrSigner.instance.applicationIOScope.launch {
-        val database = NostrSigner.instance.getDatabase(account.npub)
-        val defaultRelays = NostrSigner.instance.settings.defaultRelays
+    Amber.instance.applicationIOScope.launch {
+        val database = Amber.instance.getDatabase(account.npub)
+        val defaultRelays = Amber.instance.settings.defaultRelays
         var savedApplication = database.applicationDao().getByKey(key)
         if (savedApplication == null && intentData.bunkerRequest?.secret != null) {
             savedApplication = database.applicationDao().getByKey(intentData.bunkerRequest.secret)
@@ -168,7 +168,7 @@ fun sendResult(
         savedApplication = database.applicationDao().getByKey(key)
         val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
         if (intentData.bunkerRequest != null) {
-            NostrSigner.instance.checkForNewRelays(
+            Amber.instance.checkForNewRelays(
                 newRelays = relays.toSet(),
             )
         }
@@ -307,7 +307,7 @@ fun sendResult(
                 application.application.relays.ifEmpty { relays },
                 onLoading,
                 onDone = {
-                    NostrSigner.instance.applicationIOScope.launch {
+                    Amber.instance.applicationIOScope.launch {
                         if (!it) {
                             if (rememberChoice) {
                                 if (intentData.type == SignerType.SIGN_EVENT) {
@@ -397,7 +397,7 @@ fun sendResult(
                     context.getString(R.string.event_copied_to_the_clipboard)
                 }
 
-            NostrSigner.instance.applicationIOScope.launch(Dispatchers.Main) {
+            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                 clipboardManager.setClipEntry(
                     ClipEntry(
                         ClipData.newPlainText("", result),
@@ -532,7 +532,7 @@ fun MainScreen(
                     },
                 )
 
-                NostrSigner.instance.fetchProfileData(
+                Amber.instance.fetchProfileData(
                     account = account,
                     onPictureFound = {
                         profileUrl = it
@@ -625,7 +625,7 @@ fun MainScreen(
                                         title = Route.QrCode.title
                                     }
                                     navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                        val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
+                                        val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
                                         title = if (destinationRoute.startsWith("Activity/")) {
                                             "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                         } else {
@@ -633,7 +633,7 @@ fun MainScreen(
                                         }
                                     }
                                     navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                        val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
+                                        val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
                                         title = if (destinationRoute.startsWith("Activity/")) {
                                             "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                         } else {
@@ -648,7 +648,7 @@ fun MainScreen(
                             } else {
                                 launch(Dispatchers.IO) {
                                     if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
-                                        val application = NostrSigner.instance.getDatabase(account.npub).applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
+                                        val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
                                         val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
                                         title = if (titleTemp.isBlank()) {
                                             routes.find { it.route == destinationRoute }?.title ?: ""
@@ -1315,7 +1315,7 @@ fun MainScreen(
                                 scope.launch(Dispatchers.IO) {
                                     LocalPreferences.updateProxy(context, true, it)
                                     NotificationDataSource.stop()
-                                    NostrSigner.instance.checkForNewRelays()
+                                    Amber.instance.checkForNewRelays()
                                     NotificationDataSource.start()
                                     scope.launch {
                                         navController.navigate(Route.Settings.route) {

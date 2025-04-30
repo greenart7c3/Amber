@@ -53,8 +53,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.compose.AsyncImage
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
@@ -72,7 +72,7 @@ fun ProfilePicture(account: Account) {
         var profileUrl by remember { mutableStateOf<String?>(null) }
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
-                NostrSigner.instance.fetchProfileData(
+                Amber.instance.fetchProfileData(
                     account = account,
                     onPictureFound = {
                         profileUrl = it

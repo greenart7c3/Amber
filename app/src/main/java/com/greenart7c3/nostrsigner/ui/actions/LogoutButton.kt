@@ -14,8 +14,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.AccountInfo
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import kotlinx.coroutines.Dispatchers
@@ -38,7 +38,7 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                     account?.let {
-                        val database = NostrSigner.instance.getDatabase(it.npub)
+                        val database = Amber.instance.getDatabase(it.npub)
                         val permissions = database.applicationDao().getAll(it.hexKey)
                         permissions.forEach { app ->
                             database.applicationDao().delete(app)

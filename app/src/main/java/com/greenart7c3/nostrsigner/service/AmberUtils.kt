@@ -2,7 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import android.util.Log
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
@@ -178,7 +178,7 @@ object AmberUtils {
                 ),
             )
 
-            NostrSigner.instance.getDatabase(account.npub)
+            Amber.instance.getDatabase(account.npub)
                 .applicationDao()
                 .insertApplicationWithPermissions(application)
         }

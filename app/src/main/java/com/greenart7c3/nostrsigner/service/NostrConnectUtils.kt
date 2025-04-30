@@ -3,7 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Intent
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
@@ -133,7 +133,7 @@ object NostrConnectUtils {
                         "connect",
                         arrayOf(pubKey),
                         pubKey,
-                        relays.ifEmpty { NostrSigner.instance.getSavedRelays().toList() },
+                        relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
                         "",
                         account.npub,
                         EncryptionType.NIP04,
@@ -147,8 +147,8 @@ object NostrConnectUtils {
             )
         } catch (e: Exception) {
             Log.e("nostrconnect", e.message, e)
-            NostrSigner.instance.applicationIOScope.launch {
-                NostrSigner.instance.getDatabase(account.npub).applicationDao().insertLog(
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
                     LogEntity(
                         0,
                         "nostrconnect",

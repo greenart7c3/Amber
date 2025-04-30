@@ -54,7 +54,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.greenart7c3.nostrsigner.NostrSigner
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
@@ -149,7 +149,7 @@ fun ActivityScreen(
     account: Account,
     key: String,
 ) {
-    val activities = NostrSigner.instance.getDatabase(account.npub).applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
+    val activities = Amber.instance.getDatabase(account.npub).applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
     // State for the search query
     var searchQuery by remember { mutableStateOf("") }

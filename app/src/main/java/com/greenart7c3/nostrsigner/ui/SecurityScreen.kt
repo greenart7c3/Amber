@@ -23,8 +23,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.NostrSigner
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
@@ -45,10 +45,10 @@ fun SecurityScreen(
             TitleExplainer(stringResource(BiometricsTimeType.FIVE_MINUTES.resourceId)),
             TitleExplainer(stringResource(BiometricsTimeType.TEN_MINUTES.resourceId)),
         )
-    var enableBiometrics by remember { mutableStateOf(NostrSigner.instance.settings.useAuth) }
-    val setupPin by remember { mutableStateOf(NostrSigner.instance.settings.usePin) }
+    var enableBiometrics by remember { mutableStateOf(Amber.instance.settings.useAuth) }
+    val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
     var biometricsIndex by remember {
-        mutableIntStateOf(NostrSigner.instance.settings.biometricsTimeType.screenCode)
+        mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
     Surface(
@@ -132,11 +132,11 @@ fun SecurityScreen(
             AmberButton(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        NostrSigner.instance.settings = NostrSigner.instance.settings.copy(
+                        Amber.instance.settings = Amber.instance.settings.copy(
                             useAuth = enableBiometrics,
                             biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
                         )
-                        LocalPreferences.saveSettingsToEncryptedStorage(NostrSigner.instance.settings)
+                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                         scope.launch(Dispatchers.Main) {
                             navController.navigateUp()
                         }

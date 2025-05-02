@@ -160,6 +160,7 @@ data class Permission(
                     39001 -> context.getString(R.string.event_kind_39001)
                     39002 -> context.getString(R.string.event_kind_39002)
                     in 39003..39009 -> context.getString(R.string.event_kind_39000_39009)
+                    10000300 -> context.getString(R.string.event_kind_10000300)
                     else -> {
                         val nipDescription = nipToLocalizedString(context, this, true)
                         nipDescription.ifEmpty {

@@ -55,7 +55,7 @@ class BootReceiver : BroadcastReceiver() {
                     LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                         Amber.instance.getDatabase(it.npub).let { database ->
                             try {
-                                val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                                val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
                                 val oneWeekAgo = TimeUtils.oneWeekAgo()
                                 val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
                                 Log.d("NostrSigner", "Deleting $countHistory old history entries")
@@ -86,7 +86,7 @@ class BootReceiver : BroadcastReceiver() {
                                 }
 
                                 val countLog = database.applicationDao().countOldLog(oneWeek)
-                                Log.d("NostrSigner", "Deleting $countLog old log entries")
+                                Log.d("NostrSigner", "Deleting $countLog old log entries from ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(oneWeek)}")
                                 if (countLog > 0) {
                                     var logs = database.applicationDao().getOldLog(oneWeek)
                                     var count = 0

@@ -434,7 +434,6 @@ object LocalPreferences {
     }
 
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
-        Log.d("SignerProvider", "Loading from encrypted storage ${savedAccounts == null} accountCacheEmpty: ${accountCache.size()}")
         if (savedAccounts == null || accountCache.size() == 0 || savedAccounts?.size != accountCache.size()) {
             Log.d("SignerProvider", "accountCache is null loading accounts")
             runBlocking {

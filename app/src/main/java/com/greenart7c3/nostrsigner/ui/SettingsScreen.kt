@@ -274,7 +274,7 @@ fun SettingsScreen(
                                 Amber.instance.getDatabase(it.npub).let { database ->
                                     try {
                                         status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
-                                        val oneWeek = System.currentTimeMillis() - ONE_WEEK
+                                        val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
                                         val oneWeekAgo = TimeUtils.oneWeekAgo()
                                         val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
                                         if (countHistory > 0) {

@@ -93,6 +93,7 @@ class BootReceiver : BroadcastReceiver() {
                                     while (logs.isNotEmpty()) {
                                         count++
                                         logs.forEach { history ->
+                                            Log.d("NostrSigner", "Deleting log entry ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(history.time)}")
                                             database.applicationDao().deleteLog(history)
                                         }
                                         logs = database.applicationDao().getOldLog(oneWeek)

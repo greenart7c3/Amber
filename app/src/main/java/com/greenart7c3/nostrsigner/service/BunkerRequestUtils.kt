@@ -234,7 +234,7 @@ object BunkerRequestUtils {
             return
         }
         val data = getDataFromBunker(bunkerRequest)
-        val account = LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)!!
+        val account = LocalPreferences.loadFromEncryptedStorageSync(context, bunkerRequest.currentAccount)!!
 
         val pubKey =
             if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {

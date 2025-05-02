@@ -188,7 +188,7 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
 
         val pubKeys =
             accounts.mapNotNull {
-                LocalPreferences.loadFromEncryptedStorage(Amber.instance, it.npub)?.signer?.keyPair?.pubKey?.toHexKey()
+                LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, it.npub)?.signer?.keyPair?.pubKey?.toHexKey()
             }
 
         val eoses =
@@ -229,7 +229,7 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
         super.auth(relay, challenge)
 
         LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-            val account = LocalPreferences.loadFromEncryptedStorage(Amber.instance, it.npub) ?: return@forEach
+            val account = LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, it.npub) ?: return@forEach
             account.createAuthEvent(relay.url, challenge) { authEvent ->
                 Amber.instance.client.sendIfExists(authEvent, relay)
             }

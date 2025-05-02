@@ -117,7 +117,7 @@ object IntentUtils {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
                     if (unsignedEvent.pubKey != account.hexKey) {
-                        LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
+                        LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                             localAccount = it
                         }
                     }
@@ -300,7 +300,7 @@ object IntentUtils {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
                 if (unsignedEvent.pubKey != account.hexKey) {
-                    LocalPreferences.loadFromEncryptedStorage(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
+                    LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                         localAccount = it
                     }
                 }
@@ -486,7 +486,7 @@ object IntentUtils {
 
             var localAccount = currentLoggedInAccount
             if (bunkerRequest != null) {
-                LocalPreferences.loadFromEncryptedStorage(context, bunkerRequest.currentAccount)?.let {
+                LocalPreferences.loadFromEncryptedStorageSync(context, bunkerRequest.currentAccount)?.let {
                     localAccount = it
                 }
             } else if (intent.getStringExtra("current_user") != null) {
@@ -494,7 +494,7 @@ object IntentUtils {
                 if (npub != null) {
                     npub = parsePubKey(npub)
                 }
-                LocalPreferences.loadFromEncryptedStorage(context, npub)?.let {
+                LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
                     localAccount = it
                 }
             }

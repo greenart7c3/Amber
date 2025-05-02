@@ -121,6 +121,18 @@ class Amber : Application() {
         }
 
         runBlocking(Dispatchers.IO) {
+            LocalPreferences.allSavedAccounts(this@Amber).forEach {
+                if (LocalPreferences.didMigrateFromLegacyStorage(this@Amber, it.npub)) {
+                    LocalPreferences.deleteLegacyUserPreferenceFile(this@Amber, it.npub)
+                    if (LocalPreferences.existsLegacySettings(this@Amber)) LocalPreferences.deleteSettingsPreferenceFile(this@Amber)
+                }
+            }
+            if (LocalPreferences.existsLegacySettings(this@Amber)) {
+                LocalPreferences.allLegacySavedAccounts(this@Amber).forEach {
+                    LocalPreferences.migrateFromSharedPrefs(this@Amber, it.npub)
+                    LocalPreferences.loadFromEncryptedStorage(this@Amber, it.npub)
+                }
+            }
             LocalPreferences.migrateTorSettings(this@Amber)
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }
@@ -267,7 +279,9 @@ class Amber : Application() {
                         (event as MetadataEvent).contactMetaData()?.let { metadata ->
                             metadata.name?.let { name ->
                                 account.name = name
-                                LocalPreferences.saveToEncryptedStorage(account = account, context = this)
+                                applicationIOScope.launch {
+                                    LocalPreferences.saveToEncryptedStorage(account = account, context = this@Amber)
+                                }
                             }
 
                             metadata.profilePicture()?.let { url ->

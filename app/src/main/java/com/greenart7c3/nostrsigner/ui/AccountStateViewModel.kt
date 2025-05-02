@@ -91,7 +91,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         if (forceLogout) {
             currentUser = null
         }
-        LocalPreferences.loadFromEncryptedStorage(Amber.instance, currentUser)?.let {
+        LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
             startUI(it, route)
         }
         if (currentUser == null) {

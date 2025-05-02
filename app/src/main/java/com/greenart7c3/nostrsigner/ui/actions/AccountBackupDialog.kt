@@ -176,7 +176,9 @@ fun AccountBackupScreen(
                                     onApproved = {
                                         showSeedWords = true
                                         account.didBackup = true
-                                        LocalPreferences.saveToEncryptedStorage(context, account)
+                                        Amber.instance.applicationIOScope.launch {
+                                            LocalPreferences.saveToEncryptedStorage(context, account)
+                                        }
                                     },
                                     onError = { _, message ->
                                         Toast.makeText(
@@ -295,9 +297,11 @@ private fun NSecQrButton(account: Account) {
         QrCodeDialog(
             content = account.signer.keyPair.privKey!!.toNsec(),
         ) {
-            account.didBackup = true
-            LocalPreferences.saveToEncryptedStorage(context, account)
-            showDialog = false
+            scope.launch(Dispatchers.IO) {
+                account.didBackup = true
+                LocalPreferences.saveToEncryptedStorage(context, account)
+                showDialog = false
+            }
         }
     }
 
@@ -425,9 +429,11 @@ private fun NSecCopyButton(account: Account) {
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
-                    account.didBackup = true
-                    LocalPreferences.saveToEncryptedStorage(context, account)
-                    copyNSec(context, scope, account, clipboardManager)
+                    scope.launch(Dispatchers.IO) {
+                        account.didBackup = true
+                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        copyNSec(context, scope, account, clipboardManager)
+                    }
                 },
                 onError = { _, message ->
                     scope.launch {
@@ -452,7 +458,9 @@ private fun copyNSec(
 ) {
     account.signer.keyPair.privKey?.let {
         account.didBackup = true
-        LocalPreferences.saveToEncryptedStorage(context, account)
+        scope.launch(Dispatchers.IO) {
+            LocalPreferences.saveToEncryptedStorage(context, account)
+        }
         scope.launch {
             clipboardManager.setClipEntry(
                 ClipEntry(

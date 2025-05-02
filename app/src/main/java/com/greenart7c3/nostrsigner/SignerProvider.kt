@@ -55,15 +55,35 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
         sortOrder: String?,
     ): Cursor? {
+        Log.d("SignerProvider", "Querying $uri has context ${context != null}")
         val appId = BuildConfig.APPLICATION_ID
         return try {
             when (uri.toString()) {
                 "content://$appId.SIGN_MESSAGE" -> {
-                    val packageName = callingPackage ?: return null
-                    val message = projection?.first() ?: return null
-                    val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
-                    if (!LocalPreferences.containsAccount(context!!, npub)) return null
-                    val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
+                    val packageName = callingPackage
+                    if (packageName == null) {
+                        Log.d("SignerProvider", "No package name")
+                        return null
+                    }
+                    val message = projection?.first()
+                    if (message == null) {
+                        Log.d("SignerProvider", "No message")
+                        return null
+                    }
+                    val npub = IntentUtils.parsePubKey(projection[2])
+                    if (npub == null) {
+                        Log.d("SignerProvider", "No npub")
+                        return null
+                    }
+                    if (!LocalPreferences.containsAccount(context!!, npub)) {
+                        Log.d("SignerProvider", "No account")
+                        return null
+                    }
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
+                    if (account == null) {
+                        Log.d("SignerProvider", "No account from storage")
+                        return null
+                    }
                     val database = Amber.instance.getDatabase(account.npub)
                     val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                     val permission =
@@ -116,11 +136,30 @@ class SignerProvider : ContentProvider() {
                     return localCursor
                 }
                 "content://$appId.SIGN_EVENT" -> {
-                    val packageName = callingPackage ?: return null
-                    val json = projection?.first() ?: return null
-                    val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
-                    if (!LocalPreferences.containsAccount(context!!, npub)) return null
-                    val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
+                    val packageName = callingPackage
+                    if (packageName == null) {
+                        Log.d("SignerProvider", "No package name")
+                        return null
+                    }
+                    val json = projection?.first()
+                    if (json == null) {
+                        Log.d("SignerProvider", "No json")
+                        return null
+                    }
+                    val npub = IntentUtils.parsePubKey(projection[2])
+                    if (npub == null) {
+                        Log.d("SignerProvider", "No npub")
+                        return null
+                    }
+                    if (!LocalPreferences.containsAccount(context!!, npub)) {
+                        Log.d("SignerProvider", "No account")
+                        return null
+                    }
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
+                    if (account == null) {
+                        Log.d("SignerProvider", "No account from storage")
+                        return null
+                    }
                     val event = try {
                         IntentUtils.getUnsignedEvent(json, account)
                     } catch (e: Exception) {
@@ -239,7 +278,7 @@ class SignerProvider : ContentProvider() {
                     if (!LocalPreferences.containsAccount(context!!, npub)) return null
                     val stringType = uri.toString().replace("content://$appId.", "")
                     val pubkey = projection[1]
-                    val account = LocalPreferences.loadFromEncryptedStorage(context!!, npub) ?: return null
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
                     val database = Amber.instance.getDatabase(account.npub)
                     var permission =
                         database
@@ -345,7 +384,7 @@ class SignerProvider : ContentProvider() {
 
                 "content://$appId.GET_PUBLIC_KEY" -> {
                     val packageName = callingPackage ?: return null
-                    val account = LocalPreferences.loadFromEncryptedStorage(context!!) ?: return null
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!) ?: return null
                     val database = Amber.instance.getDatabase(account.npub)
                     val permission =
                         database

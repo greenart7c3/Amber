@@ -210,7 +210,9 @@ fun SettingsScreen(
                         onClick = {
                             allowNewConnections = !allowNewConnections
                             account.allowNewConnections = allowNewConnections
-                            LocalPreferences.saveToEncryptedStorage(context, account)
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.saveToEncryptedStorage(context, account)
+                            }
                         },
                         onLongClick = {
                             Toast.makeText(

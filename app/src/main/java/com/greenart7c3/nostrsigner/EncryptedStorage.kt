@@ -1,3 +1,5 @@
+@file:Suppress("DEPRECATION")
+
 package com.greenart7c3.nostrsigner
 
 import android.content.Context

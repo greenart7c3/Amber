@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
+import android.util.Log
 import android.util.LruCache
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
@@ -17,40 +18,41 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import java.io.File
+import kotlin.collections.component1
+import kotlin.collections.component2
+import kotlin.collections.iterator
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 
-// Release mode (!BuildConfig.DEBUG) always uses encrypted preferences
-// To use plaintext SharedPreferences for debugging, set this to true
-// It will only apply in Debug builds
-private const val DEBUG_PLAINTEXT_PREFERENCES = false
-private const val DEBUG_PREFERENCES_NAME = "debug_prefs"
-
-private object PrefKeys {
-    const val NOSTR_PRIVKEY = "nostr_privkey"
-    const val NOSTR_PUBKEY = "nostr_pubkey"
-    const val ACCOUNT_NAME = "account_name"
-    const val LANGUAGE_PREFS = "languagePreferences"
-    const val ALLOW_NEW_CONNECTIONS = "allow_new_connections"
-    const val SIGN_POLICY = "default_sign_policy"
-    const val SEED_WORDS2 = "seed_words"
-    const val PROFILE_URL = "profile_url"
-    const val LAST_METADATA_UPDATE = "last_metadata_update"
-    const val LAST_CHECK = "last_check"
-    const val DID_BACKUP = "did_backup"
+private enum class PrefKeys(val key: String) {
+    NOSTR_PRIVKEY("nostr_privkey"),
+    NOSTR_PUBKEY("nostr_pubkey"),
+    ACCOUNT_NAME("account_name"),
+    LANGUAGE_PREFS("languagePreferences"),
+    ALLOW_NEW_CONNECTIONS("allow_new_connections"),
+    SIGN_POLICY("default_sign_policy"),
+    SEED_WORDS2("seed_words"),
+    PROFILE_URL("profile_url"),
+    LAST_METADATA_UPDATE("last_metadata_update"),
+    LAST_CHECK("last_check"),
+    DID_BACKUP("did_backup"),
 }
 
-private object SettingsKeys {
-    const val DEFAULT_RELAYS = "default_relays"
-    const val DEFAULT_PROFILE_RELAYS = "default_profile_relays"
-    const val LAST_BIOMETRICS_TIME = "last_biometrics_time"
-    const val USE_AUTH = "use_auth"
-    const val BIOMETRICS_TYPE = "biometrics_type"
-    const val USE_PIN = "use_pin"
-    const val RATIONALE = "rationale"
-    const val CURRENT_ACCOUNT = "currently_logged_in_account"
-    const val PIN = "pin"
-    const val SAVED_ACCOUNTS = "all_saved_accounts"
-    const val USE_PROXY = "use_proxy"
-    const val PROXY_PORT = "proxy_port"
+private enum class SettingsKeys(val keys: String) {
+    DEFAULT_RELAYS("default_relays"),
+    DEFAULT_PROFILE_RELAYS("default_profile_relays"),
+    LAST_BIOMETRICS_TIME("last_biometrics_time"),
+    USE_AUTH("use_auth"),
+    BIOMETRICS_TYPE("biometrics_type"),
+    USE_PIN("use_pin"),
+    RATIONALE("rationale"),
+    CURRENT_ACCOUNT("currently_logged_in_account"),
+    PIN("pin"),
+    SAVED_ACCOUNTS("all_saved_accounts"),
+    USE_PROXY("use_proxy"),
+    PROXY_PORT("proxy_port"),
 }
 
 @Immutable
@@ -64,6 +66,15 @@ object LocalPreferences {
     private var currentAccount: String? = null
     private var accountCache = LruCache<String, Account>(10)
 
+    fun allLegacySavedAccounts(context: Context): List<AccountInfo> {
+        return legacySavedAccounts(context).map { npub ->
+            AccountInfo(
+                npub,
+                true,
+            )
+        }.toSet().toList()
+    }
+
     fun allSavedAccounts(context: Context): List<AccountInfo> {
         return savedAccounts(context).map { npub ->
             AccountInfo(
@@ -75,7 +86,7 @@ object LocalPreferences {
 
     fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
-            currentAccount = encryptedPreferences(context).getString(SettingsKeys.CURRENT_ACCOUNT, null)
+            currentAccount = sharedPrefs(context).getString(SettingsKeys.CURRENT_ACCOUNT.keys, null)
         }
         return currentAccount
     }
@@ -84,87 +95,87 @@ object LocalPreferences {
         if (currentAccount != npub) {
             currentAccount = npub
 
-            encryptedPreferences(context).edit {
+            sharedPrefs(context).edit {
                 apply {
-                    putString(SettingsKeys.CURRENT_ACCOUNT, npub)
+                    putString(SettingsKeys.CURRENT_ACCOUNT.keys, npub)
                 }
             }
         }
     }
 
     fun shouldShowRationale(context: Context): Boolean? {
-        if (!encryptedPreferences(context).contains(SettingsKeys.RATIONALE)) {
+        if (!sharedPrefs(context).contains(SettingsKeys.RATIONALE.keys)) {
             return null
         }
-        return encryptedPreferences(context).getBoolean(SettingsKeys.RATIONALE, true)
+        return sharedPrefs(context).getBoolean(SettingsKeys.RATIONALE.keys, true)
     }
 
     fun updateShouldShowRationale(context: Context, value: Boolean) {
-        encryptedPreferences(context).edit {
+        sharedPrefs(context).edit {
             apply {
-                putBoolean(SettingsKeys.RATIONALE, value)
+                putBoolean(SettingsKeys.RATIONALE.keys, value)
             }
         }
     }
 
     fun saveSettingsToEncryptedStorage(settings: AmberSettings) {
         val context = Amber.instance
-        encryptedPreferences(context).edit {
+        sharedPrefs(context).edit {
             apply {
-                putStringSet(SettingsKeys.DEFAULT_RELAYS, settings.defaultRelays.map { it.url }.toSet())
-                putStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS, settings.defaultProfileRelays.map { it.url }.toSet())
-                putLong(SettingsKeys.LAST_BIOMETRICS_TIME, settings.lastBiometricsTime)
-                putBoolean(SettingsKeys.USE_AUTH, settings.useAuth)
-                putInt(SettingsKeys.BIOMETRICS_TYPE, settings.biometricsTimeType.screenCode)
-                putBoolean(SettingsKeys.USE_PIN, settings.usePin)
-                putBoolean(SettingsKeys.USE_PROXY, settings.useProxy)
-                putInt(SettingsKeys.PROXY_PORT, settings.proxyPort)
+                putStringSet(SettingsKeys.DEFAULT_RELAYS.keys, settings.defaultRelays.map { it.url }.toSet())
+                putStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.keys, settings.defaultProfileRelays.map { it.url }.toSet())
+                putLong(SettingsKeys.LAST_BIOMETRICS_TIME.keys, settings.lastBiometricsTime)
+                putBoolean(SettingsKeys.USE_AUTH.keys, settings.useAuth)
+                putInt(SettingsKeys.BIOMETRICS_TYPE.keys, settings.biometricsTimeType.screenCode)
+                putBoolean(SettingsKeys.USE_PIN.keys, settings.usePin)
+                putBoolean(SettingsKeys.USE_PROXY.keys, settings.useProxy)
+                putInt(SettingsKeys.PROXY_PORT.keys, settings.proxyPort)
             }
         }
     }
 
     fun getLastCheck(context: Context, npub: String): Long {
-        return encryptedPreferences(context, npub).getLong(PrefKeys.LAST_CHECK, 0)
+        return sharedPrefs(context, npub).getLong(PrefKeys.LAST_CHECK.key, 0)
     }
 
     fun setLastCheck(context: Context, npub: String, time: Long) {
-        encryptedPreferences(context, npub).edit {
+        sharedPrefs(context, npub).edit {
             apply {
-                putLong(PrefKeys.LAST_CHECK, time)
+                putLong(PrefKeys.LAST_CHECK.key, time)
             }
         }
     }
 
     fun getLastMetadataUpdate(context: Context, npub: String): Long {
-        return encryptedPreferences(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE, 0)
+        return sharedPrefs(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE.key, 0)
     }
 
     fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
-        encryptedPreferences(context, npub).edit {
+        sharedPrefs(context, npub).edit {
             apply {
-                putLong(PrefKeys.LAST_METADATA_UPDATE, time)
+                putLong(PrefKeys.LAST_METADATA_UPDATE.key, time)
             }
         }
     }
 
     fun loadPinFromEncryptedStorage(): String? {
         val context = Amber.instance
-        return encryptedPreferences(context).getString(SettingsKeys.PIN, null)
+        return sharedPrefs(context).getString(SettingsKeys.PIN.keys, null)
     }
 
     fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
         val context = Amber.instance
-        return encryptedPreferences(context, npub).getString(PrefKeys.PROFILE_URL, null)
+        return sharedPrefs(context, npub).getString(PrefKeys.PROFILE_URL.key, null)
     }
 
     fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
         val context = Amber.instance
-        encryptedPreferences(context, npub).edit {
+        sharedPrefs(context, npub).edit {
             apply {
                 if (profileUrl == null) {
-                    remove(PrefKeys.PROFILE_URL)
+                    remove(PrefKeys.PROFILE_URL.key)
                 } else {
-                    putString(PrefKeys.PROFILE_URL, profileUrl)
+                    putString(PrefKeys.PROFILE_URL.key, profileUrl)
                 }
             }
         }
@@ -172,12 +183,12 @@ object LocalPreferences {
 
     fun savePinToEncryptedStorage(pin: String?) {
         val context = Amber.instance
-        encryptedPreferences(context).edit {
+        sharedPrefs(context).edit {
             apply {
                 if (pin == null) {
-                    remove(SettingsKeys.PIN)
+                    remove(SettingsKeys.PIN.keys)
                 } else {
-                    putString(SettingsKeys.PIN, pin)
+                    putString(SettingsKeys.PIN.keys, pin)
                 }
             }
         }
@@ -185,36 +196,42 @@ object LocalPreferences {
 
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
-        encryptedPreferences(context).apply {
-            val proxyPort = getInt(SettingsKeys.PROXY_PORT, 9050)
+        sharedPrefs(context).apply {
+            val proxyPort = getInt(SettingsKeys.PROXY_PORT.keys, 9050)
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
 
             return AmberSettings(
-                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS, null)?.map {
+                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.keys, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
-                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS, null)?.map {
+                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.keys, null)?.map {
                     RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(
                     RelaySetupInfo("wss://relay.nostr.band", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
                     RelaySetupInfo("wss://purplepag.es", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
                 ),
-                lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME, 0),
-                useAuth = getBoolean(SettingsKeys.USE_AUTH, false),
-                biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE, 0)),
-                usePin = getBoolean(SettingsKeys.USE_PIN, false),
-                useProxy = getBoolean(SettingsKeys.USE_PROXY, false),
-                proxyPort = getInt(SettingsKeys.PROXY_PORT, 9050),
+                lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME.keys, 0),
+                useAuth = getBoolean(SettingsKeys.USE_AUTH.keys, false),
+                biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE.keys, 0)),
+                usePin = getBoolean(SettingsKeys.USE_PIN.keys, false),
+                useProxy = getBoolean(SettingsKeys.USE_PROXY.keys, false),
+                proxyPort = getInt(SettingsKeys.PROXY_PORT.keys, 9050),
             )
         }
     }
 
     private var savedAccounts: List<String>? = null
 
+    @Suppress("DEPRECATION")
+    private fun legacySavedAccounts(context: Context): List<String> {
+        return encryptedPreferences(context)
+            .getString(SettingsKeys.SAVED_ACCOUNTS.keys, null)?.split(COMMA) ?: listOf()
+    }
+
     private fun savedAccounts(context: Context): List<String> {
         if (savedAccounts == null) {
-            savedAccounts = encryptedPreferences(context)
-                .getString(SettingsKeys.SAVED_ACCOUNTS, null)?.split(COMMA) ?: listOf()
+            savedAccounts = sharedPrefs(context)
+                .getString(SettingsKeys.SAVED_ACCOUNTS.keys, null)?.split(COMMA) ?: listOf()
         }
         return savedAccounts!!
     }
@@ -223,9 +240,9 @@ object LocalPreferences {
         if (savedAccounts != accounts) {
             savedAccounts = accounts
 
-            encryptedPreferences(context).edit {
+            sharedPrefs(context).edit {
                 apply {
-                    putString(SettingsKeys.SAVED_ACCOUNTS, accounts.joinToString(COMMA).ifBlank { null })
+                    putString(SettingsKeys.SAVED_ACCOUNTS.keys, accounts.joinToString(COMMA).ifBlank { null })
                 }
             }
         }
@@ -273,22 +290,78 @@ object LocalPreferences {
         val prefsDir = File(getDirPath(context))
         prefsDir.list()?.forEach {
             if (it.contains(npub)) {
-                File(prefsDir, it).delete()
+                try {
+                    val result = File(prefsDir, it).delete()
+                    Log.d("delete", "deleted $it: $result")
+                } catch (e: Exception) {
+                    Log.d("delete", "failed to delete $it", e)
+                }
             }
         }
     }
 
-    @Suppress("KotlinConstantConditions")
+    fun deleteLegacyUserPreferenceFile(context: Context, npub: String) {
+        val prefsDir = File(getDirPath(context))
+        prefsDir.list()?.forEach {
+            if (it.contains(npub) && it.startsWith("secret_keeper")) {
+                try {
+                    val result = File(prefsDir, it).delete()
+                    Log.d("delete", "deleted $it: $result")
+                } catch (e: Exception) {
+                    Log.d("delete", "failed to delete $it", e)
+                }
+            }
+        }
+    }
+
+    fun existsLegacySettings(context: Context): Boolean {
+        val prefsDir = File(getDirPath(context))
+        var result = false
+        prefsDir.list()?.forEach {
+            if (it == "secret_keeper.xml") {
+                result = true
+            }
+        }
+        return result
+    }
+
+    fun deleteSettingsPreferenceFile(context: Context) {
+        val prefsDir = File(getDirPath(context))
+        prefsDir.list()?.forEach {
+            if (it == "secret_keeper.xml") {
+                try {
+                    val result = File(prefsDir, it).delete()
+                    Log.d("delete", "deleted $it: $result")
+                } catch (e: Exception) {
+                    Log.d("delete", "failed to delete $it", e)
+                }
+            }
+        }
+    }
+
+    @Deprecated("Use sharedPrefs instead")
     private fun encryptedPreferences(
         context: Context,
         npub: String? = null,
     ): SharedPreferences {
-        return if (BuildConfig.DEBUG && DEBUG_PLAINTEXT_PREFERENCES) {
-            val preferenceFile = if (npub == null) DEBUG_PREFERENCES_NAME else "${DEBUG_PREFERENCES_NAME}_$npub"
-            context.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
-        } else {
-            return EncryptedStorage.preferences(npub, context)
+        return EncryptedStorage.preferences(npub, context)
+    }
+
+    private fun sharedPrefs(
+        context: Context,
+        npub: String? = null,
+    ): SharedPreferences {
+        val preferenceFile = if (npub == null) "prefs" else "prefs_$npub"
+        return context.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
+    }
+
+    private fun deleteUserDataStoreFile(context: Context, npub: String) {
+        val fileName = "secure_datastore_$npub.preferences_pb"
+        val file = File(context.filesDir, "datastore/$fileName")
+        if (file.exists()) {
+            file.delete()
         }
+        DataStoreAccess.clearCacheForNpub(npub)
     }
 
     /**
@@ -302,13 +375,15 @@ object LocalPreferences {
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         accountCache.remove(npub)
-        val userPrefs = encryptedPreferences(context, npub)
+        val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
         removeAccount(context, npub)
         deleteUserPreferenceFile(context, npub)
 
+        deleteUserDataStoreFile(context, npub)
+
         if (savedAccounts(context).isEmpty()) {
-            val appPrefs = encryptedPreferences(context)
+            val appPrefs = sharedPrefs(context)
             appPrefs.edit(commit = true) { clear() }
             return true
         } else if (currentAccount(context) == npub) {
@@ -320,27 +395,59 @@ object LocalPreferences {
 
     fun updatePrefsForLogin(context: Context, account: Account) {
         setCurrentAccount(context, account)
-        saveToEncryptedStorage(context, account)
-    }
-
-    fun saveToEncryptedStorage(context: Context, account: Account) {
-        val prefs = encryptedPreferences(context = context, account.npub)
-        prefs.edit {
-            apply {
-                account.signer.keyPair.privKey.let { putString(PrefKeys.NOSTR_PRIVKEY, it?.toHexKey()) }
-                account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY, it.toHexKey()) }
-                putString(PrefKeys.ACCOUNT_NAME, account.name)
-                putString(PrefKeys.LANGUAGE_PREFS, account.language)
-                putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, account.allowNewConnections)
-                putInt(PrefKeys.SIGN_POLICY, account.signPolicy)
-                putString(PrefKeys.SEED_WORDS2, account.seedWords.joinToString(separator = " ") { it })
-                putBoolean(PrefKeys.DID_BACKUP, account.didBackup)
-            }
+        Amber.instance.applicationIOScope.launch {
+            saveToEncryptedStorage(context, account)
         }
     }
 
-    fun loadFromEncryptedStorage(context: Context): Account? {
-        return loadFromEncryptedStorage(context, currentAccount(context))
+    suspend fun saveToEncryptedStorage(context: Context, account: Account) {
+        val prefs = sharedPrefs(context = context, account.npub)
+        prefs.edit {
+            apply {
+                account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY.key, it.toHexKey()) }
+                putString(PrefKeys.ACCOUNT_NAME.key, account.name)
+                putString(PrefKeys.LANGUAGE_PREFS.key, account.language)
+                putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS.key, account.allowNewConnections)
+                putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
+                putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
+            }
+        }
+
+        account.signer.keyPair.privKey?.toHexKey()?.let {
+            DataStoreAccess.saveEncryptedKey(context, account.npub, DataStoreAccess.NOSTR_PRIVKEY, it)
+        }
+
+        DataStoreAccess.saveEncryptedKey(
+            context,
+            account.npub,
+            DataStoreAccess.SEED_WORDS,
+            account.seedWords.joinToString(" "),
+        )
+        accountCache.put(account.npub, account)
+    }
+
+    suspend fun loadFromEncryptedStorage(context: Context): Account? {
+        currentAccount(context)?.let {
+            return loadFromEncryptedStorage(context, it)
+        }
+        return null
+    }
+
+    fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
+        Log.d("SignerProvider", "Loading from encrypted storage ${savedAccounts == null} accountCacheEmpty: ${accountCache.size()}")
+        if (savedAccounts == null || accountCache.size() == 0 || savedAccounts?.size != accountCache.size()) {
+            Log.d("SignerProvider", "accountCache is null loading accounts")
+            runBlocking {
+                allSavedAccounts(context).forEach {
+                    loadFromEncryptedStorage(context, it.npub)
+                }
+            }
+        }
+        if (npub == null) {
+            val currentAccount = currentAccount(context) ?: return null
+            return accountCache[currentAccount]
+        }
+        return accountCache[npub]
     }
 
     fun setAccountName(
@@ -348,9 +455,9 @@ object LocalPreferences {
         npub: String,
         value: String,
     ) {
-        encryptedPreferences(context, npub).edit {
+        sharedPrefs(context, npub).edit {
             apply {
-                putString(PrefKeys.ACCOUNT_NAME, value)
+                putString(PrefKeys.ACCOUNT_NAME.key, value)
             }
         }
         accountCache.get(npub)?.let {
@@ -359,8 +466,8 @@ object LocalPreferences {
     }
 
     fun getAccountName(context: Context, npub: String): String {
-        encryptedPreferences(context, npub).apply {
-            return getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
+        sharedPrefs(context, npub).apply {
+            return getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
         }
     }
 
@@ -369,30 +476,30 @@ object LocalPreferences {
         useProxy: Boolean,
         port: Int,
     ) {
-        encryptedPreferences(context).edit {
+        sharedPrefs(context).edit {
             apply {
-                putBoolean(SettingsKeys.USE_PROXY, useProxy)
-                putInt(SettingsKeys.PROXY_PORT, port)
+                putBoolean(SettingsKeys.USE_PROXY.keys, useProxy)
+                putInt(SettingsKeys.PROXY_PORT.keys, port)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
         HttpClientManager.setDefaultProxyOnPort(port)
     }
 
-    fun loadFromEncryptedStorage(context: Context, npub: String?): Account? {
-        if (npub != null && accountCache.get(npub) != null) {
+    suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
+        if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }
-        encryptedPreferences(context, npub).apply {
-            val pubKey = getString(PrefKeys.NOSTR_PUBKEY, null) ?: return null
-            val privKey = getString(PrefKeys.NOSTR_PRIVKEY, null)
-            val name = getString(PrefKeys.ACCOUNT_NAME, "") ?: ""
-            val language = getString(PrefKeys.LANGUAGE_PREFS, null)
-            val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS, false)
-            val signPolicy = getInt(PrefKeys.SIGN_POLICY, 1)
-            val savedSeedWords = getString(PrefKeys.SEED_WORDS2, null)
+        sharedPrefs(context, npub).apply {
+            val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
+            val privKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
+            val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
+            val language = getString(PrefKeys.LANGUAGE_PREFS.key, null)
+            val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS.key, false)
+            val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
+            val savedSeedWords = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
             val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
-            val didBackup = getBoolean(PrefKeys.DID_BACKUP, true)
+            val didBackup = getBoolean(PrefKeys.DID_BACKUP.key, true)
 
             val account =
                 Account(
@@ -409,15 +516,102 @@ object LocalPreferences {
         }
     }
 
+    suspend fun didMigrateFromLegacyStorage(context: Context, npub: String): Boolean {
+        val existingPrivKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
+        val existingSeed = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
+        return !existingPrivKey.isNullOrBlank() && !existingSeed.isNullOrBlank()
+    }
+
+    @Suppress("DEPRECATION")
+    suspend fun migrateFromSharedPrefs(context: Context, npub: String) {
+        withContext(Dispatchers.IO) {
+            if (didMigrateFromLegacyStorage(context, npub)) return@withContext
+
+            val legacyPrefs = encryptedPreferences(context, npub)
+
+            val privKey = legacyPrefs.getString(PrefKeys.NOSTR_PRIVKEY.key, null)
+            val seedWords = legacyPrefs.getString(PrefKeys.SEED_WORDS2.key, null)
+
+            if (!privKey.isNullOrBlank()) {
+                DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY, privKey)
+            }
+
+            if (!seedWords.isNullOrBlank()) {
+                DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS, seedWords)
+            }
+            legacyPrefs.edit {
+                apply {
+                    remove(PrefKeys.NOSTR_PRIVKEY.key)
+                    remove(PrefKeys.SEED_WORDS2.key)
+                }
+            }
+
+            migrateUserSharedPrefs(context, npub)
+            deleteLegacyUserPreferenceFile(context, npub)
+            if (existsLegacySettings(context)) {
+                migrateSettings(context)
+                deleteSettingsPreferenceFile(context)
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun migrateUserSharedPrefs(context: Context, npub: String) {
+        val legacyPrefs = encryptedPreferences(context, npub)
+        val sharedPrefs = sharedPrefs(context, npub)
+        for ((key, value) in legacyPrefs.all) {
+            when (value) {
+                is String -> sharedPrefs.edit { putString(key, value) }
+                is Boolean -> sharedPrefs.edit { putBoolean(key, value) }
+                is Int -> sharedPrefs.edit { putInt(key, value) }
+                is Long -> sharedPrefs.edit { putLong(key, value) }
+                is Float -> sharedPrefs.edit { putFloat(key, value) }
+                is Set<*> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    if (value.all { it is String }) {
+                        sharedPrefs.edit { putStringSet(key, value as Set<String>) }
+                    }
+                }
+                else -> {
+                    // Ignore unsupported types
+                }
+            }
+        }
+    }
+
+    @Suppress("DEPRECATION")
+    private fun migrateSettings(context: Context) {
+        val settingsPrefs = sharedPrefs(context)
+        val legacySettingsPrefs = encryptedPreferences(context)
+        for ((key, value) in legacySettingsPrefs.all) {
+            when (value) {
+                is String -> settingsPrefs.edit { putString(key, value) }
+                is Boolean -> settingsPrefs.edit { putBoolean(key, value) }
+                is Int -> settingsPrefs.edit { putInt(key, value) }
+                is Long -> settingsPrefs.edit { putLong(key, value) }
+                is Float -> settingsPrefs.edit { putFloat(key, value) }
+                is Set<*> -> {
+                    @Suppress("UNCHECKED_CAST")
+                    if (value.all { it is String }) {
+                        settingsPrefs.edit { putStringSet(key, value as Set<String>) }
+                    }
+                }
+                else -> {
+                    // Ignore unsupported types
+                }
+            }
+        }
+    }
+
     suspend fun migrateTorSettings(context: Context) {
-        if (encryptedPreferences(context).contains(SettingsKeys.USE_PROXY)) return
+        if (sharedPrefs(context).contains(SettingsKeys.USE_PROXY.keys)) return
 
         val useProxy = allSavedAccounts(context).any {
-            encryptedPreferences(context, it.npub).getBoolean(SettingsKeys.USE_PROXY, false)
+            sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.keys, false)
         }
         val proxyPort: Int = allSavedAccounts(context).firstNotNullOfOrNull {
-            if (encryptedPreferences(context, it.npub).getBoolean(SettingsKeys.USE_PROXY, false)) {
-                encryptedPreferences(context, it.npub).getInt(SettingsKeys.PROXY_PORT, 9050)
+            if (sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.keys, false)) {
+                sharedPrefs(context, it.npub).getInt(SettingsKeys.PROXY_PORT.keys, 9050)
             } else {
                 null
             }

@@ -11,6 +11,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.intl.Locale
 import androidx.core.os.LocaleListCompat
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -19,6 +20,7 @@ import java.io.IOException
 import kotlinx.collections.immutable.ImmutableMap
 import kotlinx.collections.immutable.toImmutableList
 import kotlinx.collections.immutable.toImmutableMap
+import kotlinx.coroutines.launch
 import org.xmlpull.v1.XmlPullParser
 import org.xmlpull.v1.XmlPullParserException
 
@@ -46,11 +48,13 @@ fun LanguageScreen(
                     languageList,
                     languageIndex,
                 ) {
-                    account.language = languageEntries[languageList[it].title]
-                    LocalPreferences.saveToEncryptedStorage(context, account)
-                    AppCompatDelegate.setApplicationLocales(
-                        LocaleListCompat.forLanguageTags(account.language),
-                    )
+                    Amber.instance.applicationIOScope.launch {
+                        account.language = languageEntries[languageList[it].title]
+                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        AppCompatDelegate.setApplicationLocales(
+                            LocaleListCompat.forLanguageTags(account.language),
+                        )
+                    }
                 }
             }
         }

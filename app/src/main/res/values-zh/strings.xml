@@ -510,4 +510,5 @@
     <string name="backup">备份</string>
     <string name="qrCode">二维码</string>
     <string name="make_backup_message">不要失去 Nostr 账户的访问权限！创建一个备份</string>
+    <string name="event_kind_10000300">Primal wallet authorization event</string>
 </resources>

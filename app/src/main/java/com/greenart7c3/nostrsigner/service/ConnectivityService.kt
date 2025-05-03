@@ -90,7 +90,7 @@ class ConnectivityService : Service() {
     override fun onCreate() {
         if (isStarted) return
 
-        Log.d("ConnectivityService", "onCreate")
+        Log.d("ConnectivityService", "onCreate ConnectivityService")
 
         isStarted = true
 
@@ -145,6 +145,7 @@ class ConnectivityService : Service() {
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
             try {
+                Log.d("ConnectivityService", "unregisterNetworkCallback")
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 connectivityManager.unregisterNetworkCallback(networkCallback)

@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
+import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.work.Data
@@ -87,25 +88,29 @@ class Amber : Application() {
         return changedNetwork
     }
 
-    override fun onCreate() {
-        super.onCreate()
-
+    private fun startCleanLogsAlarm() {
         val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, BootReceiver::class.java)
         intent.action = BootReceiver.CLEAR_LOGS_ACTION
         val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_MUTABLE)
 
-        // Set up the alarm to trigger every 24 hours
         val interval: Long = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
         val triggerAtMillis = System.currentTimeMillis()
 
-        // Set a repeating alarm
         alarmManager.setRepeating(
             AlarmManager.RTC_WAKEUP,
             triggerAtMillis,
             interval,
             pendingIntent,
         )
+    }
+
+    override fun onCreate() {
+        super.onCreate()
+
+        Log.d("NostrSigner", "onCreate Amber")
+
+        startCleanLogsAlarm()
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         _instance = this
@@ -139,13 +144,28 @@ class Amber : Application() {
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }
 
+        startService()
+    }
+
+    fun startService() {
         try {
-            this.startForegroundService(
-                Intent(
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                val operation = PendingIntent.getForegroundService(
                     this,
-                    ConnectivityService::class.java,
-                ),
-            )
+                    10,
+                    Intent(this, ConnectivityService::class.java),
+                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+                )
+                val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
+                alarmManager.set(AlarmManager.RTC_WAKEUP, 1000, operation)
+            } else {
+                this.startForegroundService(
+                    Intent(
+                        this,
+                        ConnectivityService::class.java,
+                    ),
+                )
+            }
         } catch (e: Exception) {
             Log.e("NostrSigner", "Failed to start ConnectivityService", e)
         }

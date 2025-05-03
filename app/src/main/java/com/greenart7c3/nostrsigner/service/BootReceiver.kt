@@ -22,45 +22,19 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR == "offline") return
+        Log.d("BootReceiver", "Received intent: ${intent.action}")
 
         when (intent.action) {
             Intent.ACTION_PACKAGE_REPLACED -> {
                 if (intent.dataString?.contains("com.greenart7c3.nostrsigner") == true && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                    try {
-                        context.startForegroundService(
-                            Intent(
-                                context,
-                                ConnectivityService::class.java,
-                            ),
-                        )
-                    } catch (e: Exception) {
-                        Log.e("NostrSigner", "Failed to start ConnectivityService", e)
-                    }
+                    Amber.instance.startService()
                 }
             }
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                try {
-                    context.startForegroundService(
-                        Intent(
-                            context,
-                            ConnectivityService::class.java,
-                        ),
-                    )
-                } catch (e: Exception) {
-                    Log.e("NostrSigner", "Failed to start ConnectivityService", e)
-                }
+                Amber.instance.startService()
             }
             Intent.ACTION_BOOT_COMPLETED -> {
-                try {
-                    context.startForegroundService(
-                        Intent(
-                            context,
-                            ConnectivityService::class.java,
-                        ),
-                    )
-                } catch (e: Exception) {
-                    Log.e("NostrSigner", "Failed to start ConnectivityService", e)
-                }
+                Amber.instance.startService()
             }
             CLEAR_LOGS_ACTION -> {
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {

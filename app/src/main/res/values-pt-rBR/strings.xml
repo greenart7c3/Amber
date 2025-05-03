@@ -509,4 +509,7 @@
     <string name="qrCode">QR Code</string>
     <string name="make_backup_message">Don\'t lose access to your Nostr account! Create a backup</string>
     <string name="event_kind_10000300">Primal wallet authorization event</string>
+    <string name="event_kind_39089">Starter packs</string>
+    <string name="event_kind_39092">Media starter packs</string>
+    <string name="event_kind_10020">Media follows</string>
 </resources>

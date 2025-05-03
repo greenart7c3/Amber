@@ -108,6 +108,7 @@ data class Permission(
                     10009 -> context.getString(R.string.event_kind_10009)
                     10013 -> context.getString(R.string.event_kind_10013)
                     10015 -> context.getString(R.string.event_kind_10015)
+                    10020 -> context.getString(R.string.event_kind_10020)
                     10030 -> context.getString(R.string.event_kind_10030)
                     10050 -> context.getString(R.string.event_kind_10050)
                     10063 -> context.getString(R.string.event_kind_10063)
@@ -160,6 +161,8 @@ data class Permission(
                     39001 -> context.getString(R.string.event_kind_39001)
                     39002 -> context.getString(R.string.event_kind_39002)
                     in 39003..39009 -> context.getString(R.string.event_kind_39000_39009)
+                    39089 -> context.getString(R.string.event_kind_39089)
+                    39092 -> context.getString(R.string.event_kind_39092)
                     10000300 -> context.getString(R.string.event_kind_10000300)
                     else -> {
                         val nipDescription = nipToLocalizedString(context, this, true)
@@ -444,6 +447,7 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 10009),
     Permission("sign_event", 10013),
     Permission("sign_event", 10015),
+    Permission("sign_event", 10020),
     Permission("sign_event", 10030),
     Permission("sign_event", 10050),
     Permission("sign_event", 10063),
@@ -495,6 +499,9 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 39000),
     Permission("sign_event", 39001),
     Permission("sign_event", 39002),
+    Permission("sign_event", 39089),
+    Permission("sign_event", 39092),
+    Permission("sign_event", 10000300),
     *(39003..39009).toList().map { Permission("sign_event", it) }.toTypedArray(),
     *(9000..9030).toList().map { Permission("sign_event", it) }.toTypedArray(),
     Permission("connect", null),

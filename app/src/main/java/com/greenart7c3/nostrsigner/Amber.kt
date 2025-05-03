@@ -20,9 +20,11 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
+import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.MetadataRelayListener
 import com.greenart7c3.nostrsigner.service.BootReceiver
 import com.greenart7c3.nostrsigner.service.ConnectivityService
+import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.MutableSubscriptionManager
@@ -48,7 +50,7 @@ class Amber : Application() {
     val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
         HttpClientManager.getHttpClient(useProxy)
     }
-    val client: NostrClient = NostrClient(factory)
+    var client: NostrClient = NostrClient(factory)
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     lateinit var settings: AmberSettings
@@ -177,6 +179,15 @@ class Amber : Application() {
         newRelays: Set<RelaySetupInfo> = emptySet(),
     ) {
         val savedRelays = getSavedRelays() + newRelays
+        if (savedRelays.isEmpty()) {
+            client.getAll().forEach {
+                it.disconnect()
+            }
+            client = NostrClient(factory)
+            NotificationDataSource.stop()
+            AmberRelayStats.updateNotification()
+            return
+        }
 
         if (shouldReconnect) {
             checkIfRelaysAreConnected()
@@ -187,6 +198,11 @@ class Amber : Application() {
                 savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else settings.useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
+            NotificationDataSource.start()
+            applicationIOScope.launch {
+                delay(1000)
+                AmberRelayStats.updateNotification()
+            }
         }
     }
 

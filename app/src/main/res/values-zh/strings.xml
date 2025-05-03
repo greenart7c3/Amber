@@ -511,4 +511,7 @@
     <string name="qrCode">二维码</string>
     <string name="make_backup_message">不要失去 Nostr 账户的访问权限！创建一个备份</string>
     <string name="event_kind_10000300">Primal wallet authorization event</string>
+    <string name="event_kind_39089">Starter packs</string>
+    <string name="event_kind_39092">Media starter packs</string>
+    <string name="event_kind_10020">Media follows</string>
 </resources>

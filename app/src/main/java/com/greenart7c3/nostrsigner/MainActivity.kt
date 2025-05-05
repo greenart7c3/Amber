@@ -68,7 +68,7 @@ class MainActivity : AppCompatActivity() {
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         setContent {
             if (intent.isLaunchFromHistory()) {
-                Log.d("isLaunchFromHistory", "Cleared intent history")
+                Log.d(Amber.TAG, "Cleared intent history")
                 intent = Intent()
             }
 
@@ -224,13 +224,13 @@ class MainActivity : AppCompatActivity() {
                                     val currentAccount = LocalPreferences.currentAccount(context)
                                     if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
                                         if (npub.startsWith("npub")) {
-                                            Log.d("Account", "Switching account to $npub")
+                                            Log.d(Amber.TAG, "Switching account to $npub")
                                             if (LocalPreferences.containsAccount(context, npub)) {
                                                 accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
                                             }
                                         } else {
                                             val localNpub = Hex.decode(npub).toNpub()
-                                            Log.d("Account", "Switching account to $localNpub")
+                                            Log.d(Amber.TAG, "Switching account to $localNpub")
                                             if (LocalPreferences.containsAccount(context, localNpub)) {
                                                 accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
                                             }

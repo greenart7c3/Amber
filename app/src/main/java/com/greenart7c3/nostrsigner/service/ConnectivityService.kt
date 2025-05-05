@@ -90,7 +90,7 @@ class ConnectivityService : Service() {
     override fun onCreate() {
         if (isStarted) return
 
-        Log.d("ConnectivityService", "onCreate ConnectivityService")
+        Log.d(Amber.TAG, "onCreate ConnectivityService")
 
         isStarted = true
 
@@ -125,7 +125,7 @@ class ConnectivityService : Service() {
                     Amber.instance.client.getAll().forEach {
                         if (!it.isConnected()) {
                             Log.d(
-                                "ConnectivityService",
+                                Amber.TAG,
                                 "Relay ${it.url} is not connected, reconnecting...",
                             )
                             it.connectAndSendFiltersIfDisconnected()
@@ -145,19 +145,19 @@ class ConnectivityService : Service() {
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {
             try {
-                Log.d("ConnectivityService", "unregisterNetworkCallback")
+                Log.d(Amber.TAG, "unregisterNetworkCallback")
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 connectivityManager.unregisterNetworkCallback(networkCallback)
             } catch (e: Exception) {
-                Log.d("connectivityManager", "Failed to unregisterNetworkCallback", e)
+                Log.d(Amber.TAG, "Failed to unregisterNetworkCallback", e)
             }
         }
         super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d("ConnectivityService", "onStartCommand")
+        Log.d(Amber.TAG, "onStartCommand")
         return START_STICKY
     }
 }

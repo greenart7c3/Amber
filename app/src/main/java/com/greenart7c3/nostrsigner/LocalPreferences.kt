@@ -292,9 +292,9 @@ object LocalPreferences {
             if (it.contains(npub)) {
                 try {
                     val result = File(prefsDir, it).delete()
-                    Log.d("delete", "deleted $it: $result")
+                    Log.d(Amber.TAG, "deleted $it: $result")
                 } catch (e: Exception) {
-                    Log.d("delete", "failed to delete $it", e)
+                    Log.d(Amber.TAG, "failed to delete $it", e)
                 }
             }
         }
@@ -306,9 +306,9 @@ object LocalPreferences {
             if (it.contains(npub) && it.startsWith("secret_keeper")) {
                 try {
                     val result = File(prefsDir, it).delete()
-                    Log.d("delete", "deleted $it: $result")
+                    Log.d(Amber.TAG, "deleted $it: $result")
                 } catch (e: Exception) {
-                    Log.d("delete", "failed to delete $it", e)
+                    Log.d(Amber.TAG, "failed to delete $it", e)
                 }
             }
         }
@@ -331,9 +331,9 @@ object LocalPreferences {
             if (it == "secret_keeper.xml") {
                 try {
                     val result = File(prefsDir, it).delete()
-                    Log.d("delete", "deleted $it: $result")
+                    Log.d(Amber.TAG, "deleted $it: $result")
                 } catch (e: Exception) {
-                    Log.d("delete", "failed to delete $it", e)
+                    Log.d(Amber.TAG, "failed to delete $it", e)
                 }
             }
         }
@@ -435,7 +435,7 @@ object LocalPreferences {
 
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
         if (savedAccounts == null || accountCache.size() == 0 || savedAccounts?.size != accountCache.size()) {
-            Log.d("SignerProvider", "accountCache is null loading accounts")
+            Log.d(Amber.TAG, "accountCache is null loading accounts")
             runBlocking {
                 allSavedAccounts(context).forEach {
                     loadFromEncryptedStorage(context, it.npub)

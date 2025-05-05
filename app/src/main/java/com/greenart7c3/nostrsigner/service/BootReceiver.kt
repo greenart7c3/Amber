@@ -22,7 +22,7 @@ class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR == "offline") return
-        Log.d("BootReceiver", "Received intent: ${intent.action}")
+        Log.d(Amber.TAG, "Received intent: ${intent.action}")
 
         when (intent.action) {
             Intent.ACTION_PACKAGE_REPLACED -> {
@@ -44,7 +44,7 @@ class BootReceiver : BroadcastReceiver() {
                                 val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
                                 val oneWeekAgo = TimeUtils.oneWeekAgo()
                                 val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
-                                Log.d("NostrSigner", "Deleting $countHistory old history entries")
+                                Log.d(Amber.TAG, "Deleting $countHistory old history entries")
                                 if (countHistory > 0) {
                                     var logs = database.applicationDao().getOldHistory(oneWeekAgo)
                                     var count = 0
@@ -58,7 +58,7 @@ class BootReceiver : BroadcastReceiver() {
                                 }
 
                                 val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
-                                Log.d("NostrSigner", "Deleting $countNotification old notification entries")
+                                Log.d(Amber.TAG, "Deleting $countNotification old notification entries")
                                 if (countNotification > 0) {
                                     var logs = database.applicationDao().getOldNotification(oneWeekAgo)
                                     var count = 0
@@ -72,14 +72,14 @@ class BootReceiver : BroadcastReceiver() {
                                 }
 
                                 val countLog = database.applicationDao().countOldLog(oneWeek)
-                                Log.d("NostrSigner", "Deleting $countLog old log entries from ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(oneWeek)}")
+                                Log.d(Amber.TAG, "Deleting $countLog old log entries from ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(oneWeek)}")
                                 if (countLog > 0) {
                                     var logs = database.applicationDao().getOldLog(oneWeek)
                                     var count = 0
                                     while (logs.isNotEmpty()) {
                                         count++
                                         logs.forEach { history ->
-                                            Log.d("NostrSigner", "Deleting log entry ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(history.time)}")
+                                            Log.d(Amber.TAG, "Deleting log entry ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(history.time)}")
                                             database.applicationDao().deleteLog(history)
                                         }
                                         logs = database.applicationDao().getOldLog(oneWeek)
@@ -87,7 +87,7 @@ class BootReceiver : BroadcastReceiver() {
                                 }
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
-                                Log.e("NostrSigner", "Error deleting old log entries", e)
+                                Log.e(Amber.TAG, "Error deleting old log entries", e)
                             }
                         }
                     }

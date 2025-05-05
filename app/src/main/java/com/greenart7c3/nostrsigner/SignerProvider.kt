@@ -55,33 +55,33 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
         sortOrder: String?,
     ): Cursor? {
-        Log.d("SignerProvider", "Querying $uri has context ${context != null}")
+        Log.d(Amber.TAG, "Querying $uri has context ${context != null}")
         val appId = BuildConfig.APPLICATION_ID
         return try {
             when (uri.toString()) {
                 "content://$appId.SIGN_MESSAGE" -> {
                     val packageName = callingPackage
                     if (packageName == null) {
-                        Log.d("SignerProvider", "No package name")
+                        Log.d(Amber.TAG, "No package name")
                         return null
                     }
                     val message = projection?.first()
                     if (message == null) {
-                        Log.d("SignerProvider", "No message")
+                        Log.d(Amber.TAG, "No message")
                         return null
                     }
                     val npub = IntentUtils.parsePubKey(projection[2])
                     if (npub == null) {
-                        Log.d("SignerProvider", "No npub")
+                        Log.d(Amber.TAG, "No npub")
                         return null
                     }
                     if (!LocalPreferences.containsAccount(context!!, npub)) {
-                        Log.d("SignerProvider", "No account")
+                        Log.d(Amber.TAG, "No account")
                         return null
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
                     if (account == null) {
-                        Log.d("SignerProvider", "No account from storage")
+                        Log.d(Amber.TAG, "No account from storage")
                         return null
                     }
                     val database = Amber.instance.getDatabase(account.npub)
@@ -138,32 +138,32 @@ class SignerProvider : ContentProvider() {
                 "content://$appId.SIGN_EVENT" -> {
                     val packageName = callingPackage
                     if (packageName == null) {
-                        Log.d("SignerProvider", "No package name")
+                        Log.d(Amber.TAG, "No package name")
                         return null
                     }
                     val json = projection?.first()
                     if (json == null) {
-                        Log.d("SignerProvider", "No json")
+                        Log.d(Amber.TAG, "No json")
                         return null
                     }
                     val npub = IntentUtils.parsePubKey(projection[2])
                     if (npub == null) {
-                        Log.d("SignerProvider", "No npub")
+                        Log.d(Amber.TAG, "No npub")
                         return null
                     }
                     if (!LocalPreferences.containsAccount(context!!, npub)) {
-                        Log.d("SignerProvider", "No account")
+                        Log.d(Amber.TAG, "No account")
                         return null
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
                     if (account == null) {
-                        Log.d("SignerProvider", "No account from storage")
+                        Log.d(Amber.TAG, "No account from storage")
                         return null
                     }
                     val event = try {
                         IntentUtils.getUnsignedEvent(json, account)
                     } catch (e: Exception) {
-                        Log.d("SignerProvider", "Failed to parse event from $packageName", e)
+                        Log.d(Amber.TAG, "Failed to parse event from $packageName", e)
                         return null
                     }
 
@@ -219,7 +219,7 @@ class SignerProvider : ContentProvider() {
                     val signedEvent = account.signer.signerSync.sign<Event>(event.createdAt, event.kind, event.tags, event.content)
 
                     if (signedEvent == null) {
-                        Log.d("SignerProvider", "Failed to sign event from $packageName")
+                        Log.d(Amber.TAG, "Failed to sign event from $packageName")
                         scope.launch {
                             database.applicationDao().addHistory(
                                 HistoryEntity2(
@@ -440,7 +440,7 @@ class SignerProvider : ContentProvider() {
                 else -> null
             }
         } catch (e: Exception) {
-            Log.e("SignerProvider", "Error from $callingPackage $uri", e)
+            Log.e(Amber.TAG, "Error from $callingPackage $uri", e)
             return null
         }
     }

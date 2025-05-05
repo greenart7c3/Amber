@@ -70,7 +70,7 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
             }
 
             override fun onRelayStateChange(type: RelayState, relay: Relay) {
-                Log.d("NotificationDataSource", "onRelayStateChange: $type")
+                Log.d(Amber.TAG, "onRelayStateChange: $type")
                 AmberRelayStats.updateNotification()
                 scope.launch {
                     LocalPreferences.currentAccount(Amber.instance)?.let { account ->

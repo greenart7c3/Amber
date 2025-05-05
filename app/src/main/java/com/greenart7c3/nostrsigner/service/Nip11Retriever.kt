@@ -21,6 +21,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.vitorpamplona.quartz.nip11RelayInfo.Nip11RelayInformation
@@ -77,7 +78,7 @@ class Nip11Retriever {
                                 } catch (e: Exception) {
                                     if (e is CancellationException) throw e
                                     Log.e(
-                                        "RelayInfoFail",
+                                        Amber.TAG,
                                         "Resulting Message from Relay $dirtyUrl in not parseable: $body",
                                         e,
                                     )
@@ -90,14 +91,14 @@ class Nip11Retriever {
                             call: Call,
                             e: IOException,
                         ) {
-                            Log.e("RelayInfoFail", "$dirtyUrl unavailable", e)
+                            Log.e(Amber.TAG, "$dirtyUrl unavailable", e)
                             onError(dirtyUrl, ErrorCode.FAIL_TO_REACH_SERVER, e.message)
                         }
                     },
                 )
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.e("RelayInfoFail", "Invalid URL $dirtyUrl", e)
+            Log.e(Amber.TAG, "Invalid URL $dirtyUrl", e)
             onError(dirtyUrl, ErrorCode.FAIL_TO_ASSEMBLE_URL, e.message)
         }
     }

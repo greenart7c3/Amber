@@ -115,7 +115,7 @@ object AmberUtils {
                         null
                     }
                 } catch (e: Exception) {
-                    Log.e("Account", "Failed to create pubkey for ZapRequest ${event.id}", e)
+                    Log.e(Amber.TAG, "Failed to create pubkey for ZapRequest ${event.id}", e)
                     null
                 }
             }

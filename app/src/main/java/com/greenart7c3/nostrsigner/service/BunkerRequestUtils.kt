@@ -155,7 +155,7 @@ object BunkerRequestUtils {
             encryptedContent,
         ) {
             Amber.instance.applicationIOScope.launch {
-                Log.d("IntentUtils", "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
+                Log.d(Amber.TAG, "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
 
                 if (Amber.instance.client.getAll().any { !it.isConnected() }) {
                     Amber.instance.checkForNewRelays(
@@ -178,12 +178,12 @@ object BunkerRequestUtils {
                     }
                 }
                 if (success) {
-                    Log.d("IntentUtils", "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
+                    Log.d(Amber.TAG, "Success response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                     onDone(true)
                 } else {
                     onDone(false)
                     AmberListenerSingleton.showErrorMessage()
-                    Log.d("IntentUtils", "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
+                    Log.d(Amber.TAG, "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest?.method}")
                 }
                 AmberListenerSingleton.getListener()?.let {
                     Amber.instance.client.unsubscribe(it)
@@ -229,7 +229,7 @@ object BunkerRequestUtils {
     ) {
         val type = getTypeFromBunker(bunkerRequest)
         if (type == SignerType.INVALID) {
-            Log.d("IntentUtils", "Invalid type ${bunkerRequest.method}")
+            Log.d(Amber.TAG, "Invalid type ${bunkerRequest.method}")
             onReady(null)
             return
         }

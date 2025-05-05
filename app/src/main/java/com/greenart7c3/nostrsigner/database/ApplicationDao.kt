@@ -7,6 +7,7 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.greenart7c3.nostrsigner.Amber
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.flow.Flow
 
@@ -154,7 +155,7 @@ interface ApplicationDao {
         try {
             innerAddHistory(entity)
         } catch (e: Exception) {
-            Log.e("ApplicationDao", "Error adding history", e)
+            Log.e(Amber.TAG, "Error adding history", e)
         }
     }
 

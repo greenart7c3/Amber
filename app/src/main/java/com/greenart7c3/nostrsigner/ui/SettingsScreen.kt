@@ -329,7 +329,7 @@ fun SettingsScreen(
                                     } catch (e: Exception) {
                                         isLoading = false
                                         if (e is CancellationException) throw e
-                                        Log.e("NostrSigner", "Error deleting old log entries", e)
+                                        Log.e(Amber.TAG, "Error deleting old log entries", e)
                                         val dbFile = context.getDatabasePath("amber_db_${account.npub}")
                                         val df = DecimalFormat("#.###")
                                         sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))

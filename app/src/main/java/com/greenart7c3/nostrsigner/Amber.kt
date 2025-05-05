@@ -108,7 +108,7 @@ class Amber : Application() {
     override fun onCreate() {
         super.onCreate()
 
-        Log.d("NostrSigner", "onCreate Amber")
+        Log.d(TAG, "onCreate Amber")
 
         startCleanLogsAlarm()
 
@@ -127,6 +127,11 @@ class Amber : Application() {
             }
         }
 
+        runMigrations()
+        startService()
+    }
+
+    fun runMigrations() {
         runBlocking(Dispatchers.IO) {
             LocalPreferences.allSavedAccounts(this@Amber).forEach {
                 if (LocalPreferences.didMigrateFromLegacyStorage(this@Amber, it.npub)) {
@@ -143,8 +148,6 @@ class Amber : Application() {
             LocalPreferences.migrateTorSettings(this@Amber)
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
         }
-
-        startService()
     }
 
     fun startService() {
@@ -167,7 +170,7 @@ class Amber : Application() {
                 )
             }
         } catch (e: Exception) {
-            Log.e("NostrSigner", "Failed to start ConnectivityService", e)
+            Log.e(TAG, "Failed to start ConnectivityService", e)
         }
     }
 
@@ -249,7 +252,7 @@ class Amber : Application() {
     }
 
     private suspend fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {
-        Log.d("NostrSigner", "Checking if relays are connected")
+        Log.d(TAG, "Checking if relays are connected")
         client.getAll().forEach { relay ->
             if (!relay.isConnected()) {
                 relay.connectAndRunAfterSync {
@@ -306,7 +309,7 @@ class Amber : Application() {
         val oneDayAgo = TimeUtils.oneDayAgo()
         val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
         if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
-            Log.d("NostrSigner", "Fetching profile data for ${account.npub}")
+            Log.d(Amber.TAG, "Fetching profile data for ${account.npub}")
             LocalPreferences.setLastCheck(this, account.npub, TimeUtils.now())
             val listener = MetadataRelayListener(
                 account = account,
@@ -361,7 +364,7 @@ class Amber : Application() {
                 }
             }
         } else {
-            Log.d("NostrSigner", "Using cached profile data for ${account.npub}")
+            Log.d(TAG, "Using cached profile data for ${account.npub}")
             LocalPreferences.loadProfileUrlFromEncryptedStorage(account.npub)?.let {
                 onPictureFound(it)
                 return
@@ -370,6 +373,8 @@ class Amber : Application() {
     }
 
     companion object {
+        const val TAG = "Amber"
+
         @Volatile
         private var _instance: Amber? = null
         val instance: Amber get() =

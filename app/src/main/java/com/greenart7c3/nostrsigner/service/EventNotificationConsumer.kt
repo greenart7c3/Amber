@@ -55,7 +55,7 @@ import kotlinx.coroutines.launch
 
 class EventNotificationConsumer(private val applicationContext: Context) {
     private fun saveLog(text: String) {
-        Log.d("EventNotificationConsumer", text)
+        Log.d(Amber.TAG, text)
         Amber.instance.applicationIOScope.launch {
             val accounts = LocalPreferences.allSavedAccounts(applicationContext)
             accounts.forEach {
@@ -291,7 +291,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
 
         if (type == SignerType.INVALID) {
-            Log.d("EventNotificationConsumer", "Invalid request method ${bunkerRequest.method}")
+            Log.d(Amber.TAG, "Invalid request method ${bunkerRequest.method}")
             dao.insertLog(
                 LogEntity(
                     0,

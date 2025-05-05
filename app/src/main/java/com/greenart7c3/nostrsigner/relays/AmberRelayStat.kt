@@ -104,7 +104,7 @@ object AmberRelayStats {
     }
 
     fun updateNotification() {
-        Log.d("ConnectivityService", "updateNotification")
+        Log.d(Amber.TAG, "updateNotification")
         val notificationManager = NotificationManagerCompat.from(Amber.instance)
         if (ActivityCompat.checkSelfPermission(Amber.instance, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             notificationManager.notify(1, createNotification())

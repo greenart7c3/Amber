@@ -474,7 +474,7 @@ private fun askNotificationPermission(
 fun Color.Companion.fromHex(colorString: String) = try {
     Color("#$colorString".toColorInt())
 } catch (e: Exception) {
-    Log.e("Color", "Failed to parse color: $colorString", e)
+    Log.e(Amber.TAG, "Failed to parse color: $colorString", e)
     Unspecified
 }
 

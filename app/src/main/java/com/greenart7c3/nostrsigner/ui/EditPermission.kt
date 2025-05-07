@@ -212,7 +212,10 @@ fun EditPermission(
                                     val localPermissions =
                                         permissions.map {
                                             if (it.id == permission.id) {
-                                                it.copy(acceptable = !permission.acceptable)
+                                                it.copy(
+                                                    acceptable = !permission.acceptable,
+                                                    rememberType = RememberType.ALWAYS.screenCode,
+                                                )
                                             } else {
                                                 it.copy()
                                             }
@@ -235,7 +238,10 @@ fun EditPermission(
                                     val localPermissions =
                                         permissions.map {
                                             if (it.id == permission.id) {
-                                                it.copy(acceptable = !permission.acceptable)
+                                                it.copy(
+                                                    acceptable = !permission.acceptable,
+                                                    rememberType = RememberType.ALWAYS.screenCode,
+                                                )
                                             } else {
                                                 it.copy()
                                             }

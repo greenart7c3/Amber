@@ -93,7 +93,20 @@ class SignerProvider : ContentProvider() {
                                 sortOrder ?: packageName,
                                 "SIGN_MESSAGE",
                             )
-                    val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
+                    val rejectUntil = permission?.rejectUntil ?: 0
+                    val acceptUntil = permission?.acceptUntil ?: 0
+                    val isRemembered = if (signPolicy == 2) {
+                        true
+                    } else {
+                        if (rejectUntil == 0L && acceptUntil == 0L) return null
+                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                            false
+                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                            true
+                        } else {
+                            return null
+                        }
+                    }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
@@ -193,7 +206,20 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
-                    val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
+                    val rejectUntil = permission?.rejectUntil ?: 0
+                    val acceptUntil = permission?.acceptUntil ?: 0
+                    val isRemembered = if (signPolicy == 2) {
+                        true
+                    } else {
+                        if (rejectUntil == 0L && acceptUntil == 0L) return null
+                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                            false
+                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                            true
+                        } else {
+                            return null
+                        }
+                    }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
@@ -308,7 +334,20 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
-                    val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
+                    val rejectUntil = permission?.rejectUntil ?: 0
+                    val acceptUntil = permission?.acceptUntil ?: 0
+                    val isRemembered = if (signPolicy == 2) {
+                        true
+                    } else {
+                        if (rejectUntil == 0L && acceptUntil == 0L) return null
+                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                            false
+                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                            true
+                        } else {
+                            return null
+                        }
+                    }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
@@ -395,7 +434,20 @@ class SignerProvider : ContentProvider() {
                             )
 
                     val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
-                    val isRemembered = if (signPolicy == 2) true else permission?.acceptable ?: return null
+                    val rejectUntil = permission?.rejectUntil ?: 0
+                    val acceptUntil = permission?.acceptUntil ?: 0
+                    val isRemembered = if (signPolicy == 2) {
+                        true
+                    } else {
+                        if (rejectUntil == 0L && acceptUntil == 0L) return null
+                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                            false
+                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                            true
+                        } else {
+                            return null
+                        }
+                    }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(

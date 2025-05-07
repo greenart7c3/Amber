@@ -522,4 +522,6 @@
     <string name="event_kind_39089">Starter packs</string>
     <string name="event_kind_39092">Media starter packs</string>
     <string name="event_kind_10020">Media follows</string>
+    <string name="automatically_sign_this_for">Automatically sign this for</string>
+    <string name="always">Always</string>
 </resources>

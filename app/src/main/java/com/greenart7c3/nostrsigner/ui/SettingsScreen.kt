@@ -423,9 +423,11 @@ fun SettingsScreen(
 @Composable
 fun SettingsRow(
     name: Int,
-    description: Int,
+    description: Int?,
     selectedItems: ImmutableList<TitleExplainer>,
     selectedIndex: Int,
+    maxLines: Int = 1,
+    overflow: TextOverflow = TextOverflow.Ellipsis,
     onSelect: (Int) -> Unit,
 ) {
     Row(
@@ -438,16 +440,18 @@ fun SettingsRow(
         ) {
             Text(
                 text = stringResource(name),
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+                maxLines = maxLines,
+                overflow = overflow,
             )
-            Text(
-                text = stringResource(description),
-                style = MaterialTheme.typography.bodySmall,
-                color = Color.Gray,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-            )
+            description?.let {
+                Text(
+                    text = stringResource(description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
         }
 
         TextSpinner(
@@ -460,6 +464,14 @@ fun SettingsRow(
                 .weight(1f),
         )
     }
+}
+
+enum class RememberType(val screenCode: Int, val resourceId: Int) {
+    NEVER(0, R.string.never),
+    ONE_MINUTE(1, R.string.one_minute),
+    FIVE_MINUTES(2, R.string.five_minutes),
+    TEN_MINUTES(3, R.string.ten_minutes),
+    ALWAYS(4, R.string.always),
 }
 
 enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {

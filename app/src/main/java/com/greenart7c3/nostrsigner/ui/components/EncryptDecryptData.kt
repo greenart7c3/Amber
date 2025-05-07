@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -36,6 +37,7 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 
@@ -51,8 +53,8 @@ fun EncryptDecryptData(
     applicationName: String?,
     appName: String,
     type: SignerType,
-    onAccept: () -> Unit,
-    onReject: () -> Unit,
+    onAccept: (RememberType) -> Unit,
+    onReject: (RememberType) -> Unit,
 ) {
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
@@ -61,6 +63,9 @@ fun EncryptDecryptData(
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val scrollState = rememberScrollState()
+    var rememberType by remember {
+        mutableStateOf(RememberType.NEVER)
+    }
 
     Column(
         Modifier
@@ -165,12 +170,17 @@ fun EncryptDecryptData(
             onAccept,
             onReject,
         ) {
-            remember.value = !remember.value
+            remember.value = it != RememberType.NEVER
+            rememberType = it
         }
 
         AcceptRejectButtons(
-            onAccept,
-            onReject,
+            onAccept = {
+                onAccept(rememberType)
+            },
+            onReject = {
+                onReject(rememberType)
+            },
         )
     }
 }

@@ -67,6 +67,26 @@ val MIGRATION_7_8 =
         }
     }
 
+val MIGRATION_8_9 =
+    object : Migration(8, 9) {
+        override fun migrate(db: SupportSQLiteDatabase) {
+            db.execSQL("ALTER TABLE `applicationPermission` ADD COLUMN `rememberType` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `applicationPermission` ADD COLUMN `acceptUntil` INTEGER NOT NULL DEFAULT 0")
+            db.execSQL("ALTER TABLE `applicationPermission` ADD COLUMN `rejectUntil` INTEGER NOT NULL DEFAULT 0")
+            val cursor = db.query("SELECT * FROM applicationPermission")
+            while (cursor.moveToNext()) {
+                val id = cursor.getInt(cursor.getColumnIndexOrThrow("id"))
+                val acceptable = cursor.getInt(cursor.getColumnIndexOrThrow("acceptable"))
+                val until = Long.MAX_VALUE / 1000
+                if (acceptable == 1) {
+                    db.execSQL("UPDATE applicationPermission SET acceptUntil = $until, rejectUntil = 0, rememberType = 4 WHERE id = $id")
+                } else {
+                    db.execSQL("UPDATE applicationPermission SET rejectUntil = $until, acceptUntil = 0, rememberType = 4 WHERE id = $id")
+                }
+            }
+        }
+    }
+
 @Database(
     entities = [
         ApplicationEntity::class,
@@ -76,7 +96,7 @@ val MIGRATION_7_8 =
         LogEntity::class,
         HistoryEntity2::class,
     ],
-    version = 8,
+    version = 9,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -106,8 +126,10 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_5_6)
                         .addMigrations(MIGRATION_6_7)
                         .addMigrations(MIGRATION_7_8)
+                        .addMigrations(MIGRATION_8_9)
                         .build()
                 instance.openHelper.writableDatabase.execSQL("VACUUM")
+
                 instance
             }
         }

@@ -59,6 +59,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.fromHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
@@ -132,8 +133,8 @@ fun LoginWithPubKey(
     appName: String,
     applicationName: String?,
     permissions: List<Permission>?,
-    onAccept: (List<Permission>?, Int, Boolean?) -> Unit,
-    onReject: () -> Unit,
+    onAccept: (List<Permission>?, Int, Boolean?, RememberType) -> Unit,
+    onReject: (RememberType) -> Unit,
 ) {
     val localPermissions = remember {
         val snapshot = mutableStateListOf<Permission>()
@@ -144,6 +145,7 @@ fun LoginWithPubKey(
     }
 
     val scrollState = rememberScrollState()
+    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     if (isBunkerRequest) {
         Column(
@@ -195,7 +197,8 @@ fun LoginWithPubKey(
                     onReject = onReject,
                     remember = remember.value,
                     onChanged = {
-                        remember.value = !remember.value
+                        remember.value = it != RememberType.NEVER
+                        rememberType = it
                     },
                     packageName = packageName,
                 )
@@ -203,14 +206,16 @@ fun LoginWithPubKey(
                 AmberButton(
                     modifier = Modifier.padding(vertical = 20.dp),
                     onClick = {
-                        onAccept(localPermissions, 1, null)
+                        onAccept(localPermissions, 1, null, rememberType)
                     },
                     text = stringResource(R.string.grant_permissions),
                 )
 
                 AmberButton(
                     modifier = Modifier.padding(vertical = 20.dp),
-                    onClick = onReject,
+                    onClick = {
+                        onReject(rememberType)
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFF6B00),
                     ),
@@ -405,14 +410,16 @@ fun LoginWithPubKey(
                 AmberButton(
                     modifier = Modifier.padding(vertical = 20.dp),
                     onClick = {
-                        onAccept(localPermissions, selectedOption, closeApp)
+                        onAccept(localPermissions, selectedOption, closeApp, rememberType)
                     },
                     text = stringResource(R.string.grant_permissions),
                 )
 
                 AmberButton(
                     modifier = Modifier.padding(vertical = 20.dp),
-                    onClick = onReject,
+                    onClick = {
+                        onReject(rememberType)
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = Color(0xFFFF6B00),
                     ),

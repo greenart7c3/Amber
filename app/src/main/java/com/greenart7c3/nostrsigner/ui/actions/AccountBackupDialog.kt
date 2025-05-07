@@ -122,7 +122,7 @@ fun AccountBackupScreen(
                     SeedWordsPage(
                         seedWords = account.seedWords,
                         showNextButton = false,
-                    ) {}
+                    )
                 }
             }
         }

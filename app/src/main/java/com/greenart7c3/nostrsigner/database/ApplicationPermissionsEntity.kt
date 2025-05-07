@@ -34,4 +34,7 @@ data class ApplicationPermissionsEntity(
     val type: String,
     val kind: Int?,
     var acceptable: Boolean,
+    val rememberType: Int,
+    var acceptUntil: Long,
+    var rejectUntil: Long,
 )

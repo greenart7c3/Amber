@@ -64,7 +64,7 @@ interface ApplicationDao {
     @Transaction
     suspend fun getBySecret(secret: String): ApplicationWithPermissions?
 
-    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key and rememberType = 4")
     suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
 
     @Query("SELECT * FROM application")

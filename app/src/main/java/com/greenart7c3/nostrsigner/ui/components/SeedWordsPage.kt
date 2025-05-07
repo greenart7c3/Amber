@@ -33,7 +33,7 @@ import kotlinx.coroutines.launch
 fun SeedWordsPage(
     seedWords: Set<String>,
     showNextButton: Boolean = true,
-    onNextPage: () -> Unit,
+    onNextPage: () -> Unit = {},
 ) {
     val clipboardManager = LocalClipboard.current
     val scope = rememberCoroutineScope()

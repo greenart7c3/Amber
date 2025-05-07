@@ -65,6 +65,7 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.IntentResultType
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
@@ -230,6 +231,7 @@ fun MultiEventHomeScreen(
                                         intentData,
                                         localEvent.kind,
                                         intentData.rememberMyChoice.value,
+                                        RememberType.ALWAYS,
                                         thisAccount,
                                     )
                                 }
@@ -313,6 +315,7 @@ fun MultiEventHomeScreen(
                                         intentData,
                                         null,
                                         intentData.rememberMyChoice.value,
+                                        RememberType.ALWAYS,
                                         thisAccount,
                                     )
                                 }
@@ -438,6 +441,7 @@ fun MultiEventHomeScreen(
                                         intentData,
                                         null,
                                         intentData.rememberMyChoice.value,
+                                        RememberType.ALWAYS,
                                         thisAccount,
                                     )
                                 }
@@ -570,6 +574,7 @@ fun MultiEventHomeScreen(
                                 intentData,
                                 null,
                                 false,
+                                RememberType.ALWAYS,
                                 thisAccount,
                             )
                         }

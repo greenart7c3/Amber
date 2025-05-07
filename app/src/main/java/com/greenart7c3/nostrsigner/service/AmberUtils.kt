@@ -9,8 +9,8 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.ui.IntentResultType
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
@@ -23,6 +23,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapEncryption
 import com.vitorpamplona.quartz.utils.Hex
+import com.vitorpamplona.quartz.utils.TimeUtils
 
 object AmberUtils {
     fun encryptOrDecryptData(
@@ -161,27 +162,39 @@ object AmberUtils {
         intentData: IntentData,
         kind: Int?,
         value: Boolean,
+        rememberType: RememberType,
         account: Account,
     ) {
-        val noPermission = application.permissions.none {
-            val nip = it.kind?.kindToNip()?.toIntOrNull()
-            (it.type == intentData.type.toString() && it.kind == kind) || (nip != null && it.type == "NIP" && it.kind == nip)
+        val until = when (rememberType) {
+            RememberType.ALWAYS -> Long.MAX_VALUE / 1000
+            RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
+            RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
+            RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+            RememberType.NEVER -> 0L
         }
-        if (noPermission) {
-            application.permissions.add(
-                ApplicationPermissionsEntity(
-                    null,
-                    key,
-                    intentData.type.toString(),
-                    kind,
-                    value,
-                ),
-            )
 
-            Amber.instance.getDatabase(account.npub)
-                .applicationDao()
-                .insertApplicationWithPermissions(application)
+        if (kind != null) {
+            application.permissions.removeIf { it.kind == kind && it.type == intentData.type.toString() }
+        } else {
+            application.permissions.removeIf { it.type == intentData.type.toString() && it.type != "SIGN_EVENT" }
         }
+
+        application.permissions.add(
+            ApplicationPermissionsEntity(
+                null,
+                key,
+                intentData.type.toString(),
+                kind,
+                value,
+                rememberType.screenCode,
+                if (value) until else 0L,
+                if (!value) until else 0L,
+            ),
+        )
+
+        Amber.instance.getDatabase(account.npub)
+            .applicationDao()
+            .insertApplicationWithPermissions(application)
     }
 }
 

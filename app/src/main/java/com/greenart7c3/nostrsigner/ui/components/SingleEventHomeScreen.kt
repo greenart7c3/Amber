@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.IntentResultType
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -96,7 +98,7 @@ fun SingleEventHomeScreen(
                 }
 
             LoginWithPubKey(
-                applicationEntity?.application?.closeApplication ?: (intentData.bunkerRequest?.closeApplication == true),
+                applicationEntity?.application?.closeApplication ?: (intentData.bunkerRequest?.closeApplication != false),
                 paddingValues,
                 remember,
                 intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
@@ -105,7 +107,7 @@ fun SingleEventHomeScreen(
                 appName,
                 applicationName,
                 intentData.permissions,
-                { permissions, signPolicy, closeApplication ->
+                { permissions, signPolicy, closeApplication, rememberType ->
                     val sig =
                         if (intentData.type == SignerType.CONNECT) {
                             intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
@@ -134,6 +136,7 @@ fun SingleEventHomeScreen(
                         signPolicy = signPolicy,
                         onRemoveIntentData = onRemoveIntentData,
                         shouldCloseApplication = closeApplication,
+                        rememberType = rememberType,
                     )
 
                     return@LoginWithPubKey
@@ -161,9 +164,9 @@ fun SingleEventHomeScreen(
                             )
                         }
                     } else {
-                        onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
+                        onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                         onLoading(false)
                     }
                 },
@@ -186,11 +189,24 @@ fun SingleEventHomeScreen(
                 } else {
                     packageName
                 }
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
             SignMessage(
                 account,
                 paddingValues,
                 intentData.data,
-                permission?.acceptable,
+                acceptOrReject,
                 remember,
                 localPackageName,
                 applicationName,
@@ -213,6 +229,7 @@ fun SingleEventHomeScreen(
                             null,
                             onLoading,
                             onRemoveIntentData = onRemoveIntentData,
+                            rememberType = it,
                         )
                     }
                 },
@@ -246,13 +263,14 @@ fun SingleEventHomeScreen(
                                 permissions = mutableListOf(),
                             )
 
-                        if (remember.value) {
+                        if (it != RememberType.NEVER) {
                             AmberUtils.acceptOrRejectPermission(
                                 application,
                                 key,
                                 intentData,
                                 null,
                                 false,
+                                it,
                                 account,
                             )
                         }
@@ -288,11 +306,11 @@ fun SingleEventHomeScreen(
                                 onRemoveIntentData = onRemoveIntentData,
                             )
                         } else {
-                            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
                             }
+                            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             onLoading(false)
                         }
                     }
@@ -328,12 +346,26 @@ fun SingleEventHomeScreen(
                 } else {
                     packageName
                 }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
             EncryptDecryptData(
                 account,
                 paddingValues,
                 intentData.data,
                 intentData.encryptedData ?: "",
-                permission?.acceptable,
+                acceptOrReject,
                 remember,
                 localPackageName,
                 applicationName,
@@ -360,6 +392,7 @@ fun SingleEventHomeScreen(
                         null,
                         onRemoveIntentData = onRemoveIntentData,
                         onLoading = onLoading,
+                        rememberType = it,
                     )
                 },
                 {
@@ -389,13 +422,14 @@ fun SingleEventHomeScreen(
                                 ),
                                 permissions = mutableListOf(),
                             )
-                        if (remember.value) {
+                        if (it != RememberType.NEVER) {
                             AmberUtils.acceptOrRejectPermission(
                                 application,
                                 key,
                                 intentData,
                                 null,
                                 false,
+                                it,
                                 account,
                             )
                         }
@@ -431,11 +465,11 @@ fun SingleEventHomeScreen(
                                 onLoading,
                             )
                         } else {
-                            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
                             }
+                            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             onLoading(false)
                         }
                     }
@@ -480,10 +514,24 @@ fun SingleEventHomeScreen(
                     } else {
                         packageName
                     }
+
+                val acceptUntil = permission?.acceptUntil ?: 0
+                val rejectUntil = permission?.rejectUntil ?: 0
+
+                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                    null
+                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                    false
+                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                    true
+                } else {
+                    null
+                }
+
                 EventData(
                     account,
                     paddingValues,
-                    permission?.acceptable,
+                    acceptOrReject,
                     remember,
                     localPackageName,
                     appName,
@@ -530,6 +578,7 @@ fun SingleEventHomeScreen(
                             signPolicy = null,
                             appName = null,
                             permissions = null,
+                            rememberType = it,
                         )
                     },
                     {
@@ -568,13 +617,14 @@ fun SingleEventHomeScreen(
                                 )
                             }
 
-                            if (remember.value) {
+                            if (it != RememberType.NEVER) {
                                 AmberUtils.acceptOrRejectPermission(
                                     application,
                                     key,
                                     intentData,
                                     event.kind,
                                     false,
+                                    it,
                                     account,
                                 )
                             }
@@ -604,11 +654,14 @@ fun SingleEventHomeScreen(
                                     onRemoveIntentData = onRemoveIntentData,
                                 )
                             } else {
-                                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                                context.getAppCompatActivity()?.intent = null
+                                val activity = context.getAppCompatActivity()
+                                Log.d("activity", "is activity null ${activity == null}")
+                                activity?.intent = null
+                                Log.d("activity", "Shold close app ${application.application.closeApplication}")
                                 if (application.application.closeApplication) {
-                                    context.getAppCompatActivity()?.finish()
+                                    activity?.finish()
                                 }
+                                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                                 onLoading(false)
                             }
                         }

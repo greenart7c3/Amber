@@ -142,6 +142,7 @@ fun sendResult(
     signPolicy: Int? = null,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     shouldCloseApplication: Boolean? = null,
+    rememberType: RememberType,
 ) {
     onLoading(true)
     Amber.instance.applicationIOScope.launch {
@@ -196,7 +197,7 @@ fun sendResult(
                     intentData.bunkerRequest?.secret ?: "",
                     intentData.bunkerRequest?.secret != null,
                     account.signPolicy,
-                    shouldCloseApplication ?: (intentData.bunkerRequest?.closeApplication != false),
+                    shouldCloseApplication ?: (intentData.bunkerRequest?.closeApplication == false),
                 ),
                 permissions = mutableListOf(),
             )
@@ -217,6 +218,9 @@ fun sendResult(
                                 it.type.toUpperCase(Locale.current),
                                 it.kind,
                                 true,
+                                RememberType.ALWAYS.screenCode,
+                                Long.MAX_VALUE / 1000,
+                                0,
                             ),
                         )
                     }
@@ -234,6 +238,9 @@ fun sendResult(
                                 it.type.toUpperCase(Locale.current),
                                 it.kind,
                                 true,
+                                RememberType.ALWAYS.screenCode,
+                                Long.MAX_VALUE / 1000,
+                                0,
                             ),
                         )
                     }
@@ -244,7 +251,21 @@ fun sendResult(
             }
         }
 
-        if (rememberChoice) {
+        if (rememberType != RememberType.NEVER) {
+            val until = when (rememberType) {
+                RememberType.ALWAYS -> Long.MAX_VALUE / 1000
+                RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
+                RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
+                RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+                RememberType.NEVER -> 0L
+            }
+
+            if (kind != null) {
+                application.permissions.removeIf { it.kind == kind && it.type == intentData.type.toString() }
+            } else {
+                application.permissions.removeIf { it.type == intentData.type.toString() && it.type != "SIGN_EVENT" }
+            }
+
             application.permissions.add(
                 ApplicationPermissionsEntity(
                     null,
@@ -252,6 +273,9 @@ fun sendResult(
                     intentData.type.toString(),
                     kind,
                     true,
+                    rememberType.screenCode,
+                    until,
+                    0,
                 ),
             )
         }
@@ -272,6 +296,9 @@ fun sendResult(
                         SignerType.GET_PUBLIC_KEY.toString(),
                         null,
                         true,
+                        RememberType.ALWAYS.screenCode,
+                        Long.MAX_VALUE / 1000,
+                        0,
                     ),
                 )
             }
@@ -309,7 +336,7 @@ fun sendResult(
                 onDone = {
                     Amber.instance.applicationIOScope.launch {
                         if (!it) {
-                            if (rememberChoice) {
+                            if (rememberType != RememberType.NEVER) {
                                 if (intentData.type == SignerType.SIGN_EVENT) {
                                     kind?.let {
                                         database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)

@@ -2,12 +2,16 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
@@ -24,11 +28,36 @@ import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import com.google.zxing.qrcode.encoder.ByteMatrix
 import com.google.zxing.qrcode.encoder.Encoder
 import com.google.zxing.qrcode.encoder.QRCode
+import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
 
 const val QR_MARGIN_PX = 100f
 
 @Composable
 fun QrCodeDrawer(
+    contents: String,
+    modifier: Modifier = Modifier,
+) {
+    var showQrCodeDialog by remember {
+        mutableStateOf(false)
+    }
+    if (showQrCodeDialog) {
+        QrCodeDialog(
+            content = contents,
+            onClose = {
+                showQrCodeDialog = false
+            },
+        )
+    }
+    InnerQrCodeDrawer(
+        contents,
+        modifier.clickable {
+            showQrCodeDialog = true
+        },
+    )
+}
+
+@Composable
+fun InnerQrCodeDrawer(
     contents: String,
     modifier: Modifier = Modifier,
 ) {

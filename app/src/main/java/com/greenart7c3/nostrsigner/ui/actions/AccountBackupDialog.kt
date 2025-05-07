@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.actions
 import android.app.Activity
 import android.content.ClipData
 import android.content.Context
+import android.view.WindowManager
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
@@ -32,6 +33,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -68,6 +70,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
@@ -368,6 +371,23 @@ fun QrCodeDialog(
     content: String,
     onClose: () -> Unit,
 ) {
+    val context = LocalContext.current
+    val activity = context as? Activity
+
+    DisposableEffect(Unit) {
+        val window = activity?.window
+        val originalBrightness = window?.attributes?.screenBrightness
+        window?.attributes = window.attributes?.apply {
+            screenBrightness = 1f
+        }
+
+        onDispose {
+            window?.attributes = window.attributes?.apply {
+                screenBrightness = originalBrightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
+            }
+        }
+    }
+
     Dialog(
         onDismissRequest = onClose,
         properties = DialogProperties(usePlatformDefaultWidth = false),
@@ -392,17 +412,8 @@ fun QrCodeDialog(
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(horizontal = 30.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                    verticalArrangement = Arrangement.Center,
                 ) {
-                    Row(
-                        horizontalArrangement = Arrangement.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = Size35dp),
-                    ) {
-                        QrCodeDrawer(content)
-                    }
+                    InnerQrCodeDrawer(content, Modifier.fillMaxSize())
                 }
             }
         }

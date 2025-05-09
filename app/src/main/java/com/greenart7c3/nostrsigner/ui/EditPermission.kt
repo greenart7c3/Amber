@@ -117,37 +117,39 @@ fun EditPermission(
     Column(
         modifier = modifier,
     ) {
-        if (applicationData.isConnected) {
+        if (applicationData.relays.isNotEmpty()) {
+            if (applicationData.isConnected) {
+                Text(
+                    stringResource(R.string.connected_app_warning),
+                )
+                Spacer(Modifier.height(12.dp))
+            }
+
             Text(
-                stringResource(R.string.connected_app_warning),
+                bunkerUri,
+                Modifier
+                    .padding(bottom = 8.dp),
+                textAlign = TextAlign.Start,
+                fontSize = 18.sp,
             )
+
+            AmberButton(
+                modifier = Modifier
+                    .fillMaxWidth(),
+                onClick = {
+                    scope.launch {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText("", bunkerUri),
+                            ),
+                        )
+                    }
+                },
+                text = stringResource(R.string.copy_to_clipboard),
+            )
+
             Spacer(Modifier.height(12.dp))
         }
-
-        Text(
-            bunkerUri,
-            Modifier
-                .padding(bottom = 8.dp),
-            textAlign = TextAlign.Start,
-            fontSize = 18.sp,
-        )
-
-        AmberButton(
-            modifier = Modifier
-                .fillMaxWidth(),
-            onClick = {
-                scope.launch {
-                    clipboardManager.setClipEntry(
-                        ClipEntry(
-                            ClipData.newPlainText("", bunkerUri),
-                        ),
-                    )
-                }
-            },
-            text = stringResource(R.string.copy_to_clipboard),
-        )
-
-        Spacer(Modifier.height(12.dp))
 
         AmberButton(
             modifier = Modifier.padding(top = 20.dp),

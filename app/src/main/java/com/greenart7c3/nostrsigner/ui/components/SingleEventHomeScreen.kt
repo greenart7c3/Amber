@@ -92,15 +92,10 @@ fun SingleEventHomeScreen(
                 applicationEntity?.permissions?.firstOrNull {
                     it.pkKey == key && it.type == intentData.type.toString()
                 }
-            val remember =
-                remember {
-                    mutableStateOf(permission?.acceptable != null)
-                }
 
             LoginWithPubKey(
                 applicationEntity?.application?.closeApplication ?: (intentData.bunkerRequest?.closeApplication != false),
                 paddingValues,
-                remember,
                 intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
                 account,
                 packageName,
@@ -124,7 +119,6 @@ fun SingleEventHomeScreen(
                         packageName,
                         account,
                         key,
-                        remember.value,
                         clipboardManager,
                         sig,
                         sig,
@@ -178,10 +172,6 @@ fun SingleEventHomeScreen(
                 applicationEntity?.permissions?.firstOrNull {
                     it.pkKey == key && it.type == intentData.type.toString()
                 }
-            val remember =
-                remember {
-                    mutableStateOf(permission?.acceptable != null)
-                }
 
             val localPackageName =
                 if (intentData.bunkerRequest != null) {
@@ -207,7 +197,6 @@ fun SingleEventHomeScreen(
                 paddingValues,
                 intentData.data,
                 acceptOrReject,
-                remember,
                 localPackageName,
                 applicationName,
                 appName,
@@ -221,7 +210,6 @@ fun SingleEventHomeScreen(
                             packageName,
                             account,
                             key,
-                            remember.value,
                             clipboardManager,
                             result,
                             result,
@@ -335,10 +323,6 @@ fun SingleEventHomeScreen(
                         it.pkKey == key && it.type == "NIP" && it.kind == nip
                     }
             }
-            val remember =
-                remember {
-                    mutableStateOf(permission?.acceptable != null)
-                }
 
             val localPackageName =
                 if (intentData.bunkerRequest != null) {
@@ -366,7 +350,6 @@ fun SingleEventHomeScreen(
                 intentData.data,
                 intentData.encryptedData ?: "",
                 acceptOrReject,
-                remember,
                 localPackageName,
                 applicationName,
                 appName,
@@ -384,7 +367,6 @@ fun SingleEventHomeScreen(
                         packageName,
                         account,
                         key,
-                        remember.value,
                         clipboardManager,
                         result,
                         result,
@@ -504,10 +486,6 @@ fun SingleEventHomeScreen(
                         val nip = event.kind.kindToNip()?.toIntOrNull()
                         it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
                     }
-                val remember =
-                    remember {
-                        mutableStateOf(permission?.acceptable != null)
-                    }
                 val localPackageName =
                     if (intentData.bunkerRequest != null) {
                         intentData.bunkerRequest.localKey
@@ -532,7 +510,6 @@ fun SingleEventHomeScreen(
                     account,
                     paddingValues,
                     acceptOrReject,
-                    remember,
                     localPackageName,
                     appName,
                     applicationName,
@@ -558,7 +535,6 @@ fun SingleEventHomeScreen(
                             packageName = packageName,
                             account = account,
                             key = key,
-                            rememberChoice = remember.value,
                             clipboardManager = clipboardManager,
                             event = event.toJson(),
                             value = if (event is LnZapRequestEvent &&

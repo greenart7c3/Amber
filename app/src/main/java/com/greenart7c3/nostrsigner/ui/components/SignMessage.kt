@@ -15,7 +15,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -47,7 +46,6 @@ fun SignMessage(
     paddingValues: PaddingValues,
     content: String,
     shouldRunOnAccept: Boolean?,
-    remember: MutableState<Boolean>,
     packageName: String?,
     applicationName: String?,
     appName: String,
@@ -157,13 +155,11 @@ fun SignMessage(
 
         RememberMyChoice(
             shouldRunOnAccept,
-            remember.value,
             packageName,
             false,
             onAccept,
             onReject,
         ) {
-            remember.value = it != RememberType.NEVER
             rememberType = it
         }
 

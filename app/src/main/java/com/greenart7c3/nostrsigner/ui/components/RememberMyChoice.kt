@@ -16,7 +16,6 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun RememberMyChoice(
     shouldRunAcceptOrReject: Boolean?,
-    remember: Boolean,
     packageName: String?,
     alwaysShow: Boolean = false,
     onAccept: (RememberType) -> Unit,

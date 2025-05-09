@@ -130,7 +130,6 @@ fun sendResult(
     packageName: String?,
     account: Account,
     key: String,
-    rememberChoice: Boolean,
     clipboardManager: Clipboard,
     event: String,
     value: String,
@@ -257,7 +256,7 @@ fun sendResult(
                 RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
                 RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
                 RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
-                RememberType.NEVER -> 0L
+                else -> 0L
             }
 
             if (kind != null) {

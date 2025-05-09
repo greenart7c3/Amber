@@ -34,7 +34,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -126,7 +125,6 @@ fun ProfilePicture(account: Account) {
 fun LoginWithPubKey(
     shouldCloseApp: Boolean,
     paddingValues: PaddingValues,
-    remember: MutableState<Boolean>,
     isBunkerRequest: Boolean,
     account: Account,
     packageName: String?,
@@ -195,9 +193,7 @@ fun LoginWithPubKey(
                     shouldRunAcceptOrReject = null,
                     onAccept = {},
                     onReject = onReject,
-                    remember = remember.value,
                     onChanged = {
-                        remember.value = it != RememberType.NEVER
                         rememberType = it
                     },
                     packageName = packageName,

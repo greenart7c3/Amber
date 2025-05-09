@@ -14,7 +14,6 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
@@ -46,7 +45,6 @@ fun EventData(
     account: Account,
     paddingValues: PaddingValues,
     shouldAcceptOrReject: Boolean?,
-    remember: MutableState<Boolean>,
     packageName: String?,
     appName: String,
     applicationName: String?,
@@ -156,13 +154,11 @@ fun EventData(
 
         RememberMyChoice(
             shouldAcceptOrReject,
-            remember.value,
             packageName,
             false,
             onAccept,
             onReject,
         ) {
-            remember.value = it != RememberType.NEVER
             rememberType = it
         }
 

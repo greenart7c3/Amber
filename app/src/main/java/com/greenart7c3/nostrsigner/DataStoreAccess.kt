@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -9,14 +10,16 @@ import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import java.io.IOException
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 
 object DataStoreAccess {
-    private val storeCache = mutableMapOf<String, DataStore<Preferences>>()
+    private val storeCache = ConcurrentHashMap<String, DataStore<Preferences>>()
 
     private fun getDataStore(context: Context, npub: String): DataStore<Preferences> {
-        return storeCache.getOrPut(npub) {
+        return storeCache.computeIfAbsent(npub) {
+            Log.d(Amber.TAG, "Creating new DataStore for $npub")
             PreferenceDataStoreFactory.create(
                 produceFile = { context.applicationContext.preferencesDataStoreFile("secure_datastore_$npub") },
             )

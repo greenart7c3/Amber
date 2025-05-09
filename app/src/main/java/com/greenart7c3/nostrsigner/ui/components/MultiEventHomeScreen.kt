@@ -20,7 +20,6 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -31,7 +30,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -103,7 +101,7 @@ fun MultiEventHomeScreen(
     }
     var localAccount by remember { mutableStateOf("") }
     val key = intents.firstOrNull()?.bunkerRequest?.localKey ?: "$packageName"
-    var rememberMyChoice by remember { mutableStateOf(false) }
+    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -157,15 +155,23 @@ fun MultiEventHomeScreen(
             )
         }
 
-        AlwaysApproveSwitch(
-            checked = rememberMyChoice,
-            onClick = {
-                rememberMyChoice = !rememberMyChoice
-                intents.forEach {
-                    it.rememberMyChoice.value = rememberMyChoice
-                }
-            },
-        )
+        Row(
+            Modifier.padding(vertical = 40.dp),
+        ) {
+            RememberMyChoice(
+                alwaysShow = true,
+                shouldRunAcceptOrReject = null,
+                onAccept = {},
+                onReject = {},
+                onChanged = {
+                    rememberType = it
+                    intents.forEach {
+                        it.rememberType.value = rememberType
+                    }
+                },
+                packageName = packageName,
+            )
+        }
 
         AmberButton(
             Modifier.padding(bottom = 40.dp),
@@ -224,14 +230,14 @@ fun MultiEventHomeScreen(
                             if (intentData.type == SignerType.SIGN_EVENT) {
                                 val localEvent = intentData.event!!
 
-                                if (intentData.rememberMyChoice.value && intentData.checked.value) {
+                                if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
                                         intentData,
                                         localEvent.kind,
-                                        intentData.rememberMyChoice.value,
-                                        RememberType.ALWAYS,
+                                        true,
+                                        intentData.rememberType.value,
                                         thisAccount,
                                     )
                                 }
@@ -308,14 +314,14 @@ fun MultiEventHomeScreen(
                                     }
                                 }
                             } else if (intentData.type == SignerType.SIGN_MESSAGE) {
-                                if (intentData.rememberMyChoice.value && intentData.checked.value) {
+                                if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
                                         intentData,
                                         null,
-                                        intentData.rememberMyChoice.value,
-                                        RememberType.ALWAYS,
+                                        true,
+                                        intentData.rememberType.value,
                                         thisAccount,
                                     )
                                 }
@@ -434,14 +440,14 @@ fun MultiEventHomeScreen(
                                     }
                                 }
                             } else {
-                                if (intentData.rememberMyChoice.value && intentData.checked.value) {
+                                if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
                                         intentData,
                                         null,
-                                        intentData.rememberMyChoice.value,
-                                        RememberType.ALWAYS,
+                                        true,
+                                        intentData.rememberType.value,
                                         thisAccount,
                                     )
                                 }
@@ -567,14 +573,14 @@ fun MultiEventHomeScreen(
                                 permissions = mutableListOf(),
                             )
 
-                        if (intentData.rememberMyChoice.value && intentData.checked.value) {
+                        if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                             AmberUtils.acceptOrRejectPermission(
                                 application,
                                 localKey,
                                 intentData,
                                 null,
                                 false,
-                                RememberType.ALWAYS,
+                                intentData.rememberType.value,
                                 thisAccount,
                             )
                         }
@@ -724,35 +730,5 @@ fun PermissionCard(
                 }
             }
         }
-    }
-}
-
-@Composable
-fun AlwaysApproveSwitch(
-    checked: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        horizontalArrangement = Arrangement.SpaceBetween,
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .padding(vertical = 40.dp)
-            .clickable {
-                onClick()
-            },
-    ) {
-        Switch(
-            modifier = Modifier.scale(0.85f),
-            checked = checked,
-            onCheckedChange = {
-                onClick()
-            },
-        )
-        Text(
-            modifier = Modifier
-                .weight(1f)
-                .padding(start = 8.dp),
-            text = stringResource(R.string.always_approve_these_permissions),
-        )
     }
 }

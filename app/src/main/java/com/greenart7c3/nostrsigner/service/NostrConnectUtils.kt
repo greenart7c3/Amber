@@ -15,6 +15,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.containsNip
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import java.util.UUID
@@ -127,7 +128,7 @@ object NostrConnectUtils {
                     permissions,
                     "",
                     mutableStateOf(true),
-                    mutableStateOf(false),
+                    mutableStateOf(RememberType.NEVER),
                     BunkerRequest(
                         UUID.randomUUID().toString().substring(0, 4),
                         "connect",

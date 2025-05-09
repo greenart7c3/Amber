@@ -19,6 +19,7 @@ import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils.getUnsignedEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
@@ -270,6 +271,7 @@ object BunkerRequestUtils {
         permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
         permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
+        @Suppress("KotlinConstantConditions")
         when (type) {
             SignerType.CONNECT -> {
                 onReady(
@@ -285,7 +287,7 @@ object BunkerRequestUtils {
                         permissions,
                         bunkerRequest.currentAccount,
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         bunkerRequest,
                         route,
                         null,
@@ -315,7 +317,7 @@ object BunkerRequestUtils {
                             permissions,
                             bunkerRequest.currentAccount,
                             mutableStateOf(true),
-                            mutableStateOf(false),
+                            mutableStateOf(RememberType.NEVER),
                             bunkerRequest,
                             route,
                             it,
@@ -363,7 +365,7 @@ object BunkerRequestUtils {
                         permissions,
                         bunkerRequest.currentAccount,
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         bunkerRequest,
                         route,
                         null,
@@ -386,7 +388,7 @@ object BunkerRequestUtils {
                         permissions,
                         bunkerRequest.currentAccount,
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         bunkerRequest,
                         route,
                         null,
@@ -409,7 +411,7 @@ object BunkerRequestUtils {
                         permissions,
                         bunkerRequest.currentAccount,
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         bunkerRequest,
                         route,
                         null,

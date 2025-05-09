@@ -21,6 +21,7 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -140,7 +141,7 @@ object IntentUtils {
                                 listOf(),
                                 Hex.decode(it.pubKey).toNpub(),
                                 mutableStateOf(true),
-                                mutableStateOf(false),
+                                mutableStateOf(RememberType.NEVER),
                                 null,
                                 route,
                                 it,
@@ -187,7 +188,7 @@ object IntentUtils {
                             listOf(),
                             Hex.decode(pubKey).toNpub(),
                             mutableStateOf(true),
-                            mutableStateOf(false),
+                            mutableStateOf(RememberType.NEVER),
                             null,
                             route,
                             null,
@@ -209,7 +210,7 @@ object IntentUtils {
                             listOf(),
                             "",
                             mutableStateOf(true),
-                            mutableStateOf(false),
+                            mutableStateOf(RememberType.NEVER),
                             null,
                             route,
                             null,
@@ -231,7 +232,7 @@ object IntentUtils {
                             listOf(),
                             "",
                             mutableStateOf(true),
-                            mutableStateOf(false),
+                            mutableStateOf(RememberType.NEVER),
                             null,
                             route,
                             null,
@@ -329,7 +330,7 @@ object IntentUtils {
                             permissions,
                             npub ?: Hex.decode(it.pubKey).toNpub(),
                             mutableStateOf(true),
-                            mutableStateOf(false),
+                            mutableStateOf(RememberType.NEVER),
                             null,
                             route,
                             it,
@@ -381,7 +382,7 @@ object IntentUtils {
                         permissions,
                         npub ?: Hex.decode(pubKey).toNpub(),
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         null,
                         route,
                         null,
@@ -408,7 +409,7 @@ object IntentUtils {
                         permissions,
                         npub ?: Hex.decode(pubKey).toNpub(),
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         null,
                         route,
                         null,
@@ -435,7 +436,7 @@ object IntentUtils {
                         permissions,
                         npub ?: Hex.decode(pubKey).toNpub(),
                         mutableStateOf(true),
-                        mutableStateOf(false),
+                        mutableStateOf(RememberType.NEVER),
                         null,
                         route,
                         null,

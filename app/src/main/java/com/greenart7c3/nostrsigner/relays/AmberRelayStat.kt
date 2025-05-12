@@ -6,7 +6,6 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
@@ -104,7 +103,6 @@ object AmberRelayStats {
     }
 
     fun updateNotification() {
-        Log.d(Amber.TAG, "updateNotification")
         val notificationManager = NotificationManagerCompat.from(Amber.instance)
         if (ActivityCompat.checkSelfPermission(Amber.instance, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             notificationManager.notify(1, createNotification())

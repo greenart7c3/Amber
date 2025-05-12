@@ -33,22 +33,11 @@ class ConnectivityService : Service() {
                 if (BuildConfig.FLAVOR == "offline") return
 
                 val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
-                Log.d("subscriptions", "subs count: ${Amber.instance.client.allSubscriptions().size} relays: ${Amber.instance.client.getAll().size}")
-
                 if (lastNetwork != null && lastNetwork != network && hasAnyRelayDisconnected) {
                     scope.launch(Dispatchers.IO) {
-                        Log.d(Amber.TAG, "reconnecting relays")
-                        NotificationDataSource.stop()
-                        Amber.instance.client.getAll().forEach {
-                            it.disconnect()
-                        }
-                        delay(1000)
-                        Amber.instance.checkForNewRelays()
-                        NotificationDataSource.start()
-                        AmberRelayStats.updateNotification()
+                        reconnect()
                     }
                 }
-
                 lastNetwork = network
             }
 
@@ -74,15 +63,7 @@ class ConnectivityService : Service() {
                     val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
 
                     if (Amber.instance.updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
-                        Log.d(Amber.TAG, "reconnecting relays")
-                        NotificationDataSource.stop()
-                        Amber.instance.client.getAll().forEach {
-                            it.disconnect()
-                        }
-                        delay(1000)
-                        Amber.instance.checkForNewRelays()
-                        NotificationDataSource.start()
-                        AmberRelayStats.updateNotification()
+                        reconnect()
                     }
                 }
             }
@@ -141,13 +122,10 @@ class ConnectivityService : Service() {
                     }
 
                     AmberRelayStats.updateNotification()
-                    Amber.instance.client.getAll().forEach {
-                        if (!it.isConnected()) {
-                            Log.d(
-                                Amber.TAG,
-                                "Relay ${it.url} is not connected, reconnecting...",
-                            )
-                            it.connectAndSendFiltersIfDisconnected()
+                    val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
+                    if (hasAnyRelayDisconnected) {
+                        scope.launch {
+                            reconnect()
                         }
                     }
                 }
@@ -178,5 +156,17 @@ class ConnectivityService : Service() {
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(Amber.TAG, "onStartCommand")
         return START_STICKY
+    }
+
+    suspend fun reconnect() {
+        Log.d(Amber.TAG, "reconnecting relays")
+        NotificationDataSource.stop()
+        Amber.instance.client.getAll().forEach {
+            it.disconnect()
+        }
+        delay(1000)
+        Amber.instance.checkForNewRelays()
+        NotificationDataSource.start()
+        AmberRelayStats.updateNotification()
     }
 }

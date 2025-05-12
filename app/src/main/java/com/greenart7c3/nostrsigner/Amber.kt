@@ -135,7 +135,6 @@ class Amber : Application() {
         }
 
         runMigrations()
-        startService()
     }
 
     fun runMigrations() {
@@ -154,6 +153,8 @@ class Amber : Application() {
             }
             LocalPreferences.migrateTorSettings(this@Amber)
             settings = LocalPreferences.loadSettingsFromEncryptedStorage()
+            LocalPreferences.reloadApp()
+            startService()
         }
     }
 

@@ -58,10 +58,7 @@ class ConnectivityService : Service() {
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
                     )
 
-                    Log.d("subscriptions", "subs count: ${Amber.instance.client.allSubscriptions().size} relays: ${Amber.instance.client.getAll().size}")
-
                     val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
-
                     if (Amber.instance.updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
                         reconnect()
                     }

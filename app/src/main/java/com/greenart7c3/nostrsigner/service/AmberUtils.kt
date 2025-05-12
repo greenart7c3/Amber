@@ -146,6 +146,8 @@ object AmberUtils {
                 if (!result) {
                     onLoading(false)
                 } else {
+                    BunkerRequestUtils.clearRequests()
+                    EventNotificationConsumer(context).notificationManager().cancelAll()
                     onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                     context.getAppCompatActivity()?.intent = null
                     if (closeApplication) {

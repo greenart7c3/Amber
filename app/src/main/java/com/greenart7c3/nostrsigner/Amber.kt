@@ -58,10 +58,12 @@ class Amber : Application() {
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
+    val isOnOfflineState = mutableStateOf(false)
 
-    fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities): Boolean {
-        val isOnMobileData = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR)
-        val isOnWifi = networkCapabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI)
+    fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities?): Boolean {
+        val isOnMobileData = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
+        val isOnWifi = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true
+        val isOffline = !isOnMobileData && !isOnWifi
 
         var changedNetwork = false
 
@@ -74,6 +76,11 @@ class Amber : Application() {
         if (isOnWifiDataState.value != isOnWifi) {
             isOnWifiDataState.value = isOnWifi
 
+            changedNetwork = true
+        }
+
+        if (isOnOfflineState.value != isOffline) {
+            isOnOfflineState.value = isOffline
             changedNetwork = true
         }
 

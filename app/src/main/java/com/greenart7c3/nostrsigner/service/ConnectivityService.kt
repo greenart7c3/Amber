@@ -15,6 +15,7 @@ import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
@@ -32,18 +33,19 @@ class ConnectivityService : Service() {
                 if (BuildConfig.FLAVOR == "offline") return
 
                 val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
+                Log.d("subscriptions", "subs count: ${Amber.instance.client.allSubscriptions().size} relays: ${Amber.instance.client.getAll().size}")
 
                 if (lastNetwork != null && lastNetwork != network && hasAnyRelayDisconnected) {
                     scope.launch(Dispatchers.IO) {
+                        Log.d(Amber.TAG, "reconnecting relays")
+                        NotificationDataSource.stop()
                         Amber.instance.client.getAll().forEach {
-                            if (!it.isConnected()) {
-                                Log.d(
-                                    "ConnectivityService",
-                                    "Relay ${it.url} is not connected, reconnecting...",
-                                )
-                                it.connectAndSendFiltersIfDisconnected()
-                            }
+                            it.disconnect()
                         }
+                        delay(1000)
+                        Amber.instance.checkForNewRelays()
+                        NotificationDataSource.start()
+                        AmberRelayStats.updateNotification()
                     }
                 }
 
@@ -61,25 +63,41 @@ class ConnectivityService : Service() {
                 if (BuildConfig.FLAVOR == "offline") return
 
                 scope.launch(Dispatchers.IO) {
+                    AmberRelayStats.updateNotification()
                     Log.d(
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
                     )
 
+                    Log.d("subscriptions", "subs count: ${Amber.instance.client.allSubscriptions().size} relays: ${Amber.instance.client.getAll().size}")
+
                     val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
 
                     if (Amber.instance.updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
+                        Log.d(Amber.TAG, "reconnecting relays")
+                        NotificationDataSource.stop()
                         Amber.instance.client.getAll().forEach {
-                            if (!it.isConnected()) {
-                                Log.d(
-                                    "ConnectivityService",
-                                    "Relay ${it.url} is not connected, reconnecting...",
-                                )
-                                it.connectAndSendFiltersIfDisconnected()
-                            }
+                            it.disconnect()
                         }
+                        delay(1000)
+                        Amber.instance.checkForNewRelays()
+                        NotificationDataSource.start()
+                        AmberRelayStats.updateNotification()
                     }
                 }
+            }
+
+            override fun onLost(network: Network) {
+                super.onLost(network)
+                @Suppress("KotlinConstantConditions")
+                if (BuildConfig.FLAVOR == "offline") return
+
+                lastNetwork = null
+
+                val connectivityManager =
+                    (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
+                val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
+                Amber.instance.updateNetworkCapabilities(capabilities)
             }
         }
 
@@ -122,6 +140,7 @@ class ConnectivityService : Service() {
                         return
                     }
 
+                    AmberRelayStats.updateNotification()
                     Amber.instance.client.getAll().forEach {
                         if (!it.isConnected()) {
                             Log.d(

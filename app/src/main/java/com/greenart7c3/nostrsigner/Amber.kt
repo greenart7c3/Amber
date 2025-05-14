@@ -39,13 +39,14 @@ import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 class Amber : Application() {
     val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
@@ -54,11 +55,13 @@ class Amber : Application() {
     var client: NostrClient = NostrClient(factory)
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
-    lateinit var settings: AmberSettings
+    var settings: AmberSettings = AmberSettings()
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
+    private val isStartingApp = MutableStateFlow(false)
+    val isStartingAppState = isStartingApp
 
     fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities?): Boolean {
         val isOnMobileData = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true
@@ -115,6 +118,8 @@ class Amber : Application() {
     override fun onCreate() {
         super.onCreate()
 
+        isStartingApp.value = true
+
         Log.d(TAG, "onCreate Amber")
 
         startCleanLogsAlarm()
@@ -138,28 +143,36 @@ class Amber : Application() {
     }
 
     fun runMigrations() {
-        runBlocking(Dispatchers.IO) {
-            LocalPreferences.allSavedAccounts(this@Amber).forEach {
-                if (LocalPreferences.didMigrateFromLegacyStorage(this@Amber, it.npub)) {
-                    LocalPreferences.deleteLegacyUserPreferenceFile(this@Amber, it.npub)
-                    if (LocalPreferences.existsLegacySettings(this@Amber)) LocalPreferences.deleteSettingsPreferenceFile(this@Amber)
+        applicationIOScope.launch {
+            try {
+                LocalPreferences.allSavedAccounts(this@Amber).forEach {
+                    if (LocalPreferences.didMigrateFromLegacyStorage(this@Amber, it.npub)) {
+                        LocalPreferences.deleteLegacyUserPreferenceFile(this@Amber, it.npub)
+                        if (LocalPreferences.existsLegacySettings(this@Amber)) LocalPreferences.deleteSettingsPreferenceFile(this@Amber)
+                    }
                 }
-            }
-            if (LocalPreferences.existsLegacySettings(this@Amber)) {
-                LocalPreferences.allLegacySavedAccounts(this@Amber).forEach {
-                    LocalPreferences.migrateFromSharedPrefs(this@Amber, it.npub)
-                    LocalPreferences.loadFromEncryptedStorage(this@Amber, it.npub)
+                if (LocalPreferences.existsLegacySettings(this@Amber)) {
+                    LocalPreferences.allLegacySavedAccounts(this@Amber).forEach {
+                        LocalPreferences.migrateFromSharedPrefs(this@Amber, it.npub)
+                        LocalPreferences.loadFromEncryptedStorage(this@Amber, it.npub)
+                    }
                 }
+                LocalPreferences.migrateTorSettings(this@Amber)
+                settings = LocalPreferences.loadSettingsFromEncryptedStorage()
+                LocalPreferences.reloadApp()
+                isStartingApp.value = false
+                startService()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to run migrations", e)
+                isStartingApp.value = false
+                if (e is CancellationException) throw e
             }
-            LocalPreferences.migrateTorSettings(this@Amber)
-            settings = LocalPreferences.loadSettingsFromEncryptedStorage()
-            LocalPreferences.reloadApp()
-            startService()
         }
     }
 
     fun startService() {
         try {
+            Log.d(TAG, "Starting ConnectivityService")
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
                 val operation = PendingIntent.getForegroundService(
                     this,
@@ -179,6 +192,7 @@ class Amber : Application() {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start ConnectivityService", e)
+            if (e is CancellationException) throw e
         }
     }
 

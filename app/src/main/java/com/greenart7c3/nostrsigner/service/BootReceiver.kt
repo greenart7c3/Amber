@@ -12,6 +12,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
@@ -26,17 +27,36 @@ class BootReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             Intent.ACTION_PACKAGE_REPLACED -> {
+                Log.d(Amber.TAG, "Received ACTION_PACKAGE_REPLACED")
                 if (intent.dataString?.contains("com.greenart7c3.nostrsigner") == true && Build.VERSION.SDK_INT < Build.VERSION_CODES.S) {
-                    Amber.instance.startService()
+                    Amber.instance.applicationIOScope.launch {
+                        while (Amber.instance.isStartingAppState.value) {
+                            delay(1000)
+                        }
+                        Amber.instance.startService()
+                    }
                 }
             }
             Intent.ACTION_MY_PACKAGE_REPLACED -> {
-                Amber.instance.startService()
+                Log.d(Amber.TAG, "Received ACTION_MY_PACKAGE_REPLACED")
+                Amber.instance.applicationIOScope.launch {
+                    while (Amber.instance.isStartingAppState.value) {
+                        delay(1000)
+                    }
+                    Amber.instance.startService()
+                }
             }
             Intent.ACTION_BOOT_COMPLETED -> {
-                Amber.instance.startService()
+                Log.d(Amber.TAG, "Received ACTION_BOOT_COMPLETED")
+                Amber.instance.applicationIOScope.launch {
+                    while (Amber.instance.isStartingAppState.value) {
+                        delay(1000)
+                    }
+                    Amber.instance.startService()
+                }
             }
             CLEAR_LOGS_ACTION -> {
+                Log.d(Amber.TAG, "Received CLEAR_LOGS_ACTION")
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                         Amber.instance.getDatabase(it.npub).let { database ->

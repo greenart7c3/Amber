@@ -196,16 +196,13 @@ object LocalPreferences {
 
     suspend fun reloadApp() {
         val context = Amber.instance
-        val job = context.applicationIOScope.launch {
-            currentAccount = null
-            savedAccounts = null
-            accountCache.evictAll()
-            allSavedAccounts(context).forEach {
-                loadFromEncryptedStorage(context, it.npub)
-            }
-            context.settings = loadSettingsFromEncryptedStorage(context)
+        currentAccount = null
+        savedAccounts = null
+        accountCache.evictAll()
+        allSavedAccounts(context).forEach {
+            loadFromEncryptedStorage(context, it.npub)
         }
-        job.join()
+        context.settings = loadSettingsFromEncryptedStorage(context)
     }
 
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {

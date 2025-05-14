@@ -84,9 +84,8 @@ class ConnectivityService : Service() {
     }
 
     override fun onCreate() {
+        Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: $isStarted")
         if (isStarted) return
-
-        Log.d(Amber.TAG, "onCreate ConnectivityService")
 
         isStarted = true
 

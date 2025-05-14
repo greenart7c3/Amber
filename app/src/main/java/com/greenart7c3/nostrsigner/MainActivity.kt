@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -41,6 +42,7 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
+import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
@@ -64,81 +66,142 @@ class MainActivity : AppCompatActivity() {
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         mainViewModel = MainViewModel(applicationContext)
-
-        HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
         setContent {
-            if (intent.isLaunchFromHistory()) {
-                Log.d(Amber.TAG, "Cleared intent history")
-                intent = Intent()
-            }
+            val isStartingApp = Amber.instance.isStartingAppState.collectAsStateWithLifecycle()
+            if (isStartingApp.value) {
+                NostrSignerTheme {
+                    CenterCircularProgressIndicator(Modifier, "Starting application...")
+                }
+            } else {
+                HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
-            val packageName = callingPackage
-            val appName =
-                if (packageName != null) {
-                    val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                    applicationContext.packageManager.getApplicationLabel(info).toString()
-                } else {
-                    null
+                if (intent.isLaunchFromHistory()) {
+                    Log.d(Amber.TAG, "Cleared intent history")
+                    intent = Intent()
                 }
 
-            NostrSignerTheme {
-                CompositionLocalProvider(
-                    LocalDensity provides Density(
-                        LocalDensity.current.density,
-                        1f,
-                    ),
-                ) {
-                    val navController = rememberNavController()
-                    mainViewModel.navController = navController
-                    var isAuthenticated by remember { mutableStateOf(false) }
-                    var showPinDialog by remember { mutableStateOf(false) }
-                    val keyguardLauncher =
-                        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-                            if (result.resultCode == RESULT_OK) {
-                                isAuthenticated = true
+                val packageName = callingPackage
+                val appName =
+                    if (packageName != null) {
+                        val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
+                        applicationContext.packageManager.getApplicationLabel(info).toString()
+                    } else {
+                        null
+                    }
+
+                NostrSignerTheme {
+                    CompositionLocalProvider(
+                        LocalDensity provides Density(
+                            LocalDensity.current.density,
+                            1f,
+                        ),
+                    ) {
+                        val navController = rememberNavController()
+                        mainViewModel.navController = navController
+                        var isAuthenticated by remember { mutableStateOf(false) }
+                        var showPinDialog by remember { mutableStateOf(false) }
+                        val keyguardLauncher =
+                            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+                                if (result.resultCode == RESULT_OK) {
+                                    isAuthenticated = true
+                                }
+                            }
+                        val scope = rememberCoroutineScope()
+                        val context = LocalContext.current
+
+                        LaunchedEffect(Unit) {
+                            launch(Dispatchers.IO) {
+                                val settings = Amber.instance.settings
+                                val lastAuthTime = settings.lastBiometricsTime
+                                val whenToAsk = settings.biometricsTimeType
+                                val isTimeToAsk = when (whenToAsk) {
+                                    BiometricsTimeType.EVERY_TIME -> true
+                                    BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
+                                    BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
+                                    BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
+                                }
+                                val shouldAuthenticate = (settings.useAuth || settings.usePin) && isTimeToAsk
+                                if (!shouldAuthenticate) {
+                                    isAuthenticated = true
+                                } else {
+                                    if (!isAuthenticated) {
+                                        launch(Dispatchers.Main) {
+                                            if (settings.usePin) {
+                                                showPinDialog = true
+                                            } else {
+                                                Biometrics.authenticate(
+                                                    getString(R.string.authenticate),
+                                                    this@MainActivity,
+                                                    keyguardLauncher,
+                                                    {
+                                                        Amber.instance.settings = Amber.instance.settings.copy(
+                                                            lastBiometricsTime = System.currentTimeMillis(),
+                                                        )
+
+                                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                                        isAuthenticated = true
+                                                    },
+                                                    { _, message ->
+                                                        this@MainActivity.finish()
+                                                        scope.launch {
+                                                            Toast.makeText(
+                                                                context,
+                                                                message,
+                                                                Toast.LENGTH_SHORT,
+                                                            ).show()
+                                                        }
+                                                    },
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
-                    val scope = rememberCoroutineScope()
-                    val context = LocalContext.current
 
-                    LaunchedEffect(Unit) {
-                        launch(Dispatchers.IO) {
-                            val settings = Amber.instance.settings
-                            val lastAuthTime = settings.lastBiometricsTime
-                            val whenToAsk = settings.biometricsTimeType
-                            val isTimeToAsk = when (whenToAsk) {
-                                BiometricsTimeType.EVERY_TIME -> true
-                                BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
-                                BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
-                                BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
-                            }
-                            val shouldAuthenticate = (settings.useAuth || settings.usePin) && isTimeToAsk
-                            if (!shouldAuthenticate) {
-                                isAuthenticated = true
-                            } else {
-                                if (!isAuthenticated) {
-                                    launch(Dispatchers.Main) {
-                                        if (settings.usePin) {
-                                            showPinDialog = true
-                                        } else {
-                                            Biometrics.authenticate(
-                                                getString(R.string.authenticate),
-                                                this@MainActivity,
-                                                keyguardLauncher,
-                                                {
-                                                    Amber.instance.settings = Amber.instance.settings.copy(
-                                                        lastBiometricsTime = System.currentTimeMillis(),
-                                                    )
+                        Surface(
+                            modifier = Modifier.fillMaxSize(),
+                            color = MaterialTheme.colorScheme.background,
+                        ) {
+                            if (showPinDialog) {
+                                Dialog(
+                                    properties = DialogProperties(usePlatformDefaultWidth = false),
+                                    onDismissRequest = {
+                                        showPinDialog = false
+                                        this@MainActivity.finish()
+                                        scope.launch {
+                                            Toast.makeText(
+                                                context,
+                                                getString(R.string.pin_does_not_match),
+                                                Toast.LENGTH_SHORT,
+                                            ).show()
+                                        }
+                                    },
+                                ) {
+                                    Surface(
+                                        modifier = Modifier
+                                            .fillMaxSize(),
+                                        color = MaterialTheme.colorScheme.background,
+                                    ) {
+                                        Box(
+                                            Modifier.padding(40.dp),
+                                        ) {
+                                            RandomPinInput(
+                                                text = getString(R.string.enter_pin),
+                                                onPinEntered = {
+                                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                                    if (it == pin) {
+                                                        Amber.instance.settings = Amber.instance.settings.copy(
+                                                            lastBiometricsTime = System.currentTimeMillis(),
+                                                        )
 
-                                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                                                    isAuthenticated = true
-                                                },
-                                                { _, message ->
-                                                    this@MainActivity.finish()
-                                                    scope.launch {
+                                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                                        isAuthenticated = true
+                                                        showPinDialog = false
+                                                    } else {
                                                         Toast.makeText(
                                                             context,
-                                                            message,
+                                                            getString(R.string.pin_does_not_match),
                                                             Toast.LENGTH_SHORT,
                                                         ).show()
                                                     }
@@ -148,105 +211,51 @@ class MainActivity : AppCompatActivity() {
                                     }
                                 }
                             }
-                        }
-                    }
 
-                    Surface(
-                        modifier = Modifier.fillMaxSize(),
-                        color = MaterialTheme.colorScheme.background,
-                    ) {
-                        if (showPinDialog) {
-                            Dialog(
-                                properties = DialogProperties(usePlatformDefaultWidth = false),
-                                onDismissRequest = {
-                                    showPinDialog = false
-                                    this@MainActivity.finish()
-                                    scope.launch {
-                                        Toast.makeText(
-                                            context,
-                                            getString(R.string.pin_does_not_match),
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                    }
-                                },
-                            ) {
-                                Surface(
-                                    modifier = Modifier
-                                        .fillMaxSize(),
-                                    color = MaterialTheme.colorScheme.background,
+                            if (!isAuthenticated) {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
                                 ) {
-                                    Box(
-                                        Modifier.padding(40.dp),
-                                    ) {
-                                        RandomPinInput(
-                                            text = getString(R.string.enter_pin),
-                                            onPinEntered = {
-                                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
-                                                if (it == pin) {
-                                                    Amber.instance.settings = Amber.instance.settings.copy(
-                                                        lastBiometricsTime = System.currentTimeMillis(),
-                                                    )
+                                    CircularProgressIndicator()
+                                }
+                            } else {
+                                var npub = remember { mainViewModel.getAccount(intent.getStringExtra("current_user")) }
 
-                                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                                                    isAuthenticated = true
-                                                    showPinDialog = false
-                                                } else {
-                                                    Toast.makeText(
-                                                        context,
-                                                        getString(R.string.pin_does_not_match),
-                                                        Toast.LENGTH_SHORT,
-                                                    ).show()
+                                val accountStateViewModel: AccountStateViewModel =
+                                    viewModel {
+                                        AccountStateViewModel(npub)
+                                    }
+
+                                LaunchedEffect(Unit) {
+                                    launch(Dispatchers.IO) {
+                                        val currentAccount = LocalPreferences.currentAccount(context)
+                                        if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
+                                            if (npub.startsWith("npub")) {
+                                                Log.d(Amber.TAG, "Switching account to $npub")
+                                                if (LocalPreferences.containsAccount(context, npub)) {
+                                                    accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
                                                 }
-                                            },
-                                        )
-                                    }
-                                }
-                            }
-                        }
-
-                        if (!isAuthenticated) {
-                            Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator()
-                            }
-                        } else {
-                            var npub = remember { mainViewModel.getAccount(intent.getStringExtra("current_user")) }
-
-                            val accountStateViewModel: AccountStateViewModel =
-                                viewModel {
-                                    AccountStateViewModel(npub)
-                                }
-
-                            LaunchedEffect(Unit) {
-                                launch(Dispatchers.IO) {
-                                    val currentAccount = LocalPreferences.currentAccount(context)
-                                    if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
-                                        if (npub.startsWith("npub")) {
-                                            Log.d(Amber.TAG, "Switching account to $npub")
-                                            if (LocalPreferences.containsAccount(context, npub)) {
-                                                accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
-                                            }
-                                        } else {
-                                            val localNpub = Hex.decode(npub).toNpub()
-                                            Log.d(Amber.TAG, "Switching account to $localNpub")
-                                            if (LocalPreferences.containsAccount(context, localNpub)) {
-                                                accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                            } else {
+                                                val localNpub = Hex.decode(npub).toNpub()
+                                                Log.d(Amber.TAG, "Switching account to $localNpub")
+                                                if (LocalPreferences.containsAccount(context, localNpub)) {
+                                                    accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                                }
                                             }
                                         }
                                     }
+                                    launch {
+                                        BunkerRequestUtils.state
+                                            .receiveAsFlow()
+                                            .collectLatest {
+                                                mainViewModel.showBunkerRequests(null, accountStateViewModel)
+                                            }
+                                    }
                                 }
-                                launch {
-                                    BunkerRequestUtils.state
-                                        .receiveAsFlow()
-                                        .collectLatest {
-                                            mainViewModel.showBunkerRequests(null, accountStateViewModel)
-                                        }
-                                }
-                            }
 
-                            AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController)
+                                AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController)
+                            }
                         }
                     }
                 }

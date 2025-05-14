@@ -56,6 +56,12 @@ class SignerProvider : ContentProvider() {
         sortOrder: String?,
     ): Cursor? {
         Log.d(Amber.TAG, "Querying $uri has context ${context != null}")
+
+        while (Amber.instance.isStartingAppState.value) {
+            Log.d(Amber.TAG, "Waiting for Amber to start")
+            Thread.sleep(1000)
+        }
+
         val appId = BuildConfig.APPLICATION_ID
         return try {
             when (uri.toString()) {

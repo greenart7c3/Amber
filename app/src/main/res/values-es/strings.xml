@@ -516,4 +516,7 @@
     <string name="event_kind_10020">Media follows</string>
     <string name="automatically_sign_this_for">Automatically sign this for</string>
     <string name="always">Always</string>
+    <string name="proxy_is_connected">Proxy is connected</string>
+    <string name="proxy_is_not_working">Proxy is not working. Check your proxy settings/application.</string>
+    <string name="failed_to_connect_to_tor_orbot">Failed to connect to Tor/Orbot</string>
 </resources>

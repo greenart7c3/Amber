@@ -199,19 +199,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
                 permission.application.relays,
                 onLoading = {},
-                onDone = {
-                    if (!it) {
-                        BunkerRequestUtils.sendBunkerResponse(
-                            applicationContext,
-                            acc,
-                            bunkerRequest,
-                            BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
-                            permission.application.relays,
-                            onLoading = {},
-                            onDone = {},
-                        )
-                    }
-                },
+                onDone = {},
             )
             return
         }
@@ -245,19 +233,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         BunkerResponse(bunkerRequest.id, "", message),
                         applicationWithSecret?.application?.relays ?: responseRelay,
                         onLoading = { },
-                        onDone = {
-                            if (!it) {
-                                BunkerRequestUtils.sendBunkerResponse(
-                                    applicationContext,
-                                    acc,
-                                    bunkerRequest,
-                                    BunkerResponse(bunkerRequest.id, "", message),
-                                    applicationWithSecret?.application?.relays ?: responseRelay,
-                                    onLoading = { },
-                                    onDone = { },
-                                )
-                            }
-                        },
+                        onDone = { },
                     )
                     return
                 }
@@ -312,19 +288,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 BunkerResponse(bunkerRequest.id, "", "no permission"),
                 relays,
                 onLoading = { },
-                onDone = {
-                    if (!it) {
-                        BunkerRequestUtils.sendBunkerResponse(
-                            applicationContext,
-                            acc,
-                            bunkerRequest,
-                            BunkerResponse(bunkerRequest.id, "", "no permission"),
-                            relays,
-                            onLoading = { },
-                            onDone = {},
-                        )
-                    }
-                },
+                onDone = { },
             )
             return
         }
@@ -350,19 +314,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             BunkerResponse(bunkerRequest.id, "", "user rejected"),
                             relays,
                             onLoading = { },
-                            onDone = {
-                                if (!it) {
-                                    BunkerRequestUtils.sendBunkerResponse(
-                                        applicationContext,
-                                        acc,
-                                        bunkerRequest,
-                                        BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                                        relays,
-                                        onLoading = { },
-                                        onDone = { },
-                                    )
-                                }
-                            },
+                            onDone = { },
                         )
                     } else {
                         var index = localCursor.getColumnIndex("event")
@@ -378,19 +330,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             BunkerResponse(bunkerRequest.id, result, null),
                             relays,
                             onLoading = { },
-                            onDone = {
-                                if (!it) {
-                                    BunkerRequestUtils.sendBunkerResponse(
-                                        applicationContext,
-                                        acc,
-                                        bunkerRequest,
-                                        BunkerResponse(bunkerRequest.id, result, null),
-                                        relays,
-                                        onLoading = { },
-                                        onDone = { },
-                                    )
-                                }
-                            },
+                            onDone = { },
                         )
                     }
                 } else {

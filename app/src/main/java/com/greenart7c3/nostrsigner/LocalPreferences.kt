@@ -40,7 +40,7 @@ private enum class PrefKeys(val key: String) {
     DID_BACKUP("did_backup"),
 }
 
-private enum class SettingsKeys(val keys: String) {
+private enum class SettingsKeys(val key: String) {
     DEFAULT_RELAYS("default_relays"),
     DEFAULT_PROFILE_RELAYS("default_profile_relays"),
     LAST_BIOMETRICS_TIME("last_biometrics_time"),
@@ -86,7 +86,12 @@ object LocalPreferences {
 
     fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
-            currentAccount = sharedPrefs(context).getString(SettingsKeys.CURRENT_ACCOUNT.keys, null)
+            Log.d(Amber.TAG, "currentAccount is null fetching from shared preferences")
+            currentAccount = sharedPrefs(context).getString(SettingsKeys.CURRENT_ACCOUNT.key, null)
+            if (currentAccount == null) {
+                Log.d(Amber.TAG, "currentAccount is null fetching from all saved accounts")
+                currentAccount = allSavedAccounts(context).firstOrNull()?.npub
+            }
         }
         return currentAccount
     }
@@ -97,23 +102,23 @@ object LocalPreferences {
 
             sharedPrefs(context).edit {
                 apply {
-                    putString(SettingsKeys.CURRENT_ACCOUNT.keys, npub)
+                    putString(SettingsKeys.CURRENT_ACCOUNT.key, npub)
                 }
             }
         }
     }
 
     fun shouldShowRationale(context: Context): Boolean? {
-        if (!sharedPrefs(context).contains(SettingsKeys.RATIONALE.keys)) {
+        if (!sharedPrefs(context).contains(SettingsKeys.RATIONALE.key)) {
             return null
         }
-        return sharedPrefs(context).getBoolean(SettingsKeys.RATIONALE.keys, true)
+        return sharedPrefs(context).getBoolean(SettingsKeys.RATIONALE.key, true)
     }
 
     fun updateShouldShowRationale(context: Context, value: Boolean) {
         sharedPrefs(context).edit {
             apply {
-                putBoolean(SettingsKeys.RATIONALE.keys, value)
+                putBoolean(SettingsKeys.RATIONALE.key, value)
             }
         }
     }
@@ -122,14 +127,14 @@ object LocalPreferences {
         val context = Amber.instance
         sharedPrefs(context).edit {
             apply {
-                putStringSet(SettingsKeys.DEFAULT_RELAYS.keys, settings.defaultRelays.map { it.url }.toSet())
-                putStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.keys, settings.defaultProfileRelays.map { it.url }.toSet())
-                putLong(SettingsKeys.LAST_BIOMETRICS_TIME.keys, settings.lastBiometricsTime)
-                putBoolean(SettingsKeys.USE_AUTH.keys, settings.useAuth)
-                putInt(SettingsKeys.BIOMETRICS_TYPE.keys, settings.biometricsTimeType.screenCode)
-                putBoolean(SettingsKeys.USE_PIN.keys, settings.usePin)
-                putBoolean(SettingsKeys.USE_PROXY.keys, settings.useProxy)
-                putInt(SettingsKeys.PROXY_PORT.keys, settings.proxyPort)
+                putStringSet(SettingsKeys.DEFAULT_RELAYS.key, settings.defaultRelays.map { it.url }.toSet())
+                putStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.key, settings.defaultProfileRelays.map { it.url }.toSet())
+                putLong(SettingsKeys.LAST_BIOMETRICS_TIME.key, settings.lastBiometricsTime)
+                putBoolean(SettingsKeys.USE_AUTH.key, settings.useAuth)
+                putInt(SettingsKeys.BIOMETRICS_TYPE.key, settings.biometricsTimeType.screenCode)
+                putBoolean(SettingsKeys.USE_PIN.key, settings.usePin)
+                putBoolean(SettingsKeys.USE_PROXY.key, settings.useProxy)
+                putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
             }
         }
     }
@@ -160,7 +165,7 @@ object LocalPreferences {
 
     fun loadPinFromEncryptedStorage(): String? {
         val context = Amber.instance
-        return sharedPrefs(context).getString(SettingsKeys.PIN.keys, null)
+        return sharedPrefs(context).getString(SettingsKeys.PIN.key, null)
     }
 
     fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
@@ -186,9 +191,9 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 if (pin == null) {
-                    remove(SettingsKeys.PIN.keys)
+                    remove(SettingsKeys.PIN.key)
                 } else {
-                    putString(SettingsKeys.PIN.keys, pin)
+                    putString(SettingsKeys.PIN.key, pin)
                 }
             }
         }
@@ -208,25 +213,25 @@ object LocalPreferences {
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
         sharedPrefs(context).apply {
-            val proxyPort = getInt(SettingsKeys.PROXY_PORT.keys, 9050)
+            val proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050)
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
 
             return AmberSettings(
-                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.keys, null)?.map {
+                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.key, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
-                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.keys, null)?.map {
+                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.key, null)?.map {
                     RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(
                     RelaySetupInfo("wss://relay.nostr.band", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
                     RelaySetupInfo("wss://purplepag.es", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
                 ),
-                lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME.keys, 0),
-                useAuth = getBoolean(SettingsKeys.USE_AUTH.keys, false),
-                biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE.keys, 0)),
-                usePin = getBoolean(SettingsKeys.USE_PIN.keys, false),
-                useProxy = getBoolean(SettingsKeys.USE_PROXY.keys, false),
-                proxyPort = getInt(SettingsKeys.PROXY_PORT.keys, 9050),
+                lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME.key, 0),
+                useAuth = getBoolean(SettingsKeys.USE_AUTH.key, false),
+                biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE.key, 0)),
+                usePin = getBoolean(SettingsKeys.USE_PIN.key, false),
+                useProxy = getBoolean(SettingsKeys.USE_PROXY.key, false),
+                proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050),
             )
         }
     }
@@ -236,13 +241,13 @@ object LocalPreferences {
     @Suppress("DEPRECATION")
     private fun legacySavedAccounts(context: Context): List<String> {
         return encryptedPreferences(context)
-            .getString(SettingsKeys.SAVED_ACCOUNTS.keys, null)?.split(COMMA) ?: listOf()
+            .getString(SettingsKeys.SAVED_ACCOUNTS.key, null)?.split(COMMA) ?: listOf()
     }
 
     private fun savedAccounts(context: Context): List<String> {
         if (savedAccounts == null) {
             savedAccounts = sharedPrefs(context)
-                .getString(SettingsKeys.SAVED_ACCOUNTS.keys, null)?.split(COMMA) ?: listOf()
+                .getString(SettingsKeys.SAVED_ACCOUNTS.key, null)?.split(COMMA) ?: listOf()
         }
         return savedAccounts!!
     }
@@ -253,7 +258,7 @@ object LocalPreferences {
 
             sharedPrefs(context).edit {
                 apply {
-                    putString(SettingsKeys.SAVED_ACCOUNTS.keys, accounts.joinToString(COMMA).ifBlank { null })
+                    putString(SettingsKeys.SAVED_ACCOUNTS.key, accounts.joinToString(COMMA).ifBlank { null })
                 }
             }
         }
@@ -488,8 +493,8 @@ object LocalPreferences {
     ) {
         sharedPrefs(context).edit {
             apply {
-                putBoolean(SettingsKeys.USE_PROXY.keys, useProxy)
-                putInt(SettingsKeys.PROXY_PORT.keys, port)
+                putBoolean(SettingsKeys.USE_PROXY.key, useProxy)
+                putInt(SettingsKeys.PROXY_PORT.key, port)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
@@ -614,14 +619,14 @@ object LocalPreferences {
     }
 
     suspend fun migrateTorSettings(context: Context) {
-        if (sharedPrefs(context).contains(SettingsKeys.USE_PROXY.keys)) return
+        if (sharedPrefs(context).contains(SettingsKeys.USE_PROXY.key)) return
 
         val useProxy = allSavedAccounts(context).any {
-            sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.keys, false)
+            sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.key, false)
         }
         val proxyPort: Int = allSavedAccounts(context).firstNotNullOfOrNull {
-            if (sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.keys, false)) {
-                sharedPrefs(context, it.npub).getInt(SettingsKeys.PROXY_PORT.keys, 9050)
+            if (sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.key, false)) {
+                sharedPrefs(context, it.npub).getInt(SettingsKeys.PROXY_PORT.key, 9050)
             } else {
                 null
             }

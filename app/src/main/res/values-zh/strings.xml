@@ -510,10 +510,10 @@
     <string name="backup">备份</string>
     <string name="qrCode">二维码</string>
     <string name="make_backup_message">不要失去 Nostr 账户的访问权限！创建一个备份</string>
-    <string name="event_kind_10000300">Primal wallet authorization event</string>
-    <string name="event_kind_39089">Starter packs</string>
-    <string name="event_kind_39092">Media starter packs</string>
-    <string name="event_kind_10020">Media follows</string>
-    <string name="automatically_sign_this_for">Automatically sign this for</string>
-    <string name="always">Always</string>
+    <string name="event_kind_10000300">Primal 钱包授权事件</string>
+    <string name="event_kind_39089">入门包</string>
+    <string name="event_kind_39092">媒体入门包</string>
+    <string name="event_kind_10020">媒体关注</string>
+    <string name="automatically_sign_this_for">自动签署</string>
+    <string name="always">总是</string>
 </resources>

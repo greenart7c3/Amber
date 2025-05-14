@@ -502,7 +502,7 @@ private fun EncryptNSecCopyButton(
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                encryptCopyNSec(password, context, scope, account, clipboardManager, onLoading)
+                encryptCopyNSec(password, context, account, clipboardManager, onLoading)
             }
         }
 
@@ -512,7 +512,7 @@ private fun EncryptNSecCopyButton(
                 title = context.getString(R.string.copy_my_secret_key),
                 context = context,
                 keyguardLauncher = keyguardLauncher,
-                onApproved = { encryptCopyNSec(password, context, scope, account, clipboardManager, onLoading) },
+                onApproved = { encryptCopyNSec(password, context, account, clipboardManager, onLoading) },
                 onError = { _, message ->
                     scope.launch {
                         Toast.makeText(
@@ -539,12 +539,11 @@ private fun EncryptNSecQRButton(
     navController: NavHostController,
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
                 result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                scope.launch(Dispatchers.IO) {
+                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     onLoading(true)
                     val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
                     account.didBackup = true
@@ -564,7 +563,7 @@ private fun EncryptNSecQRButton(
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
-                    scope.launch(Dispatchers.IO) {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         onLoading(true)
                         val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
                         account.didBackup = true
@@ -576,7 +575,7 @@ private fun EncryptNSecQRButton(
                     }
                 },
                 onError = { _, message ->
-                    scope.launch {
+                    Amber.instance.applicationIOScope.launch {
                         Toast.makeText(
                             context,
                             message,
@@ -594,13 +593,12 @@ private fun EncryptNSecQRButton(
 private fun encryptCopyNSec(
     password: MutableState<TextFieldValue>,
     context: Context,
-    scope: CoroutineScope,
     account: Account,
     clipboardManager: Clipboard,
     onLoading: (Boolean) -> Unit,
 ) {
     if (password.value.text.isBlank()) {
-        scope.launch {
+        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
             Toast.makeText(
                 context,
                 context.getString(R.string.password_is_required),
@@ -609,14 +607,14 @@ private fun encryptCopyNSec(
                 .show()
         }
     } else {
-        scope.launch(Dispatchers.IO) {
+        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             onLoading(true)
             account.signer.keyPair.privKey?.let {
                 try {
                     val key = Nip49().encrypt(it.toHexKey(), password.value.text)
                     account.didBackup = true
                     LocalPreferences.saveToEncryptedStorage(context, account)
-                    scope.launch {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                         clipboardManager.setClipEntry(
                             ClipEntry(
                                 ClipData.newPlainText("", key),
@@ -632,7 +630,7 @@ private fun encryptCopyNSec(
                     onLoading(false)
                 } catch (_: Exception) {
                     onLoading(false)
-                    scope.launch {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                         Toast.makeText(
                             context,
                             context.getString(R.string.failed_to_encrypt_key),

@@ -37,6 +37,8 @@ import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.net.InetSocketAddress
+import java.net.Socket
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
@@ -62,6 +64,18 @@ class Amber : Application() {
     val isOnOfflineState = mutableStateOf(false)
     private val isStartingApp = MutableStateFlow(false)
     val isStartingAppState = isStartingApp
+
+    fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
+        try {
+            val socket = Socket()
+            socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
+            socket.close()
+            return true
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to connect to proxy", e)
+            return false
+        }
+    }
 
     fun updateNetworkCapabilities(networkCapabilities: NetworkCapabilities?): Boolean {
         val isOnMobileData = networkCapabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true

@@ -6,6 +6,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
@@ -78,6 +79,16 @@ object BunkerRequestUtils {
             }
 
             return
+        }
+
+        if (Amber.instance.settings.useProxy) {
+            val isProxyWorking = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+            if (!isProxyWorking) {
+                AmberListenerSingleton.accountStateViewModel?.toast(context.getString(R.string.warning), context.getString(R.string.failed_to_connect_to_tor_orbot))
+                onDone(false)
+                onLoading(false)
+                return
+            }
         }
 
         AmberListenerSingleton.getListener()?.let {

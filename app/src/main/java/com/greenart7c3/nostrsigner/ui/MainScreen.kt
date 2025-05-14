@@ -17,6 +17,7 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -36,6 +37,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
@@ -52,6 +54,7 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -78,6 +81,9 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -522,6 +528,7 @@ fun MainScreen(
     navController: NavHostController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
 ) {
+    val lifecycleOwner = LocalLifecycleOwner.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
     val scope = rememberCoroutineScope()
@@ -642,6 +649,59 @@ fun MainScreen(
         topBar = {
             if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
                 CenterAlignedTopAppBar(
+                    actions = {
+                        if (Amber.instance.settings.useProxy) {
+                            var isProxyEnabled by remember { mutableStateOf(false) }
+                            DisposableEffect(lifecycleOwner) {
+                                val observer = LifecycleEventObserver { _, event ->
+                                    when (event) {
+                                        Lifecycle.Event.ON_START -> {
+                                            Amber.instance.applicationIOScope.launch {
+                                                isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                            }
+                                        }
+
+                                        Lifecycle.Event.ON_RESUME -> {
+                                            Amber.instance.applicationIOScope.launch {
+                                                isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                            }
+                                        }
+
+                                        else -> {}
+                                    }
+                                }
+                                lifecycleOwner.lifecycle.addObserver(observer)
+
+                                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                            }
+
+                            Icon(
+                                Icons.Outlined.Shield,
+                                "Proxy",
+                                tint = if (isProxyEnabled) Color.Green else Color.Red,
+                                modifier = Modifier.combinedClickable(
+                                    onClick = {
+                                        scope.launch {
+                                            if (isProxyEnabled) {
+                                                Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    },
+                                    onLongClick = {
+                                        scope.launch {
+                                            if (isProxyEnabled) {
+                                                Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
+                                            } else {
+                                                Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
+                                            }
+                                        }
+                                    },
+                                ),
+                            )
+                        }
+                    },
                     title = {
                         var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
                         LaunchedEffect(destinationRoute) {

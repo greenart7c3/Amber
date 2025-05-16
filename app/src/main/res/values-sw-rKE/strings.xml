@@ -516,4 +516,8 @@
     <string name="proxy_is_connected">Proxy is connected</string>
     <string name="proxy_is_not_working">Proxy is not working. Check your proxy settings/application.</string>
     <string name="failed_to_connect_to_tor_orbot">Failed to connect to Tor/Orbot</string>
+    <string name="event_kind_443">KeyPackage</string>
+    <string name="event_kind_10051">KeyPackage Relays List</string>
+    <string name="event_kind_444">Welcome</string>
+    <string name="event_kind_445">Group</string>
 </resources>

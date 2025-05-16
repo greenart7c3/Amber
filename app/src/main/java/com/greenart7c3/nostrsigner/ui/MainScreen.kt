@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -1442,6 +1443,30 @@ fun MainScreen(
                                 npub = key,
                             )
                         }
+                    },
+                )
+
+                composable(
+                    Route.Feedback.route,
+                    content = {
+                        FeedbackScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .consumeWindowInsets(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account = account,
+                            accountStateViewModel = accountStateViewModel,
+                            onDismiss = {
+                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    navController.navigateUp()
+                                }
+                            },
+                            onLoading = {
+                                isLoading = it
+                            },
+                        )
                     },
                 )
             }

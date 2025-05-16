@@ -172,6 +172,12 @@ sealed class Route(
         route = "EditProfile/{key}",
         icon = R.drawable.settings,
     )
+
+    data object Feedback : Route(
+        title = Amber.instance.getString(R.string.give_us_feedback),
+        route = "Feedback",
+        icon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -200,4 +206,5 @@ val routes = listOf(
     Route.DefaultProfileRelaysScreen,
     Route.TorSettings,
     Route.EditProfile,
+    Route.Feedback,
 )

@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Draw
+import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
@@ -249,6 +250,20 @@ fun SettingsScreen(
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
                         navController.navigate(Route.SignPolicy.route)
+                    },
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.give_us_feedback),
+                    icon = Icons.Default.Feedback,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.Feedback.route)
                     },
                 )
             }

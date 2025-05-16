@@ -19,6 +19,7 @@ import coil3.util.DebugLogger
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
@@ -35,7 +36,11 @@ import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.ammolite.relays.TypedFilter
 import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
+import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
+import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
+import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
+import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -406,6 +411,79 @@ class Amber : Application() {
                 return
             }
         }
+    }
+
+    suspend fun sendFeedBack(
+        subject: String,
+        body: String,
+        type: FeedbackType,
+        account: Account,
+    ): Boolean {
+        val client = NostrClient(factory)
+        val relays = listOf(
+            Relay(
+                url = "wss://nos.lol",
+                read = true,
+                write = true,
+                forceProxy = settings.useProxy,
+                activeTypes = COMMON_FEED_TYPES,
+                socketBuilderFactory = factory,
+                subs = MutableSubscriptionCache(),
+            ),
+            Relay(
+                url = "wss://relay.damus.io",
+                read = true,
+                write = true,
+                forceProxy = settings.useProxy,
+                activeTypes = COMMON_FEED_TYPES,
+                socketBuilderFactory = factory,
+                subs = MutableSubscriptionCache(),
+            ),
+        )
+        client.reconnect(relays.map { RelaySetupInfoToConnect(url = it.url, forceProxy = it.forceProxy, read = it.read, write = it.write, feedTypes = it.activeTypes) }.toTypedArray())
+
+        val repositoryEvent = GitRepositoryEvent(
+            "",
+            "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19",
+            TimeUtils.now(),
+            tags = arrayOf(arrayOf("d", "Amber")),
+            "",
+            "",
+        )
+
+        val template = GitIssueEvent.build(
+            subject,
+            body,
+            EventHintBundle<GitRepositoryEvent>(repositoryEvent),
+            listOf(PTag("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19", null)),
+            listOf(if (type == FeedbackType.BUG_REPORT) "bug" else "enhancement"),
+        )
+        val event = account.signer.signerSync.sign(
+            template,
+        ) ?: return false
+        var success = false
+        var errorCount = 0
+        while (!success && errorCount < 3) {
+            success = client.sendAndWaitForResponse(event, relayList = relays.map { RelaySetupInfo(url = it.url, read = it.read, write = it.write, feedTypes = it.activeTypes) })
+            if (!success) {
+                errorCount++
+                relays.forEach {
+                    if (client.getRelay(it.url)?.isConnected() == false) {
+                        client.getRelay(it.url)?.connect()
+                    }
+                }
+                delay(1000)
+            }
+        }
+        if (success) {
+            Log.d(TAG, "Success response to relays ${relays.map { it.url }}")
+        } else {
+            Log.d(TAG, "Failed response to relays ${relays.map { it.url }}")
+        }
+        client.getAll().forEach {
+            it.disconnect()
+        }
+        return success
     }
 
     companion object {

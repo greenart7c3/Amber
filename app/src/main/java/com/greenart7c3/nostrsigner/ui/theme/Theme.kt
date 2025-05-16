@@ -92,3 +92,5 @@ fun NostrSignerTheme(
         }
     }
 }
+
+fun Color.light(factor: Float = 0.5f) = this.copy(alpha = this.alpha * factor)

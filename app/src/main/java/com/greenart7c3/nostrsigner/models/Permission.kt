@@ -52,6 +52,9 @@ data class Permission(
                     43 -> context.getString(R.string.event_kind_43)
                     44 -> context.getString(R.string.event_kind_44)
                     64 -> context.getString(R.string.event_kind_64)
+                    443 -> context.getString(R.string.event_kind_443)
+                    444 -> context.getString(R.string.event_kind_444)
+                    445 -> context.getString(R.string.event_kind_445)
                     818 -> context.getString(R.string.event_kind_818)
                     1018 -> context.getString(R.string.event_kind_1018)
                     1021 -> context.getString(R.string.event_kind_1021)
@@ -111,6 +114,7 @@ data class Permission(
                     10020 -> context.getString(R.string.event_kind_10020)
                     10030 -> context.getString(R.string.event_kind_10030)
                     10050 -> context.getString(R.string.event_kind_10050)
+                    10051 -> context.getString(R.string.event_kind_10051)
                     10063 -> context.getString(R.string.event_kind_10063)
                     10096 -> context.getString(R.string.event_kind_10096)
                     13194 -> context.getString(R.string.event_kind_13194)
@@ -360,6 +364,9 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 43),
     Permission("sign_event", 44),
     Permission("sign_event", 64),
+    Permission("sign_event", 443),
+    Permission("sign_event", 444),
+    Permission("sign_event", 445),
     Permission("sign_event", 818),
     Permission("sign_event", 1018),
     Permission("sign_event", 1021),
@@ -450,6 +457,7 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 10020),
     Permission("sign_event", 10030),
     Permission("sign_event", 10050),
+    Permission("sign_event", 10051),
     Permission("sign_event", 10063),
     Permission("sign_event", 10096),
     Permission("sign_event", 13194),

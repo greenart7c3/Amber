@@ -520,4 +520,12 @@
     <string name="event_kind_10051">KeyPackage Relays List</string>
     <string name="event_kind_444">Welcome</string>
     <string name="event_kind_445">Group</string>
+    <string name="give_us_feedback">Give us feedback</string>
+    <string name="bug_report">Bug report</string>
+    <string name="enhancement_request">Enhancement request</string>
+    <string name="subject">Subject</string>
+    <string name="body_text_optional">Body text (optional)</string>
+    <string name="create_anonymously">Create anonymously</string>
+    <string name="send">Send</string>
+    <string name="feedback_sent">Feedback sent</string>
 </resources>

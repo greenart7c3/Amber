@@ -28,7 +28,7 @@ import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.MutableSubscriptionManager
+import com.vitorpamplona.ammolite.relays.MutableSubscriptionCache
 import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
@@ -345,7 +345,7 @@ class Amber : Application() {
         val oneDayAgo = TimeUtils.oneDayAgo()
         val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
         if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
-            Log.d(Amber.TAG, "Fetching profile data for ${account.npub}")
+            Log.d(TAG, "Fetching profile data for ${account.npub}")
             LocalPreferences.setLastCheck(this, account.npub, TimeUtils.now())
             val listener = MetadataRelayListener(
                 account = account,
@@ -377,7 +377,7 @@ class Amber : Application() {
                     activeTypes = it.feedTypes,
                     socketBuilderFactory = factory,
                     forceProxy = settings.useProxy,
-                    subs = MutableSubscriptionManager(),
+                    subs = MutableSubscriptionCache(),
                 )
             }
 

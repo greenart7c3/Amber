@@ -141,7 +141,7 @@ class AmberClientListener(
         }
     }
 
-    override fun onEvent(event: Event, subscriptionId: String, relay: Relay, afterEOSE: Boolean) {
+    override fun onEvent(event: Event, subscriptionId: String, relay: Relay, arrivalTime: Long, afterEOSE: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(

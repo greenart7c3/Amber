@@ -26,12 +26,12 @@ class MetadataRelayListener(
         Log.d(Amber.TAG, "Received error $error from subscription $subscriptionId")
     }
 
-    override fun onEvent(relay: Relay, subscriptionId: String, event: Event, afterEOSE: Boolean) {
+    override fun onEvent(relay: Relay, subscriptionId: String, event: Event, time: Long, afterEOSE: Boolean) {
         Log.d(Amber.TAG, "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
         onReceiveEvent(relay, subscriptionId, event)
     }
 
-    override fun onEOSE(relay: Relay, subscriptionId: String) {
+    override fun onEOSE(relay: Relay, subscriptionId: String, time: Long) {
         Log.d(Amber.TAG, "Received EOSE from subscription $subscriptionId")
     }
 

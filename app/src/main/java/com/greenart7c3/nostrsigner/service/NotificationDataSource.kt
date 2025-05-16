@@ -48,12 +48,7 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
 
     private val clientListener =
         object : NostrClient.Listener {
-            override fun onEvent(
-                event: Event,
-                subscriptionId: String,
-                relay: Relay,
-                afterEOSE: Boolean,
-            ) {
+            override fun onEvent(event: Event, subscriptionId: String, relay: Relay, arrivalTime: Long, afterEOSE: Boolean) {
                 scope.launch {
                     LocalPreferences.currentAccount(Amber.instance)?.let { account ->
                         Amber.instance.getDatabase(account).applicationDao().insertLog(

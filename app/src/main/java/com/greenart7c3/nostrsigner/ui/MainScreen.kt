@@ -15,37 +15,25 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -60,14 +48,12 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.intl.Locale
@@ -83,7 +69,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
-import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -112,11 +97,9 @@ import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
+import com.greenart7c3.nostrsigner.ui.components.AmberBottomBar
 import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
-import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.greenart7c3.nostrsigner.ui.navigation.routes
-import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
@@ -608,7 +591,7 @@ fun MainScreen(
         }
     }
 
-    val items = mutableListOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
+    val items = listOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
 
     var shouldShowBottomSheet by remember { mutableStateOf(false) }
     val sheetState =
@@ -646,114 +629,18 @@ fun MainScreen(
             )
         },
         bottomBar = {
-            if (destinationRoute in items.map { it.route }) {
-                NavigationBar(
-                    tonalElevation = 0.dp,
-                ) {
-                    Row(
-                        Modifier
-                            .padding(horizontal = 40.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    ) {
-                        items.forEach {
-                            val selected = destinationRoute == it.route
-                            NavigationBarItem(
-                                selected = selected,
-                                onClick = {
-                                    if (it.route == Route.Accounts.route) {
-                                        scope.launch {
-                                            sheetState.show()
-                                            shouldShowBottomSheet = true
-                                        }
-                                    } else {
-                                        navController.navigate(it.route) {
-                                            popUpTo(0)
-                                        }
-                                    }
-                                },
-                                icon = {
-                                    if (it.route == Route.Accounts.route) {
-                                        @Suppress("KotlinConstantConditions")
-                                        if (!profileUrl.isNullOrBlank() && BuildConfig.FLAVOR != "offline") {
-                                            SubcomposeAsyncImage(
-                                                profileUrl,
-                                                it.route,
-                                                Modifier
-                                                    .clip(
-                                                        RoundedCornerShape(50),
-                                                    )
-                                                    .height(28.dp)
-                                                    .width(28.dp),
-                                                loading = {
-                                                    CenterCircularProgressIndicator(Modifier)
-                                                },
-                                                error = { error ->
-                                                    Icon(
-                                                        Icons.Outlined.Person,
-                                                        it.route,
-                                                        modifier = Modifier.border(
-                                                            2.dp,
-                                                            Color.fromHex(account.hexKey.slice(0..5)),
-                                                            CircleShape,
-                                                        ),
-                                                    )
-                                                },
-                                            )
-                                        } else {
-                                            Icon(
-                                                Icons.Outlined.Person,
-                                                it.route,
-                                                modifier = Modifier.border(
-                                                    2.dp,
-                                                    Color.fromHex(account.hexKey.slice(0..5)),
-                                                    CircleShape,
-                                                ),
-                                            )
-                                        }
-                                    } else {
-                                        Icon(
-                                            painterResource(it.icon),
-                                            it.route,
-                                            tint = if (selected) Color.Black else if (isSystemInDarkTheme()) Color.White else Color.Black,
-                                        )
-                                    }
-                                },
-                            )
-                        }
-                    }
-                }
-            } else if (destinationRoute != "create" && destinationRoute != "loginPage") {
-                val localBackButtonTitle = routes.find { it.route == navController.previousBackStackEntry?.destination?.route }?.title ?: ""
-                if (localBackButtonTitle.isNotBlank()) {
-                    BottomAppBar {
-                        IconRow(
-                            center = true,
-                            title = if (destinationRoute.startsWith("login")) {
-                                stringResource(R.string.go_back)
-                            } else if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
-                                stringResource(R.string.back_to, localBackButtonTitle)
-                            } else {
-                                if (destinationRoute == "NewNsecBunker") {
-                                    stringResource(R.string.back_to, stringResource(R.string.add_a_new_application))
-                                } else {
-                                    stringResource(R.string.back_to, localBackButtonTitle)
-                                }
-                            },
-                            icon = ImageVector.vectorResource(R.drawable.back),
-                            onClick = {
-                                if (destinationRoute.startsWith("NewNsecBunkerCreated/")) {
-                                    navController.navigate(Route.Applications.route) {
-                                        popUpTo(0)
-                                    }
-                                } else {
-                                    navController.navigateUp()
-                                }
-                            },
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
+            AmberBottomBar(
+                items = items,
+                navController = navController,
+                destinationRoute = destinationRoute,
+                scope = scope,
+                sheetState = sheetState,
+                onShouldShowBottomSheet = {
+                    shouldShowBottomSheet = it
+                },
+                profileUrl = profileUrl,
+                account = account,
+            )
         },
         floatingActionButton = {
             @Suppress("KotlinConstantConditions")

@@ -8,7 +8,6 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -76,7 +75,6 @@ import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
@@ -118,6 +116,7 @@ import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
+import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
@@ -496,13 +495,6 @@ private fun askNotificationPermission(
     } else {
         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
     }
-}
-
-fun Color.Companion.fromHex(colorString: String) = try {
-    Color("#$colorString".toColorInt())
-} catch (e: Exception) {
-    Log.e(Amber.TAG, "Failed to parse color: $colorString", e)
-    Unspecified
 }
 
 enum class IntentResultType {

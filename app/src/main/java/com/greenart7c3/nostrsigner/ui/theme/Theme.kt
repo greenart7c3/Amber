@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.theme
 
 import android.app.Activity
 import android.os.Build
+import android.util.Log
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,7 +17,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
+import androidx.core.graphics.toColorInt
 import androidx.core.view.WindowCompat
+import com.greenart7c3.nostrsigner.Amber
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.resolveDefaults
 
@@ -94,3 +97,10 @@ fun NostrSignerTheme(
 }
 
 fun Color.light(factor: Float = 0.5f) = this.copy(alpha = this.alpha * factor)
+
+fun Color.Companion.fromHex(colorString: String) = try {
+    Color("#$colorString".toColorInt())
+} catch (e: Exception) {
+    Log.e(Amber.TAG, "Failed to parse color: $colorString", e)
+    Unspecified
+}

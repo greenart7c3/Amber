@@ -7,6 +7,10 @@ import androidx.compose.runtime.mutableStateOf
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
@@ -434,6 +438,159 @@ object BunkerRequestUtils {
             SignerType.INVALID -> {
                 onReady(null)
             }
+        }
+    }
+
+    fun sendResult(
+        context: Context,
+        account: Account,
+        key: String,
+        event: String,
+        bunkerRequest: BunkerRequest,
+        kind: Int?,
+        onLoading: (Boolean) -> Unit,
+        permissions: List<Permission>? = null,
+        appName: String? = null,
+        signPolicy: Int? = null,
+        shouldCloseApplication: Boolean? = null,
+        rememberType: RememberType,
+    ) {
+        onLoading(true)
+        Amber.instance.applicationIOScope.launch {
+            val database = Amber.instance.getDatabase(account.npub)
+            val defaultRelays = Amber.instance.settings.defaultRelays
+            var savedApplication = database.applicationDao().getByKey(key)
+            if (savedApplication == null && bunkerRequest.secret.isNotBlank()) {
+                savedApplication = database.applicationDao().getByKey(bunkerRequest.secret)
+                if (savedApplication != null) {
+                    val tempApplication = savedApplication.application.copy(
+                        key = key,
+                    )
+                    val tempApp2 = ApplicationWithPermissions(
+                        application = tempApplication,
+                        permissions = savedApplication.permissions.map {
+                            it.copy()
+                        }.toMutableList(),
+                    )
+
+                    database.applicationDao().delete(bunkerRequest.secret)
+                    database.applicationDao().insertApplicationWithPermissions(tempApp2)
+                }
+            }
+            savedApplication = database.applicationDao().getByKey(key)
+            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
+            Amber.instance.checkForNewRelays(
+                newRelays = relays.toSet(),
+            )
+            val activity = context.getAppCompatActivity()
+
+            val application =
+                savedApplication ?: ApplicationWithPermissions(
+                    application = ApplicationEntity(
+                        key,
+                        appName ?: "",
+                        relays,
+                        "",
+                        "",
+                        "",
+                        account.hexKey,
+                        true,
+                        bunkerRequest.secret,
+                        bunkerRequest.secret.isNotBlank(),
+                        account.signPolicy,
+                        shouldCloseApplication ?: bunkerRequest.closeApplication,
+                    ),
+                    permissions = mutableListOf(),
+                )
+            application.application.isConnected = true
+
+            if (signPolicy != null) {
+                AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)
+            }
+
+            val type = getTypeFromBunker(bunkerRequest)
+            if (rememberType != RememberType.NEVER) {
+                AmberUtils.acceptPermission(
+                    application = application,
+                    key = key,
+                    type = type,
+                    kind = kind,
+                    rememberType = rememberType,
+                )
+            }
+
+            if (type == SignerType.CONNECT) {
+                database.applicationDao().deletePermissions(key)
+                application.application.isConnected = true
+                shouldCloseApplication?.let {
+                    application.application.closeApplication = it
+                }
+                if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
+                    application.permissions.add(
+                        ApplicationPermissionsEntity(
+                            null,
+                            key,
+                            SignerType.GET_PUBLIC_KEY.toString(),
+                            null,
+                            true,
+                            RememberType.ALWAYS.screenCode,
+                            Long.MAX_VALUE / 1000,
+                            0,
+                        ),
+                    )
+                }
+            }
+
+            val localBunkerRequest = bunkerRequest.copy()
+
+            clearRequests()
+
+            // assume that everything worked and try to revert it if it fails
+            EventNotificationConsumer(context).notificationManager().cancelAll()
+            database.applicationDao().insertApplicationWithPermissions(application)
+            database.applicationDao().addHistory(
+                HistoryEntity2(
+                    0,
+                    key,
+                    type.toString(),
+                    kind,
+                    TimeUtils.now(),
+                    true,
+                ),
+            )
+
+            EventNotificationConsumer(context).notificationManager().cancelAll()
+            sendBunkerResponse(
+                context,
+                account,
+                bunkerRequest,
+                BunkerResponse(bunkerRequest.id, event, null),
+                application.application.relays.ifEmpty { relays },
+                onLoading,
+                onDone = {
+                    Amber.instance.applicationIOScope.launch {
+                        if (!it) {
+                            if (rememberType != RememberType.NEVER) {
+                                if (type == SignerType.SIGN_EVENT) {
+                                    kind?.let {
+                                        database.applicationDao().deletePermissions(key, type.toString(), kind)
+                                    }
+                                } else {
+                                    database.applicationDao().deletePermissions(key, type.toString())
+                                }
+                            }
+
+                            onLoading(false)
+                            addRequest(localBunkerRequest)
+                        } else {
+                            activity?.intent = null
+                            if (application.application.closeApplication) {
+                                activity?.finish()
+                            }
+                        }
+                    }
+                },
+            )
         }
     }
 }

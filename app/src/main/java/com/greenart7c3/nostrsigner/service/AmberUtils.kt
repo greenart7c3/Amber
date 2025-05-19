@@ -2,14 +2,18 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import android.util.Log
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.ui.IntentResultType
+import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -197,6 +201,94 @@ object AmberUtils {
         Amber.instance.getDatabase(account.npub)
             .applicationDao()
             .insertApplicationWithPermissions(application)
+    }
+
+    fun configureSignPolicy(
+        application: ApplicationWithPermissions,
+        signPolicy: Int,
+        key: String,
+        permissions: List<Permission>?,
+    ) {
+        when (signPolicy) {
+            0 -> {
+                application.application.signPolicy = 0
+                basicPermissions.forEach {
+                    if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
+                        return@forEach
+                    }
+                    application.permissions.add(
+                        ApplicationPermissionsEntity(
+                            null,
+                            key,
+                            it.type.toUpperCase(Locale.current),
+                            it.kind,
+                            true,
+                            RememberType.ALWAYS.screenCode,
+                            Long.MAX_VALUE / 1000,
+                            0,
+                        ),
+                    )
+                }
+            }
+            1 -> {
+                application.application.signPolicy = 1
+                permissions?.filter { it.checked }?.forEach {
+                    if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
+                        return@forEach
+                    }
+                    application.permissions.add(
+                        ApplicationPermissionsEntity(
+                            null,
+                            key,
+                            it.type.toUpperCase(Locale.current),
+                            it.kind,
+                            true,
+                            RememberType.ALWAYS.screenCode,
+                            Long.MAX_VALUE / 1000,
+                            0,
+                        ),
+                    )
+                }
+            }
+            2 -> {
+                application.application.signPolicy = 2
+            }
+        }
+    }
+
+    fun acceptPermission(
+        application: ApplicationWithPermissions,
+        key: String,
+        type: SignerType,
+        kind: Int?,
+        rememberType: RememberType,
+    ) {
+        val until = when (rememberType) {
+            RememberType.ALWAYS -> Long.MAX_VALUE / 1000
+            RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
+            RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
+            RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+            else -> 0L
+        }
+
+        if (kind != null) {
+            application.permissions.removeIf { it.kind == kind && it.type == type.toString() }
+        } else {
+            application.permissions.removeIf { it.type == type.toString() && it.type != "SIGN_EVENT" }
+        }
+
+        application.permissions.add(
+            ApplicationPermissionsEntity(
+                null,
+                key,
+                type.toString(),
+                kind,
+                true,
+                rememberType.screenCode,
+                until,
+                0,
+            ),
+        )
     }
 }
 

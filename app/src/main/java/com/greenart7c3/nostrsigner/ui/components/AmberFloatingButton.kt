@@ -18,7 +18,6 @@ import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.ui.NewBunkerFloatingButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 @Composable

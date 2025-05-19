@@ -31,14 +31,15 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.IntentResultType
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.sendResult
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -88,11 +89,6 @@ fun SingleEventHomeScreen(
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
-            val permission =
-                applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString()
-                }
-
             LoginWithPubKey(
                 applicationEntity?.application?.closeApplication ?: (intentData.bunkerRequest?.closeApplication != false),
                 paddingValues,
@@ -103,35 +99,53 @@ fun SingleEventHomeScreen(
                 applicationName,
                 intentData.permissions,
                 { permissions, signPolicy, closeApplication, rememberType ->
-                    val sig =
-                        if (intentData.type == SignerType.CONNECT) {
-                            intentData.bunkerRequest!!.nostrConnectSecret.ifBlank { "ack" }
-                        } else if (intentData.bunkerRequest != null) {
+                    if (intentData.bunkerRequest != null) {
+                        val result = if (intentData.type == SignerType.CONNECT) {
+                            intentData.bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                        } else {
                             account.hexKey
-                        } else if (packageName == null) {
+                        }
+
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            event = result,
+                            bunkerRequest = intentData.bunkerRequest,
+                            kind = null,
+                            onLoading = onLoading,
+                            permissions = permissions,
+                            appName = applicationName ?: appName,
+                            signPolicy = signPolicy,
+                            shouldCloseApplication = closeApplication,
+                            rememberType = rememberType,
+                        )
+                    } else {
+                        val result = if (packageName == null) {
                             account.hexKey
                         } else {
                             account.npub
                         }
 
-                    sendResult(
-                        context,
-                        packageName,
-                        account,
-                        key,
-                        clipboardManager,
-                        sig,
-                        sig,
-                        intentData,
-                        null,
-                        permissions = permissions,
-                        appName = applicationName ?: appName,
-                        onLoading = onLoading,
-                        signPolicy = signPolicy,
-                        onRemoveIntentData = onRemoveIntentData,
-                        shouldCloseApplication = closeApplication,
-                        rememberType = rememberType,
-                    )
+                        IntentUtils.sendResult(
+                            context,
+                            packageName,
+                            account,
+                            key,
+                            clipboardManager,
+                            result,
+                            result,
+                            intentData,
+                            null,
+                            permissions = permissions,
+                            appName = applicationName ?: appName,
+                            onLoading = onLoading,
+                            signPolicy = signPolicy,
+                            onRemoveIntentData = onRemoveIntentData,
+                            shouldCloseApplication = closeApplication,
+                            rememberType = rememberType,
+                        )
+                    }
 
                     return@LoginWithPubKey
                 },
@@ -205,20 +219,37 @@ fun SingleEventHomeScreen(
                     Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
-                        sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            clipboardManager,
-                            result,
-                            result,
-                            intentData,
-                            null,
-                            onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            rememberType = it,
-                        )
+                        if (intentData.bunkerRequest != null) {
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = account,
+                                key = key,
+                                event = result,
+                                bunkerRequest = intentData.bunkerRequest,
+                                kind = null,
+                                onLoading = onLoading,
+                                permissions = null,
+                                appName = applicationName ?: appName,
+                                signPolicy = null,
+                                shouldCloseApplication = intentData.bunkerRequest.closeApplication,
+                                rememberType = it,
+                            )
+                        } else {
+                            IntentUtils.sendResult(
+                                context,
+                                packageName,
+                                account,
+                                key,
+                                clipboardManager,
+                                result,
+                                result,
+                                intentData,
+                                null,
+                                onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                                rememberType = it,
+                            )
+                        }
                     }
                 },
                 {
@@ -362,20 +393,37 @@ fun SingleEventHomeScreen(
                             intentData.encryptedData ?: ""
                         }
 
-                    sendResult(
-                        context,
-                        packageName,
-                        account,
-                        key,
-                        clipboardManager,
-                        result,
-                        result,
-                        intentData,
-                        null,
-                        onRemoveIntentData = onRemoveIntentData,
-                        onLoading = onLoading,
-                        rememberType = it,
-                    )
+                    if (intentData.bunkerRequest != null) {
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            event = result,
+                            bunkerRequest = intentData.bunkerRequest,
+                            kind = null,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = applicationName ?: appName,
+                            signPolicy = null,
+                            shouldCloseApplication = intentData.bunkerRequest.closeApplication,
+                            rememberType = it,
+                        )
+                    } else {
+                        IntentUtils.sendResult(
+                            context,
+                            packageName,
+                            account,
+                            key,
+                            clipboardManager,
+                            result,
+                            result,
+                            intentData,
+                            null,
+                            onRemoveIntentData = onRemoveIntentData,
+                            onLoading = onLoading,
+                            rememberType = it,
+                        )
+                    }
                 },
                 {
                     Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
@@ -530,32 +578,48 @@ fun SingleEventHomeScreen(
 
                         val eventJson = event.toJson()
 
-                        sendResult(
-                            context = context,
-                            packageName = packageName,
-                            account = account,
-                            key = key,
-                            clipboardManager = clipboardManager,
-                            event = event.toJson(),
-                            value = if (event is LnZapRequestEvent &&
-                                event.tags.any {
-                                        tag ->
-                                    tag.any { t -> t == "anon" }
-                                }
-                            ) {
-                                eventJson
-                            } else {
-                                event.sig
-                            },
-                            intentData = intentData,
-                            kind = event.kind,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            signPolicy = null,
-                            appName = null,
-                            permissions = null,
-                            rememberType = it,
-                        )
+                        if (intentData.bunkerRequest != null) {
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = account,
+                                key = key,
+                                event = eventJson,
+                                bunkerRequest = intentData.bunkerRequest,
+                                kind = event.kind,
+                                onLoading = onLoading,
+                                permissions = null,
+                                appName = applicationName ?: appName,
+                                signPolicy = null,
+                                shouldCloseApplication = intentData.bunkerRequest.closeApplication,
+                                rememberType = it,
+                            )
+                        } else {
+                            IntentUtils.sendResult(
+                                context = context,
+                                packageName = packageName,
+                                account = account,
+                                key = key,
+                                clipboardManager = clipboardManager,
+                                event = event.toJson(),
+                                value = if (event is LnZapRequestEvent &&
+                                    event.tags.any { tag ->
+                                        tag.any { t -> t == "anon" }
+                                    }
+                                ) {
+                                    eventJson
+                                } else {
+                                    event.sig
+                                },
+                                intentData = intentData,
+                                kind = event.kind,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                                signPolicy = null,
+                                appName = null,
+                                permissions = null,
+                                rememberType = it,
+                            )
+                        }
                     },
                     {
                         onLoading(true)

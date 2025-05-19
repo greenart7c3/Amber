@@ -1,12 +1,8 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
-import android.app.Activity.RESULT_OK
-import android.content.ClipData
 import android.content.Context
-import android.content.Intent
 import android.content.pm.PackageManager
-import android.net.Uri
 import android.os.Build
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
@@ -15,7 +11,6 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -24,16 +19,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -46,20 +35,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -71,22 +53,11 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.ApplicationEntity
-import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
-import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.models.basicPermissions
+import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
-import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
-import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -99,359 +70,9 @@ import com.greenart7c3.nostrsigner.ui.components.AmberBottomBar
 import com.greenart7c3.nostrsigner.ui.components.AmberFloatingButton
 import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.utils.TimeUtils
-import java.io.ByteArrayOutputStream
 import java.util.Base64
-import java.util.zip.GZIPOutputStream
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-
-fun sendResult(
-    context: Context,
-    packageName: String?,
-    account: Account,
-    key: String,
-    clipboardManager: Clipboard,
-    event: String,
-    value: String,
-    intentData: IntentData,
-    kind: Int?,
-    onLoading: (Boolean) -> Unit,
-    permissions: List<Permission>? = null,
-    appName: String? = null,
-    signPolicy: Int? = null,
-    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
-    shouldCloseApplication: Boolean? = null,
-    rememberType: RememberType,
-) {
-    onLoading(true)
-    Amber.instance.applicationIOScope.launch {
-        val database = Amber.instance.getDatabase(account.npub)
-        val defaultRelays = Amber.instance.settings.defaultRelays
-        var savedApplication = database.applicationDao().getByKey(key)
-        if (savedApplication == null && intentData.bunkerRequest?.secret != null) {
-            savedApplication = database.applicationDao().getByKey(intentData.bunkerRequest.secret)
-            if (savedApplication != null) {
-                val tempApplication = savedApplication.application.copy(
-                    key = key,
-                )
-                val tempApp2 = ApplicationWithPermissions(
-                    application = tempApplication,
-                    permissions = savedApplication.permissions.map {
-                        it.copy()
-                    }.toMutableList(),
-                )
-
-                database.applicationDao().delete(intentData.bunkerRequest.secret)
-                database.applicationDao().insertApplicationWithPermissions(tempApp2)
-            }
-        }
-        savedApplication = database.applicationDao().getByKey(key)
-        val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
-        if (intentData.bunkerRequest != null) {
-            Amber.instance.checkForNewRelays(
-                newRelays = relays.toSet(),
-            )
-        }
-
-        val activity = context.getAppCompatActivity()
-        val localAppName =
-            if (packageName != null) {
-                val info = context.packageManager.getApplicationInfo(packageName, 0)
-                context.packageManager.getApplicationLabel(info).toString()
-            } else {
-                appName
-            }
-
-        val application =
-            savedApplication ?: ApplicationWithPermissions(
-                application = ApplicationEntity(
-                    key,
-                    appName ?: localAppName ?: "",
-                    if (packageName != null) emptyList() else relays,
-                    "",
-                    "",
-                    "",
-                    account.hexKey,
-                    true,
-                    intentData.bunkerRequest?.secret ?: "",
-                    intentData.bunkerRequest?.secret != null,
-                    account.signPolicy,
-                    shouldCloseApplication ?: (intentData.bunkerRequest?.closeApplication == false),
-                ),
-                permissions = mutableListOf(),
-            )
-        application.application.isConnected = true
-
-        if (signPolicy != null) {
-            when (signPolicy) {
-                0 -> {
-                    application.application.signPolicy = 0
-                    basicPermissions.forEach {
-                        if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
-                            return@forEach
-                        }
-                        application.permissions.add(
-                            ApplicationPermissionsEntity(
-                                null,
-                                key,
-                                it.type.toUpperCase(Locale.current),
-                                it.kind,
-                                true,
-                                RememberType.ALWAYS.screenCode,
-                                Long.MAX_VALUE / 1000,
-                                0,
-                            ),
-                        )
-                    }
-                }
-                1 -> {
-                    application.application.signPolicy = 1
-                    permissions?.filter { it.checked }?.forEach {
-                        if (application.permissions.any { permission -> permission.type == it.type.toUpperCase(Locale.current) && permission.kind == it.kind }) {
-                            return@forEach
-                        }
-                        application.permissions.add(
-                            ApplicationPermissionsEntity(
-                                null,
-                                key,
-                                it.type.toUpperCase(Locale.current),
-                                it.kind,
-                                true,
-                                RememberType.ALWAYS.screenCode,
-                                Long.MAX_VALUE / 1000,
-                                0,
-                            ),
-                        )
-                    }
-                }
-                2 -> {
-                    application.application.signPolicy = 2
-                }
-            }
-        }
-
-        if (rememberType != RememberType.NEVER) {
-            val until = when (rememberType) {
-                RememberType.ALWAYS -> Long.MAX_VALUE / 1000
-                RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
-                RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
-                RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
-                else -> 0L
-            }
-
-            if (kind != null) {
-                application.permissions.removeIf { it.kind == kind && it.type == intentData.type.toString() }
-            } else {
-                application.permissions.removeIf { it.type == intentData.type.toString() && it.type != "SIGN_EVENT" }
-            }
-
-            application.permissions.add(
-                ApplicationPermissionsEntity(
-                    null,
-                    key,
-                    intentData.type.toString(),
-                    kind,
-                    true,
-                    rememberType.screenCode,
-                    until,
-                    0,
-                ),
-            )
-        }
-
-        if (intentData.type == SignerType.CONNECT) {
-            database.applicationDao().deletePermissions(key)
-        }
-        if ((intentData.bunkerRequest == null && intentData.type == SignerType.GET_PUBLIC_KEY) || (intentData.bunkerRequest != null && intentData.type == SignerType.CONNECT)) {
-            application.application.isConnected = true
-            shouldCloseApplication?.let {
-                application.application.closeApplication = it
-            }
-            if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
-                application.permissions.add(
-                    ApplicationPermissionsEntity(
-                        null,
-                        key,
-                        SignerType.GET_PUBLIC_KEY.toString(),
-                        null,
-                        true,
-                        RememberType.ALWAYS.screenCode,
-                        Long.MAX_VALUE / 1000,
-                        0,
-                    ),
-                )
-            }
-        }
-
-        if (intentData.bunkerRequest != null) {
-            val localIntentData = intentData.copy()
-
-            BunkerRequestUtils.clearRequests()
-
-            // assume that everything worked and try to revert it if it fails
-            EventNotificationConsumer(context).notificationManager().cancelAll()
-            database.applicationDao().insertApplicationWithPermissions(application)
-            database.applicationDao().addHistory(
-                HistoryEntity2(
-                    0,
-                    key,
-                    intentData.type.toString(),
-                    kind,
-                    TimeUtils.now(),
-                    true,
-                ),
-            )
-
-            EventNotificationConsumer(context).notificationManager().cancelAll()
-            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-
-            BunkerRequestUtils.sendBunkerResponse(
-                context,
-                account,
-                intentData.bunkerRequest,
-                BunkerResponse(intentData.bunkerRequest.id, event, null),
-                application.application.relays.ifEmpty { relays },
-                onLoading,
-                onDone = {
-                    Amber.instance.applicationIOScope.launch {
-                        if (!it) {
-                            if (rememberType != RememberType.NEVER) {
-                                if (intentData.type == SignerType.SIGN_EVENT) {
-                                    kind?.let {
-                                        database.applicationDao().deletePermissions(key, intentData.type.toString(), kind)
-                                    }
-                                } else {
-                                    database.applicationDao().deletePermissions(key, intentData.type.toString())
-                                }
-                            }
-
-                            onLoading(false)
-                            BunkerRequestUtils.addRequest(localIntentData.bunkerRequest!!)
-                        } else {
-                            activity?.intent = null
-                            if (application.application.closeApplication) {
-                                activity?.finish()
-                            }
-                        }
-                    }
-                },
-            )
-        } else if (packageName != null) {
-            database.applicationDao().insertApplicationWithPermissions(application)
-            database.applicationDao().addHistory(
-                HistoryEntity2(
-                    0,
-                    key,
-                    intentData.type.toString(),
-                    kind,
-                    TimeUtils.now(),
-                    true,
-                ),
-            )
-
-            val intent = Intent()
-            intent.putExtra("signature", value)
-            intent.putExtra("result", value)
-            intent.putExtra("id", intentData.id)
-            intent.putExtra("event", event)
-            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-                intent.putExtra("package", BuildConfig.APPLICATION_ID)
-            }
-            activity?.setResult(RESULT_OK, intent)
-            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-            activity?.intent = null
-            activity?.finish()
-        } else if (!intentData.callBackUrl.isNullOrBlank()) {
-            if (intentData.returnType == ReturnType.SIGNATURE) {
-                val intent = Intent(Intent.ACTION_VIEW)
-                intent.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
-                context.startActivity(intent)
-            } else {
-                if (intentData.compression == CompressionType.GZIP) {
-                    // Compress the string using GZIP
-                    val byteArrayOutputStream = ByteArrayOutputStream()
-                    val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
-                    gzipOutputStream.write(event.toByteArray())
-                    gzipOutputStream.close()
-
-                    // Convert the compressed data to Base64
-                    val compressedData = byteArrayOutputStream.toByteArray()
-                    val encodedString = Base64.getEncoder().encodeToString(compressedData)
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = (intentData.callBackUrl + Uri.encode("Signer1$encodedString")).toUri()
-                    context.startActivity(intent)
-                } else {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
-                    context.startActivity(intent)
-                }
-            }
-            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-            activity?.intent = null
-            activity?.finish()
-        } else {
-            val result =
-                if (intentData.returnType == ReturnType.SIGNATURE) {
-                    value
-                } else {
-                    event
-                }
-            val message =
-                if (intentData.returnType == ReturnType.SIGNATURE) {
-                    context.getString(R.string.signature_copied_to_the_clipboard)
-                } else {
-                    context.getString(R.string.event_copied_to_the_clipboard)
-                }
-
-            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                clipboardManager.setClipEntry(
-                    ClipEntry(
-                        ClipData.newPlainText("", result),
-                    ),
-                )
-
-                Toast.makeText(
-                    context,
-                    message,
-                    Toast.LENGTH_SHORT,
-                ).show()
-            }
-            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-            activity?.intent = null
-            activity?.finish()
-        }
-    }
-}
-
-@Composable
-fun NewBunkerFloatingButton(
-    onClick: () -> Unit,
-) {
-    Column(
-        horizontalAlignment = Alignment.End,
-    ) {
-        FloatingActionButton(
-            modifier = Modifier
-                .padding(end = 8.dp),
-            elevation = FloatingActionButtonDefaults.elevation(
-                defaultElevation = 0.dp,
-                focusedElevation = 0.dp,
-                hoveredElevation = 0.dp,
-                pressedElevation = 0.dp,
-            ),
-            onClick = onClick,
-            shape = RoundedCornerShape(24),
-        ) {
-            Icon(
-                Icons.Default.Add,
-                contentDescription = stringResource(R.string.connect_app),
-                tint = Color.Black,
-            )
-        }
-    }
-}
 
 private fun askNotificationPermission(
     context: Context,
@@ -477,11 +98,6 @@ private fun askNotificationPermission(
     } else {
         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
     }
-}
-
-enum class IntentResultType {
-    REMOVE,
-    ADD,
 }
 
 @SuppressLint("ConfigurationScreenWidthHeight")

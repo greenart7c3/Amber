@@ -1,21 +1,34 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.app.Activity.RESULT_OK
+import android.content.ClipData
 import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.provider.Browser
+import android.widget.Toast
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.net.toUri
 import com.google.gson.Gson
 import com.google.gson.reflect.TypeToken
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
+import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -26,7 +39,12 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
+import com.vitorpamplona.quartz.utils.TimeUtils
+import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
+import java.util.Base64
+import java.util.zip.GZIPOutputStream
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object IntentUtils {
@@ -547,5 +565,180 @@ object IntentUtils {
         }
 
         return AmberEvent.toEvent(event)
+    }
+
+    fun sendResult(
+        context: Context,
+        packageName: String?,
+        account: Account,
+        key: String,
+        clipboardManager: Clipboard,
+        event: String,
+        value: String,
+        intentData: IntentData,
+        kind: Int?,
+        onLoading: (Boolean) -> Unit,
+        permissions: List<Permission>? = null,
+        appName: String? = null,
+        signPolicy: Int? = null,
+        onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+        shouldCloseApplication: Boolean? = null,
+        rememberType: RememberType,
+    ) {
+        onLoading(true)
+        Amber.instance.applicationIOScope.launch {
+            val database = Amber.instance.getDatabase(account.npub)
+            val defaultRelays = Amber.instance.settings.defaultRelays
+            var savedApplication = database.applicationDao().getByKey(key)
+            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
+            val activity = context.getAppCompatActivity()
+            val localAppName =
+                if (packageName != null) {
+                    val info = context.packageManager.getApplicationInfo(packageName, 0)
+                    context.packageManager.getApplicationLabel(info).toString()
+                } else {
+                    appName
+                }
+
+            val application =
+                savedApplication ?: ApplicationWithPermissions(
+                    application = ApplicationEntity(
+                        key,
+                        appName ?: localAppName ?: "",
+                        if (packageName != null) emptyList() else relays,
+                        "",
+                        "",
+                        "",
+                        account.hexKey,
+                        true,
+                        "",
+                        false,
+                        account.signPolicy,
+                        shouldCloseApplication != false,
+                    ),
+                    permissions = mutableListOf(),
+                )
+            application.application.isConnected = true
+
+            if (signPolicy != null) {
+                AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)
+            }
+
+            if (rememberType != RememberType.NEVER) {
+                AmberUtils.acceptPermission(
+                    application = application,
+                    key = key,
+                    type = intentData.type,
+                    kind = kind,
+                    rememberType = rememberType,
+                )
+            }
+
+            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                application.application.isConnected = true
+                shouldCloseApplication?.let {
+                    application.application.closeApplication = it
+                }
+                if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
+                    application.permissions.add(
+                        ApplicationPermissionsEntity(
+                            null,
+                            key,
+                            SignerType.GET_PUBLIC_KEY.toString(),
+                            null,
+                            true,
+                            RememberType.ALWAYS.screenCode,
+                            Long.MAX_VALUE / 1000,
+                            0,
+                        ),
+                    )
+                }
+            }
+
+            if (packageName != null) {
+                database.applicationDao().insertApplicationWithPermissions(application)
+                database.applicationDao().addHistory(
+                    HistoryEntity2(
+                        0,
+                        key,
+                        intentData.type.toString(),
+                        kind,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                )
+
+                val intent = Intent()
+                intent.putExtra("signature", value)
+                intent.putExtra("result", value)
+                intent.putExtra("id", intentData.id)
+                intent.putExtra("event", event)
+                if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                    intent.putExtra("package", BuildConfig.APPLICATION_ID)
+                }
+                activity?.setResult(RESULT_OK, intent)
+                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                activity?.intent = null
+                activity?.finish()
+            } else if (!intentData.callBackUrl.isNullOrBlank()) {
+                if (intentData.returnType == ReturnType.SIGNATURE) {
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    intent.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
+                    context.startActivity(intent)
+                } else {
+                    if (intentData.compression == CompressionType.GZIP) {
+                        // Compress the string using GZIP
+                        val byteArrayOutputStream = ByteArrayOutputStream()
+                        val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
+                        gzipOutputStream.write(event.toByteArray())
+                        gzipOutputStream.close()
+
+                        // Convert the compressed data to Base64
+                        val compressedData = byteArrayOutputStream.toByteArray()
+                        val encodedString = Base64.getEncoder().encodeToString(compressedData)
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = (intentData.callBackUrl + Uri.encode("Signer1$encodedString")).toUri()
+                        context.startActivity(intent)
+                    } else {
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
+                        context.startActivity(intent)
+                    }
+                }
+                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                activity?.intent = null
+                activity?.finish()
+            } else {
+                val result =
+                    if (intentData.returnType == ReturnType.SIGNATURE) {
+                        value
+                    } else {
+                        event
+                    }
+                val message =
+                    if (intentData.returnType == ReturnType.SIGNATURE) {
+                        context.getString(R.string.signature_copied_to_the_clipboard)
+                    } else {
+                        context.getString(R.string.event_copied_to_the_clipboard)
+                    }
+
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    clipboardManager.setClipEntry(
+                        ClipEntry(
+                            ClipData.newPlainText("", result),
+                        ),
+                    )
+
+                    Toast.makeText(
+                        context,
+                        message,
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                activity?.intent = null
+                activity?.finish()
+            }
+        }
     }
 }

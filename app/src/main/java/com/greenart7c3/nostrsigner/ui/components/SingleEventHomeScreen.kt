@@ -89,17 +89,12 @@ fun SingleEventHomeScreen(
 
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
-            LoginWithPubKey(
-                applicationEntity?.application?.closeApplication ?: (intentData.bunkerRequest?.closeApplication != false),
-                paddingValues,
-                intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY,
-                account,
-                packageName,
-                appName,
-                applicationName,
-                intentData.permissions,
-                { permissions, signPolicy, closeApplication, rememberType ->
-                    if (intentData.bunkerRequest != null) {
+            if (intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY) {
+                BunkerGetPubKeyScreen(
+                    paddingValues,
+                    account,
+                    appName,
+                    { permissions, signPolicy, closeApplication, rememberType ->
                         val result = if (intentData.type == SignerType.CONNECT) {
                             intentData.bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
                         } else {
@@ -120,7 +115,92 @@ fun SingleEventHomeScreen(
                             shouldCloseApplication = closeApplication,
                             rememberType = rememberType,
                         )
-                    } else {
+                    },
+                    {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val defaultRelays = Amber.instance.settings.defaultRelays
+                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
+
+                            Amber.instance.checkForNewRelays(
+                                newRelays = relays.toSet(),
+                            )
+
+                            AmberUtils.sendBunkerError(
+                                intentData,
+                                account,
+                                intentData.bunkerRequest,
+                                applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
+                                context,
+                                closeApplication = intentData.bunkerRequest.closeApplication,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                            )
+                        }
+                    },
+                )
+            } else if (intentData.bunkerRequest != null) {
+                BunkerConnectRequestScreen(
+                    applicationEntity?.application?.closeApplication ?: intentData.bunkerRequest.closeApplication,
+                    paddingValues,
+                    account,
+                    appName,
+                    intentData.permissions,
+                    { permissions, signPolicy, closeApplication, rememberType ->
+                        val result = if (intentData.type == SignerType.CONNECT) {
+                            intentData.bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                        } else {
+                            account.hexKey
+                        }
+
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            event = result,
+                            bunkerRequest = intentData.bunkerRequest,
+                            kind = null,
+                            onLoading = onLoading,
+                            permissions = permissions,
+                            appName = applicationName ?: appName,
+                            signPolicy = signPolicy,
+                            shouldCloseApplication = closeApplication,
+                            rememberType = rememberType,
+                        )
+                    },
+                    {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val defaultRelays = Amber.instance.settings.defaultRelays
+                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
+
+                            Amber.instance.checkForNewRelays(
+                                newRelays = relays.toSet(),
+                            )
+
+                            AmberUtils.sendBunkerError(
+                                intentData,
+                                account,
+                                intentData.bunkerRequest,
+                                applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
+                                context,
+                                closeApplication = intentData.bunkerRequest.closeApplication,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                            )
+                        }
+                    },
+                )
+            } else {
+                LoginWithPubKey(
+                    applicationEntity?.application?.closeApplication != false,
+                    paddingValues,
+                    account,
+                    packageName,
+                    appName,
+                    applicationName,
+                    intentData.permissions,
+                    { permissions, signPolicy, closeApplication, rememberType ->
                         val result = if (packageName == null) {
                             account.hexKey
                         } else {
@@ -145,40 +225,15 @@ fun SingleEventHomeScreen(
                             shouldCloseApplication = closeApplication,
                             rememberType = rememberType,
                         )
-                    }
-
-                    return@LoginWithPubKey
-                },
-                {
-                    if (intentData.bunkerRequest != null) {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val defaultRelays = Amber.instance.settings.defaultRelays
-                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
-                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
-
-                            Amber.instance.checkForNewRelays(
-                                newRelays = relays.toSet(),
-                            )
-
-                            AmberUtils.sendBunkerError(
-                                intentData,
-                                account,
-                                intentData.bunkerRequest,
-                                applicationEntity?.application?.relays ?: intentData.bunkerRequest.relays,
-                                context,
-                                closeApplication = intentData.bunkerRequest.closeApplication,
-                                onLoading = onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                            )
-                        }
-                    } else {
+                    },
+                    {
                         context.getAppCompatActivity()?.intent = null
                         context.getAppCompatActivity()?.finish()
                         onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                         onLoading(false)
-                    }
-                },
-            )
+                    },
+                )
+            }
         }
 
         SignerType.SIGN_MESSAGE -> {

@@ -49,13 +49,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.unit.LayoutDirection
@@ -98,6 +96,7 @@ import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.AmberBottomBar
+import com.greenart7c3.nostrsigner.ui.components.AmberFloatingButton
 import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -643,39 +642,10 @@ fun MainScreen(
             )
         },
         floatingActionButton = {
-            @Suppress("KotlinConstantConditions")
-            if (navBackStackEntry?.destination?.route == Route.Applications.route && BuildConfig.FLAVOR != "offline") {
-                NewBunkerFloatingButton(
-                    onClick = {
-                        navController.navigate(Route.NewApplication.route)
-                    },
-                )
-            } else if (navBackStackEntry?.destination?.route == Route.ActiveRelays.route) {
-                Column(
-                    horizontalAlignment = Alignment.End,
-                ) {
-                    FloatingActionButton(
-                        modifier = Modifier
-                            .padding(end = 8.dp),
-                        elevation = FloatingActionButtonDefaults.elevation(
-                            defaultElevation = 0.dp,
-                            focusedElevation = 0.dp,
-                            hoveredElevation = 0.dp,
-                            pressedElevation = 0.dp,
-                        ),
-                        onClick = {
-                            navController.navigate(Route.DefaultRelays.route)
-                        },
-                        shape = RoundedCornerShape(24),
-                    ) {
-                        Icon(
-                            ImageVector.vectorResource(R.drawable.settings),
-                            contentDescription = stringResource(R.string.connect_app),
-                            tint = Color.Black,
-                        )
-                    }
-                }
-            }
+            AmberFloatingButton(
+                navController = navController,
+                navBackStackEntry = navBackStackEntry,
+            )
         },
     ) { padding ->
         var isLoading by remember { mutableStateOf(false) }

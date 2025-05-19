@@ -17,7 +17,6 @@ import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.border
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -38,11 +37,9 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.outlined.Person
-import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.Button
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
@@ -55,7 +52,6 @@ import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
@@ -82,8 +78,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.graphics.toColorInt
 import androidx.core.net.toUri
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -112,7 +106,6 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.getAppCompatActivity
-import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -121,6 +114,7 @@ import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
+import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
@@ -648,111 +642,16 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
-                CenterAlignedTopAppBar(
-                    actions = {
-                        if (Amber.instance.settings.useProxy) {
-                            var isProxyEnabled by remember { mutableStateOf(false) }
-                            DisposableEffect(lifecycleOwner) {
-                                val observer = LifecycleEventObserver { _, event ->
-                                    when (event) {
-                                        Lifecycle.Event.ON_START -> {
-                                            Amber.instance.applicationIOScope.launch {
-                                                isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
-                                            }
-                                        }
-
-                                        Lifecycle.Event.ON_RESUME -> {
-                                            Amber.instance.applicationIOScope.launch {
-                                                isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
-                                            }
-                                        }
-
-                                        else -> {}
-                                    }
-                                }
-                                lifecycleOwner.lifecycle.addObserver(observer)
-
-                                onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-                            }
-
-                            Icon(
-                                Icons.Outlined.Shield,
-                                "Proxy",
-                                tint = if (isProxyEnabled) Color.Green else Color.Red,
-                                modifier = Modifier.combinedClickable(
-                                    onClick = {
-                                        scope.launch {
-                                            if (isProxyEnabled) {
-                                                Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-                                    onLongClick = {
-                                        scope.launch {
-                                            if (isProxyEnabled) {
-                                                Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
-                                            } else {
-                                                Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
-                                            }
-                                        }
-                                    },
-                                ),
-                            )
-                        }
-                    },
-                    title = {
-                        var title by remember { mutableStateOf(routes.find { it.route.startsWith(destinationRoute) }?.title ?: "") }
-                        LaunchedEffect(destinationRoute) {
-                            if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/") || destinationRoute.startsWith("qrcode/")) {
-                                launch(Dispatchers.IO) {
-                                    navBackStackEntry?.arguments?.getString("content")?.let {
-                                        title = Route.QrCode.title
-                                    }
-                                    navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                        val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
-                                        title = if (destinationRoute.startsWith("Activity/")) {
-                                            "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
-                                        } else {
-                                            application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
-                                        }
-                                    }
-                                    navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                        val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
-                                        title = if (destinationRoute.startsWith("Activity/")) {
-                                            "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
-                                        } else {
-                                            application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
-                                        }
-                                    }
-                                    navBackStackEntry?.arguments?.getString("url")?.let { url ->
-                                        val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
-                                        title = localUrl
-                                    }
-                                }
-                            } else {
-                                launch(Dispatchers.IO) {
-                                    if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
-                                        val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
-                                        val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
-                                        title = if (titleTemp.isBlank()) {
-                                            routes.find { it.route == destinationRoute }?.title ?: ""
-                                        } else {
-                                            "$titleTemp - Request"
-                                        }
-                                    } else {
-                                        title = routes.find { it.route == destinationRoute }?.title ?: ""
-                                    }
-                                }
-                            }
-                        }
-
-                        Text(title)
-                    },
-                )
-            }
+            AmberTopAppBar(
+                destinationRoute = destinationRoute,
+                lifecycleOwner = lifecycleOwner,
+                scope = scope,
+                context = context,
+                navBackStackEntry = navBackStackEntry,
+                account = account,
+                intents = intents,
+                packageName = packageName,
+            )
         },
         bottomBar = {
             if (destinationRoute in items.map { it.route }) {

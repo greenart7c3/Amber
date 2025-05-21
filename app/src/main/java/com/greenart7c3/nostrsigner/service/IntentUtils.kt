@@ -44,6 +44,7 @@ import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
 import java.util.Base64
 import java.util.zip.GZIPOutputStream
+import kotlin.collections.ifEmpty
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -591,7 +592,6 @@ object IntentUtils {
             val defaultRelays = Amber.instance.settings.defaultRelays
             var savedApplication = database.applicationDao().getByKey(key)
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
-            val activity = context.getAppCompatActivity()
             val localAppName =
                 if (packageName != null) {
                     val info = context.packageManager.getApplicationInfo(packageName, 0)
@@ -676,6 +676,7 @@ object IntentUtils {
                 if (intentData.type == SignerType.GET_PUBLIC_KEY) {
                     intent.putExtra("package", BuildConfig.APPLICATION_ID)
                 }
+                val activity = Amber.instance.getMainActivity()
                 activity?.setResult(RESULT_OK, intent)
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                 activity?.intent = null
@@ -706,6 +707,7 @@ object IntentUtils {
                     }
                 }
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                val activity = Amber.instance.getMainActivity()
                 activity?.intent = null
                 activity?.finish()
             } else {
@@ -736,9 +738,81 @@ object IntentUtils {
                     ).show()
                 }
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                val activity = Amber.instance.getMainActivity()
                 activity?.intent = null
                 activity?.finish()
             }
+        }
+    }
+
+    fun sendRejection(
+        key: String,
+        account: Account,
+        intentData: IntentData,
+        appName: String,
+        rememberType: RememberType,
+        kind: Int?,
+        onLoading: (Boolean) -> Unit,
+        onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    ) {
+        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+            if (key == "null") {
+                onLoading(false)
+                return@launch
+            }
+
+            val defaultRelays = Amber.instance.settings.defaultRelays
+            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
+            val application =
+                savedApplication ?: ApplicationWithPermissions(
+                    application = ApplicationEntity(
+                        key,
+                        appName,
+                        relays,
+                        "",
+                        "",
+                        "",
+                        account.hexKey,
+                        true,
+                        intentData.bunkerRequest?.secret ?: "",
+                        intentData.bunkerRequest?.secret != null,
+                        account.signPolicy,
+                        intentData.bunkerRequest?.closeApplication != false,
+                    ),
+                    permissions = mutableListOf(),
+                )
+            if (rememberType != RememberType.NEVER) {
+                AmberUtils.acceptOrRejectPermission(
+                    application,
+                    key,
+                    intentData.type,
+                    null,
+                    false,
+                    rememberType,
+                    account,
+                )
+            }
+
+            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+            Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
+                HistoryEntity2(
+                    0,
+                    key,
+                    intentData.type.toString(),
+                    kind,
+                    TimeUtils.now(),
+                    false,
+                ),
+            )
+
+            val activity = Amber.instance.getMainActivity()
+            activity?.intent = null
+            if (application.application.closeApplication) {
+                activity?.finish()
+            }
+            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+            onLoading(false)
         }
     }
 }

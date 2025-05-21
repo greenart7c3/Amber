@@ -153,9 +153,10 @@ object AmberUtils {
                     BunkerRequestUtils.clearRequests()
                     EventNotificationConsumer(context).notificationManager().cancelAll()
                     onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                    context.getAppCompatActivity()?.intent = null
+                    val activity = Amber.instance.getMainActivity()
+                    activity?.intent = null
                     if (closeApplication) {
-                        context.getAppCompatActivity()?.finish()
+                        activity?.finish()
                     }
                 }
             },
@@ -165,7 +166,7 @@ object AmberUtils {
     suspend fun acceptOrRejectPermission(
         application: ApplicationWithPermissions,
         key: String,
-        intentData: IntentData,
+        signerType: SignerType,
         kind: Int?,
         value: Boolean,
         rememberType: RememberType,
@@ -180,16 +181,16 @@ object AmberUtils {
         }
 
         if (kind != null) {
-            application.permissions.removeIf { it.kind == kind && it.type == intentData.type.toString() }
+            application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() }
         } else {
-            application.permissions.removeIf { it.type == intentData.type.toString() && it.type != "SIGN_EVENT" }
+            application.permissions.removeIf { it.type == signerType.toString() && it.type != "SIGN_EVENT" }
         }
 
         application.permissions.add(
             ApplicationPermissionsEntity(
                 null,
                 key,
-                intentData.type.toString(),
+                signerType.toString(),
                 kind,
                 value,
                 rememberType.screenCode,

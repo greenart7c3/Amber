@@ -17,6 +17,7 @@ import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -31,6 +32,7 @@ import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -482,7 +484,6 @@ object BunkerRequestUtils {
             Amber.instance.checkForNewRelays(
                 newRelays = relays.toSet(),
             )
-            val activity = context.getAppCompatActivity()
 
             val application =
                 savedApplication ?: ApplicationWithPermissions(
@@ -583,6 +584,7 @@ object BunkerRequestUtils {
                             onLoading(false)
                             addRequest(localBunkerRequest)
                         } else {
+                            val activity = Amber.instance.getMainActivity()
                             activity?.intent = null
                             if (application.application.closeApplication) {
                                 activity?.finish()
@@ -590,6 +592,82 @@ object BunkerRequestUtils {
                         }
                     }
                 },
+            )
+        }
+    }
+
+    fun sendRejection(
+        key: String,
+        account: Account,
+        bunkerRequest: BunkerRequest,
+        appName: String,
+        rememberType: RememberType,
+        signerType: SignerType,
+        kind: Int?,
+        intentData: IntentData,
+        onLoading: (Boolean) -> Unit,
+        onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    ) {
+        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+            val defaultRelays = Amber.instance.settings.defaultRelays
+            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
+            val application =
+                savedApplication ?: ApplicationWithPermissions(
+                    application = ApplicationEntity(
+                        key,
+                        appName,
+                        relays,
+                        "",
+                        "",
+                        "",
+                        account.hexKey,
+                        true,
+                        bunkerRequest.secret,
+                        bunkerRequest.secret.isNotBlank(),
+                        account.signPolicy,
+                        bunkerRequest.closeApplication,
+                    ),
+                    permissions = mutableListOf(),
+                )
+
+            if (rememberType != RememberType.NEVER) {
+                AmberUtils.acceptOrRejectPermission(
+                    application,
+                    key,
+                    signerType,
+                    kind,
+                    false,
+                    rememberType,
+                    account,
+                )
+            }
+
+            Amber.instance.checkForNewRelays(
+                newRelays = relays.toSet(),
+            )
+
+            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+            Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
+                HistoryEntity2(
+                    0,
+                    key,
+                    signerType.toString(),
+                    null,
+                    TimeUtils.now(),
+                    false,
+                ),
+            )
+
+            AmberUtils.sendBunkerError(
+                intentData,
+                account,
+                bunkerRequest,
+                relays,
+                Amber.instance,
+                closeApplication = application.application.closeApplication,
+                onLoading = onLoading,
+                onRemoveIntentData = onRemoveIntentData,
             )
         }
     }

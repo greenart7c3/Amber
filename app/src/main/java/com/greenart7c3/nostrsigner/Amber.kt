@@ -41,6 +41,7 @@ import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.UUID
@@ -55,6 +56,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class Amber : Application() {
+    private var mainActivityRef: WeakReference<MainActivity?>? = null
+
+    fun setMainActivity(activity: MainActivity?) {
+        Log.d(TAG, "Setting main activity ref to $activity")
+        mainActivityRef = WeakReference<MainActivity?>(activity)
+    }
+
+    fun getMainActivity(): MainActivity? {
+        return if (mainActivityRef != null) mainActivityRef!!.get() else null
+    }
+
     val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
         HttpClientManager.getHttpClient(useProxy)
     }
@@ -239,6 +251,10 @@ class Amber : Application() {
         newRelays: Set<RelaySetupInfo> = emptySet(),
     ) {
         val savedRelays = getSavedRelays() + newRelays
+        val savedUrls = savedRelays.map { it.url }.toSet()
+        val allClientRelays = client.getAll()
+        val hasNewRelays = allClientRelays.any { it.url !in savedUrls }
+
         if (savedRelays.isEmpty()) {
             client.getAll().forEach {
                 it.disconnect()
@@ -258,6 +274,10 @@ class Amber : Application() {
                 savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else settings.useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
+            if (hasNewRelays) {
+                NotificationDataSource.stop()
+                delay(1000)
+            }
             NotificationDataSource.start()
             applicationIOScope.launch {
                 delay(1000)

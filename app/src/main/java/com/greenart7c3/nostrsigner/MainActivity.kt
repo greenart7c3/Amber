@@ -65,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         Amber.instance.startService()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+        Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
         setContent {
             val isStartingApp = Amber.instance.isStartingAppState.collectAsStateWithLifecycle()

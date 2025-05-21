@@ -234,7 +234,7 @@ fun MultiEventHomeScreen(
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
-                                        intentData,
+                                        intentData.type,
                                         localEvent.kind,
                                         true,
                                         intentData.rememberType.value,
@@ -318,7 +318,7 @@ fun MultiEventHomeScreen(
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
-                                        intentData,
+                                        intentData.type,
                                         null,
                                         true,
                                         intentData.rememberType.value,
@@ -444,7 +444,7 @@ fun MultiEventHomeScreen(
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
-                                        intentData,
+                                        intentData.type,
                                         null,
                                         true,
                                         intentData.rememberType.value,
@@ -577,7 +577,7 @@ fun MultiEventHomeScreen(
                             AmberUtils.acceptOrRejectPermission(
                                 application,
                                 localKey,
-                                intentData,
+                                intentData.type,
                                 null,
                                 false,
                                 intentData.rememberType.value,
@@ -605,6 +605,7 @@ fun MultiEventHomeScreen(
 }
 
 private fun finishActivity(activity: AppCompatActivity?, closeApp: Boolean) {
+    val activity = Amber.instance.getMainActivity()
     activity?.intent = null
     if (closeApp) {
         activity?.finish()

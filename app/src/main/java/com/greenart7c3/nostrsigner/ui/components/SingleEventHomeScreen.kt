@@ -81,7 +81,7 @@ fun SingleEventHomeScreen(
         }
     }
 
-    var appName = applicationEntity?.application?.name?.ifBlank { key.toShortenHex() } ?: packageName ?: intentData.name
+    var appName = applicationEntity?.application?.name ?: packageName ?: intentData.name
     appName = appName.ifBlank { key.toShortenHex() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -261,20 +261,18 @@ fun SingleEventHomeScreen(
                 null
             }
 
-            SignMessage(
-                account,
-                paddingValues,
-                intentData.data,
-                acceptOrReject,
-                localPackageName,
-                applicationName,
-                appName,
-                intentData.type,
-                {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
+            if (intentData.bunkerRequest != null) {
+                BunkerSignMessage(
+                    account,
+                    paddingValues,
+                    intentData.data,
+                    acceptOrReject,
+                    appName,
+                    intentData.type,
+                    {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
-                        if (intentData.bunkerRequest != null) {
                             BunkerRequestUtils.sendResult(
                                 context = context,
                                 account = account,
@@ -289,7 +287,86 @@ fun SingleEventHomeScreen(
                                 shouldCloseApplication = intentData.bunkerRequest.closeApplication,
                                 rememberType = it,
                             )
-                        } else {
+                        }
+                    },
+                    {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                            val defaultRelays = Amber.instance.settings.defaultRelays
+                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: intentData.bunkerRequest.relays.ifEmpty { defaultRelays }
+                            val application =
+                                savedApplication ?: ApplicationWithPermissions(
+                                    application = ApplicationEntity(
+                                        key,
+                                        appName,
+                                        relays,
+                                        "",
+                                        "",
+                                        "",
+                                        account.hexKey,
+                                        true,
+                                        intentData.bunkerRequest.secret,
+                                        intentData.bunkerRequest.secret.isNotBlank(),
+                                        account.signPolicy,
+                                        intentData.bunkerRequest.closeApplication,
+                                    ),
+                                    permissions = mutableListOf(),
+                                )
+
+                            if (it != RememberType.NEVER) {
+                                AmberUtils.acceptOrRejectPermission(
+                                    application,
+                                    key,
+                                    intentData,
+                                    null,
+                                    false,
+                                    it,
+                                    account,
+                                )
+                            }
+
+                            Amber.instance.checkForNewRelays(
+                                newRelays = relays.toSet(),
+                            )
+
+                            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+                            Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
+                                HistoryEntity2(
+                                    0,
+                                    key,
+                                    intentData.type.toString(),
+                                    null,
+                                    TimeUtils.now(),
+                                    false,
+                                ),
+                            )
+
+                            AmberUtils.sendBunkerError(
+                                intentData,
+                                account,
+                                intentData.bunkerRequest,
+                                relays,
+                                context,
+                                closeApplication = application.application.closeApplication,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                            )
+                        }
+                    },
+                )
+            } else {
+                SignMessage(
+                    account,
+                    paddingValues,
+                    intentData.data,
+                    acceptOrReject,
+                    localPackageName,
+                    applicationName,
+                    appName,
+                    intentData.type,
+                    {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
                             IntentUtils.sendResult(
                                 context,
                                 packageName,
@@ -305,81 +382,63 @@ fun SingleEventHomeScreen(
                                 rememberType = it,
                             )
                         }
-                    }
-                },
-                {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        if (key == "null") {
-                            context.getAppCompatActivity()?.intent = null
-                            context.getAppCompatActivity()?.finish()
-                            return@launch
-                        }
+                    },
+                    {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            if (key == "null") {
+                                return@launch
+                            }
 
-                        val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
-                        val defaultRelays = Amber.instance.settings.defaultRelays
-                        val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
-                        val application =
-                            savedApplication ?: ApplicationWithPermissions(
-                                application = ApplicationEntity(
+                            val savedApplication = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                            val defaultRelays = Amber.instance.settings.defaultRelays
+                            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: (intentData.bunkerRequest?.relays?.ifEmpty { defaultRelays } ?: defaultRelays)
+                            val application =
+                                savedApplication ?: ApplicationWithPermissions(
+                                    application = ApplicationEntity(
+                                        key,
+                                        appName,
+                                        relays,
+                                        "",
+                                        "",
+                                        "",
+                                        account.hexKey,
+                                        true,
+                                        intentData.bunkerRequest?.secret ?: "",
+                                        intentData.bunkerRequest?.secret != null,
+                                        account.signPolicy,
+                                        intentData.bunkerRequest?.closeApplication != false,
+                                    ),
+                                    permissions = mutableListOf(),
+                                )
+
+                            if (it != RememberType.NEVER) {
+                                AmberUtils.acceptOrRejectPermission(
+                                    application,
                                     key,
-                                    appName,
-                                    relays,
-                                    "",
-                                    "",
-                                    "",
-                                    account.hexKey,
-                                    true,
-                                    intentData.bunkerRequest?.secret ?: "",
-                                    intentData.bunkerRequest?.secret != null,
-                                    account.signPolicy,
-                                    intentData.bunkerRequest?.closeApplication != false,
-                                ),
-                                permissions = mutableListOf(),
-                            )
+                                    intentData,
+                                    null,
+                                    false,
+                                    it,
+                                    account,
+                                )
+                            }
 
-                        if (it != RememberType.NEVER) {
-                            AmberUtils.acceptOrRejectPermission(
-                                application,
-                                key,
-                                intentData,
-                                null,
-                                false,
-                                it,
-                                account,
-                            )
-                        }
-
-                        if (intentData.bunkerRequest != null) {
                             Amber.instance.checkForNewRelays(
                                 newRelays = relays.toSet(),
                             )
-                        }
 
-                        Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
-
-                        Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
-                            HistoryEntity2(
-                                0,
-                                key,
-                                intentData.type.toString(),
-                                null,
-                                TimeUtils.now(),
-                                false,
-                            ),
-                        )
-
-                        if (intentData.bunkerRequest != null) {
-                            AmberUtils.sendBunkerError(
-                                intentData,
-                                account,
-                                intentData.bunkerRequest,
-                                relays,
-                                context,
-                                closeApplication = application.application.closeApplication,
-                                onLoading = onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
+                            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
+                            Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
+                                HistoryEntity2(
+                                    0,
+                                    key,
+                                    intentData.type.toString(),
+                                    null,
+                                    TimeUtils.now(),
+                                    false,
+                                ),
                             )
-                        } else {
+
                             context.getAppCompatActivity()?.intent = null
                             if (application.application.closeApplication) {
                                 context.getAppCompatActivity()?.finish()
@@ -387,9 +446,9 @@ fun SingleEventHomeScreen(
                             onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                             onLoading(false)
                         }
-                    }
-                },
-            )
+                    },
+                )
+            }
         }
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {

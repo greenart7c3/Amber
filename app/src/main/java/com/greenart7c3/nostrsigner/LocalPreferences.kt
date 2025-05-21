@@ -546,8 +546,7 @@ object LocalPreferences {
 
     suspend fun didMigrateFromLegacyStorage(context: Context, npub: String): Boolean {
         val existingPrivKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
-        val existingSeed = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
-        return !existingPrivKey.isNullOrBlank() && !existingSeed.isNullOrBlank()
+        return !existingPrivKey.isNullOrBlank()
     }
 
     @Suppress("DEPRECATION")

@@ -265,6 +265,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onResume() {
+        Amber.instance.setMainActivity(this)
         mainViewModel.showBunkerRequests(callingPackage)
         @Suppress("KotlinConstantConditions")
         if (BuildConfig.FLAVOR != "offline") {

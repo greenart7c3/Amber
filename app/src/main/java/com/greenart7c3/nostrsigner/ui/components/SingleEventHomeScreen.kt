@@ -473,12 +473,6 @@ fun SingleEventHomeScreen(
                         val nip = event.kind.kindToNip()?.toIntOrNull()
                         it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
                     }
-                val localPackageName =
-                    if (intentData.bunkerRequest != null) {
-                        intentData.bunkerRequest.localKey
-                    } else {
-                        packageName
-                    }
 
                 val acceptUntil = permission?.acceptUntil ?: 0
                 val rejectUntil = permission?.rejectUntil ?: 0
@@ -493,36 +487,32 @@ fun SingleEventHomeScreen(
                     null
                 }
 
-                EventData(
-                    account,
-                    paddingValues,
-                    acceptOrReject,
-                    localPackageName,
-                    appName,
-                    applicationName,
-                    event,
-                    event.toJson(),
-                    intentData.type,
-                    {
-                        if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
-                            coroutineScope.launch {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                if (intentData.bunkerRequest != null) {
+                    BunkerEventData(
+                        account,
+                        paddingValues,
+                        acceptOrReject,
+                        appName,
+                        event,
+                        event.toJson(),
+                        intentData.type,
+                        {
+                            if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                                coroutineScope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                                return@BunkerEventData
                             }
-                            return@EventData
-                        }
 
-                        val eventJson = event.toJson()
-
-                        if (intentData.bunkerRequest != null) {
                             BunkerRequestUtils.sendResult(
                                 context = context,
                                 account = account,
                                 key = key,
-                                event = eventJson,
+                                event = event.toJson(),
                                 bunkerRequest = intentData.bunkerRequest,
                                 kind = event.kind,
                                 onLoading = onLoading,
@@ -532,36 +522,8 @@ fun SingleEventHomeScreen(
                                 shouldCloseApplication = intentData.bunkerRequest.closeApplication,
                                 rememberType = it,
                             )
-                        } else {
-                            IntentUtils.sendResult(
-                                context = context,
-                                packageName = packageName,
-                                account = account,
-                                key = key,
-                                clipboardManager = clipboardManager,
-                                event = event.toJson(),
-                                value = if (event is LnZapRequestEvent &&
-                                    event.tags.any { tag ->
-                                        tag.any { t -> t == "anon" }
-                                    }
-                                ) {
-                                    eventJson
-                                } else {
-                                    event.sig
-                                },
-                                intentData = intentData,
-                                kind = event.kind,
-                                onLoading = onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                                signPolicy = null,
-                                appName = applicationName ?: appName,
-                                permissions = null,
-                                rememberType = it,
-                            )
-                        }
-                    },
-                    {
-                        if (intentData.bunkerRequest != null) {
+                        },
+                        {
                             BunkerRequestUtils.sendRejection(
                                 key = key,
                                 account = account,
@@ -574,7 +536,58 @@ fun SingleEventHomeScreen(
                                 onLoading = onLoading,
                                 onRemoveIntentData = onRemoveIntentData,
                             )
-                        } else {
+                        },
+                    )
+                } else {
+                    EventData(
+                        account,
+                        paddingValues,
+                        acceptOrReject,
+                        packageName,
+                        appName,
+                        applicationName,
+                        event,
+                        event.toJson(),
+                        intentData.type,
+                        {
+                            if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                                coroutineScope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                                return@EventData
+                            }
+
+                            IntentUtils.sendResult(
+                                context = context,
+                                packageName = packageName,
+                                account = account,
+                                key = key,
+                                clipboardManager = clipboardManager,
+                                event = event.toJson(),
+                                value = if (event is LnZapRequestEvent &&
+                                    event.tags.any { tag ->
+                                        tag.any { t -> t == "anon" }
+                                    }
+                                ) {
+                                    event.toJson()
+                                } else {
+                                    event.sig
+                                },
+                                intentData = intentData,
+                                kind = event.kind,
+                                onLoading = onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                                signPolicy = null,
+                                appName = applicationName ?: appName,
+                                permissions = null,
+                                rememberType = it,
+                            )
+                        },
+                        {
                             IntentUtils.sendRejection(
                                 key = key,
                                 account = account,
@@ -585,9 +598,9 @@ fun SingleEventHomeScreen(
                                 onRemoveIntentData = onRemoveIntentData,
                                 kind = event.kind,
                             )
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }

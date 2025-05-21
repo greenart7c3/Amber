@@ -26,7 +26,7 @@
         android:launchMode="singleTop"
         android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
-        android:theme="@style/Theme.SignerSplash"
+        android:theme="@style/Theme.NostrSigner"
         android:usesCleartextTraffic="true"
         android:windowSoftInputMode="adjustResize"
         tools:targetApi="33">

@@ -178,8 +178,8 @@ class Amber : Application() {
                 LocalPreferences.migrateTorSettings(this@Amber)
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
-                reconnect()
                 isStartingApp.value = false
+                reconnect()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false

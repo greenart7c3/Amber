@@ -9,6 +9,7 @@
 /.idea/deploymentTargetDropDown.xml
 /.idea/deploymentTargetSelector.xml
 /.idea/other.xml
+/.idea/appInsightsSettings.xml
 .DS_Store
 /build
 /captures

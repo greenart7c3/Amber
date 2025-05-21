@@ -98,15 +98,37 @@ fun IncomingRequestScreen(
                 onLoading,
             )
         } else {
-            MultiEventHomeScreen(
-                paddingValues = paddingValues,
-                intents,
-                packageName,
-                account,
-                navController,
-                onRemoveIntentData,
-                onLoading,
-            )
+            if (intents.filter { it.bunkerRequest == null }.size == 1) {
+                SingleEventHomeScreen(
+                    paddingValues,
+                    packageName,
+                    applicationName,
+                    intents.first { it.bunkerRequest == null },
+                    account,
+                    onRemoveIntentData,
+                    onLoading,
+                )
+            } else if (intents.filter { it.bunkerRequest != null }.size == 1) {
+                SingleEventHomeScreen(
+                    paddingValues,
+                    packageName,
+                    applicationName,
+                    intents.first { it.bunkerRequest != null },
+                    account,
+                    onRemoveIntentData,
+                    onLoading,
+                )
+            } else {
+                MultiEventHomeScreen(
+                    paddingValues = paddingValues,
+                    intents,
+                    packageName,
+                    account,
+                    navController,
+                    onRemoveIntentData,
+                    onLoading,
+                )
+            }
         }
     }
 }

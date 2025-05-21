@@ -366,25 +366,23 @@ fun SingleEventHomeScreen(
                 null
             }
 
-            EncryptDecryptData(
-                account,
-                paddingValues,
-                intentData.data,
-                intentData.encryptedData ?: "",
-                acceptOrReject,
-                localPackageName,
-                applicationName,
-                appName,
-                intentData.type,
-                {
-                    val result =
-                        if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                            ""
-                        } else {
-                            intentData.encryptedData ?: ""
-                        }
+            if (intentData.bunkerRequest != null) {
+                BunkerEncryptDecryptData(
+                    account,
+                    paddingValues,
+                    intentData.data,
+                    intentData.encryptedData ?: "",
+                    acceptOrReject,
+                    appName,
+                    intentData.type,
+                    {
+                        val result =
+                            if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                ""
+                            } else {
+                                intentData.encryptedData ?: ""
+                            }
 
-                    if (intentData.bunkerRequest != null) {
                         BunkerRequestUtils.sendResult(
                             context = context,
                             account = account,
@@ -399,7 +397,41 @@ fun SingleEventHomeScreen(
                             shouldCloseApplication = intentData.bunkerRequest.closeApplication,
                             rememberType = it,
                         )
-                    } else {
+                    },
+                    {
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = intentData.bunkerRequest,
+                            appName = appName,
+                            rememberType = it,
+                            signerType = intentData.type,
+                            kind = null,
+                            intentData = intentData,
+                            onLoading = onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                        )
+                    },
+                )
+            } else {
+                EncryptDecryptData(
+                    account,
+                    paddingValues,
+                    intentData.data,
+                    intentData.encryptedData ?: "",
+                    acceptOrReject,
+                    localPackageName,
+                    applicationName,
+                    appName,
+                    intentData.type,
+                    {
+                        val result =
+                            if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                                ""
+                            } else {
+                                intentData.encryptedData ?: ""
+                            }
+
                         IntentUtils.sendResult(
                             context,
                             packageName,
@@ -414,23 +446,8 @@ fun SingleEventHomeScreen(
                             onLoading = onLoading,
                             rememberType = it,
                         )
-                    }
-                },
-                {
-                    if (intentData.bunkerRequest != null) {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = intentData.bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = intentData.type,
-                            kind = null,
-                            intentData = intentData,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                        )
-                    } else {
+                    },
+                    {
                         IntentUtils.sendRejection(
                             key = key,
                             account = account,
@@ -441,9 +458,9 @@ fun SingleEventHomeScreen(
                             onRemoveIntentData = onRemoveIntentData,
                             kind = null,
                         )
-                    }
-                },
-            )
+                    },
+                )
+            }
         }
 
         else -> {

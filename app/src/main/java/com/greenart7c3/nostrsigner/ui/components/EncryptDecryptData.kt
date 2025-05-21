@@ -180,3 +180,130 @@ fun EncryptDecryptData(
         )
     }
 }
+
+@Composable
+fun BunkerEncryptDecryptData(
+    account: Account,
+    paddingValues: PaddingValues,
+    content: String,
+    encryptedData: String,
+    shouldRunOnAccept: Boolean?,
+    appName: String,
+    type: SignerType,
+    onAccept: (RememberType) -> Unit,
+    onReject: (RememberType) -> Unit,
+) {
+    var showMore by androidx.compose.runtime.remember {
+        mutableStateOf(false)
+    }
+    val clipboardManager = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+    val scrollState = rememberScrollState()
+    var rememberType by remember {
+        mutableStateOf(RememberType.NEVER)
+    }
+
+    Column(
+        Modifier
+            .fillMaxSize()
+            .verticalScrollbar(scrollState)
+            .verticalScroll(scrollState)
+            .padding(paddingValues),
+    ) {
+        ProfilePicture(account)
+
+        val message =
+            when (type) {
+                SignerType.NIP44_ENCRYPT -> stringResource(R.string.encrypt_nip44)
+                SignerType.NIP04_ENCRYPT -> stringResource(R.string.encrypt_nip04)
+                SignerType.NIP44_DECRYPT -> stringResource(R.string.decrypt_nip44)
+                SignerType.NIP04_DECRYPT -> stringResource(R.string.decrypt_nip04)
+                SignerType.DECRYPT_ZAP_EVENT -> stringResource(R.string.decrypt_zap_event)
+                else -> stringResource(R.string.encrypt_decrypt)
+            }
+
+        Text(
+            buildAnnotatedString {
+                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                    append(appName)
+                }
+                append(" requests $message")
+            },
+            fontSize = 18.sp,
+        )
+        Spacer(Modifier.size(4.dp))
+        if (!type.toString().contains("DECRYPT")) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth(),
+            ) {
+                Column(Modifier.padding(6.dp)) {
+                    Text(
+                        "Event content",
+                        fontWeight = FontWeight.Bold,
+                    )
+
+                    Text(
+                        content,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                    )
+                }
+            }
+        }
+        RawJsonButton(
+            onCLick = {
+                showMore = !showMore
+            },
+            if (!showMore) stringResource(R.string.show_details) else stringResource(R.string.hide_details),
+        )
+        if (showMore) {
+            RawJson(
+                content,
+                encryptedData,
+                Modifier.height(200.dp),
+                stringResource(R.string.encrypted_decrypted_data),
+                type,
+            ) {
+                coroutineScope.launch {
+                    clipboardManager.setClipEntry(
+                        ClipEntry(
+                            ClipData.newPlainText("", encryptedData),
+                        ),
+                    )
+
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.data_copied_to_the_clipboard),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+            }
+        } else {
+            Spacer(modifier = Modifier.weight(1f))
+        }
+
+        RememberMyChoice(
+            shouldRunOnAccept,
+            null,
+            true,
+            onAccept,
+            onReject,
+        ) {
+            rememberType = it
+        }
+
+        AcceptRejectButtons(
+            onAccept = {
+                onAccept(rememberType)
+            },
+            onReject = {
+                onReject(rememberType)
+            },
+        )
+    }
+}

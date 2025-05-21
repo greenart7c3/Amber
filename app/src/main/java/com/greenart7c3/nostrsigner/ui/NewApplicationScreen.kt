@@ -27,7 +27,6 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.launch
@@ -53,7 +52,7 @@ fun NewApplicationScreen(
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 intent.putExtra("closeApplication", false)
                 intent.`package` = context.packageName
-                context.getAppCompatActivity()?.startActivity(intent)
+                Amber.instance.getMainActivity()?.startActivity(intent)
                 accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
             }
         }
@@ -100,7 +99,7 @@ fun NewApplicationScreen(
                     intent.data = clipboardText.text.toString().toUri()
                     intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     intent.`package` = context.packageName
-                    context.getAppCompatActivity()?.startActivity(intent)
+                    Amber.instance.getMainActivity()?.startActivity(intent)
                     accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
                 }
             },

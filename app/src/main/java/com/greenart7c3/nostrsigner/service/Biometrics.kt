@@ -3,14 +3,13 @@ package com.greenart7c3.nostrsigner.service
 import android.annotation.SuppressLint
 import android.app.KeyguardManager
 import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
 import android.os.Build
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.result.ActivityResult
-import androidx.appcompat.app.AppCompatActivity
 import androidx.biometric.BiometricManager
 import androidx.biometric.BiometricPrompt
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 
 object Biometrics {
@@ -21,7 +20,7 @@ object Biometrics {
         onApproved: () -> Unit,
         onError: (String, String) -> Unit,
     ) {
-        val fragmentContext = context.getAppCompatActivity()!!
+        val fragmentContext = Amber.instance.getMainActivity()!!
         val keyguardManager =
             fragmentContext.getSystemService(Context.KEYGUARD_SERVICE) as KeyguardManager
 
@@ -101,15 +100,4 @@ object Biometrics {
             else -> keyguardPrompt()
         }
     }
-}
-
-fun Context.getAppCompatActivity(): AppCompatActivity? {
-    var currentContext = this
-    while (currentContext is ContextWrapper) {
-        if (currentContext is AppCompatActivity) {
-            return currentContext
-        }
-        currentContext = currentContext.baseContext
-    }
-    return null
 }

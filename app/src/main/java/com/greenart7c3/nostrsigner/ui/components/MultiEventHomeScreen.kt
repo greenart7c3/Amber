@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
-import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,7 +60,6 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
-import com.greenart7c3.nostrsigner.service.getAppCompatActivity
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.Result
@@ -180,7 +178,6 @@ fun MultiEventHomeScreen(
                 onLoading(true)
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     try {
-                        val activity = context.getAppCompatActivity()
                         val results = mutableListOf<Result>()
                         reconnectToRelays(intents)
                         var closeApp = true
@@ -512,13 +509,13 @@ fun MultiEventHomeScreen(
                         }
 
                         if (results.isNotEmpty()) {
-                            sendResultIntent(results, activity)
+                            sendResultIntent(results)
                         }
                         if (intents.any { it.bunkerRequest != null }) {
                             EventNotificationConsumer(context).notificationManager().cancelAll()
-                            finishActivity(activity, closeApp)
+                            finishActivity(closeApp)
                         } else {
-                            finishActivity(activity, closeApp)
+                            finishActivity(closeApp)
                         }
                     } finally {
                         onLoading(false)
@@ -590,12 +587,11 @@ fun MultiEventHomeScreen(
                         }
                     }
 
-                    val activity = context.getAppCompatActivity()
                     if (intents.any { it.bunkerRequest != null }) {
                         EventNotificationConsumer(context).notificationManager().cancelAll()
-                        finishActivity(activity, closeApp)
+                        finishActivity(closeApp)
                     } else {
-                        finishActivity(activity, closeApp)
+                        finishActivity(closeApp)
                     }
                 }
             },
@@ -604,7 +600,7 @@ fun MultiEventHomeScreen(
     }
 }
 
-private fun finishActivity(activity: AppCompatActivity?, closeApp: Boolean) {
+private fun finishActivity(closeApp: Boolean) {
     val activity = Amber.instance.getMainActivity()
     activity?.intent = null
     if (closeApp) {
@@ -614,13 +610,12 @@ private fun finishActivity(activity: AppCompatActivity?, closeApp: Boolean) {
 
 private fun sendResultIntent(
     results: MutableList<Result>,
-    activity: AppCompatActivity?,
 ) {
     val gson = GsonBuilder().serializeNulls().create()
     val json = gson.toJson(results)
     val intent = Intent()
     intent.putExtra("results", json)
-    activity?.setResult(Activity.RESULT_OK, intent)
+    Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
 }
 
 private suspend fun reconnectToRelays(intents: List<IntentData>) {

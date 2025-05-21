@@ -33,13 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.scale
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import com.greenart7c3.nostrsigner.service.getAppCompatActivity
+import com.greenart7c3.nostrsigner.Amber
 
 @Composable
 fun RandomPinInput(
@@ -50,21 +49,20 @@ fun RandomPinInput(
     var selectedPin by remember { mutableStateOf("") }
     var obscureText by remember { mutableStateOf(true) }
 
-    val activity = LocalContext.current.getAppCompatActivity()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     DisposableEffect(key1 = lifecycleOwner) {
         val observer = LifecycleEventObserver { _, event ->
             when (event) {
                 Lifecycle.Event.ON_START -> {
-                    activity?.window?.setFlags(
+                    Amber.instance.getMainActivity()?.window?.setFlags(
                         WindowManager.LayoutParams.FLAG_SECURE,
                         WindowManager.LayoutParams.FLAG_SECURE,
                     )
                 }
 
                 Lifecycle.Event.ON_PAUSE -> {
-                    activity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+                    Amber.instance.getMainActivity()?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
                 }
 
                 else -> {}
@@ -72,7 +70,10 @@ fun RandomPinInput(
         }
         lifecycleOwner.lifecycle.addObserver(observer)
 
-        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+        onDispose {
+            Amber.instance.getMainActivity()?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            lifecycleOwner.lifecycle.removeObserver(observer)
+        }
     }
 
     Column(

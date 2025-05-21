@@ -27,6 +27,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -54,24 +55,46 @@ fun SingleEventHomeScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
+    if (intentData.bunkerRequest != null) {
+        BunkerSingleEventHomeScreen(
+            paddingValues = paddingValues,
+            bunkerRequest = intentData.bunkerRequest,
+            intentData = intentData,
+            account = account,
+            onRemoveIntentData = onRemoveIntentData,
+            onLoading = onLoading,
+        )
+    } else {
+        IntentSingleEventHomeScreen(
+            paddingValues = paddingValues,
+            packageName = packageName,
+            applicationName = applicationName,
+            intentData = intentData,
+            account = account,
+            onRemoveIntentData = onRemoveIntentData,
+            onLoading = onLoading,
+        )
+    }
+}
+
+@Composable
+private fun IntentSingleEventHomeScreen(
+    paddingValues: PaddingValues,
+    packageName: String?,
+    applicationName: String?,
+    intentData: IntentData,
+    account: Account,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+) {
     var applicationEntity by remember {
         mutableStateOf<ApplicationWithPermissions?>(null)
     }
-    val key =
-        if (intentData.bunkerRequest != null) {
-            intentData.bunkerRequest.localKey
-        } else {
-            "$packageName"
-        }
+    val key = "$packageName"
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            applicationEntity =
-                if (intentData.bunkerRequest?.secret != null && intentData.bunkerRequest.secret.isNotBlank()) {
-                    Amber.instance.getDatabase(account.npub).applicationDao().getBySecret(intentData.bunkerRequest.secret)
-                } else {
-                    Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
-                }
+            applicationEntity = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
         }
     }
 
@@ -82,137 +105,49 @@ fun SingleEventHomeScreen(
     val clipboardManager = LocalClipboard.current
 
     when (intentData.type) {
-        SignerType.GET_PUBLIC_KEY, SignerType.CONNECT -> {
-            if (intentData.bunkerRequest != null && intentData.type == SignerType.GET_PUBLIC_KEY) {
-                BunkerGetPubKeyScreen(
-                    paddingValues,
-                    account,
-                    appName,
-                    { permissions, signPolicy, closeApplication, rememberType ->
-                        val result = if (intentData.type == SignerType.CONNECT) {
-                            intentData.bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
-                        } else {
-                            account.hexKey
-                        }
+        SignerType.GET_PUBLIC_KEY -> {
+            LoginWithPubKey(
+                applicationEntity?.application?.closeApplication != false,
+                paddingValues,
+                account,
+                packageName,
+                appName,
+                applicationName,
+                intentData.permissions,
+                { permissions, signPolicy, closeApplication, rememberType ->
+                    val result = if (packageName == null) {
+                        account.hexKey
+                    } else {
+                        account.npub
+                    }
 
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = account,
-                            key = key,
-                            event = result,
-                            bunkerRequest = intentData.bunkerRequest,
-                            kind = null,
-                            onLoading = onLoading,
-                            permissions = permissions,
-                            appName = applicationName ?: appName,
-                            signPolicy = signPolicy,
-                            shouldCloseApplication = closeApplication,
-                            rememberType = rememberType,
-                        )
-                    },
-                    {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = intentData.bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = intentData.type,
-                            kind = null,
-                            intentData = intentData,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                        )
-                    },
-                )
-            } else if (intentData.bunkerRequest != null) {
-                BunkerConnectRequestScreen(
-                    applicationEntity?.application?.closeApplication ?: intentData.bunkerRequest.closeApplication,
-                    paddingValues,
-                    account,
-                    appName,
-                    intentData.permissions,
-                    { permissions, signPolicy, closeApplication, rememberType ->
-                        val result = if (intentData.type == SignerType.CONNECT) {
-                            intentData.bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
-                        } else {
-                            account.hexKey
-                        }
-
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = account,
-                            key = key,
-                            event = result,
-                            bunkerRequest = intentData.bunkerRequest,
-                            kind = null,
-                            onLoading = onLoading,
-                            permissions = permissions,
-                            appName = applicationName ?: appName,
-                            signPolicy = signPolicy,
-                            shouldCloseApplication = closeApplication,
-                            rememberType = rememberType,
-                        )
-                    },
-                    {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = intentData.bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = intentData.type,
-                            kind = null,
-                            intentData = intentData,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                        )
-                    },
-                )
-            } else {
-                LoginWithPubKey(
-                    applicationEntity?.application?.closeApplication != false,
-                    paddingValues,
-                    account,
-                    packageName,
-                    appName,
-                    applicationName,
-                    intentData.permissions,
-                    { permissions, signPolicy, closeApplication, rememberType ->
-                        val result = if (packageName == null) {
-                            account.hexKey
-                        } else {
-                            account.npub
-                        }
-
-                        IntentUtils.sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            clipboardManager,
-                            result,
-                            result,
-                            intentData,
-                            null,
-                            permissions = permissions,
-                            appName = applicationName ?: appName,
-                            onLoading = onLoading,
-                            signPolicy = signPolicy,
-                            onRemoveIntentData = onRemoveIntentData,
-                            shouldCloseApplication = closeApplication,
-                            rememberType = rememberType,
-                        )
-                    },
-                    {
-                        val activity = Amber.instance.getMainActivity()
-                        activity?.intent = null
-                        activity?.finish()
-                        onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                        onLoading(false)
-                    },
-                )
-            }
+                    IntentUtils.sendResult(
+                        context,
+                        packageName,
+                        account,
+                        key,
+                        clipboardManager,
+                        result,
+                        result,
+                        intentData,
+                        null,
+                        permissions = permissions,
+                        appName = applicationName ?: appName,
+                        onLoading = onLoading,
+                        signPolicy = signPolicy,
+                        onRemoveIntentData = onRemoveIntentData,
+                        shouldCloseApplication = closeApplication,
+                        rememberType = rememberType,
+                    )
+                },
+                {
+                    val activity = Amber.instance.getMainActivity()
+                    activity?.intent = null
+                    activity?.finish()
+                    onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
+                    onLoading(false)
+                },
+            )
         }
 
         SignerType.SIGN_MESSAGE -> {
@@ -221,12 +156,6 @@ fun SingleEventHomeScreen(
                     it.pkKey == key && it.type == intentData.type.toString()
                 }
 
-            val localPackageName =
-                if (intentData.bunkerRequest != null) {
-                    intentData.bunkerRequest.localKey
-                } else {
-                    packageName
-                }
             val acceptUntil = permission?.acceptUntil ?: 0
             val rejectUntil = permission?.rejectUntil ?: 0
 
@@ -240,92 +169,47 @@ fun SingleEventHomeScreen(
                 null
             }
 
-            if (intentData.bunkerRequest != null) {
-                BunkerSignMessage(
-                    account,
-                    paddingValues,
-                    intentData.data,
-                    acceptOrReject,
-                    appName,
-                    intentData.type,
-                    {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
-
-                            BunkerRequestUtils.sendResult(
-                                context = context,
-                                account = account,
-                                key = key,
-                                event = result,
-                                bunkerRequest = intentData.bunkerRequest,
-                                kind = null,
-                                onLoading = onLoading,
-                                permissions = null,
-                                appName = applicationName ?: appName,
-                                signPolicy = null,
-                                shouldCloseApplication = intentData.bunkerRequest.closeApplication,
-                                rememberType = it,
-                            )
-                        }
-                    },
-                    {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = intentData.bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = intentData.type,
-                            kind = null,
-                            intentData = intentData,
-                            onLoading = onLoading,
+            SignMessage(
+                account,
+                paddingValues,
+                intentData.data,
+                acceptOrReject,
+                packageName,
+                applicationName,
+                appName,
+                intentData.type,
+                {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                        val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
+                        IntentUtils.sendResult(
+                            context,
+                            packageName,
+                            account,
+                            key,
+                            clipboardManager,
+                            result,
+                            result,
+                            intentData,
+                            null,
+                            onLoading,
                             onRemoveIntentData = onRemoveIntentData,
-                        )
-                    },
-                )
-            } else {
-                SignMessage(
-                    account,
-                    paddingValues,
-                    intentData.data,
-                    acceptOrReject,
-                    localPackageName,
-                    applicationName,
-                    appName,
-                    intentData.type,
-                    {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
-                            IntentUtils.sendResult(
-                                context,
-                                packageName,
-                                account,
-                                key,
-                                clipboardManager,
-                                result,
-                                result,
-                                intentData,
-                                null,
-                                onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                                rememberType = it,
-                            )
-                        }
-                    },
-                    {
-                        IntentUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            intentData = intentData,
-                            appName = appName,
                             rememberType = it,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            kind = null,
                         )
-                    },
-                )
-            }
+                    }
+                },
+                {
+                    IntentUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        intentData = intentData,
+                        appName = appName,
+                        rememberType = it,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                        kind = null,
+                    )
+                },
+            )
         }
 
         SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
@@ -346,13 +230,6 @@ fun SingleEventHomeScreen(
                     }
             }
 
-            val localPackageName =
-                if (intentData.bunkerRequest != null) {
-                    intentData.bunkerRequest.localKey
-                } else {
-                    packageName
-                }
-
             val acceptUntil = permission?.acceptUntil ?: 0
             val rejectUntil = permission?.rejectUntil ?: 0
 
@@ -366,101 +243,52 @@ fun SingleEventHomeScreen(
                 null
             }
 
-            if (intentData.bunkerRequest != null) {
-                BunkerEncryptDecryptData(
-                    account,
-                    paddingValues,
-                    intentData.data,
-                    intentData.encryptedData ?: "",
-                    acceptOrReject,
-                    appName,
-                    intentData.type,
-                    {
-                        val result =
-                            if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                                ""
-                            } else {
-                                intentData.encryptedData ?: ""
-                            }
+            EncryptDecryptData(
+                account,
+                paddingValues,
+                intentData.data,
+                intentData.encryptedData ?: "",
+                acceptOrReject,
+                packageName,
+                applicationName,
+                appName,
+                intentData.type,
+                {
+                    val result =
+                        if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                            ""
+                        } else {
+                            intentData.encryptedData ?: ""
+                        }
 
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = account,
-                            key = key,
-                            event = result,
-                            bunkerRequest = intentData.bunkerRequest,
-                            kind = null,
-                            onLoading = onLoading,
-                            permissions = null,
-                            appName = applicationName ?: appName,
-                            signPolicy = null,
-                            shouldCloseApplication = intentData.bunkerRequest.closeApplication,
-                            rememberType = it,
-                        )
-                    },
-                    {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = intentData.bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = intentData.type,
-                            kind = null,
-                            intentData = intentData,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                        )
-                    },
-                )
-            } else {
-                EncryptDecryptData(
-                    account,
-                    paddingValues,
-                    intentData.data,
-                    intentData.encryptedData ?: "",
-                    acceptOrReject,
-                    localPackageName,
-                    applicationName,
-                    appName,
-                    intentData.type,
-                    {
-                        val result =
-                            if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                                ""
-                            } else {
-                                intentData.encryptedData ?: ""
-                            }
-
-                        IntentUtils.sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            clipboardManager,
-                            result,
-                            result,
-                            intentData,
-                            null,
-                            onRemoveIntentData = onRemoveIntentData,
-                            onLoading = onLoading,
-                            rememberType = it,
-                        )
-                    },
-                    {
-                        IntentUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            intentData = intentData,
-                            appName = appName,
-                            rememberType = it,
-                            onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            kind = null,
-                        )
-                    },
-                )
-            }
+                    IntentUtils.sendResult(
+                        context,
+                        packageName,
+                        account,
+                        key,
+                        clipboardManager,
+                        result,
+                        result,
+                        intentData,
+                        null,
+                        onRemoveIntentData = onRemoveIntentData,
+                        onLoading = onLoading,
+                        rememberType = it,
+                    )
+                },
+                {
+                    IntentUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        intentData = intentData,
+                        appName = appName,
+                        rememberType = it,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                        kind = null,
+                    )
+                },
+            )
         }
 
         else -> {
@@ -504,120 +332,425 @@ fun SingleEventHomeScreen(
                     null
                 }
 
-                if (intentData.bunkerRequest != null) {
-                    BunkerEventData(
-                        account,
-                        paddingValues,
-                        acceptOrReject,
-                        appName,
-                        event,
-                        event.toJson(),
-                        intentData.type,
-                        {
-                            if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
-                                coroutineScope.launch {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                                return@BunkerEventData
+                EventData(
+                    account,
+                    paddingValues,
+                    acceptOrReject,
+                    packageName,
+                    appName,
+                    applicationName,
+                    event,
+                    event.toJson(),
+                    intentData.type,
+                    {
+                        if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                            coroutineScope.launch {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
                             }
+                            return@EventData
+                        }
 
-                            BunkerRequestUtils.sendResult(
-                                context = context,
-                                account = account,
-                                key = key,
-                                event = event.toJson(),
-                                bunkerRequest = intentData.bunkerRequest,
-                                kind = event.kind,
-                                onLoading = onLoading,
-                                permissions = null,
-                                appName = applicationName ?: appName,
-                                signPolicy = null,
-                                shouldCloseApplication = intentData.bunkerRequest.closeApplication,
-                                rememberType = it,
-                            )
-                        },
-                        {
-                            BunkerRequestUtils.sendRejection(
-                                key = key,
-                                account = account,
-                                bunkerRequest = intentData.bunkerRequest,
-                                appName = appName,
-                                rememberType = it,
-                                signerType = intentData.type,
-                                kind = event.kind,
-                                intentData = intentData,
-                                onLoading = onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                            )
-                        },
-                    )
+                        IntentUtils.sendResult(
+                            context = context,
+                            packageName = packageName,
+                            account = account,
+                            key = key,
+                            clipboardManager = clipboardManager,
+                            event = event.toJson(),
+                            value = if (event is LnZapRequestEvent &&
+                                event.tags.any { tag ->
+                                    tag.any { t -> t == "anon" }
+                                }
+                            ) {
+                                event.toJson()
+                            } else {
+                                event.sig
+                            },
+                            intentData = intentData,
+                            kind = event.kind,
+                            onLoading = onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                            signPolicy = null,
+                            appName = applicationName ?: appName,
+                            permissions = null,
+                            rememberType = it,
+                        )
+                    },
+                    {
+                        IntentUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            intentData = intentData,
+                            appName = appName,
+                            rememberType = it,
+                            onLoading = onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                            kind = event.kind,
+                        )
+                    },
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun BunkerSingleEventHomeScreen(
+    paddingValues: PaddingValues,
+    bunkerRequest: BunkerRequest,
+    intentData: IntentData,
+    account: Account,
+    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    onLoading: (Boolean) -> Unit,
+) {
+    var applicationEntity by remember {
+        mutableStateOf<ApplicationWithPermissions?>(null)
+    }
+    val key = bunkerRequest.localKey
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            applicationEntity =
+                if (bunkerRequest.secret.isNotBlank()) {
+                    Amber.instance.getDatabase(account.npub).applicationDao().getBySecret(bunkerRequest.secret)
                 } else {
-                    EventData(
-                        account,
-                        paddingValues,
-                        acceptOrReject,
-                        packageName,
-                        appName,
-                        applicationName,
-                        event,
-                        event.toJson(),
-                        intentData.type,
-                        {
-                            if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
-                                coroutineScope.launch {
-                                    Toast.makeText(
-                                        context,
-                                        context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                        Toast.LENGTH_SHORT,
-                                    ).show()
-                                }
-                                return@EventData
-                            }
-
-                            IntentUtils.sendResult(
-                                context = context,
-                                packageName = packageName,
-                                account = account,
-                                key = key,
-                                clipboardManager = clipboardManager,
-                                event = event.toJson(),
-                                value = if (event is LnZapRequestEvent &&
-                                    event.tags.any { tag ->
-                                        tag.any { t -> t == "anon" }
-                                    }
-                                ) {
-                                    event.toJson()
-                                } else {
-                                    event.sig
-                                },
-                                intentData = intentData,
-                                kind = event.kind,
-                                onLoading = onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                                signPolicy = null,
-                                appName = applicationName ?: appName,
-                                permissions = null,
-                                rememberType = it,
-                            )
-                        },
-                        {
-                            IntentUtils.sendRejection(
-                                key = key,
-                                account = account,
-                                intentData = intentData,
-                                appName = appName,
-                                rememberType = it,
-                                onLoading = onLoading,
-                                onRemoveIntentData = onRemoveIntentData,
-                                kind = event.kind,
-                            )
-                        },
-                    )
+                    Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                 }
+        }
+    }
+
+    var appName = applicationEntity?.application?.name ?: intentData.name
+    appName = appName.ifBlank { key.toShortenHex() }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    when (intentData.type) {
+        SignerType.CONNECT -> {
+            BunkerConnectRequestScreen(
+                applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
+                paddingValues,
+                account,
+                appName,
+                intentData.permissions,
+                { permissions, signPolicy, closeApplication, rememberType ->
+                    val result = if (intentData.type == SignerType.CONNECT) {
+                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                    } else {
+                        account.hexKey
+                    }
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        event = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = permissions,
+                        appName = appName,
+                        signPolicy = signPolicy,
+                        shouldCloseApplication = closeApplication,
+                        rememberType = rememberType,
+                    )
+                },
+                {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = intentData.type,
+                        kind = null,
+                        intentData = intentData,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                    )
+                },
+            )
+        }
+        SignerType.GET_PUBLIC_KEY -> {
+            BunkerGetPubKeyScreen(
+                paddingValues,
+                account,
+                appName,
+                { permissions, signPolicy, closeApplication, rememberType ->
+                    val result = if (intentData.type == SignerType.CONNECT) {
+                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                    } else {
+                        account.hexKey
+                    }
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        event = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = permissions,
+                        appName = appName,
+                        signPolicy = signPolicy,
+                        shouldCloseApplication = closeApplication,
+                        rememberType = rememberType,
+                    )
+                },
+                {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = intentData.type,
+                        kind = null,
+                        intentData = intentData,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                    )
+                },
+            )
+        }
+
+        SignerType.SIGN_MESSAGE -> {
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString()
+                }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
+            BunkerSignMessage(
+                account,
+                paddingValues,
+                intentData.data,
+                acceptOrReject,
+                appName,
+                intentData.type,
+                {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                        val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
+
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            event = result,
+                            bunkerRequest = bunkerRequest,
+                            kind = null,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = appName,
+                            signPolicy = null,
+                            shouldCloseApplication = bunkerRequest.closeApplication,
+                            rememberType = it,
+                        )
+                    }
+                },
+                {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = intentData.type,
+                        kind = null,
+                        intentData = intentData,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                    )
+                },
+            )
+        }
+
+        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
+            val nip = when (intentData.type) {
+                SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
+                SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
+                SignerType.DECRYPT_ZAP_EVENT -> null
+                else -> null
+            }
+            var permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString()
+                }
+            if (permission == null && nip != null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == "NIP" && it.kind == nip
+                    }
+            }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
+            BunkerEncryptDecryptData(
+                account,
+                paddingValues,
+                intentData.data,
+                intentData.encryptedData ?: "",
+                acceptOrReject,
+                appName,
+                intentData.type,
+                {
+                    val result =
+                        if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                            ""
+                        } else {
+                            intentData.encryptedData ?: ""
+                        }
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        event = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = null,
+                        appName = appName,
+                        signPolicy = null,
+                        shouldCloseApplication = bunkerRequest.closeApplication,
+                        rememberType = it,
+                    )
+                },
+                {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = intentData.type,
+                        kind = null,
+                        intentData = intentData,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                    )
+                },
+            )
+        }
+
+        else -> {
+            val event = intentData.event!!
+            val accounts =
+                LocalPreferences.allSavedAccounts(context).filter {
+                    it.npub.bechToBytes().toHexKey() == event.pubKey
+                }
+
+            if (accounts.isEmpty() && !isPrivateEvent(event.kind, event.tags)) {
+                Column(
+                    Modifier.fillMaxSize(),
+                    Arrangement.Center,
+                    Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        Hex.decode(event.pubKey).toNpub().toShortenHex(),
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 21.sp,
+                    )
+                    Spacer(Modifier.size(8.dp))
+                    Text("Not logged in")
+                }
+            } else {
+                val permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        val nip = event.kind.kindToNip()?.toIntOrNull()
+                        it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
+                    }
+
+                val acceptUntil = permission?.acceptUntil ?: 0
+                val rejectUntil = permission?.rejectUntil ?: 0
+
+                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                    null
+                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                    false
+                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                    true
+                } else {
+                    null
+                }
+
+                BunkerEventData(
+                    account,
+                    paddingValues,
+                    acceptOrReject,
+                    appName,
+                    event,
+                    event.toJson(),
+                    intentData.type,
+                    {
+                        if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                            coroutineScope.launch {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                            return@BunkerEventData
+                        }
+
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            event = event.toJson(),
+                            bunkerRequest = bunkerRequest,
+                            kind = event.kind,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = appName,
+                            signPolicy = null,
+                            shouldCloseApplication = bunkerRequest.closeApplication,
+                            rememberType = it,
+                        )
+                    },
+                    {
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = it,
+                            signerType = intentData.type,
+                            kind = event.kind,
+                            intentData = intentData,
+                            onLoading = onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                        )
+                    },
+                )
             }
         }
     }

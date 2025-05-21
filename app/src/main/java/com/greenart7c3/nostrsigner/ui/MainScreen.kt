@@ -2,8 +2,11 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
 import android.widget.Toast
 import androidx.activity.compose.ManagedActivityResultLauncher
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -42,6 +45,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
+import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -80,6 +84,7 @@ private fun askNotificationPermission(
     onShouldShowRequestPermissionRationale: () -> Unit,
 ) {
     if (ContextCompat.checkSelfPermission(context, "android.permission.POST_NOTIFICATIONS") == PackageManager.PERMISSION_GRANTED) {
+        requestIgnoreBatteryOptimizations(context)
         return
     }
 
@@ -97,6 +102,21 @@ private fun askNotificationPermission(
         onShouldShowRequestPermissionRationale()
     } else {
         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+    }
+}
+
+@SuppressLint("BatteryLife")
+fun requestIgnoreBatteryOptimizations(context: Context) {
+    @Suppress("KotlinConstantConditions")
+    if (BuildConfig.FLAVOR == "offline") return
+    if (Amber.instance.client.getAll().isEmpty()) return
+    val packageName = context.packageName
+    val pm = context.getSystemService(PowerManager::class.java)
+    if (!pm.isIgnoringBatteryOptimizations(packageName) && !LocalPreferences.getBatteryOptimization(context)) {
+        LocalPreferences.updateBatteryOptimization(context, true)
+        val intent = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS)
+        intent.data = "package:$packageName".toUri()
+        context.startActivity(intent)
     }
 }
 
@@ -133,6 +153,7 @@ fun MainScreen(
                 }
             } else {
                 AmberRelayStats.updateNotification()
+                requestIgnoreBatteryOptimizations(context)
             }
         }
 

@@ -53,6 +53,7 @@ private enum class SettingsKeys(val key: String) {
     SAVED_ACCOUNTS("all_saved_accounts"),
     USE_PROXY("use_proxy"),
     PROXY_PORT("proxy_port"),
+    BATERRY_OPTIMIZATION("battery_optimization"),
 }
 
 @Immutable
@@ -135,6 +136,18 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.USE_PIN.key, settings.usePin)
                 putBoolean(SettingsKeys.USE_PROXY.key, settings.useProxy)
                 putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
+            }
+        }
+    }
+
+    fun getBatteryOptimization(context: Context): Boolean {
+        return sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
+    }
+
+    fun updateBatteryOptimization(context: Context, value: Boolean) {
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, value)
             }
         }
     }

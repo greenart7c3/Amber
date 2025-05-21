@@ -5,7 +5,6 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
-import android.os.Build
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.work.Data
@@ -179,8 +178,8 @@ class Amber : Application() {
                 LocalPreferences.migrateTorSettings(this@Amber)
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
+                reconnect()
                 isStartingApp.value = false
-                startService()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false
@@ -192,27 +191,24 @@ class Amber : Application() {
     fun startService() {
         try {
             Log.d(TAG, "Starting ConnectivityService")
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-                val operation = PendingIntent.getForegroundService(
-                    this,
-                    10,
-                    Intent(this, ConnectivityService::class.java),
-                    PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
-                )
-                val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
-                alarmManager.set(AlarmManager.RTC_WAKEUP, 1000, operation)
-            } else {
-                this.startForegroundService(
-                    Intent(
-                        this,
-                        ConnectivityService::class.java,
-                    ),
-                )
-            }
+            val serviceIntent = Intent(this, ConnectivityService::class.java)
+            this.startForegroundService(serviceIntent)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start ConnectivityService", e)
             if (e is CancellationException) throw e
         }
+    }
+
+    suspend fun reconnect() {
+        Log.d(TAG, "reconnecting relays")
+        NotificationDataSource.stop()
+        client.getAll().forEach {
+            it.disconnect()
+        }
+        delay(1000)
+        checkForNewRelays()
+        NotificationDataSource.start()
+        AmberRelayStats.updateNotification()
     }
 
     fun getDatabase(npub: String): AppDatabase {

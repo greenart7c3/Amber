@@ -62,6 +62,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        Log.d(Amber.TAG, "onCreate MainActivity")
+        Amber.instance.startService()
         installSplashScreen()
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)

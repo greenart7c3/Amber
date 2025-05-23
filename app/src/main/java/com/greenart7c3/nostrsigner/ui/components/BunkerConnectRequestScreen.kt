@@ -3,15 +3,11 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -34,13 +30,12 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlin.collections.forEach
 
 @Composable
 fun BunkerConnectRequestScreen(
+    modifier: Modifier,
     shouldCloseApp: Boolean,
-    paddingValues: PaddingValues,
     account: Account,
     appName: String,
     permissions: List<Permission>?,
@@ -55,15 +50,10 @@ fun BunkerConnectRequestScreen(
         snapshot
     }
 
-    val scrollState = rememberScrollState()
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         ProfilePicture(account)
 

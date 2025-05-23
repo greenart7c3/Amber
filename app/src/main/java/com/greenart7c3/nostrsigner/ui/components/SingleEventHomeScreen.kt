@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -47,7 +46,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun SingleEventHomeScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
@@ -57,7 +56,7 @@ fun SingleEventHomeScreen(
 ) {
     if (intentData.bunkerRequest != null) {
         BunkerSingleEventHomeScreen(
-            paddingValues = paddingValues,
+            modifier = modifier,
             bunkerRequest = intentData.bunkerRequest,
             intentData = intentData,
             account = account,
@@ -66,7 +65,7 @@ fun SingleEventHomeScreen(
         )
     } else {
         IntentSingleEventHomeScreen(
-            paddingValues = paddingValues,
+            modifier = modifier,
             packageName = packageName,
             applicationName = applicationName,
             intentData = intentData,
@@ -79,7 +78,7 @@ fun SingleEventHomeScreen(
 
 @Composable
 private fun IntentSingleEventHomeScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     packageName: String?,
     applicationName: String?,
     intentData: IntentData,
@@ -107,14 +106,14 @@ private fun IntentSingleEventHomeScreen(
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> {
             LoginWithPubKey(
-                applicationEntity?.application?.closeApplication != false,
-                paddingValues,
-                account,
-                packageName,
-                appName,
-                applicationName,
-                intentData.permissions,
-                { permissions, signPolicy, closeApplication, rememberType ->
+                shouldCloseApp = applicationEntity?.application?.closeApplication != false,
+                modifier = modifier,
+                account = account,
+                packageName = packageName,
+                appName = appName,
+                applicationName = applicationName,
+                permissions = intentData.permissions,
+                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
                     val result = if (packageName == null) {
                         account.hexKey
                     } else {
@@ -140,7 +139,7 @@ private fun IntentSingleEventHomeScreen(
                         rememberType = rememberType,
                     )
                 },
-                {
+                onReject = {
                     val activity = Amber.instance.getMainActivity()
                     activity?.intent = null
                     activity?.finish()
@@ -170,15 +169,15 @@ private fun IntentSingleEventHomeScreen(
             }
 
             SignMessage(
-                account,
-                paddingValues,
-                intentData.data,
-                acceptOrReject,
-                packageName,
-                applicationName,
-                appName,
-                intentData.type,
-                {
+                account = account,
+                modifier = modifier,
+                content = intentData.data,
+                shouldRunOnAccept = acceptOrReject,
+                packageName = packageName,
+                applicationName = applicationName,
+                appName = appName,
+                type = intentData.type,
+                onAccept = {
                     Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
                         IntentUtils.sendResult(
@@ -197,7 +196,7 @@ private fun IntentSingleEventHomeScreen(
                         )
                     }
                 },
-                {
+                onReject = {
                     IntentUtils.sendRejection(
                         key = key,
                         account = account,
@@ -244,16 +243,16 @@ private fun IntentSingleEventHomeScreen(
             }
 
             EncryptDecryptData(
-                account,
-                paddingValues,
-                intentData.data,
-                intentData.encryptedData ?: "",
-                acceptOrReject,
-                packageName,
-                applicationName,
-                appName,
-                intentData.type,
-                {
+                account = account,
+                modifier = modifier,
+                content = intentData.data,
+                encryptedData = intentData.encryptedData ?: "",
+                shouldRunOnAccept = acceptOrReject,
+                packageName = packageName,
+                applicationName = applicationName,
+                appName = appName,
+                type = intentData.type,
+                onAccept = {
                     val result =
                         if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
                             ""
@@ -276,7 +275,7 @@ private fun IntentSingleEventHomeScreen(
                         rememberType = it,
                     )
                 },
-                {
+                onReject = {
                     IntentUtils.sendRejection(
                         key = key,
                         account = account,
@@ -333,16 +332,16 @@ private fun IntentSingleEventHomeScreen(
                 }
 
                 EventData(
-                    account,
-                    paddingValues,
-                    acceptOrReject,
-                    packageName,
-                    appName,
-                    applicationName,
-                    event,
-                    event.toJson(),
-                    intentData.type,
-                    {
+                    account = account,
+                    modifier = modifier,
+                    shouldAcceptOrReject = acceptOrReject,
+                    packageName = packageName,
+                    appName = appName,
+                    applicationName = applicationName,
+                    event = event,
+                    rawJson = event.toJson(),
+                    type = intentData.type,
+                    onAccept = {
                         if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {
                                 Toast.makeText(
@@ -380,7 +379,7 @@ private fun IntentSingleEventHomeScreen(
                             rememberType = it,
                         )
                     },
-                    {
+                    onReject = {
                         IntentUtils.sendRejection(
                             key = key,
                             account = account,
@@ -400,7 +399,7 @@ private fun IntentSingleEventHomeScreen(
 
 @Composable
 private fun BunkerSingleEventHomeScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     bunkerRequest: BunkerRequest,
     intentData: IntentData,
     account: Account,
@@ -431,12 +430,12 @@ private fun BunkerSingleEventHomeScreen(
     when (intentData.type) {
         SignerType.CONNECT -> {
             BunkerConnectRequestScreen(
-                applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
-                paddingValues,
-                account,
-                appName,
-                intentData.permissions,
-                { permissions, signPolicy, closeApplication, rememberType ->
+                modifier = modifier,
+                shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
+                account = account,
+                appName = appName,
+                permissions = intentData.permissions,
+                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
                     val result = if (intentData.type == SignerType.CONNECT) {
                         bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
                     } else {
@@ -458,7 +457,7 @@ private fun BunkerSingleEventHomeScreen(
                         rememberType = rememberType,
                     )
                 },
-                {
+                onReject = {
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
@@ -476,10 +475,10 @@ private fun BunkerSingleEventHomeScreen(
         }
         SignerType.GET_PUBLIC_KEY -> {
             BunkerGetPubKeyScreen(
-                paddingValues,
-                account,
-                appName,
-                { permissions, signPolicy, closeApplication, rememberType ->
+                modifier = modifier,
+                account = account,
+                applicationName = appName,
+                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
                     val result = if (intentData.type == SignerType.CONNECT) {
                         bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
                     } else {
@@ -501,7 +500,7 @@ private fun BunkerSingleEventHomeScreen(
                         rememberType = rememberType,
                     )
                 },
-                {
+                onReject = {
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
@@ -538,13 +537,13 @@ private fun BunkerSingleEventHomeScreen(
             }
 
             BunkerSignMessage(
-                account,
-                paddingValues,
-                intentData.data,
-                acceptOrReject,
-                appName,
-                intentData.type,
-                {
+                account = account,
+                modifier = modifier,
+                content = intentData.data,
+                shouldRunOnAccept = acceptOrReject,
+                appName = appName,
+                type = intentData.type,
+                onAccept = {
                     Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
 
@@ -564,7 +563,7 @@ private fun BunkerSingleEventHomeScreen(
                         )
                     }
                 },
-                {
+                onReject = {
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
@@ -613,14 +612,14 @@ private fun BunkerSingleEventHomeScreen(
             }
 
             BunkerEncryptDecryptData(
-                account,
-                paddingValues,
-                intentData.data,
-                intentData.encryptedData ?: "",
-                acceptOrReject,
-                appName,
-                intentData.type,
-                {
+                account = account,
+                modifier = modifier,
+                content = intentData.data,
+                encryptedData = intentData.encryptedData ?: "",
+                shouldRunOnAccept = acceptOrReject,
+                appName = appName,
+                type = intentData.type,
+                onAccept = {
                     val result =
                         if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
                             ""
@@ -643,7 +642,7 @@ private fun BunkerSingleEventHomeScreen(
                         rememberType = it,
                     )
                 },
-                {
+                onReject = {
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
@@ -702,14 +701,14 @@ private fun BunkerSingleEventHomeScreen(
                 }
 
                 BunkerEventData(
-                    account,
-                    paddingValues,
-                    acceptOrReject,
-                    appName,
-                    event,
-                    event.toJson(),
-                    intentData.type,
-                    {
+                    account = account,
+                    modifier = modifier,
+                    shouldAcceptOrReject = acceptOrReject,
+                    appName = appName,
+                    event = event,
+                    rawJson = event.toJson(),
+                    type = intentData.type,
+                    onAccept = {
                         if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {
                                 Toast.makeText(
@@ -736,7 +735,7 @@ private fun BunkerSingleEventHomeScreen(
                             rememberType = it,
                         )
                     },
-                    {
+                    onReject = {
                         BunkerRequestUtils.sendRejection(
                             key = key,
                             account = account,

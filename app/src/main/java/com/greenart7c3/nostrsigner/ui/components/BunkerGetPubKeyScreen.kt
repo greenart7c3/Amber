@@ -2,13 +2,9 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -28,25 +24,19 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 
 @Composable
 fun BunkerGetPubKeyScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     account: Account,
     applicationName: String,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
-    val scrollState = rememberScrollState()
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         ProfilePicture(account)
 

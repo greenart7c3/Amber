@@ -1,16 +1,12 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,14 +32,13 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip02FollowList.ContactListEvent
 
 @Composable
 fun EventData(
     account: Account,
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     shouldAcceptOrReject: Boolean?,
     packageName: String?,
     appName: String,
@@ -58,17 +53,12 @@ fun EventData(
         mutableStateOf(false)
     }
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         ProfilePicture(account)
 
@@ -176,7 +166,7 @@ fun EventData(
 @Composable
 fun BunkerEventData(
     account: Account,
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     shouldAcceptOrReject: Boolean?,
     appName: String,
     event: Event,
@@ -189,17 +179,12 @@ fun BunkerEventData(
         mutableStateOf(false)
     }
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         ProfilePicture(account)
 

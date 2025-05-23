@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -38,7 +37,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun IncomingRequestScreen(
     modifier: Modifier,
-    paddingValues: PaddingValues,
     intents: List<IntentData>,
     packageName: String?,
     applicationName: String?,
@@ -89,44 +87,44 @@ fun IncomingRequestScreen(
             }
         } else if (intents.size == 1) {
             SingleEventHomeScreen(
-                paddingValues,
-                packageName,
-                applicationName,
-                intents.first(),
-                account,
-                onRemoveIntentData,
-                onLoading,
+                modifier = modifier,
+                packageName = packageName,
+                applicationName = applicationName,
+                intentData = intents.first(),
+                account = account,
+                onRemoveIntentData = onRemoveIntentData,
+                onLoading = onLoading,
             )
         } else {
             if (intents.filter { it.bunkerRequest == null }.size == 1) {
                 SingleEventHomeScreen(
-                    paddingValues,
-                    packageName,
-                    applicationName,
-                    intents.first { it.bunkerRequest == null },
-                    account,
-                    onRemoveIntentData,
-                    onLoading,
+                    modifier = modifier,
+                    packageName = packageName,
+                    applicationName = applicationName,
+                    intentData = intents.first { it.bunkerRequest == null },
+                    account = account,
+                    onRemoveIntentData = onRemoveIntentData,
+                    onLoading = onLoading,
                 )
             } else if (intents.filter { it.bunkerRequest != null }.size == 1) {
                 SingleEventHomeScreen(
-                    paddingValues,
-                    packageName,
-                    applicationName,
-                    intents.first { it.bunkerRequest != null },
-                    account,
-                    onRemoveIntentData,
-                    onLoading,
+                    modifier = modifier,
+                    packageName = packageName,
+                    applicationName = applicationName,
+                    intentData = intents.first { it.bunkerRequest != null },
+                    account = account,
+                    onRemoveIntentData = onRemoveIntentData,
+                    onLoading = onLoading,
                 )
             } else {
                 MultiEventHomeScreen(
-                    paddingValues = paddingValues,
-                    intents,
-                    packageName,
-                    account,
-                    navController,
-                    onRemoveIntentData,
-                    onLoading,
+                    modifier = modifier,
+                    intents = intents,
+                    packageName = packageName,
+                    accountParam = account,
+                    navController = navController,
+                    onRemoveIntentData = onRemoveIntentData,
+                    onLoading = onLoading,
                 )
             }
         }

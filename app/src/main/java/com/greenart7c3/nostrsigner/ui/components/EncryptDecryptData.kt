@@ -3,15 +3,11 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.content.ClipData
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -37,13 +33,12 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 
 @Composable
 fun EncryptDecryptData(
     account: Account,
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     content: String,
     encryptedData: String,
     shouldRunOnAccept: Boolean?,
@@ -60,17 +55,12 @@ fun EncryptDecryptData(
     val clipboardManager = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         ProfilePicture(account)
 
@@ -184,7 +174,7 @@ fun EncryptDecryptData(
 @Composable
 fun BunkerEncryptDecryptData(
     account: Account,
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     content: String,
     encryptedData: String,
     shouldRunOnAccept: Boolean?,
@@ -199,17 +189,12 @@ fun BunkerEncryptDecryptData(
     val clipboardManager = LocalClipboard.current
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val scrollState = rememberScrollState()
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
 
     Column(
-        Modifier
-            .fillMaxSize()
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         ProfilePicture(account)
 

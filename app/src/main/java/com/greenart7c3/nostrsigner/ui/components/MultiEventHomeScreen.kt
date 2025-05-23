@@ -7,12 +7,9 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -65,7 +62,6 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
-import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
@@ -76,7 +72,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun MultiEventHomeScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     intents: List<IntentData>,
     packageName: String?,
     accountParam: Account,
@@ -86,7 +82,7 @@ fun MultiEventHomeScreen(
 ) {
     if (intents.first().bunkerRequest != null) {
         BunkerMultiEventHomeScreen(
-            paddingValues = paddingValues,
+            modifier = modifier,
             intents = intents.filter { it.bunkerRequest != null },
             packageName = packageName,
             accountParam = accountParam,
@@ -96,7 +92,7 @@ fun MultiEventHomeScreen(
         )
     } else {
         IntentMultiEventHomeScreen(
-            paddingValues = paddingValues,
+            modifier = modifier,
             intents = intents.filter { it.bunkerRequest == null },
             packageName = packageName,
             accountParam = accountParam,
@@ -109,7 +105,7 @@ fun MultiEventHomeScreen(
 
 @Composable
 fun IntentMultiEventHomeScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     intents: List<IntentData>,
     packageName: String?,
     accountParam: Account,
@@ -144,13 +140,9 @@ fun IntentMultiEventHomeScreen(
     }
 
     val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
-    val scrollState = rememberScrollState()
 
     Column(
-        Modifier
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         Text(
             stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),
@@ -471,7 +463,7 @@ fun IntentMultiEventHomeScreen(
 
 @Composable
 fun BunkerMultiEventHomeScreen(
-    paddingValues: PaddingValues,
+    modifier: Modifier,
     intents: List<IntentData>,
     packageName: String?,
     accountParam: Account,
@@ -506,13 +498,9 @@ fun BunkerMultiEventHomeScreen(
     }
 
     val appName = ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()
-    val scrollState = rememberScrollState()
 
     Column(
-        Modifier
-            .verticalScrollbar(scrollState)
-            .verticalScroll(scrollState)
-            .padding(paddingValues),
+        modifier,
     ) {
         Text(
             stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),

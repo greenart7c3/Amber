@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.ScrollState
-import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
@@ -11,11 +10,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
-@Composable
 fun Modifier.verticalScrollbar(
     state: ScrollState,
-    topBarHeight: Dp = 56.dp,
-    bottomBarHeight: Dp = 56.dp,
     scrollbarWidth: Dp = 6.dp,
     color: Color = Color.LightGray,
 ): Modifier {
@@ -23,25 +19,30 @@ fun Modifier.verticalScrollbar(
         Modifier.drawWithContent {
             drawContent()
 
-            val totalHeight = this.size.height
-            val availableHeight = totalHeight - topBarHeight.toPx() - bottomBarHeight.toPx() // Subtract app bar heights
+            if (state.maxValue > 0) {
+                val width = size.width
+                val height = size.height
 
-            val viewHeight = availableHeight.toFloat()
-            val contentHeight = state.maxValue + viewHeight
+                val scrollFraction = state.value.toFloat() / state.maxValue.toFloat()
+                val scrollbarHeight = (height * height / (state.maxValue + height).toFloat())
+                    .coerceIn(10.dp.toPx()..height)
 
-            // Calculate scrollbar height based on the visible portion of the content
-            val scrollbarHeight = (viewHeight * (viewHeight / contentHeight)).coerceIn(10.dp.toPx()..viewHeight)
-            val variableZone = viewHeight - scrollbarHeight
-            val scrollbarYoffset = ((state.value.toFloat() / state.maxValue) * variableZone)
+                val scrollableHeight = height - scrollbarHeight
+                val scrollbarY = scrollableHeight * scrollFraction
 
-            // Draw the scrollbar
-            drawRoundRect(
-                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2, scrollbarWidth.toPx() / 2),
-                color = color,
-                topLeft = Offset(this.size.width - scrollbarWidth.toPx(), scrollbarYoffset),
-                size = Size(scrollbarWidth.toPx(), scrollbarHeight),
-                alpha = 1.0f,
-            )
+                drawRoundRect(
+                    color = color,
+                    topLeft = Offset(
+                        x = width - scrollbarWidth.toPx(),
+                        y = scrollbarY,
+                    ),
+                    size = Size(
+                        width = scrollbarWidth.toPx(),
+                        height = scrollbarHeight,
+                    ),
+                    cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
+                )
+            }
         },
     )
 }

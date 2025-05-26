@@ -456,6 +456,8 @@ object BunkerRequestUtils {
         signPolicy: Int? = null,
         shouldCloseApplication: Boolean? = null,
         rememberType: RememberType,
+        intentData: IntentData,
+        onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -542,9 +544,9 @@ object BunkerRequestUtils {
                 }
             }
 
-            val localBunkerRequest = bunkerRequest.copy()
-
+            val localIntentData = intentData.copy()
             clearRequests()
+            onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
 
             // assume that everything worked and try to revert it if it fails
             EventNotificationConsumer(context).notificationManager().cancelAll()
@@ -582,7 +584,8 @@ object BunkerRequestUtils {
                             }
 
                             onLoading(false)
-                            addRequest(localBunkerRequest)
+                            addRequest(localIntentData.bunkerRequest!!)
+                            onRemoveIntentData(listOf(localIntentData), IntentResultType.ADD)
                         } else {
                             val activity = Amber.instance.getMainActivity()
                             activity?.intent = null

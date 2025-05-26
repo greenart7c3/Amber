@@ -455,6 +455,8 @@ private fun BunkerSingleEventHomeScreen(
                         signPolicy = signPolicy,
                         shouldCloseApplication = closeApplication,
                         rememberType = rememberType,
+                        onRemoveIntentData = onRemoveIntentData,
+                        intentData = intentData,
                     )
                 },
                 onReject = {
@@ -498,6 +500,8 @@ private fun BunkerSingleEventHomeScreen(
                         signPolicy = signPolicy,
                         shouldCloseApplication = closeApplication,
                         rememberType = rememberType,
+                        onRemoveIntentData = onRemoveIntentData,
+                        intentData = intentData,
                     )
                 },
                 onReject = {
@@ -560,6 +564,8 @@ private fun BunkerSingleEventHomeScreen(
                             signPolicy = null,
                             shouldCloseApplication = bunkerRequest.closeApplication,
                             rememberType = it,
+                            onRemoveIntentData = onRemoveIntentData,
+                            intentData = intentData,
                         )
                     }
                 },
@@ -640,6 +646,8 @@ private fun BunkerSingleEventHomeScreen(
                         signPolicy = null,
                         shouldCloseApplication = bunkerRequest.closeApplication,
                         rememberType = it,
+                        onRemoveIntentData = onRemoveIntentData,
+                        intentData = intentData,
                     )
                 },
                 onReject = {
@@ -733,6 +741,8 @@ private fun BunkerSingleEventHomeScreen(
                             signPolicy = null,
                             shouldCloseApplication = bunkerRequest.closeApplication,
                             rememberType = it,
+                            onRemoveIntentData = onRemoveIntentData,
+                            intentData = intentData,
                         )
                     },
                     onReject = {

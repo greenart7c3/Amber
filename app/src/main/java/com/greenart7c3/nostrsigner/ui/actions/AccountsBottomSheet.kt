@@ -42,6 +42,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -72,7 +73,11 @@ fun AccountsBottomSheet(
             val accounts = LocalPreferences.allSavedAccounts(context)
             val scrollState = rememberScrollState()
 
-            Column(modifier = Modifier.verticalScroll(scrollState)) {
+            Column(
+                modifier = Modifier
+                    .verticalScrollbar(scrollState)
+                    .verticalScroll(scrollState),
+            ) {
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()

@@ -431,7 +431,6 @@ object LocalPreferences {
                 account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY.key, it.toHexKey()) }
                 putString(PrefKeys.ACCOUNT_NAME.key, account.name)
                 putString(PrefKeys.LANGUAGE_PREFS.key, account.language)
-                putBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS.key, account.allowNewConnections)
                 putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
                 putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
             }
@@ -518,7 +517,6 @@ object LocalPreferences {
             val privKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
             val language = getString(PrefKeys.LANGUAGE_PREFS.key, null)
-            val allowNewConnections = getBoolean(PrefKeys.ALLOW_NEW_CONNECTIONS.key, false)
             val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
             val savedSeedWords = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
             val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
@@ -529,7 +527,6 @@ object LocalPreferences {
                     signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
                     name = name,
                     language = language,
-                    allowNewConnections = allowNewConnections,
                     signPolicy = signPolicy,
                     seedWords = seedWords,
                     didBackup = didBackup,

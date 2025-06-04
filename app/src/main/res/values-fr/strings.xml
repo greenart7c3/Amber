@@ -242,8 +242,6 @@
     <string name="push_server">Serveur Push</string>
     <string name="no_distributors_found">Aucun distributeur n\'a été trouvé pour les notifications push.\nVeuillez installer un distributeur comme ntfy.</string>
     <string name="requests">requêtes</string>
-    <string name="disable_listening_for_new_connections">Désactiver l\'écoute des nouvelles connexions</string>
-    <string name="enable_listening_for_new_connections">Activer l\'écoute des nouvelles connexions</string>
     <string name="authenticate">Authentification nécessaire pour utiliser l\'application</string>
     <string name="security">Sécurité</string>
     <string name="enable_biometrics">Activer la biométrie</string>

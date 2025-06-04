@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.util.Log
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,9 +16,7 @@ import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
-import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material.icons.filled.Security
-import androidx.compose.material.icons.filled.Stop
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -83,7 +80,6 @@ fun SettingsScreen(
     var checked by remember { mutableStateOf(Amber.instance.settings.useProxy) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
-    var allowNewConnections by remember { mutableStateOf(account.allowNewConnections) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var sizeInMBFormatted by remember { mutableStateOf("") }
@@ -196,31 +192,6 @@ fun SettingsScreen(
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = {
                             navController.navigate(Route.RelaysScreen.route)
-                        },
-                    )
-                }
-
-                Box(
-                    Modifier
-                        .padding(vertical = 8.dp),
-                ) {
-                    IconRow(
-                        title = if (!allowNewConnections) stringResource(R.string.enable_listening_for_new_connections) else stringResource(R.string.disable_listening_for_new_connections),
-                        icon = if (allowNewConnections) Icons.Default.Stop else Icons.Default.PlayArrow,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        onClick = {
-                            allowNewConnections = !allowNewConnections
-                            account.allowNewConnections = allowNewConnections
-                            scope.launch(Dispatchers.IO) {
-                                LocalPreferences.saveToEncryptedStorage(context, account)
-                            }
-                        },
-                        onLongClick = {
-                            Toast.makeText(
-                                context,
-                                if (allowNewConnections) context.getString(R.string.disable_listening_for_new_connections) else context.getString(R.string.enable_listening_for_new_connections),
-                                Toast.LENGTH_LONG,
-                            ).show()
                         },
                     )
                 }

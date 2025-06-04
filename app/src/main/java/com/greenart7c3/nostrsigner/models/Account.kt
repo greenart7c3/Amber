@@ -14,7 +14,6 @@ class Account(
     val signer: NostrSignerInternal,
     var name: String,
     var language: String?,
-    var allowNewConnections: Boolean,
     var signPolicy: Int,
     var seedWords: Set<String>,
     var didBackup: Boolean,

@@ -235,8 +235,6 @@
     <string name="push_server">推送服务器</string>
     <string name="no_distributors_found">未找到通知推送提供方。\n请安装类似 ntfy 这样的提供方。</string>
     <string name="requests">请求</string>
-    <string name="disable_listening_for_new_connections">禁用监听新连接</string>
-    <string name="enable_listening_for_new_connections">启用监听新连接</string>
     <string name="authenticate">使用应用需要身份验证</string>
     <string name="security">安全性</string>
     <string name="enable_biometrics">启用生物识别解锁</string>

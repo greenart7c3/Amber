@@ -242,8 +242,6 @@
     <string name="push_server">Push-Server</string>
     <string name="no_distributors_found">Keine Distributoren für Push-Benachrichtigungen gefunden.\nBitte installiere einen Distributor wie ntfy.</string>
     <string name="requests">beantragt</string>
-    <string name="disable_listening_for_new_connections">Warten auf neue Verbindungen deaktivieren</string>
-    <string name="enable_listening_for_new_connections">Warten auf neue Verbindungen aktivieren</string>
     <string name="authenticate">Authentifizierung benötigt, um die App zu nutzen</string>
     <string name="security">Sicherheit</string>
     <string name="enable_biometrics">Biometrische Daten aktivieren</string>

@@ -280,7 +280,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
-        if (permission == null && applicationWithSecret == null && !acc.allowNewConnections) {
+        if (permission == null && applicationWithSecret == null) {
             BunkerRequestUtils.sendBunkerResponse(
                 applicationContext,
                 acc,

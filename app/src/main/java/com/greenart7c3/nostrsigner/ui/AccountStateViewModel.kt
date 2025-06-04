@@ -130,48 +130,19 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun isValidKey(key: String, password: String): Pair<Boolean, String> {
         try {
-            val account =
+            val signer =
                 if (key.startsWith("ncryptsec")) {
                     val newKey = Nip49().decrypt(key, password)
-
-                    Account(
-                        signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
-                        name = "",
-                        language = null,
-                        signPolicy = 0,
-                        seedWords = emptySet(),
-                        didBackup = true,
-                    )
+                    NostrSignerInternal(KeyPair(Hex.decode(newKey)))
                 } else if (key.startsWith("nsec")) {
-                    Account(
-                        signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
-                        name = "",
-                        language = null,
-                        signPolicy = 0,
-                        seedWords = emptySet(),
-                        didBackup = true,
-                    )
+                    NostrSignerInternal(KeyPair(privKey = key.bechToBytes()))
                 } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
                     val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
-                    Account(
-                        signer = NostrSignerInternal(keyPair),
-                        name = "",
-                        language = null,
-                        signPolicy = 0,
-                        seedWords = emptySet(),
-                        didBackup = true,
-                    )
+                    NostrSignerInternal(keyPair)
                 } else {
-                    Account(
-                        signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
-                        name = "",
-                        language = null,
-                        signPolicy = 0,
-                        seedWords = emptySet(),
-                        didBackup = true,
-                    )
+                    NostrSignerInternal(KeyPair(Hex.decode(key)))
                 }
-            return Pair(account.signer.keyPair.privKey != null, "")
+            return Pair(signer.keyPair.privKey != null, "")
         } catch (e: Exception) {
             return Pair(false, e.message ?: "Unknown error")
         }

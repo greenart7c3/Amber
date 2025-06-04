@@ -239,7 +239,6 @@
     <string name="push_server">Push Server</string>
     <string name="no_distributors_found">No distributors found for push notifications.\nPlease install a distributor like ntfy.</string>
     <string name="requests">requests</string>
-
     <string name="authenticate">Authentication needed to use the app</string>
     <string name="security">Security</string>
     <string name="enable_biometrics">Enable biometrics</string>

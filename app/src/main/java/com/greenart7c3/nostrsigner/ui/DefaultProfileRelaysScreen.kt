@@ -106,6 +106,7 @@ fun DefaultProfileRelaysScreen(
                                     accountStateViewModel,
                                     account,
                                     context,
+                                    shouldCheckForBunker = false,
                                     onDone = {
                                         Amber.instance.settings = Amber.instance.settings.copy(
                                             defaultProfileRelays = relays2,
@@ -146,6 +147,7 @@ fun DefaultProfileRelaysScreen(
                                 accountStateViewModel,
                                 account,
                                 context,
+                                shouldCheckForBunker = false,
                                 onDone = {
                                     isLoading.value = true
                                     Amber.instance.settings = Amber.instance.settings.copy(

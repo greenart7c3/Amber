@@ -257,6 +257,7 @@ fun onAddRelay(
     accountStateViewModel: AccountStateViewModel,
     account: Account,
     context: Context,
+    shouldCheckForBunker: Boolean = true,
     onDone: () -> Unit,
 ) {
     checkNotInMainThread()
@@ -290,28 +291,142 @@ fun onAddRelay(
                 forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
-                        if (info.limitation?.payment_required == true) {
-                            accountStateViewModel.toast(
-                                context.getString(R.string.relay),
-                                context.getString(R.string.paid_relays_are_not_supported),
-                            )
-                            textFieldRelay.value = TextFieldValue("")
-                            isLoading.value = false
-                            return@secondLaunch
-                        }
+                        if (shouldCheckForBunker) {
+                            val relays = Amber.instance.getSavedRelays()
+                            if (relays.any { it.url == addedWSS }) {
+                                relays2.add(
+                                    RelaySetupInfo(
+                                        addedWSS,
+                                        read = true,
+                                        write = true,
+                                        feedTypes = COMMON_FEED_TYPES,
+                                    ),
+                                )
+                                onDone()
+                                textFieldRelay.value = TextFieldValue("")
+                                isLoading.value = false
+                                return@secondLaunch
+                            }
 
-                        if (info.limitation?.auth_required == true) {
-                            accountStateViewModel.toast(
-                                context.getString(R.string.relay),
-                                context.getString(R.string.auth_required_message),
+                            val signer = NostrSignerInternal(KeyPair())
+                            val encryptedContent = signer.signerSync.nip04Encrypt(
+                                "Test bunker event",
+                                signer.keyPair.pubKey.toHexKey(),
                             )
-                            textFieldRelay.value = TextFieldValue("")
-                            isLoading.value = false
-                            return@secondLaunch
-                        }
+                            encryptedContent?.let {
+                                val event = signer.signerSync.sign<Event>(
+                                    TimeUtils.now(),
+                                    24133,
+                                    arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+                                    it,
+                                )
 
-                        val relays = Amber.instance.getSavedRelays()
-                        if (relays.any { it.url == addedWSS }) {
+                                val isPrivateIp = Amber.instance.isPrivateIp(addedWSS)
+                                val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
+                                    HttpClientManager.getHttpClient(useProxy)
+                                }
+
+                                event?.let { signedEvent ->
+                                    AmberListenerSingleton.setListener(context)
+                                    val socket = factory
+                                    val client = NostrClient(
+                                        socket,
+                                    )
+                                    AmberListenerSingleton.getListener()?.let { listener ->
+                                        client.subscribe(listener)
+                                    }
+                                    client.reconnect(
+                                        arrayOf(
+                                            RelaySetupInfoToConnect(
+                                                addedWSS,
+                                                read = true,
+                                                write = true,
+                                                feedTypes = COMMON_FEED_TYPES,
+                                                forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
+                                            ),
+                                        ),
+                                    )
+                                    var filterResult = false
+                                    val listener2 = BunkerValidationRelayListener(
+                                        account,
+                                        onReceiveEvent = { _, _, event ->
+                                            if (event.kind == 24133 && event.id == signedEvent.id) {
+                                                filterResult = true
+                                            }
+                                        },
+                                    )
+                                    val relay = client.getRelay(addedWSS) ?: return@secondLaunch
+                                    client.subscribe(
+                                        listener2,
+                                    )
+                                    relay.connect()
+                                    delay(3000)
+                                    val result = client.sendAndWaitForResponse(
+                                        signedEvent = signedEvent,
+                                        relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
+                                    )
+                                    if (result) {
+                                        relay.sendFilter(
+                                            UUID.randomUUID().toString().substring(0, 4),
+                                            filters = listOf(
+                                                TypedFilter(
+                                                    types = COMMON_FEED_TYPES,
+                                                    filter = SincePerRelayFilter(
+                                                        ids = listOf(event.id),
+                                                    ),
+                                                ),
+                                            ),
+                                        )
+                                        var count = 0
+                                        while (!filterResult && count < 10) {
+                                            delay(1000)
+                                            count++
+                                        }
+                                    } else {
+                                        AmberListenerSingleton.showErrorMessage()
+                                        filterResult = true
+                                    }
+
+                                    AmberListenerSingleton.getListener()?.let { listener ->
+                                        client.unsubscribe(listener)
+                                    }
+                                    client.unsubscribe(listener2)
+                                    client.getRelay(addedWSS)?.disconnect()
+
+                                    if (result && filterResult) {
+                                        relays2.add(
+                                            RelaySetupInfo(
+                                                addedWSS,
+                                                read = true,
+                                                write = true,
+                                                feedTypes = COMMON_FEED_TYPES,
+                                            ),
+                                        )
+                                        onDone()
+                                    } else if (!filterResult) {
+                                        accountStateViewModel.toast(
+                                            context.getString(R.string.relay),
+                                            context.getString(R.string.relay_filter_failed),
+                                            onAccept = {
+                                                relays2.add(
+                                                    RelaySetupInfo(
+                                                        addedWSS,
+                                                        read = true,
+                                                        write = true,
+                                                        feedTypes = COMMON_FEED_TYPES,
+                                                    ),
+                                                )
+                                                onDone()
+                                            },
+                                            onReject = {},
+                                        )
+                                    }
+
+                                    textFieldRelay.value = TextFieldValue("")
+                                }
+                                isLoading.value = false
+                            }
+                        } else {
                             relays2.add(
                                 RelaySetupInfo(
                                     addedWSS,
@@ -322,127 +437,6 @@ fun onAddRelay(
                             )
                             onDone()
                             textFieldRelay.value = TextFieldValue("")
-                            isLoading.value = false
-                            return@secondLaunch
-                        }
-
-                        val signer = NostrSignerInternal(KeyPair())
-                        val encryptedContent = signer.signerSync.nip04Encrypt(
-                            "Test bunker event",
-                            signer.keyPair.pubKey.toHexKey(),
-                        )
-                        encryptedContent?.let {
-                            val event = signer.signerSync.sign<Event>(
-                                TimeUtils.now(),
-                                24133,
-                                arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                                it,
-                            )
-
-                            val isPrivateIp = Amber.instance.isPrivateIp(addedWSS)
-                            val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
-                                HttpClientManager.getHttpClient(useProxy)
-                            }
-
-                            event?.let { signedEvent ->
-                                AmberListenerSingleton.setListener(context)
-                                val socket = factory
-                                val client = NostrClient(
-                                    socket,
-                                )
-                                AmberListenerSingleton.getListener()?.let { listener ->
-                                    client.subscribe(listener)
-                                }
-                                client.reconnect(
-                                    arrayOf(
-                                        RelaySetupInfoToConnect(
-                                            addedWSS,
-                                            read = true,
-                                            write = true,
-                                            feedTypes = COMMON_FEED_TYPES,
-                                            forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
-                                        ),
-                                    ),
-                                )
-                                var filterResult = false
-                                val listener2 = BunkerValidationRelayListener(
-                                    account,
-                                    onReceiveEvent = { _, _, event ->
-                                        if (event.kind == 24133 && event.id == signedEvent.id) {
-                                            filterResult = true
-                                        }
-                                    },
-                                )
-                                val relay = client.getRelay(addedWSS) ?: return@secondLaunch
-                                client.subscribe(
-                                    listener2,
-                                )
-                                relay.connect()
-                                delay(3000)
-                                val result = client.sendAndWaitForResponse(
-                                    signedEvent = signedEvent,
-                                    relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
-                                )
-                                if (result) {
-                                    relay.sendFilter(
-                                        UUID.randomUUID().toString().substring(0, 4),
-                                        filters = listOf(
-                                            TypedFilter(
-                                                types = COMMON_FEED_TYPES,
-                                                filter = SincePerRelayFilter(
-                                                    ids = listOf(event.id),
-                                                ),
-                                            ),
-                                        ),
-                                    )
-                                    var count = 0
-                                    while (!filterResult && count < 10) {
-                                        delay(1000)
-                                        count++
-                                    }
-                                } else {
-                                    AmberListenerSingleton.showErrorMessage()
-                                    filterResult = true
-                                }
-
-                                AmberListenerSingleton.getListener()?.let { listener ->
-                                    client.unsubscribe(listener)
-                                }
-                                client.unsubscribe(listener2)
-                                client.getRelay(addedWSS)?.disconnect()
-
-                                if (result && filterResult) {
-                                    relays2.add(
-                                        RelaySetupInfo(
-                                            addedWSS,
-                                            read = true,
-                                            write = true,
-                                            feedTypes = COMMON_FEED_TYPES,
-                                        ),
-                                    )
-                                    onDone()
-                                } else if (!filterResult) {
-                                    accountStateViewModel.toast(
-                                        context.getString(R.string.relay),
-                                        context.getString(R.string.relay_filter_failed),
-                                        onAccept = {
-                                            relays2.add(
-                                                RelaySetupInfo(
-                                                    addedWSS,
-                                                    read = true,
-                                                    write = true,
-                                                    feedTypes = COMMON_FEED_TYPES,
-                                                ),
-                                            )
-                                            onDone()
-                                        },
-                                        onReject = {},
-                                    )
-                                }
-
-                                textFieldRelay.value = TextFieldValue("")
-                            }
-                            isLoading.value = false
                         }
                     }
                 },

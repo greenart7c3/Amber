@@ -22,10 +22,10 @@ import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
-import com.greenart7c3.nostrsigner.relays.MetadataRelayListener
 import com.greenart7c3.nostrsigner.service.BootReceiver
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
+import com.greenart7c3.nostrsigner.service.ProfileDataSource
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.MutableSubscriptionCache
@@ -33,8 +33,6 @@ import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
-import com.vitorpamplona.ammolite.relays.TypedFilter
-import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
@@ -44,7 +42,6 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
-import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
@@ -71,6 +68,8 @@ class Amber : Application() {
         HttpClientManager.getHttpClient(useProxy)
     }
     var client: NostrClient = NostrClient(factory)
+    var profileClient = ConcurrentHashMap<String, NostrClient>()
+    val profileDataSource = ConcurrentHashMap<String, ProfileDataSource>()
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     var settings: AmberSettings = AmberSettings()
@@ -368,58 +367,52 @@ class Amber : Application() {
         if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
             Log.d(TAG, "Fetching profile data for ${account.npub}")
             LocalPreferences.setLastCheck(this, account.npub, TimeUtils.now())
-            val listener = MetadataRelayListener(
-                account = account,
-                onReceiveEvent = { _, _, event ->
-                    if (event.kind == MetadataEvent.KIND) {
-                        (event as MetadataEvent).contactMetaData()?.let { metadata ->
-                            metadata.name?.let { name ->
-                                account.name = name
-                                applicationIOScope.launch {
-                                    LocalPreferences.saveToEncryptedStorage(account = account, context = this@Amber)
-                                }
-                            }
-
-                            metadata.profilePicture()?.let { url ->
-                                LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.npub)
-                                LocalPreferences.setLastMetadataUpdate(this, account.npub, TimeUtils.now())
-                                onPictureFound(url)
-                            }
-                        }
-                    }
-                },
-            )
-
             val relays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays.map {
-                Relay(
+                RelaySetupInfoToConnect(
                     url = it.url,
                     read = it.read,
                     write = it.write,
-                    activeTypes = it.feedTypes,
-                    socketBuilderFactory = factory,
+                    feedTypes = it.feedTypes,
                     forceProxy = settings.useProxy,
-                    subs = MutableSubscriptionCache(),
                 )
-            }
+            }.toTypedArray()
+            profileClient.getOrPut(account.hexKey, defaultValue = { NostrClient(factory) }).reconnect(relays)
+            profileDataSource.getOrPut(
+                account.hexKey,
+                defaultValue = {
+                    ProfileDataSource(
+                        client = profileClient.get(account.hexKey)!!,
+                        account = account,
+                        onReceiveEvent = { event ->
+                            applicationIOScope.launch {
+                                if (event.kind == MetadataEvent.KIND) {
+                                    (event as MetadataEvent).contactMetaData()?.let { metadata ->
+                                        metadata.name?.let { name ->
+                                            account.name = name
+                                            applicationIOScope.launch {
+                                                LocalPreferences.saveToEncryptedStorage(account = account, context = this@Amber)
+                                            }
+                                        }
 
-            relays.forEach {
-                it.register(listener)
-                it.connectAndRunAfterSync {
-                    it.sendFilter(
-                        UUID.randomUUID().toString().substring(0, 4),
-                        filters = listOf(
-                            TypedFilter(
-                                types = COMMON_FEED_TYPES,
-                                filter = SincePerRelayFilter(
-                                    kinds = listOf(MetadataEvent.KIND),
-                                    authors = listOf(account.hexKey),
-                                    limit = 1,
-                                ),
-                            ),
-                        ),
+                                        metadata.profilePicture()?.let { url ->
+                                            LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.npub)
+                                            LocalPreferences.setLastMetadataUpdate(this@Amber, account.npub, TimeUtils.now())
+                                            onPictureFound(url)
+                                        }
+                                    }
+                                }
+                                profileDataSource[account.hexKey]?.stop()
+                                profileClient[account.hexKey]?.getAll()?.forEach {
+                                    Log.d(TAG, "disconnecting profile relay ${it.url}")
+                                    it.disconnect()
+                                }
+                            }
+                        },
                     )
-                }
-            }
+                },
+            )
+
+            profileDataSource.get(account.hexKey)?.start()
         } else {
             Log.d(TAG, "Using cached profile data for ${account.npub}")
             LocalPreferences.loadProfileUrlFromEncryptedStorage(account.npub)?.let {

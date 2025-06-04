@@ -384,13 +384,8 @@ object LocalPreferences {
         return context.getSharedPreferences(preferenceFile, Context.MODE_PRIVATE)
     }
 
-    private fun deleteUserDataStoreFile(context: Context, npub: String) {
-        val fileName = "secure_datastore_$npub.preferences_pb"
-        val file = File(context.filesDir, "datastore/$fileName")
-        if (file.exists()) {
-            file.delete()
-        }
-        DataStoreAccess.clearCacheForNpub(npub)
+    private suspend fun deleteUserDataStoreFile(context: Context, npub: String) {
+        DataStoreAccess.clearCacheForNpub(context, npub)
     }
 
     /**
@@ -409,7 +404,7 @@ object LocalPreferences {
         removeAccount(context, npub)
         deleteUserPreferenceFile(context, npub)
 
-        deleteUserDataStoreFile(context, npub)
+        runBlocking { deleteUserDataStoreFile(context, npub) }
 
         if (savedAccounts(context).isEmpty()) {
             val appPrefs = sharedPrefs(context)

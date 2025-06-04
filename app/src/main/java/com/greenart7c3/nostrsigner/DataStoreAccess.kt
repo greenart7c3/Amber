@@ -47,7 +47,9 @@ object DataStoreAccess {
         return SecureCryptoHelper.decrypt(encrypted)
     }
 
-    fun clearCacheForNpub(npub: String) {
-        storeCache.remove(npub)
+    suspend fun clearCacheForNpub(context: Context, npub: String) {
+        getDataStore(context, npub).edit { prefs ->
+            prefs.clear()
+        }
     }
 }

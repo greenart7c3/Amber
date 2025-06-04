@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
@@ -289,6 +290,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+            Log.d(Amber.TAG, "Account saved")
             LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account)
         }
     }

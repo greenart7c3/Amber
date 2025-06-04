@@ -7,8 +7,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
@@ -59,53 +57,47 @@ fun SignPolicySettingsScreen(
         modifier = modifier
             .fillMaxSize(),
     ) {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center,
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            itemsIndexed(radioOptions) { index, option ->
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .selectable(
-                            selected = selectedOption == index,
-                            onClick = {
-                                selectedOption = index
-                            },
-                        )
-                        .border(
-                            width = 1.dp,
-                            color = if (selectedOption == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                Color.Transparent
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                        )
-                        .padding(16.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    RadioButton(
+        radioOptions.forEachIndexed { index, option ->
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .selectable(
                         selected = selectedOption == index,
                         onClick = {
                             selectedOption = index
                         },
                     )
-                    Column(
-                        verticalArrangement = Arrangement.spacedBy(4.dp),
-                    ) {
+                    .border(
+                        width = 1.dp,
+                        color = if (selectedOption == index) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Transparent
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                    )
+                    .padding(16.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(
+                    selected = selectedOption == index,
+                    onClick = {
+                        selectedOption = index
+                    },
+                )
+                Column(
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = option.title,
+                        modifier = Modifier.padding(start = 16.dp),
+                        style = MaterialTheme.typography.titleLarge,
+                    )
+                    option.explainer?.let {
                         Text(
-                            text = option.title,
+                            text = it,
                             modifier = Modifier.padding(start = 16.dp),
-                            style = MaterialTheme.typography.titleLarge,
                         )
-                        option.explainer?.let {
-                            Text(
-                                text = it,
-                                modifier = Modifier.padding(start = 16.dp),
-                            )
-                        }
                     }
                 }
             }

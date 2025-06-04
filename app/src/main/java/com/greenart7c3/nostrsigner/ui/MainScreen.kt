@@ -528,11 +528,14 @@ fun MainScreen(
                 composable(
                     Route.SignPolicy.route,
                     content = {
+                        val scrollState = rememberScrollState()
                         SignPolicySettingsScreen(
                             modifier =
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             account = account,

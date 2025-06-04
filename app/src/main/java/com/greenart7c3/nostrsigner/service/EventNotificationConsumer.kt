@@ -212,31 +212,28 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 } catch (_: Exception) {
                     ""
                 }
-            // TODO: make secret not optional when more applications start using it
-            if (secret.isNotBlank()) {
-                bunkerRequest.secret = secret
-                applicationWithSecret = database.applicationDao().getBySecret(secret)
-                if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret) {
-                    val message = if (applicationWithSecret == null) {
-                        "invalid secret"
-                    } else if (secret.isBlank()) {
-                        "no secret"
-                    } else if (applicationWithSecret.application.isConnected) {
-                        "already connected"
-                    } else {
-                        "secret not in use"
-                    }
-                    BunkerRequestUtils.sendBunkerResponse(
-                        applicationContext,
-                        acc,
-                        bunkerRequest,
-                        BunkerResponse(bunkerRequest.id, "", message),
-                        applicationWithSecret?.application?.relays ?: responseRelay,
-                        onLoading = { },
-                        onDone = { },
-                    )
-                    return
+            bunkerRequest.secret = secret
+            applicationWithSecret = database.applicationDao().getBySecret(secret)
+            if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret) {
+                val message = if (applicationWithSecret == null) {
+                    "invalid secret"
+                } else if (secret.isBlank()) {
+                    "no secret"
+                } else if (applicationWithSecret.application.isConnected) {
+                    "already connected"
+                } else {
+                    "secret not in use"
                 }
+                BunkerRequestUtils.sendBunkerResponse(
+                    applicationContext,
+                    acc,
+                    bunkerRequest,
+                    BunkerResponse(bunkerRequest.id, "", message),
+                    applicationWithSecret?.application?.relays ?: responseRelay,
+                    onLoading = { },
+                    onDone = { },
+                )
+                return
             }
         }
 

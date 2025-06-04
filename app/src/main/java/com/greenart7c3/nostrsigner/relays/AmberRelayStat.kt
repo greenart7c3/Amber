@@ -6,6 +6,7 @@ import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
@@ -18,6 +19,7 @@ import com.vitorpamplona.ammolite.relays.RelayStats
 import kotlinx.coroutines.launch
 
 object AmberRelayStats {
+    var oldMessage = ""
     var connected = 0
     var available = 0
     init {
@@ -30,7 +32,7 @@ object AmberRelayStats {
     }
     private val innerCache = mutableMapOf<String, AmberRelayStat>()
 
-    fun createNotification(): Notification {
+    fun createNotification(): Notification? {
         val channelId = "ServiceChannel"
         val group = NotificationChannelGroupCompat.Builder("ServiceGroup")
             .setName(Amber.instance.getString(R.string.service))
@@ -76,6 +78,8 @@ object AmberRelayStats {
 
             connected + ping + sent + received + failed + error
         }
+        if (message == oldMessage && oldMessage.isNotBlank()) return null
+        oldMessage = message
 
         val contentIntent = Intent(Amber.instance, MainActivity::class.java)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
@@ -105,7 +109,10 @@ object AmberRelayStats {
     fun updateNotification() {
         val notificationManager = NotificationManagerCompat.from(Amber.instance)
         if (ActivityCompat.checkSelfPermission(Amber.instance, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            notificationManager.notify(1, createNotification())
+            createNotification()?.let {
+                Log.d(Amber.TAG, "updateNotification")
+                notificationManager.notify(1, it)
+            }
         }
     }
 

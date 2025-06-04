@@ -52,7 +52,6 @@ class ConnectivityService : Service() {
                 if (BuildConfig.FLAVOR == "offline") return
 
                 scope.launch(Dispatchers.IO) {
-                    AmberRelayStats.updateNotification()
                     Log.d(
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
@@ -87,7 +86,9 @@ class ConnectivityService : Service() {
         Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: $isStarted")
         if (isStarted) return
         isStarted = true
-        startForeground(1, AmberRelayStats.createNotification())
+        AmberRelayStats.createNotification()?.let {
+            startForeground(1, it)
+        }
         Amber.instance.applicationIOScope.launch {
             while (Amber.instance.isStartingAppState.value) {
                 delay(1000)
@@ -118,7 +119,6 @@ class ConnectivityService : Service() {
                             return
                         }
 
-                        AmberRelayStats.updateNotification()
                         val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
                         if (hasAnyRelayDisconnected) {
                             scope.launch {
@@ -153,7 +153,9 @@ class ConnectivityService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(Amber.TAG, "onStartCommand")
-        startForeground(1, AmberRelayStats.createNotification())
+        AmberRelayStats.createNotification()?.let {
+            startForeground(1, it)
+        }
         return START_STICKY
     }
 }

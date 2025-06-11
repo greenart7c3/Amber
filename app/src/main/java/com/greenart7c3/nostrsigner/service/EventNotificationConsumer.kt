@@ -140,7 +140,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         relay: Relay,
     ) {
         val responseRelay = listOf(RelaySetupInfo(relay.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES))
-        val dao = Amber.instance.getDatabase(acc.npub).applicationDao()
+        val database = Amber.instance.getDatabase(acc.npub)
+        val dao = database.applicationDao()
         val notification = dao.getNotification(event.id)
         if (notification != null) return
         dao.insertNotification(NotificationEntity(0, event.id, event.createdAt))
@@ -161,6 +162,20 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         bunkerRequest.encryptionType = encryptionType
 
         val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
+        if (type == SignerType.INVALID) {
+            Log.d(Amber.TAG, "Invalid request method ${bunkerRequest.method}")
+            dao.insertLog(
+                LogEntity(
+                    0,
+                    "nostrsigner",
+                    "bunker request",
+                    "Invalid request method ${bunkerRequest.method}",
+                    System.currentTimeMillis(),
+                ),
+            )
+            return
+        }
+
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
 
         var amberEvent: AmberEvent? = null
@@ -175,12 +190,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-        val database = Amber.instance.getDatabase(acc.npub)
-
-        val permission = database.applicationDao().getByKey(bunkerRequest.localKey)
+        val permission = dao.getByKey(bunkerRequest.localKey)
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             Amber.instance.applicationIOScope.launch {
-                database.applicationDao()
+                dao
                     .addHistory(
                         HistoryEntity2(
                             0,
@@ -213,7 +226,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     ""
                 }
             bunkerRequest.secret = secret
-            applicationWithSecret = database.applicationDao().getBySecret(secret)
+            applicationWithSecret = dao.getBySecret(secret)
             if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret) {
                 val message = if (applicationWithSecret == null) {
                     "invalid secret"
@@ -237,46 +250,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             }
         }
 
-        val cursor =
-            applicationContext.contentResolver.query(
-                "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
-                arrayOf(data, pubKey, acc.npub),
-                "1",
-                null,
-                bunkerRequest.localKey,
-            )
-
-        var name = event.pubKey.toShortenHex()
-        if (permission != null && permission.application.name.isNotBlank()) {
-            name = permission.application.name
-        } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
-            name = applicationWithSecret.application.name
-        }
-
-        val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
-        var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
-        if (type == SignerType.SIGN_EVENT) {
-            message = "$name ${applicationContext.getString(R.string.wants_you_to_sign_a, bunkerPermission.toLocalizedString(applicationContext))}"
-        }
-        if (type == SignerType.CONNECT) {
-            message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
-        }
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
-
-        if (type == SignerType.INVALID) {
-            Log.d(Amber.TAG, "Invalid request method ${bunkerRequest.method}")
-            dao.insertLog(
-                LogEntity(
-                    0,
-                    "nostrsigner",
-                    "bunker request",
-                    "Invalid request method ${bunkerRequest.method}",
-                    System.currentTimeMillis(),
-                ),
-            )
-            return
-        }
-
         if (permission == null && applicationWithSecret == null) {
             BunkerRequestUtils.sendBunkerResponse(
                 applicationContext,
@@ -288,6 +262,28 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 onDone = { },
             )
             return
+        }
+        val cursor =
+            applicationContext.contentResolver.query(
+                "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
+                arrayOf(data, pubKey, acc.npub),
+                "1",
+                null,
+                bunkerRequest.localKey,
+            )
+        var name = event.pubKey.toShortenHex()
+        if (permission != null && permission.application.name.isNotBlank()) {
+            name = permission.application.name
+        } else if (applicationWithSecret != null && applicationWithSecret.application.name.isNotBlank()) {
+            name = applicationWithSecret.application.name
+        }
+        val bunkerPermission = Permission(type.toString().toLowerCase(Locale.current), amberEvent?.kind)
+        var message = "$name  ${applicationContext.getString(R.string.requests)} ${bunkerPermission.toLocalizedString(applicationContext)}"
+        if (type == SignerType.SIGN_EVENT) {
+            message = "$name ${applicationContext.getString(R.string.wants_you_to_sign_a, bunkerPermission.toLocalizedString(applicationContext))}"
+        }
+        if (type == SignerType.CONNECT) {
+            message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
 
         cursor.use { localCursor ->

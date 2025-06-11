@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.Amber.Companion.TAG
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -140,7 +139,7 @@ class ProfileDataSource(
             delay(30000)
             stop()
             client.getAll().forEach {
-                Log.d(TAG, "disconnecting profile relay ${it.url}")
+                Log.d(Amber.TAG, "disconnecting profile relay ${it.url}")
                 it.disconnect()
             }
         }

@@ -531,4 +531,8 @@
     <string name="feedback_sent">反馈已发送</string>
     <string name="activities">Activities</string>
     <string name="remove_all_message">Are you sure you want to remove all permissions from this application?</string>
+    <string name="replace">Replace</string>
+    <string name="replace_app_message">Would you like to replace the existing connection \'%1$s\'? If you replace the existing connection the old application will stop working.</string>
+    <string name="replace_connection">Replace connection</string>
+    <string name="create_a_new_connection">Create a new connection</string>
 </resources>

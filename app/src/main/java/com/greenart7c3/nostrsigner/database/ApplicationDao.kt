@@ -162,6 +162,9 @@ interface ApplicationDao {
     @Query("SELECT * FROM history2 where pkKey = :pk ORDER BY time DESC")
     fun getAllHistory(pk: String): Flow<List<HistoryEntity2>>
 
+    @Query("SELECT * FROM history2 ORDER BY time DESC")
+    fun getAllHistory(): Flow<List<HistoryEntity2>>
+
     @Insert
     @Transaction
     suspend fun insertLog(logEntity: LogEntity)

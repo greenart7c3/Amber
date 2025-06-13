@@ -383,7 +383,7 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
 
-                        PermissionsScreen(
+                        ApplicationsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
@@ -644,6 +644,26 @@ fun MainScreen(
                                     .imePadding(),
                             )
                         }
+                    },
+                )
+
+                composable(
+                    Route.Activities.route,
+                    content = {
+                        ActivitiesScreen(
+                            account = account,
+                            paddingValues = PaddingValues(
+                                top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                                bottom = padding.calculateBottomPadding(),
+                                start = padding.calculateStartPadding(LayoutDirection.Ltr) + verticalPadding,
+                                end = padding.calculateEndPadding(LayoutDirection.Ltr) + verticalPadding,
+                            ),
+                            topPadding = padding.calculateTopPadding() + (verticalPadding * 1.5f),
+                            modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .imePadding(),
+                        )
                     },
                 )
 

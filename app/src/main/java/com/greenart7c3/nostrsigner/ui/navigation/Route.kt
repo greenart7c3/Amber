@@ -178,6 +178,12 @@ sealed class Route(
         route = "Feedback",
         icon = R.drawable.settings,
     )
+
+    data object Activities : Route(
+        title = Amber.instance.getString(R.string.activities),
+        route = "Activities",
+        icon = R.drawable.incoming_request,
+    )
 }
 
 val routes = listOf(
@@ -207,4 +213,5 @@ val routes = listOf(
     Route.TorSettings,
     Route.EditProfile,
     Route.Feedback,
+    Route.Activities,
 )

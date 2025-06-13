@@ -1,4 +1,4 @@
-package com.greenart7c3.nostrsigner.ui.actions
+package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -20,6 +20,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -41,22 +42,27 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
+import com.greenart7c3.nostrsigner.service.ApplicationNameCache
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ActivityScreen(
+fun ActivitiesScreen(
     modifier: Modifier,
     paddingValues: PaddingValues,
     topPadding: Dp,
     account: Account,
-    key: String,
 ) {
-    val activities = Amber.instance.getDatabase(account.npub).applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
+    val database = Amber.instance.getDatabase(account.npub)
+    val activities = database.applicationDao().getAllHistory().collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
     // State for the search query
     var searchQuery by remember { mutableStateOf("") }
@@ -124,8 +130,14 @@ fun ActivityScreen(
                             modifier = Modifier.fillMaxWidth(0.9f),
                             verticalArrangement = Arrangement.Center,
                         ) {
+                            ApplicationName(
+                                key = activity.pkKey,
+                                accepted = activity.accepted,
+                                database = database,
+                                account = account,
+                            )
+
                             Text(
-                                modifier = Modifier.padding(top = 16.dp),
                                 text = if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -156,4 +168,39 @@ fun ActivityScreen(
             }
         }
     }
+}
+
+@Composable
+fun ApplicationName(
+    key: String,
+    accepted: Boolean,
+    database: AppDatabase,
+    account: Account,
+) {
+    var name by remember { mutableStateOf("") }
+
+    LaunchedEffect(Unit) {
+        launch(Dispatchers.IO) {
+            if (ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] == null) {
+                val app = database.applicationDao().getByKey(key)
+                app?.let {
+                    name = it.application.name
+                    ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] = it.application.name
+                }
+            } else {
+                ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"]?.let {
+                    name = it
+                }
+            }
+        }
+    }
+
+    Text(
+        modifier = Modifier.padding(top = 16.dp),
+        text = name.ifBlank { key.toShortenHex() },
+        maxLines = 1,
+        overflow = TextOverflow.Ellipsis,
+        color = if (accepted) Color.Unspecified else Color.Gray,
+        fontWeight = FontWeight.Bold,
+    )
 }

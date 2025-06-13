@@ -39,10 +39,11 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 @Composable
-fun PermissionsScreen(
+fun ApplicationsScreen(
     modifier: Modifier,
     account: Account,
     navController: NavController,
@@ -125,6 +126,14 @@ fun PermissionsScreen(
                 },
             )
         } else {
+            AmberButton(
+                modifier = Modifier.padding(top = 20.dp),
+                onClick = {
+                    navController.navigate(Route.Activities.route)
+                },
+                text = stringResource(R.string.activity),
+            )
+
             applications.value.forEach { applicationWithHistory ->
                 Row(
                     modifier = Modifier

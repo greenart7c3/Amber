@@ -169,6 +169,9 @@ interface ApplicationDao {
     @Query("SELECT * FROM history2 ORDER BY time DESC")
     fun getAllHistory(): Flow<List<HistoryEntity2>>
 
+    @Query("DELETE FROM history2 where pkKey = :pk")
+    suspend fun deleteHistory(pk: String)
+
     @Insert
     @Transaction
     suspend fun insertLog(logEntity: LogEntity)

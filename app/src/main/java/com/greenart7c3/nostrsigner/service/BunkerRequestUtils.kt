@@ -467,6 +467,7 @@ object BunkerRequestUtils {
 
             if (oldKey.isNotBlank()) {
                 database.applicationDao().delete(oldKey)
+                database.applicationDao().deleteHistory(oldKey)
             }
 
             var savedApplication = database.applicationDao().getByKey(key)

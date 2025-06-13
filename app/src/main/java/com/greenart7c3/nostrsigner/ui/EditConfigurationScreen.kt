@@ -320,6 +320,7 @@ fun EditConfigurationScreen(
                     application?.let {
                         scope.launch(Dispatchers.IO) {
                             Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
+                            Amber.instance.getDatabase(account.npub).applicationDao().deleteHistory(it.application.key)
 
                             Amber.instance.checkForNewRelays()
 

@@ -45,13 +45,9 @@ You can also send patches through Nostr using [GitStr](https://github.com/fiatja
 
 By contributing to this repository, you agree to license your work under the MIT license. Any work contributed where you are not the original author must contain its license header with the original author(s) and source.
 
-# Usage for Android applications
+# Usage
 
-Check [Android.md](docs/Android.md)
-
-# Usage for Web Applications
-
-Check [web-apps.md](docs/web-apps.md)
+Check [55.md](https://github.com/nostr-protocol/nips/blob/master/55.md)
 
 # Contributors
 

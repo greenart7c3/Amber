@@ -529,4 +529,5 @@
     <string name="create_anonymously">匿名创建</string>
     <string name="send">发送 </string>
     <string name="feedback_sent">反馈已发送</string>
+    <string name="activities">Activities</string>
 </resources>

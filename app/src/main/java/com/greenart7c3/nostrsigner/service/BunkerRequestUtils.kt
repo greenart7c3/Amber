@@ -458,11 +458,17 @@ object BunkerRequestUtils {
         rememberType: RememberType,
         intentData: IntentData,
         onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+        oldKey: String = "",
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
             val database = Amber.instance.getDatabase(account.npub)
             val defaultRelays = Amber.instance.settings.defaultRelays
+
+            if (oldKey.isNotBlank()) {
+                database.applicationDao().delete(oldKey)
+            }
+
             var savedApplication = database.applicationDao().getByKey(key)
             if (savedApplication == null && bunkerRequest.secret.isNotBlank()) {
                 savedApplication = database.applicationDao().getByKey(bunkerRequest.secret)

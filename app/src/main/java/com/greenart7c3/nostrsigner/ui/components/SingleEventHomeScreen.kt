@@ -3,15 +3,11 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -444,61 +440,82 @@ private fun BunkerSingleEventHomeScreen(
             var localCloseApplication by remember { mutableStateOf<Boolean?>(null) }
             var localSignPolicy by remember { mutableIntStateOf(0) }
             var localRememberType by remember { mutableStateOf(RememberType.NEVER) }
+            var existingAppKey by remember { mutableStateOf("") }
 
             if (showExistingAppDialog) {
                 AlertDialog(
                     title = {
-                        Text(text = stringResource(R.string.reuse_connection))
+                        Text(text = stringResource(R.string.replace_connection))
                     },
                     text = {
-                        Text(text = stringResource(R.string.reuse_app_message, intentData.name))
+                        Text(text = stringResource(R.string.replace_app_message, intentData.name))
                     },
                     onDismissRequest = {
                         showExistingAppDialog = false
                     },
                     confirmButton = {
-                        AmberButton(
-                            onClick = {
-                                val result = if (intentData.type == SignerType.CONNECT) {
-                                    bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
-                                } else {
-                                    account.hexKey
-                                }
+                        Column {
+                            AmberButton(
+                                onClick = {
+                                    val result = if (intentData.type == SignerType.CONNECT) {
+                                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                                    } else {
+                                        account.hexKey
+                                    }
 
-                                BunkerRequestUtils.sendResult(
-                                    context = context,
-                                    account = account,
-                                    key = key,
-                                    event = result,
-                                    bunkerRequest = bunkerRequest,
-                                    kind = null,
-                                    onLoading = onLoading,
-                                    permissions = localPermissions,
-                                    appName = appName,
-                                    signPolicy = localSignPolicy,
-                                    shouldCloseApplication = localCloseApplication,
-                                    rememberType = localRememberType,
-                                    onRemoveIntentData = onRemoveIntentData,
-                                    intentData = intentData,
-                                )
-                            },
-                            text = stringResource(R.string.reuse),
-                        )
-                    },
-                    dismissButton = {
-                        Row(
-                            Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            TextButton(
+                                    BunkerRequestUtils.sendResult(
+                                        oldKey = existingAppKey,
+                                        context = context,
+                                        account = account,
+                                        key = key,
+                                        event = result,
+                                        bunkerRequest = bunkerRequest,
+                                        kind = null,
+                                        onLoading = onLoading,
+                                        permissions = localPermissions,
+                                        appName = appName,
+                                        signPolicy = localSignPolicy,
+                                        shouldCloseApplication = localCloseApplication,
+                                        rememberType = localRememberType,
+                                        onRemoveIntentData = onRemoveIntentData,
+                                        intentData = intentData,
+                                    )
+                                },
+                                text = stringResource(R.string.replace),
+                            )
+                            AmberButton(
+                                text = stringResource(R.string.create_a_new_connection),
+                                onClick = {
+                                    val result = if (intentData.type == SignerType.CONNECT) {
+                                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                                    } else {
+                                        account.hexKey
+                                    }
+
+                                    BunkerRequestUtils.sendResult(
+                                        context = context,
+                                        account = account,
+                                        key = key,
+                                        event = result,
+                                        bunkerRequest = bunkerRequest,
+                                        kind = null,
+                                        onLoading = onLoading,
+                                        permissions = localPermissions,
+                                        appName = appName,
+                                        signPolicy = localSignPolicy,
+                                        shouldCloseApplication = localCloseApplication,
+                                        rememberType = localRememberType,
+                                        onRemoveIntentData = onRemoveIntentData,
+                                        intentData = intentData,
+                                    )
+                                },
+                            )
+                            AmberButton(
+                                text = stringResource(R.string.cancel),
                                 onClick = {
                                     showExistingAppDialog = false
                                 },
-                            ) {
-                                Text(text = stringResource(R.string.cancel))
-                            }
+                            )
                         }
                     },
                 )
@@ -542,6 +559,7 @@ private fun BunkerSingleEventHomeScreen(
                                     intentData = intentData,
                                 )
                             } else {
+                                existingAppKey = existingApp.application.key
                                 showExistingAppDialog = true
                             }
                         }

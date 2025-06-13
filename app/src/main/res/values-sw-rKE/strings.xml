@@ -527,4 +527,8 @@
     <string name="send">Send</string>
     <string name="feedback_sent">Feedback sent</string>
     <string name="activities">Activities</string>
+    <string name="remove_all_message">Are you sure you want to remove all permissions from this application?</string>
+    <string name="reuse">Reuse</string>
+    <string name="reuse_app_message">Would you like to reuse the existing connection \'%1$s\'? If you reuse the existing connection the old application will stop working.</string>
+    <string name="reuse_connection">Reuse connection</string>
 </resources>

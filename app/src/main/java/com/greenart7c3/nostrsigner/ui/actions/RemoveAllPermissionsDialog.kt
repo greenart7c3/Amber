@@ -17,7 +17,7 @@ fun RemoveAllPermissionsDialog(
             Text(text = stringResource(R.string.remove))
         },
         text = {
-            Text(text = "Are you sure you want to remove all permissions from this application?")
+            Text(text = stringResource(R.string.remove_all_message))
         },
         onDismissRequest = {
             onCancel()

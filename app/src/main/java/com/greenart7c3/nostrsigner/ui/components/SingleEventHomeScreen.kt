@@ -3,13 +3,19 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -18,22 +24,26 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.BunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -429,6 +439,71 @@ private fun BunkerSingleEventHomeScreen(
 
     when (intentData.type) {
         SignerType.CONNECT -> {
+            var showExistingAppDialog by remember { mutableStateOf(false) }
+            var localPermissions by remember { mutableStateOf<List<Permission>?>(null) }
+            var localCloseApplication by remember { mutableStateOf<Boolean?>(null) }
+            var localSignPolicy by remember { mutableIntStateOf(0) }
+            var localRememberType by remember { mutableStateOf(RememberType.NEVER) }
+
+            if (showExistingAppDialog) {
+                AlertDialog(
+                    title = {
+                        Text(text = stringResource(R.string.reuse_connection))
+                    },
+                    text = {
+                        Text(text = stringResource(R.string.reuse_app_message, intentData.name))
+                    },
+                    onDismissRequest = {
+                        showExistingAppDialog = false
+                    },
+                    confirmButton = {
+                        AmberButton(
+                            onClick = {
+                                val result = if (intentData.type == SignerType.CONNECT) {
+                                    bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                                } else {
+                                    account.hexKey
+                                }
+
+                                BunkerRequestUtils.sendResult(
+                                    context = context,
+                                    account = account,
+                                    key = key,
+                                    event = result,
+                                    bunkerRequest = bunkerRequest,
+                                    kind = null,
+                                    onLoading = onLoading,
+                                    permissions = localPermissions,
+                                    appName = appName,
+                                    signPolicy = localSignPolicy,
+                                    shouldCloseApplication = localCloseApplication,
+                                    rememberType = localRememberType,
+                                    onRemoveIntentData = onRemoveIntentData,
+                                    intentData = intentData,
+                                )
+                            },
+                            text = stringResource(R.string.reuse),
+                        )
+                    },
+                    dismissButton = {
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                            horizontalArrangement = Arrangement.Center,
+                        ) {
+                            TextButton(
+                                onClick = {
+                                    showExistingAppDialog = false
+                                },
+                            ) {
+                                Text(text = stringResource(R.string.cancel))
+                            }
+                        }
+                    },
+                )
+            }
+
             BunkerConnectRequestScreen(
                 modifier = modifier,
                 shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
@@ -441,23 +516,53 @@ private fun BunkerSingleEventHomeScreen(
                     } else {
                         account.hexKey
                     }
+                    localPermissions = permissions
+                    localSignPolicy = signPolicy
+                    localCloseApplication = closeApplication
+                    localRememberType = rememberType
 
-                    BunkerRequestUtils.sendResult(
-                        context = context,
-                        account = account,
-                        key = key,
-                        event = result,
-                        bunkerRequest = bunkerRequest,
-                        kind = null,
-                        onLoading = onLoading,
-                        permissions = permissions,
-                        appName = appName,
-                        signPolicy = signPolicy,
-                        shouldCloseApplication = closeApplication,
-                        rememberType = rememberType,
-                        onRemoveIntentData = onRemoveIntentData,
-                        intentData = intentData,
-                    )
+                    if (intentData.name.isNotBlank()) {
+                        Amber.instance.applicationIOScope.launch {
+                            val existingApp = AppDatabase.getDatabase(Amber.instance, account.npub).applicationDao().getByName(intentData.name)
+                            if (existingApp == null) {
+                                BunkerRequestUtils.sendResult(
+                                    context = context,
+                                    account = account,
+                                    key = key,
+                                    event = result,
+                                    bunkerRequest = bunkerRequest,
+                                    kind = null,
+                                    onLoading = onLoading,
+                                    permissions = permissions,
+                                    appName = appName,
+                                    signPolicy = signPolicy,
+                                    shouldCloseApplication = closeApplication,
+                                    rememberType = rememberType,
+                                    onRemoveIntentData = onRemoveIntentData,
+                                    intentData = intentData,
+                                )
+                            } else {
+                                showExistingAppDialog = true
+                            }
+                        }
+                    } else {
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            event = result,
+                            bunkerRequest = bunkerRequest,
+                            kind = null,
+                            onLoading = onLoading,
+                            permissions = permissions,
+                            appName = appName,
+                            signPolicy = signPolicy,
+                            shouldCloseApplication = closeApplication,
+                            rememberType = rememberType,
+                            onRemoveIntentData = onRemoveIntentData,
+                            intentData = intentData,
+                        )
+                    }
                 },
                 onReject = {
                     BunkerRequestUtils.sendRejection(

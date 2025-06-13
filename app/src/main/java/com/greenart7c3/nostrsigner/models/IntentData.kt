@@ -22,4 +22,5 @@ data class IntentData(
     val route: String?,
     val event: Event?,
     val encryptedData: String?,
+    val isNostrConnectURI: Boolean = false,
 )

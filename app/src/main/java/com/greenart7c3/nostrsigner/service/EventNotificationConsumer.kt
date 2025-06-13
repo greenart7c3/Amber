@@ -118,12 +118,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         if (EncryptedInfo.isNIP04(event.content)) {
+            Log.d(Amber.TAG, "isNIP04: true")
             acc.signer.nip04Decrypt(event.content, event.pubKey) {
                 Amber.instance.applicationIOScope.launch {
                     notify(event, acc, it, EncryptionType.NIP04, relay)
                 }
             }
         } else {
+            Log.d(Amber.TAG, "isNIP04: false")
             acc.signer.nip44Decrypt(event.content, event.pubKey) {
                 Amber.instance.applicationIOScope.launch {
                     notify(event, acc, it, EncryptionType.NIP44, relay)

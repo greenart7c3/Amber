@@ -60,6 +60,10 @@ interface ApplicationDao {
     @Transaction
     suspend fun getByKey(key: String): ApplicationWithPermissions?
 
+    @Query("SELECT * FROM application WHERE `name` = :name LIMIT 1")
+    @Transaction
+    suspend fun getByName(name: String): ApplicationWithPermissions?
+
     @Query("SELECT * FROM application WHERE secret = :secret")
     @Transaction
     suspend fun getBySecret(secret: String): ApplicationWithPermissions?

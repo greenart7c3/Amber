@@ -67,7 +67,7 @@ class Amber : Application() {
     val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
         HttpClientManager.getHttpClient(useProxy)
     }
-    var client: NostrClient = NostrClient(factory)
+    val client: NostrClient = NostrClient(factory)
     var profileClient = ConcurrentHashMap<String, NostrClient>()
     val profileDataSource = ConcurrentHashMap<String, ProfileDataSource>()
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -255,10 +255,7 @@ class Amber : Application() {
         val hasNewRelays = allClientRelays.any { it.url !in savedUrls }
 
         if (savedRelays.isEmpty()) {
-            client.getAll().forEach {
-                it.disconnect()
-            }
-            client = NostrClient(factory)
+            client.reconnect(relays = null)
             NotificationDataSource.stop()
             AmberRelayStats.updateNotification()
             return

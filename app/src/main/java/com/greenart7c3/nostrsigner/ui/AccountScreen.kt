@@ -34,20 +34,23 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.flow.MutableStateFlow
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
 fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
-    intent: Intent,
+    intent: Intent?,
     packageName: String?,
     appName: String?,
     flow: MutableStateFlow<List<IntentData>>,
+    bunkerRequests: List<AmberBunkerRequest>,
     navController: NavHostController,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
@@ -67,36 +70,45 @@ fun AccountScreen(
                 }
                 is AccountState.LoggedIn -> {
                     LaunchedEffect(intent, intents) {
-                        IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
-                            it?.let { intentData ->
-                                if (intents.none { item -> item.id == intentData.id }) {
-                                    val oldIntents = intents.toMutableList()
-                                    oldIntents.add(intentData)
-                                    flow.value = oldIntents
+                        intent?.let {
+                            IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
+                                it?.let { intentData ->
+                                    if (intents.none { item -> item.id == intentData.id }) {
+                                        val oldIntents = intents.toMutableList()
+                                        oldIntents.add(intentData)
+                                        flow.value = oldIntents
+                                    }
                                 }
                             }
                         }
                     }
-
-                    val localRoute = mutableStateOf(intents.firstNotNullOfOrNull { it.route } ?: state.route)
+                    val localRoute = mutableStateOf(
+                        intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
+                            Route.IncomingRequest.route
+                        } else {
+                            null ?: state.route
+                        },
+                    )
 
                     AmberListenerSingleton.accountStateViewModel = accountStateViewModel
 
                     DisplayErrorMessages(accountStateViewModel)
                     MainScreen(
-                        state.account,
-                        accountStateViewModel,
-                        intents,
-                        packageName,
-                        appName,
-                        localRoute,
-                        navController,
+                        account = state.account,
+                        accountStateViewModel = accountStateViewModel,
+                        intents = intents,
+                        bunkerRequests = bunkerRequests,
+                        packageName = packageName,
+                        appName = appName,
+                        route = localRoute,
+                        navController = navController,
                         onRemoveIntentData = { results, type ->
                             val oldIntents = intents.toMutableList()
                             when (type) {
                                 IntentResultType.ADD -> {
                                     oldIntents.addAll(results)
                                 }
+
                                 IntentResultType.REMOVE -> {
                                     oldIntents.removeAll(results)
                                 }

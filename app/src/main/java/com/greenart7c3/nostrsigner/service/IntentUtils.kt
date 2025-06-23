@@ -25,7 +25,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.BunkerRequest
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
@@ -149,22 +149,21 @@ object IntentUtils {
                     ) {
                         onReady(
                             IntentData(
-                                localData,
-                                appName,
-                                type,
-                                pubKey,
-                                "",
-                                callbackUrl,
-                                compressionType,
-                                returnType,
-                                listOf(),
-                                Hex.decode(it.pubKey).toNpub(),
-                                mutableStateOf(true),
-                                mutableStateOf(RememberType.NEVER),
-                                null,
-                                route,
-                                it,
-                                null,
+                                data = localData,
+                                name = appName,
+                                type = type,
+                                pubKey = pubKey,
+                                id = "",
+                                callBackUrl = callbackUrl,
+                                compression = compressionType,
+                                returnType = returnType,
+                                permissions = listOf(),
+                                currentAccount = Hex.decode(it.pubKey).toNpub(),
+                                checked = mutableStateOf(true),
+                                rememberType = mutableStateOf(RememberType.NEVER),
+                                route = route,
+                                event = it,
+                                encryptedData = null,
                             ),
                         )
                     }
@@ -196,66 +195,63 @@ object IntentUtils {
 
                     onReady(
                         IntentData(
-                            localData,
-                            appName,
-                            type,
-                            pubKey,
-                            "",
-                            callbackUrl,
-                            compressionType,
-                            returnType,
-                            listOf(),
-                            Hex.decode(pubKey).toNpub(),
-                            mutableStateOf(true),
-                            mutableStateOf(RememberType.NEVER),
-                            null,
-                            route,
-                            null,
-                            result,
+                            data = localData,
+                            name = appName,
+                            type = type,
+                            pubKey = pubKey,
+                            id = "",
+                            callBackUrl = callbackUrl,
+                            compression = compressionType,
+                            returnType = returnType,
+                            permissions = listOf(),
+                            currentAccount = Hex.decode(pubKey).toNpub(),
+                            checked = mutableStateOf(true),
+                            rememberType = mutableStateOf(RememberType.NEVER),
+                            route = route,
+                            event = null,
+                            encryptedData = result,
                         ),
                     )
                 }
                 SignerType.GET_PUBLIC_KEY -> {
                     onReady(
                         IntentData(
-                            localData,
-                            appName,
-                            type,
-                            pubKey,
-                            "",
-                            callbackUrl,
-                            compressionType,
-                            returnType,
-                            listOf(),
-                            "",
-                            mutableStateOf(true),
-                            mutableStateOf(RememberType.NEVER),
-                            null,
-                            route,
-                            null,
-                            null,
+                            data = localData,
+                            name = appName,
+                            type = type,
+                            pubKey = pubKey,
+                            id = "",
+                            callBackUrl = callbackUrl,
+                            compression = compressionType,
+                            returnType = returnType,
+                            permissions = listOf(),
+                            currentAccount = "",
+                            checked = mutableStateOf(true),
+                            rememberType = mutableStateOf(RememberType.NEVER),
+                            route = route,
+                            event = null,
+                            encryptedData = null,
                         ),
                     )
                 }
                 SignerType.SIGN_MESSAGE -> {
                     onReady(
                         IntentData(
-                            localData,
-                            appName,
-                            type,
-                            pubKey,
-                            "",
-                            callbackUrl,
-                            compressionType,
-                            returnType,
-                            listOf(),
-                            "",
-                            mutableStateOf(true),
-                            mutableStateOf(RememberType.NEVER),
-                            null,
-                            route,
-                            null,
-                            null,
+                            data = localData,
+                            name = appName,
+                            type = type,
+                            pubKey = pubKey,
+                            id = "",
+                            callBackUrl = callbackUrl,
+                            compression = compressionType,
+                            returnType = returnType,
+                            permissions = listOf(),
+                            currentAccount = "",
+                            checked = mutableStateOf(true),
+                            rememberType = mutableStateOf(RememberType.NEVER),
+                            route = route,
+                            event = null,
+                            encryptedData = null,
                         ),
                     )
                 }
@@ -338,22 +334,21 @@ object IntentUtils {
 
                     onReady(
                         IntentData(
-                            data,
-                            name,
-                            type,
-                            pubKey,
-                            id,
-                            intent.extras?.getString("callbackUrl"),
-                            compressionType,
-                            returnType,
-                            permissions,
-                            npub ?: Hex.decode(it.pubKey).toNpub(),
-                            mutableStateOf(true),
-                            mutableStateOf(RememberType.NEVER),
-                            null,
-                            route,
-                            it,
-                            null,
+                            data = data,
+                            name = name,
+                            type = type,
+                            pubKey = pubKey,
+                            id = id,
+                            callBackUrl = intent.extras?.getString("callbackUrl"),
+                            compression = compressionType,
+                            returnType = returnType,
+                            permissions = permissions,
+                            currentAccount = npub ?: Hex.decode(it.pubKey).toNpub(),
+                            checked = mutableStateOf(true),
+                            rememberType = mutableStateOf(RememberType.NEVER),
+                            route = route,
+                            event = it,
+                            encryptedData = null,
                         ),
                     )
                 }
@@ -390,22 +385,21 @@ object IntentUtils {
 
                 onReady(
                     IntentData(
-                        data,
-                        name,
-                        type,
-                        pubKey,
-                        id,
-                        intent.extras?.getString("callbackUrl"),
-                        compressionType,
-                        returnType,
-                        permissions,
-                        npub ?: Hex.decode(pubKey).toNpub(),
-                        mutableStateOf(true),
-                        mutableStateOf(RememberType.NEVER),
-                        null,
-                        route,
-                        null,
-                        result,
+                        data = data,
+                        name = name,
+                        type = type,
+                        pubKey = pubKey,
+                        id = id,
+                        callBackUrl = intent.extras?.getString("callbackUrl"),
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = permissions,
+                        currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = null,
+                        encryptedData = result,
                     ),
                 )
             }
@@ -417,22 +411,21 @@ object IntentUtils {
 
                 onReady(
                     IntentData(
-                        data,
-                        name,
-                        type,
-                        pubKey,
-                        id,
-                        intent.extras?.getString("callbackUrl"),
-                        compressionType,
-                        returnType,
-                        permissions,
-                        npub ?: Hex.decode(pubKey).toNpub(),
-                        mutableStateOf(true),
-                        mutableStateOf(RememberType.NEVER),
-                        null,
-                        route,
-                        null,
-                        null,
+                        data = data,
+                        name = name,
+                        type = type,
+                        pubKey = pubKey,
+                        id = id,
+                        callBackUrl = intent.extras?.getString("callbackUrl"),
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = permissions,
+                        currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = null,
+                        encryptedData = null,
                     ),
                 )
             }
@@ -444,22 +437,21 @@ object IntentUtils {
 
                 onReady(
                     IntentData(
-                        data,
-                        name,
-                        type,
-                        pubKey,
-                        id,
-                        intent.extras?.getString("callbackUrl"),
-                        compressionType,
-                        returnType,
-                        permissions,
-                        npub ?: Hex.decode(pubKey).toNpub(),
-                        mutableStateOf(true),
-                        mutableStateOf(RememberType.NEVER),
-                        null,
-                        route,
-                        null,
-                        null,
+                        data = data,
+                        name = name,
+                        type = type,
+                        pubKey = pubKey,
+                        id = id,
+                        callBackUrl = intent.extras?.getString("callbackUrl"),
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = permissions,
+                        currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = null,
+                        encryptedData = null,
                     ),
                 )
             }
@@ -496,9 +488,9 @@ object IntentUtils {
 
             val bunkerRequest =
                 if (intent.getStringExtra("bunker") != null) {
-                    BunkerRequest.mapper.readValue(
+                    AmberBunkerRequest.mapper.readValue(
                         intent.getStringExtra("bunker"),
-                        BunkerRequest::class.java,
+                        AmberBunkerRequest::class.java,
                     )
                 } else {
                     null
@@ -520,9 +512,9 @@ object IntentUtils {
             }
 
             if (intent.dataString?.startsWith("nostrconnect:") == true) {
-                NostrConnectUtils.getIntentFromNostrConnect(intent, route, localAccount, onReady)
+                NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
             } else if (bunkerRequest != null) {
-                BunkerRequestUtils.getIntentDataFromBunkerRequest(context, intent, bunkerRequest, route, onReady)
+                BunkerRequestUtils.addRequest(bunkerRequest)
             } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
                 getIntentDataFromIntent(context, intent, packageName, route, localAccount, onReady)
             } else {
@@ -775,10 +767,10 @@ object IntentUtils {
                         "",
                         account.hexKey,
                         true,
-                        intentData.bunkerRequest?.secret ?: "",
-                        intentData.bunkerRequest?.secret != null,
+                        "",
+                        false,
                         account.signPolicy,
-                        intentData.bunkerRequest?.closeApplication != false,
+                        true,
                     ),
                     permissions = mutableListOf(),
                 )

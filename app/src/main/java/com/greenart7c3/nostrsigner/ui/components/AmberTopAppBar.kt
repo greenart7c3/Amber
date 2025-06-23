@@ -25,6 +25,7 @@ import androidx.navigation.NavBackStackEntry
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -44,6 +45,7 @@ fun AmberTopAppBar(
     navBackStackEntry: NavBackStackEntry?,
     account: Account,
     intents: List<IntentData>,
+    bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
 ) {
     if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
@@ -132,8 +134,14 @@ fun AmberTopAppBar(
                         }
                     } else {
                         launch(Dispatchers.IO) {
-                            if (destinationRoute == Route.IncomingRequest.route && intents.isNotEmpty()) {
-                                val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(intents.first().bunkerRequest?.localKey ?: packageName ?: "")?.application
+                            if (destinationRoute == Route.IncomingRequest.route && (intents.isNotEmpty() || bunkerRequests.isNotEmpty())) {
+                                val key = if (bunkerRequests.isNotEmpty()) {
+                                    bunkerRequests.first().localKey
+                                } else {
+                                    packageName
+                                }
+
+                                val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key ?: "")?.application
                                 val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
                                 title = if (titleTemp.isBlank()) {
                                     routes.find { it.route == destinationRoute }?.title ?: ""

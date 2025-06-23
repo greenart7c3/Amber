@@ -28,9 +28,11 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.components.RememberMyChoice
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 
 @Composable
 fun SeeDetailsScreen(
@@ -41,15 +43,25 @@ fun SeeDetailsScreen(
         modifier = modifier
             .fillMaxWidth(),
     ) {
-        var rememberType by remember { mutableStateOf(MultiEventScreenIntents.intents.first().rememberType.value) }
-        val first = MultiEventScreenIntents.intents.first()
-        val permission = if (first.type == SignerType.SIGN_EVENT) {
-            Permission("sign_event", first.event!!.kind)
+        var rememberType by remember { mutableStateOf(MultiEventScreenIntents.intents.firstOrNull()?.rememberType?.value ?: MultiEventScreenIntents.bunkerRequests.first().rememberType.value) }
+        val type = if (MultiEventScreenIntents.intents.isNotEmpty()) {
+            MultiEventScreenIntents.intents.first().type
         } else {
-            Permission(first.type.toString().toLowerCase(Locale.current), null)
+            BunkerRequestUtils.getTypeFromBunker(MultiEventScreenIntents.bunkerRequests.first().request)
+        }
+        val permission = if (type == SignerType.SIGN_EVENT) {
+            val event = if (MultiEventScreenIntents.intents.isNotEmpty()) {
+                MultiEventScreenIntents.intents.first().event!!
+            } else {
+                MultiEventScreenIntents.bunkerRequests.first().signedEvent!!
+            }
+
+            Permission("sign_event", event.kind)
+        } else {
+            Permission(type.toString().toLowerCase(Locale.current), null)
         }
 
-        val message = if (first.type == SignerType.CONNECT) {
+        val message = if (type == SignerType.CONNECT) {
             stringResource(R.string.connect)
         } else {
             permission.toLocalizedString(context)
@@ -119,6 +131,51 @@ fun SeeDetailsScreen(
                             .padding(vertical = 8.dp),
                         text = data.ifBlank { message },
                         color = if (intent.checked.value) Color.Unspecified else Color.Gray,
+                    )
+                }
+            }
+        }
+
+        MultiEventScreenIntents.bunkerRequests.forEach { bunkerRequest ->
+            Card(
+                Modifier
+                    .padding(4.dp),
+                colors = CardDefaults.cardColors().copy(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
+                border = BorderStroke(1.dp, Color.Gray),
+            ) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            bunkerRequest.checked.value = !bunkerRequest.checked.value
+                        },
+                ) {
+                    Checkbox(
+                        checked = bunkerRequest.checked.value,
+                        onCheckedChange = { _ ->
+                            bunkerRequest.checked.value = !bunkerRequest.checked.value
+                        },
+                        colors = CheckboxDefaults.colors().copy(
+                            uncheckedBorderColor = Color.Gray,
+                        ),
+                    )
+
+                    val data = if (bunkerRequest.request is BunkerRequestSign) {
+                        val event = bunkerRequest.signedEvent!!
+                        if (event.kind == 22242) AmberEvent.relay(event) else event.content
+                    } else {
+                        bunkerRequest.encryptDecryptResponse ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                    }
+
+                    Text(
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(vertical = 8.dp),
+                        text = data.ifBlank { message },
+                        color = if (bunkerRequest.checked.value) Color.Unspecified else Color.Gray,
                     )
                 }
             }

@@ -36,7 +36,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.BunkerRequest
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -46,11 +46,20 @@ import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip01Core.verify
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Encrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.UUID
 import kotlinx.coroutines.launch
 
 class EventNotificationConsumer(private val applicationContext: Context) {
@@ -158,10 +167,32 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             ),
         )
 
-        val bunkerRequest = BunkerRequest.mapper.readValue(request, BunkerRequest::class.java)
-        bunkerRequest.localKey = event.pubKey
-        bunkerRequest.currentAccount = acc.npub
-        bunkerRequest.encryptionType = encryptionType
+        val bunkerRequest = EventMapper.mapper.readValue(request, BunkerRequest::class.java)
+
+        val signedEvent = if (bunkerRequest is BunkerRequestSign) {
+            acc.signer.signerSync.sign(bunkerRequest.event)
+        } else {
+            null
+        }
+
+        val encryptDecryptResponse = if (bunkerRequest is BunkerRequestNip44Decrypt) {
+            acc.signer.signerSync.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
+        } else if (bunkerRequest is BunkerRequestNip44Encrypt) {
+            acc.signer.signerSync.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
+        } else if (bunkerRequest is BunkerRequestNip04Decrypt) {
+            acc.signer.signerSync.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
+        } else if (bunkerRequest is BunkerRequestNip04Encrypt) {
+            acc.signer.signerSync.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
+        } else if (bunkerRequest.method == "decrypt_zap_event") {
+            AmberUtils.encryptOrDecryptData(
+                bunkerRequest.params[1],
+                SignerType.DECRYPT_ZAP_EVENT,
+                acc,
+                bunkerRequest.params.first(),
+            )
+        } else {
+            null
+        }
 
         val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
         if (type == SignerType.INVALID) {
@@ -178,13 +209,26 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
-        val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
+        val request = AmberBunkerRequest(
+            request = bunkerRequest,
+            localKey = event.pubKey,
+            relays = responseRelay,
+            currentAccount = acc.hexKey,
+            encryptionType = encryptionType,
+            nostrConnectSecret = "",
+            closeApplication = true,
+            name = "",
+            signedEvent = signedEvent,
+            encryptDecryptResponse = encryptDecryptResponse,
+        )
 
         var amberEvent: AmberEvent? = null
 
         val pubKey =
             if (bunkerRequest.method.endsWith("encrypt") || bunkerRequest.method.endsWith("decrypt")) {
                 bunkerRequest.params.first()
+            } else if (bunkerRequest.method == "decrypt_zap_event") {
+                bunkerRequest.params[1]
             } else if (bunkerRequest.method == "sign_event") {
                 amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
                 amberEvent.pubKey
@@ -192,7 +236,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ""
             }
 
-        val permission = dao.getByKey(bunkerRequest.localKey)
+        val permission = dao.getByKey(event.pubKey)
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             Amber.instance.applicationIOScope.launch {
                 dao
@@ -208,11 +252,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     )
             }
             BunkerRequestUtils.sendBunkerResponse(
-                applicationContext,
-                acc,
-                bunkerRequest,
-                BunkerResponse(bunkerRequest.id, bunkerRequest.nostrConnectSecret.ifBlank { "ack" }, null),
-                permission.application.relays,
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = request,
+                bunkerResponse = BunkerResponse(bunkerRequest.id, request.nostrConnectSecret.ifBlank { "ack" }, null),
+                relays = permission.application.relays,
                 onLoading = {},
                 onDone = {},
             )
@@ -220,14 +264,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         var applicationWithSecret: ApplicationWithPermissions? = null
-        if (type == SignerType.CONNECT) {
-            val secret =
-                try {
-                    bunkerRequest.params[1]
-                } catch (_: Exception) {
-                    ""
-                }
-            bunkerRequest.secret = secret
+        if (bunkerRequest is BunkerRequestConnect) {
+            val secret = bunkerRequest.secret ?: UUID.randomUUID().toString()
+
             applicationWithSecret = dao.getBySecret(secret)
             if (applicationWithSecret == null || secret.isBlank() || applicationWithSecret.application.isConnected || !applicationWithSecret.application.useSecret) {
                 val message = if (applicationWithSecret == null) {
@@ -240,11 +279,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                     "secret not in use"
                 }
                 BunkerRequestUtils.sendBunkerResponse(
-                    applicationContext,
-                    acc,
-                    bunkerRequest,
-                    BunkerResponse(bunkerRequest.id, "", message),
-                    applicationWithSecret?.application?.relays ?: responseRelay,
+                    context = applicationContext,
+                    account = acc,
+                    bunkerRequest = request,
+                    bunkerResponse = BunkerResponse(bunkerRequest.id, "", message),
+                    relays = applicationWithSecret?.application?.relays ?: responseRelay,
                     onLoading = { },
                     onDone = { },
                 )
@@ -255,23 +294,24 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val relays = permission?.application?.relays ?: applicationWithSecret?.application?.relays ?: responseRelay
         if (permission == null && applicationWithSecret == null) {
             BunkerRequestUtils.sendBunkerResponse(
-                applicationContext,
-                acc,
-                bunkerRequest,
-                BunkerResponse(bunkerRequest.id, "", "no permission"),
-                relays,
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = request,
+                bunkerResponse = BunkerResponse(bunkerRequest.id, "", "no permission"),
+                relays = relays,
                 onLoading = { },
                 onDone = { },
             )
             return
         }
+        val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
         val cursor =
             applicationContext.contentResolver.query(
                 "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
                 arrayOf(data, pubKey, acc.npub),
                 "1",
                 null,
-                bunkerRequest.localKey,
+                event.pubKey,
             )
         var name = event.pubKey.toShortenHex()
         if (permission != null && permission.application.name.isNotBlank()) {
@@ -297,17 +337,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         "Bunker",
                         "BunkerID",
                         applicationContext,
-                        bunkerRequest,
+                        request,
                     )
             } else {
                 if (localCursor.moveToFirst()) {
                     if (localCursor.getColumnIndex("rejected") > -1) {
                         BunkerRequestUtils.sendBunkerResponse(
-                            applicationContext,
-                            acc,
-                            bunkerRequest,
-                            BunkerResponse(bunkerRequest.id, "", "user rejected"),
-                            relays,
+                            context = applicationContext,
+                            account = acc,
+                            bunkerRequest = request,
+                            bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
+                            relays = relays,
                             onLoading = { },
                             onDone = { },
                         )
@@ -319,11 +359,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         val result = localCursor.getString(index)
 
                         BunkerRequestUtils.sendBunkerResponse(
-                            applicationContext,
-                            acc,
-                            bunkerRequest,
-                            BunkerResponse(bunkerRequest.id, result, null),
-                            relays,
+                            context = applicationContext,
+                            account = acc,
+                            bunkerRequest = request,
+                            bunkerResponse = BunkerResponse(bunkerRequest.id, result, null),
+                            relays = relays,
                             onLoading = { },
                             onDone = { },
                         )
@@ -336,7 +376,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             "Bunker",
                             "BunkerID",
                             applicationContext,
-                            bunkerRequest,
+                            request,
                         )
                 }
             }

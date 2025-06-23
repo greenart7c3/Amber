@@ -50,8 +50,6 @@ import com.vitorpamplona.quartz.utils.Hex
 import java.time.Duration
 import java.time.Instant
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
 fun Intent.isLaunchFromHistory(): Boolean =
@@ -221,41 +219,44 @@ class MainActivity : AppCompatActivity() {
                                     CircularProgressIndicator()
                                 }
                             } else {
-                                var npub = remember { mainViewModel.getAccount(intent.getStringExtra("current_user")) }
+                                val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(emptyList())
+                                var npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
                                 val accountStateViewModel: AccountStateViewModel =
                                     viewModel {
                                         AccountStateViewModel(npub)
                                     }
 
-                                LaunchedEffect(Unit) {
+                                LaunchedEffect(Unit, bunkerRequests.value) {
                                     launch(Dispatchers.IO) {
+                                        val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
                                         val currentAccount = LocalPreferences.currentAccount(context)
-                                        if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
-                                            if (npub.startsWith("npub")) {
-                                                Log.d(Amber.TAG, "Switching account to $npub")
-                                                if (LocalPreferences.containsAccount(context, npub)) {
-                                                    accountStateViewModel.switchUser(npub, Route.IncomingRequest.route)
-                                                }
-                                            } else {
-                                                val localNpub = Hex.decode(npub).toNpub()
+                                        if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
+                                            if (localNpub.startsWith("npub")) {
                                                 Log.d(Amber.TAG, "Switching account to $localNpub")
                                                 if (LocalPreferences.containsAccount(context, localNpub)) {
                                                     accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
                                                 }
+                                            } else {
+                                                val localNpub2 = Hex.decode(localNpub).toNpub()
+                                                Log.d(Amber.TAG, "Switching account to $localNpub2")
+                                                if (LocalPreferences.containsAccount(context, localNpub2)) {
+                                                    accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
+                                                }
                                             }
                                         }
                                     }
-                                    launch {
-                                        BunkerRequestUtils.state
-                                            .receiveAsFlow()
-                                            .collectLatest {
-                                                mainViewModel.showBunkerRequests(null, accountStateViewModel)
-                                            }
-                                    }
                                 }
 
-                                AccountScreen(accountStateViewModel, intent, packageName, appName, mainViewModel.intents, navController)
+                                AccountScreen(
+                                    accountStateViewModel = accountStateViewModel,
+                                    intent = intent,
+                                    packageName = packageName,
+                                    appName = appName,
+                                    flow = mainViewModel.intents,
+                                    bunkerRequests = bunkerRequests.value,
+                                    navController = navController,
+                                )
                             }
                         }
                     }

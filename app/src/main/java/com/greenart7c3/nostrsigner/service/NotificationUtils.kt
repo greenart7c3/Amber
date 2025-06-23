@@ -31,7 +31,7 @@ import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.BunkerRequest
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 object NotificationUtils {
@@ -65,7 +65,7 @@ object NotificationUtils {
         messageTitle: String,
         channelId: String,
         applicationContext: Context,
-        bunkerRequest: BunkerRequest,
+        bunkerRequest: AmberBunkerRequest,
     ) {
         sendNotification(
             id = id,
@@ -85,7 +85,7 @@ object NotificationUtils {
         picture: BitmapDrawable?,
         channelId: String,
         applicationContext: Context,
-        bunkerRequest: BunkerRequest,
+        bunkerRequest: AmberBunkerRequest,
     ) {
         val notId = id.hashCode()
         val notifications: Array<StatusBarNotification> = activeNotifications

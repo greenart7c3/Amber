@@ -8,9 +8,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.BunkerRequest
-import com.greenart7c3.nostrsigner.models.IntentData
-import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
@@ -130,20 +128,18 @@ object AmberUtils {
     }
 
     fun sendBunkerError(
-        intentData: IntentData,
         account: Account,
-        bunkerRequest: BunkerRequest,
+        bunkerRequest: AmberBunkerRequest,
         relays: List<RelaySetupInfo>,
         context: Context,
         closeApplication: Boolean,
-        onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
         onLoading: (Boolean) -> Unit,
     ) {
         BunkerRequestUtils.sendBunkerResponse(
             context,
             account,
             bunkerRequest,
-            BunkerResponse(bunkerRequest.id, "", "user rejected"),
+            BunkerResponse(bunkerRequest.request.id, "", "user rejected"),
             relays,
             onLoading = onLoading,
             onDone = { result ->
@@ -152,7 +148,6 @@ object AmberUtils {
                 } else {
                     BunkerRequestUtils.clearRequests()
                     EventNotificationConsumer(context).notificationManager().cancelAll()
-                    onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                     val activity = Amber.instance.getMainActivity()
                     activity?.intent = null
                     if (closeApplication) {

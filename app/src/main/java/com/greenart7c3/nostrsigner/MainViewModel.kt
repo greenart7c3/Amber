@@ -47,8 +47,8 @@ class MainViewModel(val context: Context) : ViewModel() {
 
             val pubKeys =
                 intents.value.mapNotNull {
-                    it.event?.pubKey ?: it.bunkerRequest?.currentAccount
-                }.filter { it.isNotBlank() }
+                    it.event?.pubKey
+                }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().map { it.currentAccount }
 
             if (pubKeys.isEmpty()) {
                 if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {
@@ -90,7 +90,7 @@ class MainViewModel(val context: Context) : ViewModel() {
     fun showBunkerRequests(callingPackage: String?, accountStateViewModel: AccountStateViewModel? = null) {
         val requests =
             BunkerRequestUtils.getBunkerRequests().map {
-                it.value.copy()
+                it.copy()
             }
 
         viewModelScope.launch(Dispatchers.IO) {

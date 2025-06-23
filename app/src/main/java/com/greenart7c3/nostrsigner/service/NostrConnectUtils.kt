@@ -2,23 +2,17 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
 import android.util.Log
-import androidx.compose.runtime.mutableStateOf
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
-import com.greenart7c3.nostrsigner.models.BunkerRequest
-import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EncryptionType
-import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.models.ReturnType
-import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.containsNip
-import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import java.util.UUID
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
@@ -28,9 +22,7 @@ object NostrConnectUtils {
 
     fun getIntentFromNostrConnect(
         intent: Intent,
-        route: String?,
         account: Account,
-        onReady: (IntentData?) -> Unit,
     ) {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
@@ -115,36 +107,26 @@ object NostrConnectUtils {
             permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
             permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
-            onReady(
-                IntentData(
-                    data = "ack",
-                    name = name,
-                    type = SignerType.CONNECT,
-                    pubKey = pubKey,
-                    id = "",
-                    callBackUrl = null,
-                    compression = CompressionType.NONE,
-                    returnType = ReturnType.EVENT,
-                    permissions = permissions,
-                    currentAccount = "",
-                    checked = mutableStateOf(true),
-                    rememberType = mutableStateOf(RememberType.NEVER),
-                    bunkerRequest = BunkerRequest(
-                        id = UUID.randomUUID().toString().substring(0, 4),
-                        method = "connect",
-                        params = arrayOf(pubKey),
-                        localKey = pubKey,
-                        relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
+            BunkerRequestUtils.addRequest(
+                AmberBunkerRequest(
+                    BunkerRequestConnect(
+                        remoteKey = pubKey,
                         secret = "",
-                        currentAccount = account.npub,
-                        encryptionType = EncryptionType.NIP04,
-                        nostrConnectSecret = nostrConnectSecret,
-                        closeApplication = intent.getBooleanExtra("closeApplication", true),
+                        permissions = if (permissions.isNotEmpty()) {
+                            permissions.joinToString { if (it.kind != null) "${it.type}:${it.kind}" else it.type }
+                        } else {
+                            null
+                        },
                     ),
-                    route = route,
-                    event = null,
-                    encryptedData = null,
-                    isNostrConnectURI = true,
+                    localKey = pubKey,
+                    relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
+                    currentAccount = account.hexKey,
+                    encryptionType = EncryptionType.NIP04,
+                    nostrConnectSecret = nostrConnectSecret,
+                    closeApplication = intent.getBooleanExtra("closeApplication", true),
+                    name = name,
+                    signedEvent = null,
+                    encryptDecryptResponse = null,
                 ),
             )
         } catch (e: Exception) {
@@ -160,7 +142,6 @@ object NostrConnectUtils {
                     ),
                 )
             }
-            onReady(null)
         }
     }
 }

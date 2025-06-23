@@ -58,6 +58,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
@@ -127,6 +128,7 @@ fun MainScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
     intents: List<IntentData>,
+    bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
     appName: String?,
     route: MutableState<String?>,
@@ -215,14 +217,14 @@ fun MainScreen(
         )
     }
 
-    var localRoute by remember { mutableStateOf(route.value ?: if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route) }
-    LaunchedEffect(Unit, route.value, intents) {
+    var localRoute by remember { mutableStateOf(route.value ?: if (intents.isEmpty() && bunkerRequests.isEmpty()) Route.Applications.route else Route.IncomingRequest.route) }
+    LaunchedEffect(Unit, route.value, intents, bunkerRequests) {
         launch(Dispatchers.Main) {
             if (route.value != null) {
                 localRoute = route.value!!
                 route.value = null
             } else {
-                localRoute = if (intents.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
+                localRoute = if (intents.isEmpty() && bunkerRequests.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
             }
         }
     }
@@ -261,6 +263,7 @@ fun MainScreen(
                 navBackStackEntry = navBackStackEntry,
                 account = account,
                 intents = intents,
+                bunkerRequests = bunkerRequests,
                 packageName = packageName,
             )
         },
@@ -349,6 +352,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             intents = intents,
+                            bunkerRequests = bunkerRequests,
                             packageName = packageName,
                             applicationName = appName,
                             account = account,

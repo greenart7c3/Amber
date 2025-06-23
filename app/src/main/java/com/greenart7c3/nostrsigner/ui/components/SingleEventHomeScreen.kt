@@ -30,7 +30,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.BunkerRequest
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
@@ -43,6 +43,13 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestGetPublicKey
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Encrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
@@ -51,39 +58,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
-fun SingleEventHomeScreen(
-    modifier: Modifier,
-    packageName: String?,
-    applicationName: String?,
-    intentData: IntentData,
-    account: Account,
-    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
-    onLoading: (Boolean) -> Unit,
-) {
-    if (intentData.bunkerRequest != null) {
-        BunkerSingleEventHomeScreen(
-            modifier = modifier,
-            bunkerRequest = intentData.bunkerRequest,
-            intentData = intentData,
-            account = account,
-            onRemoveIntentData = onRemoveIntentData,
-            onLoading = onLoading,
-        )
-    } else {
-        IntentSingleEventHomeScreen(
-            modifier = modifier,
-            packageName = packageName,
-            applicationName = applicationName,
-            intentData = intentData,
-            account = account,
-            onRemoveIntentData = onRemoveIntentData,
-            onLoading = onLoading,
-        )
-    }
-}
-
-@Composable
-private fun IntentSingleEventHomeScreen(
+fun IntentSingleEventHomeScreen(
     modifier: Modifier,
     packageName: String?,
     applicationName: String?,
@@ -404,12 +379,10 @@ private fun IntentSingleEventHomeScreen(
 }
 
 @Composable
-private fun BunkerSingleEventHomeScreen(
+fun BunkerSingleEventHomeScreen(
     modifier: Modifier,
-    bunkerRequest: BunkerRequest,
-    intentData: IntentData,
+    bunkerRequest: AmberBunkerRequest,
     account: Account,
-    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     var applicationEntity by remember {
@@ -420,21 +393,22 @@ private fun BunkerSingleEventHomeScreen(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             applicationEntity =
-                if (bunkerRequest.secret.isNotBlank()) {
-                    Amber.instance.getDatabase(account.npub).applicationDao().getBySecret(bunkerRequest.secret)
+                if (bunkerRequest.request is BunkerRequestConnect && bunkerRequest.request.secret?.isNotBlank() == true) {
+                    Amber.instance.getDatabase(account.npub).applicationDao().getBySecret(bunkerRequest.request.secret!!)
                 } else {
                     Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
                 }
         }
     }
 
-    var appName = applicationEntity?.application?.name ?: intentData.name
+    var appName = applicationEntity?.application?.name ?: bunkerRequest.name
     appName = appName.ifBlank { key.toShortenHex() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+    val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
 
-    when (intentData.type) {
-        SignerType.CONNECT -> {
+    when (bunkerRequest.request) {
+        is BunkerRequestConnect -> {
             var showExistingAppDialog by remember { mutableStateOf(false) }
             var localPermissions by remember { mutableStateOf<List<Permission>?>(null) }
             var localCloseApplication by remember { mutableStateOf<Boolean?>(null) }
@@ -448,7 +422,7 @@ private fun BunkerSingleEventHomeScreen(
                         Text(text = stringResource(R.string.replace_connection))
                     },
                     text = {
-                        Text(text = stringResource(R.string.replace_app_message, intentData.name))
+                        Text(text = stringResource(R.string.replace_app_message, bunkerRequest.name))
                     },
                     onDismissRequest = {
                         showExistingAppDialog = false
@@ -457,18 +431,14 @@ private fun BunkerSingleEventHomeScreen(
                         Column {
                             AmberButton(
                                 onClick = {
-                                    val result = if (intentData.type == SignerType.CONNECT) {
-                                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
-                                    } else {
-                                        account.hexKey
-                                    }
+                                    val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
                                     BunkerRequestUtils.sendResult(
                                         oldKey = existingAppKey,
                                         context = context,
                                         account = account,
                                         key = key,
-                                        event = result,
+                                        response = result,
                                         bunkerRequest = bunkerRequest,
                                         kind = null,
                                         onLoading = onLoading,
@@ -477,8 +447,6 @@ private fun BunkerSingleEventHomeScreen(
                                         signPolicy = localSignPolicy,
                                         shouldCloseApplication = localCloseApplication,
                                         rememberType = localRememberType,
-                                        onRemoveIntentData = onRemoveIntentData,
-                                        intentData = intentData,
                                     )
                                 },
                                 text = stringResource(R.string.replace),
@@ -486,17 +454,13 @@ private fun BunkerSingleEventHomeScreen(
                             AmberButton(
                                 text = stringResource(R.string.create_a_new_connection),
                                 onClick = {
-                                    val result = if (intentData.type == SignerType.CONNECT) {
-                                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
-                                    } else {
-                                        account.hexKey
-                                    }
+                                    val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
                                     BunkerRequestUtils.sendResult(
                                         context = context,
                                         account = account,
                                         key = key,
-                                        event = result,
+                                        response = result,
                                         bunkerRequest = bunkerRequest,
                                         kind = null,
                                         onLoading = onLoading,
@@ -505,8 +469,6 @@ private fun BunkerSingleEventHomeScreen(
                                         signPolicy = localSignPolicy,
                                         shouldCloseApplication = localCloseApplication,
                                         rememberType = localRememberType,
-                                        onRemoveIntentData = onRemoveIntentData,
-                                        intentData = intentData,
                                     )
                                 },
                             )
@@ -526,27 +488,31 @@ private fun BunkerSingleEventHomeScreen(
                 shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
                 account = account,
                 appName = appName,
-                permissions = intentData.permissions,
-                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
-                    val result = if (intentData.type == SignerType.CONNECT) {
-                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+                permissions = bunkerRequest.request.permissions?.split(",")?.map {
+                    val split = it.split(":")
+                    if (split.size > 1) {
+                        Permission(split[0], split[1].toInt())
                     } else {
-                        account.hexKey
+                        Permission(split[0], null)
                     }
+                },
+                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
+                    val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
+
                     localPermissions = permissions
                     localSignPolicy = signPolicy
                     localCloseApplication = closeApplication
                     localRememberType = rememberType
 
-                    if (intentData.name.isNotBlank()) {
+                    if (bunkerRequest.name.isNotBlank()) {
                         Amber.instance.applicationIOScope.launch {
-                            val existingApp = AppDatabase.getDatabase(Amber.instance, account.npub).applicationDao().getByName(intentData.name)
+                            val existingApp = AppDatabase.getDatabase(Amber.instance, account.npub).applicationDao().getByName(bunkerRequest.name)
                             if (existingApp == null) {
                                 BunkerRequestUtils.sendResult(
                                     context = context,
                                     account = account,
                                     key = key,
-                                    event = result,
+                                    response = result,
                                     bunkerRequest = bunkerRequest,
                                     kind = null,
                                     onLoading = onLoading,
@@ -555,8 +521,6 @@ private fun BunkerSingleEventHomeScreen(
                                     signPolicy = signPolicy,
                                     shouldCloseApplication = closeApplication,
                                     rememberType = rememberType,
-                                    onRemoveIntentData = onRemoveIntentData,
-                                    intentData = intentData,
                                 )
                             } else {
                                 existingAppKey = existingApp.application.key
@@ -568,7 +532,7 @@ private fun BunkerSingleEventHomeScreen(
                             context = context,
                             account = account,
                             key = key,
-                            event = result,
+                            response = result,
                             bunkerRequest = bunkerRequest,
                             kind = null,
                             onLoading = onLoading,
@@ -577,8 +541,6 @@ private fun BunkerSingleEventHomeScreen(
                             signPolicy = signPolicy,
                             shouldCloseApplication = closeApplication,
                             rememberType = rememberType,
-                            onRemoveIntentData = onRemoveIntentData,
-                            intentData = intentData,
                         )
                     }
                 },
@@ -589,32 +551,26 @@ private fun BunkerSingleEventHomeScreen(
                         bunkerRequest = bunkerRequest,
                         appName = appName,
                         rememberType = it,
-                        signerType = intentData.type,
+                        signerType = type,
                         kind = null,
-                        intentData = intentData,
                         onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
                     )
                 },
             )
         }
-        SignerType.GET_PUBLIC_KEY -> {
+        is BunkerRequestGetPublicKey -> {
             BunkerGetPubKeyScreen(
                 modifier = modifier,
                 account = account,
                 applicationName = appName,
                 onAccept = { permissions, signPolicy, closeApplication, rememberType ->
-                    val result = if (intentData.type == SignerType.CONNECT) {
-                        bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
-                    } else {
-                        account.hexKey
-                    }
+                    val result = account.hexKey
 
                     BunkerRequestUtils.sendResult(
                         context = context,
                         account = account,
                         key = key,
-                        event = result,
+                        response = result,
                         bunkerRequest = bunkerRequest,
                         kind = null,
                         onLoading = onLoading,
@@ -623,8 +579,6 @@ private fun BunkerSingleEventHomeScreen(
                         signPolicy = signPolicy,
                         shouldCloseApplication = closeApplication,
                         rememberType = rememberType,
-                        onRemoveIntentData = onRemoveIntentData,
-                        intentData = intentData,
                     )
                 },
                 onReject = {
@@ -634,93 +588,21 @@ private fun BunkerSingleEventHomeScreen(
                         bunkerRequest = bunkerRequest,
                         appName = appName,
                         rememberType = it,
-                        signerType = intentData.type,
+                        signerType = type,
                         kind = null,
-                        intentData = intentData,
                         onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
                     )
                 },
             )
         }
 
-        SignerType.SIGN_MESSAGE -> {
-            val permission =
-                applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString()
-                }
-
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
-
-            BunkerSignMessage(
-                account = account,
-                modifier = modifier,
-                content = intentData.data,
-                shouldRunOnAccept = acceptOrReject,
-                appName = appName,
-                type = intentData.type,
-                onAccept = {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
-
-                        BunkerRequestUtils.sendResult(
-                            context = context,
-                            account = account,
-                            key = key,
-                            event = result,
-                            bunkerRequest = bunkerRequest,
-                            kind = null,
-                            onLoading = onLoading,
-                            permissions = null,
-                            appName = appName,
-                            signPolicy = null,
-                            shouldCloseApplication = bunkerRequest.closeApplication,
-                            rememberType = it,
-                            onRemoveIntentData = onRemoveIntentData,
-                            intentData = intentData,
-                        )
-                    }
-                },
-                onReject = {
-                    BunkerRequestUtils.sendRejection(
-                        key = key,
-                        account = account,
-                        bunkerRequest = bunkerRequest,
-                        appName = appName,
-                        rememberType = it,
-                        signerType = intentData.type,
-                        kind = null,
-                        intentData = intentData,
-                        onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
-                    )
-                },
-            )
-        }
-
-        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
-            val nip = when (intentData.type) {
-                SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
-                SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
-                SignerType.DECRYPT_ZAP_EVENT -> null
-                else -> null
-            }
+        is BunkerRequestNip04Encrypt -> {
+            val nip = 4
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString()
+                    it.pkKey == key && it.type == type.toString()
                 }
-            if (permission == null && nip != null) {
+            if (permission == null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {
                         it.pkKey == key && it.type == "NIP" && it.kind == nip
@@ -743,24 +625,17 @@ private fun BunkerSingleEventHomeScreen(
             BunkerEncryptDecryptData(
                 account = account,
                 modifier = modifier,
-                content = intentData.data,
-                encryptedData = intentData.encryptedData ?: "",
+                content = bunkerRequest.request.message,
+                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
-                type = intentData.type,
+                type = type,
                 onAccept = {
-                    val result =
-                        if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
-                            ""
-                        } else {
-                            intentData.encryptedData ?: ""
-                        }
-
                     BunkerRequestUtils.sendResult(
                         context = context,
                         account = account,
                         key = key,
-                        event = result,
+                        response = bunkerRequest.encryptDecryptResponse ?: "",
                         bunkerRequest = bunkerRequest,
                         kind = null,
                         onLoading = onLoading,
@@ -769,8 +644,6 @@ private fun BunkerSingleEventHomeScreen(
                         signPolicy = null,
                         shouldCloseApplication = bunkerRequest.closeApplication,
                         rememberType = it,
-                        onRemoveIntentData = onRemoveIntentData,
-                        intentData = intentData,
                     )
                 },
                 onReject = {
@@ -780,18 +653,217 @@ private fun BunkerSingleEventHomeScreen(
                         bunkerRequest = bunkerRequest,
                         appName = appName,
                         rememberType = it,
-                        signerType = intentData.type,
+                        signerType = type,
                         kind = null,
-                        intentData = intentData,
                         onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
                     )
                 },
             )
         }
 
-        else -> {
-            val event = intentData.event!!
+        is BunkerRequestNip04Decrypt -> {
+            val nip = 4
+            var permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString()
+                }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == "NIP" && it.kind == nip
+                    }
+            }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
+            BunkerEncryptDecryptData(
+                account = account,
+                modifier = modifier,
+                content = bunkerRequest.request.ciphertext,
+                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                shouldRunOnAccept = acceptOrReject,
+                appName = appName,
+                type = type,
+                onAccept = {
+                    val result = bunkerRequest.encryptDecryptResponse ?: ""
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        response = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = null,
+                        appName = appName,
+                        signPolicy = null,
+                        shouldCloseApplication = bunkerRequest.closeApplication,
+                        rememberType = it,
+                    )
+                },
+                onReject = {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = type,
+                        kind = null,
+                        onLoading = onLoading,
+                    )
+                },
+            )
+        }
+
+        is BunkerRequestNip44Encrypt -> {
+            val nip = 44
+            var permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString()
+                }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == "NIP" && it.kind == nip
+                    }
+            }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
+            BunkerEncryptDecryptData(
+                account = account,
+                modifier = modifier,
+                content = bunkerRequest.request.message,
+                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                shouldRunOnAccept = acceptOrReject,
+                appName = appName,
+                type = type,
+                onAccept = {
+                    val result = bunkerRequest.encryptDecryptResponse ?: ""
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        response = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = null,
+                        appName = appName,
+                        signPolicy = null,
+                        shouldCloseApplication = bunkerRequest.closeApplication,
+                        rememberType = it,
+                    )
+                },
+                onReject = {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = type,
+                        kind = null,
+                        onLoading = onLoading,
+                    )
+                },
+            )
+        }
+
+        is BunkerRequestNip44Decrypt -> {
+            val nip = 44
+            var permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString()
+                }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == "NIP" && it.kind == nip
+                    }
+            }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
+            BunkerEncryptDecryptData(
+                account = account,
+                modifier = modifier,
+                content = bunkerRequest.request.ciphertext,
+                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                shouldRunOnAccept = acceptOrReject,
+                appName = appName,
+                type = type,
+                onAccept = {
+                    val result = bunkerRequest.encryptDecryptResponse ?: ""
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        response = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = null,
+                        appName = appName,
+                        signPolicy = null,
+                        shouldCloseApplication = bunkerRequest.closeApplication,
+                        rememberType = it,
+                    )
+                },
+                onReject = {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = type,
+                        kind = null,
+                        onLoading = onLoading,
+                    )
+                },
+            )
+        }
+
+        is BunkerRequestSign -> {
+            val event = bunkerRequest.signedEvent!!
             val accounts =
                 LocalPreferences.allSavedAccounts(context).filter {
                     it.npub.bechToBytes().toHexKey() == event.pubKey
@@ -815,7 +887,7 @@ private fun BunkerSingleEventHomeScreen(
                 val permission =
                     applicationEntity?.permissions?.firstOrNull {
                         val nip = event.kind.kindToNip()?.toIntOrNull()
-                        it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
+                        it.pkKey == key && ((it.type == type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
                     }
 
                 val acceptUntil = permission?.acceptUntil ?: 0
@@ -838,7 +910,7 @@ private fun BunkerSingleEventHomeScreen(
                     appName = appName,
                     event = event,
                     rawJson = event.toJson(),
-                    type = intentData.type,
+                    type = type,
                     onAccept = {
                         if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {
@@ -855,7 +927,7 @@ private fun BunkerSingleEventHomeScreen(
                             context = context,
                             account = account,
                             key = key,
-                            event = event.toJson(),
+                            response = event.toJson(),
                             bunkerRequest = bunkerRequest,
                             kind = event.kind,
                             onLoading = onLoading,
@@ -864,8 +936,6 @@ private fun BunkerSingleEventHomeScreen(
                             signPolicy = null,
                             shouldCloseApplication = bunkerRequest.closeApplication,
                             rememberType = it,
-                            onRemoveIntentData = onRemoveIntentData,
-                            intentData = intentData,
                         )
                     },
                     onReject = {
@@ -875,11 +945,135 @@ private fun BunkerSingleEventHomeScreen(
                             bunkerRequest = bunkerRequest,
                             appName = appName,
                             rememberType = it,
-                            signerType = intentData.type,
+                            signerType = type,
                             kind = event.kind,
-                            intentData = intentData,
                             onLoading = onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
+                        )
+                    },
+                )
+            }
+        }
+
+        else -> {
+            if (type == SignerType.DECRYPT_ZAP_EVENT) {
+                var permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+
+                val acceptUntil = permission?.acceptUntil ?: 0
+                val rejectUntil = permission?.rejectUntil ?: 0
+
+                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                    null
+                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                    false
+                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                    true
+                } else {
+                    null
+                }
+
+                BunkerEncryptDecryptData(
+                    account = account,
+                    modifier = modifier,
+                    content = bunkerRequest.request.params[1],
+                    encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                    shouldRunOnAccept = acceptOrReject,
+                    appName = appName,
+                    type = type,
+                    onAccept = {
+                        val result =
+                            if (bunkerRequest.encryptDecryptResponse == "Could not decrypt the message") {
+                                ""
+                            } else {
+                                bunkerRequest.encryptDecryptResponse ?: ""
+                            }
+
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            response = result,
+                            bunkerRequest = bunkerRequest,
+                            kind = null,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = appName,
+                            signPolicy = null,
+                            shouldCloseApplication = bunkerRequest.closeApplication,
+                            rememberType = it,
+                        )
+                    },
+                    onReject = {
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = it,
+                            signerType = type,
+                            kind = null,
+                            onLoading = onLoading,
+                        )
+                    },
+                )
+            } else if (type == SignerType.SIGN_MESSAGE) {
+                val permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+
+                val acceptUntil = permission?.acceptUntil ?: 0
+                val rejectUntil = permission?.rejectUntil ?: 0
+
+                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                    null
+                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                    false
+                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                    true
+                } else {
+                    null
+                }
+
+                BunkerSignMessage(
+                    account = account,
+                    modifier = modifier,
+                    content = bunkerRequest.request.params.first(),
+                    shouldRunOnAccept = acceptOrReject,
+                    appName = appName,
+                    type = type,
+                    onAccept = {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val result = signString(bunkerRequest.request.params.first(), account.signer.keyPair.privKey!!).toHexKey()
+
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = account,
+                                key = key,
+                                response = result,
+                                bunkerRequest = bunkerRequest,
+                                kind = null,
+                                onLoading = onLoading,
+                                permissions = null,
+                                appName = appName,
+                                signPolicy = null,
+                                shouldCloseApplication = bunkerRequest.closeApplication,
+                                rememberType = it,
+                            )
+                        }
+                    },
+                    onReject = {
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = it,
+                            signerType = type,
+                            kind = null,
+                            onLoading = onLoading,
                         )
                     },
                 )

@@ -25,12 +25,14 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.components.BunkerSingleEventHomeScreen
+import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
-import com.greenart7c3.nostrsigner.ui.components.SingleEventHomeScreen
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -38,6 +40,7 @@ import kotlinx.coroutines.launch
 fun IncomingRequestScreen(
     modifier: Modifier,
     intents: List<IntentData>,
+    bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
     applicationName: String?,
     account: Account,
@@ -68,7 +71,7 @@ fun IncomingRequestScreen(
     if (loading) {
         CenterCircularProgressIndicator(modifier)
     } else {
-        if (intents.isEmpty()) {
+        if (intents.isEmpty() && bunkerRequests.isEmpty()) {
             Column(
                 modifier.fillMaxSize(),
                 Arrangement.Center,
@@ -86,7 +89,7 @@ fun IncomingRequestScreen(
                 )
             }
         } else if (intents.size == 1) {
-            SingleEventHomeScreen(
+            IntentSingleEventHomeScreen(
                 modifier = modifier,
                 packageName = packageName,
                 applicationName = applicationName,
@@ -95,38 +98,24 @@ fun IncomingRequestScreen(
                 onRemoveIntentData = onRemoveIntentData,
                 onLoading = onLoading,
             )
+        } else if (bunkerRequests.size == 1) {
+            BunkerSingleEventHomeScreen(
+                modifier = modifier,
+                bunkerRequest = bunkerRequests.first(),
+                account = account,
+                onLoading = onLoading,
+            )
         } else {
-            if (intents.filter { it.bunkerRequest == null }.size == 1) {
-                SingleEventHomeScreen(
-                    modifier = modifier,
-                    packageName = packageName,
-                    applicationName = applicationName,
-                    intentData = intents.first { it.bunkerRequest == null },
-                    account = account,
-                    onRemoveIntentData = onRemoveIntentData,
-                    onLoading = onLoading,
-                )
-            } else if (intents.filter { it.bunkerRequest != null }.size == 1) {
-                SingleEventHomeScreen(
-                    modifier = modifier,
-                    packageName = packageName,
-                    applicationName = applicationName,
-                    intentData = intents.first { it.bunkerRequest != null },
-                    account = account,
-                    onRemoveIntentData = onRemoveIntentData,
-                    onLoading = onLoading,
-                )
-            } else {
-                MultiEventHomeScreen(
-                    modifier = modifier,
-                    intents = intents,
-                    packageName = packageName,
-                    accountParam = account,
-                    navController = navController,
-                    onRemoveIntentData = onRemoveIntentData,
-                    onLoading = onLoading,
-                )
-            }
+            MultiEventHomeScreen(
+                modifier = modifier,
+                intents = intents,
+                bunkerRequests = bunkerRequests,
+                packageName = packageName,
+                accountParam = account,
+                navController = navController,
+                onRemoveIntentData = onRemoveIntentData,
+                onLoading = onLoading,
+            )
         }
     }
 }

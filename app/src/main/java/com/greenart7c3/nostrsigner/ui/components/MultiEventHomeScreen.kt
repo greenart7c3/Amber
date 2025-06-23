@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
@@ -63,6 +64,8 @@ import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
@@ -74,26 +77,26 @@ import kotlinx.coroutines.launch
 fun MultiEventHomeScreen(
     modifier: Modifier,
     intents: List<IntentData>,
+    bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
     navController: NavController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
-    if (intents.first().bunkerRequest != null) {
+    if (bunkerRequests.isNotEmpty()) {
         BunkerMultiEventHomeScreen(
             modifier = modifier,
-            intents = intents.filter { it.bunkerRequest != null },
             packageName = packageName,
             accountParam = accountParam,
             navController = navController,
-            onRemoveIntentData = onRemoveIntentData,
+            bunkerRequests = bunkerRequests,
             onLoading = onLoading,
         )
     } else {
         IntentMultiEventHomeScreen(
             modifier = modifier,
-            intents = intents.filter { it.bunkerRequest == null },
+            intents = intents,
             packageName = packageName,
             accountParam = accountParam,
             navController = navController,
@@ -219,7 +222,7 @@ fun IntentMultiEventHomeScreen(
                                     accountParam
                                 } ?: continue
 
-                            val localKey = intentData.bunkerRequest?.localKey ?: packageName ?: continue
+                            val localKey = packageName ?: continue
 
                             val database = Amber.instance.getDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
@@ -380,12 +383,8 @@ fun IntentMultiEventHomeScreen(
                         if (results.isNotEmpty()) {
                             sendResultIntent(results)
                         }
-                        if (intents.any { it.bunkerRequest != null }) {
-                            EventNotificationConsumer(context).notificationManager().cancelAll()
-                            finishActivity(closeApp)
-                        } else {
-                            finishActivity(closeApp)
-                        }
+
+                        finishActivity(closeApp)
                     } finally {
                         onLoading(false)
                     }
@@ -428,10 +427,10 @@ fun IntentMultiEventHomeScreen(
                                     "",
                                     thisAccount.hexKey,
                                     true,
-                                    intentData.bunkerRequest?.secret ?: "",
-                                    intentData.bunkerRequest?.secret != null,
+                                    "",
+                                    false,
                                     thisAccount.signPolicy,
-                                    intentData.bunkerRequest?.closeApplication != false,
+                                    true,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -464,16 +463,15 @@ fun IntentMultiEventHomeScreen(
 @Composable
 fun BunkerMultiEventHomeScreen(
     modifier: Modifier,
-    intents: List<IntentData>,
+    bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
     navController: NavController,
-    onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val grouped = intents.groupBy { it.type }.filter { it.key != SignerType.SIGN_EVENT }
-    val grouped2 = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
+    val grouped = bunkerRequests.groupBy { BunkerRequestUtils.getTypeFromBunker(it.request) }.filter { it.key != SignerType.SIGN_EVENT }
+    val grouped2 = bunkerRequests.filter { it.request is BunkerRequestSign }.groupBy { (it.request as BunkerRequestSign).event.kind }
     val acceptEventsGroup1 = grouped.map {
         remember {
             mutableStateOf(true)
@@ -485,14 +483,14 @@ fun BunkerMultiEventHomeScreen(
         }
     }
     var localAccount by remember { mutableStateOf("") }
-    val key = intents.firstOrNull()?.bunkerRequest?.localKey ?: "$packageName"
+    val key = bunkerRequests.first().localKey
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             localAccount = LocalPreferences.loadFromEncryptedStorage(
                 context,
-                intents.firstOrNull()?.currentAccount ?: "",
+                bunkerRequests.first().currentAccount,
             )?.npub?.toShortenHex() ?: ""
         }
     }
@@ -510,26 +508,26 @@ fun BunkerMultiEventHomeScreen(
         )
 
         grouped.toList().forEachIndexed { index, it ->
-            PermissionCard(
+            BunkerPermissionCard(
                 context = context,
                 acceptEventsGroup = acceptEventsGroup1,
                 index = index,
                 item = it,
                 onDetailsClick = {
-                    MultiEventScreenIntents.intents = it
+                    MultiEventScreenIntents.bunkerRequests = it
                     MultiEventScreenIntents.appName = appName
                     navController.navigate(Route.SeeDetails.route)
                 },
             )
         }
         grouped2.toList().forEachIndexed { index, it ->
-            PermissionCard(
+            BunkerPermissionCard(
                 context = context,
                 acceptEventsGroup = acceptEventsGroup2,
                 index = index,
                 item = it,
                 onDetailsClick = {
-                    MultiEventScreenIntents.intents = it
+                    MultiEventScreenIntents.bunkerRequests = it
                     MultiEventScreenIntents.appName = appName
                     navController.navigate(Route.SeeDetails.route)
                 },
@@ -546,7 +544,7 @@ fun BunkerMultiEventHomeScreen(
                 onReject = {},
                 onChanged = {
                     rememberType = it
-                    intents.forEach {
+                    bunkerRequests.forEach {
                         it.rememberType.value = rememberType
                     }
                 },
@@ -561,27 +559,30 @@ fun BunkerMultiEventHomeScreen(
                 onLoading(true)
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     try {
-                        reconnectToRelays(intents)
+                        reconnectToRelays()
                         var closeApp = true
 
                         BunkerRequestUtils.clearRequests()
-                        onRemoveIntentData(intents, IntentResultType.REMOVE)
-                        for (intentData in intents) {
-                            intentData.bunkerRequest ?: continue
-
+                        for (request in bunkerRequests) {
                             val thisAccount =
-                                if (intentData.currentAccount.isNotBlank()) {
+                                if (request.currentAccount.isNotBlank()) {
                                     LocalPreferences.loadFromEncryptedStorage(
                                         context,
-                                        intentData.currentAccount,
+                                        request.currentAccount,
                                     )
                                 } else {
                                     accountParam
                                 } ?: continue
 
-                            val localKey = intentData.bunkerRequest.localKey
+                            val localKey = request.localKey
                             val database = Amber.instance.getDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
+
+                            val secret = if (request.request is BunkerRequestConnect) {
+                                request.request.secret ?: ""
+                            } else {
+                                ""
+                            }
 
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
@@ -594,10 +595,10 @@ fun BunkerMultiEventHomeScreen(
                                         "",
                                         thisAccount.hexKey,
                                         true,
-                                        intentData.bunkerRequest.secret,
-                                        intentData.bunkerRequest.secret.isNotBlank(),
+                                        secret,
+                                        secret.isNotBlank(),
                                         thisAccount.signPolicy,
-                                        intentData.bunkerRequest.closeApplication,
+                                        request.closeApplication,
                                     ),
                                     permissions = mutableListOf(),
                                 )
@@ -606,72 +607,70 @@ fun BunkerMultiEventHomeScreen(
                                 closeApp = false
                             }
 
-                            if (intentData.type == SignerType.SIGN_EVENT) {
-                                val localEvent = intentData.event!!
+                            if (request.request is BunkerRequestSign) {
+                                val localEvent = request.signedEvent!!
 
-                                if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
-                                        application,
-                                        localKey,
-                                        intentData.type,
-                                        localEvent.kind,
-                                        true,
-                                        intentData.rememberType.value,
-                                        thisAccount,
+                                        application = application,
+                                        key = localKey,
+                                        signerType = SignerType.SIGN_EVENT,
+                                        kind = localEvent.kind,
+                                        value = true,
+                                        rememberType = request.rememberType.value,
+                                        account = thisAccount,
                                     )
                                 }
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    HistoryEntity2(
-                                        0,
-                                        localKey,
-                                        intentData.type.toString(),
-                                        localEvent.kind,
-                                        TimeUtils.now(),
-                                        intentData.checked.value,
+                                    entity = HistoryEntity2(
+                                        id = 0,
+                                        pkKey = localKey,
+                                        type = SignerType.SIGN_EVENT.toString(),
+                                        kind = localEvent.kind,
+                                        time = TimeUtils.now(),
+                                        accepted = request.checked.value,
                                     ),
                                 )
 
-                                val localIntentData = intentData.copy()
-                                BunkerRequestUtils.remove(intentData.bunkerRequest.id)
+                                val localBunkerRequest = request.copy()
+                                BunkerRequestUtils.remove(request.request.id)
 
-                                if (intentData.checked.value) {
+                                if (request.checked.value) {
                                     BunkerRequestUtils.sendBunkerResponse(
                                         context,
                                         thisAccount,
-                                        intentData.bunkerRequest,
-                                        BunkerResponse(intentData.bunkerRequest.id, localEvent.toJson(), null),
+                                        request,
+                                        BunkerResponse(request.request.id, localEvent.toJson(), null),
                                         application.application.relays,
                                         onLoading = {},
                                         onDone = {
                                             if (!it) {
-                                                BunkerRequestUtils.addRequest(localIntentData.bunkerRequest!!)
+                                                BunkerRequestUtils.addRequest(localBunkerRequest)
                                             }
                                         },
                                     )
                                 } else {
                                     AmberUtils.sendBunkerError(
-                                        intentData,
-                                        thisAccount,
-                                        intentData.bunkerRequest,
+                                        account = thisAccount,
+                                        bunkerRequest = request,
                                         relays = application.application.relays,
                                         context = context,
                                         closeApplication = application.application.closeApplication,
-                                        onRemoveIntentData = onRemoveIntentData,
                                         onLoading = {},
                                     )
                                 }
-                            } else if (intentData.type == SignerType.SIGN_MESSAGE) {
-                                if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                            } else if (request.request.method == "sign_message") {
+                                if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
-                                        intentData.type,
+                                        SignerType.SIGN_MESSAGE,
                                         null,
                                         true,
-                                        intentData.rememberType.value,
+                                        request.rememberType.value,
                                         thisAccount,
                                     )
                                 }
@@ -681,44 +680,42 @@ fun BunkerMultiEventHomeScreen(
                                     HistoryEntity2(
                                         0,
                                         localKey,
-                                        intentData.type.toString(),
+                                        SignerType.SIGN_MESSAGE.toString(),
                                         null,
                                         TimeUtils.now(),
-                                        intentData.checked.value,
+                                        request.checked.value,
                                     ),
                                 )
 
-                                val signedMessage = signString(intentData.data, thisAccount.signer.keyPair.privKey!!).toHexKey()
-                                val localIntentData = intentData.copy()
-                                BunkerRequestUtils.remove(intentData.bunkerRequest.id)
+                                val signedMessage = signString(request.request.params.first(), thisAccount.signer.keyPair.privKey!!).toHexKey()
+                                val localBunkerRequest = request.copy()
+                                BunkerRequestUtils.remove(localBunkerRequest.request.id)
 
-                                if (intentData.checked.value) {
+                                if (request.checked.value) {
                                     BunkerRequestUtils.sendBunkerResponse(
                                         context,
                                         thisAccount,
-                                        intentData.bunkerRequest,
-                                        BunkerResponse(intentData.bunkerRequest.id, signedMessage, null),
+                                        request,
+                                        BunkerResponse(request.request.id, signedMessage, null),
                                         application.application.relays,
                                         onLoading = {},
                                         onDone = {
                                             if (!it) {
-                                                BunkerRequestUtils.addRequest(localIntentData.bunkerRequest!!)
+                                                BunkerRequestUtils.addRequest(localBunkerRequest)
                                             }
                                         },
                                     )
                                 } else {
                                     AmberUtils.sendBunkerError(
-                                        intentData,
-                                        thisAccount,
-                                        intentData.bunkerRequest,
+                                        account = thisAccount,
+                                        bunkerRequest = request,
                                         relays = application.application.relays,
                                         context = context,
                                         closeApplication = application.application.closeApplication,
-                                        onRemoveIntentData = onRemoveIntentData,
                                         onLoading = {},
                                     )
                                 }
-                            } else if (intentData.type == SignerType.CONNECT) {
+                            } else if (request.request is BunkerRequestConnect) {
                                 if (savedApplication == null) {
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
@@ -726,51 +723,50 @@ fun BunkerMultiEventHomeScreen(
                                         HistoryEntity2(
                                             0,
                                             localKey,
-                                            intentData.type.toString(),
+                                            SignerType.CONNECT.toString(),
                                             null,
                                             TimeUtils.now(),
-                                            intentData.checked.value,
+                                            request.checked.value,
                                         ),
                                     )
 
-                                    val localIntentData = intentData.copy()
-                                    BunkerRequestUtils.remove(intentData.bunkerRequest.id)
-                                    if (intentData.checked.value) {
+                                    val localBunkerRequest = request.copy()
+                                    BunkerRequestUtils.remove(request.request.id)
+                                    if (request.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
                                             thisAccount,
-                                            intentData.bunkerRequest,
-                                            BunkerResponse(intentData.bunkerRequest.id, "", null),
+                                            request,
+                                            BunkerResponse(request.request.id, "", null),
                                             application.application.relays,
                                             onLoading = {},
                                             onDone = {
                                                 if (!it) {
-                                                    BunkerRequestUtils.addRequest(localIntentData.bunkerRequest!!)
+                                                    BunkerRequestUtils.addRequest(localBunkerRequest)
                                                 }
                                             },
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(
-                                            intentData,
-                                            thisAccount,
-                                            intentData.bunkerRequest,
+                                            account = thisAccount,
+                                            bunkerRequest = request,
                                             relays = application.application.relays,
                                             context = context,
                                             closeApplication = application.application.closeApplication,
-                                            onRemoveIntentData = onRemoveIntentData,
                                             onLoading = {},
                                         )
                                     }
                                 }
                             } else {
-                                if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                val type = BunkerRequestUtils.getTypeFromBunker(request.request)
+                                if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                     AmberUtils.acceptOrRejectPermission(
                                         application,
                                         localKey,
-                                        intentData.type,
+                                        type,
                                         null,
                                         true,
-                                        intentData.rememberType.value,
+                                        request.rememberType.value,
                                         thisAccount,
                                     )
                                 }
@@ -781,39 +777,37 @@ fun BunkerMultiEventHomeScreen(
                                     HistoryEntity2(
                                         0,
                                         localKey,
-                                        intentData.type.toString(),
+                                        type.toString(),
                                         null,
                                         TimeUtils.now(),
-                                        intentData.checked.value,
+                                        request.checked.value,
                                     ),
                                 )
 
-                                val signature = intentData.encryptedData ?: continue
-                                val localIntentData = intentData.copy()
-                                BunkerRequestUtils.remove(intentData.bunkerRequest.id)
-                                if (intentData.checked.value) {
+                                val signature = request.encryptDecryptResponse ?: continue
+                                val localBunkerRequest = request.copy()
+                                BunkerRequestUtils.remove(request.request.id)
+                                if (request.checked.value) {
                                     BunkerRequestUtils.sendBunkerResponse(
                                         context,
                                         thisAccount,
-                                        intentData.bunkerRequest,
-                                        BunkerResponse(intentData.bunkerRequest.id, signature, null),
+                                        request,
+                                        BunkerResponse(request.request.id, signature, null),
                                         application.application.relays,
                                         onLoading = {},
                                         onDone = {
                                             if (!it) {
-                                                BunkerRequestUtils.addRequest(localIntentData.bunkerRequest!!)
+                                                BunkerRequestUtils.addRequest(localBunkerRequest)
                                             }
                                         },
                                     )
                                 } else {
                                     AmberUtils.sendBunkerError(
-                                        intentData,
-                                        thisAccount,
-                                        intentData.bunkerRequest,
+                                        account = thisAccount,
+                                        bunkerRequest = request,
                                         relays = application.application.relays,
                                         context = context,
                                         closeApplication = application.application.closeApplication,
-                                        onRemoveIntentData = onRemoveIntentData,
                                         onLoading = {},
                                     )
                                 }
@@ -837,22 +831,24 @@ fun BunkerMultiEventHomeScreen(
                 Amber.instance.applicationIOScope.launch {
                     var closeApp = true
                     BunkerRequestUtils.clearRequests()
-                    onRemoveIntentData(intents, IntentResultType.REMOVE)
-                    for (intentData in intents) {
-                        intentData.bunkerRequest ?: continue
-
+                    for (request in bunkerRequests) {
                         val thisAccount =
-                            if (intentData.currentAccount.isNotBlank()) {
+                            if (request.currentAccount.isNotBlank()) {
                                 LocalPreferences.loadFromEncryptedStorage(
                                     context,
-                                    intentData.currentAccount,
+                                    request.currentAccount,
                                 )
                             } else {
                                 accountParam
                             } ?: continue
 
-                        val localKey = intentData.bunkerRequest.localKey
+                        val localKey = request.localKey
                         val database = Amber.instance.getDatabase(thisAccount.npub)
+                        val secret = if (request.request is BunkerRequestConnect) {
+                            request.request.secret ?: ""
+                        } else {
+                            ""
+                        }
                         val application =
                             database
                                 .applicationDao()
@@ -866,22 +862,22 @@ fun BunkerMultiEventHomeScreen(
                                     "",
                                     thisAccount.hexKey,
                                     true,
-                                    intentData.bunkerRequest.secret,
-                                    intentData.bunkerRequest.secret.isNotBlank(),
+                                    secret,
+                                    secret.isNotBlank(),
                                     thisAccount.signPolicy,
-                                    intentData.bunkerRequest.closeApplication,
+                                    request.closeApplication,
                                 ),
                                 permissions = mutableListOf(),
                             )
 
-                        if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                        if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                             AmberUtils.acceptOrRejectPermission(
                                 application,
                                 localKey,
-                                intentData.type,
+                                BunkerRequestUtils.getTypeFromBunker(request.request),
                                 null,
                                 false,
-                                intentData.rememberType.value,
+                                request.rememberType.value,
                                 thisAccount,
                             )
                         }
@@ -918,9 +914,7 @@ private fun sendResultIntent(
     Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
 }
 
-private suspend fun reconnectToRelays(intents: List<IntentData>) {
-    if (!intents.any { it.bunkerRequest != null }) return
-
+private suspend fun reconnectToRelays() {
     Amber.instance.checkForNewRelays()
 }
 
@@ -931,6 +925,111 @@ fun PermissionCard(
     index: Int,
     item: Pair<Any?, List<IntentData>>,
     onDetailsClick: (List<IntentData>) -> Unit,
+) {
+    Card(
+        Modifier
+            .padding(4.dp),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+        border = BorderStroke(1.dp, Color.Gray),
+    ) {
+        Column(
+            Modifier
+                .padding(4.dp),
+        ) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        acceptEventsGroup[index].value = !acceptEventsGroup[index].value
+                        item.second.forEach { it.checked.value = acceptEventsGroup[index].value }
+                    },
+            ) {
+                Checkbox(
+                    checked = acceptEventsGroup[index].value,
+                    onCheckedChange = { _ ->
+                        acceptEventsGroup[index].value = !acceptEventsGroup[index].value
+                        item.second.forEach { it.checked.value = acceptEventsGroup[index].value }
+                    },
+                    colors = CheckboxDefaults.colors().copy(
+                        uncheckedBorderColor = Color.Gray,
+                    ),
+                )
+                val first = item.first
+                val permission = if (first is Int) {
+                    Permission("sign_event", first)
+                } else {
+                    Permission(first.toString().toLowerCase(Locale.current), null)
+                }
+
+                val message = if (first == SignerType.CONNECT) {
+                    stringResource(R.string.connect)
+                } else {
+                    permission.toLocalizedString(context)
+                }
+
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = message,
+                    color = if (acceptEventsGroup[index].value) Color.Unspecified else Color.Gray,
+                )
+            }
+            if (acceptEventsGroup[index].value) {
+                val selected = item.second.filter { it.checked.value }.size
+                val total = item.second.size
+                Row(
+                    Modifier
+                        .fillMaxWidth()
+                        .clickable {
+                            onDetailsClick(item.second)
+                        }
+                        .padding(end = 8.dp, top = 8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                ) {
+                    Text(
+                        stringResource(R.string.of_events, selected, total),
+                        modifier = Modifier.padding(start = 48.dp, bottom = 4.dp),
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                    )
+
+                    Text(
+                        buildAnnotatedString {
+                            withLink(
+                                LinkAnnotation.Clickable(
+                                    tag = "See_details",
+                                    styles = TextLinkStyles(
+                                        style = SpanStyle(
+                                            textDecoration = TextDecoration.Underline,
+                                        ),
+                                    ),
+                                    linkInteractionListener = {
+                                        onDetailsClick(item.second)
+                                    },
+                                ),
+                            ) {
+                                append(stringResource(R.string.see_details))
+                            }
+                        },
+                        modifier = Modifier.padding(start = 46.dp, bottom = 8.dp),
+                        color = Color.Gray,
+                        fontSize = 14.sp,
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun BunkerPermissionCard(
+    context: Context,
+    acceptEventsGroup: List<MutableState<Boolean>>,
+    index: Int,
+    item: Pair<Any?, List<AmberBunkerRequest>>,
+    onDetailsClick: (List<AmberBunkerRequest>) -> Unit,
 ) {
     Card(
         Modifier

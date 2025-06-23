@@ -18,7 +18,6 @@ data class IntentData(
     val currentAccount: String,
     val checked: MutableState<Boolean>,
     val rememberType: MutableState<RememberType>,
-    val bunkerRequest: BunkerRequest?,
     val route: String?,
     val event: Event?,
     val encryptedData: String?,

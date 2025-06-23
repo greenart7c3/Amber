@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
+import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.mutableStateOf
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.databind.DeserializationContext
@@ -11,54 +13,32 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
+import kotlin.collections.asIterable
 
-data class BunkerRequest(
-    val id: String,
-    val method: String,
-    val params: Array<String>,
-    var localKey: String,
-    var relays: List<RelaySetupInfo>,
-    var secret: String,
-    var currentAccount: String,
-    var encryptionType: EncryptionType,
-    var nostrConnectSecret: String,
-    var closeApplication: Boolean,
+data class AmberBunkerRequest(
+    val request: BunkerRequest,
+    val localKey: String,
+    val relays: List<RelaySetupInfo>,
+    val currentAccount: String,
+    val encryptionType: EncryptionType,
+    val nostrConnectSecret: String,
+    val closeApplication: Boolean,
+    val name: String,
+    val signedEvent: Event?,
+    val encryptDecryptResponse: String?,
+    val checked: MutableState<Boolean> = mutableStateOf(true),
+    val rememberType: MutableState<RememberType> = mutableStateOf(RememberType.NEVER),
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
-    }
-
-    override fun equals(other: Any?): Boolean {
-        if (this === other) return true
-        if (javaClass != other?.javaClass) return false
-
-        other as BunkerRequest
-
-        if (id != other.id) return false
-        if (method != other.method) return false
-        if (!params.contentEquals(other.params)) return false
-        if (localKey != other.localKey) return false
-        if (relays != other.relays) return false
-        if (secret != other.secret) return false
-        if (currentAccount != other.currentAccount) return false
-        if (encryptionType != other.encryptionType) return false
-
-        return true
-    }
-
-    override fun hashCode(): Int {
-        var result = id.hashCode()
-        result = 31 * result + method.hashCode()
-        result = 31 * result + params.contentHashCode()
-        result = 31 * result + localKey.hashCode()
-        result = 31 * result + relays.hashCode()
-        result = 31 * result + secret.hashCode()
-        result = 31 * result + currentAccount.hashCode()
-        result = 31 * result + encryptionType.hashCode()
-        return result
     }
 
     companion object {
@@ -67,11 +47,11 @@ data class BunkerRequest(
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .registerModule(
                     SimpleModule()
-                        .addDeserializer(BunkerRequest::class.java, BunkerRequestDeserializer())
-                        .addSerializer(BunkerRequest::class.java, BunkerRequestSerializer()),
+                        .addDeserializer(AmberBunkerRequest::class.java, AmberBunkerRequestDeserializer())
+                        .addSerializer(AmberBunkerRequest::class.java, AmberBunkerRequestSerializer()),
                 )
 
-        fun fromJson(jsonObject: JsonNode): BunkerRequest {
+        fun fromJson(jsonObject: JsonNode): AmberBunkerRequest {
             val encryptionTypeString = jsonObject.get("encryptionType")?.asText()?.intern() ?: ""
             val encryptionType = when (encryptionTypeString) {
                 "NIP44" -> EncryptionType.NIP44
@@ -79,60 +59,56 @@ data class BunkerRequest(
                 else -> EncryptionType.NIP04
             }
 
-            return BunkerRequest(
-                id = jsonObject.get("id").asText().intern(),
-                method = jsonObject.get("method").asText().intern(),
-                params = jsonObject.get("params").asIterable().toList().map {
-                    it.asText().intern()
-                }.toTypedArray(),
+            return AmberBunkerRequest(
+                request = EventMapper.mapper.readValue(jsonObject.get("request").asText().intern()),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
                 relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
                     var relayUrl = it.asText().intern()
                     if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
                     RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: Amber.instance.getSavedRelays().toList(),
-                secret = jsonObject.get("secret")?.asText()?.intern() ?: "",
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
                 encryptionType = encryptionType,
                 nostrConnectSecret = jsonObject.get("nostrConnectSecret")?.asText()?.intern() ?: "",
                 closeApplication = jsonObject.get("closeApplication")?.asBoolean() != false,
+                name = jsonObject.get("name")?.asText()?.intern() ?: "",
+                signedEvent = jsonObject.get("signedEvent")?.asText()?.intern()?.let {
+                    EventMapper.fromJson(it)
+                },
+                encryptDecryptResponse = jsonObject.get("encryptDecryptResponse")?.asText()?.intern(),
             )
         }
 
-        private class BunkerRequestDeserializer : StdDeserializer<BunkerRequest>(BunkerRequest::class.java) {
+        private class AmberBunkerRequestDeserializer : StdDeserializer<AmberBunkerRequest>(AmberBunkerRequest::class.java) {
             override fun deserialize(
                 jp: JsonParser,
                 ctxt: DeserializationContext,
-            ): BunkerRequest {
+            ): AmberBunkerRequest {
                 return fromJson(jp.codec.readTree(jp))
             }
         }
 
-        private class BunkerRequestSerializer : StdSerializer<BunkerRequest>(BunkerRequest::class.java) {
+        private class AmberBunkerRequestSerializer : StdSerializer<AmberBunkerRequest>(AmberBunkerRequest::class.java) {
             override fun serialize(
-                value: BunkerRequest,
+                value: AmberBunkerRequest,
                 gen: JsonGenerator,
                 provider: SerializerProvider,
             ) {
                 gen.writeStartObject()
-                gen.writeStringField("id", value.id)
-                gen.writeStringField("method", value.method)
-                gen.writeArrayFieldStart("params")
-                value.params.forEach {
-                    gen.writeString(it)
-                }
-                gen.writeEndArray()
+                gen.writeStringField("request", mapper.writeValueAsString(value.request))
                 gen.writeStringField("localKey", value.localKey)
                 gen.writeArrayFieldStart("relays")
                 value.relays.forEach {
                     gen.writeString(it.url)
                 }
                 gen.writeEndArray()
-                gen.writeStringField("secret", value.secret)
                 gen.writeStringField("currentAccount", value.currentAccount)
                 gen.writeStringField("encryptionType", value.encryptionType.toString())
                 gen.writeStringField("nostrConnectSecret", value.nostrConnectSecret)
                 gen.writeBooleanField("closeApplication", value.closeApplication)
+                gen.writeStringField("name", value.name)
+                gen.writeStringField("signedEvent", value.signedEvent?.toJson())
+                gen.writeStringField("encryptDecryptResponse", value.encryptDecryptResponse)
                 gen.writeEndObject()
             }
         }

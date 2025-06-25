@@ -361,22 +361,24 @@ fun onAddRelay(
                                     )
                                     relay.connect()
                                     delay(3000)
+                                    relay.sendFilter(
+                                        UUID.randomUUID().toString().substring(0, 4),
+                                        filters = listOf(
+                                            TypedFilter(
+                                                types = COMMON_FEED_TYPES,
+                                                filter = SincePerRelayFilter(
+                                                    kinds = listOf(24133),
+                                                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
+                                                ),
+                                            ),
+                                        ),
+                                    )
+                                    delay(3000)
                                     val result = client.sendAndWaitForResponse(
                                         signedEvent = signedEvent,
                                         relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
                                     )
                                     if (result) {
-                                        relay.sendFilter(
-                                            UUID.randomUUID().toString().substring(0, 4),
-                                            filters = listOf(
-                                                TypedFilter(
-                                                    types = COMMON_FEED_TYPES,
-                                                    filter = SincePerRelayFilter(
-                                                        ids = listOf(event.id),
-                                                    ),
-                                                ),
-                                            ),
-                                        )
                                         var count = 0
                                         while (!filterResult && count < 10) {
                                             delay(1000)

@@ -292,3 +292,10 @@ fun String.toShortenHex(): String {
     if (length <= 16) return this
     return replaceRange(8, length - 8, ":")
 }
+
+fun isPrivateEvent(
+    kind: Int,
+    tags: Array<Array<String>>,
+): Boolean {
+    return kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
+}

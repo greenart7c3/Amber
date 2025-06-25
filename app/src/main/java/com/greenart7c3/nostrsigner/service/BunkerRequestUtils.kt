@@ -23,6 +23,7 @@ import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
+import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -157,7 +158,7 @@ object BunkerRequestUtils {
     ) {
         account.signer.sign<Event>(
             TimeUtils.now(),
-            24133,
+            NostrConnectEvent.KIND,
             arrayOf(arrayOf("p", localKey)),
             encryptedContent,
         ) {

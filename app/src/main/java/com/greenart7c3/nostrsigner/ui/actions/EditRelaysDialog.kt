@@ -69,6 +69,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.nip65RelayList.RelayUrlFormatter
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.Base64
@@ -316,7 +317,7 @@ fun onAddRelay(
                             encryptedContent?.let {
                                 val event = signer.signerSync.sign<Event>(
                                     TimeUtils.now(),
-                                    24133,
+                                    NostrConnectEvent.KIND,
                                     arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
                                     it,
                                 )
@@ -350,7 +351,7 @@ fun onAddRelay(
                                     val listener2 = BunkerValidationRelayListener(
                                         account,
                                         onReceiveEvent = { _, _, event ->
-                                            if (event.kind == 24133 && event.id == signedEvent.id) {
+                                            if (event.kind == NostrConnectEvent.KIND && event.id == signedEvent.id) {
                                                 filterResult = true
                                             }
                                         },
@@ -367,7 +368,7 @@ fun onAddRelay(
                                             TypedFilter(
                                                 types = COMMON_FEED_TYPES,
                                                 filter = SincePerRelayFilter(
-                                                    kinds = listOf(24133),
+                                                    kinds = listOf(NostrConnectEvent.KIND),
                                                     tags = mapOf("p" to listOf(signedEvent.pubKey)),
                                                 ),
                                             ),

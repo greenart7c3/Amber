@@ -36,6 +36,7 @@ import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.relay.RelayState
+import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -194,7 +195,7 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
         return TypedFilter(
             types = COMMON_FEED_TYPES,
             filter = SincePerRelayFilter(
-                kinds = listOf(24133),
+                kinds = listOf(NostrConnectEvent.KIND),
                 tags = mapOf("p" to pubKeys),
                 limit = 1,
                 since = eoses,

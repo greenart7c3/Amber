@@ -58,6 +58,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
+import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlinx.coroutines.launch
@@ -91,7 +92,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("notifications disabled")
             return
         }
-        if (event.kind != 24133) {
+        if (event.kind != NostrConnectEvent.KIND) {
             saveLog("Not a bunker request")
             return
         }

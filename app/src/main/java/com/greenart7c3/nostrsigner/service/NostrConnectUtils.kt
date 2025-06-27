@@ -7,7 +7,6 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
@@ -121,7 +120,6 @@ object NostrConnectUtils {
                     localKey = pubKey,
                     relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
                     currentAccount = account.hexKey,
-                    encryptionType = EncryptionType.NIP04,
                     nostrConnectSecret = nostrConnectSecret,
                     closeApplication = intent.getBooleanExtra("closeApplication", true),
                     name = name,

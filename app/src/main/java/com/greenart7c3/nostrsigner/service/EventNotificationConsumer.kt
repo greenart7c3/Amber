@@ -37,7 +37,6 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
@@ -49,7 +48,6 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip01Core.verify
-import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
@@ -127,19 +125,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
         }
 
-        if (EncryptedInfo.isNIP04(event.content)) {
-            Log.d(Amber.TAG, "isNIP04: true")
-            acc.signer.nip04Decrypt(event.content, event.pubKey) {
-                Amber.instance.applicationIOScope.launch {
-                    notify(event, acc, it, EncryptionType.NIP04, relay)
-                }
-            }
-        } else {
-            Log.d(Amber.TAG, "isNIP04: false")
-            acc.signer.nip44Decrypt(event.content, event.pubKey) {
-                Amber.instance.applicationIOScope.launch {
-                    notify(event, acc, it, EncryptionType.NIP44, relay)
-                }
+        acc.signer.decrypt(event.content, event.pubKey) {
+            Amber.instance.applicationIOScope.launch {
+                notify(event, acc, it, relay)
             }
         }
     }
@@ -148,7 +136,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         acc: Account,
         request: String,
-        encryptionType: EncryptionType,
         relay: Relay,
     ) {
         val responseRelay = listOf(RelaySetupInfo(relay.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES))
@@ -215,7 +202,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             localKey = event.pubKey,
             relays = responseRelay,
             currentAccount = acc.hexKey,
-            encryptionType = encryptionType,
             nostrConnectSecret = "",
             closeApplication = true,
             name = "",

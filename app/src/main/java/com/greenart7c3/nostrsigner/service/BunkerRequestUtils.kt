@@ -11,7 +11,6 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -111,39 +110,19 @@ object BunkerRequestUtils {
             }
         }
 
-        when (bunkerRequest.encryptionType) {
-            EncryptionType.NIP04 -> {
-                account.signer.nip04Encrypt(
-                    EventMapper.mapper.writeValueAsString(bunkerResponse),
-                    bunkerRequest.localKey,
-                ) { encryptedContent ->
-                    sendBunkerResponse(
-                        bunkerRequest = bunkerRequest,
-                        account = account,
-                        localKey = bunkerRequest.localKey,
-                        encryptedContent = encryptedContent,
-                        relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
-                        onLoading = onLoading,
-                        onDone = onDone,
-                    )
-                }
-            }
-            EncryptionType.NIP44 -> {
-                account.signer.nip44Encrypt(
-                    EventMapper.mapper.writeValueAsString(bunkerResponse),
-                    bunkerRequest.localKey,
-                ) { encryptedContent ->
-                    sendBunkerResponse(
-                        bunkerRequest = bunkerRequest,
-                        account = account,
-                        localKey = bunkerRequest.localKey,
-                        encryptedContent = encryptedContent,
-                        relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
-                        onLoading = onLoading,
-                        onDone = onDone,
-                    )
-                }
-            }
+        account.signer.nip44Encrypt(
+            EventMapper.mapper.writeValueAsString(bunkerResponse),
+            bunkerRequest.localKey,
+        ) { encryptedContent ->
+            sendBunkerResponse(
+                bunkerRequest = bunkerRequest,
+                account = account,
+                localKey = bunkerRequest.localKey,
+                encryptedContent = encryptedContent,
+                relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
+                onLoading = onLoading,
+                onDone = onDone,
+            )
         }
     }
 

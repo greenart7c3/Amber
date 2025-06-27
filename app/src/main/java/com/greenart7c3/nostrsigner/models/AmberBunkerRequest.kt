@@ -28,7 +28,6 @@ data class AmberBunkerRequest(
     val localKey: String,
     val relays: List<RelaySetupInfo>,
     val currentAccount: String,
-    val encryptionType: EncryptionType,
     val nostrConnectSecret: String,
     val closeApplication: Boolean,
     val name: String,
@@ -52,13 +51,6 @@ data class AmberBunkerRequest(
                 )
 
         fun fromJson(jsonObject: JsonNode): AmberBunkerRequest {
-            val encryptionTypeString = jsonObject.get("encryptionType")?.asText()?.intern() ?: ""
-            val encryptionType = when (encryptionTypeString) {
-                "NIP44" -> EncryptionType.NIP44
-                "NIP04" -> EncryptionType.NIP04
-                else -> EncryptionType.NIP04
-            }
-
             return AmberBunkerRequest(
                 request = EventMapper.mapper.readValue(jsonObject.get("request").asText().intern()),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
@@ -68,7 +60,6 @@ data class AmberBunkerRequest(
                     RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
                 } ?: Amber.instance.getSavedRelays().toList(),
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
-                encryptionType = encryptionType,
                 nostrConnectSecret = jsonObject.get("nostrConnectSecret")?.asText()?.intern() ?: "",
                 closeApplication = jsonObject.get("closeApplication")?.asBoolean() != false,
                 name = jsonObject.get("name")?.asText()?.intern() ?: "",
@@ -103,7 +94,6 @@ data class AmberBunkerRequest(
                 }
                 gen.writeEndArray()
                 gen.writeStringField("currentAccount", value.currentAccount)
-                gen.writeStringField("encryptionType", value.encryptionType.toString())
                 gen.writeStringField("nostrConnectSecret", value.nostrConnectSecret)
                 gen.writeBooleanField("closeApplication", value.closeApplication)
                 gen.writeStringField("name", value.name)

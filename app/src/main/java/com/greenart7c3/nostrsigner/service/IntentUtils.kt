@@ -13,8 +13,7 @@ import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.net.toUri
-import com.google.gson.Gson
-import com.google.gson.reflect.TypeToken
+import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -303,8 +302,10 @@ object IntentUtils {
 
         val compressionType = if (intent.extras?.getString("compression") == "gzip") CompressionType.GZIP else CompressionType.NONE
         val returnType = if (intent.extras?.getString("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE
-        val listType = object : TypeToken<MutableList<Permission>>() {}.type
-        val permissions = Gson().fromJson<MutableList<Permission>?>(intent.extras?.getString("permissions"), listType)
+        val json = intent.extras?.getString("permissions")
+        val permissions: MutableList<Permission>? = json?.let {
+            Permission.mapper.readValue<MutableList<Permission>>(it)
+        }
         permissions?.forEach {
             it.checked = true
         }
@@ -582,7 +583,7 @@ object IntentUtils {
         Amber.instance.applicationIOScope.launch {
             val database = Amber.instance.getDatabase(account.npub)
             val defaultRelays = Amber.instance.settings.defaultRelays
-            var savedApplication = database.applicationDao().getByKey(key)
+            val savedApplication = database.applicationDao().getByKey(key)
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
             val localAppName =
                 if (packageName != null) {

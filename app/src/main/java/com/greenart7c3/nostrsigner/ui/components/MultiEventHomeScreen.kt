@@ -40,7 +40,6 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.google.gson.GsonBuilder
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -191,8 +190,8 @@ fun IntentMultiEventHomeScreen(
                 onReject = {},
                 onChanged = {
                     rememberType = it
-                    intents.forEach {
-                        it.rememberType.value = rememberType
+                    intents.forEach { intent ->
+                        intent.rememberType.value = rememberType
                     }
                 },
                 packageName = packageName,
@@ -544,8 +543,8 @@ fun BunkerMultiEventHomeScreen(
                 onReject = {},
                 onChanged = {
                     rememberType = it
-                    bunkerRequests.forEach {
-                        it.rememberType.value = rememberType
+                    bunkerRequests.forEach { bunkerRequest ->
+                        bunkerRequest.rememberType.value = rememberType
                     }
                 },
                 packageName = packageName,
@@ -907,8 +906,7 @@ private fun finishActivity(closeApp: Boolean) {
 private fun sendResultIntent(
     results: MutableList<Result>,
 ) {
-    val gson = GsonBuilder().serializeNulls().create()
-    val json = gson.toJson(results)
+    val json = Permission.mapper.writeValueAsString(results)
     val intent = Intent()
     intent.putExtra("results", json)
     Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)

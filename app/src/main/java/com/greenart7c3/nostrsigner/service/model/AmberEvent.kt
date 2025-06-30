@@ -1,92 +1,91 @@
 package com.greenart7c3.nostrsigner.service.model
 
 import androidx.compose.runtime.Immutable
-import com.google.gson.Gson
-import com.google.gson.GsonBuilder
-import com.google.gson.JsonArray
-import com.google.gson.JsonDeserializationContext
-import com.google.gson.JsonDeserializer
-import com.google.gson.JsonElement
-import com.google.gson.JsonObject
-import com.google.gson.JsonSerializationContext
-import com.google.gson.JsonSerializer
-import com.google.gson.annotations.SerializedName
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
+import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper.Companion.defaultPrettyPrinter
+import com.vitorpamplona.quartz.nip01Core.jackson.toTypedArray
 import com.vitorpamplona.quartz.utils.TimeUtils
-import java.lang.reflect.Type
 
 @Immutable
 open class AmberEvent(
     var id: HexKey,
-    @SerializedName("pubkey") var pubKey: HexKey,
-    @SerializedName("created_at") val createdAt: Long,
+    var pubKey: HexKey,
+    val createdAt: Long,
     val kind: Int,
     val tags: Array<Array<String>>,
     val content: String,
     val sig: HexKey,
 ) {
-    private class EventDeserializer : JsonDeserializer<AmberEvent> {
-        override fun deserialize(
-            json: JsonElement,
-            typeOfT: Type?,
-            context: JsonDeserializationContext?,
-        ): AmberEvent {
-            val jsonObject = json.asJsonObject
-            return AmberEvent(
-                id = jsonObject.get("id")?.asString ?: "",
-                pubKey = jsonObject.get("pubkey")?.asString ?: "",
-                createdAt = jsonObject.get("created_at")?.asLong ?: TimeUtils.now(),
-                kind = jsonObject.get("kind").asInt,
-                tags = jsonObject.get("tags")?.asJsonArray?.map {
-                    it.asJsonArray.mapNotNull { s -> if (s.isJsonNull) null else s.asString }.toTypedArray()
-                }?.toTypedArray() ?: emptyArray(),
-                content = jsonObject.get("content").asString,
-                sig = jsonObject.get("sig")?.asString ?: "",
-            )
+    private class EventSerializer : StdSerializer<AmberEvent>(AmberEvent::class.java) {
+        override fun serialize(
+            event: AmberEvent,
+            gen: JsonGenerator,
+            provider: SerializerProvider,
+        ) {
+            gen.writeStartObject()
+            gen.writeStringField("id", event.id)
+            gen.writeStringField("pubkey", event.pubKey)
+            gen.writeNumberField("created_at", event.createdAt)
+            gen.writeNumberField("kind", event.kind)
+            gen.writeArrayFieldStart("tags")
+            event.tags.forEach { tag -> gen.writeArray(tag, 0, tag.size) }
+            gen.writeEndArray()
+            gen.writeStringField("content", event.content)
+            gen.writeStringField("sig", event.sig)
+            gen.writeEndObject()
         }
     }
 
-    private class EventSerializer : JsonSerializer<AmberEvent> {
-        override fun serialize(
-            src: AmberEvent,
-            typeOfSrc: Type?,
-            context: JsonSerializationContext?,
-        ): JsonElement {
-            return JsonObject().apply {
-                addProperty("id", src.id)
-                addProperty("pubkey", src.pubKey)
-                addProperty("created_at", src.createdAt)
-                addProperty("kind", src.kind)
-                add(
-                    "tags",
-                    JsonArray().also { jsonTags ->
-                        src.tags.forEach { tag ->
-                            jsonTags.add(
-                                JsonArray().also { jsonTagElement ->
-                                    tag.forEach { tagElement ->
-                                        jsonTagElement.add(tagElement)
-                                    }
-                                },
-                            )
-                        }
-                    },
+    private class EventDeserializer : StdDeserializer<AmberEvent>(AmberEvent::class.java) {
+        override fun deserialize(
+            jp: JsonParser,
+            ctxt: DeserializationContext,
+        ): AmberEvent = EventManualDeserializer.fromJson(jp.codec.readTree(jp))
+    }
+
+    private class EventManualDeserializer {
+        companion object {
+            fun fromJson(jsonObject: JsonNode): AmberEvent =
+                AmberEvent(
+                    id = jsonObject.get("id")?.asText()?.intern() ?: "",
+                    pubKey = jsonObject.get("pubkey")?.asText()?.intern() ?: "",
+                    createdAt = jsonObject.get("created_at")?.asLong() ?: TimeUtils.now(),
+                    kind = jsonObject.get("kind").asInt(),
+                    tags = jsonObject.get("tags")?.toTypedArray {
+                        it.toTypedArray { s -> if (s.isNull) "" else s.asText().intern() }
+                    } ?: emptyArray(),
+                    content = jsonObject.get("content").asText(),
+                    sig = jsonObject.get("sig")?.asText() ?: "",
                 )
-                addProperty("content", src.content)
-                addProperty("sig", src.sig)
-            }
         }
     }
 
     companion object {
-        private val gson: Gson =
-            GsonBuilder()
-                .disableHtmlEscaping()
-                .registerTypeAdapter(AmberEvent::class.java, EventSerializer())
-                .registerTypeAdapter(AmberEvent::class.java, EventDeserializer())
-                .create()
+        val mapper: ObjectMapper =
+            jacksonObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature())
+                .setDefaultPrettyPrinter(defaultPrettyPrinter)
+                .registerModule(
+                    SimpleModule()
+                        .addSerializer(AmberEvent::class.java, EventSerializer())
+                        .addDeserializer(AmberEvent::class.java, EventDeserializer()),
+                )
 
-        fun fromJson(json: String): AmberEvent = gson.fromJson(json, AmberEvent::class.java)
+        fun fromJson(json: String): AmberEvent = mapper.readValue(json, AmberEvent::class.java)
 
         fun toEvent(amberEvent: AmberEvent): Event {
             return Event(

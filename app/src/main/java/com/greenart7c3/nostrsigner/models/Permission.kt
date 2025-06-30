@@ -1,13 +1,71 @@
 package com.greenart7c3.nostrsigner.models
 
 import android.content.Context
+import com.fasterxml.jackson.core.JsonGenerator
+import com.fasterxml.jackson.core.JsonParser
+import com.fasterxml.jackson.core.json.JsonReadFeature
+import com.fasterxml.jackson.databind.DeserializationContext
+import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.databind.JsonNode
+import com.fasterxml.jackson.databind.ObjectMapper
+import com.fasterxml.jackson.databind.SerializerProvider
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer
+import com.fasterxml.jackson.databind.module.SimpleModule
+import com.fasterxml.jackson.databind.ser.std.StdSerializer
+import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.R
+import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper.Companion.defaultPrettyPrinter
 
 data class Permission(
     val type: String,
     val kind: Int?,
     var checked: Boolean = true,
 ) {
+    private class PermissionSerializer : StdSerializer<Permission>(Permission::class.java) {
+        override fun serialize(
+            permission: Permission,
+            gen: JsonGenerator,
+            provider: SerializerProvider,
+        ) {
+            gen.writeStartObject()
+            gen.writeStringField("type", permission.type)
+            permission.kind?.let {
+                gen.writeNumberField("kind", it)
+            }
+            gen.writeEndObject()
+        }
+    }
+
+    private class PermissionDeserializer : StdDeserializer<Permission>(Permission::class.java) {
+        override fun deserialize(
+            jp: JsonParser,
+            ctxt: DeserializationContext,
+        ): Permission = PermissionManualDeserializer.fromJson(jp.codec.readTree(jp))
+    }
+
+    private class PermissionManualDeserializer {
+        companion object {
+            fun fromJson(jsonObject: JsonNode): Permission =
+                Permission(
+                    type = jsonObject.get("type").asText().intern(),
+                    kind = jsonObject.get("kind").asText()?.toIntOrNull(),
+                )
+        }
+    }
+
+    companion object {
+        val mapper: ObjectMapper =
+            jacksonObjectMapper()
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature())
+                .setDefaultPrettyPrinter(defaultPrettyPrinter)
+                .registerModule(
+                    SimpleModule()
+                        .addSerializer(Permission::class.java, PermissionSerializer())
+                        .addDeserializer(Permission::class.java, PermissionDeserializer()),
+                )
+    }
+
     // LAST_COMMIT_CHECKED = "14ec14dac92d891715239bfb83ed1c9bdf2ac382"
     fun toLocalizedString(context: Context, shouldTranslateConnect: Boolean = false): String {
         return when (type) {

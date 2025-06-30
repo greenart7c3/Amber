@@ -227,9 +227,6 @@ dependencies {
     implementation libs.core
     implementation libs.zxing.android.embedded
 
-    // Json Serialization
-    implementation libs.converter.gson
-
     // Markdown (With fix for full-image bleeds)
     implementation(libs.richtext.ui)
     implementation(libs.richtext.ui.material3)

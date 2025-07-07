@@ -142,9 +142,9 @@ object BunkerRequestUtils {
             encryptedContent,
         ) {
             Amber.instance.applicationIOScope.launch {
-                Log.d(Amber.TAG, "Sending response to relays ${relays.map { it.url }} type ${bunkerRequest.request.method}")
+                Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
-                if (Amber.instance.client.getAll().any { !it.isConnected() }) {
+                if (Amber.instance.client.getAll().any { relay -> !relay.isConnected() }) {
                     Amber.instance.checkForNewRelays(
                         newRelays = relays.toSet(),
                     )
@@ -156,24 +156,24 @@ object BunkerRequestUtils {
                     success = Amber.instance.client.sendAndWaitForResponse(it, relayList = relays)
                     if (!success) {
                         errorCount++
-                        relays.forEach {
-                            if (Amber.instance.client.getRelay(it.url)?.isConnected() == false) {
-                                Amber.instance.client.getRelay(it.url)?.connect()
+                        relays.forEach { relay ->
+                            if (Amber.instance.client.getRelay(relay.url)?.isConnected() == false) {
+                                Amber.instance.client.getRelay(relay.url)?.connect()
                             }
                         }
                         delay(1000)
                     }
                 }
                 if (success) {
-                    Log.d(Amber.TAG, "Success response to relays ${relays.map { it.url }} type ${bunkerRequest.request.method}")
+                    Log.d(Amber.TAG, "Success response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
                     onDone(true)
                 } else {
                     onDone(false)
                     AmberListenerSingleton.showErrorMessage()
-                    Log.d(Amber.TAG, "Failed response to relays ${relays.map { it.url }} type ${bunkerRequest.request.method}")
+                    Log.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
                 }
-                AmberListenerSingleton.getListener()?.let {
-                    Amber.instance.client.unsubscribe(it)
+                AmberListenerSingleton.getListener()?.let { listener ->
+                    Amber.instance.client.unsubscribe(listener)
                 }
                 onLoading(false)
             }

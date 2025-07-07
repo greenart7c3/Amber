@@ -535,4 +535,5 @@
     <string name="replace_app_message">Would you like to replace the existing connection \'%1$s\'? If you replace the existing connection the old application will stop working.</string>
     <string name="replace_connection">Replace connection</string>
     <string name="create_a_new_connection">Create a new connection</string>
+    <string name="network_permission_message">Failed to connect to relay/proxy. Check if you enabled the network permission for Amber</string>
 </resources>

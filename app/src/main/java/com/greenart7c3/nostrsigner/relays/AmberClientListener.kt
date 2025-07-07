@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.ammolite.relays.NostrClient
@@ -134,8 +135,12 @@ class AmberClientListener(
                 )
             }
         }
-        if (Amber.instance.settings.useProxy && error.message?.contains("(port ${Amber.instance.settings.proxyPort})") == true) {
-            AmberListenerSingleton.latestErrorMessages.add("Failed to connect to Tor/Orbot")
+        if (error.message?.contains("EACCES (Permission denied)") == true) {
+            AmberListenerSingleton.latestErrorMessages.add(context.getString(R.string.network_permission_message))
+        } else if (error.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
+            AmberListenerSingleton.latestErrorMessages.add(context.getString(R.string.network_permission_message))
+        } else if (Amber.instance.settings.useProxy && error.message?.contains("(port ${Amber.instance.settings.proxyPort})") == true) {
+            AmberListenerSingleton.latestErrorMessages.add(context.getString(R.string.failed_to_connect_to_tor_orbot))
         } else {
             AmberListenerSingleton.latestErrorMessages.add(error.message ?: "Unknown error")
         }

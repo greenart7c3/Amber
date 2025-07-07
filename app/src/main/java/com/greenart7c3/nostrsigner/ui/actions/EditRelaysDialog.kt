@@ -476,10 +476,22 @@ fun onAddRelay(
                                 )
                         }
 
-                    accountStateViewModel.toast(
-                        context.getString(R.string.unable_to_download_relay_document),
-                        msg,
-                    )
+                    if (exceptionMessage?.contains("EACCES (Permission denied)") == true) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.unable_to_download_relay_document),
+                            context.getString(R.string.network_permission_message),
+                        )
+                    } else if (exceptionMessage == "socket failed: EPERM (Operation not permitted)") {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.unable_to_download_relay_document),
+                            context.getString(R.string.network_permission_message),
+                        )
+                    } else {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.unable_to_download_relay_document),
+                            msg,
+                        )
+                    }
                     textFieldRelay.value = TextFieldValue("")
                 },
             )

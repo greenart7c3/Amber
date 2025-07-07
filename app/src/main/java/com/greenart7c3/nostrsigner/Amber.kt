@@ -21,6 +21,7 @@ import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
+import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.service.BootReceiver
 import com.greenart7c3.nostrsigner.service.ConnectivityService
@@ -87,6 +88,11 @@ class Amber : Application() {
             socket.close()
             return true
         } catch (e: Exception) {
+            if (e.message?.contains("EACCES (Permission denied)") == true) {
+                AmberListenerSingleton.accountStateViewModel?.toast(getString(R.string.warning), getString(R.string.network_permission_message))
+            } else if (e.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
+                AmberListenerSingleton.accountStateViewModel?.toast(getString(R.string.warning), getString(R.string.network_permission_message))
+            }
             Log.e(TAG, "Failed to connect to proxy", e)
             return false
         }

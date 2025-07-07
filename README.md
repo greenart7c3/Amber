@@ -47,7 +47,7 @@ By contributing to this repository, you agree to license your work under the MIT
 
 # Usage
 
-Check [55.md](https://github.com/nostr-protocol/nips/blob/master/55.md)
+Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NIP 46](https://github.com/nostr-protocol/nips/blob/master/46.md) for more information.
 
 # Contributors
 

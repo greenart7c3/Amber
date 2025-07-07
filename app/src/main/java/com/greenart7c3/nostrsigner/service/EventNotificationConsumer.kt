@@ -201,7 +201,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             request = bunkerRequest,
             localKey = event.pubKey,
             relays = responseRelay,
-            currentAccount = acc.hexKey,
+            currentAccount = acc.npub,
             nostrConnectSecret = "",
             closeApplication = true,
             name = "",

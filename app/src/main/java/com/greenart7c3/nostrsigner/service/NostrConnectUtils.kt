@@ -119,7 +119,7 @@ object NostrConnectUtils {
                     ),
                     localKey = pubKey,
                     relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
-                    currentAccount = account.hexKey,
+                    currentAccount = account.npub,
                     nostrConnectSecret = nostrConnectSecret,
                     closeApplication = intent.getBooleanExtra("closeApplication", true),
                     name = name,

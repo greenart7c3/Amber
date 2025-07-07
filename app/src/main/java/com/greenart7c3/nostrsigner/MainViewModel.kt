@@ -13,6 +13,8 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
+import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
 import kotlin.text.isNotBlank
@@ -48,7 +50,13 @@ class MainViewModel(val context: Context) : ViewModel() {
             val pubKeys =
                 intents.value.mapNotNull {
                     it.event?.pubKey
-                }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().map { it.currentAccount }
+                }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().mapNotNull {
+                    val parsed = Nip19Parser.uriToRoute(it.currentAccount)?.entity
+                    when (parsed) {
+                        is NPub -> parsed.hex
+                        else -> null
+                    }
+                }
 
             if (pubKeys.isEmpty()) {
                 if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {

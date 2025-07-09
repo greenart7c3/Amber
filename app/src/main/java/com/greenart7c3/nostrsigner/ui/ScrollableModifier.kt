@@ -24,7 +24,7 @@ fun Modifier.verticalScrollbar(
                 val height = size.height
 
                 val scrollFraction = state.value.toFloat() / state.maxValue.toFloat()
-                val scrollbarHeight = (height * height / (state.maxValue + height).toFloat())
+                val scrollbarHeight = (height * height / (state.maxValue + height))
                     .coerceIn(10.dp.toPx()..height)
 
                 val scrollableHeight = height - scrollbarHeight

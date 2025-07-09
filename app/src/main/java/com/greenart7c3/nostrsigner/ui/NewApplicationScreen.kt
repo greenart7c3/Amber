@@ -27,6 +27,7 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.launch
@@ -97,10 +98,15 @@ fun NewApplicationScreen(
 
                     val intent = Intent(Intent.ACTION_VIEW)
                     intent.data = clipboardText.text.toString().toUri()
-                    intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                     intent.`package` = context.packageName
-                    Amber.instance.getMainActivity()?.startActivity(intent)
-                    accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
+                    IntentUtils.getIntentData(
+                        context = Amber.instance,
+                        intent = intent,
+                        packageName = null,
+                        route = Route.IncomingRequest.route,
+                        currentLoggedInAccount = account,
+                        onReady = {},
+                    )
                 }
             },
             text = stringResource(R.string.paste_from_clipboard),

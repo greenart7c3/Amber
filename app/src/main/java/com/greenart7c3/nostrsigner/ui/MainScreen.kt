@@ -369,14 +369,14 @@ fun MainScreen(
                     Route.QrCode.route,
                     arguments = listOf(navArgument("content") { type = NavType.StringType }),
                     content = {
-                        it.arguments?.getString("content")?.let {
+                        it.arguments?.getString("content")?.let { content ->
                             QrCodeScreen(
                                 modifier = Modifier
                                     .fillMaxSize()
                                     .padding(padding)
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
-                                content = it,
+                                content = content,
                             )
                         }
                     },

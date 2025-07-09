@@ -86,8 +86,8 @@ fun AccountScreen(
                         intents.firstNotNullOfOrNull { it.route } ?: if (bunkerRequests.isNotEmpty()) {
                             Route.IncomingRequest.route
                         } else {
-                            null ?: state.route
-                        },
+                            null
+                        } ?: state.route,
                     )
 
                     AmberListenerSingleton.accountStateViewModel = accountStateViewModel

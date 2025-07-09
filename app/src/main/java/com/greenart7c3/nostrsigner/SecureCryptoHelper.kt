@@ -1,10 +1,11 @@
+package com.greenart7c3.nostrsigner
+
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import com.greenart7c3.nostrsigner.Amber
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import javax.crypto.Cipher

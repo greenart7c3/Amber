@@ -9,7 +9,7 @@ import com.greenart7c3.nostrsigner.R
 sealed class Route(
     val title: String,
     val route: String,
-    @DrawableRes val icon: Int,
+    @param:DrawableRes val icon: Int,
 ) {
     data object TorSettings : Route(
         title = Amber.instance.getString(R.string.connect_via_tor_short),

@@ -220,7 +220,7 @@ class MainActivity : AppCompatActivity() {
                                 }
                             } else {
                                 val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(emptyList())
-                                var npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
+                                val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
                                 val accountStateViewModel: AccountStateViewModel =
                                     viewModel {

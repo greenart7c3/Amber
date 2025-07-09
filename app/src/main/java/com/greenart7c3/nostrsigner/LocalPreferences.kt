@@ -31,7 +31,6 @@ private enum class PrefKeys(val key: String) {
     NOSTR_PUBKEY("nostr_pubkey"),
     ACCOUNT_NAME("account_name"),
     LANGUAGE_PREFS("languagePreferences"),
-    ALLOW_NEW_CONNECTIONS("allow_new_connections"),
     SIGN_POLICY("default_sign_policy"),
     SEED_WORDS2("seed_words"),
     PROFILE_URL("profile_url"),
@@ -493,7 +492,7 @@ object LocalPreferences {
         }
     }
 
-    suspend fun updateProxy(
+    fun updateProxy(
         context: Context,
         useProxy: Boolean,
         port: Int,
@@ -622,7 +621,7 @@ object LocalPreferences {
         }
     }
 
-    suspend fun migrateTorSettings(context: Context) {
+    fun migrateTorSettings(context: Context) {
         if (sharedPrefs(context).contains(SettingsKeys.USE_PROXY.key)) return
 
         val useProxy = allSavedAccounts(context).any {

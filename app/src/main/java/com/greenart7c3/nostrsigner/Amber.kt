@@ -338,7 +338,7 @@ class Amber : Application() {
         applicationIOScope.cancel()
     }
 
-    suspend fun fetchProfileData(
+    fun fetchProfileData(
         account: Account,
         onPictureFound: (String) -> Unit,
     ) {
@@ -466,7 +466,7 @@ class Amber : Application() {
         val template = GitIssueEvent.build(
             subject,
             body,
-            EventHintBundle<GitRepositoryEvent>(repositoryEvent),
+            EventHintBundle(repositoryEvent),
             listOf(PTag("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19", null)),
             listOf(if (type == FeedbackType.BUG_REPORT) "bug" else "enhancement"),
         )

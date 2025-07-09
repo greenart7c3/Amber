@@ -62,7 +62,7 @@ fun ActivityScreen(
     var searchQuery by remember { mutableStateOf("") }
 
     // Filtered activities based on the search query
-    var filteredActivities = activities.value.filter { activity ->
+    val filteredActivities = activities.value.filter { activity ->
         if (searchQuery.isEmpty()) {
             true
         } else {

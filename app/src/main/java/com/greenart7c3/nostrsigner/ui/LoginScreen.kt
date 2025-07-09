@@ -486,9 +486,9 @@ fun SignUpPage(
                                                 modifier = Modifier.padding(start = 16.dp),
                                                 style = MaterialTheme.typography.titleLarge,
                                             )
-                                            option.explainer?.let {
+                                            option.explainer?.let { explainer ->
                                                 Text(
-                                                    text = it,
+                                                    text = explainer,
                                                     modifier = Modifier.padding(start = 16.dp),
                                                 )
                                             }
@@ -510,8 +510,8 @@ fun SignUpPage(
                                     Switch(
                                         modifier = Modifier.scale(0.85f),
                                         checked = useProxy,
-                                        onCheckedChange = {
-                                            useProxy = it
+                                        onCheckedChange = { value ->
+                                            useProxy = value
                                         },
                                     )
                                     Text(
@@ -709,8 +709,8 @@ fun LoginPage(
                                 .padding(vertical = 20.dp),
                             shape = RoundedCornerShape(18.dp),
                             value = key.value,
-                            onValueChange = {
-                                key.value = it
+                            onValueChange = { value ->
+                                key.value = value
                                 if (errorMessage.isNotEmpty()) {
                                     errorMessage = ""
                                 }
@@ -741,10 +741,10 @@ fun LoginPage(
                             },
                             leadingIcon = {
                                 if (dialogOpen) {
-                                    SimpleQrCodeScanner {
+                                    SimpleQrCodeScanner { content ->
                                         dialogOpen = false
-                                        if (!it.isNullOrEmpty()) {
-                                            key.value = TextFieldValue(it.toLowerCase(Locale.current))
+                                        if (!content.isNullOrEmpty()) {
+                                            key.value = TextFieldValue(content.toLowerCase(Locale.current))
                                         }
                                     }
                                 }
@@ -769,7 +769,7 @@ fun LoginPage(
                                     }
 
                                     if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                         if (isValid.first) {
                                             scope.launch {
                                                 pageState.animateScrollToPage(1)
@@ -792,8 +792,8 @@ fun LoginPage(
                                     .padding(bottom = 20.dp),
                                 shape = RoundedCornerShape(18.dp),
                                 value = password.value,
-                                onValueChange = {
-                                    password.value = it
+                                onValueChange = { value ->
+                                    password.value = value
                                     if (errorMessage.isNotEmpty()) {
                                         errorMessage = ""
                                     }
@@ -836,7 +836,7 @@ fun LoginPage(
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            val isValid = accountViewModel.isValidKey(key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                            val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                             if (isValid.first) {
                                                 scope.launch {
                                                     pageState.animateScrollToPage(1)
@@ -869,7 +869,7 @@ fun LoginPage(
                                 }
 
                                 if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                     if (isValid.first) {
                                         keyboardController?.hide()
                                         scope.launch {
@@ -951,9 +951,9 @@ fun LoginPage(
                                             modifier = Modifier.padding(start = 16.dp),
                                             style = MaterialTheme.typography.titleLarge,
                                         )
-                                        option.explainer?.let {
+                                        option.explainer?.let { explainer ->
                                             Text(
-                                                text = it,
+                                                text = explainer,
                                                 modifier = Modifier.padding(start = 16.dp),
                                             )
                                         }
@@ -974,8 +974,8 @@ fun LoginPage(
                                 Switch(
                                     modifier = Modifier.scale(0.85f),
                                     checked = useProxy,
-                                    onCheckedChange = {
-                                        useProxy = it
+                                    onCheckedChange = { value ->
+                                        useProxy = value
                                     },
                                 )
                                 Text(
@@ -1055,7 +1055,7 @@ fun LoginPage(
                                 }
 
                                 accountViewModel.startUI(
-                                    key = key.value.text.filter { it.code in 33..126 || it.code == 32 }.toLowerCase(Locale.current).trim(),
+                                    key = key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(),
                                     password = password.value.text,
                                     route = null,
                                     useProxy = useProxy,

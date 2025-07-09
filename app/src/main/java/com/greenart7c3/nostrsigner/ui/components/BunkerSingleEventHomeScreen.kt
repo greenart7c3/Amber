@@ -631,7 +631,7 @@ fun BunkerSingleEventHomeScreen(
 
         else -> {
             if (type == SignerType.DECRYPT_ZAP_EVENT) {
-                var permission =
+                val permission =
                     applicationEntity?.permissions?.firstOrNull {
                         it.pkKey == key && it.type == type.toString()
                     }

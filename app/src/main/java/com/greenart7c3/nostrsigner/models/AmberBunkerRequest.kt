@@ -64,7 +64,11 @@ data class AmberBunkerRequest(
                 closeApplication = jsonObject.get("closeApplication")?.asBoolean() != false,
                 name = jsonObject.get("name")?.asText()?.intern() ?: "",
                 signedEvent = jsonObject.get("signedEvent")?.asText()?.intern()?.let {
-                    EventMapper.fromJson(it)
+                    try {
+                        EventMapper.fromJson(it)
+                    } catch (_: Exception) {
+                        null
+                    }
                 },
                 encryptDecryptResponse = jsonObject.get("encryptDecryptResponse")?.asText()?.intern(),
             )

@@ -16,7 +16,7 @@ android {
         applicationId "com.greenart7c3.nostrsigner"
         minSdk 26
         targetSdk 36
-        versionCode 145
+        versionCode 146
         versionName "3.4.2"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"

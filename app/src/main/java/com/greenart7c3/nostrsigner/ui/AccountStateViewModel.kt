@@ -234,6 +234,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             LocalPreferences.saveSettingsToEncryptedStorage(
                 Amber.instance.settings,
             )
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.reconnect()
+            }
         }
         LocalPreferences.updatePrefsForLogin(Amber.instance, account)
         startUI(account, null)

@@ -259,8 +259,9 @@ class Amber : Application() {
         val savedUrls = savedRelays.map { it.url }.toSet()
         val allClientRelays = client.getAll()
         val hasNewRelays = allClientRelays.any { it.url !in savedUrls }
+        val hasAccount = LocalPreferences.allSavedAccounts(this).isNotEmpty()
 
-        if (savedRelays.isEmpty()) {
+        if (savedRelays.isEmpty() || !hasAccount) {
             client.reconnect(relays = null)
             NotificationDataSource.stop()
             AmberRelayStats.updateNotification()

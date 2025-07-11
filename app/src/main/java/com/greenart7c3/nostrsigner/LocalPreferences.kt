@@ -9,6 +9,7 @@ import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
@@ -231,7 +232,7 @@ object LocalPreferences {
             return AmberSettings(
                 defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.key, null)?.map {
                     RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
-                } ?: listOf(RelaySetupInfo("wss://relay.nsec.app", read = true, write = true, feedTypes = COMMON_FEED_TYPES)),
+                } ?: defaultAppRelays,
                 defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.key, null)?.map {
                     RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
                 } ?: listOf(

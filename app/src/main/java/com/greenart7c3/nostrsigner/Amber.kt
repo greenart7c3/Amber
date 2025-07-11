@@ -137,10 +137,10 @@ class Amber : Application() {
         val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
         val intent = Intent(this, BootReceiver::class.java)
         intent.action = BootReceiver.CLEAR_LOGS_ACTION
-        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT + PendingIntent.FLAG_MUTABLE)
+        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
 
         val interval: Long = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
-        val triggerAtMillis = System.currentTimeMillis()
+        val triggerAtMillis = System.currentTimeMillis() + (5 * 60 * 1000) // start after 5 minutes
 
         alarmManager.setRepeating(
             AlarmManager.RTC_WAKEUP,

@@ -2,5 +2,5 @@ identifier: com.greenart7c3.nostrsigner
 name: Amber
 description: Amber is a nostr event signer for Android. It allows users to keep their nsec segregated in a single, dedicated app. The goal of Amber is to have your smartphone act as a NIP-46 signing device without any need for servers or additional hardware.
 repository: https://github.com/greenart7c3/amber
-artifacts:
+assets:
   - amber-free-arm64-v8a-v\d+\.\d+\.\d.apk

@@ -10,11 +10,6 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
-import coil3.ImageLoader
-import coil3.SingletonImageLoader
-import coil3.network.okhttp.OkHttpNetworkFetcherFactory
-import coil3.request.crossfade
-import coil3.util.DebugLogger
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
@@ -26,7 +21,6 @@ import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.ProfileDataSource
 import com.greenart7c3.nostrsigner.service.RelayDisconnectService
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
 import com.vitorpamplona.ammolite.relays.MutableSubscriptionCache
@@ -35,7 +29,6 @@ import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
-import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
@@ -70,8 +63,6 @@ class Amber : Application() {
         HttpClientManager.getHttpClient(useProxy)
     }
     val client: NostrClient = NostrClient(factory)
-    var profileClient = ConcurrentHashMap<String, NostrClient>()
-    val profileDataSource = ConcurrentHashMap<String, ProfileDataSource>()
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     var settings: AmberSettings = AmberSettings()
@@ -337,93 +328,6 @@ class Amber : Application() {
     override fun onTerminate() {
         super.onTerminate()
         applicationIOScope.cancel()
-    }
-
-    fun fetchProfileData(
-        account: Account,
-        onPictureFound: (String) -> Unit,
-    ) {
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR == "offline") {
-            return
-        }
-
-        SingletonImageLoader.setSafe {
-            ImageLoader.Builder(this)
-                .crossfade(true)
-                .logger(DebugLogger())
-                .components {
-                    add(
-                        OkHttpNetworkFetcherFactory(
-                            callFactory = {
-                                HttpClientManager.getHttpClient(settings.useProxy)
-                            },
-                        ),
-                    )
-                }
-                .build()
-        }
-
-        val lastMetaData = LocalPreferences.getLastMetadataUpdate(this, account.npub)
-        val lastCheck = LocalPreferences.getLastCheck(this, account.npub)
-        val oneDayAgo = TimeUtils.oneDayAgo()
-        val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
-        if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
-            Log.d(TAG, "Fetching profile data for ${account.npub}")
-            LocalPreferences.setLastCheck(this, account.npub, TimeUtils.now())
-            val relays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays.map {
-                RelaySetupInfoToConnect(
-                    url = it.url,
-                    read = it.read,
-                    write = it.write,
-                    feedTypes = it.feedTypes,
-                    forceProxy = settings.useProxy,
-                )
-            }.toTypedArray()
-            profileClient.getOrPut(account.hexKey, defaultValue = { NostrClient(factory) }).reconnect(relays)
-            profileDataSource.getOrPut(
-                account.hexKey,
-                defaultValue = {
-                    ProfileDataSource(
-                        client = profileClient.get(account.hexKey)!!,
-                        account = account,
-                        onReceiveEvent = { event ->
-                            applicationIOScope.launch {
-                                if (event.kind == MetadataEvent.KIND) {
-                                    (event as MetadataEvent).contactMetaData()?.let { metadata ->
-                                        metadata.name?.let { name ->
-                                            account.name = name
-                                            applicationIOScope.launch {
-                                                LocalPreferences.saveToEncryptedStorage(account = account, context = this@Amber)
-                                            }
-                                        }
-
-                                        metadata.profilePicture()?.let { url ->
-                                            LocalPreferences.saveProfileUrlToEncryptedStorage(url, account.npub)
-                                            LocalPreferences.setLastMetadataUpdate(this@Amber, account.npub, TimeUtils.now())
-                                            onPictureFound(url)
-                                        }
-                                    }
-                                }
-                                profileDataSource[account.hexKey]?.stop()
-                                profileClient[account.hexKey]?.getAll()?.forEach {
-                                    Log.d(TAG, "disconnecting profile relay ${it.url}")
-                                    it.disconnect()
-                                }
-                            }
-                        },
-                    )
-                },
-            )
-
-            profileDataSource.get(account.hexKey)?.start()
-        } else {
-            Log.d(TAG, "Using cached profile data for ${account.npub}")
-            LocalPreferences.loadProfileUrlFromEncryptedStorage(account.npub)?.let {
-                onPictureFound(it)
-                return
-            }
-        }
     }
 
     suspend fun sendFeedBack(

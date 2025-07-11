@@ -39,11 +39,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.compose.AsyncImage
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.service.ProfileFetcherService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -58,7 +58,7 @@ fun ProfilePicture(account: Account) {
         var profileUrl by remember { mutableStateOf<String?>(null) }
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
-                Amber.instance.fetchProfileData(
+                ProfileFetcherService().fetchProfileData(
                     account = account,
                     onPictureFound = {
                         profileUrl = it

@@ -1,14 +1,14 @@
 package com.greenart7c3.nostrsigner
 
-import android.app.AlarmManager
 import android.app.Application
-import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
 import androidx.work.Data
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequest
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import coil3.ImageLoader
 import coil3.SingletonImageLoader
@@ -23,7 +23,7 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
-import com.greenart7c3.nostrsigner.service.BootReceiver
+import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.service.ProfileDataSource
@@ -44,6 +44,7 @@ import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -134,19 +135,18 @@ class Amber : Application() {
     }
 
     private fun startCleanLogsAlarm() {
-        val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
-        val intent = Intent(this, BootReceiver::class.java)
-        intent.action = BootReceiver.CLEAR_LOGS_ACTION
-        val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE)
+        val workRequest = PeriodicWorkRequestBuilder<ClearLogsWorker>(
+            24,
+            TimeUnit.HOURS,
+        )
+            .setInitialDelay(5, TimeUnit.MINUTES) // Delay first run by 5 minutes
+            .addTag("clearLogsWork")
+            .build()
 
-        val interval: Long = 24 * 60 * 60 * 1000 // 24 hours in milliseconds
-        val triggerAtMillis = System.currentTimeMillis() + (5 * 60 * 1000) // start after 5 minutes
-
-        alarmManager.setRepeating(
-            AlarmManager.RTC_WAKEUP,
-            triggerAtMillis,
-            interval,
-            pendingIntent,
+        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+            "ClearLogsWorker",
+            ExistingPeriodicWorkPolicy.REPLACE,
+            workRequest,
         )
     }
 

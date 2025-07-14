@@ -49,7 +49,7 @@ object BunkerRequestUtils {
         return state.value
     }
 
-    fun sendBunkerResponse(
+    suspend fun sendBunkerResponse(
         context: Context,
         account: Account,
         bunkerRequest: AmberBunkerRequest,
@@ -61,18 +61,15 @@ object BunkerRequestUtils {
         if (relays.isEmpty()) {
             onDone(true)
             onLoading(false)
-            Amber.instance.applicationIOScope.launch {
-                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
-                    LogEntity(
-                        id = 0,
-                        url = bunkerRequest.localKey,
-                        type = "bunker response",
-                        message = "No permission created for this client. Please logout from the client and create a new bunker connection",
-                        time = System.currentTimeMillis(),
-                    ),
-                )
-            }
-
+            Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
+                LogEntity(
+                    id = 0,
+                    url = bunkerRequest.localKey,
+                    type = "bunker response",
+                    message = "No permission created for this client. Please logout from the client and create a new bunker connection",
+                    time = System.currentTimeMillis(),
+                ),
+            )
             return
         }
 
@@ -110,23 +107,39 @@ object BunkerRequestUtils {
             }
         }
 
-        account.signer.nip44Encrypt(
+        val encryptedContent = account.signer.signerSync.nip44Encrypt(
             EventMapper.mapper.writeValueAsString(bunkerResponse),
             bunkerRequest.localKey,
-        ) { encryptedContent ->
-            sendBunkerResponse(
-                bunkerRequest = bunkerRequest,
-                account = account,
-                localKey = bunkerRequest.localKey,
-                encryptedContent = encryptedContent,
-                relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
-                onLoading = onLoading,
-                onDone = onDone,
-            )
+        )
+        if (encryptedContent == null) {
+            onDone(false)
+            onLoading(false)
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = bunkerRequest.localKey,
+                        type = "bunker response",
+                        message = "Failed to encrypt bunker response",
+                        time = System.currentTimeMillis(),
+                    ),
+                )
+            }
+            return
         }
+
+        sendBunkerResponse(
+            bunkerRequest = bunkerRequest,
+            account = account,
+            localKey = bunkerRequest.localKey,
+            encryptedContent = encryptedContent,
+            relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
+            onLoading = onLoading,
+            onDone = onDone,
+        )
     }
 
-    private fun sendBunkerResponse(
+    private suspend fun sendBunkerResponse(
         bunkerRequest: AmberBunkerRequest,
         account: Account,
         localKey: String,
@@ -135,49 +148,47 @@ object BunkerRequestUtils {
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
-        account.signer.sign<Event>(
+        val signedEvent = account.signer.signerSync.sign<Event>(
             TimeUtils.now(),
             NostrConnectEvent.KIND,
             arrayOf(arrayOf("p", localKey)),
             encryptedContent,
-        ) {
-            Amber.instance.applicationIOScope.launch {
-                Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
+        ) ?: return
 
-                if (Amber.instance.client.getAll().any { relay -> !relay.isConnected() }) {
-                    Amber.instance.checkForNewRelays(
-                        newRelays = relays.toSet(),
-                    )
-                }
+        Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
-                var success = false
-                var errorCount = 0
-                while (!success && errorCount < 3) {
-                    success = Amber.instance.client.sendAndWaitForResponse(it, relayList = relays)
-                    if (!success) {
-                        errorCount++
-                        relays.forEach { relay ->
-                            if (Amber.instance.client.getRelay(relay.url)?.isConnected() == false) {
-                                Amber.instance.client.getRelay(relay.url)?.connect()
-                            }
-                        }
-                        delay(1000)
+        if (Amber.instance.client.getAll().any { relay -> !relay.isConnected() }) {
+            Amber.instance.checkForNewRelays(
+                newRelays = relays.toSet(),
+            )
+        }
+
+        var success = false
+        var errorCount = 0
+        while (!success && errorCount < 3) {
+            success = Amber.instance.client.sendAndWaitForResponse(signedEvent, relayList = relays)
+            if (!success) {
+                errorCount++
+                relays.forEach { relay ->
+                    if (Amber.instance.client.getRelay(relay.url)?.isConnected() == false) {
+                        Amber.instance.client.getRelay(relay.url)?.connect()
                     }
                 }
-                if (success) {
-                    Log.d(Amber.TAG, "Success response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
-                    onDone(true)
-                } else {
-                    onDone(false)
-                    AmberListenerSingleton.showErrorMessage()
-                    Log.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
-                }
-                AmberListenerSingleton.getListener()?.let { listener ->
-                    Amber.instance.client.unsubscribe(listener)
-                }
-                onLoading(false)
+                delay(1000)
             }
         }
+        if (success) {
+            Log.d(Amber.TAG, "Success response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
+            onDone(true)
+        } else {
+            onDone(false)
+            AmberListenerSingleton.showErrorMessage()
+            Log.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
+        }
+        AmberListenerSingleton.getListener()?.let { listener ->
+            Amber.instance.client.unsubscribe(listener)
+        }
+        onLoading(false)
     }
 
     fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType {

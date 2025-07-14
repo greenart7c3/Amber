@@ -127,7 +127,7 @@ object AmberUtils {
         }
     }
 
-    fun sendBunkerError(
+    suspend fun sendBunkerError(
         account: Account,
         bunkerRequest: AmberBunkerRequest,
         relays: List<RelaySetupInfo>,

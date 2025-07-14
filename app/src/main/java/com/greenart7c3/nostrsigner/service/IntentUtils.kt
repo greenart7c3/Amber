@@ -304,7 +304,11 @@ object IntentUtils {
         val returnType = if (intent.extras?.getString("returnType") == "event") ReturnType.EVENT else ReturnType.SIGNATURE
         val json = intent.extras?.getString("permissions")
         val permissions: MutableList<Permission>? = json?.let {
-            Permission.mapper.readValue<MutableList<Permission>>(it)
+            try {
+                Permission.mapper.readValue<MutableList<Permission>>(it)
+            } catch (_: Exception) {
+                null
+            }
         }
         permissions?.forEach {
             it.checked = true

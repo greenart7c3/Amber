@@ -5,6 +5,10 @@ import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.compose.runtime.mutableStateOf
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleObserver
+import androidx.lifecycle.LifecycleOwner
+import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.OneTimeWorkRequest
@@ -47,7 +51,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-class Amber : Application() {
+class Amber : Application(), LifecycleObserver {
     private var mainActivityRef: WeakReference<MainActivity?>? = null
 
     fun setMainActivity(activity: MainActivity?) {
@@ -143,6 +147,17 @@ class Amber : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStart(owner: LifecycleOwner) {
+                Log.d("ProcessLifecycleOwner", "App in foreground")
+                isAppInForeground = true
+            }
+
+            override fun onStop(owner: LifecycleOwner) {
+                Log.d("ProcessLifecycleOwner", "App in background")
+                isAppInForeground = false
+            }
+        })
 
         isStartingApp.value = true
 
@@ -404,6 +419,7 @@ class Amber : Application() {
     }
 
     companion object {
+        var isAppInForeground = false
         const val TAG = "Amber"
 
         @Volatile

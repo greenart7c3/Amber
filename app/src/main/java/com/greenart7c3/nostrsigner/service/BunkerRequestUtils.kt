@@ -290,6 +290,14 @@ object BunkerRequestUtils {
                 )
             application.application.isConnected = true
 
+            val activity = Amber.instance.getMainActivity()
+            activity?.intent = null
+            if (application.application.closeApplication) {
+                activity?.finish()
+            }
+
+            delay(500)
+
             if (signPolicy != null) {
                 AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)
             }
@@ -344,7 +352,6 @@ object BunkerRequestUtils {
                 ),
             )
 
-            EventNotificationConsumer(context).notificationManager().cancelAll()
             sendBunkerResponse(
                 context,
                 account,
@@ -367,12 +374,6 @@ object BunkerRequestUtils {
 
                             onLoading(false)
                             addRequest(localBunkerRequest)
-                        } else {
-                            val activity = Amber.instance.getMainActivity()
-                            activity?.intent = null
-                            if (application.application.closeApplication) {
-                                activity?.finish()
-                            }
                         }
                     }
                 },

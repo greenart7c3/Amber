@@ -61,6 +61,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(Amber.TAG, "onCreate MainActivity")
         Amber.instance.startService()
+        Amber.isAppInForeground = true
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
         Amber.instance.setMainActivity(this)

@@ -46,6 +46,7 @@ junit = { module = "junit:junit", version.ref = "junit" }
 lifecycle-runtime-compose = { module = "androidx.lifecycle:lifecycle-runtime-compose", version.ref = "lifecycle_version" }
 lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycle_version" }
 lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle_version" }
+lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle_version" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }

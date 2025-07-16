@@ -21,6 +21,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationChannel
+import android.app.NotificationChannelGroup
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
@@ -35,12 +36,37 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 object NotificationUtils {
-    private var dmChannel: NotificationChannel? = null
+    private var bunkerChannel: NotificationChannel? = null
+    private var errorsChannel: NotificationChannel? = null
+    private var bunkerGroup: NotificationChannelGroup? = null
+    private var errorsGroup: NotificationChannelGroup? = null
 
-    fun getOrCreateDMChannel(applicationContext: Context): NotificationChannel {
-        if (dmChannel != null) return dmChannel!!
+    fun getOrCreateBunkerGroup(applicationContext: Context): NotificationChannelGroup {
+        if (bunkerGroup != null) return bunkerGroup!!
+        bunkerGroup =
+            NotificationChannelGroup(
+                "BunkerGroup",
+                applicationContext.getString(R.string.bunker_notifications),
+            )
+        return bunkerGroup!!
+    }
 
-        dmChannel =
+    fun getOrCreateErrorsGroup(applicationContext: Context): NotificationChannelGroup {
+        if (errorsGroup != null) return errorsGroup!!
+        errorsGroup =
+            NotificationChannelGroup(
+                "ErrorsGroup",
+                applicationContext.getString(R.string.error_notifications),
+            )
+        return errorsGroup!!
+    }
+
+    fun getOrCreateBunkerChannel(applicationContext: Context): NotificationChannel {
+        if (bunkerChannel != null) return bunkerChannel!!
+
+        getOrCreateBunkerGroup(applicationContext)
+
+        bunkerChannel =
             NotificationChannel(
                 "BunkerID",
                 applicationContext.getString(R.string.bunker_notifications),
@@ -48,15 +74,41 @@ object NotificationUtils {
             )
                 .apply {
                     description = applicationContext.getString(R.string.notifications_for_approving_or_rejecting_bunker_requests)
+                    group = bunkerGroup?.id
                 }
 
         // Register the channel with the system
         val notificationManager: NotificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
-        notificationManager.createNotificationChannel(dmChannel!!)
+        notificationManager.createNotificationChannel(bunkerChannel!!)
 
-        return dmChannel!!
+        return bunkerChannel!!
+    }
+
+    fun getOrCreateErrorsChannel(applicationContext: Context): NotificationChannel {
+        if (errorsChannel != null) return errorsChannel!!
+
+        getOrCreateErrorsGroup(applicationContext)
+
+        errorsChannel =
+            NotificationChannel(
+                "ErrorID",
+                applicationContext.getString(R.string.error_notifications),
+                NotificationManager.IMPORTANCE_HIGH,
+            )
+                .apply {
+                    description = applicationContext.getString(R.string.notifications_for_approving_or_rejecting_bunker_requests)
+                    group = errorsGroup?.id
+                }
+
+        // Register the channel with the system
+        val notificationManager: NotificationManager =
+            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+
+        notificationManager.createNotificationChannel(bunkerChannel!!)
+
+        return bunkerChannel!!
     }
 
     fun NotificationManager.sendNotification(
@@ -118,7 +170,7 @@ object NotificationUtils {
                 .setContentTitle(messageTitle)
                 .setContentText(applicationContext.getString(R.string.new_event_to_sign))
                 .setLargeIcon(picture?.bitmap)
-                // .setGroup(messageTitle)
+                .setGroup(bunkerGroup?.id)
                 // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
                 // activate this
                 .setContentIntent(contentPendingIntent)
@@ -140,7 +192,85 @@ object NotificationUtils {
                 .setContentTitle(messageTitle)
                 .setContentText(messageBody)
                 .setLargeIcon(picture?.bitmap)
-                // .setGroup(messageTitle)
+                .setGroup(bunkerGroup?.id)
+                // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
+                // activate this
+                .setContentIntent(contentPendingIntent)
+                .setPublicVersion(builderPublic.build())
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setExtras(
+                    Bundle().apply {
+                        putString("route", Route.IncomingRequest.route)
+                    },
+                )
+
+        notify(notId, builder.build())
+    }
+
+    private fun NotificationManager.sendErrorNotification(
+        id: String,
+        messageBody: String,
+        messageTitle: String,
+        picture: BitmapDrawable?,
+        channelId: String,
+        applicationContext: Context,
+        bunkerRequest: AmberBunkerRequest,
+    ) {
+        val notId = id.hashCode()
+        val notifications: Array<StatusBarNotification> = activeNotifications
+        for (notification in notifications) {
+            if (notification.id == notId) {
+                return
+            }
+        }
+
+        val contentIntent = Intent(applicationContext, MainActivity::class.java)
+        contentIntent.putExtra("route", Route.IncomingRequest.route)
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val contentPendingIntent =
+            PendingIntent.getActivity(
+                applicationContext,
+                notId,
+                contentIntent,
+                PendingIntent.FLAG_MUTABLE,
+            )
+
+        BunkerRequestUtils.addRequest(bunkerRequest)
+
+        // Build the notification
+        val builderPublic =
+            NotificationCompat.Builder(
+                applicationContext,
+                channelId,
+            )
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(messageTitle)
+                .setContentText(applicationContext.getString(R.string.new_event_to_sign))
+                .setLargeIcon(picture?.bitmap)
+                .setGroup(errorsGroup?.id)
+                // .setGroup(notificationGroupKey) //-> Might need a Group summary as well before we
+                // activate this
+                .setContentIntent(contentPendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_HIGH)
+                .setAutoCancel(true)
+                .setExtras(
+                    Bundle().apply {
+                        putString("route", Route.IncomingRequest.route)
+                    },
+                )
+
+        // Build the notification
+        val builder =
+            NotificationCompat.Builder(
+                applicationContext,
+                channelId,
+            )
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(messageTitle)
+                .setContentText(messageBody)
+                .setLargeIcon(picture?.bitmap)
+                .setGroup(errorsGroup?.id)
                 // .setGroup(notificationGroupKey)  //-> Might need a Group summary as well before we
                 // activate this
                 .setContentIntent(contentPendingIntent)

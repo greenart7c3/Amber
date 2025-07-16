@@ -6,6 +6,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.greenart7c3.nostrsigner.service.NotificationUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
@@ -35,7 +36,11 @@ object AmberListenerSingleton {
     fun showErrorMessage() {
         if (latestErrorMessages.isEmpty()) return
         if (latestErrorMessages.last().isBlank()) return
-        accountStateViewModel?.toast("Error", latestErrorMessages.last())
+        if (Amber.isAppInForeground) {
+            accountStateViewModel?.toast("Error", latestErrorMessages.last())
+        } else {
+            NotificationUtils
+        }
         latestErrorMessages.clear()
     }
 }

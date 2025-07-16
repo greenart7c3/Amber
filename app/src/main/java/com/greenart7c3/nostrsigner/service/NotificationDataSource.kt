@@ -208,7 +208,8 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
         relay: Relay,
     ) {
         checkNotInMainThread()
-        NotificationUtils.getOrCreateDMChannel(Amber.instance.applicationContext)
+        NotificationUtils.getOrCreateBunkerChannel(Amber.instance.applicationContext)
+        NotificationUtils.getOrCreateErrorsChannel(Amber.instance.applicationContext)
         AmberRelayStats.addReceived(relay.url)
         eventNotificationConsumer.consume(event, relay)
     }

@@ -216,7 +216,9 @@
     <string name="checking_connectivity">Vérification de la connectivité</string>
     <string name="amber_is_running_in_background">Amber fonctionne en arrière-plan</string>
     <string name="bunker_notifications">Notifications Bunker</string>
+    <string name="error_notifications">Error Notifications</string>
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Notifications pour approuver ou rejeter les requêtes Bunker.</string>
+    <string name="notifications_for_showing_errors_bunker_requests">Notifications for Showing Errors in Bunker requests.</string>
     <string name="new_event_to_sign">nouvel événement à signer</string>
     <string name="event_kind_10013">Liste des relais de messagerie privés</string>
     <string name="remove_permission">Supprimer la permission</string>

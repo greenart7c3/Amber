@@ -108,9 +108,9 @@ object NotificationUtils {
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
         notificationManager.createNotificationChannelGroup(errorsGroup!!)
-        notificationManager.createNotificationChannel(bunkerChannel!!)
+        notificationManager.createNotificationChannel(errorsChannel!!)
 
-        return bunkerChannel!!
+        return errorsChannel!!
     }
 
     fun NotificationManager.sendNotification(
@@ -210,14 +210,13 @@ object NotificationUtils {
         notify(notId, builder.build())
     }
 
-    private fun NotificationManager.sendErrorNotification(
+    fun NotificationManager.sendErrorNotification(
         id: String,
         messageBody: String,
         messageTitle: String,
         picture: BitmapDrawable?,
         channelId: String,
         applicationContext: Context,
-        bunkerRequest: AmberBunkerRequest,
     ) {
         val notId = id.hashCode()
         val notifications: Array<StatusBarNotification> = activeNotifications
@@ -237,8 +236,6 @@ object NotificationUtils {
                 contentIntent,
                 PendingIntent.FLAG_MUTABLE,
             )
-
-        BunkerRequestUtils.addRequest(bunkerRequest)
 
         // Build the notification
         val builderPublic =

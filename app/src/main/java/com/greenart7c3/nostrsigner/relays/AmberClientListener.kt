@@ -1,12 +1,13 @@
 package com.greenart7c3.nostrsigner.relays
 
 import android.annotation.SuppressLint
+import android.app.NotificationManager
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
-import com.greenart7c3.nostrsigner.service.NotificationUtils
+import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.ammolite.relays.NostrClient
 import com.vitorpamplona.ammolite.relays.Relay
@@ -39,7 +40,16 @@ object AmberListenerSingleton {
         if (Amber.isAppInForeground) {
             accountStateViewModel?.toast("Error", latestErrorMessages.last())
         } else {
-            NotificationUtils
+            val notificationManager: NotificationManager =
+                Amber.instance.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            notificationManager.sendErrorNotification(
+                id = latestErrorMessages.last().hashCode().toString(),
+                channelId = "ErrorID",
+                messageTitle = "Error sending bunker response",
+                messageBody = latestErrorMessages.last(),
+                picture = null,
+                applicationContext = Amber.instance.applicationContext,
+            )
         }
         latestErrorMessages.clear()
     }

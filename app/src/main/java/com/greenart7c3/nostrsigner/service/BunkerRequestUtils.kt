@@ -148,12 +148,12 @@ object BunkerRequestUtils {
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
-        val signedEvent = account.signer.signerSync.sign<Event>(
+        var signedEvent = account.signer.signerSync.sign<Event>(
             TimeUtils.now(),
             NostrConnectEvent.KIND,
             arrayOf(arrayOf("p", localKey)),
             encryptedContent,
-        ) ?: return
+        )!!
 
         Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
@@ -175,6 +175,12 @@ object BunkerRequestUtils {
                     }
                 }
                 delay(1000)
+                signedEvent = account.signer.signerSync.sign(
+                    TimeUtils.now(),
+                    NostrConnectEvent.KIND,
+                    arrayOf(arrayOf("p", localKey)),
+                    encryptedContent,
+                )!!
             }
         }
         if (success) {

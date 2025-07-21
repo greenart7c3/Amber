@@ -64,7 +64,7 @@ object NotificationUtils {
     fun getOrCreateBunkerChannel(applicationContext: Context): NotificationChannel {
         if (bunkerChannel != null) return bunkerChannel!!
 
-        getOrCreateBunkerGroup(applicationContext)
+        val bunkerGroup = getOrCreateBunkerGroup(applicationContext)
 
         bunkerChannel =
             NotificationChannel(
@@ -74,13 +74,14 @@ object NotificationUtils {
             )
                 .apply {
                     description = applicationContext.getString(R.string.notifications_for_approving_or_rejecting_bunker_requests)
-                    group = bunkerGroup?.id
+                    group = bunkerGroup.id
                 }
 
         // Register the channel with the system
         val notificationManager: NotificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        notificationManager.createNotificationChannelGroup(bunkerGroup)
         notificationManager.createNotificationChannel(bunkerChannel!!)
 
         return bunkerChannel!!
@@ -106,6 +107,7 @@ object NotificationUtils {
         val notificationManager: NotificationManager =
             applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
 
+        notificationManager.createNotificationChannelGroup(errorsGroup!!)
         notificationManager.createNotificationChannel(bunkerChannel!!)
 
         return bunkerChannel!!

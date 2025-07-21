@@ -216,9 +216,9 @@
     <string name="checking_connectivity">Bağlantı Kontrol Ediliyor</string>
     <string name="amber_is_running_in_background">Amber arka planda çalışıyor</string>
     <string name="bunker_notifications">Bunker Bildirimleri</string>
-    <string name="error_notifications">Error Notifications</string>
+    <string name="error_notifications">Hata Bildirimleri</string>
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Bunker isteklerini onaylamak veya reddetmek için bildirimler.</string>
-    <string name="notifications_for_showing_errors_bunker_requests">Notifications for Showing Errors in Bunker requests.</string>
+    <string name="notifications_for_showing_errors_bunker_requests">Bunker isteklerinde hata bildirimlerinin gösterilmesi.</string>
     <string name="new_event_to_sign">imzalanacak yeni etkinlik</string>
     <string name="event_kind_10013">Özel giden kutusu relay listesi</string>
     <string name="remove_permission">İzni kaldır</string>

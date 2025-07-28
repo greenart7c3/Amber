@@ -333,10 +333,24 @@ fun onAddRelay(
                                     val client = NostrClient(
                                         socket,
                                     )
+                                    val clientSub = NostrClient(
+                                        socket,
+                                    )
                                     AmberListenerSingleton.getListener()?.let { listener ->
                                         client.subscribe(listener)
                                     }
                                     client.reconnect(
+                                        arrayOf(
+                                            RelaySetupInfoToConnect(
+                                                addedWSS,
+                                                read = true,
+                                                write = true,
+                                                feedTypes = COMMON_FEED_TYPES,
+                                                forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
+                                            ),
+                                        ),
+                                    )
+                                    clientSub.reconnect(
                                         arrayOf(
                                             RelaySetupInfoToConnect(
                                                 addedWSS,
@@ -357,12 +371,29 @@ fun onAddRelay(
                                         },
                                     )
                                     val relay = client.getRelay(addedWSS) ?: return@secondLaunch
+                                    val relaySub = clientSub.getRelay(addedWSS) ?: return@secondLaunch
                                     client.subscribe(
                                         listener2,
                                     )
+                                    clientSub.subscribe(
+                                        listener2,
+                                    )
                                     relay.connect()
+                                    relaySub.connect()
                                     delay(3000)
                                     relay.sendFilter(
+                                        UUID.randomUUID().toString().substring(0, 4),
+                                        filters = listOf(
+                                            TypedFilter(
+                                                types = COMMON_FEED_TYPES,
+                                                filter = SincePerRelayFilter(
+                                                    kinds = listOf(NostrConnectEvent.KIND),
+                                                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
+                                                ),
+                                            ),
+                                        ),
+                                    )
+                                    relaySub.sendFilter(
                                         UUID.randomUUID().toString().substring(0, 4),
                                         filters = listOf(
                                             TypedFilter(
@@ -394,7 +425,9 @@ fun onAddRelay(
                                         client.unsubscribe(listener)
                                     }
                                     client.unsubscribe(listener2)
+                                    clientSub.unsubscribe(listener2)
                                     client.getRelay(addedWSS)?.disconnect()
+                                    clientSub.getRelay(addedWSS)?.disconnect()
 
                                     if (result && filterResult) {
                                         relays2.add(

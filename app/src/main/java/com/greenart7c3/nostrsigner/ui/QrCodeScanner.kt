@@ -1,27 +1,37 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.content.Intent
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.ui.platform.LocalContext
-import com.greenart7c3.nostrsigner.QrCodeScannerActivity
+import androidx.compose.runtime.DisposableEffect
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import com.google.zxing.client.android.Intents
+import com.journeyapps.barcodescanner.ScanContract
+import com.journeyapps.barcodescanner.ScanOptions
 
 @Composable
-fun SimpleQrCodeScanner(
-    onScan: (String?) -> Unit,
-) {
-    val context = LocalContext.current
-    val launcher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.StartActivityForResult(),
-    ) { result ->
-        val text = result.data?.getStringExtra("qr_result")
-        onScan(text)
-    }
+fun SimpleQrCodeScanner(onScan: (String?) -> Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
 
-    LaunchedEffect(Unit) {
-        val intent = Intent(context, QrCodeScannerActivity::class.java)
-        launcher.launch(intent)
+    val qrLauncher =
+        rememberLauncherForActivityResult(ScanContract()) {
+            if (it.contents != null) {
+                onScan(it.contents)
+            } else {
+                onScan(null)
+            }
+        }
+
+    val scanOptions =
+        ScanOptions().apply {
+            setDesiredBarcodeFormats(ScanOptions.QR_CODE)
+            setPrompt("Point to the QR Code")
+            setBeepEnabled(false)
+            setOrientationLocked(false)
+            addExtra(Intents.Scan.SCAN_TYPE, Intents.Scan.MIXED_SCAN)
+        }
+
+    DisposableEffect(lifecycleOwner) {
+        qrLauncher.launch(scanOptions)
+        onDispose { }
     }
 }

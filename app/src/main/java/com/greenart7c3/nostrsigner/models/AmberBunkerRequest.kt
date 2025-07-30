@@ -23,6 +23,11 @@ import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import kotlin.collections.asIterable
 
+enum class EncryptionType {
+    NIP44,
+    NIP04,
+}
+
 data class AmberBunkerRequest(
     val request: BunkerRequest,
     val localKey: String,
@@ -35,6 +40,7 @@ data class AmberBunkerRequest(
     val encryptDecryptResponse: String?,
     val checked: MutableState<Boolean> = mutableStateOf(true),
     val rememberType: MutableState<RememberType> = mutableStateOf(RememberType.NEVER),
+    val encryptionType: EncryptionType,
 ) {
     fun toJson(): String {
         return mapper.writeValueAsString(this)
@@ -71,6 +77,7 @@ data class AmberBunkerRequest(
                     }
                 },
                 encryptDecryptResponse = jsonObject.get("encryptDecryptResponse")?.asText()?.intern(),
+                encryptionType = EncryptionType.valueOf(jsonObject.get("encryptionType")?.asText()?.intern() ?: "NIP44"),
             )
         }
 

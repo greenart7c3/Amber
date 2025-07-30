@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
+import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
@@ -125,6 +126,7 @@ object NostrConnectUtils {
                     name = name,
                     signedEvent = null,
                     encryptDecryptResponse = null,
+                    encryptionType = EncryptionType.NIP44,
                 ),
             )
         } catch (e: Exception) {

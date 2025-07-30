@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -107,10 +108,18 @@ object BunkerRequestUtils {
             }
         }
 
-        val encryptedContent = account.signer.signerSync.nip44Encrypt(
-            EventMapper.mapper.writeValueAsString(bunkerResponse),
-            bunkerRequest.localKey,
-        )
+        val encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+            account.signer.signerSync.nip44Encrypt(
+                EventMapper.mapper.writeValueAsString(bunkerResponse),
+                bunkerRequest.localKey,
+            )
+        } else {
+            account.signer.signerSync.nip04Encrypt(
+                EventMapper.mapper.writeValueAsString(bunkerResponse),
+                bunkerRequest.localKey,
+            )
+        }
+
         if (encryptedContent == null) {
             onDone(false)
             onLoading(false)

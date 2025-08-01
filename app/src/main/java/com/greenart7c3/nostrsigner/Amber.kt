@@ -225,10 +225,11 @@ class Amber : Application(), LifecycleObserver {
     suspend fun reconnect() {
         Log.d(TAG, "reconnecting relays")
         NotificationDataSource.stop()
+        delay(2000)
         client.getAll().forEach {
             it.disconnect()
         }
-        delay(1000)
+        delay(2000)
         checkForNewRelays()
         NotificationDataSource.start()
         AmberRelayStats.updateNotification()

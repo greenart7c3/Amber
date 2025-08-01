@@ -15,6 +15,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.vitorpamplona.ammolite.relays.RelayStats
 import kotlinx.coroutines.launch
 
@@ -91,10 +92,18 @@ object AmberRelayStats {
                 PendingIntent.FLAG_MUTABLE,
             )
 
+        val reconnectIntent = Intent(Amber.instance, ReconnectReceiver::class.java)
+        val reconnectPendingIntent = PendingIntent.getBroadcast(
+            Amber.instance,
+            0,
+            reconnectIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
+
         val notificationBuilder =
             NotificationCompat.Builder(Amber.instance, channelId)
                 .setGroup(group.id)
-                .setContentTitle("$connected of $available connected relays")
+                .setContentTitle(Amber.instance.getString(R.string.of_connected_relays, connected, available))
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .bigText(message),
@@ -102,6 +111,7 @@ object AmberRelayStats {
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)
+                .addAction(R.drawable.ic_notification, Amber.instance.getString(R.string.reconnect), reconnectPendingIntent)
 
         return notificationBuilder.build()
     }

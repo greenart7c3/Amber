@@ -538,4 +538,7 @@
     <string name="replace_connection">Bağlantıyı değiştir</string>
     <string name="create_a_new_connection">Yeni bir bağlantı oluştur</string>
     <string name="network_permission_message">Relay/proxy\'ye bağlanılamadı. Amber için ağ iznini etkinleştirip etkinleştirmediğinizi kontrol edin</string>
+    <string name="reconnect">Reconnect</string>
+    <string name="of_connected_relays">%1$d of %2$d connected relays</string>
+    <string name="proxy">Proxy</string>
 </resources>

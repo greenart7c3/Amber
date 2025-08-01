@@ -538,4 +538,7 @@
     <string name="replace_connection">Replace connection</string>
     <string name="create_a_new_connection">Create a new connection</string>
     <string name="network_permission_message">Failed to connect to relay/proxy. Check if you enabled the network permission for Amber</string>
+    <string name="reconnect">Reconnect</string>
+    <string name="of_connected_relays">%1$d of %2$d connected relays</string>
+    <string name="proxy">Proxy</string>
 </resources>

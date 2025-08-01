@@ -262,9 +262,6 @@ class Amber : Application(), LifecycleObserver {
         newRelays: Set<RelaySetupInfo> = emptySet(),
     ) {
         val savedRelays = getSavedRelays() + newRelays
-        val savedUrls = savedRelays.map { it.url }.toSet()
-        val allClientRelays = client.getAll()
-        val hasNewRelays = allClientRelays.any { it.url !in savedUrls }
         val hasAccount = LocalPreferences.allSavedAccounts(this).isNotEmpty()
 
         if (savedRelays.isEmpty() || !hasAccount) {
@@ -283,10 +280,9 @@ class Amber : Application(), LifecycleObserver {
                 savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else settings.useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
                 true,
             )
-            if (hasNewRelays) {
-                NotificationDataSource.stop()
-                delay(1000)
-            }
+
+            NotificationDataSource.stop()
+            delay(1000)
             NotificationDataSource.start()
             applicationIOScope.launch {
                 delay(1000)

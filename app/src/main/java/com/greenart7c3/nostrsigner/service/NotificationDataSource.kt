@@ -41,6 +41,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object NotificationDataSource : NostrDataSource(Amber.instance.client) {
@@ -79,6 +80,13 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
                                 time = System.currentTimeMillis(),
                             ),
                         )
+                    }
+                }
+                if (type == RelayState.CONNECTED) {
+                    Amber.instance.applicationIOScope.launch {
+                        stop()
+                        delay(1000)
+                        start()
                     }
                 }
             }
@@ -138,6 +146,35 @@ object NotificationDataSource : NostrDataSource(Amber.instance.client) {
                     }
                 }
                 notify(relay, description)
+            }
+
+            override fun onSend(relay: Relay, msg: String, success: Boolean) {
+                if (!success) {
+                    scope.launch {
+                        LocalPreferences.currentAccount(Amber.instance)?.let { account ->
+                            Amber.instance.getDatabase(account).applicationDao().insertLog(
+                                LogEntity(
+                                    id = 0,
+                                    url = relay.url,
+                                    type = "onSend",
+                                    message = "Failed to send message: $msg",
+                                    time = System.currentTimeMillis(),
+                                ),
+                            )
+                        }
+                    }
+
+                    if (relay.isConnected()) {
+                        Amber.instance.applicationIOScope.launch {
+                            relay.disconnect()
+                            delay(1000)
+                            relay.connect()
+                            delay(2000)
+                            relay.renewFilters()
+                        }
+                    }
+                }
+                super.onSend(relay, msg, success)
             }
 
             override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {

@@ -195,14 +195,18 @@ class Amber : Application(), LifecycleObserver {
                 super.onResume(owner)
 
                 // activates the profile filter only when the app is in the foreground
-                profileSubscription.updateFilter()
+                applicationIOScope.launch {
+                    profileSubscription.updateFilter()
+                }
             }
 
             override fun onPause(owner: LifecycleOwner) {
                 super.onPause(owner)
 
                 // closes the filter when in the background
-                profileSubscription.closeSub()
+                applicationIOScope.launch {
+                    profileSubscription.closeSub()
+                }
             }
         })
 

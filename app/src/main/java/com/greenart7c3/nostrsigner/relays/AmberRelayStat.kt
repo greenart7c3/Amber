@@ -22,6 +22,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 
@@ -33,9 +34,9 @@ class AmberRelayStats(
     var oldMessage = ""
     val relayStatus = client.relayStatusFlow()
 
-    val relayStatusUpdater = client.relayStatusFlow().onEach {
+    val relayStatusUpdater = client.relayStatusFlow().debounce(300).onEach {
         try {
-            createNotification()
+            updateNotification()
         } catch (e: NullPointerException) {
         }
     }.stateIn(
@@ -118,10 +119,7 @@ class AmberRelayStats(
             NotificationCompat.Builder(appContext, channelId)
                 .setGroup(group.id)
                 .setContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
-                .setStyle(
-                    NotificationCompat.BigTextStyle()
-                        .bigText(message),
-                )
+                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)

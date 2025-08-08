@@ -55,7 +55,7 @@ import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -71,7 +71,7 @@ fun EditConfigurationScreen(
     val scope = rememberCoroutineScope()
     var application by remember { mutableStateOf<ApplicationWithPermissions?>(null) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
-    val relays = remember { mutableStateListOf<RelaySetupInfo>() }
+    val relays = remember { mutableStateListOf<NormalizedRelayUrl>() }
     val textFieldRelay = remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val isLoading = remember { mutableStateOf(true) }
     var closeApp by remember { mutableStateOf(false) }
@@ -297,7 +297,7 @@ fun EditConfigurationScreen(
                                     it.permissions,
                                 ),
                             )
-                            Amber.instance.checkForNewRelays()
+                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {
@@ -322,7 +322,7 @@ fun EditConfigurationScreen(
                             Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
                             Amber.instance.getDatabase(account.npub).applicationDao().deleteHistory(it.application.key)
 
-                            Amber.instance.checkForNewRelays()
+                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
 
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {

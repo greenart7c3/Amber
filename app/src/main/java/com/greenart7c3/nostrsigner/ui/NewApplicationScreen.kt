@@ -105,7 +105,6 @@ fun NewApplicationScreen(
                         packageName = null,
                         route = Route.IncomingRequest.route,
                         currentLoggedInAccount = account,
-                        onReady = {},
                     )
                 }
             },

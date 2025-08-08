@@ -57,15 +57,14 @@ object IntentUtils {
         return URLDecoder.decode(data.replace("nostrsigner:", "").replace("+", "%2b"), "utf-8")
     }
 
-    private fun getIntentDataWithoutExtras(
+    private suspend fun getIntentDataWithoutExtras(
         context: Context,
         data: String,
         intent: Intent,
         packageName: String?,
         route: String?,
         account: Account,
-        onReady: (IntentData?) -> Unit,
-    ) {
+    ): IntentData? {
         val content: String
         if (data.contains("?iv")) {
             val splitData = data.replace("nostrsigner:", "").split("?")
@@ -80,7 +79,7 @@ object IntentUtils {
         parameters.removeIf { it.isBlank() }
 
         if (parameters.isEmpty() || parameters.toString() == "[]") {
-            getIntentDataFromIntent(context, intent, packageName, route, account, onReady)
+            return getIntentDataFromIntent(context, intent, packageName, route, account)
         } else {
             var type = SignerType.INVALID
             var pubKey = ""
@@ -127,11 +126,10 @@ object IntentUtils {
             }
 
             if (type == SignerType.INVALID) {
-                onReady(null)
-                return
+                return null
             }
 
-            when (type) {
+            return when (type) {
                 SignerType.SIGN_EVENT -> {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
@@ -140,32 +138,30 @@ object IntentUtils {
                             localAccount = it
                         }
                     }
-                    localAccount.signer.sign<Event>(
+                    val signedEvent = localAccount.signer.sign<Event>(
                         unsignedEvent.createdAt,
                         unsignedEvent.kind,
                         unsignedEvent.tags,
                         unsignedEvent.content,
-                    ) {
-                        onReady(
-                            IntentData(
-                                data = localData,
-                                name = appName,
-                                type = type,
-                                pubKey = pubKey,
-                                id = "",
-                                callBackUrl = callbackUrl,
-                                compression = compressionType,
-                                returnType = returnType,
-                                permissions = listOf(),
-                                currentAccount = Hex.decode(it.pubKey).toNpub(),
-                                checked = mutableStateOf(true),
-                                rememberType = mutableStateOf(RememberType.NEVER),
-                                route = route,
-                                event = it,
-                                encryptedData = null,
-                            ),
-                        )
-                    }
+                    )
+
+                    IntentData(
+                        data = localData,
+                        name = appName,
+                        type = type,
+                        pubKey = pubKey,
+                        id = "",
+                        callBackUrl = callbackUrl,
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = listOf(),
+                        currentAccount = Hex.decode(signedEvent.pubKey).toNpub(),
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = signedEvent,
+                        encryptedData = null,
+                    )
                 }
                 SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
                     val result =
@@ -192,81 +188,74 @@ object IntentUtils {
                             "Could not decrypt the message"
                         }
 
-                    onReady(
-                        IntentData(
-                            data = localData,
-                            name = appName,
-                            type = type,
-                            pubKey = pubKey,
-                            id = "",
-                            callBackUrl = callbackUrl,
-                            compression = compressionType,
-                            returnType = returnType,
-                            permissions = listOf(),
-                            currentAccount = Hex.decode(pubKey).toNpub(),
-                            checked = mutableStateOf(true),
-                            rememberType = mutableStateOf(RememberType.NEVER),
-                            route = route,
-                            event = null,
-                            encryptedData = result,
-                        ),
+                    IntentData(
+                        data = localData,
+                        name = appName,
+                        type = type,
+                        pubKey = pubKey,
+                        id = "",
+                        callBackUrl = callbackUrl,
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = listOf(),
+                        currentAccount = Hex.decode(pubKey).toNpub(),
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = null,
+                        encryptedData = result,
                     )
                 }
                 SignerType.GET_PUBLIC_KEY -> {
-                    onReady(
-                        IntentData(
-                            data = localData,
-                            name = appName,
-                            type = type,
-                            pubKey = pubKey,
-                            id = "",
-                            callBackUrl = callbackUrl,
-                            compression = compressionType,
-                            returnType = returnType,
-                            permissions = listOf(),
-                            currentAccount = "",
-                            checked = mutableStateOf(true),
-                            rememberType = mutableStateOf(RememberType.NEVER),
-                            route = route,
-                            event = null,
-                            encryptedData = null,
-                        ),
+                    IntentData(
+                        data = localData,
+                        name = appName,
+                        type = type,
+                        pubKey = pubKey,
+                        id = "",
+                        callBackUrl = callbackUrl,
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = listOf(),
+                        currentAccount = "",
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = null,
+                        encryptedData = null,
                     )
                 }
                 SignerType.SIGN_MESSAGE -> {
-                    onReady(
-                        IntentData(
-                            data = localData,
-                            name = appName,
-                            type = type,
-                            pubKey = pubKey,
-                            id = "",
-                            callBackUrl = callbackUrl,
-                            compression = compressionType,
-                            returnType = returnType,
-                            permissions = listOf(),
-                            currentAccount = "",
-                            checked = mutableStateOf(true),
-                            rememberType = mutableStateOf(RememberType.NEVER),
-                            route = route,
-                            event = null,
-                            encryptedData = null,
-                        ),
+                    IntentData(
+                        data = localData,
+                        name = appName,
+                        type = type,
+                        pubKey = pubKey,
+                        id = "",
+                        callBackUrl = callbackUrl,
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = listOf(),
+                        currentAccount = "",
+                        checked = mutableStateOf(true),
+                        rememberType = mutableStateOf(RememberType.NEVER),
+                        route = route,
+                        event = null,
+                        encryptedData = null,
                     )
                 }
-                else -> onReady(null)
+                else -> null
             }
         }
     }
 
-    private fun getIntentDataFromIntent(
+    private suspend fun getIntentDataFromIntent(
         context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
         account: Account,
-        onReady: (IntentData?) -> Unit,
-    ) {
+    ): IntentData? {
         val type =
             when (intent.extras?.getString("type")) {
                 "sign_message" -> SignerType.SIGN_MESSAGE
@@ -281,8 +270,7 @@ object IntentUtils {
             }
 
         if (type == SignerType.INVALID) {
-            onReady(null)
-            return
+            return null
         }
 
         val data =
@@ -316,7 +304,7 @@ object IntentUtils {
         permissions?.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
         permissions?.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
-        when (type) {
+        return when (type) {
             SignerType.SIGN_EVENT -> {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
@@ -326,37 +314,35 @@ object IntentUtils {
                     }
                 }
 
-                localAccount.signer.sign<Event>(
+                val signed = localAccount.signer.sign<Event>(
                     unsignedEvent.createdAt,
                     unsignedEvent.kind,
                     unsignedEvent.tags,
                     unsignedEvent.content,
-                ) {
-                    var npub = intent.getStringExtra("current_user")
-                    if (npub != null) {
-                        npub = parsePubKey(npub)
-                    }
+                )
 
-                    onReady(
-                        IntentData(
-                            data = data,
-                            name = name,
-                            type = type,
-                            pubKey = pubKey,
-                            id = id,
-                            callBackUrl = intent.extras?.getString("callbackUrl"),
-                            compression = compressionType,
-                            returnType = returnType,
-                            permissions = permissions,
-                            currentAccount = npub ?: Hex.decode(it.pubKey).toNpub(),
-                            checked = mutableStateOf(true),
-                            rememberType = mutableStateOf(RememberType.NEVER),
-                            route = route,
-                            event = it,
-                            encryptedData = null,
-                        ),
-                    )
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub)
                 }
+
+                IntentData(
+                    data = data,
+                    name = name,
+                    type = type,
+                    pubKey = pubKey,
+                    id = id,
+                    callBackUrl = intent.extras?.getString("callbackUrl"),
+                    compression = compressionType,
+                    returnType = returnType,
+                    permissions = permissions,
+                    currentAccount = npub ?: Hex.decode(signed.pubKey).toNpub(),
+                    checked = mutableStateOf(true),
+                    rememberType = mutableStateOf(RememberType.NEVER),
+                    route = route,
+                    event = signed,
+                    encryptedData = null,
+                )
             }
             SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
                 val result =
@@ -388,24 +374,22 @@ object IntentUtils {
                     npub = parsePubKey(npub)
                 }
 
-                onReady(
-                    IntentData(
-                        data = data,
-                        name = name,
-                        type = type,
-                        pubKey = pubKey,
-                        id = id,
-                        callBackUrl = intent.extras?.getString("callbackUrl"),
-                        compression = compressionType,
-                        returnType = returnType,
-                        permissions = permissions,
-                        currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
-                        route = route,
-                        event = null,
-                        encryptedData = result,
-                    ),
+                IntentData(
+                    data = data,
+                    name = name,
+                    type = type,
+                    pubKey = pubKey,
+                    id = id,
+                    callBackUrl = intent.extras?.getString("callbackUrl"),
+                    compression = compressionType,
+                    returnType = returnType,
+                    permissions = permissions,
+                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    checked = mutableStateOf(true),
+                    rememberType = mutableStateOf(RememberType.NEVER),
+                    route = route,
+                    event = null,
+                    encryptedData = result,
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
@@ -414,24 +398,22 @@ object IntentUtils {
                     npub = parsePubKey(npub)
                 }
 
-                onReady(
-                    IntentData(
-                        data = data,
-                        name = name,
-                        type = type,
-                        pubKey = pubKey,
-                        id = id,
-                        callBackUrl = intent.extras?.getString("callbackUrl"),
-                        compression = compressionType,
-                        returnType = returnType,
-                        permissions = permissions,
-                        currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
-                        route = route,
-                        event = null,
-                        encryptedData = null,
-                    ),
+                IntentData(
+                    data = data,
+                    name = name,
+                    type = type,
+                    pubKey = pubKey,
+                    id = id,
+                    callBackUrl = intent.extras?.getString("callbackUrl"),
+                    compression = compressionType,
+                    returnType = returnType,
+                    permissions = permissions,
+                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    checked = mutableStateOf(true),
+                    rememberType = mutableStateOf(RememberType.NEVER),
+                    route = route,
+                    event = null,
+                    encryptedData = null,
                 )
             }
             SignerType.SIGN_MESSAGE -> {
@@ -440,27 +422,25 @@ object IntentUtils {
                     npub = parsePubKey(npub)
                 }
 
-                onReady(
-                    IntentData(
-                        data = data,
-                        name = name,
-                        type = type,
-                        pubKey = pubKey,
-                        id = id,
-                        callBackUrl = intent.extras?.getString("callbackUrl"),
-                        compression = compressionType,
-                        returnType = returnType,
-                        permissions = permissions,
-                        currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
-                        route = route,
-                        event = null,
-                        encryptedData = null,
-                    ),
+                IntentData(
+                    data = data,
+                    name = name,
+                    type = type,
+                    pubKey = pubKey,
+                    id = id,
+                    callBackUrl = intent.extras?.getString("callbackUrl"),
+                    compression = compressionType,
+                    returnType = returnType,
+                    permissions = permissions,
+                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    checked = mutableStateOf(true),
+                    rememberType = mutableStateOf(RememberType.NEVER),
+                    route = route,
+                    event = null,
+                    encryptedData = null,
                 )
             }
-            else -> onReady(null)
+            else -> null
         }
     }
 
@@ -475,20 +455,16 @@ object IntentUtils {
         }
     }
 
-    fun getIntentData(
+    suspend fun getIntentData(
         context: Context,
         intent: Intent,
         packageName: String?,
         route: String?,
         currentLoggedInAccount: Account,
-        onReady: (IntentData?) -> Unit,
-    ) {
+    ): IntentData? {
         try {
             if (intent.data == null) {
-                onReady(
-                    null,
-                )
-                return
+                return null
             }
 
             val bunkerRequest =
@@ -521,9 +497,9 @@ object IntentUtils {
             } else if (bunkerRequest != null) {
                 BunkerRequestUtils.addRequest(bunkerRequest)
             } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-                getIntentDataFromIntent(context, intent, packageName, route, localAccount, onReady)
+                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
             } else {
-                getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount, onReady)
+                return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
             }
         } catch (e: Exception) {
             Amber.instance.applicationIOScope.launch {
@@ -539,8 +515,8 @@ object IntentUtils {
                     )
                 }
             }
-            onReady(null)
         }
+        return null
     }
 
     fun getUnsignedEvent(

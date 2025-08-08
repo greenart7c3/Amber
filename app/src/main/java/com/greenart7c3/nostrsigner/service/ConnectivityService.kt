@@ -9,7 +9,6 @@ import android.os.IBinder
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import java.util.Timer
 import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
@@ -32,10 +31,9 @@ class ConnectivityService : Service() {
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
 
-                val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
-                if (lastNetwork != null && lastNetwork != network && hasAnyRelayDisconnected) {
+                if (lastNetwork != null && lastNetwork != network) {
                     scope.launch(Dispatchers.IO) {
-                        Amber.instance.reconnect()
+                        Amber.instance.client.reconnect(true)
                     }
                 }
                 lastNetwork = network
@@ -57,10 +55,7 @@ class ConnectivityService : Service() {
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
                     )
 
-                    val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
-                    if (Amber.instance.updateNetworkCapabilities(networkCapabilities) && hasAnyRelayDisconnected) {
-                        Amber.instance.reconnect()
-                    }
+                    Amber.instance.client.reconnect(true)
                 }
             }
 
@@ -86,7 +81,7 @@ class ConnectivityService : Service() {
         Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: $isStarted")
         if (isStarted) return
         isStarted = true
-        AmberRelayStats.createNotification()?.let {
+        Amber.instance.stats.createNotification()?.let {
             startForeground(1, it)
         }
         Amber.instance.applicationIOScope.launch {
@@ -94,10 +89,10 @@ class ConnectivityService : Service() {
                 delay(1000)
             }
             @Suppress("KotlinConstantConditions")
-            if (BuildConfig.FLAVOR != "offline" && Amber.instance.client.getAll().isEmpty()) {
+            if (BuildConfig.FLAVOR != "offline") {
+                Amber.instance.client.connect()
                 Amber.instance.applicationIOScope.launch {
-                    Amber.instance.checkForNewRelays()
-                    NotificationDataSource.start()
+                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                 }
             }
 
@@ -119,11 +114,8 @@ class ConnectivityService : Service() {
                             return
                         }
 
-                        val hasAnyRelayDisconnected = Amber.instance.client.getAll().any { !it.isConnected() }
-                        if (hasAnyRelayDisconnected) {
-                            scope.launch {
-                                Amber.instance.reconnect()
-                            }
+                        scope.launch {
+                            Amber.instance.client.reconnect(true)
                         }
                     }
                 },
@@ -153,7 +145,7 @@ class ConnectivityService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(Amber.TAG, "onStartCommand")
-        AmberRelayStats.createNotification()?.let {
+        Amber.instance.stats.createNotification()?.let {
             startForeground(1, it)
         }
         return START_STICKY

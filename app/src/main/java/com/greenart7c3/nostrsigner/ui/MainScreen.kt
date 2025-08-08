@@ -47,6 +47,7 @@ import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -61,9 +62,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.relays.AmberRelayStats
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.ProfileFetcherService
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -111,7 +109,7 @@ private fun askNotificationPermission(
 fun requestIgnoreBatteryOptimizations(context: Context) {
     @Suppress("KotlinConstantConditions")
     if (BuildConfig.FLAVOR == "offline") return
-    if (Amber.instance.client.getAll().isEmpty()) return
+    if (Amber.instance.client.relayStatusFlow().value.connected.isEmpty()) return
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
     if (!pm.isIgnoringBatteryOptimizations(packageName) && !LocalPreferences.getBatteryOptimization(context)) {
@@ -141,7 +139,6 @@ fun MainScreen(
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    var profileUrl by remember { mutableStateOf<String?>(null) }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
     val percentage = (screenWidthDp * 0.93f)
@@ -155,7 +152,7 @@ fun MainScreen(
                     LocalPreferences.updateShouldShowRationale(context, true)
                 }
             } else {
-                AmberRelayStats.updateNotification()
+                Amber.instance.stats.updateNotification()
                 requestIgnoreBatteryOptimizations(context)
             }
         }
@@ -171,13 +168,6 @@ fun MainScreen(
                     requestPermissionLauncher = requestPermissionLauncher,
                     onShouldShowRequestPermissionRationale = {
                         showDialog = true
-                    },
-                )
-
-                ProfileFetcherService().fetchProfileData(
-                    account = account,
-                    onPictureFound = {
-                        profileUrl = it
                     },
                 )
             }
@@ -269,6 +259,7 @@ fun MainScreen(
             )
         },
         bottomBar = {
+            val profileUrl = account.picture.collectAsStateWithLifecycle()
             AmberBottomBar(
                 items = items,
                 navController = navController,
@@ -278,7 +269,7 @@ fun MainScreen(
                 onShouldShowBottomSheet = {
                     shouldShowBottomSheet = it
                 },
-                profileUrl = profileUrl,
+                profileUrl = profileUrl.value,
                 account = account,
             )
         },
@@ -814,9 +805,7 @@ fun MainScreen(
                             onPost = {
                                 scope.launch(Dispatchers.IO) {
                                     LocalPreferences.updateProxy(context, true, it)
-                                    NotificationDataSource.stop()
-                                    Amber.instance.checkForNewRelays()
-                                    NotificationDataSource.start()
+                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                     scope.launch {
                                         navController.navigate(Route.Settings.route) {
                                             popUpTo(0)

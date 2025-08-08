@@ -913,7 +913,7 @@ private fun sendResultIntent(
 }
 
 private suspend fun reconnectToRelays() {
-    Amber.instance.checkForNewRelays()
+    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
 }
 
 @Composable

@@ -53,7 +53,6 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
@@ -254,7 +253,6 @@ fun SettingsScreen(
                     text = stringResource(R.string.clear_logs_and_activity),
                     onClick = {
                         Amber.instance.applicationIOScope.launch {
-                            NotificationDataSource.stop()
                             isLoading = true
                             LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                                 Amber.instance.getDatabase(it.npub).let { database ->
@@ -311,7 +309,6 @@ fun SettingsScreen(
                                         sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
                                         status = ""
                                         isLoading = false
-                                        NotificationDataSource.start()
                                     } catch (e: Exception) {
                                         isLoading = false
                                         if (e is CancellationException) throw e
@@ -320,10 +317,11 @@ fun SettingsScreen(
                                         val df = DecimalFormat("#.###")
                                         sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
                                         status = ""
-                                        NotificationDataSource.start()
                                     }
                                 }
                             }
+
+                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                         }
                     },
                 )
@@ -386,9 +384,7 @@ fun SettingsScreen(
                         checked = false
                         scope.launch(Dispatchers.IO) {
                             LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
-                            NotificationDataSource.stop()
-                            Amber.instance.checkForNewRelays()
-                            NotificationDataSource.start()
+                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                         }
                     },
                 ) {

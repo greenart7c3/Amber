@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
+import android.annotation.SuppressLint
 import android.content.Context
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -23,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,34 +51,32 @@ import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
-import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
-import com.greenart7c3.nostrsigner.relays.BunkerValidationRelayListener
+import com.greenart7c3.nostrsigner.service.Nip11CachedRetriever
 import com.greenart7c3.nostrsigner.service.Nip11Retriever
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.NostrClient
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
-import com.vitorpamplona.ammolite.relays.RelayStats
-import com.vitorpamplona.ammolite.relays.TypedFilter
-import com.vitorpamplona.ammolite.relays.filters.SincePerRelayFilter
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
+import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
+import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
-import com.vitorpamplona.quartz.nip65RelayList.RelayUrlFormatter
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.Base64
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -89,22 +89,9 @@ fun DefaultRelaysScreen(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
-    val textFieldRelay = remember {
-        mutableStateOf(TextFieldValue(""))
-    }
-    val isLoading = remember {
-        mutableStateOf(false)
-    }
-    val relays2 =
-        remember {
-            val localRelays = mutableStateListOf<RelaySetupInfo>()
-            Amber.instance.settings.defaultRelays.forEach {
-                localRelays.add(
-                    it.copy(),
-                )
-            }
-            localRelays
-        }
+    val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
+    val isLoading = remember { mutableStateOf(false) }
+    val relays2 = remember { mutableStateListOf(*Amber.instance.settings.defaultRelays.toTypedArray()) }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -158,10 +145,7 @@ fun DefaultRelaysScreen(
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
                                             if (BuildConfig.FLAVOR != "offline") {
-                                                Amber.instance.checkForNewRelays()
-                                                NotificationDataSource.stop()
-                                                delay(2000)
-                                                NotificationDataSource.start()
+                                                Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                                 isLoading.value = false
                                             } else {
                                                 isLoading.value = false
@@ -199,10 +183,7 @@ fun DefaultRelaysScreen(
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
                                         if (BuildConfig.FLAVOR != "offline") {
-                                            Amber.instance.checkForNewRelays()
-                                            NotificationDataSource.stop()
-                                            delay(2000)
-                                            NotificationDataSource.start()
+                                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                             isLoading.value = false
                                         } else {
                                             isLoading.value = false
@@ -232,10 +213,7 @@ fun DefaultRelaysScreen(
                                 scope.launch(Dispatchers.IO) {
                                     @Suppress("KotlinConstantConditions")
                                     if (BuildConfig.FLAVOR != "offline") {
-                                        Amber.instance.checkForNewRelays()
-                                        NotificationDataSource.stop()
-                                        delay(2000)
-                                        NotificationDataSource.start()
+                                        Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                         isLoading.value = false
                                     } else {
                                         isLoading.value = false
@@ -253,7 +231,7 @@ fun DefaultRelaysScreen(
 fun onAddRelay(
     textFieldRelay: MutableState<TextFieldValue>,
     isLoading: MutableState<Boolean>,
-    relays2: SnapshotStateList<RelaySetupInfo>,
+    relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
@@ -266,43 +244,36 @@ fun onAddRelay(
     if (url.isNotBlank() && url != "/") {
         isLoading.value = true
         val isPrivateIp = Amber.instance.isPrivateIp(url)
-        var addedWSS =
+        val addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
-                // TODO: How to identify relays on the local network?
                 if (url.endsWith(".onion") || url.endsWith(".onion/") || isPrivateIp) {
-                    "ws://$url"
+                    RelayUrlNormalizer.normalizeOrNull("ws://$url") ?: return
                 } else {
-                    "wss://$url"
+                    RelayUrlNormalizer.normalizeOrNull("wss://$url") ?: return
                 }
             } else {
-                url
+                RelayUrlNormalizer.normalizeOrNull(url) ?: return
             }
-        if (url.endsWith("/")) addedWSS = addedWSS.dropLast(1)
-        if (relays2.any { it.url == addedWSS }) {
+
+        if (relays2.any { it == addedWSS }) {
             textFieldRelay.value = TextFieldValue("")
             isLoading.value = false
             return
         }
-        val httpsUrl = RelayUrlFormatter.getHttpsUrl(addedWSS)
-        val retriever = Nip11Retriever()
+
         scope.launch(Dispatchers.IO) {
-            retriever.loadRelayInfo(
-                httpsUrl,
-                addedWSS,
-                forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
+            Nip11CachedRetriever.loadRelayInfo(
+                relay = addedWSS,
+                okHttpClient = {
+                    val useProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy
+                    HttpClientManager.getHttpClient(useProxy)
+                },
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
                         if (shouldCheckForBunker) {
                             val relays = Amber.instance.getSavedRelays()
-                            if (relays.any { it.url == addedWSS }) {
-                                relays2.add(
-                                    RelaySetupInfo(
-                                        addedWSS,
-                                        read = true,
-                                        write = true,
-                                        feedTypes = COMMON_FEED_TYPES,
-                                    ),
-                                )
+                            if (addedWSS in relays) {
+                                relays2.add(addedWSS)
                                 onDone()
                                 textFieldRelay.value = TextFieldValue("")
                                 isLoading.value = false
@@ -314,163 +285,78 @@ fun onAddRelay(
                                 "Test bunker event",
                                 signer.keyPair.pubKey.toHexKey(),
                             )
-                            encryptedContent?.let {
-                                val event = signer.signerSync.sign<Event>(
-                                    TimeUtils.now(),
-                                    NostrConnectEvent.KIND,
-                                    arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                                    it,
-                                )
 
-                                val isPrivateIp = Amber.instance.isPrivateIp(addedWSS)
-                                val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
-                                    HttpClientManager.getHttpClient(useProxy)
-                                }
+                            val signedEvent = signer.signerSync.sign<Event>(
+                                TimeUtils.now(),
+                                NostrConnectEvent.KIND,
+                                arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+                                encryptedContent,
+                            )
 
-                                event?.let { signedEvent ->
-                                    AmberListenerSingleton.setListener(context)
-                                    val socket = factory
-                                    val client = NostrClient(
-                                        socket,
-                                    )
-                                    val clientSub = NostrClient(
-                                        socket,
-                                    )
-                                    AmberListenerSingleton.getListener()?.let { listener ->
-                                        client.subscribe(listener)
-                                    }
-                                    client.reconnect(
-                                        arrayOf(
-                                            RelaySetupInfoToConnect(
-                                                addedWSS,
-                                                read = true,
-                                                write = true,
-                                                feedTypes = COMMON_FEED_TYPES,
-                                                forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
-                                            ),
-                                        ),
-                                    )
-                                    clientSub.reconnect(
-                                        arrayOf(
-                                            RelaySetupInfoToConnect(
-                                                addedWSS,
-                                                read = true,
-                                                write = true,
-                                                feedTypes = COMMON_FEED_TYPES,
-                                                forceProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy,
-                                            ),
-                                        ),
-                                    )
-                                    var filterResult = false
-                                    val listener2 = BunkerValidationRelayListener(
-                                        account,
-                                        onReceiveEvent = { _, _, event ->
-                                            if (event.kind == NostrConnectEvent.KIND && event.id == signedEvent.id) {
-                                                filterResult = true
-                                            }
-                                        },
-                                    )
-                                    val relay = client.getRelay(addedWSS) ?: return@secondLaunch
-                                    val relaySub = clientSub.getRelay(addedWSS) ?: return@secondLaunch
-                                    client.subscribe(
-                                        listener2,
-                                    )
-                                    clientSub.subscribe(
-                                        listener2,
-                                    )
-                                    relay.connect()
-                                    relaySub.connect()
-                                    delay(3000)
-                                    relay.sendFilter(
-                                        UUID.randomUUID().toString().substring(0, 4),
-                                        filters = listOf(
-                                            TypedFilter(
-                                                types = COMMON_FEED_TYPES,
-                                                filter = SincePerRelayFilter(
-                                                    kinds = listOf(NostrConnectEvent.KIND),
-                                                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
-                                                ),
-                                            ),
-                                        ),
-                                    )
-                                    relaySub.sendFilter(
-                                        UUID.randomUUID().toString().substring(0, 4),
-                                        filters = listOf(
-                                            TypedFilter(
-                                                types = COMMON_FEED_TYPES,
-                                                filter = SincePerRelayFilter(
-                                                    kinds = listOf(NostrConnectEvent.KIND),
-                                                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
-                                                ),
-                                            ),
-                                        ),
-                                    )
-                                    delay(3000)
-                                    val result = client.sendAndWaitForResponse(
-                                        signedEvent = signedEvent,
-                                        relayList = listOf(RelaySetupInfo(addedWSS, read = true, write = true, setOf())),
-                                    )
-                                    if (result) {
-                                        var count = 0
-                                        while (!filterResult && count < 10) {
-                                            delay(1000)
-                                            count++
-                                        }
-                                    } else {
-                                        AmberListenerSingleton.showErrorMessage()
-                                        filterResult = true
-                                    }
-
-                                    AmberListenerSingleton.getListener()?.let { listener ->
-                                        client.unsubscribe(listener)
-                                    }
-                                    client.unsubscribe(listener2)
-                                    clientSub.unsubscribe(listener2)
-                                    client.getRelay(addedWSS)?.disconnect()
-                                    clientSub.getRelay(addedWSS)?.disconnect()
-
-                                    if (result && filterResult) {
-                                        relays2.add(
-                                            RelaySetupInfo(
-                                                addedWSS,
-                                                read = true,
-                                                write = true,
-                                                feedTypes = COMMON_FEED_TYPES,
-                                            ),
-                                        )
-                                        onDone()
-                                    } else if (!filterResult) {
-                                        accountStateViewModel.toast(
-                                            context.getString(R.string.relay),
-                                            context.getString(R.string.relay_filter_failed),
-                                            onAccept = {
-                                                relays2.add(
-                                                    RelaySetupInfo(
-                                                        addedWSS,
-                                                        read = true,
-                                                        write = true,
-                                                        feedTypes = COMMON_FEED_TYPES,
-                                                    ),
-                                                )
-                                                onDone()
-                                            },
-                                            onReject = {},
-                                        )
-                                    }
-
-                                    textFieldRelay.value = TextFieldValue("")
-                                }
-                                isLoading.value = false
-                            }
-                        } else {
-                            relays2.add(
-                                RelaySetupInfo(
-                                    addedWSS,
-                                    read = true,
-                                    write = true,
-                                    feedTypes = COMMON_FEED_TYPES,
+                            val filters = listOf(
+                                Filter(
+                                    kinds = listOf(NostrConnectEvent.KIND),
+                                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
                                 ),
                             )
+
+                            var filterResult = false
+                            val ncSub = UUID.randomUUID().toString().substring(0, 4)
+
+                            val listener = object : IRelayClientListener {
+                                override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
+                                    if (ncSub == subId && event.kind == NostrConnectEvent.KIND && event.id == signedEvent.id) {
+                                        filterResult = true
+                                    }
+                                }
+                            }
+
+                            Amber.instance.client.subscribe(listener)
+
+                            Amber.instance.client.sendRequest(
+                                ncSub,
+                                mapOf(addedWSS to filters),
+                            )
+
+                            val result = Amber.instance.client.sendAndWaitForResponse(
+                                event = signedEvent,
+                                relayList = setOf(addedWSS),
+                            )
+
+                            delay(3000)
+
+                            if (result) {
+                                var count = 0
+                                while (!filterResult && count < 10) {
+                                    delay(1000)
+                                    count++
+                                }
+                            } else {
+                                AmberListenerSingleton.showErrorMessage()
+                                filterResult = true
+                            }
+
+                            Amber.instance.client.unsubscribe(listener)
+
+                            if (result && filterResult) {
+                                relays2.add(addedWSS)
+                                onDone()
+                            } else if (!filterResult) {
+                                accountStateViewModel.toast(
+                                    context.getString(R.string.relay),
+                                    context.getString(R.string.relay_filter_failed),
+                                    onAccept = {
+                                        relays2.add(addedWSS)
+                                        onDone()
+                                    },
+                                    onReject = {},
+                                )
+                            }
+
+                            textFieldRelay.value = TextFieldValue("")
+                            isLoading.value = false
+                        } else {
+                            relays2.add(addedWSS)
                             onDone()
                             textFieldRelay.value = TextFieldValue("")
                         }
@@ -587,6 +473,7 @@ fun RelayLogScreen(
     }
 }
 
+@SuppressLint("StateFlowValueCalledInComposition")
 @Composable
 fun ActiveRelaysScreen(
     modifier: Modifier,
@@ -594,7 +481,7 @@ fun ActiveRelaysScreen(
 ) {
     val relays2 =
         remember {
-            mutableStateListOf<RelaySetupInfo>()
+            mutableStateListOf<NormalizedRelayUrl>()
         }
 
     LaunchedEffect(Unit) {
@@ -626,13 +513,17 @@ fun ActiveRelaysScreen(
                 Column(
                     verticalArrangement = Arrangement.Center,
                 ) {
+                    val isConnected by Amber.instance.client.relayStatusFlow().map { status ->
+                        relay in status.connected
+                    }.collectAsStateWithLifecycle(relay in Amber.instance.client.relayStatusFlow().value.connected)
+
                     Text(
                         modifier = Modifier.padding(top = 16.dp),
                         text = relay.url,
                         fontSize = 24.sp,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
-                        color = if (Amber.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                        color = if (isConnected) Color.Unspecified else Color.Gray,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -640,11 +531,11 @@ fun ActiveRelaysScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (Amber.instance.client.getRelay(relay.url)?.isConnected() == true) "${RelayStats.get(relay.url).pingInMs}ms ping" else "Unavailable",
+                            text = if (isConnected) "${RelayStats.get(relay).pingInMs}ms ping" else "Unavailable",
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            color = if (Amber.instance.client.getRelay(relay.url)?.isConnected() == true) Color.Unspecified else Color.Gray,
+                            color = if (isConnected) Color.Unspecified else Color.Gray,
                         )
                     }
 

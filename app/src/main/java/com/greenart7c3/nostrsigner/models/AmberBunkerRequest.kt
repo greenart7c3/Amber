@@ -16,10 +16,10 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
+import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import kotlin.collections.asIterable
 
@@ -31,7 +31,7 @@ enum class EncryptionType {
 data class AmberBunkerRequest(
     val request: BunkerRequest,
     val localKey: String,
-    val relays: List<RelaySetupInfo>,
+    val relays: List<NormalizedRelayUrl>,
     val currentAccount: String,
     val nostrConnectSecret: String,
     val closeApplication: Boolean,
@@ -58,12 +58,10 @@ data class AmberBunkerRequest(
 
         fun fromJson(jsonObject: JsonNode): AmberBunkerRequest {
             return AmberBunkerRequest(
-                request = EventMapper.mapper.readValue(jsonObject.get("request").asText().intern()),
+                request = JsonMapper.mapper.readValue(jsonObject.get("request").asText().intern()),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
-                relays = jsonObject.get("relays")?.asIterable()?.toList()?.map {
-                    var relayUrl = it.asText().intern()
-                    if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
-                    RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
+                relays = jsonObject.get("relays")?.asIterable()?.toList()?.mapNotNull {
+                    RelayUrlNormalizer.normalizeOrNull(it.asText())
                 } ?: Amber.instance.getSavedRelays().toList(),
                 currentAccount = jsonObject.get("currentAccount")?.asText()?.intern() ?: "",
                 nostrConnectSecret = jsonObject.get("nostrConnectSecret")?.asText()?.intern() ?: "",
@@ -71,7 +69,7 @@ data class AmberBunkerRequest(
                 name = jsonObject.get("name")?.asText()?.intern() ?: "",
                 signedEvent = jsonObject.get("signedEvent")?.asText()?.intern()?.let {
                     try {
-                        EventMapper.fromJson(it)
+                        JsonMapper.fromJson(it)
                     } catch (_: Exception) {
                         null
                     }

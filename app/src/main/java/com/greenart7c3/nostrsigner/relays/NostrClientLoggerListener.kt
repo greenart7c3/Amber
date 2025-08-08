@@ -9,30 +9,17 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.vitorpamplona.ammolite.relays.NostrClient
-import com.vitorpamplona.ammolite.relays.Relay
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.relay.RelayState
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayState
+import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak")
 object AmberListenerSingleton {
     var accountStateViewModel: AccountStateViewModel? = null
-    private var listener: AmberClientListener? = null
     val latestErrorMessages = mutableListOf<String>()
-
-    fun setListener(
-        context: Context,
-    ) {
-        listener = AmberClientListener(context)
-    }
-
-    fun getListener(): AmberClientListener? {
-        return listener
-    }
 
     fun showErrorMessage() {
         if (latestErrorMessages.isEmpty()) return
@@ -55,18 +42,18 @@ object AmberListenerSingleton {
     }
 }
 
-class AmberClientListener(
+class NostrClientLoggerListener(
     val context: Context,
-) : NostrClient.Listener {
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-
-    override fun onAuth(relay: Relay, challenge: String) {
+    val stats: AmberRelayStats,
+    val scope: CoroutineScope,
+) : IRelayClientListener {
+    override fun onAuth(relay: IRelayClient, challenge: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onAuth",
                         message = "Authenticating",
                         time = System.currentTimeMillis(),
@@ -76,13 +63,13 @@ class AmberClientListener(
         }
     }
 
-    override fun onBeforeSend(relay: Relay, event: Event) {
+    override fun onBeforeSend(relay: IRelayClient, event: Event) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onBeforeSend",
                         message = "Sending event ${event.id}",
                         time = System.currentTimeMillis(),
@@ -92,13 +79,13 @@ class AmberClientListener(
         }
     }
 
-    override fun onSend(relay: Relay, msg: String, success: Boolean) {
+    override fun onSend(relay: IRelayClient, msg: String, success: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onSend",
                         message = "message: $msg success: $success",
                         time = System.currentTimeMillis(),
@@ -115,13 +102,13 @@ class AmberClientListener(
         }
     }
 
-    override fun onSendResponse(eventId: String, success: Boolean, message: String, relay: Relay) {
+    override fun onSendResponse(relay: IRelayClient, eventId: String, success: Boolean, message: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onSendResponse",
                         message = "Success: $success Message: $message",
                         time = System.currentTimeMillis(),
@@ -133,16 +120,22 @@ class AmberClientListener(
         if (!success) {
             AmberListenerSingleton.latestErrorMessages.add(message)
         }
+
+        if (success) {
+            stats.addSent(relay.url)
+        } else {
+            stats.addFailed(relay.url)
+        }
     }
 
-    override fun onError(error: Error, subscriptionId: String, relay: Relay) {
+    override fun onError(relay: IRelayClient, subId: String, error: Error) {
         if (error.message?.trim()?.equals("Relay sent notice:") == true) return
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onError",
                         message = "${error.message}",
                         time = System.currentTimeMillis(),
@@ -161,29 +154,31 @@ class AmberClientListener(
         }
     }
 
-    override fun onEvent(event: Event, subscriptionId: String, relay: Relay, arrivalTime: Long, afterEOSE: Boolean) {
+    override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onEvent",
-                        message = "Received event ${event.id} from subscription $subscriptionId afterEOSE: $afterEOSE",
+                        message = "Received event ${event.id} from subscription $subId afterEOSE: $afterEOSE",
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
+
+            Amber.instance.stats.addReceived(relay.url)
         }
     }
 
-    override fun onNotify(relay: Relay, description: String) {
+    override fun onNotify(relay: IRelayClient, description: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onNotify",
                         message = description,
                         time = System.currentTimeMillis(),
@@ -193,13 +188,13 @@ class AmberClientListener(
         }
     }
 
-    override fun onRelayStateChange(type: RelayState, relay: Relay) {
+    override fun onRelayStateChange(relay: IRelayClient, type: RelayState) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getDatabase(account).applicationDao().insertLog(
                     LogEntity(
                         id = 0,
-                        url = relay.url,
+                        url = relay.url.url,
                         type = "onRelayStateChange",
                         message = type.name,
                         time = System.currentTimeMillis(),

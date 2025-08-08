@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import android.util.Log
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toUpperCase
 import com.greenart7c3.nostrsigner.Amber
@@ -13,19 +12,18 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
-import com.vitorpamplona.quartz.nip01Core.crypto.Nip01
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip04Dm.crypto.Nip04
 import com.vitorpamplona.quartz.nip44Encryption.Nip44
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
-import com.vitorpamplona.quartz.nip57Zaps.PrivateZapEncryption
+import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlinx.coroutines.CancellationException
 
 object AmberUtils {
     fun encryptOrDecryptData(
@@ -74,55 +72,13 @@ object AmberUtils {
         account: Account,
     ): String? {
         val event = Event.fromJson(data) as LnZapRequestEvent
-
-        val loggedInPrivateKey = account.signer.keyPair.privKey
-
-        return if (event.isPrivateZap()) {
-            val recipientPK = event.zappedAuthor().firstOrNull()
-            val recipientPost = event.zappedPost().firstOrNull()
-            if (recipientPK == account.hexKey) {
-                // if the receiver is logged in, these are the params.
-                val pubkeyToUse = event.pubKey
-
-                event.getPrivateZapEvent(loggedInPrivateKey!!, pubkeyToUse)?.toJson() ?: ""
-            } else {
-                // if the sender is logged in, these are the params
-                val altPrivateKeyToUse =
-                    if (recipientPost != null) {
-                        PrivateZapEncryption.createEncryptionPrivateKey(
-                            loggedInPrivateKey!!.toHexKey(),
-                            recipientPost,
-                            event.createdAt,
-                        )
-                    } else if (recipientPK != null) {
-                        PrivateZapEncryption.createEncryptionPrivateKey(
-                            loggedInPrivateKey!!.toHexKey(),
-                            recipientPK,
-                            event.createdAt,
-                        )
-                    } else {
-                        null
-                    }
-
-                try {
-                    if (altPrivateKeyToUse != null && recipientPK != null) {
-                        val altPubKeyFromPrivate = Nip01.pubKeyCreate(altPrivateKeyToUse).toHexKey()
-
-                        if (altPubKeyFromPrivate == event.pubKey) {
-                            val result = event.getPrivateZapEvent(altPrivateKeyToUse, recipientPK)
-                            result?.toJson() ?: ""
-                        } else {
-                            null
-                        }
-                    } else {
-                        null
-                    }
-                } catch (e: Exception) {
-                    Log.e(Amber.TAG, "Failed to create pubkey for ZapRequest ${event.id}", e)
-                    null
-                }
-            }
-        } else {
+        return try {
+            PrivateZapRequestBuilder().decryptZapEvent(
+                event = event,
+                signer = account.signer.signerSync,
+            ).toJson()
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             null
         }
     }
@@ -130,7 +86,7 @@ object AmberUtils {
     suspend fun sendBunkerError(
         account: Account,
         bunkerRequest: AmberBunkerRequest,
-        relays: List<RelaySetupInfo>,
+        relays: List<NormalizedRelayUrl>,
         context: Context,
         closeApplication: Boolean,
         onLoading: (Boolean) -> Unit,

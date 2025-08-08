@@ -49,13 +49,10 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import java.util.UUID
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -71,13 +68,7 @@ fun NewNsecBunkerScreen(
 
     val relays =
         remember {
-            val localRelays = mutableStateListOf<RelaySetupInfo>()
-            Amber.instance.settings.defaultRelays.forEach {
-                localRelays.add(
-                    it.copy(),
-                )
-            }
-            localRelays
+            mutableStateListOf(*Amber.instance.settings.defaultRelays.toTypedArray())
         }
 
     val textFieldRelay = remember {
@@ -283,10 +274,7 @@ fun NewNsecBunkerCreatedScreen(
 
         LaunchedEffect(Unit) {
             Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                Amber.instance.checkForNewRelays(shouldReconnect = true)
-                NotificationDataSource.stop()
-                delay(2000)
-                NotificationDataSource.start()
+                Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
             }
         }
 

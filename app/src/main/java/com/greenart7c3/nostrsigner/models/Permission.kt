@@ -14,7 +14,7 @@ import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.R
-import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper.Companion.defaultPrettyPrinter
+import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper.Companion.defaultPrettyPrinter
 
 data class Permission(
     val type: String,

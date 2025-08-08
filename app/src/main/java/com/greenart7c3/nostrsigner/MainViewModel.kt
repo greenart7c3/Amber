@@ -11,6 +11,7 @@ import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents.intents
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
@@ -111,12 +112,11 @@ class MainViewModel(val context: Context) : ViewModel() {
                         }
                     contentIntent.putExtra("bunker", it.toJson())
                     contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.IncomingRequest.route, acc) { intentData ->
-                        contentIntent.putExtra("current_account", acc.npub)
-                        if (intentData != null) {
-                            if (intents.value.none { item -> item.id == intentData.id }) {
-                                intents.value += listOf(intentData)
-                            }
+                    val intentData = IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.IncomingRequest.route, acc)
+                    contentIntent.putExtra("current_account", acc.npub)
+                    if (intentData != null) {
+                        if (intents.value.none { item -> item.id == intentData.id }) {
+                            intents.value += listOf(intentData)
                         }
                     }
                 }
@@ -150,31 +150,30 @@ class MainViewModel(val context: Context) : ViewModel() {
         viewModelScope.launch(Dispatchers.IO) {
             val account = LocalPreferences.loadFromEncryptedStorage(context)
             account?.let { acc ->
-                IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc) { intentData ->
-                    if (intentData != null) {
-                        if (intents.value.none { item -> item.id == intentData.id }) {
-                            intents.value += listOf(intentData)
-                        }
-                        intents.value =
-                            intents.value.map {
-                                it.copy()
-                            }.toMutableList()
+                val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
+                if (intentData != null) {
+                    if (intents.value.none { item -> item.id == intentData.id }) {
+                        intents.value += listOf(intentData)
+                    }
+                    intents.value =
+                        intents.value.map {
+                            it.copy()
+                        }.toMutableList()
 
-                        intent.getStringExtra("route")?.let {
-                            viewModelScope.launch(Dispatchers.Main) {
-                                var error = true
-                                var count = 0
-                                while (error && count < 10) {
-                                    delay(100)
-                                    count++
-                                    try {
-                                        navController?.navigate(Route.IncomingRequest.route) {
-                                            popUpTo(0)
-                                        }
-                                        error = false
-                                    } catch (e: Exception) {
-                                        Log.e(Amber.TAG, "Error showing bunker requests", e)
+                    intent.getStringExtra("route")?.let {
+                        viewModelScope.launch(Dispatchers.Main) {
+                            var error = true
+                            var count = 0
+                            while (error && count < 10) {
+                                delay(100)
+                                count++
+                                try {
+                                    navController?.navigate(Route.IncomingRequest.route) {
+                                        popUpTo(0)
                                     }
+                                    error = false
+                                } catch (e: Exception) {
+                                    Log.e(Amber.TAG, "Error showing bunker requests", e)
                                 }
                             }
                         }

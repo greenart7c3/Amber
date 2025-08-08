@@ -6,8 +6,9 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import androidx.room.TypeConverter
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import kotlin.collections.joinToString
 
 @Entity(
     tableName = "application",
@@ -28,7 +29,7 @@ data class ApplicationEntity(
     @PrimaryKey(autoGenerate = false)
     val key: String,
     val name: String,
-    val relays: List<RelaySetupInfo>,
+    val relays: List<NormalizedRelayUrl>,
     val url: String,
     val icon: String,
     val description: String,
@@ -72,17 +73,17 @@ data class ApplicationWithPermissions(
 
 class Converters {
     @TypeConverter
-    fun fromString(stringListString: String): List<RelaySetupInfo> {
+    fun fromString(stringListString: String): List<NormalizedRelayUrl> {
         if (stringListString.isBlank()) {
             return emptyList()
         }
-        return stringListString.split(",").map {
-            RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
+        return stringListString.split(",").mapNotNull {
+            RelayUrlNormalizer.normalizeOrNull(it)
         }
     }
 
     @TypeConverter
-    fun toString(relays: List<RelaySetupInfo>): String {
+    fun toString(relays: List<NormalizedRelayUrl>): String {
         return relays.joinToString(separator = ",") {
             it.url
         }

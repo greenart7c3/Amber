@@ -21,7 +21,6 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -37,42 +36,30 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowWidthSizeClass
 import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
-import com.greenart7c3.nostrsigner.service.ProfileFetcherService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Composable
 fun ProfilePicture(account: Account) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
     if (windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT) {
-        var profileUrl by remember { mutableStateOf<String?>(null) }
-        LaunchedEffect(Unit) {
-            launch(Dispatchers.IO) {
-                ProfileFetcherService().fetchProfileData(
-                    account = account,
-                    onPictureFound = {
-                        profileUrl = it
-                    },
-                )
-            }
-        }
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
+            val profileUrl by account.picture.collectAsStateWithLifecycle()
             @Suppress("KotlinConstantConditions")
-            if (!profileUrl.isNullOrBlank() && BuildConfig.FLAVOR != "offline") {
+            if (profileUrl.isNotBlank() && BuildConfig.FLAVOR != "offline") {
                 AsyncImage(
                     profileUrl,
                     Route.Accounts.route,
@@ -97,8 +84,9 @@ fun ProfilePicture(account: Account) {
                         .width(120.dp),
                 )
             }
+            val name by account.name.collectAsStateWithLifecycle()
             Text(
-                account.name.ifBlank { account.npub.toShortenHex() },
+                name.ifBlank { account.npub.toShortenHex() },
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,

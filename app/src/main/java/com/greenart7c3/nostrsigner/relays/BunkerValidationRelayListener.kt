@@ -20,13 +20,13 @@ class BunkerValidationRelayListener(
         Log.d(Amber.TAG, "Sending event ${event.id} to relay ${relay.url}")
     }
 
-    override fun onError(relay: IRelayClient, subscriptionId: String, error: Error) {
-        Log.d(Amber.TAG, "Received error $error from subscription $subscriptionId")
+    override fun onError(relay: IRelayClient, subId: String, error: Error) {
+        Log.d(Amber.TAG, "Received error $error from subscription $subId")
     }
 
-    override fun onEvent(relay: IRelayClient, subscriptionId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
-        Log.d(Amber.TAG, "Received event ${event.toJson()} from subscription $subscriptionId afterEOSE: $afterEOSE")
-        onReceiveEvent(relay, subscriptionId, event)
+    override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
+        Log.d(Amber.TAG, "Received event ${event.toJson()} from subscription $subId afterEOSE: $afterEOSE")
+        onReceiveEvent(relay, subId, event)
     }
 
     override fun onNotify(relay: IRelayClient, description: String) {

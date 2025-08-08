@@ -250,23 +250,6 @@ class SignerProvider : ContentProvider() {
 
                     val signedEvent = account.signer.signerSync.sign<Event>(event.createdAt, event.kind, event.tags, event.content)
 
-                    if (signedEvent == null) {
-                        Log.d(Amber.TAG, "Failed to sign event from $packageName")
-                        scope.launch {
-                            database.applicationDao().addHistory(
-                                HistoryEntity2(
-                                    0,
-                                    sortOrder ?: packageName,
-                                    "SIGN_EVENT",
-                                    event.kind,
-                                    TimeUtils.now(),
-                                    false,
-                                ),
-                            )
-                        }
-                        return null
-                    }
-
                     scope.launch {
                         database.applicationDao().addHistory(
                             HistoryEntity2(

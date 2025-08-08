@@ -43,9 +43,6 @@ class NotificationSubscription(
     private val subId = UUID.randomUUID().toString()
 
     init {
-        NotificationUtils.getOrCreateBunkerChannel(appContext)
-        NotificationUtils.getOrCreateErrorsChannel(appContext)
-
         // listens until the app crashes.
         client.subscribe(this)
 

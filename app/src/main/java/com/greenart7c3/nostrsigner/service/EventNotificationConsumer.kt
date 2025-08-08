@@ -99,6 +99,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
+        NotificationUtils.getOrCreateBunkerChannel(applicationContext)
+        NotificationUtils.getOrCreateErrorsChannel(applicationContext)
+
         val taggedKey = event.taggedUsers().firstOrNull() ?: return
         LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())?.let { acc ->
             notify(event, acc, relay)

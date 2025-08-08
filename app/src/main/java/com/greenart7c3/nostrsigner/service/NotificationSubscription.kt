@@ -45,8 +45,6 @@ class NotificationSubscription(
     init {
         // listens until the app crashes.
         client.subscribe(this)
-
-        updateFilter()
     }
 
     override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {

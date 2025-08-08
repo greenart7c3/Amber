@@ -85,7 +85,7 @@ fun AmberTopAppBar(
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     val relayStats = Amber.instance.client.relayStatusFlow().collectAsStateWithLifecycle()
-                                    Text("${relayStats.value.connected}/${relayStats.value.available}")
+                                    Text("${relayStats.value.connected.size}/${relayStats.value.available.size}")
                                     Icon(
                                         imageVector = ImageVector.vectorResource(R.drawable.relays),
                                         contentDescription = context.getString(R.string.reconnect),

@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.util.Log
@@ -27,15 +28,19 @@ import kotlinx.coroutines.flow.stateIn
 class AmberRelayStats(
     client: NostrClient,
     scope: CoroutineScope,
+    val appContext: Context,
 ) {
     var oldMessage = ""
     val relayStatus = client.relayStatusFlow()
 
-    val relayStatusUpdater = relayStatus.onEach {
-        createNotification()
+    val relayStatusUpdater = client.relayStatusFlow().onEach {
+        try {
+            createNotification()
+        } catch (e: NullPointerException) {
+        }
     }.stateIn(
         scope,
-        SharingStarted.WhileSubscribed(2000),
+        SharingStarted.Eagerly,
         relayStatus.value,
     )
 
@@ -52,67 +57,67 @@ class AmberRelayStats(
     ): Notification? {
         val channelId = "ServiceChannel"
         val group = NotificationChannelGroupCompat.Builder("ServiceGroup")
-            .setName(Amber.instance.getString(R.string.service))
-            .setDescription(Amber.instance.getString(R.string.service_description))
+            .setName(appContext.getString(R.string.service))
+            .setDescription(appContext.getString(R.string.service_description))
             .build()
         val channel = NotificationChannelCompat.Builder(channelId, NotificationManager.IMPORTANCE_DEFAULT)
-            .setName(Amber.instance.getString(R.string.service))
-            .setDescription(Amber.instance.getString(R.string.amber_is_running_in_background))
+            .setName(appContext.getString(R.string.service))
+            .setDescription(appContext.getString(R.string.amber_is_running_in_background))
             .setSound(null, null)
             .setGroup(group.id)
             .build()
 
-        val notificationManager = NotificationManagerCompat.from(Amber.instance)
+        val notificationManager = NotificationManagerCompat.from(appContext)
         notificationManager.createNotificationChannelGroup(group)
         notificationManager.createNotificationChannel(channel)
 
         val message = available.joinToString("\n") {
-            val connected = "${it.url} ${if (it in connected) Amber.instance.getString(R.string.connected) else Amber.instance.getString(R.string.disconnected)}\n"
-            val ping = Amber.instance.getString(R.string.ping_ms, RelayStats.get(it).pingInMs)
+            val connected = "${it.url} ${if (it in connected) appContext.getString(R.string.connected) else appContext.getString(R.string.disconnected)}\n"
+            val ping = appContext.getString(R.string.ping_ms, RelayStats.get(it).pingInMs)
             val sent = if (get(it).sent > 0) {
-                Amber.instance.getString(R.string.sent, get(it).sent)
+                appContext.getString(R.string.sent, get(it).sent)
             } else {
                 ""
             }
             val received = if (get(it).received > 0) {
-                Amber.instance.getString(R.string.received, get(it).received)
+                appContext.getString(R.string.received, get(it).received)
             } else {
                 ""
             }
             val failed = if (get(it).failed > 0) {
-                Amber.instance.getString(R.string.rejected_by_relay, get(it).failed)
+                appContext.getString(R.string.rejected_by_relay, get(it).failed)
             } else {
                 ""
             }
-            val error = if (RelayStats.get(it).errorCounter > 0) Amber.instance.getString(R.string.error, RelayStats.get(it).errorCounter) else ""
+            val error = if (RelayStats.get(it).errorCounter > 0) appContext.getString(R.string.error, RelayStats.get(it).errorCounter) else ""
 
             connected + ping + sent + received + failed + error
         }
         if (message == oldMessage && oldMessage.isNotBlank()) return null
         this.oldMessage = message
 
-        val contentIntent = Intent(Amber.instance, MainActivity::class.java)
+        val contentIntent = Intent(appContext, MainActivity::class.java)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val contentPendingIntent =
             PendingIntent.getActivity(
-                Amber.instance,
+                appContext,
                 0,
                 contentIntent,
                 PendingIntent.FLAG_MUTABLE,
             )
 
-        val reconnectIntent = Intent(Amber.instance, ReconnectReceiver::class.java)
+        val reconnectIntent = Intent(appContext, ReconnectReceiver::class.java)
         val reconnectPendingIntent = PendingIntent.getBroadcast(
-            Amber.instance,
+            appContext,
             0,
             reconnectIntent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
 
         val notificationBuilder =
-            NotificationCompat.Builder(Amber.instance, channelId)
+            NotificationCompat.Builder(appContext, channelId)
                 .setGroup(group.id)
-                .setContentTitle(Amber.instance.getString(R.string.of_connected_relays, connected.size, available.size))
+                .setContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
                 .setStyle(
                     NotificationCompat.BigTextStyle()
                         .bigText(message),
@@ -120,14 +125,14 @@ class AmberRelayStats(
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)
-                .addAction(R.drawable.ic_notification, Amber.instance.getString(R.string.reconnect), reconnectPendingIntent)
+                .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)
 
         return notificationBuilder.build()
     }
 
     fun updateNotification() {
-        val notificationManager = NotificationManagerCompat.from(Amber.instance)
-        if (ActivityCompat.checkSelfPermission(Amber.instance, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+        val notificationManager = NotificationManagerCompat.from(appContext)
+        if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createNotification()?.let {
                 Log.d(Amber.TAG, "updateNotification")
                 notificationManager.notify(1, it)

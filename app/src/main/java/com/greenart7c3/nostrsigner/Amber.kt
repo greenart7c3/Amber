@@ -78,7 +78,7 @@ class Amber : Application(), LifecycleObserver {
 
     val client: NostrClient = NostrClient(factory, applicationIOScope)
 
-    val stats = AmberRelayStats(client, applicationIOScope)
+    val stats = AmberRelayStats(client, applicationIOScope, this)
 
     // logs and stat counts.
     val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {
@@ -187,15 +187,6 @@ class Amber : Application(), LifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 Log.d("ProcessLifecycleOwner", "App in foreground")
                 isAppInForeground = true
-            }
-
-            override fun onStop(owner: LifecycleOwner) {
-                Log.d("ProcessLifecycleOwner", "App in background")
-                isAppInForeground = false
-            }
-
-            override fun onResume(owner: LifecycleOwner) {
-                super.onResume(owner)
 
                 // activates the profile filter only when the app is in the foreground
                 applicationIOScope.launch {
@@ -203,8 +194,9 @@ class Amber : Application(), LifecycleObserver {
                 }
             }
 
-            override fun onPause(owner: LifecycleOwner) {
-                super.onPause(owner)
+            override fun onStop(owner: LifecycleOwner) {
+                Log.d("ProcessLifecycleOwner", "App in background")
+                isAppInForeground = false
 
                 // closes the filter when in the background
                 applicationIOScope.launch {
@@ -308,23 +300,11 @@ class Amber : Application(), LifecycleObserver {
     suspend fun checkForNewRelaysAndUpdateAllFilters(
         shouldReconnect: Boolean = false,
     ) {
-        // TODO: This is not needed. The new Nostr Client will disconnect as soon as
-        // all the work has been done. If there are not relays from the filter below
-        // it will stay disconnected and the notification will be automatically updated
-        val savedRelays = getSavedRelays()
-        val hasAccount = LocalPreferences.allSavedAccounts(this).isNotEmpty()
-
-        if (savedRelays.isEmpty() || !hasAccount) {
-            client.disconnect()
-            stats.updateNotification()
-            return
-        }
-
         @Suppress("KotlinConstantConditions")
         // TODO: You can filter inside each update filter for only
         // localhost relays and keep these alive even on the offline
         // mode
-        if (BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
+        if (BuildConfig.FLAVOR != "offline") {
             // these update the relay list in the filters and send them to the
             // relay, reconnecting if needed
             if (isAppInForeground) {

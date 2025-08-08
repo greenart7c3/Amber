@@ -235,7 +235,7 @@ dependencies {
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
 
-    freeImplementation(libs.okhttp)
+    freeImplementation libs.okhttp
     freeImplementation libs.okhttpCoroutines
 
     // Load images from the web.
@@ -246,6 +246,7 @@ dependencies {
     implementation libs.coil.svg
     // enables network for coil
     implementation libs.coil.okhttp
+    implementation libs.okhttpCoroutines
 
     implementation libs.storage
 

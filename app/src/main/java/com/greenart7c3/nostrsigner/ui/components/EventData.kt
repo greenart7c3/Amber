@@ -100,14 +100,6 @@ fun EventData(
                                 text = "${event.verifiedFollowKeySet().size}",
                             )
                             ContactListDetail(
-                                title = stringResource(R.string.communities),
-                                text = "${event.verifiedFollowAddressSet().size}",
-                            )
-                            ContactListDetail(
-                                title = stringResource(R.string.hashtags),
-                                text = "${event.countFollowTags()}",
-                            )
-                            ContactListDetail(
                                 title = stringResource(R.string.relays_text),
                                 text = "${event.relays()?.keys?.size ?: 0}",
                             )
@@ -213,14 +205,6 @@ fun BunkerEventData(
                             ContactListDetail(
                                 title = stringResource(R.string.following),
                                 text = "${event.verifiedFollowKeySet().size}",
-                            )
-                            ContactListDetail(
-                                title = stringResource(R.string.communities),
-                                text = "${event.verifiedFollowAddressSet().size}",
-                            )
-                            ContactListDetail(
-                                title = stringResource(R.string.hashtags),
-                                text = "${event.countFollowTags()}",
                             )
                             ContactListDetail(
                                 title = stringResource(R.string.relays_text),

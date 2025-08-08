@@ -21,16 +21,131 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.util.Log
+import android.util.LruCache
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.checkNotInMainThread
-import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.toHttp
 import com.vitorpamplona.quartz.nip11RelayInfo.Nip11RelayInformation
-import java.io.IOException
+import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CancellationException
-import okhttp3.Call
-import okhttp3.Callback
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import okhttp3.OkHttpClient
 import okhttp3.Request
-import okhttp3.Response
+import okhttp3.coroutines.executeAsync
+
+object Nip11CachedRetriever {
+    sealed class RetrieveResult(
+        val data: Nip11RelayInformation,
+        val time: Long,
+    ) {
+        class Error(
+            data: Nip11RelayInformation,
+            val error: Nip11Retriever.ErrorCode,
+            val msg: String? = null,
+        ) : RetrieveResult(data, TimeUtils.now())
+
+        class Success(
+            data: Nip11RelayInformation,
+        ) : RetrieveResult(data, TimeUtils.now())
+
+        class Loading(
+            data: Nip11RelayInformation,
+        ) : RetrieveResult(data, TimeUtils.now())
+
+        class Empty(
+            data: Nip11RelayInformation,
+        ) : RetrieveResult(data, TimeUtils.now())
+    }
+
+    private val relayInformationEmptyCache = LruCache<NormalizedRelayUrl, Nip11RelayInformation>(1000)
+    private val relayInformationDocumentCache = LruCache<NormalizedRelayUrl, RetrieveResult?>(1000)
+    private val retriever = Nip11Retriever()
+
+    fun getEmpty(relay: NormalizedRelayUrl): Nip11RelayInformation {
+        relayInformationEmptyCache.get(relay)?.let { return it }
+
+        val info =
+            Nip11RelayInformation(
+                name = relay.displayUrl(),
+                icon = relay.toHttp() + "favicon.ico",
+            )
+
+        relayInformationEmptyCache.put(relay, info)
+
+        return info
+    }
+
+    fun getFromCache(relay: NormalizedRelayUrl): Nip11RelayInformation {
+        val result = relayInformationDocumentCache.get(relay)
+
+        return when (result) {
+            is RetrieveResult.Success -> return result.data
+            is RetrieveResult.Error -> return result.data
+            is RetrieveResult.Empty -> return result.data
+            is RetrieveResult.Loading -> return result.data
+            else -> {
+                val empty = getEmpty(relay)
+                relayInformationDocumentCache.put(relay, RetrieveResult.Empty(empty))
+                empty
+            }
+        }
+    }
+
+    suspend fun loadRelayInfo(
+        relay: NormalizedRelayUrl,
+        okHttpClient: (String) -> OkHttpClient,
+        onInfo: (Nip11RelayInformation) -> Unit,
+        onError: (NormalizedRelayUrl, Nip11Retriever.ErrorCode, String?) -> Unit,
+    ) {
+        val doc = relayInformationDocumentCache.get(relay)
+        if (doc != null) {
+            if (doc is RetrieveResult.Success) {
+                onInfo(doc.data)
+            } else if (doc is RetrieveResult.Loading) {
+                if (TimeUtils.now() - doc.time < TimeUtils.ONE_MINUTE) {
+                    // just wait.
+                } else {
+                    retrieve(relay, okHttpClient, onInfo, onError)
+                }
+            } else if (doc is RetrieveResult.Error) {
+                if (TimeUtils.now() - doc.time < TimeUtils.ONE_HOUR) {
+                    onError(relay, doc.error, null)
+                } else {
+                    retrieve(relay, okHttpClient, onInfo, onError)
+                }
+            } else {
+                // Empty
+                retrieve(relay, okHttpClient, onInfo, onError)
+            }
+        } else {
+            retrieve(relay, okHttpClient, onInfo, onError)
+        }
+    }
+
+    private suspend fun retrieve(
+        relay: NormalizedRelayUrl,
+        okHttpClient: (String) -> OkHttpClient,
+        onInfo: (Nip11RelayInformation) -> Unit,
+        onError: (NormalizedRelayUrl, Nip11Retriever.ErrorCode, String?) -> Unit,
+    ) {
+        relayInformationDocumentCache.put(relay, RetrieveResult.Loading(getEmpty(relay)))
+        retriever.loadRelayInfo(
+            relay = relay,
+            okHttpClient = okHttpClient,
+            onInfo = {
+                relayInformationDocumentCache.put(relay, RetrieveResult.Success(it))
+                onInfo(it)
+            },
+            onError = { relay, code, errorMsg ->
+                relayInformationDocumentCache.put(relay, RetrieveResult.Error(getEmpty(relay), code, errorMsg))
+                onError(relay, code, errorMsg)
+            },
+        )
+    }
+}
 
 class Nip11Retriever {
     enum class ErrorCode {
@@ -40,14 +155,14 @@ class Nip11Retriever {
         FAIL_WITH_HTTP_STATUS,
     }
 
-    fun loadRelayInfo(
-        url: String,
-        dirtyUrl: String,
-        forceProxy: Boolean,
+    suspend fun loadRelayInfo(
+        relay: NormalizedRelayUrl,
+        okHttpClient: (String) -> OkHttpClient,
         onInfo: (Nip11RelayInformation) -> Unit,
-        onError: (String, ErrorCode, String?) -> Unit,
+        onError: (NormalizedRelayUrl, ErrorCode, String?) -> Unit,
     ) {
         checkNotInMainThread()
+        val url = relay.toHttp()
         try {
             val request: Request =
                 Request
@@ -56,50 +171,32 @@ class Nip11Retriever {
                     .url(url)
                     .build()
 
-            HttpClientManager
-                .getHttpClient(forceProxy)
-                .newCall(request)
-                .enqueue(
-                    object : Callback {
-                        @Suppress("UNNECESSARY_SAFE_CALL")
-                        override fun onResponse(
-                            call: Call,
-                            response: Response,
-                        ) {
-                            checkNotInMainThread()
-                            response.use {
-                                val body = it.body?.string() ?: ""
-                                try {
-                                    if (it.isSuccessful) {
-                                        onInfo(Nip11RelayInformation.fromJson(body))
-                                    } else {
-                                        onError(dirtyUrl, ErrorCode.FAIL_WITH_HTTP_STATUS, it.code.toString())
-                                    }
-                                } catch (e: Exception) {
-                                    if (e is CancellationException) throw e
-                                    Log.e(
-                                        Amber.TAG,
-                                        "Resulting Message from Relay $dirtyUrl in not parseable: $body",
-                                        e,
-                                    )
-                                    onError(dirtyUrl, ErrorCode.FAIL_TO_PARSE_RESULT, e.message)
-                                }
-                            }
-                        }
+            val client = okHttpClient(url)
 
-                        override fun onFailure(
-                            call: Call,
-                            e: IOException,
-                        ) {
-                            Log.e(Amber.TAG, "$dirtyUrl unavailable", e)
-                            onError(dirtyUrl, ErrorCode.FAIL_TO_REACH_SERVER, e.message)
+            client.newCall(request).executeAsync().use { response ->
+                withContext(Dispatchers.IO) {
+                    val body = response.body.string()
+                    try {
+                        if (response.isSuccessful) {
+                            onInfo(Nip11RelayInformation.fromJson(body))
+                        } else {
+                            onError(relay, ErrorCode.FAIL_WITH_HTTP_STATUS, response.code.toString())
                         }
-                    },
-                )
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        Log.e(
+                            "RelayInfoFail",
+                            "Resulting Message from Relay ${relay.url} in not parseable: $body",
+                            e,
+                        )
+                        onError(relay, ErrorCode.FAIL_TO_PARSE_RESULT, e.message)
+                    }
+                }
+            }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.e(Amber.TAG, "Invalid URL $dirtyUrl", e)
-            onError(dirtyUrl, ErrorCode.FAIL_TO_ASSEMBLE_URL, e.message)
+            Log.e(Amber.TAG, "Invalid URL ${relay.url}", e)
+            onError(relay, ErrorCode.FAIL_TO_ASSEMBLE_URL, e.message)
         }
     }
 }

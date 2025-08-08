@@ -71,13 +71,17 @@ fun AccountScreen(
                 is AccountState.LoggedIn -> {
                     LaunchedEffect(intent, intents) {
                         intent?.let {
-                            IntentUtils.getIntentData(context, intent, packageName, intent.getStringExtra("route"), state.account) {
-                                it?.let { intentData ->
-                                    if (intents.none { item -> item.id == intentData.id }) {
-                                        val oldIntents = intents.toMutableList()
-                                        oldIntents.add(intentData)
-                                        flow.value = oldIntents
-                                    }
+                            IntentUtils.getIntentData(
+                                context,
+                                intent,
+                                packageName,
+                                intent.getStringExtra("route"),
+                                state.account,
+                            )?.let { intentData ->
+                                if (intents.none { item -> item.id == intentData.id }) {
+                                    val oldIntents = intents.toMutableList()
+                                    oldIntents.add(intentData)
+                                    flow.value = oldIntents
                                 }
                             }
                         }

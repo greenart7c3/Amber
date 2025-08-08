@@ -42,11 +42,9 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
+import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip01Core.verify
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
@@ -85,7 +83,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    fun consume(event: Event, relay: Relay) {
+    fun consume(event: Event, relay: NormalizedRelayUrl) {
         saveLog("New event ${event.toJson()}")
 
         if (!notificationManager().areNotificationsEnabled()) {
@@ -110,7 +108,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     private fun notify(
         event: Event,
         acc: Account,
-        relay: Relay,
+        relay: NormalizedRelayUrl,
     ) {
         if (event.content.isEmpty()) return
 
@@ -133,10 +131,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             EncryptionType.NIP44
         }
 
-        acc.signer.decrypt(event.content, event.pubKey) {
-            Amber.instance.applicationIOScope.launch {
-                notify(event, acc, it, relay, encryptionType)
-            }
+        Amber.instance.applicationIOScope.launch {
+            val decrypted = acc.signer.decrypt(event.content, event.pubKey)
+            notify(event, acc, decrypted, relay, encryptionType)
         }
     }
 
@@ -144,10 +141,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         event: Event,
         acc: Account,
         request: String,
-        relay: Relay,
+        relay: NormalizedRelayUrl,
         encryptionType: EncryptionType,
     ) {
-        val responseRelay = listOf(RelaySetupInfo(relay.url, read = true, write = true, feedTypes = COMMON_FEED_TYPES))
+        val responseRelay = listOf(relay)
         val database = Amber.instance.getDatabase(acc.npub)
         val dao = database.applicationDao()
         val notification = dao.getNotification(event.id)
@@ -164,7 +161,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             ),
         )
 
-        val bunkerRequest = EventMapper.mapper.readValue(request, BunkerRequest::class.java)
+        val bunkerRequest = JsonMapper.mapper.readValue(request, BunkerRequest::class.java)
 
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {
             acc.signer.signerSync.sign(bunkerRequest.event)

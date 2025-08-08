@@ -161,7 +161,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 val newKey = Nip49().decrypt(key, password)
                 Account(
                     signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
-                    name = "",
+                    name = MutableStateFlow(""),
+                    picture = MutableStateFlow(""),
                     language = null,
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
@@ -170,7 +171,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             } else if (key.startsWith("nsec")) {
                 Account(
                     signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
-                    name = "",
+                    name = MutableStateFlow(""),
+                    picture = MutableStateFlow(""),
                     language = null,
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
@@ -180,7 +182,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
                 Account(
                     signer = NostrSignerInternal(keyPair),
-                    name = "",
+                    name = MutableStateFlow(""),
+                    picture = MutableStateFlow(""),
                     language = null,
                     signPolicy = signPolicy,
                     seedWords = key.split(" ").toSet(),
@@ -189,7 +192,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             } else {
                 Account(
                     signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
-                    name = "",
+                    name = MutableStateFlow(""),
+                    picture = MutableStateFlow(""),
                     language = null,
                     signPolicy = signPolicy,
                     seedWords = emptySet(),
@@ -220,7 +224,8 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
         val account = Account(
             NostrSignerInternal(keyPair),
-            name = name,
+            name = MutableStateFlow(name),
+            picture = MutableStateFlow(""),
             language = null,
             signPolicy = signPolicy,
             seedWords = seedWords,

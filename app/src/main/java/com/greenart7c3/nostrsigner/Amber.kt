@@ -97,6 +97,9 @@ class Amber : Application(), LifecycleObserver {
     }
 
     // TODO: I assume you want this sub to stay active in the background
+    // TODO: Find a way to call either client.reconnect or notificationSubscription.updateFilters() to
+    // keep the filter live when the relay inevitably disconnects. NostrClient doesn't try to reconnect
+    // unless the filter is refreshed or a new event is sent.
     val notificationSubscription = NotificationSubscription(client, this)
 
     // This runs on the foreground only

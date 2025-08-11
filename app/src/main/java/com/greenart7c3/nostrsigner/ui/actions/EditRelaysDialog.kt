@@ -313,7 +313,7 @@ fun onAddRelay(
 
                             Amber.instance.client.subscribe(listener)
 
-                            Amber.instance.client.sendRequest(
+                            Amber.instance.client.openReqSubscription(
                                 ncSub,
                                 mapOf(addedWSS to filters),
                             )

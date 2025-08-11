@@ -99,7 +99,7 @@ class ProfileSubscription(
      * Call this method every time the relay list or the user list changes
      */
     fun updateFilter() {
-        client.sendRequest(subId, createProfileFilter())
+        client.openReqSubscription(subId, createProfileFilter())
     }
 
     /**

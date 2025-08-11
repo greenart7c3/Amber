@@ -57,7 +57,11 @@ class NotificationSubscription(
      * Call this method every time the relay list or the user list changes
      */
     fun updateFilter() {
-        client.sendRequest(subId, createNotificationsFilter())
+        client.openReqSubscription(subId, createNotificationsFilter())
+    }
+
+    fun closeSubscription() {
+        client.close(subId)
     }
 
     private fun createNotificationsFilter(): Map<NormalizedRelayUrl, List<Filter>> {

@@ -336,6 +336,8 @@ fun onAddRelay(
                                 filterResult = true
                             }
 
+                            Amber.instance.client.close(ncSub)
+
                             Amber.instance.client.unsubscribe(listener)
 
                             if (result && filterResult) {

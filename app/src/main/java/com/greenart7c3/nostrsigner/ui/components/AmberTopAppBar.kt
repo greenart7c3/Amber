@@ -40,7 +40,6 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
-import com.vitorpamplona.ammolite.relays.RelayPoolStatus
 import java.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -85,8 +84,8 @@ fun AmberTopAppBar(
                                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
-                                    val relayStats = Amber.instance.client.relayStatusFlow().collectAsStateWithLifecycle(RelayPoolStatus(0, 0, false))
-                                    Text("${relayStats.value.connected}/${relayStats.value.available}")
+                                    val relayStats = Amber.instance.client.relayStatusFlow().collectAsStateWithLifecycle()
+                                    Text("${relayStats.value.connected.size}/${relayStats.value.available.size}")
                                     Icon(
                                         imageVector = ImageVector.vectorResource(R.drawable.relays),
                                         contentDescription = context.getString(R.string.reconnect),

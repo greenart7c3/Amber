@@ -10,8 +10,8 @@ import com.greenart7c3.nostrsigner.models.BunkerMetadata
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.containsNip
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.coroutines.launch
 
@@ -27,7 +27,7 @@ object NostrConnectUtils {
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
-            val relays: MutableList<RelaySetupInfo> = mutableListOf()
+            val relays: MutableList<NormalizedRelayUrl> = mutableListOf()
             var name = ""
             val pubKey = split.first()
             val parsedData = IntentUtils.decodeData(split.drop(1).joinToString { it })
@@ -41,11 +41,10 @@ object NostrConnectUtils {
                     if (index == 0) null else s
                 }.joinToString { data -> data }
                 if (paramName == "relay") {
-                    var relayUrl = json
-                    if (relayUrl.endsWith("/")) relayUrl = relayUrl.dropLast(1)
-                    relays.add(
-                        RelaySetupInfo(relayUrl, read = true, write = true, feedTypes = COMMON_FEED_TYPES),
-                    )
+                    val relayUrl = RelayUrlNormalizer.normalizeOrNull(json)
+                    if (relayUrl != null) {
+                        relays.add(relayUrl)
+                    }
                 }
                 if (paramName == "name") {
                     name = json

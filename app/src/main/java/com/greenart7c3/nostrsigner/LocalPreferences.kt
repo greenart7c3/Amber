@@ -10,19 +10,20 @@ import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
+import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import java.io.File
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
@@ -197,6 +198,9 @@ object LocalPreferences {
                 }
             }
         }
+        accountCache.get(npub)?.let {
+            it.name.tryEmit(profileUrl ?: "")
+        }
     }
 
     fun savePinToEncryptedStorage(pin: String?) {
@@ -230,15 +234,12 @@ object LocalPreferences {
             HttpClientManager.setDefaultProxyOnPort(proxyPort)
 
             return AmberSettings(
-                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.key, null)?.map {
-                    RelaySetupInfo(it, read = true, write = true, feedTypes = COMMON_FEED_TYPES)
+                defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.key, null)?.mapNotNull {
+                    RelayUrlNormalizer.normalizeOrNull(it)
                 } ?: defaultAppRelays,
-                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.key, null)?.map {
-                    RelaySetupInfo(it, read = true, write = false, feedTypes = COMMON_FEED_TYPES)
-                } ?: listOf(
-                    RelaySetupInfo("wss://relay.nostr.band", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
-                    RelaySetupInfo("wss://purplepag.es", read = true, write = false, feedTypes = COMMON_FEED_TYPES),
-                ),
+                defaultProfileRelays = getStringSet(SettingsKeys.DEFAULT_PROFILE_RELAYS.key, null)?.mapNotNull {
+                    RelayUrlNormalizer.normalizeOrNull(it)
+                } ?: defaultIndexerRelays,
                 lastBiometricsTime = getLong(SettingsKeys.LAST_BIOMETRICS_TIME.key, 0),
                 useAuth = getBoolean(SettingsKeys.USE_AUTH.key, false),
                 biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE.key, 0)),
@@ -429,7 +430,8 @@ object LocalPreferences {
         prefs.edit {
             apply {
                 account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY.key, it.toHexKey()) }
-                putString(PrefKeys.ACCOUNT_NAME.key, account.name)
+                putString(PrefKeys.ACCOUNT_NAME.key, account.name.value)
+                putString(PrefKeys.PROFILE_URL.key, account.picture.value)
                 putString(PrefKeys.LANGUAGE_PREFS.key, account.language)
                 putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
                 putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
@@ -454,6 +456,13 @@ object LocalPreferences {
             return loadFromEncryptedStorage(context, it)
         }
         return null
+    }
+
+    suspend fun allAccounts(context: Context): List<Account> {
+        val accountInfos = allSavedAccounts(context)
+        return accountInfos.mapNotNull {
+            loadFromEncryptedStorage(context, it.npub)
+        }
     }
 
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
@@ -483,7 +492,7 @@ object LocalPreferences {
             }
         }
         accountCache.get(npub)?.let {
-            it.name = value
+            it.name.tryEmit(value)
         }
     }
 
@@ -516,6 +525,7 @@ object LocalPreferences {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
             val privKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
+            val picture = getString(PrefKeys.PROFILE_URL.key, "") ?: ""
             val language = getString(PrefKeys.LANGUAGE_PREFS.key, null)
             val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
             val savedSeedWords = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
@@ -525,7 +535,8 @@ object LocalPreferences {
             val account =
                 Account(
                     signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
-                    name = name,
+                    name = MutableStateFlow(name),
+                    picture = MutableStateFlow(picture),
                     language = language,
                     signPolicy = signPolicy,
                     seedWords = seedWords,

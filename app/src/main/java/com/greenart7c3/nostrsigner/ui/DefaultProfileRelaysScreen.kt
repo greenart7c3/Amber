@@ -29,12 +29,10 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @Composable
@@ -53,13 +51,7 @@ fun DefaultProfileRelaysScreen(
     }
     val relays2 =
         remember {
-            val localRelays = mutableStateListOf<RelaySetupInfo>()
-            Amber.instance.settings.defaultProfileRelays.forEach {
-                localRelays.add(
-                    it.copy(),
-                )
-            }
-            localRelays
+            mutableStateListOf<NormalizedRelayUrl>(*Amber.instance.settings.defaultProfileRelays.toTypedArray())
         }
 
     Surface(
@@ -115,10 +107,7 @@ fun DefaultProfileRelaysScreen(
                                         scope.launch(Dispatchers.IO) {
                                             @Suppress("KotlinConstantConditions")
                                             if (BuildConfig.FLAVOR != "offline") {
-                                                Amber.instance.checkForNewRelays()
-                                                NotificationDataSource.stop()
-                                                delay(2000)
-                                                NotificationDataSource.start()
+                                                Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                                 isLoading.value = false
                                             } else {
                                                 isLoading.value = false
@@ -157,10 +146,7 @@ fun DefaultProfileRelaysScreen(
                                     scope.launch(Dispatchers.IO) {
                                         @Suppress("KotlinConstantConditions")
                                         if (BuildConfig.FLAVOR != "offline") {
-                                            Amber.instance.checkForNewRelays()
-                                            NotificationDataSource.stop()
-                                            delay(2000)
-                                            NotificationDataSource.start()
+                                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                             isLoading.value = false
                                         } else {
                                             isLoading.value = false
@@ -190,10 +176,7 @@ fun DefaultProfileRelaysScreen(
                                 scope.launch(Dispatchers.IO) {
                                     @Suppress("KotlinConstantConditions")
                                     if (BuildConfig.FLAVOR != "offline") {
-                                        Amber.instance.checkForNewRelays()
-                                        NotificationDataSource.stop()
-                                        delay(2000)
-                                        NotificationDataSource.start()
+                                        Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                         isLoading.value = false
                                     } else {
                                         isLoading.value = false

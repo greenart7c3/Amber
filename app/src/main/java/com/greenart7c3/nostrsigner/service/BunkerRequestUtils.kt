@@ -17,14 +17,17 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.jackson.EventMapper
+import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlin.collections.toSet
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -55,7 +58,7 @@ object BunkerRequestUtils {
         account: Account,
         bunkerRequest: AmberBunkerRequest,
         bunkerResponse: BunkerResponse,
-        relays: List<RelaySetupInfo>,
+        relays: List<NormalizedRelayUrl>,
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
@@ -84,16 +87,6 @@ object BunkerRequestUtils {
             }
         }
 
-        AmberListenerSingleton.getListener()?.let {
-            Amber.instance.client.unsubscribe(it)
-        }
-        AmberListenerSingleton.setListener(
-            context,
-        )
-        Amber.instance.client.subscribe(
-            AmberListenerSingleton.getListener()!!,
-        )
-
         Amber.instance.applicationIOScope.launch {
             relays.forEach { relay ->
                 Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
@@ -101,23 +94,28 @@ object BunkerRequestUtils {
                         id = 0,
                         url = relay.url,
                         type = "bunker response",
-                        message = EventMapper.mapper.writeValueAsString(bunkerResponse),
+                        message = JsonMapper.mapper.writeValueAsString(bunkerResponse),
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
         }
 
-        val encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-            account.signer.signerSync.nip44Encrypt(
-                EventMapper.mapper.writeValueAsString(bunkerResponse),
-                bunkerRequest.localKey,
-            )
-        } else {
-            account.signer.signerSync.nip04Encrypt(
-                EventMapper.mapper.writeValueAsString(bunkerResponse),
-                bunkerRequest.localKey,
-            )
+        val encryptedContent = try {
+            if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+                account.signer.signerSync.nip44Encrypt(
+                    JsonMapper.mapper.writeValueAsString(bunkerResponse),
+                    bunkerRequest.localKey,
+                )
+            } else {
+                account.signer.signerSync.nip04Encrypt(
+                    JsonMapper.mapper.writeValueAsString(bunkerResponse),
+                    bunkerRequest.localKey,
+                )
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            null
         }
 
         if (encryptedContent == null) {
@@ -153,7 +151,7 @@ object BunkerRequestUtils {
         account: Account,
         localKey: String,
         encryptedContent: String,
-        relays: List<RelaySetupInfo>,
+        relays: List<NormalizedRelayUrl>,
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
@@ -162,34 +160,23 @@ object BunkerRequestUtils {
             NostrConnectEvent.KIND,
             arrayOf(arrayOf("p", localKey)),
             encryptedContent,
-        )!!
+        )
 
         Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
-
-        if (Amber.instance.client.getAll().any { relay -> !relay.isConnected() }) {
-            Amber.instance.checkForNewRelays(
-                newRelays = relays.toSet(),
-            )
-        }
 
         var success = false
         var errorCount = 0
         while (!success && errorCount < 3) {
-            success = Amber.instance.client.sendAndWaitForResponse(signedEvent, relayList = relays)
+            success = Amber.instance.client.sendAndWaitForResponse(signedEvent, relays.toSet())
             if (!success) {
                 errorCount++
-                relays.forEach { relay ->
-                    if (Amber.instance.client.getRelay(relay.url)?.isConnected() == false) {
-                        Amber.instance.client.getRelay(relay.url)?.connect()
-                    }
-                }
                 delay(1000)
                 signedEvent = account.signer.signerSync.sign(
                     TimeUtils.now(),
                     NostrConnectEvent.KIND,
                     arrayOf(arrayOf("p", localKey)),
                     encryptedContent,
-                )!!
+                )
             }
         }
         if (success) {
@@ -199,9 +186,6 @@ object BunkerRequestUtils {
             onDone(false)
             AmberListenerSingleton.showErrorMessage()
             Log.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
-        }
-        AmberListenerSingleton.getListener()?.let { listener ->
-            Amber.instance.client.unsubscribe(listener)
         }
         onLoading(false)
     }
@@ -279,10 +263,6 @@ object BunkerRequestUtils {
             }
             savedApplication = database.applicationDao().getByKey(key)
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
-            Amber.instance.checkForNewRelays(
-                newRelays = relays.toSet(),
-            )
-
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
             val application =
@@ -443,10 +423,6 @@ object BunkerRequestUtils {
                     account,
                 )
             }
-
-            Amber.instance.checkForNewRelays(
-                newRelays = relays.toSet(),
-            )
 
             if (bunkerRequest.request !is BunkerRequestConnect) {
                 Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)

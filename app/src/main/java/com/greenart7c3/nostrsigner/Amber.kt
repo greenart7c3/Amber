@@ -9,9 +9,7 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
-import androidx.work.Data
 import androidx.work.ExistingPeriodicWorkPolicy
-import androidx.work.OneTimeWorkRequest
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.database.AppDatabase
@@ -19,20 +17,20 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
-import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
+import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
-import com.greenart7c3.nostrsigner.service.NotificationDataSource
-import com.greenart7c3.nostrsigner.service.RelayDisconnectService
-import com.vitorpamplona.ammolite.relays.COMMON_FEED_TYPES
-import com.vitorpamplona.ammolite.relays.MutableSubscriptionCache
-import com.vitorpamplona.ammolite.relays.NostrClient
-import com.vitorpamplona.ammolite.relays.Relay
-import com.vitorpamplona.ammolite.relays.RelaySetupInfo
-import com.vitorpamplona.ammolite.relays.RelaySetupInfoToConnect
+import com.greenart7c3.nostrsigner.service.NotificationSubscription
+import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.vitorpamplona.amethyst.service.okhttp.OkHttpWebSocket
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
+import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
+import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.RelayAuthenticator
+import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
@@ -43,11 +41,11 @@ import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
+import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -63,13 +61,51 @@ class Amber : Application(), LifecycleObserver {
         return if (mainActivityRef != null) mainActivityRef!!.get() else null
     }
 
-    val factory = OkHttpWebSocket.BuilderFactory { _, useProxy ->
+    // Exists to avoid exceptions stopping the coroutine
+    val exceptionHandler =
+        CoroutineExceptionHandler { _, throwable ->
+            Log.e("AmberCoroutine", "Caught exception: ${throwable.message}", throwable)
+        }
+
+    val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
+
+    var settings: AmberSettings = AmberSettings()
+
+    val factory = OkHttpWebSocket.Builder { url ->
+        val useProxy = if (isPrivateIp(url.url)) false else settings.useProxy
         HttpClientManager.getHttpClient(useProxy)
     }
-    val client: NostrClient = NostrClient(factory)
-    val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+
+    val client: NostrClient = NostrClient(factory, applicationIOScope)
+
+    val stats = AmberRelayStats(client, applicationIOScope, this)
+
+    // logs and stat counts.
+    val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {
+        client.subscribe(it)
+    }
+
+    // Authenticates with relays.
+    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { challenge, relay ->
+        LocalPreferences.allAccounts(this).forEach { account ->
+            val authed = account.createAuthEvent(
+                relayUrl = relay.url,
+                challenge = challenge,
+            )
+            client.sendIfExists(authed, relay.url)
+        }
+    }
+
+    // TODO: I assume you want this sub to stay active in the background
+    // TODO: Find a way to call either client.reconnect or notificationSubscription.updateFilters() to
+    // keep the filter live when the relay inevitably disconnects. NostrClient doesn't try to reconnect
+    // unless the filter is refreshed or a new event is sent.
+    val notificationSubscription = NotificationSubscription(client, this)
+
+    // This runs on the foreground only
+    val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
+
     private var databases = ConcurrentHashMap<String, AppDatabase>()
-    var settings: AmberSettings = AmberSettings()
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
@@ -151,11 +187,21 @@ class Amber : Application(), LifecycleObserver {
             override fun onStart(owner: LifecycleOwner) {
                 Log.d("ProcessLifecycleOwner", "App in foreground")
                 isAppInForeground = true
+
+                // activates the profile filter only when the app is in the foreground
+                applicationIOScope.launch {
+                    profileSubscription.updateFilter()
+                }
             }
 
             override fun onStop(owner: LifecycleOwner) {
                 Log.d("ProcessLifecycleOwner", "App in background")
                 isAppInForeground = false
+
+                // closes the filter when in the background
+                applicationIOScope.launch {
+                    profileSubscription.closeSub()
+                }
             }
         })
 
@@ -224,15 +270,8 @@ class Amber : Application(), LifecycleObserver {
 
     suspend fun reconnect() {
         Log.d(TAG, "reconnecting relays")
-        NotificationDataSource.stop()
-        delay(2000)
-        client.getAll().forEach {
-            it.disconnect()
-        }
-        delay(2000)
-        checkForNewRelays()
-        NotificationDataSource.start()
-        AmberRelayStats.updateNotification()
+        client.reconnect(true)
+        stats.updateNotification()
     }
 
     fun getDatabase(npub: String): AppDatabase {
@@ -242,8 +281,8 @@ class Amber : Application(), LifecycleObserver {
         return databases[npub]!!
     }
 
-    fun getSavedRelays(): Set<RelaySetupInfo> {
-        val savedRelays = mutableSetOf<RelaySetupInfo>()
+    fun getSavedRelays(): Set<NormalizedRelayUrl> {
+        val savedRelays = mutableSetOf<NormalizedRelayUrl>()
         LocalPreferences.allSavedAccounts(this).forEach { accountInfo ->
             val database = getDatabase(accountInfo.npub)
             database.applicationDao().getAllApplications().forEach {
@@ -258,37 +297,24 @@ class Amber : Application(), LifecycleObserver {
         return savedRelays
     }
 
-    suspend fun checkForNewRelays(
+    suspend fun checkForNewRelaysAndUpdateAllFilters(
         shouldReconnect: Boolean = false,
-        newRelays: Set<RelaySetupInfo> = emptySet(),
     ) {
-        val savedRelays = getSavedRelays() + newRelays
-        val hasAccount = LocalPreferences.allSavedAccounts(this).isNotEmpty()
-
-        if (savedRelays.isEmpty() || !hasAccount) {
-            client.reconnect(relays = null)
-            NotificationDataSource.stop()
-            AmberRelayStats.updateNotification()
-            return
+        @Suppress("KotlinConstantConditions")
+        // TODO: You can filter inside each update filter for only
+        // localhost relays and keep these alive even on the offline
+        // mode
+        if (BuildConfig.FLAVOR != "offline") {
+            // these update the relay list in the filters and send them to the
+            // relay, reconnecting if needed
+            if (isAppInForeground) {
+                profileSubscription.updateFilter()
+            }
+            notificationSubscription.updateFilter()
         }
 
         if (shouldReconnect) {
-            checkIfRelaysAreConnected()
-        }
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR != "offline" && savedRelays.isNotEmpty()) {
-            client.reconnect(
-                savedRelays.map { RelaySetupInfoToConnect(it.url, if (isPrivateIp(it.url)) false else settings.useProxy, it.read, it.write, it.feedTypes) }.toTypedArray(),
-                true,
-            )
-
-            NotificationDataSource.stop()
-            delay(1000)
-            NotificationDataSource.start()
-            applicationIOScope.launch {
-                delay(1000)
-                AmberRelayStats.updateNotification()
-            }
+            client.reconnect(true)
         }
     }
 
@@ -314,29 +340,6 @@ class Amber : Application(), LifecycleObserver {
             url.contains("172.31.")
     }
 
-    private suspend fun checkIfRelaysAreConnected(tryAgain: Boolean = true) {
-        Log.d(TAG, "Checking if relays are connected")
-        client.getAll().forEach { relay ->
-            if (!relay.isConnected()) {
-                relay.connectAndRunAfterSync {
-                    val builder = OneTimeWorkRequest.Builder(RelayDisconnectService::class.java)
-                    val inputData = Data.Builder()
-                    inputData.putString("relay", relay.url)
-                    builder.setInputData(inputData.build())
-                    WorkManager.getInstance(instance).enqueue(builder.build())
-                }
-            }
-        }
-        var count = 0
-        while (client.getAll().any { !it.isConnected() } && count < 10) {
-            count++
-            delay(1000)
-        }
-        if (client.getAll().any { !it.isConnected() } && tryAgain) {
-            checkIfRelaysAreConnected(false)
-        }
-    }
-
     override fun onTerminate() {
         super.onTerminate()
         applicationIOScope.cancel()
@@ -348,28 +351,10 @@ class Amber : Application(), LifecycleObserver {
         type: FeedbackType,
         account: Account,
     ): Boolean {
-        val client = NostrClient(factory)
-        val relays = listOf(
-            Relay(
-                url = "wss://nos.lol",
-                read = true,
-                write = true,
-                forceProxy = settings.useProxy,
-                activeTypes = COMMON_FEED_TYPES,
-                socketBuilderFactory = factory,
-                subs = MutableSubscriptionCache(),
-            ),
-            Relay(
-                url = "wss://relay.damus.io",
-                read = true,
-                write = true,
-                forceProxy = settings.useProxy,
-                activeTypes = COMMON_FEED_TYPES,
-                socketBuilderFactory = factory,
-                subs = MutableSubscriptionCache(),
-            ),
+        val relays = setOfNotNull(
+            RelayUrlNormalizer.normalizeOrNull("wss://nos.lol/"),
+            RelayUrlNormalizer.normalizeOrNull("wss://relay.damus.io/"),
         )
-        client.reconnect(relays.map { RelaySetupInfoToConnect(url = it.url, forceProxy = it.forceProxy, read = it.read, write = it.write, feedTypes = it.activeTypes) }.toTypedArray())
 
         val repositoryEvent = GitRepositoryEvent(
             "",
@@ -387,32 +372,15 @@ class Amber : Application(), LifecycleObserver {
             listOf(PTag("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19", null)),
             listOf(if (type == FeedbackType.BUG_REPORT) "bug" else "enhancement"),
         )
+
         val event = account.signer.signerSync.sign(
             template,
-        ) ?: return false
-        var success = false
-        var errorCount = 0
-        while (!success && errorCount < 3) {
-            success = client.sendAndWaitForResponse(event, relayList = relays.map { RelaySetupInfo(url = it.url, read = it.read, write = it.write, feedTypes = it.activeTypes) })
-            if (!success) {
-                errorCount++
-                relays.forEach {
-                    if (client.getRelay(it.url)?.isConnected() == false) {
-                        client.getRelay(it.url)?.connect()
-                    }
-                }
-                delay(1000)
-            }
-        }
-        if (success) {
-            Log.d(TAG, "Success response to relays ${relays.map { it.url }}")
-        } else {
-            Log.d(TAG, "Failed response to relays ${relays.map { it.url }}")
-        }
-        client.getAll().forEach {
-            it.disconnect()
-        }
-        return success
+        )
+
+        // This will automatically connect to these relays even if they are not in the list
+        // once the events have been saved, it will disconnect from them unless there are other
+        // filters with them
+        return client.sendAndWaitForResponse(event, relays)
     }
 
     companion object {

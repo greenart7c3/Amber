@@ -784,7 +784,7 @@ object IntentUtils {
                     application,
                     key,
                     intentData.type,
-                    null,
+                    kind,
                     false,
                     rememberType,
                     account,

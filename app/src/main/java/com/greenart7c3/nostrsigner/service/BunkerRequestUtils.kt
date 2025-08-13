@@ -308,6 +308,7 @@ object BunkerRequestUtils {
                 )
             }
 
+            var didChangeRelays = false
             if (type == SignerType.CONNECT) {
                 database.applicationDao().deletePermissions(key)
                 application.application.isConnected = true
@@ -328,6 +329,11 @@ object BunkerRequestUtils {
                         ),
                     )
                 }
+                // check if application has any relay not in saved relays
+                val savedRelays = Amber.instance.getSavedRelays()
+                if (relays.any { !savedRelays.contains(it) }) {
+                    didChangeRelays = true
+                }
             }
 
             val localBunkerRequest = bunkerRequest.copy()
@@ -346,6 +352,9 @@ object BunkerRequestUtils {
                     true,
                 ),
             )
+            if (didChangeRelays) {
+                Amber.instance.notificationSubscription.updateFilter()
+            }
 
             sendBunkerResponse(
                 context,

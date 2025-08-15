@@ -18,7 +18,7 @@
  * AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
  * WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  */
-package com.vitorpamplona.amethyst.service.okhttp
+package com.greenart7c3.nostrsigner.okhttp
 
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.sockets.WebSocket
@@ -40,6 +40,7 @@ class OkHttpWebSocket(
     fun buildRequest() = Request.Builder().url(url.url).build()
 
     override fun needsReconnect(): Boolean {
+        if (socket == null) return true
         val myUsingOkHttp = usingOkHttp
         if (myUsingOkHttp == null) return true
 
@@ -89,13 +90,19 @@ class OkHttpWebSocket(
             webSocket: okhttp3.WebSocket,
             code: Int,
             reason: String,
-        ) = out.onClosed(code, reason)
+        ) {
+            socket = null
+            out.onClosed(code, reason)
+        }
 
         override fun onFailure(
             webSocket: okhttp3.WebSocket,
             t: Throwable,
             response: Response?,
-        ) = out.onFailure(t, response?.code, response?.message)
+        ) {
+            socket = null
+            out.onFailure(t, response?.code, response?.message)
+        }
     }
 
     class Builder(
@@ -111,6 +118,7 @@ class OkHttpWebSocket(
     override fun disconnect() {
         // uses cancel to kill the SEND stack that might be waiting
         socket?.cancel()
+        socket = null
     }
 
     override fun send(msg: String): Boolean = socket?.send(msg) ?: false

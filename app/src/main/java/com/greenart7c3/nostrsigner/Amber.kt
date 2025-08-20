@@ -248,7 +248,7 @@ class Amber : Application(), LifecycleObserver {
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
                 isStartingApp.value = false
-                reconnect()
+                checkForNewRelaysAndUpdateAllFilters(true)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false
@@ -268,7 +268,7 @@ class Amber : Application(), LifecycleObserver {
         }
     }
 
-    suspend fun reconnect() {
+    fun reconnect() {
         Log.d(TAG, "reconnecting relays")
         client.reconnect(true)
         stats.updateNotification()
@@ -297,7 +297,7 @@ class Amber : Application(), LifecycleObserver {
         return savedRelays
     }
 
-    suspend fun checkForNewRelaysAndUpdateAllFilters(
+    fun checkForNewRelaysAndUpdateAllFilters(
         shouldReconnect: Boolean = false,
     ) {
         @Suppress("KotlinConstantConditions")

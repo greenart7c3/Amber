@@ -48,7 +48,6 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
@@ -85,7 +84,6 @@ import kotlinx.coroutines.withContext
 fun DefaultRelaysScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
-    account: Account,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -135,7 +133,6 @@ fun DefaultRelaysScreen(
                                     relays2,
                                     scope,
                                     accountStateViewModel,
-                                    account,
                                     context,
                                     onDone = {
                                         Amber.instance.settings = Amber.instance.settings.copy(
@@ -172,7 +169,6 @@ fun DefaultRelaysScreen(
                                 relays2,
                                 scope,
                                 accountStateViewModel,
-                                account,
                                 context,
                                 onDone = {
                                     isLoading.value = true
@@ -234,7 +230,6 @@ fun onAddRelay(
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
     accountStateViewModel: AccountStateViewModel,
-    account: Account,
     context: Context,
     shouldCheckForBunker: Boolean = true,
     onDone: () -> Unit,
@@ -337,8 +332,8 @@ fun onAddRelay(
                             }
 
                             Amber.instance.client.close(ncSub)
-
                             Amber.instance.client.unsubscribe(listener)
+                            Amber.instance.client.reconnect()
 
                             if (result && filterResult) {
                                 relays2.add(addedWSS)

@@ -139,7 +139,6 @@ fun NewNsecBunkerScreen(
                                     relays,
                                     scope,
                                     accountStateViewModel,
-                                    account,
                                     context,
                                     onDone = {
                                     },
@@ -163,7 +162,6 @@ fun NewNsecBunkerScreen(
                                         relays,
                                         scope,
                                         accountStateViewModel,
-                                        account,
                                         context,
                                         onDone = {
                                         },

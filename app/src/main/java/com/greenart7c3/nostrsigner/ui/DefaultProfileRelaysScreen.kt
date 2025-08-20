@@ -28,10 +28,8 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -39,7 +37,6 @@ import kotlinx.coroutines.launch
 fun DefaultProfileRelaysScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
-    account: Account,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -51,7 +48,7 @@ fun DefaultProfileRelaysScreen(
     }
     val relays2 =
         remember {
-            mutableStateListOf<NormalizedRelayUrl>(*Amber.instance.settings.defaultProfileRelays.toTypedArray())
+            mutableStateListOf(*Amber.instance.settings.defaultProfileRelays.toTypedArray())
         }
 
     Surface(
@@ -96,7 +93,6 @@ fun DefaultProfileRelaysScreen(
                                     relays2,
                                     scope,
                                     accountStateViewModel,
-                                    account,
                                     context,
                                     shouldCheckForBunker = false,
                                     onDone = {
@@ -134,7 +130,6 @@ fun DefaultProfileRelaysScreen(
                                 relays2,
                                 scope,
                                 accountStateViewModel,
-                                account,
                                 context,
                                 shouldCheckForBunker = false,
                                 onDone = {

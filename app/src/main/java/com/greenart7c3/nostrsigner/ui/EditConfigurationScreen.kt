@@ -167,7 +167,6 @@ fun EditConfigurationScreen(
                                     relays,
                                     scope,
                                     accountStateViewModel,
-                                    account,
                                     context,
                                     onDone = {},
                                 )
@@ -190,7 +189,6 @@ fun EditConfigurationScreen(
                                         relays,
                                         scope,
                                         accountStateViewModel,
-                                        account,
                                         context,
                                         onDone = {},
                                     )

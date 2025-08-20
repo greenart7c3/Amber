@@ -516,7 +516,6 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             accountStateViewModel = accountStateViewModel,
-                            account = account,
                         )
                     },
                 )
@@ -784,7 +783,6 @@ fun MainScreen(
                                 .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            account = account,
                             accountStateViewModel = accountStateViewModel,
                         )
                     },

@@ -21,6 +21,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
@@ -34,10 +35,11 @@ class AmberRelayStats(
     var oldMessage = ""
     val relayStatus = client.relayStatusFlow()
 
+    @OptIn(FlowPreview::class)
     val relayStatusUpdater = client.relayStatusFlow().debounce(300).onEach {
         try {
             updateNotification()
-        } catch (e: NullPointerException) {
+        } catch (_: NullPointerException) {
         }
     }.stateIn(
         scope,
@@ -47,14 +49,16 @@ class AmberRelayStats(
 
     private val innerCache = mutableMapOf<NormalizedRelayUrl, AmberRelayStat>()
 
-    fun createNotification() = createNotification(
+    fun createNotification(forceCreate: Boolean = false) = createNotification(
         relayStatus.value.connected,
         relayStatus.value.available,
+        forceCreate,
     )
 
     fun createNotification(
         connected: Set<NormalizedRelayUrl>,
         available: Set<NormalizedRelayUrl>,
+        forceCreate: Boolean = false,
     ): Notification? {
         val channelId = "ServiceChannel"
         val group = NotificationChannelGroupCompat.Builder("ServiceGroup")
@@ -94,7 +98,7 @@ class AmberRelayStats(
 
             connected + ping + sent + received + failed + error
         }
-        if (message == oldMessage && oldMessage.isNotBlank()) return null
+        if (message == oldMessage && oldMessage.isNotBlank() && !forceCreate) return null
         this.oldMessage = message
 
         val contentIntent = Intent(appContext, MainActivity::class.java)

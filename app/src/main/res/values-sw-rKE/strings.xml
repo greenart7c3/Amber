@@ -538,4 +538,5 @@
     <string name="reconnect">Reconnect</string>
     <string name="of_connected_relays">%1$d of %2$d connected relays</string>
     <string name="proxy">Proxy</string>
+    <string name="default_relay_text">Default</string>
 </resources>

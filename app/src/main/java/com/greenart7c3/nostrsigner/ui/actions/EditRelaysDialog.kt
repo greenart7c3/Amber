@@ -49,6 +49,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
+import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.Nip11CachedRetriever
@@ -107,6 +108,33 @@ fun DefaultRelaysScreen(
                     .background(MaterialTheme.colorScheme.background)
                     .fillMaxSize(),
             ) {
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                ) {
+                    AmberButton(
+                        onClick = {
+                            relays2.clear()
+                            relays2.addAll(defaultAppRelays)
+                            Amber.instance.settings = Amber.instance.settings.copy(
+                                defaultRelays = relays2,
+                            )
+                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            scope.launch(Dispatchers.IO) {
+                                @Suppress("KotlinConstantConditions")
+                                if (BuildConfig.FLAVOR != "offline") {
+                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                    delay(2000)
+                                    Amber.instance.client.reconnect()
+                                    isLoading.value = false
+                                } else {
+                                    isLoading.value = false
+                                }
+                            }
+                        },
+                        text = stringResource(R.string.default_relay_text),
+                    )
+                }
+
                 Text(
                     text = stringResource(R.string.manage_the_relays_used_for_communicating_with_external_applications),
                     modifier = Modifier.padding(bottom = 8.dp),

@@ -334,9 +334,9 @@ class Amber : Application(), LifecycleObserver {
             }
             notificationSubscription.updateFilter()
         }
-        delay(3000)
         Log.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
         if (!wasActive) {
+            delay(3000)
             client.connect()
         }
 

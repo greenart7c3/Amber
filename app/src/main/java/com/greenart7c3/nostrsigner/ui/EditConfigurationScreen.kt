@@ -320,13 +320,13 @@ fun EditConfigurationScreen(
                             Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
                             Amber.instance.getDatabase(account.npub).applicationDao().deleteHistory(it.application.key)
 
-                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
-
                             scope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.Applications.route) {
                                     popUpTo(0)
                                 }
                             }
+
+                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                         }
                     }
                 },

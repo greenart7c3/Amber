@@ -541,4 +541,5 @@
     <string name="default_relay_text">Default</string>
     <string name="enable_kill_switch">Enable kill switch</string>
     <string name="disable_kill_switch">Disable kill switch</string>
+    <string name="kill_switch_message">Kill Switch enabled, remote login and profile fetching will not work</string>
 </resources>

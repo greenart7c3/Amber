@@ -229,7 +229,7 @@ class Amber : Application(), LifecycleObserver {
                 isStartingApp.value = false
 
                 checkForNewRelaysAndUpdateAllFilters(true)
-                if (settings.killSwitch) {
+                if (settings.killSwitch.value) {
                     client.disconnect()
                 }
                 launch(Dispatchers.Main) {
@@ -239,7 +239,7 @@ class Amber : Application(), LifecycleObserver {
                             isAppInForeground = true
 
                             // activates the profile filter only when the app is in the foreground
-                            if (!settings.killSwitch) {
+                            if (!settings.killSwitch.value) {
                                 applicationIOScope.launch {
                                     profileSubscription.updateFilter()
                                 }
@@ -277,7 +277,7 @@ class Amber : Application(), LifecycleObserver {
     }
 
     fun reconnect() {
-        if (settings.killSwitch) {
+        if (settings.killSwitch.value) {
             return
         }
         Log.d(TAG, "reconnecting relays")
@@ -315,7 +315,7 @@ class Amber : Application(), LifecycleObserver {
     suspend fun checkForNewRelaysAndUpdateAllFilters(
         shouldReconnect: Boolean = false,
     ) {
-        if (settings.killSwitch) {
+        if (settings.killSwitch.value) {
             client.disconnect()
             return
         }

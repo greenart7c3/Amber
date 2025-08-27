@@ -137,7 +137,7 @@ class AmberRelayStats(
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)
                 .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)
-                .addAction(R.drawable.ic_notification, appContext.getString(if (Amber.instance.settings.killSwitch) R.string.disable_kill_switch else R.string.enable_kill_switch), killSwitchPendingIntent)
+                .addAction(R.drawable.ic_notification, appContext.getString(if (Amber.instance.settings.killSwitch.value) R.string.disable_kill_switch else R.string.enable_kill_switch), killSwitchPendingIntent)
 
         return notificationBuilder.build()
     }

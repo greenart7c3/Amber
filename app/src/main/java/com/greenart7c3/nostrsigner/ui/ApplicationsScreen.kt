@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
+import android.content.Intent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -10,6 +11,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,9 +37,11 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
+import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -53,7 +57,48 @@ fun ApplicationsScreen(
     Column(
         modifier,
     ) {
+        val killSwitch = Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
+        if (killSwitch.value) {
+            Box(
+                Modifier
+                    .fillMaxWidth()
+                    .background(
+                        color = MaterialTheme.colorScheme.primary,
+                        shape = RoundedCornerShape(8.dp),
+                    ),
+                contentAlignment = Alignment.Center,
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(
+                        text = stringResource(R.string.kill_switch_message),
+                        modifier = Modifier.wrapContentSize(),
+                        color = Color.Black,
+                    )
+                    TextButton(
+                        onClick = {
+                            val killSwitchIntent = Intent(Amber.instance, KillSwitchReceiver::class.java)
+                            Amber.instance.sendBroadcast(killSwitchIntent)
+                            LocalPreferences.switchToAccount(Amber.instance, account.npub)
+                        },
+                        content = {
+                            Text(
+                                text = stringResource(R.string.disable_kill_switch),
+                                fontWeight = FontWeight.Bold,
+                                color = Color.Black,
+                            )
+                        },
+                    )
+                }
+            }
+        }
+
         if (!account.didBackup) {
+            if (killSwitch.value) {
+                Spacer(Modifier.height(4.dp))
+            }
             Box(
                 Modifier
                     .fillMaxWidth()

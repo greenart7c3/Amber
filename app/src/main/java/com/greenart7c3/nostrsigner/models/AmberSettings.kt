@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.models
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import kotlinx.coroutines.flow.MutableStateFlow
 
 val defaultAppRelays = listOf(
     RelayUrlNormalizer.normalize("wss://relay.nsec.app/"),
@@ -25,5 +26,5 @@ data class AmberSettings(
     val usePin: Boolean = false,
     val useProxy: Boolean = false,
     val proxyPort: Int = 9050,
-    val killSwitch: Boolean = false,
+    val killSwitch: MutableStateFlow<Boolean> = MutableStateFlow(false),
 )

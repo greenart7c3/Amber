@@ -30,7 +30,7 @@ class ConnectivityService : Service() {
                 super.onAvailable(network)
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
-                if (Amber.instance.settings.killSwitch) return
+                if (Amber.instance.settings.killSwitch.value) return
 
                 if (lastNetwork != null && lastNetwork != network) {
                     scope.launch(Dispatchers.IO) {
@@ -52,7 +52,7 @@ class ConnectivityService : Service() {
 
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
-                if (Amber.instance.settings.killSwitch) return
+                if (Amber.instance.settings.killSwitch.value) return
 
                 scope.launch(Dispatchers.IO) {
                     Log.d(
@@ -97,7 +97,7 @@ class ConnectivityService : Service() {
                 delay(1000)
             }
             @Suppress("KotlinConstantConditions")
-            if (BuildConfig.FLAVOR != "offline" && !Amber.instance.settings.killSwitch) {
+            if (BuildConfig.FLAVOR != "offline" && !Amber.instance.settings.killSwitch.value) {
                 Amber.instance.client.connect()
                 Amber.instance.applicationIOScope.launch {
                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
@@ -121,7 +121,7 @@ class ConnectivityService : Service() {
                         if (BuildConfig.FLAVOR == "offline") {
                             return
                         }
-                        if (Amber.instance.settings.killSwitch) return
+                        if (Amber.instance.settings.killSwitch.value) return
 
                         scope.launch {
                             if (!Amber.instance.client.isActive()) {

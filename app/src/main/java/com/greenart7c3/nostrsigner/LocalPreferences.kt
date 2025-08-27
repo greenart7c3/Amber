@@ -138,7 +138,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.USE_PIN.key, settings.usePin)
                 putBoolean(SettingsKeys.USE_PROXY.key, settings.useProxy)
                 putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
-                putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch)
+                putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch.value)
             }
         }
     }
@@ -248,7 +248,7 @@ object LocalPreferences {
                 usePin = getBoolean(SettingsKeys.USE_PIN.key, false),
                 useProxy = getBoolean(SettingsKeys.USE_PROXY.key, false),
                 proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050),
-                killSwitch = getBoolean(SettingsKeys.KILL_SWITCH.key, false),
+                killSwitch = MutableStateFlow(getBoolean(SettingsKeys.KILL_SWITCH.key, false)),
             )
         }
     }

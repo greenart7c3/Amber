@@ -10,9 +10,9 @@ import kotlinx.coroutines.launch
 class KillSwitchReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
         Amber.instance.applicationIOScope.launch {
-            Amber.instance.settings = Amber.instance.settings.copy(killSwitch = !Amber.instance.settings.killSwitch)
+            Amber.instance.settings.killSwitch.emit(!Amber.instance.settings.killSwitch.value)
             LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-            if (Amber.instance.settings.killSwitch) {
+            if (Amber.instance.settings.killSwitch.value) {
                 Amber.instance.client.disconnect()
             } else {
                 Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)

@@ -21,6 +21,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
+import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -51,6 +52,11 @@ class NotificationSubscription(
         if (this.subId == subId) {
             eventNotificationConsumer.consume(event, relay.url)
         }
+    }
+
+    override fun onSend(relay: IRelayClient, msg: String, success: Boolean) {
+        Log.d("NotificationSubscription", "onSend: ${relay.url}, $msg, $success")
+        super.onSend(relay, msg, success)
     }
 
     /**

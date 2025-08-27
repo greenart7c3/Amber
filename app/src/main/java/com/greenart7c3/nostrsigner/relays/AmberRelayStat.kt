@@ -16,6 +16,7 @@ import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
@@ -119,6 +120,14 @@ class AmberRelayStats(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
         )
 
+        val killSwitchIntent = Intent(appContext, KillSwitchReceiver::class.java)
+        val killSwitchPendingIntent = PendingIntent.getBroadcast(
+            appContext,
+            0,
+            killSwitchIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
+
         val notificationBuilder =
             NotificationCompat.Builder(appContext, channelId)
                 .setGroup(group.id)
@@ -128,6 +137,7 @@ class AmberRelayStats(
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)
                 .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)
+                .addAction(R.drawable.ic_notification, appContext.getString(if (Amber.instance.settings.killSwitch) R.string.disable_kill_switch else R.string.enable_kill_switch), killSwitchPendingIntent)
 
         return notificationBuilder.build()
     }

@@ -46,6 +46,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -183,28 +184,6 @@ class Amber : Application(), LifecycleObserver {
 
     override fun onCreate() {
         super.onCreate()
-        ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-            override fun onStart(owner: LifecycleOwner) {
-                Log.d("ProcessLifecycleOwner", "App in foreground")
-                isAppInForeground = true
-
-                // activates the profile filter only when the app is in the foreground
-                applicationIOScope.launch {
-                    profileSubscription.updateFilter()
-                }
-            }
-
-            override fun onStop(owner: LifecycleOwner) {
-                Log.d("ProcessLifecycleOwner", "App in background")
-                isAppInForeground = false
-
-                // closes the filter when in the background
-                applicationIOScope.launch {
-                    profileSubscription.closeSub()
-                }
-            }
-        })
-
         isStartingApp.value = true
 
         Log.d(TAG, "onCreate Amber")
@@ -248,7 +227,36 @@ class Amber : Application(), LifecycleObserver {
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
                 isStartingApp.value = false
+
                 checkForNewRelaysAndUpdateAllFilters(true)
+                if (settings.killSwitch) {
+                    client.disconnect()
+                }
+                launch(Dispatchers.Main) {
+                    ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
+                        override fun onStart(owner: LifecycleOwner) {
+                            Log.d("ProcessLifecycleOwner", "App in foreground")
+                            isAppInForeground = true
+
+                            // activates the profile filter only when the app is in the foreground
+                            if (!settings.killSwitch) {
+                                applicationIOScope.launch {
+                                    profileSubscription.updateFilter()
+                                }
+                            }
+                        }
+
+                        override fun onStop(owner: LifecycleOwner) {
+                            Log.d("ProcessLifecycleOwner", "App in background")
+                            isAppInForeground = false
+
+                            // closes the filter when in the background
+                            applicationIOScope.launch {
+                                profileSubscription.closeSub()
+                            }
+                        }
+                    })
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false
@@ -269,8 +277,15 @@ class Amber : Application(), LifecycleObserver {
     }
 
     fun reconnect() {
+        if (settings.killSwitch) {
+            return
+        }
         Log.d(TAG, "reconnecting relays")
-        client.reconnect(true)
+        val wasActive = client.isActive()
+        if (!wasActive) {
+            client.connect()
+        }
+        client.reconnect(wasActive)
         stats.updateNotification()
     }
 
@@ -297,9 +312,16 @@ class Amber : Application(), LifecycleObserver {
         return savedRelays
     }
 
-    fun checkForNewRelaysAndUpdateAllFilters(
+    suspend fun checkForNewRelaysAndUpdateAllFilters(
         shouldReconnect: Boolean = false,
     ) {
+        if (settings.killSwitch) {
+            client.disconnect()
+            return
+        }
+
+        val wasActive = client.isActive()
+
         @Suppress("KotlinConstantConditions")
         // TODO: You can filter inside each update filter for only
         // localhost relays and keep these alive even on the offline
@@ -312,9 +334,14 @@ class Amber : Application(), LifecycleObserver {
             }
             notificationSubscription.updateFilter()
         }
+        delay(3000)
+        Log.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
+        if (!wasActive) {
+            client.connect()
+        }
 
         if (shouldReconnect) {
-            client.reconnect(true)
+            client.reconnect(wasActive)
         }
     }
 

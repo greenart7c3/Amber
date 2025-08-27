@@ -353,7 +353,10 @@ object BunkerRequestUtils {
                 ),
             )
             if (didChangeRelays) {
-                Amber.instance.notificationSubscription.updateFilter()
+                Amber.instance.checkForNewRelaysAndUpdateAllFilters(true)
+            }
+            if (!Amber.instance.client.isActive()) {
+                Amber.instance.client.connect()
             }
 
             sendBunkerResponse(

@@ -30,9 +30,13 @@ class ConnectivityService : Service() {
                 super.onAvailable(network)
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
+                if (Amber.instance.settings.killSwitch) return
 
                 if (lastNetwork != null && lastNetwork != network) {
                     scope.launch(Dispatchers.IO) {
+                        if (!Amber.instance.client.isActive()) {
+                            Amber.instance.client.connect()
+                        }
                         Amber.instance.client.reconnect(true)
                     }
                 }
@@ -48,13 +52,16 @@ class ConnectivityService : Service() {
 
                 @Suppress("KotlinConstantConditions")
                 if (BuildConfig.FLAVOR == "offline") return
+                if (Amber.instance.settings.killSwitch) return
 
                 scope.launch(Dispatchers.IO) {
                     Log.d(
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
                     )
-
+                    if (!Amber.instance.client.isActive()) {
+                        Amber.instance.client.connect()
+                    }
                     Amber.instance.client.reconnect(true)
                 }
             }
@@ -90,7 +97,7 @@ class ConnectivityService : Service() {
                 delay(1000)
             }
             @Suppress("KotlinConstantConditions")
-            if (BuildConfig.FLAVOR != "offline") {
+            if (BuildConfig.FLAVOR != "offline" && !Amber.instance.settings.killSwitch) {
                 Amber.instance.client.connect()
                 Amber.instance.applicationIOScope.launch {
                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
@@ -114,8 +121,12 @@ class ConnectivityService : Service() {
                         if (BuildConfig.FLAVOR == "offline") {
                             return
                         }
+                        if (Amber.instance.settings.killSwitch) return
 
                         scope.launch {
+                            if (!Amber.instance.client.isActive()) {
+                                Amber.instance.client.connect()
+                            }
                             Amber.instance.client.reconnect(true)
                         }
                     }

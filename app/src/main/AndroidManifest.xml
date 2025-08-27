@@ -31,9 +31,13 @@
         android:windowSoftInputMode="adjustResize"
         tools:targetApi="33">
         <receiver
-            android:name=".service.ReconnectReceiver"
+            android:name=".service.KillSwitchReceiver"
             android:enabled="true"
             android:exported="false"></receiver>
+        <receiver
+            android:name=".service.ReconnectReceiver"
+            android:enabled="true"
+            android:exported="false" />
         <receiver
             android:name=".service.BootReceiver"
             android:enabled="true"

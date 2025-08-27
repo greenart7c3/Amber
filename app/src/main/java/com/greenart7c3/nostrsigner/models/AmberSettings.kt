@@ -25,4 +25,5 @@ data class AmberSettings(
     val usePin: Boolean = false,
     val useProxy: Boolean = false,
     val proxyPort: Int = 9050,
+    val killSwitch: Boolean = false,
 )

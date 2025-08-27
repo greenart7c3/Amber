@@ -55,6 +55,7 @@ private enum class SettingsKeys(val key: String) {
     USE_PROXY("use_proxy"),
     PROXY_PORT("proxy_port"),
     BATERRY_OPTIMIZATION("battery_optimization"),
+    KILL_SWITCH("kill_switch"),
 }
 
 @Immutable
@@ -137,6 +138,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.USE_PIN.key, settings.usePin)
                 putBoolean(SettingsKeys.USE_PROXY.key, settings.useProxy)
                 putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
+                putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch)
             }
         }
     }
@@ -246,6 +248,7 @@ object LocalPreferences {
                 usePin = getBoolean(SettingsKeys.USE_PIN.key, false),
                 useProxy = getBoolean(SettingsKeys.USE_PROXY.key, false),
                 proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050),
+                killSwitch = getBoolean(SettingsKeys.KILL_SWITCH.key, false),
             )
         }
     }

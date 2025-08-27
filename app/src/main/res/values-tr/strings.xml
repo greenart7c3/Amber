@@ -541,5 +541,7 @@
     <string name="reconnect">Yeniden Bağlan</string>
     <string name="of_connected_relays">%2$d röleden %1$d\'i bağlı</string>
     <string name="proxy">Proxy</string>
-    <string name="default_relay_text">Default</string>
+    <string name="default_relay_text">Varsayılan</string>
+    <string name="enable_kill_switch">Enable kill switch</string>
+    <string name="disable_kill_switch">Disable kill switch</string>
 </resources>

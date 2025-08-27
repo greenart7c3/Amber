@@ -542,4 +542,6 @@
     <string name="of_connected_relays">已连接中继：%1$d/%2$d</string>
     <string name="proxy">代理</string>
     <string name="default_relay_text">Default</string>
+    <string name="enable_kill_switch">Enable kill switch</string>
+    <string name="disable_kill_switch">Disable kill switch</string>
 </resources>

@@ -2,10 +2,8 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
 import android.content.Intent
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,16 +11,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -44,6 +38,7 @@ import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.AmberWarningCard
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 @Composable
@@ -59,78 +54,28 @@ fun ApplicationsScreen(
     ) {
         val killSwitch = Amber.instance.settings.killSwitch.collectAsStateWithLifecycle()
         if (killSwitch.value) {
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(R.string.kill_switch_message),
-                        modifier = Modifier.wrapContentSize(),
-                        color = Color.Black,
-                    )
-                    TextButton(
-                        onClick = {
-                            val killSwitchIntent = Intent(Amber.instance, KillSwitchReceiver::class.java)
-                            Amber.instance.sendBroadcast(killSwitchIntent)
-                            LocalPreferences.switchToAccount(Amber.instance, account.npub)
-                        },
-                        content = {
-                            Text(
-                                text = stringResource(R.string.disable_kill_switch),
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black,
-                            )
-                        },
-                    )
-                }
-            }
+            AmberWarningCard(
+                message = stringResource(R.string.kill_switch_message),
+                buttonText = stringResource(R.string.disable_kill_switch),
+                onClick = {
+                    val killSwitchIntent = Intent(Amber.instance, KillSwitchReceiver::class.java)
+                    Amber.instance.sendBroadcast(killSwitchIntent)
+                    LocalPreferences.switchToAccount(Amber.instance, account.npub)
+                },
+            )
         }
 
         if (!account.didBackup) {
             if (killSwitch.value) {
                 Spacer(Modifier.height(4.dp))
             }
-            Box(
-                Modifier
-                    .fillMaxWidth()
-                    .background(
-                        color = MaterialTheme.colorScheme.primary,
-                        shape = RoundedCornerShape(8.dp),
-                    ),
-                contentAlignment = Alignment.Center,
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally,
-                ) {
-                    Text(
-                        text = stringResource(R.string.make_backup_message),
-                        modifier = Modifier.wrapContentSize(),
-                        color = Color.Black,
-                    )
-                    TextButton(
-                        onClick = {
-                            navController.navigate(Route.AccountBackup.route)
-                        },
-                        content = {
-                            Text(
-                                text = stringResource(R.string.backup),
-                                fontWeight = FontWeight.Bold,
-                                color = Color.Black,
-                            )
-                        },
-                    )
-                }
-            }
+            AmberWarningCard(
+                message = stringResource(R.string.make_backup_message),
+                buttonText = stringResource(R.string.backup),
+                onClick = {
+                    navController.navigate(Route.AccountBackup.route)
+                },
+            )
         }
 
         if (applications.value.isEmpty()) {

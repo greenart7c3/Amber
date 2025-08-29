@@ -542,7 +542,7 @@
     <string name="of_connected_relays">%2$d röleden %1$d\'i bağlı</string>
     <string name="proxy">Proxy</string>
     <string name="default_relay_text">Varsayılan</string>
-    <string name="enable_kill_switch">Enable kill switch</string>
-    <string name="disable_kill_switch">Disable kill switch</string>
-    <string name="kill_switch_message">Kill Switch enabled, remote login and profile fetching will not work</string>
+    <string name="enable_kill_switch">Kill switch\'i etkinleştir</string>
+    <string name="disable_kill_switch">Kill switch\'i devre dışı bırak</string>
+    <string name="kill_switch_message">Kill switch etkinleştirildi, uzaktan oturum açma ve profil getirme çalışmayacaktır.</string>
 </resources>

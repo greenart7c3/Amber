@@ -30,10 +30,22 @@
         android:usesCleartextTraffic="true"
         android:windowSoftInputMode="adjustResize"
         tools:targetApi="33">
+        <service
+            android:name=".nostr_nip55_signer"
+            android:enabled="true"
+            android:exported="true"
+            >
+
+        <intent-filter>
+            <action android:name="nostr_nip55_signer" />
+        </intent-filter>
+
+        </service>
+
         <receiver
             android:name=".service.KillSwitchReceiver"
             android:enabled="true"
-            android:exported="false"></receiver>
+            android:exported="false" />
         <receiver
             android:name=".service.ReconnectReceiver"
             android:enabled="true"

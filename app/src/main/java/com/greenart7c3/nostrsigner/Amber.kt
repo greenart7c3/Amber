@@ -184,6 +184,7 @@ class Amber : Application(), LifecycleObserver {
 
     override fun onCreate() {
         super.onCreate()
+
         isStartingApp.value = true
 
         Log.d(TAG, "onCreate Amber")
@@ -233,29 +234,31 @@ class Amber : Application(), LifecycleObserver {
                     client.disconnect()
                 }
                 launch(Dispatchers.Main) {
-                    ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-                        override fun onStart(owner: LifecycleOwner) {
-                            Log.d("ProcessLifecycleOwner", "App in foreground")
-                            isAppInForeground = true
+                    ProcessLifecycleOwner.get().lifecycle.addObserver(
+                        object : DefaultLifecycleObserver {
+                            override fun onStart(owner: LifecycleOwner) {
+                                Log.d("ProcessLifecycleOwner", "App in foreground")
+                                isAppInForeground = true
 
-                            // activates the profile filter only when the app is in the foreground
-                            if (!settings.killSwitch.value) {
-                                applicationIOScope.launch {
-                                    profileSubscription.updateFilter()
+                                // activates the profile filter only when the app is in the foreground
+                                if (!settings.killSwitch.value) {
+                                    applicationIOScope.launch {
+                                        profileSubscription.updateFilter()
+                                    }
                                 }
                             }
-                        }
 
-                        override fun onStop(owner: LifecycleOwner) {
-                            Log.d("ProcessLifecycleOwner", "App in background")
-                            isAppInForeground = false
+                            override fun onStop(owner: LifecycleOwner) {
+                                Log.d("ProcessLifecycleOwner", "App in background")
+                                isAppInForeground = false
 
-                            // closes the filter when in the background
-                            applicationIOScope.launch {
-                                profileSubscription.closeSub()
+                                // closes the filter when in the background
+                                applicationIOScope.launch {
+                                    profileSubscription.closeSub()
+                                }
                             }
-                        }
-                    })
+                        },
+                    )
                 }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)

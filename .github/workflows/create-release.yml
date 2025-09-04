@@ -26,20 +26,90 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Build APK
-        run: ./gradlew assembleRelease --stacktrace
+      - name: Create keystore.properties
+        run: touch keystore.properties
 
-      - name: Sign free APK
+      - name: Build all variants (AABs and APKs)
+        run: |
+          ./gradlew clean bundleRelease assembleRelease --stacktrace
+        env:
+          SIGN_RELEASE: true
+        
+      - name: Sign APKs
         uses: r0adkll/sign-android-release@v1
         with:
-          releaseDirectory: app/build/outputs/apk/free/release
+          releaseDirectory: app/build/outputs/apk
           signingKeyBase64: ${{ secrets.SIGNING_KEY }}
           alias: ${{ secrets.KEY_ALIAS }}
           keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
           keyPassword: ${{ secrets.KEY_PASSWORD }}
         env:
-          # override default build-tools version (29.0.3) -- optional
           BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Sign AABs
+        uses: r0adkll/sign-android-release@v1
+        with:
+          releaseDirectory: app/build/outputs/bundle
+          signingKeyBase64: ${{ secrets.SIGNING_KEY }}
+          alias: ${{ secrets.KEY_ALIAS }}
+          keyStorePassword: ${{ secrets.KEY_STORE_PASSWORD }}
+          keyPassword: ${{ secrets.KEY_PASSWORD }}
+        env:
+          BUILD_TOOLS_VERSION: "34.0.0"
+
+      - name: Generate manifest files
+        run: |
+          mkdir -p release_assets
+          cd release_assets
+          
+          # Create manifest with all file hashes
+          echo "# Amber Release ${{ github.ref_name }} - $(date)" > manifest-${{ github.ref_name }}.txt
+          echo "# File hashes (SHA256):" >> manifest-${{ github.ref_name }}.txt
+          echo "" >> manifest-${{ github.ref_name }}.txt
+          
+          # Copy and rename all APK files
+          # Free flavor APKs
+          cp ../app/build/outputs/apk/free/release/app-free-arm64-v8a-release-unsigned-signed.apk amber-free-arm64-v8a-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/free/release/app-free-armeabi-v7a-release-unsigned-signed.apk amber-free-armeabi-v7a-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/free/release/app-free-x86-release-unsigned-signed.apk amber-free-x86-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/free/release/app-free-x86_64-release-unsigned-signed.apk amber-free-x86_64-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/free/release/app-free-universal-release-unsigned-signed.apk amber-free-universal-${{ github.ref_name }}.apk
+          
+          # Offline flavor APKs
+          cp ../app/build/outputs/apk/offline/release/app-offline-arm64-v8a-release-unsigned-signed.apk amber-offline-arm64-v8a-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/offline/release/app-offline-armeabi-v7a-release-unsigned-signed.apk amber-offline-armeabi-v7a-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/offline/release/app-offline-x86-release-unsigned-signed.apk amber-offline-x86-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/offline/release/app-offline-x86_64-release-unsigned-signed.apk amber-offline-x86_64-${{ github.ref_name }}.apk
+          cp ../app/build/outputs/apk/offline/release/app-offline-universal-release-unsigned-signed.apk amber-offline-universal-${{ github.ref_name }}.apk
+          
+          # AAB files
+          cp ../app/build/outputs/bundle/freeRelease/app-free-release.aab amber-free-${{ github.ref_name }}.aab
+          cp ../app/build/outputs/bundle/offlineRelease/app-offline-release.aab amber-offline-${{ github.ref_name }}.aab
+          
+          # Create special fdroid variant (same as free universal)
+          cp amber-free-universal-${{ github.ref_name }}.apk amber-fdroid-universal-${{ github.ref_name }}.apk
+          
+          # Generate hashes for all files
+          for file in amber-*.apk amber-*.aab; do
+            if [ -f "$file" ]; then
+              hash=$(sha256sum "$file" | cut -d' ' -f1)
+              echo "$hash  $file" >> manifest-${{ github.ref_name }}.txt
+            fi
+          done
+
+      - name: Sign manifest file
+        run: |
+          cd release_assets
+          # Create a GPG signature for the manifest file if GPG key is available
+          if [ -n "${{ secrets.GPG_PRIVATE_KEY }}" ]; then
+            echo "${{ secrets.GPG_PRIVATE_KEY }}" | gpg --batch --import
+            gpg --batch --yes --detach-sign --armor manifest-${{ github.ref_name }}.txt
+            mv manifest-${{ github.ref_name }}.txt.asc manifest-${{ github.ref_name }}.txt.sig
+          else
+            # Create a simple signature placeholder if no GPG key is configured
+            echo "# Signature placeholder - configure GPG_PRIVATE_KEY secret for real signatures" > manifest-${{ github.ref_name }}.txt.sig
+            echo "# SHA256 of manifest: $(sha256sum manifest-${{ github.ref_name }}.txt | cut -d' ' -f1)" >> manifest-${{ github.ref_name }}.txt.sig
+          fi
 
       - uses: kaisugi/action-regex-match@v1.0.1
         id: regex-match
@@ -59,13 +129,156 @@ jobs:
           draft: false
           prerelease: ${{ steps.regex-match.outputs.match != '' }}
 
-      - name: Upload Free APK Universal Asset
-        id: upload-free-release-asset-universal-apk
+      # Upload all APK variants
+      - name: Upload Free ARM64 APK
         uses: actions/upload-release-asset@v1
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: app/build/outputs/apk/free/release/app-free-universal-release-unsigned-signed.apk
+          asset_path: release_assets/amber-free-arm64-v8a-${{ github.ref_name }}.apk
+          asset_name: amber-free-arm64-v8a-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Free ARMv7 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-free-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_name: amber-free-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Free x86 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-free-x86-${{ github.ref_name }}.apk
+          asset_name: amber-free-x86-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Free x86_64 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-free-x86_64-${{ github.ref_name }}.apk
+          asset_name: amber-free-x86_64-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Free Universal APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-free-universal-${{ github.ref_name }}.apk
+          asset_name: amber-free-universal-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Offline ARM64 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-offline-arm64-v8a-${{ github.ref_name }}.apk
+          asset_name: amber-offline-arm64-v8a-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Offline ARMv7 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-offline-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_name: amber-offline-armeabi-v7a-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Offline x86 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-offline-x86-${{ github.ref_name }}.apk
+          asset_name: amber-offline-x86-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Offline x86_64 APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-offline-x86_64-${{ github.ref_name }}.apk
+          asset_name: amber-offline-x86_64-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload Offline Universal APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-offline-universal-${{ github.ref_name }}.apk
+          asset_name: amber-offline-universal-${{ github.ref_name }}.apk
+          asset_content_type: application/vnd.android.package-archive
+
+      - name: Upload F-Droid Universal APK
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-fdroid-universal-${{ github.ref_name }}.apk
           asset_name: amber-fdroid-universal-${{ github.ref_name }}.apk
-          asset_content_type: application/zip
+          asset_content_type: application/vnd.android.package-archive
+
+      # Upload AAB files
+      - name: Upload Free AAB
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-free-${{ github.ref_name }}.aab
+          asset_name: amber-free-${{ github.ref_name }}.aab
+          asset_content_type: application/octet-stream
+
+      - name: Upload Offline AAB
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/amber-offline-${{ github.ref_name }}.aab
+          asset_name: amber-offline-${{ github.ref_name }}.aab
+          asset_content_type: application/octet-stream
+
+      # Upload manifest file
+      - name: Upload Manifest
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/manifest-${{ github.ref_name }}.txt
+          asset_name: manifest-${{ github.ref_name }}.txt
+          asset_content_type: text/plain
+
+      # Upload manifest signature file
+      - name: Upload Manifest Signature
+        uses: actions/upload-release-asset@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: release_assets/manifest-${{ github.ref_name }}.txt.sig
+          asset_name: manifest-${{ github.ref_name }}.txt.sig
+          asset_content_type: text/plain

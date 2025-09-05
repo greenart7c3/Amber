@@ -1,0 +1,272 @@
+name: 'Build and Upload Android Assets'
+description: 'Builds, signs (optionally), and uploads APKs or AABs for a given flavor or all flavors'
+
+inputs:
+  flavor:
+    description: 'Build flavor (free, offline, or empty for all flavors)'
+    required: false
+    default: ''
+  build-type:
+    description: 'Type of build (apk or aab)'
+    required: true
+  build-variant:
+    description: 'Build variant (debug or release)'
+    required: true
+    default: 'release'
+  upload-target:
+    description: 'Where to upload (artifact or release)'
+    required: true
+    default: 'release'
+  release-tag:
+    description: 'Release tag for naming files (required if upload-target is release)'
+    required: false
+  artifact-name:
+    description: 'Artifact name (required if upload-target is artifact)'
+    required: false
+
+outputs:
+  manifest-entries:
+    description: 'SHA256 hashes of built files'
+    value: ${{ steps.upload.outputs.manifest-entries }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Build Android Assets
+      shell: bash
+      run: |
+        if [ -z "${{ inputs.flavor }}" ]; then
+          # Build all flavors
+          VARIANT_CAPITALIZED="$(echo ${{ inputs.build-variant }} | sed 's/./\U&/')"
+          
+          if [ "${{ inputs.build-type }}" = "apk" ]; then
+            ./gradlew assembleFree${VARIANT_CAPITALIZED} assembleOffline${VARIANT_CAPITALIZED} --stacktrace
+          elif [ "${{ inputs.build-type }}" = "aab" ]; then
+            ./gradlew bundleFree${VARIANT_CAPITALIZED} bundleOffline${VARIANT_CAPITALIZED} --stacktrace
+          else
+            echo "Error: build-type must be either 'apk' or 'aab'"
+            exit 1
+          fi
+        else
+          # Build specific flavor (existing logic)
+          FLAVOR_CAPITALIZED="$(echo ${{ inputs.flavor }} | sed 's/./\U&/')"
+          VARIANT_CAPITALIZED="$(echo ${{ inputs.build-variant }} | sed 's/./\U&/')"
+          BUILD_TYPE="${FLAVOR_CAPITALIZED}${VARIANT_CAPITALIZED}"
+          
+          if [ "${{ inputs.build-type }}" = "apk" ]; then
+            ./gradlew assemble${BUILD_TYPE} --stacktrace
+          elif [ "${{ inputs.build-type }}" = "aab" ]; then
+            ./gradlew bundle${BUILD_TYPE} --stacktrace
+          else
+            echo "Error: build-type must be either 'apk' or 'aab'"
+            exit 1
+          fi
+        fi
+      env:
+        GRADLE_OPTS: "-Xmx6g -XX:MaxMetaspaceSize=1g -XX:+HeapDumpOnOutOfMemoryError -XX:+UseG1GC"
+
+    - name: Sign Android Assets
+      if: ${{ inputs.build-variant == 'release' }}
+      shell: bash
+      run: |
+        # Create keystore from base64
+        echo "${{ env.SIGNING_KEY }}" | base64 -d > signing-key.jks
+        
+        if [ -z "${{ inputs.flavor }}" ]; then
+          echo Sign all flavors when no specific flavor is provided
+          FLAVORS="free offline"
+          for flavor in $FLAVORS; do
+            if [ "${{ inputs.build-type }}" = "apk" ]; then
+              RELEASE_DIR="app/build/outputs/apk/${flavor}/${{ inputs.build-variant }}"
+            else
+              VARIANT_CAP="$(echo ${{ inputs.build-variant }} | sed 's/./\U&/')"
+              RELEASE_DIR="app/build/outputs/bundle/${flavor}${VARIANT_CAP}"
+            fi
+            
+            echo "Signing ${flavor} ${{ inputs.build-type }} files in ${RELEASE_DIR}"
+            if [ -d "${RELEASE_DIR}" ]; then
+              cd "${RELEASE_DIR}"
+              for file in *.apk *.aab; do
+                if [ -f "$file" ]; then
+                  echo "Signing: $file"
+                  jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
+                    -keystore "$GITHUB_WORKSPACE/signing-key.jks" \
+                    -storepass "${{ env.KEY_STORE_PASSWORD }}" \
+                    -keypass "${{ env.KEY_PASSWORD }}" \
+                    "$file" "${{ env.KEY_ALIAS }}" || echo "Failed to sign $file"
+                fi
+              done
+              cd "$GITHUB_WORKSPACE"
+            else
+              echo "Directory ${RELEASE_DIR} not found"
+            fi
+          done
+        else
+          # Sign specific flavor
+          if [ "${{ inputs.build-type }}" = "apk" ]; then
+            RELEASE_DIR="app/build/outputs/apk/${{ inputs.flavor }}/${{ inputs.build-variant }}"
+          else
+            VARIANT_CAP="$(echo ${{ inputs.build-variant }} | sed 's/./\U&/')"
+            RELEASE_DIR="app/build/outputs/bundle/${{ inputs.flavor }}${VARIANT_CAP}"
+          fi
+          
+          echo "Signing specific flavor files in ${RELEASE_DIR}"
+          if [ -d "${RELEASE_DIR}" ]; then
+            cd "${RELEASE_DIR}"
+            for file in *.apk *.aab; do
+              if [ -f "$file" ]; then
+                echo "Signing: $file"
+                jarsigner -sigalg SHA256withRSA -digestalg SHA-256 \
+                  -keystore "$GITHUB_WORKSPACE/signing-key.jks" \
+                  -storepass "${{ env.KEY_STORE_PASSWORD }}" \
+                  -keypass "${{ env.KEY_PASSWORD }}" \
+                  "$file" "${{ env.KEY_ALIAS }}" || echo "Failed to sign $file"
+              fi
+            done
+            cd "$GITHUB_WORKSPACE"
+          else
+            echo "Directory ${RELEASE_DIR} not found"
+          fi
+        fi
+        
+        # Clean up keystore
+        rm -f signing-key.jks
+      continue-on-error: true
+
+    - name: Process and upload Android Assets
+      id: upload
+      shell: bash
+      run: |
+        MANIFEST_ENTRIES=""
+        
+        # Debug: List the build output structure
+        echo "Debugging build output structure:"
+        find app/build/outputs -type d -name "*" 2>/dev/null || echo "No build outputs found"
+        
+        if [ -z "${{ inputs.flavor }}" ]; then
+          # Process all flavors
+          FLAVORS="free offline"
+        else
+          # Process specific flavor
+          FLAVORS="${{ inputs.flavor }}"
+        fi
+        
+        # Store the original working directory
+        ORIGINAL_DIR="$(pwd)"
+        
+        for flavor in $FLAVORS; do
+          # Always start from the original directory
+          cd "$ORIGINAL_DIR"
+          
+          if [ "${{ inputs.build-type }}" = "apk" ]; then
+            BUILD_DIR="app/build/outputs/apk/${flavor}/${{ inputs.build-variant }}"
+            
+            # Debug: Show what directories actually exist
+            echo "Looking for directory: $BUILD_DIR"
+            echo "Available apk directories:"
+            find app/build/outputs/apk -type d 2>/dev/null || echo "No apk directories found"
+            
+            # Check if the flavor directory exists before processing
+            if [ ! -d "$BUILD_DIR" ]; then
+              echo "Warning: Directory $BUILD_DIR does not exist. Skipping $flavor flavor."
+              continue
+            fi
+            
+            echo "Processing $flavor flavor in $BUILD_DIR"
+            cd "$BUILD_DIR"
+            
+            # Debug: List files in the directory
+            echo "Files in $BUILD_DIR:"
+            ls -la
+            
+            if [ "${{ inputs.upload-target }}" = "artifact" ]; then
+              # For debug builds - find the universal APK and get absolute path
+              APK_FILE=$(find . -name "*universal*.apk" | head -1)
+              if [ -n "$APK_FILE" ]; then
+                CLEAN_FILE=$(echo "$APK_FILE" | sed 's|^\./||')
+                ABSOLUTE_PATH="$(pwd)/${CLEAN_FILE}"
+                echo "apk-path=${ABSOLUTE_PATH}" >> $GITHUB_OUTPUT
+              fi
+            else
+              # For release builds - process all architectures + F-Droid variant
+              for arch in arm64-v8a armeabi-v7a x86 x86_64 universal; do
+                APK_FILE=$(find . -name "*${arch}*.apk" | head -1)
+                if [ -n "$APK_FILE" ]; then
+                  FINAL_NAME="amber-${flavor}-${arch}-${{ inputs.release-tag }}.apk"
+                  cp "$APK_FILE" "$FINAL_NAME"
+                  
+                  HASH=$(sha256sum "$FINAL_NAME" | cut -d' ' -f1)
+                  MANIFEST_ENTRIES="${MANIFEST_ENTRIES}${HASH}  ${FINAL_NAME}\n"
+                  
+                  echo "Uploading ${FINAL_NAME} to release..."
+                  gh release upload ${{ inputs.release-tag }} "$FINAL_NAME" --clobber
+                fi
+              done
+              
+              # Create fdroid variant for free flavor only
+              if [ "$flavor" = "free" ] && [ -f "amber-free-universal-${{ inputs.release-tag }}.apk" ]; then
+                FDROID_NAME="amber-fdroid-universal-${{ inputs.release-tag }}.apk"
+                cp "amber-free-universal-${{ inputs.release-tag }}.apk" "$FDROID_NAME"
+                HASH=$(sha256sum "$FDROID_NAME" | cut -d' ' -f1)
+                MANIFEST_ENTRIES="${MANIFEST_ENTRIES}${HASH}  ${FDROID_NAME}\n"
+                gh release upload ${{ inputs.release-tag }} "$FDROID_NAME" --clobber
+              fi
+            fi
+            
+          elif [ "${{ inputs.build-type }}" = "aab" ]; then
+            VARIANT_CAP="$(echo ${{ inputs.build-variant }} | sed 's/./\U&/')"
+            BUILD_DIR="app/build/outputs/bundle/${flavor}${VARIANT_CAP}"
+            
+            # Debug: Show what directories actually exist
+            echo "Looking for directory: $BUILD_DIR"
+            echo "Available bundle directories:"
+            find app/build/outputs/bundle -type d 2>/dev/null || echo "No bundle directories found"
+            
+            # Check if the flavor directory exists before processing
+            if [ ! -d "$BUILD_DIR" ]; then
+              echo "Warning: Directory $BUILD_DIR does not exist. Skipping $flavor flavor."
+              continue
+            fi
+            
+            echo "Processing $flavor flavor in $BUILD_DIR"
+            cd "$BUILD_DIR"
+            
+            # Debug: List files in the directory
+            echo "Files in $BUILD_DIR:"
+            ls -la
+            
+            AAB_FILE=$(find . -name "*.aab" | head -1)
+            if [ -n "$AAB_FILE" ]; then
+              if [ "${{ inputs.upload-target }}" = "artifact" ]; then
+                CLEAN_FILE=$(echo "$AAB_FILE" | sed 's|^\./||')
+                ABSOLUTE_PATH="$(pwd)/${CLEAN_FILE}"
+                echo "aab-path=${ABSOLUTE_PATH}" >> $GITHUB_OUTPUT
+              else
+                FINAL_NAME="amber-${flavor}-${{ inputs.release-tag }}.aab"
+                cp "$AAB_FILE" "$FINAL_NAME"
+                
+                HASH=$(sha256sum "$FINAL_NAME" | cut -d' ' -f1)
+                MANIFEST_ENTRIES="${MANIFEST_ENTRIES}${HASH}  ${FINAL_NAME}\n"
+                
+                echo "Uploading ${FINAL_NAME} to release..."
+                gh release upload ${{ inputs.release-tag }} "$FINAL_NAME" --clobber
+              fi
+            fi
+          fi
+        done
+        
+        # Return to original directory
+        cd "$ORIGINAL_DIR"
+        
+        echo "manifest-entries<<EOF" >> $GITHUB_OUTPUT
+        echo -e "$MANIFEST_ENTRIES" >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+
+    - name: Upload to GitHub Artifacts
+      if: ${{ inputs.upload-target == 'artifact' && inputs.build-type == 'apk' }}
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact-name || 'Debug APK' }}
+        path: ${{ steps.upload.outputs.apk-path }}

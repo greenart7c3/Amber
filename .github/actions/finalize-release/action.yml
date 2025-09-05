@@ -1,0 +1,83 @@
+name: 'Finalize Release'
+description: 'Creates manifest, signs it, uploads it, and publishes the release'
+
+inputs:
+  release-tag:
+    description: 'Release tag for naming files'
+    required: true
+  manifest-data:
+    description: 'File hash data to include in manifest'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Generate manifest file
+      shell: bash
+      run: |
+        echo "# Amber Release ${{ inputs.release-tag }} - $(date)" > manifest-${{ inputs.release-tag }}.txt
+        echo "# File hashes (SHA256):" >> manifest-${{ inputs.release-tag }}.txt
+        echo "" >> manifest-${{ inputs.release-tag }}.txt
+        
+        echo '${{ inputs.manifest-data }}' | while IFS= read -r line; do
+          if [ -n "$line" ] && [ "$line" != "null" ]; then
+            echo "$line" >> manifest-${{ inputs.release-tag }}.txt
+          fi
+        done
+        
+        echo "Generated manifest:"
+        cat manifest-${{ inputs.release-tag }}.txt
+
+    - name: Sign manifest with GPG
+      shell: bash
+      run: |
+        if [ -n "$GPG_PRIVATE_KEY" ]; then
+          export GPG_TTY=""
+          export GNUPGHOME=$(mktemp -d)
+          
+          # Configure GPG for non-interactive operation
+          echo "use-agent" > $GNUPGHOME/gpg.conf
+          echo "pinentry-mode loopback" >> $GNUPGHOME/gpg.conf
+          echo "batch" >> $GNUPGHOME/gpg.conf
+          echo "no-tty" >> $GNUPGHOME/gpg.conf
+          
+          # Import private key and set trust
+          echo "$GPG_PRIVATE_KEY" | gpg --batch --import --quiet
+          echo "C00C563A025C327C95DF036AEE1FA70568414E2A:6:" | gpg --import-ownertrust --quiet
+          
+          # Sign the manifest
+          if [ -n "$GPG_PASSPHRASE" ]; then
+            echo "$GPG_PASSPHRASE" | gpg --batch --yes --quiet --pinentry-mode loopback --passphrase-fd 0 --detach-sign --armor manifest-${{ inputs.release-tag }}.txt
+          else
+            gpg --batch --yes --quiet --pinentry-mode loopback --detach-sign --armor manifest-${{ inputs.release-tag }}.txt
+          fi
+          
+          if [ -f "manifest-${{ inputs.release-tag }}.txt.asc" ]; then
+            mv manifest-${{ inputs.release-tag }}.txt.asc manifest-${{ inputs.release-tag }}.txt.sig
+            echo "✓ Manifest signed successfully"
+          else
+            echo "⚠ GPG signing failed - creating unsigned manifest"
+            echo "# Unsigned manifest - GPG signing failed" > manifest-${{ inputs.release-tag }}.txt.sig
+            echo "# SHA256 of manifest: $(sha256sum manifest-${{ inputs.release-tag }}.txt | cut -d' ' -f1)" >> manifest-${{ inputs.release-tag }}.txt.sig
+          fi
+        else
+          echo "# Signature placeholder - configure GPG_PRIVATE_KEY secret for real signatures" > manifest-${{ inputs.release-tag }}.txt.sig
+          echo "# SHA256 of manifest: $(sha256sum manifest-${{ inputs.release-tag }}.txt | cut -d' ' -f1)" >> manifest-${{ inputs.release-tag }}.txt.sig
+        fi
+      env:
+        GPG_PRIVATE_KEY: ${{ env.GPG_PRIVATE_KEY }}
+        GPG_PASSPHRASE: ${{ env.GPG_PASSPHRASE }}
+
+    - name: Upload manifest to release
+      shell: bash
+      run: |
+        gh release upload ${{ inputs.release-tag }} manifest-${{ inputs.release-tag }}.txt --clobber
+        gh release upload ${{ inputs.release-tag }} manifest-${{ inputs.release-tag }}.txt.sig --clobber
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}
+
+    - name: Publish release
+      shell: bash
+      run: gh release edit ${{ inputs.release-tag }} --draft=false
+      env:
+        GITHUB_TOKEN: ${{ env.GITHUB_TOKEN }}

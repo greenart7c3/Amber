@@ -74,9 +74,27 @@ gpg --verify manifest-v1.0.0.txt.sig manifest-v1.0.0.txt
 
 **⚠️ Security Notice**: Only download releases from this official GitHub repository. If GPG verification fails, **do not install the APK** and report it as a security issue.
 
-# Check for reproducibility
+# Verifying Reproducibility of Amber
 
-TODO: add instructions to check for reproducibility
+To confirm that the Amber build is reproducible, follow these steps:
+
+1 - Run the following command to build the image with no cache and specified version:
+
+''' bash
+docker build -t amber-repro --progress=plain --no-cache --build-arg VERSION=v4.0.1 --build-arg APK_TYPE=free-arm64-v8a .
+'''
+
+2 -After the image is built, run the container:
+
+''' bash
+docker run --rm amber-repro
+'''
+
+3 - You should see the following message indicating success:
+
+''' bash
+APKs match!
+'''
 
 # Usage
 

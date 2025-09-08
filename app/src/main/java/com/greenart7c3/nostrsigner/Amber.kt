@@ -25,6 +25,7 @@ import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.RelayAuthenticator
@@ -226,6 +227,7 @@ class Amber : Application(), LifecycleObserver {
                 LocalPreferences.migrateTorSettings(this@Amber)
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
+                fixRejectedPermissions()
                 isStartingApp.value = false
 
                 checkForNewRelaysAndUpdateAllFilters(true)
@@ -262,6 +264,26 @@ class Amber : Application(), LifecycleObserver {
                 isStartingApp.value = false
                 if (e is CancellationException) throw e
             }
+        }
+    }
+
+    suspend fun fixRejectedPermissions() {
+        LocalPreferences.allSavedAccounts(this).forEach { account ->
+            val permissions = getDatabase(account.npub).applicationDao().getAllRejectedPermissions()
+            val localPermissions =
+                permissions.map {
+                    val isAcceptable = it.acceptable
+                    val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
+                    val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
+
+                    it.copy(
+                        acceptable = it.acceptable,
+                        acceptUntil = acceptUntil,
+                        rejectUntil = rejectUntil,
+                        rememberType = RememberType.ALWAYS.screenCode,
+                    )
+                }
+            getDatabase(account.npub).applicationDao().insertPermissions(localPermissions)
         }
     }
 

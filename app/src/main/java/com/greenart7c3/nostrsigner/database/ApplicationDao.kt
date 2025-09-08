@@ -75,6 +75,10 @@ interface ApplicationDao {
     @Transaction
     fun getAllApplications(): List<ApplicationWithPermissions>
 
+    @Query("SELECT * FROM applicationPermission WHERE acceptable = 0 AND rejectUntil = 0")
+    @Transaction
+    fun getAllRejectedPermissions(): List<ApplicationPermissionsEntity>
+
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND  kind = :kind")
     fun getPermission(
         key: String,

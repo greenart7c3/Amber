@@ -45,6 +45,39 @@ You can also send patches through Nostr using [GitStr](https://github.com/fiatja
 
 By contributing to this repository, you agree to license your work under the MIT license. Any work contributed where you are not the original author must contain its license header with the original author(s) and source.
 
+# Security and Verification
+
+🔐 **All releases are cryptographically signed with GPG for your security.**
+
+Before installing any APK from our releases, we strongly recommend verifying its authenticity to ensure it hasn't been tampered with.
+
+**[📋 View Release Verification Guide](VERIFY_RELEASES.md)**
+
+The verification process involves:
+1. Importing our GPG public key
+2. Verifying the release manifest signature
+3. Checking file integrity with SHA256 hashes
+
+**GPG Key Details:**
+- **Key ID**: `44F0AAEB77F373747E3D5444885822EED3A26A6D`
+- **Fingerprint**: `44F0 AAEB 77F3 7374 7E3D  5444 8858 22EE D3A2 6A6D`
+- **User ID**: `greenart7c3 <greenart7c3@proton.me>`
+
+**Quick verification:**
+```bash
+# Import the signing key
+gpg --keyserver hkps://keys.openpgp.org --recv-keys 44F0AAEB77F373747E3D5444885822EED3A26A6D
+
+# Verify a release (example for v1.0.0)
+gpg --verify manifest-v1.0.0.txt.sig manifest-v1.0.0.txt
+```
+
+**⚠️ Security Notice**: Only download releases from this official GitHub repository. If GPG verification fails, **do not install the APK** and report it as a security issue.
+
+# Check for reproducibility
+
+TODO: add instructions to check for reproducibility
+
 # Usage
 
 Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NIP 46](https://github.com/nostr-protocol/nips/blob/master/46.md) for more information.

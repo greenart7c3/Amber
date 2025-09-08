@@ -300,6 +300,7 @@ fun IntentMultiEventHomeScreen(
                                                 localEvent.sig
                                             },
                                             id = intentData.id,
+                                            rejected = null,
                                         ),
                                     )
                                 }
@@ -336,6 +337,7 @@ fun IntentMultiEventHomeScreen(
                                             signature = signedMessage,
                                             result = signedMessage,
                                             id = intentData.id,
+                                            rejected = null,
                                         ),
                                     )
                                 }
@@ -373,6 +375,7 @@ fun IntentMultiEventHomeScreen(
                                             signature = signature,
                                             result = signature,
                                             id = intentData.id,
+                                            rejected = null,
                                         ),
                                     )
                                 }
@@ -450,7 +453,17 @@ fun IntentMultiEventHomeScreen(
                             closeApp = false
                         }
                     }
-
+                    sendRejectIntent(
+                        results = intents.map {
+                            Result(
+                                null,
+                                signature = null,
+                                result = null,
+                                id = it.id,
+                                rejected = true,
+                            )
+                        }.toMutableList(),
+                    )
                     finishActivity(closeApp)
                 }
             },
@@ -901,6 +914,15 @@ private fun finishActivity(closeApp: Boolean) {
     if (closeApp) {
         activity?.finish()
     }
+}
+
+private fun sendRejectIntent(
+    results: MutableList<Result>,
+) {
+    val json = Permission.mapper.writeValueAsString(results)
+    val intent = Intent()
+    intent.putExtra("results", json)
+    Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
 }
 
 private fun sendResultIntent(

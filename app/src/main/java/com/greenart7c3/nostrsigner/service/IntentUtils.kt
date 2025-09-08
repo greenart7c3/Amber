@@ -785,6 +785,7 @@ object IntentUtils {
 
             val activity = Amber.instance.getMainActivity()
             activity?.intent = null
+            activity?.setResult(RESULT_OK, Intent().also { it.putExtra("rejected", "") })
             if (application.application.closeApplication) {
                 activity?.finish()
             }

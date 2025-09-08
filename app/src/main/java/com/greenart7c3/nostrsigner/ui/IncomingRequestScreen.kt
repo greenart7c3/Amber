@@ -132,6 +132,7 @@ data class Result(
     val `package`: String?,
     val signature: String?,
     val result: String?,
+    val rejected: Boolean?,
     val id: String?,
 ) {
     companion object {
@@ -153,6 +154,9 @@ data class Result(
                 gen.writeStringField("package", result.`package`)
                 gen.writeStringField("signature", result.signature)
                 gen.writeStringField("result", result.result)
+                result.rejected?.let {
+                    gen.writeBooleanField("rejected", it)
+                }
                 gen.writeEndObject()
             }
         }

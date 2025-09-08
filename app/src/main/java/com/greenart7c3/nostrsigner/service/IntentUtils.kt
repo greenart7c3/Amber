@@ -133,6 +133,7 @@ object IntentUtils {
                 SignerType.SIGN_EVENT -> {
                     val unsignedEvent = getUnsignedEvent(localData, account)
                     var localAccount = account
+                    val unsignedEventKey = unsignedEvent.pubKey
                     if (unsignedEvent.pubKey != account.hexKey) {
                         LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                             localAccount = it
@@ -161,6 +162,7 @@ object IntentUtils {
                         route = route,
                         event = signedEvent,
                         encryptedData = null,
+                        unsignedEventKey = unsignedEventKey,
                     )
                 }
                 SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
@@ -308,6 +310,7 @@ object IntentUtils {
             SignerType.SIGN_EVENT -> {
                 val unsignedEvent = getUnsignedEvent(data, account)
                 var localAccount = account
+                val unsignedEventKey = unsignedEvent.pubKey
                 if (unsignedEvent.pubKey != account.hexKey) {
                     LocalPreferences.loadFromEncryptedStorageSync(context, Hex.decode(unsignedEvent.pubKey).toNpub())?.let {
                         localAccount = it
@@ -342,6 +345,7 @@ object IntentUtils {
                     route = route,
                     event = signed,
                     encryptedData = null,
+                    unsignedEventKey = unsignedEventKey,
                 )
             }
             SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {

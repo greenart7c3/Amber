@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -33,6 +32,7 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -50,6 +50,7 @@ fun IntentSingleEventHomeScreen(
     applicationName: String?,
     intentData: IntentData,
     account: Account,
+    accountStateViewModel: AccountStateViewModel,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
@@ -309,14 +310,11 @@ fun IntentSingleEventHomeScreen(
                     rawJson = event.toJson(),
                     type = intentData.type,
                     onAccept = {
-                        if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
-                            coroutineScope.launch {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
-                            }
+                        if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                            accountStateViewModel.toast(
+                                title = context.getString(R.string.warning),
+                                message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                            )
                             return@EventData
                         }
 

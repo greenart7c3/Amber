@@ -22,4 +22,5 @@ data class IntentData(
     val event: Event?,
     val encryptedData: String?,
     val isNostrConnectURI: Boolean = false,
+    val unsignedEventKey: HexKey = "",
 )

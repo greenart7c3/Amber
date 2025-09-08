@@ -50,6 +50,7 @@ fun IncomingRequestScreen(
     packageName: String?,
     applicationName: String?,
     account: Account,
+    accountStateViewModel: AccountStateViewModel,
     navController: NavController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
@@ -101,6 +102,7 @@ fun IncomingRequestScreen(
                 applicationName = applicationName,
                 intentData = intents.first(),
                 account = account,
+                accountStateViewModel = accountStateViewModel,
                 onRemoveIntentData = onRemoveIntentData,
                 onLoading = onLoading,
             )

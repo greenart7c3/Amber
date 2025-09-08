@@ -228,6 +228,7 @@ class Amber : Application(), LifecycleObserver {
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
                 fixRejectedPermissions()
+                fixAcceptedPermissions()
                 isStartingApp.value = false
 
                 checkForNewRelaysAndUpdateAllFilters(true)
@@ -270,6 +271,27 @@ class Amber : Application(), LifecycleObserver {
     suspend fun fixRejectedPermissions() {
         LocalPreferences.allSavedAccounts(this).forEach { account ->
             val permissions = getDatabase(account.npub).applicationDao().getAllRejectedPermissions()
+            val localPermissions =
+                permissions.map {
+                    val isAcceptable = it.acceptable
+                    val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
+                    val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
+
+                    it.copy(
+                        acceptable = it.acceptable,
+                        acceptUntil = acceptUntil,
+                        rejectUntil = rejectUntil,
+                        rememberType = RememberType.ALWAYS.screenCode,
+                    )
+                }
+            getDatabase(account.npub).applicationDao().insertPermissions(localPermissions)
+        }
+    }
+
+    suspend fun fixAcceptedPermissions() {
+        LocalPreferences.allSavedAccounts(this).forEach { account ->
+            val permissions = getDatabase(account.npub).applicationDao().getAllAcceptedPermissions()
+            Log.d(TAG, "Found ${permissions.size} accepted permissions")
             val localPermissions =
                 permissions.map {
                     val isAcceptable = it.acceptable

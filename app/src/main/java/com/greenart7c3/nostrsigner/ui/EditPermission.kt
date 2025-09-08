@@ -214,8 +214,14 @@ fun EditPermission(
                                     val localPermissions =
                                         permissions.map {
                                             if (it.id == permission.id) {
+                                                val isAcceptable = !permission.acceptable
+                                                val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
+                                                val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
+
                                                 it.copy(
                                                     acceptable = !permission.acceptable,
+                                                    acceptUntil = acceptUntil,
+                                                    rejectUntil = rejectUntil,
                                                     rememberType = RememberType.ALWAYS.screenCode,
                                                 )
                                             } else {
@@ -240,8 +246,14 @@ fun EditPermission(
                                     val localPermissions =
                                         permissions.map {
                                             if (it.id == permission.id) {
+                                                val isAcceptable = !permission.acceptable
+                                                val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
+                                                val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
+
                                                 it.copy(
                                                     acceptable = !permission.acceptable,
+                                                    acceptUntil = acceptUntil,
+                                                    rejectUntil = rejectUntil,
                                                     rememberType = RememberType.ALWAYS.screenCode,
                                                 )
                                             } else {

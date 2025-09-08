@@ -78,23 +78,23 @@ gpg --verify manifest-v1.0.0.txt.sig manifest-v1.0.0.txt
 
 To confirm that the Amber build is reproducible, follow these steps:
 
-1 - Run the following command to build the image with no cache and specified version:
+1. Run the following command to build the image with no cache and specified version:
 
-''' bash
+``` bash
 docker build -t amber-repro --progress=plain --no-cache --build-arg VERSION=v4.0.1 --build-arg APK_TYPE=free-arm64-v8a .
-'''
+```
 
-2 -After the image is built, run the container:
+2. After the image is built, run the container:
 
-''' bash
+``` bash
 docker run --rm amber-repro
-'''
+```
 
-3 - You should see the following message indicating success:
+3. You should see the following message indicating success:
 
-''' bash
+``` bash
 APKs match!
-'''
+```
 
 # Usage
 

@@ -135,4 +135,3 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 quartz/
-/.idea/other.xml

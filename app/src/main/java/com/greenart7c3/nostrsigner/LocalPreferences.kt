@@ -34,7 +34,7 @@ private enum class PrefKeys(val key: String) {
     ACCOUNT_NAME("account_name"),
     LANGUAGE_PREFS("languagePreferences"),
     SIGN_POLICY("default_sign_policy"),
-    SEED_WORDS2("seed_words"),
+    SEED_WORDS("seed_words"),
     PROFILE_URL("profile_url"),
     LAST_METADATA_UPDATE("last_metadata_update"),
     LAST_CHECK("last_check"),
@@ -155,20 +155,12 @@ object LocalPreferences {
         }
     }
 
-    fun getLastCheck(context: Context, npub: String): Long {
-        return sharedPrefs(context, npub).getLong(PrefKeys.LAST_CHECK.key, 0)
-    }
-
     fun setLastCheck(context: Context, npub: String, time: Long) {
         sharedPrefs(context, npub).edit {
             apply {
                 putLong(PrefKeys.LAST_CHECK.key, time)
             }
         }
-    }
-
-    fun getLastMetadataUpdate(context: Context, npub: String): Long {
-        return sharedPrefs(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE.key, 0)
     }
 
     fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
@@ -182,27 +174,6 @@ object LocalPreferences {
     fun loadPinFromEncryptedStorage(): String? {
         val context = Amber.instance
         return sharedPrefs(context).getString(SettingsKeys.PIN.key, null)
-    }
-
-    fun loadProfileUrlFromEncryptedStorage(npub: String): String? {
-        val context = Amber.instance
-        return sharedPrefs(context, npub).getString(PrefKeys.PROFILE_URL.key, null)
-    }
-
-    fun saveProfileUrlToEncryptedStorage(profileUrl: String?, npub: String) {
-        val context = Amber.instance
-        sharedPrefs(context, npub).edit {
-            apply {
-                if (profileUrl == null) {
-                    remove(PrefKeys.PROFILE_URL.key)
-                } else {
-                    putString(PrefKeys.PROFILE_URL.key, profileUrl)
-                }
-            }
-        }
-        accountCache.get(npub)?.let {
-            it.name.tryEmit(profileUrl ?: "")
-        }
     }
 
     fun savePinToEncryptedStorage(pin: String?) {
@@ -494,9 +465,7 @@ object LocalPreferences {
                 putString(PrefKeys.ACCOUNT_NAME.key, value)
             }
         }
-        accountCache.get(npub)?.let {
-            it.name.tryEmit(value)
-        }
+        accountCache.get(npub)?.name?.tryEmit(value)
     }
 
     fun getAccountName(context: Context, npub: String): String {
@@ -559,26 +528,22 @@ object LocalPreferences {
     suspend fun migrateFromSharedPrefs(context: Context, npub: String) {
         withContext(Dispatchers.IO) {
             if (didMigrateFromLegacyStorage(context, npub)) return@withContext
-
             val legacyPrefs = encryptedPreferences(context, npub)
-
             val privKey = legacyPrefs.getString(PrefKeys.NOSTR_PRIVKEY.key, null)
-            val seedWords = legacyPrefs.getString(PrefKeys.SEED_WORDS2.key, null)
-
-            if (!privKey.isNullOrBlank()) {
-                DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY, privKey)
+            if (privKey.isNullOrBlank()) {
+                return@withContext
             }
-
+            val seedWords = legacyPrefs.getString(PrefKeys.SEED_WORDS.key, null)
+            DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY, privKey)
             if (!seedWords.isNullOrBlank()) {
                 DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS, seedWords)
             }
             legacyPrefs.edit {
                 apply {
                     remove(PrefKeys.NOSTR_PRIVKEY.key)
-                    remove(PrefKeys.SEED_WORDS2.key)
+                    remove(PrefKeys.SEED_WORDS.key)
                 }
             }
-
             migrateUserSharedPrefs(context, npub)
             deleteLegacyUserPreferenceFile(context, npub)
             if (existsLegacySettings(context)) {

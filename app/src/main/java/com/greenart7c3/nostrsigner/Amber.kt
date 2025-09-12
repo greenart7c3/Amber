@@ -67,6 +67,7 @@ class Amber : Application(), LifecycleObserver {
     val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
             Log.e("AmberCoroutine", "Caught exception: ${throwable.message}", throwable)
+            if (throwable is FailedMigrationException) throw throwable
         }
 
     val applicationIOScope = CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)
@@ -215,16 +216,31 @@ class Amber : Application(), LifecycleObserver {
                 LocalPreferences.allSavedAccounts(this@Amber).forEach {
                     if (LocalPreferences.didMigrateFromLegacyStorage(this@Amber, it.npub)) {
                         LocalPreferences.deleteLegacyUserPreferenceFile(this@Amber, it.npub)
-                        if (LocalPreferences.existsLegacySettings(this@Amber)) LocalPreferences.deleteSettingsPreferenceFile(this@Amber)
                     }
                 }
                 if (LocalPreferences.existsLegacySettings(this@Amber)) {
-                    LocalPreferences.allLegacySavedAccounts(this@Amber).forEach {
-                        LocalPreferences.migrateFromSharedPrefs(this@Amber, it.npub)
-                        LocalPreferences.loadFromEncryptedStorage(this@Amber, it.npub)
+                    var error = false
+                    for (accountInfo in LocalPreferences.allLegacySavedAccounts(this@Amber)) {
+                        try {
+                            LocalPreferences.migrateFromSharedPrefs(this@Amber, accountInfo.npub)
+                            LocalPreferences.loadFromEncryptedStorage(this@Amber, accountInfo.npub)
+                        } catch (e: Exception) {
+                            error = true
+                            Log.e(TAG, "Failed to migrate settings for account ${accountInfo.npub}", e)
+                        }
+                    }
+                    if (!error) {
+                        LocalPreferences.migrateSettings(this@Amber)
+                        LocalPreferences.deleteSettingsPreferenceFile(this@Amber)
+                    } else {
+                        throw FailedMigrationException("Failed to migrate settings for all accounts")
                     }
                 }
                 LocalPreferences.migrateTorSettings(this@Amber)
+                val currentAccount = LocalPreferences.currentAccount(this@Amber)
+                if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {
+                    LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
+                }
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
                 LocalPreferences.reloadApp()
                 fixRejectedPermissions()
@@ -264,6 +280,7 @@ class Amber : Application(), LifecycleObserver {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false
                 if (e is CancellationException) throw e
+                if (e is FailedMigrationException) throw e
             }
         }
     }
@@ -466,3 +483,5 @@ class Amber : Application(), LifecycleObserver {
             }
     }
 }
+
+class FailedMigrationException(msg: String) : Exception(msg)

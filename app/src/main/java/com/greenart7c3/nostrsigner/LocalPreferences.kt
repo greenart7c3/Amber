@@ -546,10 +546,6 @@ object LocalPreferences {
             }
             migrateUserSharedPrefs(context, npub)
             deleteLegacyUserPreferenceFile(context, npub)
-            if (existsLegacySettings(context)) {
-                migrateSettings(context)
-                deleteSettingsPreferenceFile(context)
-            }
         }
     }
 
@@ -578,7 +574,7 @@ object LocalPreferences {
     }
 
     @Suppress("DEPRECATION")
-    private fun migrateSettings(context: Context) {
+    fun migrateSettings(context: Context) {
         val settingsPrefs = sharedPrefs(context)
         val legacySettingsPrefs = encryptedPreferences(context)
         for ((key, value) in legacySettingsPrefs.all) {

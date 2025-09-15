@@ -9,6 +9,7 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -17,9 +18,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.Person
+import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -34,7 +41,7 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,6 +51,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
@@ -58,17 +67,19 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
+import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
@@ -77,6 +88,7 @@ import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
+import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
 import com.halilibo.richtext.markdown.BasicMarkdown
@@ -195,10 +207,6 @@ fun AccountBackupScreen(
                             text = stringResource(R.string.show_seed_words),
                         )
                     }
-                    NSecCopyButton(account)
-                    NSecQrButton(account)
-
-                    Spacer(modifier = Modifier.height(30.dp))
 
                     val content1 = stringResource(R.string.account_backup_tips3_md)
 
@@ -280,8 +288,72 @@ fun AccountBackupScreen(
 
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    EncryptNSecCopyButton(account, password, onLoading = { isLoading = it })
-                    EncryptNSecQRButton(account, password, onLoading = { isLoading = it }, navController = navController)
+                    LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                        var localAccount by remember { mutableStateOf<Account?>(null) }
+                        LaunchedEffect(Unit) {
+                            launch(Dispatchers.IO) {
+                                localAccount = LocalPreferences.loadFromEncryptedStorage(Amber.instance, it.npub)
+                            }
+                        }
+
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.Start,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(4.dp),
+                        ) {
+                            localAccount?.let { localAccount ->
+                                val profileUrl = localAccount.picture.value
+                                @Suppress("KotlinConstantConditions")
+                                if (profileUrl.isNotBlank() && BuildConfig.FLAVOR != "offline") {
+                                    SubcomposeAsyncImage(
+                                        profileUrl,
+                                        "profile picture",
+                                        Modifier
+                                            .clip(
+                                                RoundedCornerShape(50),
+                                            )
+                                            .height(28.dp)
+                                            .width(28.dp),
+                                        loading = {
+                                            CenterCircularProgressIndicator(Modifier)
+                                        },
+                                        error = { error ->
+                                            Icon(
+                                                Icons.Outlined.Person,
+                                                "profile picture",
+                                                modifier = Modifier.border(
+                                                    2.dp,
+                                                    Color.fromHex(localAccount.hexKey.slice(0..5)),
+                                                    CircleShape,
+                                                ),
+                                            )
+                                        },
+                                    )
+                                } else {
+                                    Icon(
+                                        Icons.Outlined.Person,
+                                        "profile picture",
+                                        modifier = Modifier.border(
+                                            2.dp,
+                                            Color.fromHex(localAccount.hexKey.slice(0..5)),
+                                            CircleShape,
+                                        ),
+                                    )
+                                }
+                                Text(
+                                    modifier = Modifier
+                                        .padding(start = 4.dp)
+                                        .fillMaxWidth(0.8f),
+                                    text = localAccount.name.value.ifBlank { it.npub.toShortenHex() },
+                                )
+
+                                NSecCopyButton(localAccount, password.value.text, onLoading = { value -> isLoading = value })
+                                NSecQrButton(localAccount, password.value.text, onLoading = { value -> isLoading = value }, navController = navController)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -289,7 +361,12 @@ fun AccountBackupScreen(
 }
 
 @Composable
-private fun NSecQrButton(account: Account) {
+private fun NSecQrButton(
+    account: Account,
+    password: String,
+    onLoading: (Boolean) -> Unit,
+    navController: NavHostController,
+) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     var showDialog by remember {
@@ -300,7 +377,7 @@ private fun NSecQrButton(account: Account) {
         QrCodeDialog(
             content = account.signer.keyPair.privKey!!.toNsec(),
         ) {
-            scope.launch(Dispatchers.IO) {
+            Amber.instance.applicationIOScope.launch {
                 account.didBackup = true
                 LocalPreferences.saveToEncryptedStorage(context, account)
                 showDialog = false
@@ -311,18 +388,44 @@ private fun NSecQrButton(account: Account) {
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                showDialog = true
+                if (password.isNotBlank()) {
+                    Amber.instance.applicationIOScope.launch {
+                        onLoading(true)
+                        val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password)
+                        account.didBackup = true
+                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                            navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
+                        }
+                        onLoading(false)
+                    }
+                } else {
+                    showDialog = true
+                }
             }
         }
 
-    AmberButton(
+    IconButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.show_qr_code),
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
-                    showDialog = true
+                    if (password.isNotBlank()) {
+                        Amber.instance.applicationIOScope.launch {
+                            onLoading(true)
+                            val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password)
+                            account.didBackup = true
+                            LocalPreferences.saveToEncryptedStorage(context, account)
+                            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
+                            }
+                            onLoading(false)
+                        }
+                    } else {
+                        showDialog = true
+                    }
                 },
                 onError = { _, message ->
                     scope.launch {
@@ -335,7 +438,12 @@ private fun NSecQrButton(account: Account) {
                 },
             )
         },
-        text = stringResource(id = R.string.show_qr_code),
+        content = {
+            Icon(
+                imageVector = Icons.Outlined.QrCode,
+                contentDescription = context.getString(R.string.show_qr_code),
+            )
+        },
     )
 }
 
@@ -421,7 +529,11 @@ fun QrCodeDialog(
 }
 
 @Composable
-private fun NSecCopyButton(account: Account) {
+private fun NSecCopyButton(
+    account: Account,
+    password: String,
+    onLoading: (Boolean) -> Unit,
+) {
     val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -429,11 +541,15 @@ private fun NSecCopyButton(account: Account) {
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                copyNSec(context, scope, account, clipboardManager)
+                if (password.isNotBlank()) {
+                    encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading)
+                } else {
+                    copyNSec(context, scope, account, clipboardManager)
+                }
             }
         }
 
-    AmberButton(
+    IconButton(
         onClick = {
             authenticate(
                 title = context.getString(R.string.copy_my_secret_key),
@@ -443,7 +559,11 @@ private fun NSecCopyButton(account: Account) {
                     scope.launch(Dispatchers.IO) {
                         account.didBackup = true
                         LocalPreferences.saveToEncryptedStorage(context, account)
-                        copyNSec(context, scope, account, clipboardManager)
+                        if (password.isNotBlank()) {
+                            encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading)
+                        } else {
+                            copyNSec(context, scope, account, clipboardManager)
+                        }
                     }
                 },
                 onError = { _, message ->
@@ -457,7 +577,12 @@ private fun NSecCopyButton(account: Account) {
                 },
             )
         },
-        text = stringResource(id = R.string.copy_my_secret_key),
+        content = {
+            Icon(
+                imageVector = Icons.Outlined.ContentCopy,
+                contentDescription = context.getString(R.string.copy_my_secret_key),
+            )
+        },
     )
 }
 
@@ -488,116 +613,14 @@ private fun copyNSec(
     }
 }
 
-@Composable
-private fun EncryptNSecCopyButton(
-    account: Account,
-    password: MutableState<TextFieldValue>,
-    onLoading: (Boolean) -> Unit,
-) {
-    val clipboardManager = LocalClipboard.current
-    val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-
-    val keyguardLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                encryptCopyNSec(password, context, account, clipboardManager, onLoading)
-            }
-        }
-
-    AmberButton(
-        onClick = {
-            authenticate(
-                title = context.getString(R.string.copy_my_secret_key),
-                context = context,
-                keyguardLauncher = keyguardLauncher,
-                onApproved = { encryptCopyNSec(password, context, account, clipboardManager, onLoading) },
-                onError = { _, message ->
-                    scope.launch {
-                        Toast.makeText(
-                            context,
-                            message,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
-                },
-            )
-        },
-        enabled = password.value.text.isNotBlank(),
-        text = stringResource(id = R.string.encrypt_and_copy_my_secret_key),
-        maxLines = 1,
-        textAlign = TextAlign.Center,
-    )
-}
-
-@Composable
-private fun EncryptNSecQRButton(
-    account: Account,
-    password: MutableState<TextFieldValue>,
-    onLoading: (Boolean) -> Unit,
-    navController: NavHostController,
-) {
-    val context = LocalContext.current
-    val keyguardLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-                result: ActivityResult ->
-            if (result.resultCode == Activity.RESULT_OK) {
-                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                    onLoading(true)
-                    val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
-                    account.didBackup = true
-                    LocalPreferences.saveToEncryptedStorage(context, account)
-                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                        navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
-                    }
-                    onLoading(false)
-                }
-            }
-        }
-
-    AmberButton(
-        onClick = {
-            authenticate(
-                title = context.getString(R.string.copy_my_secret_key),
-                context = context,
-                keyguardLauncher = keyguardLauncher,
-                onApproved = {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        onLoading(true)
-                        val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password.value.text)
-                        account.didBackup = true
-                        LocalPreferences.saveToEncryptedStorage(context, account)
-                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                            navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
-                        }
-                        onLoading(false)
-                    }
-                },
-                onError = { _, message ->
-                    Amber.instance.applicationIOScope.launch {
-                        Toast.makeText(
-                            context,
-                            message,
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
-                },
-            )
-        },
-        enabled = password.value.text.isNotBlank(),
-        text = stringResource(id = R.string.show_qr_code),
-    )
-}
-
 private fun encryptCopyNSec(
-    password: MutableState<TextFieldValue>,
+    password: String,
     context: Context,
     account: Account,
     clipboardManager: Clipboard,
     onLoading: (Boolean) -> Unit,
 ) {
-    if (password.value.text.isBlank()) {
+    if (password.isBlank()) {
         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
             Toast.makeText(
                 context,
@@ -611,7 +634,7 @@ private fun encryptCopyNSec(
             onLoading(true)
             account.signer.keyPair.privKey?.let {
                 try {
-                    val key = Nip49().encrypt(it.toHexKey(), password.value.text)
+                    val key = Nip49().encrypt(it.toHexKey(), password)
                     account.didBackup = true
                     LocalPreferences.saveToEncryptedStorage(context, account)
                     Amber.instance.applicationIOScope.launch(Dispatchers.Main) {

@@ -84,9 +84,7 @@ RUN mkdir -p /tmp/signed /tmp/release && \
     cd /tmp/signed && zip -qr /app/signed-stripped.apk . && \
     cd /tmp/release && zip -qr /release_apk/official-stripped.apk .
 
-# Download apkdiff.py from Signal's reproducible builds branch
-RUN wget -q https://raw.githubusercontent.com/signalapp/Signal-Android/refs/heads/main/reproducible-builds/apkdiff/apkdiff.py \
-    -O /usr/local/bin/apkdiff.py && chmod +x /usr/local/bin/apkdiff.py
+RUN chmod +x apkdiff.py && cp apkdiff.py /usr/local/bin/apkdiff.py
 
 # Compare the stripped APKs
 CMD sh -c "python3 /usr/local/bin/apkdiff.py /release_apk/official-stripped.apk /app/signed-stripped.apk"

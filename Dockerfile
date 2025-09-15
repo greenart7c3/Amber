@@ -23,17 +23,20 @@ RUN mkdir -p ${ANDROID_SDK_ROOT}/cmdline-tools && \
 
 # Accept licenses and install build tools + platform
 RUN yes | ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager --licenses
+
 RUN ${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager \
     "platform-tools" \
-    "platforms;android-34" \
-    "build-tools;34.0.0"
+    "platforms;android-36" \
+    "build-tools;35.0.0"
 
 # Create working directory
 WORKDIR /app
 
-# Clone Amber and checkout version tag
-RUN git clone https://github.com/greenart7c3/Amber.git . && \
-    git checkout tags/$VERSION
+COPY . /app
+
+RUN git checkout ${VERSION}
+
+RUN chmod +x apkdiff.py && cp apkdiff.py /usr/local/bin/apkdiff.py
 
 # Ensure gradlew is executable
 RUN chmod +x gradlew
@@ -56,7 +59,7 @@ RUN keytool -genkeypair \
 RUN cp app/build/outputs/apk/free/release/app-${APK_TYPE}-release-unsigned.apk /app/built.apk
 
 # Sign the APK
-RUN ${ANDROID_SDK_ROOT}/build-tools/34.0.0/apksigner sign \
+RUN ${ANDROID_SDK_ROOT}/build-tools/35.0.0/apksigner sign \
     --ks /app/release.keystore \
     --ks-key-alias amberkey \
     --ks-pass pass:password \
@@ -83,8 +86,6 @@ RUN mkdir -p /tmp/signed /tmp/release && \
     find /tmp/release -name "*LICENSE*" -delete && \
     cd /tmp/signed && zip -qr /app/signed-stripped.apk . && \
     cd /tmp/release && zip -qr /release_apk/official-stripped.apk .
-
-RUN chmod +x apkdiff.py && cp apkdiff.py /usr/local/bin/apkdiff.py
 
 # Compare the stripped APKs
 CMD sh -c "python3 /usr/local/bin/apkdiff.py /release_apk/official-stripped.apk /app/signed-stripped.apk"

@@ -25,6 +25,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentCopy
+import androidx.compose.material.icons.outlined.FormatListNumbered
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.QrCode
 import androidx.compose.material.icons.outlined.Visibility
@@ -83,7 +84,6 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
-import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -107,38 +107,9 @@ import kotlinx.coroutines.launch
 @Composable
 fun AccountBackupScreen(
     modifier: Modifier,
-    account: Account,
     navController: NavHostController,
 ) {
     var isLoading by remember { mutableStateOf(false) }
-    var showSeedWords by remember { mutableStateOf(false) }
-    if (showSeedWords) {
-        ModalBottomSheet(
-            onDismissRequest = {
-                showSeedWords = false
-            },
-            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-        ) {
-            Column(
-                modifier =
-                Modifier
-                    .background(MaterialTheme.colorScheme.background)
-                    .fillMaxSize(),
-            ) {
-                CompositionLocalProvider(
-                    LocalDensity provides Density(
-                        LocalDensity.current.density,
-                        1f,
-                    ),
-                ) {
-                    SeedWordsPage(
-                        seedWords = account.seedWords,
-                        showNextButton = false,
-                    )
-                }
-            }
-        }
-    }
 
     Surface(
         modifier =
@@ -172,41 +143,6 @@ fun AccountBackupScreen(
                     }
 
                     Spacer(modifier = Modifier.height(30.dp))
-
-                    if (Nip06().isValidMnemonic(account.seedWords.joinToString(separator = " "))) {
-                        val keyguardLauncher =
-                            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-                                if (result.resultCode == Activity.RESULT_OK) {
-                                    showSeedWords = true
-                                }
-                            }
-                        val context = LocalContext.current
-
-                        AmberButton(
-                            onClick = {
-                                authenticate(
-                                    title = context.getString(R.string.show_seed_words),
-                                    context = context,
-                                    keyguardLauncher = keyguardLauncher,
-                                    onApproved = {
-                                        showSeedWords = true
-                                        account.didBackup = true
-                                        Amber.instance.applicationIOScope.launch {
-                                            LocalPreferences.saveToEncryptedStorage(context, account)
-                                        }
-                                    },
-                                    onError = { _, message ->
-                                        Toast.makeText(
-                                            context,
-                                            message,
-                                            Toast.LENGTH_SHORT,
-                                        ).show()
-                                    },
-                                )
-                            },
-                            text = stringResource(R.string.show_seed_words),
-                        )
-                    }
 
                     val content1 = stringResource(R.string.account_backup_tips3_md)
 
@@ -344,13 +280,20 @@ fun AccountBackupScreen(
                                 }
                                 Text(
                                     modifier = Modifier
-                                        .padding(start = 4.dp)
-                                        .fillMaxWidth(0.8f),
+                                        .padding(start = 4.dp),
                                     text = localAccount.name.value.ifBlank { it.npub.toShortenHex() },
                                 )
 
-                                NSecCopyButton(localAccount, password.value.text, onLoading = { value -> isLoading = value })
-                                NSecQrButton(localAccount, password.value.text, onLoading = { value -> isLoading = value }, navController = navController)
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.End,
+                                ) {
+                                    NSecCopyButton(localAccount, password.value.text, onLoading = { value -> isLoading = value })
+                                    NSecQrButton(localAccount, password.value.text, onLoading = { value -> isLoading = value }, navController = navController)
+                                    if (Nip06().isValidMnemonic(localAccount.seedWords.joinToString(separator = " "))) {
+                                        SeedWordsButton(localAccount)
+                                    }
+                                }
                             }
                         }
                     }
@@ -526,6 +469,83 @@ fun QrCodeDialog(
             }
         }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SeedWordsButton(
+    account: Account,
+) {
+    var showSeedWords by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val keyguardLauncher =
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                showSeedWords = true
+            }
+        }
+
+    if (showSeedWords) {
+        ModalBottomSheet(
+            onDismissRequest = {
+                showSeedWords = false
+            },
+            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+        ) {
+            Column(
+                modifier =
+                Modifier
+                    .background(MaterialTheme.colorScheme.background)
+                    .fillMaxSize(),
+            ) {
+                CompositionLocalProvider(
+                    LocalDensity provides Density(
+                        LocalDensity.current.density,
+                        1f,
+                    ),
+                ) {
+                    SeedWordsPage(
+                        seedWords = account.seedWords,
+                        showNextButton = false,
+                    )
+                }
+            }
+        }
+    }
+
+    IconButton(
+        onClick = {
+            authenticate(
+                title = context.getString(R.string.show_seed_words),
+                context = context,
+                keyguardLauncher = keyguardLauncher,
+                onApproved = {
+                    Amber.instance.applicationIOScope.launch {
+                        account.didBackup = true
+                        showSeedWords = true
+                        Amber.instance.applicationIOScope.launch {
+                            LocalPreferences.saveToEncryptedStorage(context, account)
+                        }
+                    }
+                },
+                onError = { _, message ->
+                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            message,
+                            Toast.LENGTH_SHORT,
+                        ).show()
+                    }
+                },
+            )
+        },
+        content = {
+            Icon(
+                imageVector = Icons.Outlined.FormatListNumbered,
+                contentDescription = context.getString(R.string.show_seed_words),
+            )
+        },
+    )
 }
 
 @Composable

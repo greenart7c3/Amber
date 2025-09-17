@@ -2,7 +2,7 @@ FROM eclipse-temurin:21-jdk
 
 ARG VERSION
 ARG APK_TYPE
-ENV VERSION=${VERSION:-v4.0.1}
+ENV VERSION=${VERSION:-v4.0.2}
 ENV APK_TYPE=${APK_TYPE:-free-arm64-v8a}
 ENV GRADLE_OPTS="-Xmx2048m -Dorg.gradle.daemon=false"
 

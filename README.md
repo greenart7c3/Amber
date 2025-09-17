@@ -37,7 +37,7 @@ height="70">](https://f-droid.org/packages/com.greenart7c3.nostrsigner/)
 
 # Contributing
 
-Issues can be logged on: [https://gitworkshop.dev/repo/Amber](https://gitworkshop.dev/repo/Amber)
+Issues can be logged on: [https://gitworkshop.dev/greenart7c3@greenart7c3.com/Amber](https://gitworkshop.dev/greenart7c3@greenart7c3.com/Amber)
 
 [GitHub issues](https://github.com/greenart7c3/Amber/issues) and [pull requests](https://github.com/greenart7c3/Amber/pulls) here are also welcome. Translations can be provided via [Crowdin](https://crowdin.com/project/amber-nostr-signer)
 

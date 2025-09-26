@@ -117,7 +117,7 @@ fun BunkerSingleEventHomeScreen(
                                         bunkerRequest = bunkerRequest,
                                         kind = null,
                                         onLoading = onLoading,
-                                        permissions = localPermissions,
+                                        permissions = localPermissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                                         appName = appName,
                                         signPolicy = localSignPolicy,
                                         shouldCloseApplication = localCloseApplication,
@@ -139,7 +139,7 @@ fun BunkerSingleEventHomeScreen(
                                         bunkerRequest = bunkerRequest,
                                         kind = null,
                                         onLoading = onLoading,
-                                        permissions = localPermissions,
+                                        permissions = localPermissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                                         appName = appName,
                                         signPolicy = localSignPolicy,
                                         shouldCloseApplication = localCloseApplication,
@@ -166,9 +166,9 @@ fun BunkerSingleEventHomeScreen(
                 permissions = bunkerRequest.request.permissions?.split(",")?.map {
                     val split = it.split(":")
                     if (split.size > 1) {
-                        Permission(split[0], split[1].toInt())
+                        Permission(split[0].trim(), split[1].toInt())
                     } else {
-                        Permission(split[0], null)
+                        Permission(split[0].trim(), null)
                     }
                 },
                 onAccept = { permissions, signPolicy, closeApplication, rememberType ->
@@ -191,7 +191,7 @@ fun BunkerSingleEventHomeScreen(
                                     bunkerRequest = bunkerRequest,
                                     kind = null,
                                     onLoading = onLoading,
-                                    permissions = permissions,
+                                    permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                                     appName = appName,
                                     signPolicy = signPolicy,
                                     shouldCloseApplication = closeApplication,
@@ -211,7 +211,7 @@ fun BunkerSingleEventHomeScreen(
                             bunkerRequest = bunkerRequest,
                             kind = null,
                             onLoading = onLoading,
-                            permissions = permissions,
+                            permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                             appName = appName,
                             signPolicy = signPolicy,
                             shouldCloseApplication = closeApplication,

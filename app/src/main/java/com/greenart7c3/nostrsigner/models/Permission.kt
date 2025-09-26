@@ -68,7 +68,7 @@ data class Permission(
 
     // LAST_COMMIT_CHECKED = "14ec14dac92d891715239bfb83ed1c9bdf2ac382"
     fun toLocalizedString(context: Context, shouldTranslateConnect: Boolean = false): String {
-        return when (type) {
+        return when (type.trim()) {
             "sign_message" -> context.getString(R.string.sign_message)
             "get_public_key" -> context.getString(R.string.read_your_public_key)
             "nip04_encrypt" -> {

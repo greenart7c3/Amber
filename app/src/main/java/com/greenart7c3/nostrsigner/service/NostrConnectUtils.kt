@@ -69,7 +69,7 @@ object NostrConnectUtils {
 
                             permissions.add(
                                 Permission(
-                                    permissionType,
+                                    permissionType.trim(),
                                     kind,
                                 ),
                             )
@@ -94,7 +94,7 @@ object NostrConnectUtils {
 
                             permissions.add(
                                 Permission(
-                                    permissionType,
+                                    permissionType.trim(),
                                     kind,
                                 ),
                             )

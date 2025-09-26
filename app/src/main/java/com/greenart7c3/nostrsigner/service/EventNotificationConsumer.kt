@@ -306,7 +306,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             applicationContext.contentResolver.query(
                 "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
                 arrayOf(data, pubKey, acc.npub),
-                "1",
+                null,
                 null,
                 event.pubKey,
             )

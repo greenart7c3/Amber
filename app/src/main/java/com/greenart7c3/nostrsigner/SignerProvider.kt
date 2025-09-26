@@ -6,6 +6,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.util.Log
+import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -16,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
+import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -63,14 +65,21 @@ class SignerProvider : ContentProvider() {
         }
 
         val appId = BuildConfig.APPLICATION_ID
+        val packageName = if (sortOrder.isNullOrBlank()) {
+            callingPackage
+        } else {
+            if (Hex.isHex(sortOrder)) {
+                sortOrder
+            }
+            null
+        }
+        if (packageName == null) {
+            Log.d(Amber.TAG, "No package name")
+            return null
+        }
         return try {
             when (uri.toString()) {
                 "content://$appId.SIGN_MESSAGE" -> {
-                    val packageName = callingPackage
-                    if (packageName == null) {
-                        Log.d(Amber.TAG, "No package name")
-                        return null
-                    }
                     val message = projection?.first()
                     if (message == null) {
                         Log.d(Amber.TAG, "No message")
@@ -91,34 +100,24 @@ class SignerProvider : ContentProvider() {
                         return null
                     }
                     val database = Amber.instance.getDatabase(account.npub)
-                    val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
                     val permission =
                         database
                             .applicationDao()
                             .getPermission(
-                                sortOrder ?: packageName,
+                                packageName,
                                 "SIGN_MESSAGE",
                             )
-                    val rejectUntil = permission?.rejectUntil ?: 0
-                    val acceptUntil = permission?.acceptUntil ?: 0
-                    val isRemembered = if (signPolicy == 2) {
-                        true
-                    } else {
-                        if (rejectUntil == 0L && acceptUntil == 0L) return null
-                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                            false
-                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                            true
-                        } else {
-                            return null
-                        }
+                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val isRemembered = isRemembered(signPolicy, permission)
+                    if (isRemembered == null) {
+                        return null
                     }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
                                 HistoryEntity2(
                                     0,
-                                    sortOrder ?: packageName,
+                                    packageName,
                                     uri.toString().replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
@@ -139,7 +138,7 @@ class SignerProvider : ContentProvider() {
                         database.applicationDao().addHistory(
                             HistoryEntity2(
                                 0,
-                                sortOrder ?: packageName,
+                                packageName,
                                 "SIGN_MESSAGE",
                                 null,
                                 TimeUtils.now(),
@@ -155,11 +154,6 @@ class SignerProvider : ContentProvider() {
                     return localCursor
                 }
                 "content://$appId.SIGN_EVENT" -> {
-                    val packageName = callingPackage
-                    if (packageName == null) {
-                        Log.d(Amber.TAG, "No package name")
-                        return null
-                    }
                     val json = projection?.first()
                     if (json == null) {
                         Log.d(Amber.TAG, "No json")
@@ -191,7 +185,7 @@ class SignerProvider : ContentProvider() {
                         database
                             .applicationDao()
                             .getPermission(
-                                sortOrder ?: packageName,
+                                packageName,
                                 "SIGN_EVENT",
                                 event.kind,
                             )
@@ -204,34 +198,24 @@ class SignerProvider : ContentProvider() {
                                 database
                                     .applicationDao()
                                     .getPermission(
-                                        sortOrder ?: packageName,
+                                        packageName,
                                         "NIP",
                                         nipNumber,
                                     )
                             }
                         }
                     }
-                    val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
-                    val rejectUntil = permission?.rejectUntil ?: 0
-                    val acceptUntil = permission?.acceptUntil ?: 0
-                    val isRemembered = if (signPolicy == 2) {
-                        true
-                    } else {
-                        if (rejectUntil == 0L && acceptUntil == 0L) return null
-                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                            false
-                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                            true
-                        } else {
-                            return null
-                        }
+                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val isRemembered = isRemembered(signPolicy, permission)
+                    if (isRemembered == null) {
+                        return null
                     }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
                                 HistoryEntity2(
                                     0,
-                                    sortOrder ?: packageName,
+                                    packageName,
                                     uri.toString().replace("content://$appId.", ""),
                                     event.kind,
                                     TimeUtils.now(),
@@ -254,7 +238,7 @@ class SignerProvider : ContentProvider() {
                         database.applicationDao().addHistory(
                             HistoryEntity2(
                                 0,
-                                sortOrder ?: packageName,
+                                packageName,
                                 "SIGN_EVENT",
                                 event.kind,
                                 TimeUtils.now(),
@@ -287,7 +271,6 @@ class SignerProvider : ContentProvider() {
                 "content://$appId.NIP44_ENCRYPT",
                 "content://$appId.DECRYPT_ZAP_EVENT",
                 -> {
-                    val packageName = callingPackage ?: return null
                     val content = projection?.first() ?: return null
                     val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
                     if (!LocalPreferences.containsAccount(context!!, npub)) return null
@@ -299,7 +282,7 @@ class SignerProvider : ContentProvider() {
                         database
                             .applicationDao()
                             .getPermission(
-                                sortOrder ?: packageName,
+                                packageName,
                                 uri.toString().replace("content://$appId.", ""),
                             )
                     if (permission == null) {
@@ -316,33 +299,23 @@ class SignerProvider : ContentProvider() {
                                 database
                                     .applicationDao()
                                     .getPermission(
-                                        sortOrder ?: packageName,
+                                        packageName,
                                         "NIP",
                                         it,
                                     )
                         }
                     }
-                    val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
-                    val rejectUntil = permission?.rejectUntil ?: 0
-                    val acceptUntil = permission?.acceptUntil ?: 0
-                    val isRemembered = if (signPolicy == 2) {
-                        true
-                    } else {
-                        if (rejectUntil == 0L && acceptUntil == 0L) return null
-                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                            false
-                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                            true
-                        } else {
-                            return null
-                        }
+                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val isRemembered = isRemembered(signPolicy, permission)
+                    if (isRemembered == null) {
+                        return null
                     }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
                                 HistoryEntity2(
                                     0,
-                                    sortOrder ?: packageName,
+                                    packageName,
                                     uri.toString().replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
@@ -382,7 +355,7 @@ class SignerProvider : ContentProvider() {
                                 database.applicationDao().insertLog(
                                     LogEntity(
                                         0,
-                                        sortOrder ?: packageName,
+                                        packageName,
                                         uri.toString().replace("content://$appId.", ""),
                                         e.message ?: "Could not decrypt the message",
                                         System.currentTimeMillis(),
@@ -396,7 +369,7 @@ class SignerProvider : ContentProvider() {
                         database.applicationDao().addHistory(
                             HistoryEntity2(
                                 0,
-                                sortOrder ?: packageName,
+                                packageName,
                                 uri.toString().replace("content://$appId.", ""),
                                 null,
                                 TimeUtils.now(),
@@ -411,7 +384,6 @@ class SignerProvider : ContentProvider() {
                 }
 
                 "content://$appId.GET_PUBLIC_KEY" -> {
-                    val packageName = callingPackage ?: return null
                     val npub = if (projection != null && projection.size >= 3) IntentUtils.parsePubKey(projection[2]) else null
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
                     val database = Amber.instance.getDatabase(account.npub)
@@ -419,31 +391,21 @@ class SignerProvider : ContentProvider() {
                         database
                             .applicationDao()
                             .getPermission(
-                                sortOrder ?: packageName,
+                                packageName,
                                 "GET_PUBLIC_KEY",
                             )
 
-                    val signPolicy = database.applicationDao().getSignPolicy(sortOrder ?: packageName)
-                    val rejectUntil = permission?.rejectUntil ?: 0
-                    val acceptUntil = permission?.acceptUntil ?: 0
-                    val isRemembered = if (signPolicy == 2) {
-                        true
-                    } else {
-                        if (rejectUntil == 0L && acceptUntil == 0L) return null
-                        if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                            false
-                        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                            true
-                        } else {
-                            return null
-                        }
+                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val isRemembered = isRemembered(signPolicy, permission)
+                    if (isRemembered == null) {
+                        return null
                     }
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
                                 HistoryEntity2(
                                     0,
-                                    sortOrder ?: packageName,
+                                    packageName,
                                     uri.toString().replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
@@ -464,7 +426,7 @@ class SignerProvider : ContentProvider() {
                         database.applicationDao().addHistory(
                             HistoryEntity2(
                                 0,
-                                sortOrder ?: packageName,
+                                packageName,
                                 uri.toString().replace("content://$appId.", ""),
                                 null,
                                 TimeUtils.now(),
@@ -494,5 +456,21 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
     ): Int {
         return 0
+    }
+
+    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? {
+        val rejectUntil = permission?.rejectUntil ?: 0
+        val acceptUntil = permission?.acceptUntil ?: 0
+        if (signPolicy == 2) {
+            return true
+        }
+        if (rejectUntil == 0L && acceptUntil == 0L) return null
+        return if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
+            false
+        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0 && permission?.acceptable == true) {
+            true
+        } else {
+            null
+        }
     }
 }

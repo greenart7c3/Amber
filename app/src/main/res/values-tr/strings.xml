@@ -546,4 +546,8 @@
     <string name="disable_kill_switch">Kill switch\'i devre dışı bırak</string>
     <string name="kill_switch_message">Kill switch etkinleştirildi, uzaktan oturum açma ve profil getirme çalışmayacaktır.</string>
     <string name="edit_relays">Edit Relays</string>
+    <string name="one_hour">One hour</string>
+    <string name="one_day">One day</string>
+    <string name="one_week">One week</string>
+    <string name="delete_after">Delete after</string>
 </resources>

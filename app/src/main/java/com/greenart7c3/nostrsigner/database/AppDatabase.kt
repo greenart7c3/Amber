@@ -87,6 +87,12 @@ val MIGRATION_8_9 =
         }
     }
 
+val MIGRATION_9_10 = object : Migration(9, 10) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE application ADD COLUMN deleteAfter INTEGER NOT NULL DEFAULT 0")
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
@@ -96,7 +102,7 @@ val MIGRATION_8_9 =
         LogEntity::class,
         HistoryEntity2::class,
     ],
-    version = 9,
+    version = 10,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -127,6 +133,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_6_7)
                         .addMigrations(MIGRATION_7_8)
                         .addMigrations(MIGRATION_8_9)
+                        .addMigrations(MIGRATION_9_10)
                         .build()
                 instance.openHelper.writableDatabase.execSQL("VACUUM")
 

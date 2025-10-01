@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -29,8 +30,13 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.ui.DeleteAfterType
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.SettingsRow
+import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
+import com.greenart7c3.nostrsigner.ui.parseDeleteAfterType
 import kotlin.collections.forEach
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun BunkerConnectRequestScreen(
@@ -39,7 +45,7 @@ fun BunkerConnectRequestScreen(
     account: Account,
     appName: String,
     permissions: List<Permission>?,
-    onAccept: (List<Permission>?, Int, Boolean?, RememberType) -> Unit,
+    onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
     val localPermissions = remember {
@@ -70,6 +76,16 @@ fun BunkerConnectRequestScreen(
         )
 
         var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
+        val deleteAfterItems =
+            persistentListOf(
+                TitleExplainer(stringResource(DeleteAfterType.NEVER.resourceId)),
+                TitleExplainer(stringResource(DeleteAfterType.FIVE_MINUTES.resourceId)),
+                TitleExplainer(stringResource(DeleteAfterType.TEN_MINUTES.resourceId)),
+                TitleExplainer(stringResource(DeleteAfterType.ONE_HOUR.resourceId)),
+                TitleExplainer(stringResource(DeleteAfterType.ONE_DAY.resourceId)),
+                TitleExplainer(stringResource(DeleteAfterType.ONE_WEEK.resourceId)),
+            )
+        var deleteAfterIndex by remember { mutableIntStateOf(DeleteAfterType.NEVER.screenCode) }
 
         Text(
             text = stringResource(R.string.handle_application_permissions),
@@ -99,6 +115,19 @@ fun BunkerConnectRequestScreen(
             )
         }
 
+        Box(
+            Modifier.padding(4.dp),
+        ) {
+            SettingsRow(
+                R.string.delete_after,
+                null,
+                deleteAfterItems,
+                deleteAfterIndex,
+            ) {
+                deleteAfterIndex = it
+            }
+        }
+
         ChooseSignPolicy(
             selectedOption = selectedOption,
             onSelected = {
@@ -122,7 +151,8 @@ fun BunkerConnectRequestScreen(
             AmberButton(
                 modifier = Modifier.padding(vertical = 20.dp),
                 onClick = {
-                    onAccept(localPermissions, selectedOption, closeApp, rememberType)
+                    val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
+                    onAccept(localPermissions, selectedOption, closeApp, rememberType, deleteAfter)
                 },
                 text = stringResource(R.string.grant_permissions),
             )

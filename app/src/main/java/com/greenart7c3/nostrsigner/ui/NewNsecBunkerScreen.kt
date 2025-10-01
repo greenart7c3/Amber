@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.ClipData
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -22,6 +23,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -51,7 +53,9 @@ import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import java.util.UUID
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -78,6 +82,16 @@ fun NewNsecBunkerScreen(
     val isLoading = remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
+    val deleteAfterItems =
+        persistentListOf(
+            TitleExplainer(stringResource(DeleteAfterType.NEVER.resourceId)),
+            TitleExplainer(stringResource(DeleteAfterType.FIVE_MINUTES.resourceId)),
+            TitleExplainer(stringResource(DeleteAfterType.TEN_MINUTES.resourceId)),
+            TitleExplainer(stringResource(DeleteAfterType.ONE_HOUR.resourceId)),
+            TitleExplainer(stringResource(DeleteAfterType.ONE_DAY.resourceId)),
+            TitleExplainer(stringResource(DeleteAfterType.ONE_WEEK.resourceId)),
+        )
+    var deleteAfterIndex by remember { mutableIntStateOf(DeleteAfterType.NEVER.screenCode) }
 
     LaunchedEffect(Unit) {
         focusRequester.requestFocus()
@@ -112,6 +126,17 @@ fun NewNsecBunkerScreen(
                     .focusRequester(focusRequester)
                     .padding(vertical = 20.dp),
             )
+
+            Box {
+                SettingsRow(
+                    R.string.delete_after,
+                    null,
+                    deleteAfterItems,
+                    deleteAfterIndex,
+                ) {
+                    deleteAfterIndex = it
+                }
+            }
 
             Row(
                 Modifier
@@ -213,6 +238,8 @@ fun NewNsecBunkerScreen(
                     }
 
                     scope.launch(Dispatchers.IO) {
+                        val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
+
                         val application =
                             ApplicationEntity(
                                 secret.value,
@@ -227,6 +254,7 @@ fun NewNsecBunkerScreen(
                                 true,
                                 account.signPolicy,
                                 true,
+                                deleteAfter = deleteAfter,
                             )
 
                         Amber.instance.getDatabase(account.npub).applicationDao().insertApplication(

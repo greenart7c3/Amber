@@ -562,6 +562,7 @@ object IntentUtils {
         onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
         shouldCloseApplication: Boolean? = null,
         rememberType: RememberType,
+        deleteAfter: Long = 0L,
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -592,6 +593,7 @@ object IntentUtils {
                         false,
                         account.signPolicy,
                         shouldCloseApplication != false,
+                        deleteAfter = deleteAfter,
                     ),
                     permissions = mutableListOf(),
                 )
@@ -756,6 +758,7 @@ object IntentUtils {
                         false,
                         account.signPolicy,
                         true,
+                        deleteAfter = 0L,
                     ),
                     permissions = mutableListOf(),
                 )

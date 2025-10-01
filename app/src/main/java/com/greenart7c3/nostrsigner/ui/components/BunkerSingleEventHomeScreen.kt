@@ -12,6 +12,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -26,7 +27,6 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -90,6 +90,7 @@ fun BunkerSingleEventHomeScreen(
             var localSignPolicy by remember { mutableIntStateOf(0) }
             var localRememberType by remember { mutableStateOf(RememberType.NEVER) }
             var existingAppKey by remember { mutableStateOf("") }
+            var localDeleteAfter by remember { mutableLongStateOf(0L) }
 
             if (showExistingAppDialog) {
                 AlertDialog(
@@ -122,6 +123,7 @@ fun BunkerSingleEventHomeScreen(
                                         signPolicy = localSignPolicy,
                                         shouldCloseApplication = localCloseApplication,
                                         rememberType = localRememberType,
+                                        deleteAfter = localDeleteAfter,
                                     )
                                 },
                                 text = stringResource(R.string.replace),
@@ -144,6 +146,7 @@ fun BunkerSingleEventHomeScreen(
                                         signPolicy = localSignPolicy,
                                         shouldCloseApplication = localCloseApplication,
                                         rememberType = localRememberType,
+                                        deleteAfter = localDeleteAfter,
                                     )
                                 },
                             )
@@ -171,7 +174,7 @@ fun BunkerSingleEventHomeScreen(
                         Permission(split[0].trim(), null)
                     }
                 },
-                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
+                onAccept = { permissions, signPolicy, closeApplication, rememberType, deleteAfter ->
                     val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
                     localPermissions = permissions
@@ -181,7 +184,7 @@ fun BunkerSingleEventHomeScreen(
 
                     if (bunkerRequest.name.isNotBlank()) {
                         Amber.instance.applicationIOScope.launch {
-                            val existingApp = AppDatabase.getDatabase(Amber.instance, account.npub).applicationDao().getByName(bunkerRequest.name)
+                            val existingApp = Amber.instance.getDatabase(account.npub).applicationDao().getByName(bunkerRequest.name)
                             if (existingApp == null) {
                                 BunkerRequestUtils.sendResult(
                                     context = context,
@@ -196,6 +199,7 @@ fun BunkerSingleEventHomeScreen(
                                     signPolicy = signPolicy,
                                     shouldCloseApplication = closeApplication,
                                     rememberType = rememberType,
+                                    deleteAfter = deleteAfter,
                                 )
                             } else {
                                 existingAppKey = existingApp.application.key
@@ -216,6 +220,7 @@ fun BunkerSingleEventHomeScreen(
                             signPolicy = signPolicy,
                             shouldCloseApplication = closeApplication,
                             rememberType = rememberType,
+                            deleteAfter = deleteAfter,
                         )
                     }
                 },

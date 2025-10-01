@@ -46,11 +46,16 @@ interface ApplicationDao {
 
     @Query(
         """
-    SELECT a.*, MAX(h.time) as latestTime
+    SELECT
+        a.*,
+        MAX(h.time) AS latestTime
     FROM application a
     LEFT JOIN history2 h ON a.`key` = h.pkKey
-    AND a.pubKey = :pubKey
-    GROUP BY a.`key`, a.description, a.icon, a.isConnected, a.name, a.pubKey, a.secret, a.signPolicy, a.url
+    WHERE a.pubKey = :pubKey
+    GROUP BY
+        a.`key`, a.description, a.icon, a.isConnected, a.name,
+        a.pubKey, a.secret, a.signPolicy, a.url, a.useSecret,
+        a.closeApplication, a.deleteAfter, a.relays
     ORDER BY latestTime DESC
     """,
     )
@@ -233,4 +238,8 @@ interface ApplicationDao {
     @Delete
     @Transaction
     suspend fun deleteLog(logEntity: LogEntity)
+
+    @Query("DELETE FROM application WHERE deleteAfter < :time AND deleteAfter > 0")
+    @Transaction
+    suspend fun deleteOldApplications(time: Long): Int
 }

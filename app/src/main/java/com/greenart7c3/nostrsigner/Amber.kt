@@ -196,7 +196,7 @@ class Amber : Application(), LifecycleObserver {
         _instance = this
 
         LocalPreferences.allSavedAccounts(this).forEach {
-            databases[it.npub] = AppDatabase.getDatabase(this, it.npub)
+            databases[it.npub] = getDatabase(it.npub)
             applicationIOScope.launch {
                 databases[it.npub]?.applicationDao()?.getAllNotConnected()?.forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {

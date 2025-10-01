@@ -241,6 +241,7 @@ fun IntentMultiEventHomeScreen(
                                         false,
                                         thisAccount.signPolicy,
                                         true,
+                                        0L,
                                     ),
                                     permissions = mutableListOf(),
                                 )
@@ -433,6 +434,7 @@ fun IntentMultiEventHomeScreen(
                                     false,
                                     thisAccount.signPolicy,
                                     true,
+                                    0L,
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -611,6 +613,7 @@ fun BunkerMultiEventHomeScreen(
                                         secret.isNotBlank(),
                                         thisAccount.signPolicy,
                                         request.closeApplication,
+                                        0L,
                                     ),
                                     permissions = mutableListOf(),
                                 )
@@ -878,6 +881,7 @@ fun BunkerMultiEventHomeScreen(
                                     secret.isNotBlank(),
                                     thisAccount.signPolicy,
                                     request.closeApplication,
+                                    0L,
                                 ),
                                 permissions = mutableListOf(),
                             )

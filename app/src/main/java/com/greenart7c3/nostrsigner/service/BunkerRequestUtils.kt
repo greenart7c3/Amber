@@ -232,6 +232,7 @@ object BunkerRequestUtils {
         shouldCloseApplication: Boolean? = null,
         rememberType: RememberType,
         oldKey: String = "",
+        deleteAfter: Long = 0L,
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -262,6 +263,9 @@ object BunkerRequestUtils {
                 }
             }
             savedApplication = database.applicationDao().getByKey(key)
+            if (bunkerRequest.request is BunkerRequestConnect) {
+                savedApplication?.application?.deleteAfter = deleteAfter
+            }
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
@@ -280,6 +284,7 @@ object BunkerRequestUtils {
                         secret.isNotBlank(),
                         account.signPolicy,
                         shouldCloseApplication ?: bunkerRequest.closeApplication,
+                        deleteAfter = deleteAfter,
                     ),
                     permissions = mutableListOf(),
                 )
@@ -420,6 +425,7 @@ object BunkerRequestUtils {
                         secret.isNotBlank(),
                         account.signPolicy,
                         bunkerRequest.closeApplication,
+                        deleteAfter = 0L,
                     ),
                     permissions = mutableListOf(),
                 )

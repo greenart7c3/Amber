@@ -456,6 +456,38 @@ enum class RememberType(val screenCode: Int, val resourceId: Int) {
     ALWAYS(4, R.string.always),
 }
 
+enum class DeleteAfterType(val screenCode: Int, val resourceId: Int) {
+    NEVER(0, R.string.never),
+    FIVE_MINUTES(1, R.string.five_minutes),
+    TEN_MINUTES(2, R.string.ten_minutes),
+    ONE_HOUR(3, R.string.one_hour),
+    ONE_DAY(4, R.string.one_day),
+    ONE_WEEK(5, R.string.one_week),
+}
+
+fun parseDeleteAfterType(screenCode: Int): DeleteAfterType {
+    return when (screenCode) {
+        DeleteAfterType.FIVE_MINUTES.screenCode -> DeleteAfterType.FIVE_MINUTES
+        DeleteAfterType.TEN_MINUTES.screenCode -> DeleteAfterType.TEN_MINUTES
+        DeleteAfterType.ONE_HOUR.screenCode -> DeleteAfterType.ONE_HOUR
+        DeleteAfterType.ONE_DAY.screenCode -> DeleteAfterType.ONE_DAY
+        DeleteAfterType.ONE_WEEK.screenCode -> DeleteAfterType.ONE_WEEK
+        else -> DeleteAfterType.NEVER
+    }
+}
+
+fun deleteAfterToSeconds(deleteAfterType: DeleteAfterType): Long {
+    val now = System.currentTimeMillis() / 1000
+    return when (deleteAfterType) {
+        DeleteAfterType.FIVE_MINUTES -> now + 300
+        DeleteAfterType.TEN_MINUTES -> now + 600
+        DeleteAfterType.ONE_HOUR -> now + 3600
+        DeleteAfterType.ONE_DAY -> now + 86400
+        DeleteAfterType.ONE_WEEK -> now + 604800
+        else -> 0
+    }
+}
+
 enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {
     EVERY_TIME(0, R.string.every_time),
     ONE_MINUTE(1, R.string.one_minute),

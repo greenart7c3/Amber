@@ -9,6 +9,8 @@ import android.os.IBinder
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.database.LogEntity
 import java.util.Timer
 import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
@@ -122,6 +124,23 @@ class ConnectivityService : Service() {
                             return
                         }
                         if (Amber.instance.settings.killSwitch.value) return
+
+                        scope.launch {
+                            LocalPreferences.allSavedAccounts(Amber.instance).forEach { accountInfo ->
+                                val now = System.currentTimeMillis() / 1000
+                                val deleted = Amber.instance.getDatabase(accountInfo.npub).applicationDao().deleteOldApplications(now)
+                                Log.d(Amber.TAG, "Deleted $deleted expired applications")
+                                Amber.instance.getDatabase(accountInfo.npub).applicationDao().insertLog(
+                                    LogEntity(
+                                        id = 0,
+                                        url = "",
+                                        type = "deleteApplications",
+                                        message = "Deleted $deleted expired applications",
+                                        time = System.currentTimeMillis(),
+                                    ),
+                                )
+                            }
+                        }
 
                         scope.launch {
                             if (!Amber.instance.client.isActive()) {

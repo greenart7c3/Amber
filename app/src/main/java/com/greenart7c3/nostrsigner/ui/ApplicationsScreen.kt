@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberWarningCard
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -158,6 +159,15 @@ fun ApplicationsScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
+                        if (applicationWithHistory.application.relays.isNotEmpty()) {
+                            Text(
+                                modifier = Modifier.padding(top = 4.dp),
+                                text = applicationWithHistory.application.relays.joinToString { it.displayUrl() },
+                                fontSize = 16.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                         Row(
                             modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,

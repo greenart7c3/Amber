@@ -545,4 +545,5 @@
     <string name="enable_kill_switch">Kill switch\'i etkinleştir</string>
     <string name="disable_kill_switch">Kill switch\'i devre dışı bırak</string>
     <string name="kill_switch_message">Kill switch etkinleştirildi, uzaktan oturum açma ve profil getirme çalışmayacaktır.</string>
+    <string name="edit_relays">Edit Relays</string>
 </resources>

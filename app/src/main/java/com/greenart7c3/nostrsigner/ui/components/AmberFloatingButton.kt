@@ -3,9 +3,10 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FloatingActionButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +37,17 @@ fun AmberFloatingButton(
         Column(
             horizontalAlignment = Alignment.End,
         ) {
-            FloatingActionButton(
+            ExtendedFloatingActionButton(
+                text = {
+                    Text(stringResource(R.string.edit_relays))
+                },
+                icon = {
+                    Icon(
+                        ImageVector.vectorResource(R.drawable.settings),
+                        contentDescription = stringResource(R.string.edit_relays),
+                        tint = Color.Black,
+                    )
+                },
                 modifier = Modifier
                     .padding(end = 8.dp),
                 elevation = FloatingActionButtonDefaults.elevation(
@@ -49,13 +60,7 @@ fun AmberFloatingButton(
                     navController.navigate(Route.DefaultRelays.route)
                 },
                 shape = RoundedCornerShape(24),
-            ) {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.settings),
-                    contentDescription = stringResource(R.string.connect_app),
-                    tint = Color.Black,
-                )
-            }
+            )
         }
     }
 }

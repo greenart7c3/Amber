@@ -546,4 +546,8 @@
     <string name="disable_kill_switch">Disable kill switch</string>
     <string name="kill_switch_message">Kill Switch enabled, remote login and profile fetching will not work</string>
     <string name="edit_relays">Edit Relays</string>
+    <string name="one_hour">One hour</string>
+    <string name="one_day">One day</string>
+    <string name="one_week">One week</string>
+    <string name="delete_after">Delete after</string>
 </resources>

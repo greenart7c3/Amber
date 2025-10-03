@@ -444,7 +444,20 @@ class SignerProvider : ContentProvider() {
                 else -> null
             }
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "Error from $callingPackage $uri", e)
+            scope.launch {
+                LocalPreferences.allSavedAccounts(context!!).forEach { accInfo ->
+                    val database = Amber.instance.getDatabase(accInfo.npub)
+                    database.applicationDao().insertLog(
+                        LogEntity(
+                            0,
+                            packageName,
+                            uri.toString().replace("content://$appId.", ""),
+                            e.message ?: "Error from $callingPackage $uri",
+                            System.currentTimeMillis(),
+                        ),
+                    )
+                }
+            }
             return null
         }
     }

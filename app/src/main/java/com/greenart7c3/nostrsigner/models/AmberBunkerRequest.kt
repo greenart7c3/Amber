@@ -17,7 +17,7 @@ import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -58,7 +58,7 @@ data class AmberBunkerRequest(
 
         fun fromJson(jsonObject: JsonNode): AmberBunkerRequest {
             return AmberBunkerRequest(
-                request = JsonMapper.mapper.readValue(jsonObject.get("request").asText().intern()),
+                request = JacksonMapper.mapper.readValue(jsonObject.get("request").asText().intern()),
                 localKey = jsonObject.get("localKey")?.asText()?.intern() ?: "",
                 relays = jsonObject.get("relays")?.asIterable()?.toList()?.mapNotNull {
                     RelayUrlNormalizer.normalizeOrNull(it.asText())
@@ -69,7 +69,7 @@ data class AmberBunkerRequest(
                 name = jsonObject.get("name")?.asText()?.intern() ?: "",
                 signedEvent = jsonObject.get("signedEvent")?.asText()?.intern()?.let {
                     try {
-                        JsonMapper.fromJson(it)
+                        JacksonMapper.fromJson(it)
                     } catch (_: Exception) {
                         null
                     }

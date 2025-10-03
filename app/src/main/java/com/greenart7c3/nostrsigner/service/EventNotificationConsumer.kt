@@ -43,10 +43,10 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.crypto.verify
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
-import com.vitorpamplona.quartz.nip01Core.verify
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
@@ -164,7 +164,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             ),
         )
 
-        val bunkerRequest = JsonMapper.mapper.readValue(request, BunkerRequest::class.java)
+        val bunkerRequest = JacksonMapper.mapper.readValue(request, BunkerRequest::class.java)
 
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {
             acc.signer.signerSync.sign(bunkerRequest.event)

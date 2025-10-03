@@ -15,7 +15,7 @@ import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
-import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.jackson.toTypedArray
 import com.vitorpamplona.quartz.utils.TimeUtils
 
@@ -78,7 +78,7 @@ open class AmberEvent(
             jacksonObjectMapper()
                 .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
                 .enable(JsonReadFeature.ALLOW_UNESCAPED_CONTROL_CHARS.mappedFeature())
-                .setDefaultPrettyPrinter(JsonMapper.defaultPrettyPrinter)
+                .setDefaultPrettyPrinter(JacksonMapper.defaultPrettyPrinter)
                 .registerModule(
                     SimpleModule()
                         .addSerializer(AmberEvent::class.java, EventSerializer())

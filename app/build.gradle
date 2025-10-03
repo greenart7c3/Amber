@@ -206,7 +206,6 @@ dependencies {
     implementation libs.adaptive.android
 
     testImplementation libs.junit
-    testImplementation libs.mockk
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ui.test.junit4
@@ -254,4 +253,5 @@ dependencies {
     implementation libs.security.crypto
 
     implementation libs.lifecycle.process
+    implementation libs.kotlinx.collections.immutable
 }

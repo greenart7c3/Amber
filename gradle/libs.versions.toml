@@ -11,9 +11,8 @@ junit = "4.13.2"
 junitVersion = "1.3.0"
 lifecycle_version = "2.9.4"
 material3 = "1.4.0"
-mockk = "1.14.5"
 nav_version = "2.9.5"
-quartz = "v1.00.5"
+quartz = "1.03.0"
 compose_ui = "1.9.2"
 richtextUi = "e1151c8"
 roomKtx = "2.8.1"
@@ -30,6 +29,7 @@ storage = "2.2.0"
 jna = "5.18.0"
 adaptiveAndroid = "1.1.0"
 materialIconsExtended = "1.7.8"
+collections = "0.4.0"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -49,9 +49,9 @@ lifecycle-viewmodel-compose = { module = "androidx.lifecycle:lifecycle-viewmodel
 lifecycle-process = { module = "androidx.lifecycle:lifecycle-process", version.ref = "lifecycle_version" }
 material-icons-extended = { module = "androidx.compose.material:material-icons-extended", version.ref = "materialIconsExtended" }
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
-mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "nav_version" }
-quartz = { module = "com.github.vitorpamplona.amethyst:quartz", version.ref = "quartz" }
+quartz = { module = "com.vitorpamplona.quartz:quartz-android", version.ref = "quartz" }
+kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "collections" }
 richtext-commonmark = { module = "com.github.vitorpamplona.compose-richtext:richtext-commonmark", version.ref = "richtextUi" }
 richtext-ui = { module = "com.github.vitorpamplona.compose-richtext:richtext-ui", version.ref = "richtextUi" }
 richtext-ui-material3 = { module = "com.github.vitorpamplona.compose-richtext:richtext-ui-material3", version.ref = "richtextUi" }

@@ -18,7 +18,7 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.jackson.JsonMapper
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -94,7 +94,7 @@ object BunkerRequestUtils {
                         id = 0,
                         url = relay.url,
                         type = "bunker response",
-                        message = JsonMapper.mapper.writeValueAsString(bunkerResponse),
+                        message = JacksonMapper.mapper.writeValueAsString(bunkerResponse),
                         time = System.currentTimeMillis(),
                     ),
                 )
@@ -102,14 +102,16 @@ object BunkerRequestUtils {
         }
 
         val encryptedContent = try {
+            val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
+
             if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
                 account.signer.signerSync.nip44Encrypt(
-                    JsonMapper.mapper.writeValueAsString(bunkerResponse),
+                    plainText,
                     bunkerRequest.localKey,
                 )
             } else {
                 account.signer.signerSync.nip04Encrypt(
-                    JsonMapper.mapper.writeValueAsString(bunkerResponse),
+                    plainText,
                     bunkerRequest.localKey,
                 )
             }

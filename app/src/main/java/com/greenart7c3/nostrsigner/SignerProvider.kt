@@ -6,7 +6,6 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.util.Log
-import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -108,7 +107,7 @@ class SignerProvider : ContentProvider() {
                                 "SIGN_MESSAGE",
                             )
                     val signPolicy = database.applicationDao().getSignPolicy(packageName)
-                    val isRemembered = isRemembered(signPolicy, permission)
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
                     }
@@ -206,7 +205,7 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.applicationDao().getSignPolicy(packageName)
-                    val isRemembered = isRemembered(signPolicy, permission)
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
                     }
@@ -306,7 +305,7 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.applicationDao().getSignPolicy(packageName)
-                    val isRemembered = isRemembered(signPolicy, permission)
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
                     }
@@ -411,7 +410,7 @@ class SignerProvider : ContentProvider() {
                             )
 
                     val signPolicy = database.applicationDao().getSignPolicy(packageName)
-                    val isRemembered = isRemembered(signPolicy, permission)
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
                     }
@@ -484,21 +483,5 @@ class SignerProvider : ContentProvider() {
         selectionArgs: Array<String>?,
     ): Int {
         return 0
-    }
-
-    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? {
-        val rejectUntil = permission?.rejectUntil ?: 0
-        val acceptUntil = permission?.acceptUntil ?: 0
-        if (signPolicy == 2) {
-            return true
-        }
-        if (rejectUntil == 0L && acceptUntil == 0L) return null
-        return if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
-            false
-        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0 && permission?.acceptable == true) {
-            true
-        } else {
-            null
-        }
     }
 }

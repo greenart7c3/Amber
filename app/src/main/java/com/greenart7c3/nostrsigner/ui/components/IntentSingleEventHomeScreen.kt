@@ -38,7 +38,6 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
-import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -121,18 +120,7 @@ fun IntentSingleEventHomeScreen(
                     it.pkKey == key && it.type == intentData.type.toString()
                 }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
             SignMessage(
                 account = account,
@@ -195,18 +183,7 @@ fun IntentSingleEventHomeScreen(
                     }
             }
 
-            val acceptUntil = permission?.acceptUntil ?: 0
-            val rejectUntil = permission?.rejectUntil ?: 0
-
-            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                null
-            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                false
-            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                true
-            } else {
-                null
-            }
+            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
             EncryptDecryptData(
                 account = account,
@@ -284,18 +261,7 @@ fun IntentSingleEventHomeScreen(
                         it.pkKey == key && ((it.type == intentData.type.toString() && it.kind == event.kind) || (nip != null && it.type == "NIP" && it.kind == nip))
                     }
 
-                val acceptUntil = permission?.acceptUntil ?: 0
-                val rejectUntil = permission?.rejectUntil ?: 0
-
-                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                    null
-                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                    false
-                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                    true
-                } else {
-                    null
-                }
+                val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
                 EventData(
                     account = account,

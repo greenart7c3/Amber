@@ -796,4 +796,20 @@ object IntentUtils {
             onLoading(false)
         }
     }
+
+    fun isRemembered(signPolicy: Int?, permission: ApplicationPermissionsEntity?): Boolean? {
+        val rejectUntil = permission?.rejectUntil ?: 0
+        val acceptUntil = permission?.acceptUntil ?: 0
+        if (signPolicy == 2) {
+            return true
+        }
+        if (rejectUntil == 0L && acceptUntil == 0L) return null
+        return if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
+            false
+        } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0 && permission?.acceptable == true) {
+            true
+        } else {
+            null
+        }
+    }
 }

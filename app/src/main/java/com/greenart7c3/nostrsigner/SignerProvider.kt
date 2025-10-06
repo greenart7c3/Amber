@@ -384,8 +384,23 @@ class SignerProvider : ContentProvider() {
                 }
 
                 "content://$appId.GET_PUBLIC_KEY" -> {
-                    val npub = if (projection != null && projection.size >= 3) IntentUtils.parsePubKey(projection[2]) else null
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
+                    val npub = if (projection != null && projection.isNotEmpty()) IntentUtils.parsePubKey(projection[0]) else null
+                    val account = if (npub != null) {
+                        LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
+                    } else {
+                        LocalPreferences.allSavedAccounts(context!!).firstNotNullOfOrNull { accountInfo ->
+                            val localDatabase = Amber.instance.getDatabase(accountInfo.npub)
+                            val hasAccount = localDatabase.applicationDao().getByKeySync(packageName) != null
+                            if (hasAccount) {
+                                LocalPreferences.loadFromEncryptedStorageSync(context!!, accountInfo.npub)
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                    if (account == null) {
+                        return null
+                    }
                     val database = Amber.instance.getDatabase(account.npub)
                     val permission =
                         database

@@ -302,10 +302,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
+        val projection = if (type == SignerType.GET_PUBLIC_KEY) {
+            arrayOf(acc.npub)
+        } else {
+            arrayOf(data, pubKey, acc.npub)
+        }
         val cursor =
             applicationContext.contentResolver.query(
                 "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
-                arrayOf(data, pubKey, acc.npub),
+                projection,
                 null,
                 null,
                 event.pubKey,

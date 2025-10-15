@@ -25,6 +25,8 @@ import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
+import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -53,6 +55,7 @@ import kotlinx.coroutines.launch
 
 class Amber : Application(), LifecycleObserver {
     private var mainActivityRef: WeakReference<MainActivity?>? = null
+    val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
 
     fun setMainActivity(activity: MainActivity?) {
         Log.d(TAG, "Setting main activity ref to $activity")
@@ -187,6 +190,9 @@ class Amber : Application(), LifecycleObserver {
     override fun onCreate() {
         super.onCreate()
         isStartingApp.value = true
+        Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+
+//        "test".toInt()
 
         Log.d(TAG, "onCreate Amber")
 

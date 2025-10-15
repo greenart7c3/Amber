@@ -62,6 +62,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -872,5 +873,7 @@ fun MainScreen(
                 )
             }
         }
+
+        DisplayCrashMessages(account)
     }
 }

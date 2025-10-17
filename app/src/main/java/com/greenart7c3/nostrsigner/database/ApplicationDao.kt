@@ -66,6 +66,7 @@ interface ApplicationDao {
     suspend fun getByKey(key: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM application WHERE `key` = :key")
+    @Transaction
     fun getByKeySync(key: String): ApplicationWithPermissions?
 
     @Query("SELECT * FROM application WHERE `name` = :name LIMIT 1")

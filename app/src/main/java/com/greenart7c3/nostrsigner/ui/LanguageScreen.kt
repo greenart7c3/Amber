@@ -14,7 +14,6 @@ import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import java.io.IOException
 import kotlinx.collections.immutable.ImmutableMap
@@ -27,12 +26,11 @@ import org.xmlpull.v1.XmlPullParserException
 @Composable
 fun LanguageScreen(
     modifier: Modifier = Modifier,
-    account: Account,
 ) {
     val context = LocalContext.current
     val languageEntries = remember { context.getLangPreferenceDropdownEntries() }
     val languageList = remember { languageEntries.keys.map { TitleExplainer(it) }.toImmutableList() }
-    val languageIndex = getLanguageIndex(languageEntries, account.language)
+    val languageIndex = getLanguageIndex(languageEntries, Amber.instance.settings.language)
 
     Column(
         modifier = modifier
@@ -49,10 +47,10 @@ fun LanguageScreen(
                     languageIndex,
                 ) {
                     Amber.instance.applicationIOScope.launch {
-                        account.language = languageEntries[languageList[it].title]
-                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        Amber.instance.settings.language = languageEntries[languageList[it].title]
+                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                         AppCompatDelegate.setApplicationLocales(
-                            LocaleListCompat.forLanguageTags(account.language),
+                            LocaleListCompat.forLanguageTags(Amber.instance.settings.language),
                         )
                     }
                 }

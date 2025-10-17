@@ -27,4 +27,5 @@ data class AmberSettings(
     val useProxy: Boolean = false,
     val proxyPort: Int = 9050,
     val killSwitch: MutableStateFlow<Boolean> = MutableStateFlow(false),
+    var language: String? = null,
 )

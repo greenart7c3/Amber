@@ -4,7 +4,9 @@ import android.app.Application
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -246,6 +248,11 @@ class Amber : Application(), LifecycleObserver {
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 settings = LocalPreferences.loadSettingsFromEncryptedStorage()
+                settings.language?.let {
+                    AppCompatDelegate.setApplicationLocales(
+                        LocaleListCompat.forLanguageTags(it),
+                    )
+                }
                 LocalPreferences.reloadApp()
                 fixRejectedPermissions()
                 fixAcceptedPermissions()

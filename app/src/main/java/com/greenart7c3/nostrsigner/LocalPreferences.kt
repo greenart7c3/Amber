@@ -32,7 +32,6 @@ private enum class PrefKeys(val key: String) {
     NOSTR_PRIVKEY("nostr_privkey"),
     NOSTR_PUBKEY("nostr_pubkey"),
     ACCOUNT_NAME("account_name"),
-    LANGUAGE_PREFS("languagePreferences"),
     SIGN_POLICY("default_sign_policy"),
     SEED_WORDS("seed_words"),
     PROFILE_URL("profile_url"),
@@ -56,6 +55,7 @@ private enum class SettingsKeys(val key: String) {
     PROXY_PORT("proxy_port"),
     BATERRY_OPTIMIZATION("battery_optimization"),
     KILL_SWITCH("kill_switch"),
+    LANGUAGE_PREFS("languagePreferences"),
 }
 
 @Immutable
@@ -139,6 +139,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.USE_PROXY.key, settings.useProxy)
                 putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
                 putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch.value)
+                putString(SettingsKeys.LANGUAGE_PREFS.key, settings.language)
             }
         }
     }
@@ -220,6 +221,7 @@ object LocalPreferences {
                 useProxy = getBoolean(SettingsKeys.USE_PROXY.key, false),
                 proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050),
                 killSwitch = MutableStateFlow(getBoolean(SettingsKeys.KILL_SWITCH.key, false)),
+                language = getString(SettingsKeys.LANGUAGE_PREFS.key, null),
             )
         }
     }
@@ -406,7 +408,6 @@ object LocalPreferences {
                 account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY.key, it.toHexKey()) }
                 putString(PrefKeys.ACCOUNT_NAME.key, account.name.value)
                 putString(PrefKeys.PROFILE_URL.key, account.picture.value)
-                putString(PrefKeys.LANGUAGE_PREFS.key, account.language)
                 putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
                 putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
             }
@@ -498,7 +499,6 @@ object LocalPreferences {
             val privKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
             val picture = getString(PrefKeys.PROFILE_URL.key, "") ?: ""
-            val language = getString(PrefKeys.LANGUAGE_PREFS.key, null)
             val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
             val savedSeedWords = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
             val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
@@ -509,7 +509,6 @@ object LocalPreferences {
                     signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
                     name = MutableStateFlow(name),
                     picture = MutableStateFlow(picture),
-                    language = language,
                     signPolicy = signPolicy,
                     seedWords = seedWords,
                     didBackup = didBackup,

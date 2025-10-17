@@ -501,7 +501,6 @@ fun MainScreen(
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            account = account,
                         )
                     },
                 )

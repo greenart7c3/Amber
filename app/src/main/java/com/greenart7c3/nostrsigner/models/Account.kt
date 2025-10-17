@@ -16,7 +16,6 @@ class Account(
     val signer: NostrSignerInternal,
     val name: MutableStateFlow<String>,
     val picture: MutableStateFlow<String>,
-    var language: String?,
     var signPolicy: Int,
     var seedWords: Set<String>,
     var didBackup: Boolean,

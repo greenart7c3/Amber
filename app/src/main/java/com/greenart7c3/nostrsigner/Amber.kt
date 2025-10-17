@@ -192,8 +192,6 @@ class Amber : Application(), LifecycleObserver {
         isStartingApp.value = true
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
 
-//        "test".toInt()
-
         Log.d(TAG, "onCreate Amber")
 
         startCleanLogsAlarm()

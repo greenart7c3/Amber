@@ -69,6 +69,7 @@ import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
+import com.greenart7c3.nostrsigner.ui.actions.ExportAllAccountsScreen
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeScreen
 import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.AmberBottomBar
@@ -429,6 +430,24 @@ fun MainScreen(
                                 .padding(top = verticalPadding * 1.5f)
                                 .imePadding(),
                             navController,
+                        )
+                    },
+                )
+
+                composable(
+                    Route.ExportAllAccounts.route,
+                    content = {
+                        val scrollState = rememberScrollState()
+                        ExportAllAccountsScreen(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .consumeWindowInsets(padding)
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f)
+                                .imePadding(),
                         )
                     },
                 )

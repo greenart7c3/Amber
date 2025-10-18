@@ -53,6 +53,12 @@ sealed class Route(
         icon = R.drawable.settings,
     )
 
+    data object ExportAllAccounts : Route(
+        title = Amber.instance.getString(R.string.export_all_accounts_title),
+        route = "ExportAllAccounts",
+        icon = R.drawable.settings,
+    )
+
     data object Logs : Route(
         title = Amber.instance.getString(R.string.logs),
         route = "Logs",
@@ -192,6 +198,7 @@ val routes = listOf(
     Route.Settings,
     Route.Permission,
     Route.AccountBackup,
+    Route.ExportAllAccounts,
     Route.Logs,
     Route.ActiveRelays,
     Route.Language,

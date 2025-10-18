@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
@@ -136,6 +137,20 @@ fun SettingsScreen(
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
                         navController.navigate(Route.AccountBackup.route)
+                    },
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
+                    title = stringResource(R.string.export_all_accounts_title),
+                    icon = Icons.Default.SaveAlt,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.ExportAllAccounts.route)
                     },
                 )
             }

@@ -10,17 +10,19 @@ import com.fasterxml.jackson.module.kotlin.readValue
  */
 @Immutable
 data class AccountExportData(
-    @JsonProperty("npub")
+    @param:JsonProperty("npub")
     val npub: String,
-    @JsonProperty("name")
+    @param:JsonProperty("name")
     val name: String,
-    @JsonProperty("nsec")
+    @param:JsonProperty("nsec")
     val nsec: String?,
-    @JsonProperty("signPolicy")
+    @param:JsonProperty("seedWords")
+    val seedWords: String,
+    @param:JsonProperty("signPolicy")
     val signPolicy: Int,
-    @JsonProperty("picture")
+    @param:JsonProperty("picture")
     val picture: String?,
-    @JsonProperty("didBackup")
+    @param:JsonProperty("didBackup")
     val didBackup: Boolean,
 )
 
@@ -29,13 +31,13 @@ data class AccountExportData(
  */
 @Immutable
 data class BulkAccountExport(
-    @JsonProperty("version")
+    @param:JsonProperty("version")
     val version: String = "1.0",
-    @JsonProperty("exportDate")
+    @param:JsonProperty("exportDate")
     val exportDate: Long = System.currentTimeMillis() / 1000,
-    @JsonProperty("accountCount")
+    @param:JsonProperty("accountCount")
     val accountCount: Int,
-    @JsonProperty("accounts")
+    @param:JsonProperty("accounts")
     val accounts: List<AccountExportData>,
 ) {
     companion object {

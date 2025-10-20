@@ -64,6 +64,7 @@ object AccountExportService {
      */
     private fun accountToExportData(account: Account, password: String): AccountExportData {
         val privKey = account.signer.keyPair.privKey
+        val encrypedSeedWords = if (account.seedWords.isNotEmpty()) account.signer.signerSync.nip44Encrypt(account.seedWords.joinToString(" "), account.hexKey) else ""
 
         // Encrypt private key with password (NIP-49) or use nsec if no password
         val encryptedNsec = if (privKey != null) {
@@ -83,6 +84,7 @@ object AccountExportService {
             signPolicy = account.signPolicy,
             picture = account.picture.value,
             didBackup = account.didBackup,
+            seedWords = encrypedSeedWords,
         )
     }
 }

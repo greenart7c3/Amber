@@ -393,6 +393,23 @@
     <string name="new_app_description">Normalerweise haben Nostr-Anwendungen eine Option „Anmelden mit Amber“, die es erlaubt, Amber als externen Unterzeichner zu verwenden; wenn sie diese Taste drücken, wird Amber gestartet und sie werden gebeten, einige Berechtigungen zu genehmigen.\n\naber sie haben noch andere Optionen um Amber zu verwenden:</string>
     <string name="add_a_new_application">Eine neue Anwendung hinzufügen</string>
     <string name="account_backup">Konto-Sicherung</string>
+    <string name="export_all_accounts_title">Export All Accounts</string>
+    <string name="export_all_accounts_warning" tools:ignore="Typos">## IMPORTANT SECURITY NOTICE\n\nYou are about to export **ALL** your Amber accounts. This file will contain your private keys.\n\n- **Password protect** your export file with a strong password\n- **Store securely** - treat this like your wallet\n- **Never share** with anyone\n- **Delete** from your device after storing safely\n\n**Anyone with access to this file can control ALL your accounts!**</string>
+    <string name="accounts_to_export">Accounts to export: %d</string>
+    <string name="encryption_password">Encryption Password</string>
+    <string name="enter_strong_password">Enter a strong password (min 8 characters)</string>
+    <string name="confirm_password">Confirm Password</string>
+    <string name="password_too_short">Password must be at least 8 characters</string>
+    <string name="passwords_do_not_match">Passwords do not match</string>
+    <string name="export_all_accounts_button">Export All Accounts</string>
+    <string name="preparing_export">Preparing export...</string>
+    <string name="exporting_accounts_progress">Exporting account %1$d of %2$d...</string>
+    <string name="export_success">Successfully exported %d accounts</string>
+    <string name="export_failed">Export failed: %s</string>
+    <string name="confirm_export_title">Confirm Export</string>
+    <string name="confirm_export_message">You are about to export %d accounts to an encrypted file.</string>
+    <string name="confirm_export_warning">This file will contain all your private keys. Store it securely!</string>
+    <string name="export">Export</string>
     <string name="create_nsecbunker_description">To create a new nsecbunker you need to give it a name and select one or more relays, that’s all!</string>
     <string name="create">Create</string>
     <string name="name">Name</string>

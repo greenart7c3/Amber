@@ -22,22 +22,8 @@ interface ApplicationDao {
     @Transaction
     suspend fun getAllNotConnected(): List<ApplicationWithPermissions>
 
-    @Query(
-        """
-    SELECT
-        a.*,
-        MAX(h.time) AS latestTime
-    FROM application a
-    LEFT JOIN history2 h ON a.`key` = h.pkKey
-    WHERE a.pubKey = :pubKey
-    GROUP BY
-        a.`key`, a.description, a.icon, a.isConnected, a.name,
-        a.pubKey, a.secret, a.signPolicy, a.url, a.useSecret,
-        a.closeApplication, a.deleteAfter, a.relays
-    ORDER BY latestTime DESC
-    """,
-    )
-    fun getAllFlow(pubKey: String): Flow<List<ApplicationWithLatestHistory>>
+    @Query("SELECT a.* FROM application a WHERE a.pubKey = :pubKey ORDER BY a.lastUsed DESC")
+    fun getAllFlow(pubKey: String): Flow<List<ApplicationEntity>>
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
@@ -153,10 +139,15 @@ interface ApplicationDao {
     suspend fun addHistory(entity: HistoryEntity2) {
         try {
             innerAddHistory(entity)
+            updateLastUsed(entity.pkKey, entity.time)
         } catch (e: Exception) {
             Log.e(Amber.TAG, "Error adding history", e)
         }
     }
+
+    @Query("UPDATE application SET lastUsed = :time where `key` = :key")
+    @Transaction
+    suspend fun updateLastUsed(key: String, time: Long)
 
     @Query("SELECT * FROM history2 where pkKey = :pk ORDER BY time DESC")
     fun getAllHistory(pk: String): Flow<List<HistoryEntity2>>

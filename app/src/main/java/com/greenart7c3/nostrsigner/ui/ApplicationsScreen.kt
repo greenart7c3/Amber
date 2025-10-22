@@ -145,7 +145,7 @@ fun ApplicationsScreen(
                         .fillMaxSize()
                         .padding(vertical = 4.dp)
                         .clickable {
-                            navController.navigate("Permission/${applicationWithHistory.application.key}")
+                            navController.navigate("Permission/${applicationWithHistory.key}")
                         },
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
@@ -154,15 +154,15 @@ fun ApplicationsScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 16.dp),
-                            text = applicationWithHistory.application.name.ifBlank { applicationWithHistory.application.key.toShortenHex() },
+                            text = applicationWithHistory.name.ifBlank { applicationWithHistory.key.toShortenHex() },
                             fontSize = 24.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
-                        if (applicationWithHistory.application.relays.isNotEmpty()) {
+                        if (applicationWithHistory.relays.isNotEmpty()) {
                             Text(
                                 modifier = Modifier.padding(top = 4.dp),
-                                text = applicationWithHistory.application.relays.joinToString { it.displayUrl() },
+                                text = applicationWithHistory.relays.joinToString { it.displayUrl() },
                                 fontSize = 16.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
@@ -174,14 +174,14 @@ fun ApplicationsScreen(
                         ) {
                             Text(
                                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                text = applicationWithHistory.application.key.toShortenHex(),
+                                text = applicationWithHistory.key.toShortenHex(),
                                 fontSize = 16.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                             )
                             Text(
                                 modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                                text = if (applicationWithHistory.latestTime == null) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.latestTime * 1000),
+                                text = if (applicationWithHistory.lastUsed == 0L) stringResource(R.string.never) else TimeUtils.formatLongToCustomDateTime(applicationWithHistory.lastUsed * 1000),
                                 fontSize = 16.sp,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,

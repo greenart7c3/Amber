@@ -287,6 +287,7 @@ object BunkerRequestUtils {
                         account.signPolicy,
                         shouldCloseApplication ?: bunkerRequest.closeApplication,
                         deleteAfter = deleteAfter,
+                        lastUsed = TimeUtils.now(),
                     ),
                     permissions = mutableListOf(),
                 )
@@ -428,6 +429,7 @@ object BunkerRequestUtils {
                         account.signPolicy,
                         bunkerRequest.closeApplication,
                         deleteAfter = 0L,
+                        lastUsed = TimeUtils.now(),
                     ),
                     permissions = mutableListOf(),
                 )

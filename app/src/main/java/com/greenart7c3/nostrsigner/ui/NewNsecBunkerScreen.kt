@@ -242,19 +242,20 @@ fun NewNsecBunkerScreen(
 
                         val application =
                             ApplicationEntity(
-                                secret.value,
-                                name.text,
-                                relays,
-                                "",
-                                "",
-                                "",
-                                account.hexKey,
-                                false,
-                                secret.value,
-                                true,
-                                account.signPolicy,
-                                true,
+                                key = secret.value,
+                                name = name.text,
+                                relays = relays,
+                                url = "",
+                                icon = "",
+                                description = "",
+                                pubKey = account.hexKey,
+                                isConnected = false,
+                                secret = secret.value,
+                                useSecret = true,
+                                signPolicy = account.signPolicy,
+                                closeApplication = true,
                                 deleteAfter = deleteAfter,
+                                lastUsed = 0L,
                             )
 
                         Amber.instance.getDatabase(account.npub).applicationDao().insertApplication(

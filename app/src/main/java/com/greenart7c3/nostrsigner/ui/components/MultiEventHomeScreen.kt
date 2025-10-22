@@ -242,6 +242,7 @@ fun IntentMultiEventHomeScreen(
                                         thisAccount.signPolicy,
                                         true,
                                         0L,
+                                        lastUsed = TimeUtils.now(),
                                     ),
                                     permissions = mutableListOf(),
                                 )
@@ -435,6 +436,7 @@ fun IntentMultiEventHomeScreen(
                                     thisAccount.signPolicy,
                                     true,
                                     0L,
+                                    lastUsed = TimeUtils.now(),
                                 ),
                                 permissions = mutableListOf(),
                             )
@@ -614,6 +616,7 @@ fun BunkerMultiEventHomeScreen(
                                         thisAccount.signPolicy,
                                         request.closeApplication,
                                         0L,
+                                        lastUsed = TimeUtils.now(),
                                     ),
                                     permissions = mutableListOf(),
                                 )
@@ -882,6 +885,7 @@ fun BunkerMultiEventHomeScreen(
                                     thisAccount.signPolicy,
                                     request.closeApplication,
                                     0L,
+                                    lastUsed = TimeUtils.now(),
                                 ),
                                 permissions = mutableListOf(),
                             )

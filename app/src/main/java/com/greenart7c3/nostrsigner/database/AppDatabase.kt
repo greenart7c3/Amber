@@ -112,15 +112,24 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
     }
 }
 
+val MIGRATION_12_13 = object : Migration(12, 13) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        try {
+            db.execSQL("DROP TABLE history")
+        } catch (e: Exception) {
+            Log.e(Amber.TAG, "No history table", e)
+        }
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
-        HistoryEntity::class,
         LogEntity::class,
         HistoryEntity2::class,
     ],
-    version = 12,
+    version = 13,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -154,6 +163,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_9_10)
                         .addMigrations(MIGRATION_10_11)
                         .addMigrations(MIGRATION_11_12)
+                        .addMigrations(MIGRATION_12_13)
                         .build()
                 instance.openHelper.writableDatabase.execSQL("VACUUM")
 

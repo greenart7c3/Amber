@@ -66,25 +66,15 @@ class NotificationSubscription(
         client.openReqSubscription(subId, createNotificationsFilter())
     }
 
-    fun closeSubscription() {
-        client.close(subId)
-    }
-
     private fun createNotificationsFilter(): Map<NormalizedRelayUrl, List<Filter>> {
         // TODO: If you break relays per account, you can change this to only send the requests to the right relays for each account.
         val relays = Amber.instance.getSavedRelays()
 
         var since = TimeUtils.now()
         val accounts = LocalPreferences.allSavedAccounts(appContext)
-        var localLatest = 0L
-        accounts.forEach {
-            val latest = Amber.instance.getDatabase(it.npub).applicationDao().getLatestNotification()
-            if (latest != null && latest > localLatest) {
-                localLatest = latest + 1
-            }
-        }
-        if (localLatest > 0) {
-            since = localLatest
+        val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L
+        if (latest > 0) {
+            since = latest
         }
 
         val pubKeys = accounts.map { it.npub.bechToBytes().toHexKey() }

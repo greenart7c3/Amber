@@ -33,20 +33,6 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) :
                         }
                     }
 
-                    val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
-                    Log.d(Amber.TAG, "Deleting $countNotification old notification entries")
-                    if (countNotification > 0) {
-                        var logs = database.applicationDao().getOldNotification(oneWeekAgo)
-                        var count = 0
-                        while (logs.isNotEmpty()) {
-                            count++
-                            logs.forEach { history ->
-                                database.applicationDao().deleteNotification(history)
-                            }
-                            logs = database.applicationDao().getOldNotification(oneWeekAgo)
-                        }
-                    }
-
                     val countLog = database.applicationDao().countOldLog(oneWeek)
                     Log.d(Amber.TAG, "Deleting $countLog old log entries from ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(oneWeek)}")
                     if (countLog > 0) {

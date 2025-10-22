@@ -290,21 +290,6 @@ fun SettingsScreen(
                                             }
                                         }
 
-                                        val countNotification = database.applicationDao().countOldNotification(oneWeekAgo)
-                                        if (countNotification > 0) {
-                                            status = context.getString(R.string.deleting_old_notification_entries, countNotification)
-                                            var logs = database.applicationDao().getOldNotification(oneWeekAgo)
-                                            var count = 0
-                                            while (logs.isNotEmpty()) {
-                                                count++
-                                                status = context.getString(R.string.deleting_old_notification_entries_2, 100 * count, countNotification)
-                                                logs.forEach { history ->
-                                                    database.applicationDao().deleteNotification(history)
-                                                }
-                                                logs = database.applicationDao().getOldNotification(oneWeekAgo)
-                                            }
-                                        }
-
                                         val countLog = database.applicationDao().countOldLog(oneWeek)
                                         if (countLog > 0) {
                                             status = context.getString(R.string.deleting_old_log_entries, countLog)

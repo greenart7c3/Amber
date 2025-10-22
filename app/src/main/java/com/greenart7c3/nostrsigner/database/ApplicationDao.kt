@@ -8,34 +8,12 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
-import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ApplicationDao {
     @Query("SELECT signPolicy FROM application WHERE `key` = :key")
     fun getSignPolicy(key: String): Int?
-
-    @Query("SELECT MAX(time) FROM notification")
-    fun getLatestNotification(): Long?
-
-    @Query("SELECT * FROM notification WHERE eventId = :eventId")
-    suspend fun getNotification(eventId: String): NotificationEntity?
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    @Transaction
-    suspend fun insertNotification(notificationEntity: NotificationEntity): Long? {
-        deleteNotification(TimeUtils.oneDayAgo())
-        return innerInsertNotification(notificationEntity)
-    }
-
-    @Query("DELETE FROM notification WHERE time <= :time")
-    @Transaction
-    suspend fun deleteNotification(time: Long)
-
-    @Insert(onConflict = OnConflictStrategy.REPLACE)
-    @Transaction
-    suspend fun innerInsertNotification(notificationEntity: NotificationEntity): Long?
 
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
     suspend fun getAll(pubKey: String): List<ApplicationEntity>
@@ -218,18 +196,6 @@ interface ApplicationDao {
     @Delete
     @Transaction
     suspend fun deleteHistory(historyEntity: HistoryEntity2)
-
-    @Query("SELECT COUNT(*) FROM notification WHERE time < :time")
-    @Transaction
-    suspend fun countOldNotification(time: Long): Long
-
-    @Query("SELECT * FROM notification WHERE time <= :time ORDER BY TIME DESC LIMIT 100")
-    @Transaction
-    suspend fun getOldNotification(time: Long): List<NotificationEntity>
-
-    @Delete
-    @Transaction
-    suspend fun deleteNotification(notificationEntity: NotificationEntity)
 
     @Query("SELECT COUNT(*) FROM amber_log WHERE time < :time")
     @Transaction

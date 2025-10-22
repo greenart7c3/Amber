@@ -34,7 +34,6 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity2
 import com.greenart7c3.nostrsigner.database.LogEntity
-import com.greenart7c3.nostrsigner.database.NotificationEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptionType
@@ -150,9 +149,10 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val responseRelay = listOf(relay)
         val database = Amber.instance.getDatabase(acc.npub)
         val dao = database.applicationDao()
-        val notification = dao.getNotification(event.id)
+
+        val notification = Amber.instance.notificationCache[event.id]
         if (notification != null) return
-        dao.insertNotification(NotificationEntity(0, event.id, event.createdAt))
+        Amber.instance.notificationCache.put(event.id, event.createdAt)
 
         dao.insertLog(
             LogEntity(

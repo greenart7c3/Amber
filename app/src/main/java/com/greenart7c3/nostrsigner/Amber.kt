@@ -5,6 +5,7 @@ import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.collection.LruCache
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -120,6 +121,7 @@ class Amber : Application(), LifecycleObserver {
     val isOnOfflineState = mutableStateOf(false)
     private val isStartingApp = MutableStateFlow(false)
     val isStartingAppState = isStartingApp
+    val notificationCache = LruCache<String, Long>(10)
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         try {
@@ -263,23 +265,6 @@ class Amber : Application(), LifecycleObserver {
                 if (settings.killSwitch.value) {
                     client.disconnect()
                 }
-
-//                LocalPreferences.allSavedAccounts(this@Amber).forEach {
-//                    List<Int>(100000, init = { 1 }).forEachIndexed { index, it2 ->
-//                        launch(Dispatchers.IO) {
-//                            getDatabase(it.npub).applicationDao().addHistory(
-//                                HistoryEntity2(
-//                                    id = 0,
-//                                    pkKey = "com.vitorpamplona.amethyst",
-//                                    type = "SIGN_EVENT",
-//                                    kind = 1,
-//                                    time = TimeUtils.now() + index,
-//                                    accepted = true,
-//                                )
-//                            )
-//                        }
-//                    }
-//                }
 
                 launch(Dispatchers.Main) {
                     ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {

@@ -1,12 +1,14 @@
 package com.greenart7c3.nostrsigner.database
 
 import android.content.Context
+import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.greenart7c3.nostrsigner.Amber
 import java.util.concurrent.Executors
 
 val MIGRATION_1_2 =
@@ -100,16 +102,25 @@ val MIGRATION_10_11 = object : Migration(10, 11) {
     }
 }
 
+val MIGRATION_11_12 = object : Migration(11, 12) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        try {
+            db.execSQL("DROP TABLE notification")
+        } catch (e: Exception) {
+            Log.e(Amber.TAG, "No notification table", e)
+        }
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
-        NotificationEntity::class,
         HistoryEntity::class,
         LogEntity::class,
         HistoryEntity2::class,
     ],
-    version = 11,
+    version = 12,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -142,6 +153,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_8_9)
                         .addMigrations(MIGRATION_9_10)
                         .addMigrations(MIGRATION_10_11)
+                        .addMigrations(MIGRATION_11_12)
                         .build()
                 instance.openHelper.writableDatabase.execSQL("VACUUM")
 

@@ -277,6 +277,7 @@ class SignerProvider : ContentProvider() {
                     val pubkey = projection[1]
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
                     val database = Amber.instance.getDatabase(account.npub)
+                    val logDatabase = Amber.instance.getLogDatabase(account.npub)
                     var permission =
                         database
                             .applicationDao()
@@ -351,7 +352,7 @@ class SignerProvider : ContentProvider() {
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
                             scope.launch {
-                                database.applicationDao().insertLog(
+                                logDatabase.logDao().insertLog(
                                     LogEntity(
                                         0,
                                         packageName,
@@ -460,8 +461,8 @@ class SignerProvider : ContentProvider() {
         } catch (e: Exception) {
             scope.launch {
                 LocalPreferences.allSavedAccounts(context!!).forEach { accInfo ->
-                    val database = Amber.instance.getDatabase(accInfo.npub)
-                    database.applicationDao().insertLog(
+                    val database = Amber.instance.getLogDatabase(accInfo.npub)
+                    database.logDao().insertLog(
                         LogEntity(
                             0,
                             packageName,

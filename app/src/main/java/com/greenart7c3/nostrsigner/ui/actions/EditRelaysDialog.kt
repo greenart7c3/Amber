@@ -451,7 +451,7 @@ fun RelayLogScreen(
     val context = LocalContext.current
 
     val flows = LocalPreferences.allSavedAccounts(context).map {
-        Amber.instance.getDatabase(it.npub).applicationDao().getLogsByUrl(url)
+        Amber.instance.getLogDatabase(it.npub).logDao().getLogsByUrl(url)
     }.merge()
 
     val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())

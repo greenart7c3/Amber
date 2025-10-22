@@ -65,7 +65,7 @@ object BunkerRequestUtils {
         if (relays.isEmpty()) {
             onDone(true)
             onLoading(false)
-            Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
+            Amber.instance.getLogDatabase(account.npub).logDao().insertLog(
                 LogEntity(
                     id = 0,
                     url = bunkerRequest.localKey,
@@ -89,7 +89,7 @@ object BunkerRequestUtils {
 
         Amber.instance.applicationIOScope.launch {
             relays.forEach { relay ->
-                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
+                Amber.instance.getLogDatabase(account.npub).logDao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url,
@@ -124,7 +124,7 @@ object BunkerRequestUtils {
             onDone(false)
             onLoading(false)
             Amber.instance.applicationIOScope.launch {
-                Amber.instance.getDatabase(account.npub).applicationDao().insertLog(
+                Amber.instance.getLogDatabase(account.npub).logDao().insertLog(
                     LogEntity(
                         id = 0,
                         url = bunkerRequest.localKey,

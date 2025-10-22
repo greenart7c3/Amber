@@ -67,7 +67,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val accounts = LocalPreferences.allSavedAccounts(applicationContext)
             accounts.forEach {
                 LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    val dao = Amber.instance.getDatabase(acc.npub).applicationDao()
+                    val dao = Amber.instance.getLogDatabase(acc.npub).logDao()
                     dao.insertLog(
                         LogEntity(
                             0,
@@ -114,7 +114,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     ) {
         if (event.content.isEmpty()) return
 
-        val dao = Amber.instance.getDatabase(acc.npub).applicationDao()
+        val dao = Amber.instance.getLogDatabase(acc.npub).logDao()
         Amber.instance.applicationIOScope.launch {
             dao.insertLog(
                 LogEntity(
@@ -149,12 +149,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val responseRelay = listOf(relay)
         val database = Amber.instance.getDatabase(acc.npub)
         val dao = database.applicationDao()
+        val logDao = Amber.instance.getLogDatabase(acc.npub).logDao()
 
         val notification = Amber.instance.notificationCache[event.id]
         if (notification != null) return
         Amber.instance.notificationCache.put(event.id, event.createdAt)
 
-        dao.insertLog(
+        logDao.insertLog(
             LogEntity(
                 0,
                 "nostrsigner",
@@ -194,7 +195,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
         if (type == SignerType.INVALID) {
             Log.d(Amber.TAG, "Invalid request method ${bunkerRequest.method}")
-            dao.insertLog(
+            logDao.insertLog(
                 LogEntity(
                     0,
                     "nostrsigner",

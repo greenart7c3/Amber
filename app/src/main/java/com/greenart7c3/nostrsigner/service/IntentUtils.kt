@@ -176,8 +176,8 @@ object IntentUtils {
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
                             Amber.instance.applicationIOScope.launch {
-                                val database = Amber.instance.getDatabase(account.npub)
-                                database.applicationDao().insertLog(
+                                val database = Amber.instance.getLogDatabase(account.npub)
+                                database.logDao().insertLog(
                                     LogEntity(
                                         0,
                                         packageName ?: "",
@@ -359,8 +359,8 @@ object IntentUtils {
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
                         Amber.instance.applicationIOScope.launch {
-                            val database = Amber.instance.getDatabase(account.npub)
-                            database.applicationDao().insertLog(
+                            val database = Amber.instance.getLogDatabase(account.npub)
+                            database.logDao().insertLog(
                                 LogEntity(
                                     0,
                                     packageName ?: "",
@@ -508,7 +508,7 @@ object IntentUtils {
         } catch (e: Exception) {
             Amber.instance.applicationIOScope.launch {
                 LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-                    Amber.instance.getDatabase(it.npub).applicationDao().insertLog(
+                    Amber.instance.getLogDatabase(it.npub).logDao().insertLog(
                         LogEntity(
                             id = 0,
                             url = "IntentUtils",

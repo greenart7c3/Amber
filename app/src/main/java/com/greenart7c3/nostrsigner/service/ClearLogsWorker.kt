@@ -33,18 +33,19 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) :
                         }
                     }
 
-                    val countLog = database.applicationDao().countOldLog(oneWeek)
+                    val logDatabase = Amber.instance.getLogDatabase(it.npub)
+                    val countLog = logDatabase.logDao().countOldLog(oneWeek)
                     Log.d(Amber.TAG, "Deleting $countLog old log entries from ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(oneWeek)}")
                     if (countLog > 0) {
-                        var logs = database.applicationDao().getOldLog(oneWeek)
+                        var logs = logDatabase.logDao().getOldLog(oneWeek)
                         var count = 0
                         while (logs.isNotEmpty()) {
                             count++
                             logs.forEach { history ->
                                 Log.d(Amber.TAG, "Deleting log entry ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(history.time)}")
-                                database.applicationDao().deleteLog(history)
+                                logDatabase.logDao().deleteLog(history)
                             }
-                            logs = database.applicationDao().getOldLog(oneWeek)
+                            logs = logDatabase.logDao().getOldLog(oneWeek)
                         }
                     }
                 } catch (e: Exception) {

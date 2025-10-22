@@ -93,8 +93,3 @@ class Converters {
         }
     }
 }
-
-data class ApplicationWithLatestHistory(
-    @Embedded val application: ApplicationEntity,
-    val latestTime: Long?,
-)

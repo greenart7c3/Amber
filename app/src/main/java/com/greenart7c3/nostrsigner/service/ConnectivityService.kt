@@ -129,15 +129,17 @@ class ConnectivityService : Service() {
                             LocalPreferences.allSavedAccounts(Amber.instance).forEach { accountInfo ->
                                 val now = System.currentTimeMillis() / 1000
                                 val deleted = Amber.instance.getDatabase(accountInfo.npub).applicationDao().deleteOldApplications(now)
-                                Amber.instance.getDatabase(accountInfo.npub).applicationDao().insertLog(
-                                    LogEntity(
-                                        id = 0,
-                                        url = "",
-                                        type = "deleteApplications",
-                                        message = "Deleted $deleted expired applications",
-                                        time = System.currentTimeMillis(),
-                                    ),
-                                )
+                                if (deleted > 0) {
+                                    Amber.instance.getLogDatabase(accountInfo.npub).logDao().insertLog(
+                                        LogEntity(
+                                            id = 0,
+                                            url = "",
+                                            type = "deleteApplications",
+                                            message = "Deleted $deleted expired applications",
+                                            time = System.currentTimeMillis(),
+                                        ),
+                                    )
+                                }
                             }
                         }
 

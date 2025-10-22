@@ -24,7 +24,7 @@
     <string name="invalid_key">Geçersiz anahtar</string>
     <string name="key_is_required">Anahtar gerekli</string>
     <string name="login">Giriş yap</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Yeni bir anahtar oluştur</string>
     <string name="backup_keys">Anahtarları Yedekle</string>
     <string name="read_your_public_key">Genel anahtarınızı okuma</string>
     <string name="no_permissions_granted">Verilmiş izin yok</string>
@@ -74,7 +74,7 @@
     <string name="adjust">Ayarla</string>
     <string name="more">%1$s tane daha...</string>
     <string name="and_more">...ve daha fazlası</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" genel anahtarınızı okumak ve sizin adınıza etkinlikleri imzalamak için izninizi istiyor"</string>
     <string name="new_app">Yeni Uygulama</string>
     <string name="connect_through_your_orbot_setup_markdown">        ## Orbot ile Tor üzerinden bağlanın
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) uygulamasını yükleyin
@@ -106,7 +106,7 @@
     <string name="direct_connection">Doğrudan Bağlantı</string>
     <string name="notification_type">Bildirim Türü</string>
     <string name="select_the_type_of_notification_you_want_to_receive">Almak istediğiniz bildirim türünü seçin</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Aktivite</string>
     <string name="accepted">Kabul edildi</string>
     <string name="rejected">Reddedildi</string>
     <string name="language">Dil</string>
@@ -124,7 +124,7 @@
     <string name="event_kind_1">Kısa metin notu</string>
     <string name="event_kind_3">Takip listesi</string>
     <string name="event_kind_4">Şifreli doğrudan mesajlar</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Etkinlik silme</string>
     <string name="event_kind_6">Yeniden gönderi (repost)</string>
     <string name="event_kind_7">Tepki</string>
     <string name="event_kind_8">Rozet ödülü</string>
@@ -393,23 +393,23 @@
     <string name="new_app_description">Genellikle Nostr uygulamalarında Amber\'ı harici bir imzalayıcı olarak kullanmaya izin veren bir \"Amber ile Giriş Yap\" seçeneği bulunur; bu düğmeye bastığınızda Amber başlatılır ve bazı izinleri onaylamanız istenir.\n\nAncak Amber\'ı kullanmak için başka seçenekleriniz de var:</string>
     <string name="add_a_new_application">Yeni bir uygulama ekle</string>
     <string name="account_backup">Hesap yedeği</string>
-    <string name="export_all_accounts_title">Export All Accounts</string>
-    <string name="export_all_accounts_warning" tools:ignore="Typos">## IMPORTANT SECURITY NOTICE\n\nYou are about to export **ALL** your Amber accounts. This file will contain your private keys.\n\n- **Password protect** your export file with a strong password\n- **Store securely** - treat this like your wallet\n- **Never share** with anyone\n- **Delete** from your device after storing safely\n\n**Anyone with access to this file can control ALL your accounts!**</string>
-    <string name="accounts_to_export">Accounts to export: %d</string>
-    <string name="encryption_password">Encryption Password</string>
-    <string name="enter_strong_password">Enter a strong password (min 8 characters)</string>
-    <string name="confirm_password">Confirm Password</string>
-    <string name="password_too_short">Password must be at least 8 characters</string>
-    <string name="passwords_do_not_match">Passwords do not match</string>
-    <string name="export_all_accounts_button">Export All Accounts</string>
-    <string name="preparing_export">Preparing export...</string>
-    <string name="exporting_accounts_progress">Exporting account %1$d of %2$d...</string>
-    <string name="export_success">Successfully exported %d accounts</string>
-    <string name="export_failed">Export failed: %s</string>
-    <string name="confirm_export_title">Confirm Export</string>
-    <string name="confirm_export_message">You are about to export %d accounts to an encrypted file.</string>
-    <string name="confirm_export_warning">This file will contain all your private keys. Store it securely!</string>
-    <string name="export">Export</string>
+    <string name="export_all_accounts_title">Tüm Hesapları Dışa Aktar</string>
+    <string name="export_all_accounts_warning" tools:ignore="Typos">## ÖNEMLİ GÜVENLİK BİLDİRİMİ\n\n**TÜM** Amber hesaplarınızı dışa aktarmak üzeresiniz. Bu dosya özel anahtarlarınızı içerecektir.\n\n- Dışa aktarma dosyanızı güçlü bir parola ile **parola koruması altına alın**\n- **Güvenli bir şekilde saklayın** - bunu cüzdanınız gibi düşünün\n- **Asla** kimseyle paylaşmayın\n- Güvenli bir şekilde sakladıktan sonra cihazınızdan **silin**\n\n**Bu dosyaya erişimi olan herkes TÜM hesaplarınızı kontrol edebilir!**</string>
+    <string name="accounts_to_export">Dışa aktarılacak hesaplar: %d</string>
+    <string name="encryption_password">Şifreleme Parolası</string>
+    <string name="enter_strong_password">Güçlü bir parola girin (en az 8 karakter)</string>
+    <string name="confirm_password">Parolayı Onayla</string>
+    <string name="password_too_short">Parola en az 8 karakter olmalıdır</string>
+    <string name="passwords_do_not_match">Parolalar eşleşmiyor</string>
+    <string name="export_all_accounts_button">Tüm Hesapları Dışa Aktar</string>
+    <string name="preparing_export">Dışa aktarma hazırlanıyor...</string>
+    <string name="exporting_accounts_progress">%2$d hesabın %1$d tanesi dışa aktarılıyor...</string>
+    <string name="export_success">%d hesap başarıyla dışa aktarıldı</string>
+    <string name="export_failed">Dışa aktarma başarısız: %s</string>
+    <string name="confirm_export_title">Dışa Aktarmayı Onayla</string>
+    <string name="confirm_export_message">%d hesabı şifreli bir dosyaya aktarmak üzeresiniz.</string>
+    <string name="confirm_export_warning">Bu dosya tüm özel anahtarlarınızı içerecektir. Güvenli bir şekilde saklayın!</string>
+    <string name="export">Dışa Aktar</string>
     <string name="create_nsecbunker_description">Yeni bir nsecbunker oluşturmak için ona bir isim vermeniz ve bir veya daha fazla relay seçmeniz yeterli, hepsi bu!</string>
     <string name="create">Oluştur</string>
     <string name="name">İsim</string>
@@ -567,8 +567,8 @@
     <string name="one_day">Bir gün</string>
     <string name="one_week">Bir hafta</string>
     <string name="delete_after">Sonrasında sil</string>
-    <string name="crashreport_found">Crash Report found</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Would you like to send the recent crash report to Amber in a DM? No personal information will be shared</string>
-    <string name="copy_crash_report_to_clipboard">Would you like to copy the crash report to your clipboard and open a Client to send it to Amber?</string>
-    <string name="crashreport_found_send">Send it</string>
+    <string name="crashreport_found">Çökme Raporu bulundu</string>
+    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu Amber\'e bir DM ile göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
+    <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalayıp Amber\'e göndermek için bir istemci açmak ister misiniz?</string>
+    <string name="crashreport_found_send">Gönder</string>
 </resources>

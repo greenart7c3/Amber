@@ -93,6 +93,13 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
     }
 }
 
+val MIGRATION_10_11 = object : Migration(10, 11) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_time` ON `history2` (`time`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_key_and_time` ON `history2` (`pkKey`, `time`)")
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
@@ -102,7 +109,7 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
         LogEntity::class,
         HistoryEntity2::class,
     ],
-    version = 10,
+    version = 11,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -134,6 +141,7 @@ abstract class AppDatabase : RoomDatabase() {
                         .addMigrations(MIGRATION_7_8)
                         .addMigrations(MIGRATION_8_9)
                         .addMigrations(MIGRATION_9_10)
+                        .addMigrations(MIGRATION_10_11)
                         .build()
                 instance.openHelper.writableDatabase.execSQL("VACUUM")
 

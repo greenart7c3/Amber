@@ -47,6 +47,14 @@ data class HistoryEntity(
             value = ["id"],
             name = "history_by_id2",
         ),
+        Index(
+            value = ["time"],
+            name = "history_by_time",
+        ),
+        Index(
+            value = ["pkKey", "time"],
+            name = "history_by_key_and_time",
+        ),
     ],
 )
 data class HistoryEntity2(

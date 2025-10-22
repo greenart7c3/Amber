@@ -191,6 +191,8 @@ class Amber : Application(), LifecycleObserver {
 
     override fun onCreate() {
         super.onCreate()
+
+        isStartingAppState.value = true
         isStartingApp.value = true
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
 
@@ -256,12 +258,29 @@ class Amber : Application(), LifecycleObserver {
                 LocalPreferences.reloadApp()
                 fixRejectedPermissions()
                 fixAcceptedPermissions()
-                isStartingApp.value = false
 
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {
                     client.disconnect()
                 }
+
+//                LocalPreferences.allSavedAccounts(this@Amber).forEach {
+//                    List<Int>(100000, init = { 1 }).forEachIndexed { index, it2 ->
+//                        launch(Dispatchers.IO) {
+//                            getDatabase(it.npub).applicationDao().addHistory(
+//                                HistoryEntity2(
+//                                    id = 0,
+//                                    pkKey = "com.vitorpamplona.amethyst",
+//                                    type = "SIGN_EVENT",
+//                                    kind = 1,
+//                                    time = TimeUtils.now() + index,
+//                                    accepted = true,
+//                                )
+//                            )
+//                        }
+//                    }
+//                }
+
                 launch(Dispatchers.Main) {
                     ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
                         override fun onStart(owner: LifecycleOwner) {
@@ -287,6 +306,7 @@ class Amber : Application(), LifecycleObserver {
                         }
                     })
                 }
+                isStartingApp.value = false
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false

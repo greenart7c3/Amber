@@ -25,7 +25,7 @@ import androidx.room.PrimaryKey
         ),
     ],
 )
-data class HistoryEntity2(
+data class HistoryEntity(
     @PrimaryKey(autoGenerate = true)
     val id: Int,
     val pkKey: String,

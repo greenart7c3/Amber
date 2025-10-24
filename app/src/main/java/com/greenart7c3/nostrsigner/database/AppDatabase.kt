@@ -142,7 +142,7 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
-        HistoryEntity2::class,
+        HistoryEntity::class,
     ],
     version = 15,
 )

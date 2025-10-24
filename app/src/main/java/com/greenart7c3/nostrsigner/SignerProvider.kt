@@ -6,7 +6,7 @@ import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
 import android.util.Log
-import com.greenart7c3.nostrsigner.database.HistoryEntity2
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
@@ -114,7 +114,7 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
-                                HistoryEntity2(
+                                HistoryEntity(
                                     0,
                                     packageName,
                                     uri.toString().replace("content://$appId.", ""),
@@ -135,7 +135,7 @@ class SignerProvider : ContentProvider() {
                     val result = signString(message, account.signer.keyPair.privKey!!).toHexKey()
                     scope.launch {
                         database.applicationDao().addHistory(
-                            HistoryEntity2(
+                            HistoryEntity(
                                 0,
                                 packageName,
                                 "SIGN_MESSAGE",
@@ -212,7 +212,7 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
-                                HistoryEntity2(
+                                HistoryEntity(
                                     0,
                                     packageName,
                                     uri.toString().replace("content://$appId.", ""),
@@ -235,7 +235,7 @@ class SignerProvider : ContentProvider() {
 
                     scope.launch {
                         database.applicationDao().addHistory(
-                            HistoryEntity2(
+                            HistoryEntity(
                                 0,
                                 packageName,
                                 "SIGN_EVENT",
@@ -313,7 +313,7 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
-                                HistoryEntity2(
+                                HistoryEntity(
                                     0,
                                     packageName,
                                     uri.toString().replace("content://$appId.", ""),
@@ -367,7 +367,7 @@ class SignerProvider : ContentProvider() {
 
                     scope.launch {
                         database.applicationDao().addHistory(
-                            HistoryEntity2(
+                            HistoryEntity(
                                 0,
                                 packageName,
                                 uri.toString().replace("content://$appId.", ""),
@@ -418,7 +418,7 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             database.applicationDao().addHistory(
-                                HistoryEntity2(
+                                HistoryEntity(
                                     0,
                                     packageName,
                                     uri.toString().replace("content://$appId.", ""),
@@ -439,7 +439,7 @@ class SignerProvider : ContentProvider() {
 
                     scope.launch {
                         database.applicationDao().addHistory(
-                            HistoryEntity2(
+                            HistoryEntity(
                                 0,
                                 packageName,
                                 uri.toString().replace("content://$appId.", ""),

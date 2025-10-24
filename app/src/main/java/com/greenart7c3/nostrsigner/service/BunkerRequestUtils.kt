@@ -7,7 +7,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity2
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -351,7 +351,7 @@ object BunkerRequestUtils {
             EventNotificationConsumer(context).notificationManager().cancelAll()
             database.applicationDao().insertApplicationWithPermissions(application)
             database.applicationDao().addHistory(
-                HistoryEntity2(
+                HistoryEntity(
                     0,
                     key,
                     type.toString(),
@@ -449,7 +449,7 @@ object BunkerRequestUtils {
             if (bunkerRequest.request !is BunkerRequestConnect) {
                 Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
                 Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
-                    HistoryEntity2(
+                    HistoryEntity(
                         0,
                         key,
                         signerType.toString(),

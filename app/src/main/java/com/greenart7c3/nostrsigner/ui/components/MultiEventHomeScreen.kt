@@ -45,7 +45,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity2
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
@@ -269,7 +269,7 @@ fun IntentMultiEventHomeScreen(
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    HistoryEntity2(
+                                    HistoryEntity(
                                         0,
                                         localKey,
                                         intentData.type.toString(),
@@ -321,7 +321,7 @@ fun IntentMultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
                                 database.applicationDao().addHistory(
-                                    HistoryEntity2(
+                                    HistoryEntity(
                                         0,
                                         localKey,
                                         intentData.type.toString(),
@@ -359,7 +359,7 @@ fun IntentMultiEventHomeScreen(
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    HistoryEntity2(
+                                    HistoryEntity(
                                         0,
                                         localKey,
                                         intentData.type.toString(),
@@ -643,7 +643,7 @@ fun BunkerMultiEventHomeScreen(
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    entity = HistoryEntity2(
+                                    entity = HistoryEntity(
                                         id = 0,
                                         pkKey = localKey,
                                         type = SignerType.SIGN_EVENT.toString(),
@@ -695,7 +695,7 @@ fun BunkerMultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
                                 database.applicationDao().addHistory(
-                                    HistoryEntity2(
+                                    HistoryEntity(
                                         0,
                                         localKey,
                                         SignerType.SIGN_MESSAGE.toString(),
@@ -738,7 +738,7 @@ fun BunkerMultiEventHomeScreen(
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
                                     database.applicationDao().addHistory(
-                                        HistoryEntity2(
+                                        HistoryEntity(
                                             0,
                                             localKey,
                                             SignerType.CONNECT.toString(),
@@ -792,7 +792,7 @@ fun BunkerMultiEventHomeScreen(
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
                                 database.applicationDao().addHistory(
-                                    HistoryEntity2(
+                                    HistoryEntity(
                                         0,
                                         localKey,
                                         type.toString(),

@@ -132,11 +132,11 @@ interface ApplicationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
-    suspend fun innerAddHistory(entity: HistoryEntity2)
+    suspend fun innerAddHistory(entity: HistoryEntity)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    suspend fun addHistory(entity: HistoryEntity2) {
+    suspend fun addHistory(entity: HistoryEntity) {
         try {
             innerAddHistory(entity)
             updateLastUsed(entity.pkKey, entity.time)
@@ -150,10 +150,10 @@ interface ApplicationDao {
     suspend fun updateLastUsed(key: String, time: Long)
 
     @Query("SELECT * FROM history2 where pkKey = :pk ORDER BY time DESC")
-    fun getAllHistory(pk: String): Flow<List<HistoryEntity2>>
+    fun getAllHistory(pk: String): Flow<List<HistoryEntity>>
 
     @Query("SELECT * FROM history2 ORDER BY time DESC")
-    fun getAllHistory(): Flow<List<HistoryEntity2>>
+    fun getAllHistory(): Flow<List<HistoryEntity>>
 
     @Query("DELETE FROM history2 where pkKey = :pk")
     suspend fun deleteHistory(pk: String)
@@ -168,11 +168,11 @@ interface ApplicationDao {
 
     @Query("SELECT * FROM history2 WHERE time < :time LIMIT 100")
     @Transaction
-    suspend fun getOldHistory(time: Long): List<HistoryEntity2>
+    suspend fun getOldHistory(time: Long): List<HistoryEntity>
 
     @Delete
     @Transaction
-    suspend fun deleteHistory(historyEntity: HistoryEntity2)
+    suspend fun deleteHistory(historyEntity: HistoryEntity)
 
     @Query("DELETE FROM application WHERE deleteAfter < :time AND deleteAfter > 0")
     @Transaction

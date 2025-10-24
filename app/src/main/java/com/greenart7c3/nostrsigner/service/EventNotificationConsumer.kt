@@ -32,7 +32,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
-import com.greenart7c3.nostrsigner.database.HistoryEntity2
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -239,7 +239,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             Amber.instance.applicationIOScope.launch {
                 dao
                     .addHistory(
-                        HistoryEntity2(
+                        HistoryEntity(
                             0,
                             permission.application.key,
                             type.toString().toLowerCase(Locale.current),

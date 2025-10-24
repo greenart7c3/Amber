@@ -5,15 +5,15 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "history2",
+    tableName = "history",
     indices = [
         Index(
             value = ["pkKey"],
-            name = "history_by_pk_key2",
+            name = "history_by_pk_key",
         ),
         Index(
             value = ["id"],
-            name = "history_by_id2",
+            name = "history_by_id",
         ),
         Index(
             value = ["time"],

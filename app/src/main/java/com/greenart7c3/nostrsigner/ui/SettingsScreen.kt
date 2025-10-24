@@ -270,55 +270,54 @@ fun SettingsScreen(
                         Amber.instance.applicationIOScope.launch {
                             isLoading = true
                             LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-                                Amber.instance.getDatabase(it.npub).let { database ->
-                                    try {
-                                        status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
-                                        val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
-                                        val oneWeekAgo = TimeUtils.oneWeekAgo()
-                                        val countHistory = database.applicationDao().countOldHistory(oneWeekAgo)
-                                        if (countHistory > 0) {
-                                            status = context.getString(R.string.deleting_old_history_entries, countHistory)
-                                            var logs = database.applicationDao().getOldHistory(oneWeekAgo)
-                                            var count = 0
-                                            while (logs.isNotEmpty()) {
-                                                count++
-                                                status = context.getString(R.string.deleting_old_history_entries_2, 100 * count, countHistory)
-                                                logs.forEach { history ->
-                                                    database.applicationDao().deleteHistory(history)
-                                                }
-                                                logs = database.applicationDao().getOldHistory(oneWeekAgo)
+                                try {
+                                    status = context.getString(R.string.deleting_old_log_entries_from, it.npub)
+                                    val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
+                                    val oneWeekAgo = TimeUtils.oneWeekAgo()
+                                    val historyDatabase = Amber.instance.getHistoryDatabase(it.npub)
+                                    val countHistory = historyDatabase.dao().countOldHistory(oneWeekAgo)
+                                    if (countHistory > 0) {
+                                        status = context.getString(R.string.deleting_old_history_entries, countHistory)
+                                        var logs = historyDatabase.dao().getOldHistory(oneWeekAgo)
+                                        var count = 0
+                                        while (logs.isNotEmpty()) {
+                                            count++
+                                            status = context.getString(R.string.deleting_old_history_entries_2, 100 * count, countHistory)
+                                            logs.forEach { history ->
+                                                historyDatabase.dao().deleteHistory(history)
                                             }
+                                            logs = historyDatabase.dao().getOldHistory(oneWeekAgo)
                                         }
-
-                                        val logDatabase = Amber.instance.getLogDatabase(it.npub)
-                                        val countLog = logDatabase.logDao().countOldLog(oneWeek)
-                                        if (countLog > 0) {
-                                            status = context.getString(R.string.deleting_old_log_entries, countLog)
-                                            var logs = logDatabase.logDao().getOldLog(oneWeek)
-                                            var count = 0
-                                            while (logs.isNotEmpty()) {
-                                                count++
-                                                status = context.getString(R.string.deleting_old_log_entries_2, 100 * count, countLog)
-                                                logs.forEach { history ->
-                                                    logDatabase.logDao().deleteLog(history)
-                                                }
-                                                logs = logDatabase.logDao().getOldLog(oneWeek)
-                                            }
-                                        }
-                                        val dbFile = context.getDatabasePath("amber_db_${account.npub}")
-                                        val df = DecimalFormat("#.###")
-                                        sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
-                                        status = ""
-                                        isLoading = false
-                                    } catch (e: Exception) {
-                                        isLoading = false
-                                        if (e is CancellationException) throw e
-                                        Log.e(Amber.TAG, "Error deleting old log entries", e)
-                                        val dbFile = context.getDatabasePath("amber_db_${account.npub}")
-                                        val df = DecimalFormat("#.###")
-                                        sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
-                                        status = ""
                                     }
+
+                                    val logDatabase = Amber.instance.getLogDatabase(it.npub)
+                                    val countLog = logDatabase.logDao().countOldLog(oneWeek)
+                                    if (countLog > 0) {
+                                        status = context.getString(R.string.deleting_old_log_entries, countLog)
+                                        var logs = logDatabase.logDao().getOldLog(oneWeek)
+                                        var count = 0
+                                        while (logs.isNotEmpty()) {
+                                            count++
+                                            status = context.getString(R.string.deleting_old_log_entries_2, 100 * count, countLog)
+                                            logs.forEach { history ->
+                                                logDatabase.logDao().deleteLog(history)
+                                            }
+                                            logs = logDatabase.logDao().getOldLog(oneWeek)
+                                        }
+                                    }
+                                    val dbFile = context.getDatabasePath("amber_db_${account.npub}")
+                                    val df = DecimalFormat("#.###")
+                                    sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+                                    status = ""
+                                    isLoading = false
+                                } catch (e: Exception) {
+                                    isLoading = false
+                                    if (e is CancellationException) throw e
+                                    Log.e(Amber.TAG, "Error deleting old log entries", e)
+                                    val dbFile = context.getDatabasePath("amber_db_${account.npub}")
+                                    val df = DecimalFormat("#.###")
+                                    sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+                                    status = ""
                                 }
                             }
 

@@ -150,6 +150,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val database = Amber.instance.getDatabase(acc.npub)
         val dao = database.applicationDao()
         val logDao = Amber.instance.getLogDatabase(acc.npub).logDao()
+        val historyDao = Amber.instance.getHistoryDatabase(acc.npub).dao()
 
         val notification = Amber.instance.notificationCache[event.id]
         if (notification != null) return
@@ -237,7 +238,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val permission = dao.getByKey(event.pubKey)
         if (permission != null && ((permission.application.secret != permission.application.key && permission.application.useSecret) || permission.application.isConnected) && type == SignerType.CONNECT) {
             Amber.instance.applicationIOScope.launch {
-                dao
+                historyDao
                     .addHistory(
                         HistoryEntity(
                             0,
@@ -247,6 +248,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             TimeUtils.now(),
                             true,
                         ),
+                        acc.npub,
                     )
             }
             BunkerRequestUtils.sendBunkerResponse(

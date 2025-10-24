@@ -567,6 +567,7 @@ object IntentUtils {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
             val database = Amber.instance.getDatabase(account.npub)
+            val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
             val defaultRelays = Amber.instance.settings.defaultRelays
             val savedApplication = database.applicationDao().getByKey(key)
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
@@ -637,7 +638,7 @@ object IntentUtils {
 
             if (packageName != null) {
                 database.applicationDao().insertApplicationWithPermissions(application)
-                database.applicationDao().addHistory(
+                historyDatabase.dao().addHistory(
                     HistoryEntity(
                         0,
                         key,
@@ -646,6 +647,7 @@ object IntentUtils {
                         TimeUtils.now(),
                         true,
                     ),
+                    account.npub,
                 )
 
                 val intent = Intent()
@@ -777,7 +779,7 @@ object IntentUtils {
             }
 
             Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
-            Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
+            Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
                 HistoryEntity(
                     0,
                     key,
@@ -786,6 +788,7 @@ object IntentUtils {
                     TimeUtils.now(),
                     false,
                 ),
+                account.npub,
             )
 
             val activity = Amber.instance.getMainActivity()

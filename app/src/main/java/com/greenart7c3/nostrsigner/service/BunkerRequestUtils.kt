@@ -239,11 +239,12 @@ object BunkerRequestUtils {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
             val database = Amber.instance.getDatabase(account.npub)
+            val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
             val defaultRelays = Amber.instance.settings.defaultRelays
 
             if (oldKey.isNotBlank()) {
                 database.applicationDao().delete(oldKey)
-                database.applicationDao().deleteHistory(oldKey)
+                historyDatabase.dao().deleteHistory(oldKey)
             }
 
             var savedApplication = database.applicationDao().getByKey(key)
@@ -350,7 +351,7 @@ object BunkerRequestUtils {
             // assume that everything worked and try to revert it if it fails
             EventNotificationConsumer(context).notificationManager().cancelAll()
             database.applicationDao().insertApplicationWithPermissions(application)
-            database.applicationDao().addHistory(
+            historyDatabase.dao().addHistory(
                 HistoryEntity(
                     0,
                     key,
@@ -359,6 +360,7 @@ object BunkerRequestUtils {
                     TimeUtils.now(),
                     true,
                 ),
+                account.npub,
             )
             if (didChangeRelays) {
                 Amber.instance.checkForNewRelaysAndUpdateAllFilters(true)
@@ -448,7 +450,7 @@ object BunkerRequestUtils {
 
             if (bunkerRequest.request !is BunkerRequestConnect) {
                 Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(application)
-                Amber.instance.getDatabase(account.npub).applicationDao().addHistory(
+                Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
                     HistoryEntity(
                         0,
                         key,
@@ -457,6 +459,7 @@ object BunkerRequestUtils {
                         TimeUtils.now(),
                         false,
                     ),
+                    account.npub,
                 )
             }
 

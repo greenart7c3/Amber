@@ -99,6 +99,7 @@ class SignerProvider : ContentProvider() {
                         return null
                     }
                     val database = Amber.instance.getDatabase(account.npub)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permission =
                         database
                             .applicationDao()
@@ -113,7 +114,7 @@ class SignerProvider : ContentProvider() {
                     }
                     if (!isRemembered) {
                         scope.launch {
-                            database.applicationDao().addHistory(
+                            historyDatabase.dao().addHistory(
                                 HistoryEntity(
                                     0,
                                     packageName,
@@ -122,6 +123,7 @@ class SignerProvider : ContentProvider() {
                                     TimeUtils.now(),
                                     false,
                                 ),
+                                account.npub,
                             )
                         }
                         val cursor =
@@ -134,7 +136,7 @@ class SignerProvider : ContentProvider() {
 
                     val result = signString(message, account.signer.keyPair.privKey!!).toHexKey()
                     scope.launch {
-                        database.applicationDao().addHistory(
+                        historyDatabase.dao().addHistory(
                             HistoryEntity(
                                 0,
                                 packageName,
@@ -143,6 +145,7 @@ class SignerProvider : ContentProvider() {
                                 TimeUtils.now(),
                                 true,
                             ),
+                            account.npub,
                         )
                     }
 
@@ -180,6 +183,7 @@ class SignerProvider : ContentProvider() {
                     }
 
                     val database = Amber.instance.getDatabase(account.npub)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     var permission =
                         database
                             .applicationDao()
@@ -211,7 +215,7 @@ class SignerProvider : ContentProvider() {
                     }
                     if (!isRemembered) {
                         scope.launch {
-                            database.applicationDao().addHistory(
+                            historyDatabase.dao().addHistory(
                                 HistoryEntity(
                                     0,
                                     packageName,
@@ -220,6 +224,7 @@ class SignerProvider : ContentProvider() {
                                     TimeUtils.now(),
                                     false,
                                 ),
+                                account.npub,
                             )
                         }
 
@@ -234,7 +239,7 @@ class SignerProvider : ContentProvider() {
                     val signedEvent = account.signer.signerSync.sign<Event>(event.createdAt, event.kind, event.tags, event.content)
 
                     scope.launch {
-                        database.applicationDao().addHistory(
+                        historyDatabase.dao().addHistory(
                             HistoryEntity(
                                 0,
                                 packageName,
@@ -243,6 +248,7 @@ class SignerProvider : ContentProvider() {
                                 TimeUtils.now(),
                                 true,
                             ),
+                            account.npub,
                         )
                     }
 
@@ -278,6 +284,7 @@ class SignerProvider : ContentProvider() {
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
                     val database = Amber.instance.getDatabase(account.npub)
                     val logDatabase = Amber.instance.getLogDatabase(account.npub)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     var permission =
                         database
                             .applicationDao()
@@ -312,7 +319,7 @@ class SignerProvider : ContentProvider() {
                     }
                     if (!isRemembered) {
                         scope.launch {
-                            database.applicationDao().addHistory(
+                            historyDatabase.dao().addHistory(
                                 HistoryEntity(
                                     0,
                                     packageName,
@@ -321,6 +328,7 @@ class SignerProvider : ContentProvider() {
                                     TimeUtils.now(),
                                     false,
                                 ),
+                                account.npub,
                             )
                         }
 
@@ -366,7 +374,7 @@ class SignerProvider : ContentProvider() {
                         }
 
                     scope.launch {
-                        database.applicationDao().addHistory(
+                        historyDatabase.dao().addHistory(
                             HistoryEntity(
                                 0,
                                 packageName,
@@ -375,6 +383,7 @@ class SignerProvider : ContentProvider() {
                                 TimeUtils.now(),
                                 true,
                             ),
+                            account.npub,
                         )
                     }
 
@@ -402,6 +411,7 @@ class SignerProvider : ContentProvider() {
                         return null
                     }
                     val database = Amber.instance.getDatabase(account.npub)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permission =
                         database
                             .applicationDao()
@@ -417,7 +427,7 @@ class SignerProvider : ContentProvider() {
                     }
                     if (!isRemembered) {
                         scope.launch {
-                            database.applicationDao().addHistory(
+                            historyDatabase.dao().addHistory(
                                 HistoryEntity(
                                     0,
                                     packageName,
@@ -426,6 +436,7 @@ class SignerProvider : ContentProvider() {
                                     TimeUtils.now(),
                                     false,
                                 ),
+                                account.npub,
                             )
                         }
 
@@ -438,7 +449,7 @@ class SignerProvider : ContentProvider() {
                     }
 
                     scope.launch {
-                        database.applicationDao().addHistory(
+                        historyDatabase.dao().addHistory(
                             HistoryEntity(
                                 0,
                                 packageName,
@@ -447,6 +458,7 @@ class SignerProvider : ContentProvider() {
                                 TimeUtils.now(),
                                 true,
                             ),
+                            account.npub,
                         )
                     }
 

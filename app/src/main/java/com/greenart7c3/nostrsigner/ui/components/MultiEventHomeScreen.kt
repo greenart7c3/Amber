@@ -224,6 +224,7 @@ fun IntentMultiEventHomeScreen(
                             val localKey = packageName ?: continue
 
                             val database = Amber.instance.getDatabase(thisAccount.npub)
+                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
 
                             val application =
@@ -268,7 +269,7 @@ fun IntentMultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
-                                database.applicationDao().addHistory(
+                                historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
                                         localKey,
@@ -277,6 +278,7 @@ fun IntentMultiEventHomeScreen(
                                         TimeUtils.now(),
                                         intentData.checked.value,
                                     ),
+                                    thisAccount.npub,
                                 )
 
                                 if (intentData.checked.value) {
@@ -320,7 +322,7 @@ fun IntentMultiEventHomeScreen(
                                 }
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
-                                database.applicationDao().addHistory(
+                                historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
                                         localKey,
@@ -329,6 +331,7 @@ fun IntentMultiEventHomeScreen(
                                         TimeUtils.now(),
                                         intentData.checked.value,
                                     ),
+                                    thisAccount.npub,
                                 )
 
                                 val signedMessage = signString(intentData.data, thisAccount.signer.keyPair.privKey!!).toHexKey()
@@ -358,7 +361,7 @@ fun IntentMultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
-                                database.applicationDao().addHistory(
+                                historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
                                         localKey,
@@ -367,6 +370,7 @@ fun IntentMultiEventHomeScreen(
                                         TimeUtils.now(),
                                         intentData.checked.value,
                                     ),
+                                    thisAccount.npub,
                                 )
 
                                 val signature = intentData.encryptedData ?: continue
@@ -592,6 +596,7 @@ fun BunkerMultiEventHomeScreen(
 
                             val localKey = request.localKey
                             val database = Amber.instance.getDatabase(thisAccount.npub)
+                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
                             val savedApplication = database.applicationDao().getByKey(localKey)
 
                             val secret = if (request.request is BunkerRequestConnect) {
@@ -642,7 +647,7 @@ fun BunkerMultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
-                                database.applicationDao().addHistory(
+                                historyDatabase.dao().addHistory(
                                     entity = HistoryEntity(
                                         id = 0,
                                         pkKey = localKey,
@@ -651,6 +656,7 @@ fun BunkerMultiEventHomeScreen(
                                         time = TimeUtils.now(),
                                         accepted = request.checked.value,
                                     ),
+                                    thisAccount.npub,
                                 )
 
                                 val localBunkerRequest = request.copy()
@@ -694,7 +700,7 @@ fun BunkerMultiEventHomeScreen(
                                 }
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
-                                database.applicationDao().addHistory(
+                                historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
                                         localKey,
@@ -703,6 +709,7 @@ fun BunkerMultiEventHomeScreen(
                                         TimeUtils.now(),
                                         request.checked.value,
                                     ),
+                                    thisAccount.npub,
                                 )
 
                                 val signedMessage = signString(request.request.params.first(), thisAccount.signer.keyPair.privKey!!).toHexKey()
@@ -737,7 +744,7 @@ fun BunkerMultiEventHomeScreen(
                                 if (savedApplication == null) {
                                     database.applicationDao().insertApplicationWithPermissions(application)
 
-                                    database.applicationDao().addHistory(
+                                    historyDatabase.dao().addHistory(
                                         HistoryEntity(
                                             0,
                                             localKey,
@@ -746,6 +753,7 @@ fun BunkerMultiEventHomeScreen(
                                             TimeUtils.now(),
                                             request.checked.value,
                                         ),
+                                        thisAccount.npub,
                                     )
 
                                     val localBunkerRequest = request.copy()
@@ -791,7 +799,7 @@ fun BunkerMultiEventHomeScreen(
 
                                 database.applicationDao().insertApplicationWithPermissions(application)
 
-                                database.applicationDao().addHistory(
+                                historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
                                         localKey,
@@ -800,6 +808,7 @@ fun BunkerMultiEventHomeScreen(
                                         TimeUtils.now(),
                                         request.checked.value,
                                     ),
+                                    thisAccount.npub,
                                 )
 
                                 val signature = request.encryptDecryptResponse ?: continue

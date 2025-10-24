@@ -56,7 +56,7 @@ fun ActivityScreen(
     account: Account,
     key: String,
 ) {
-    val activities = Amber.instance.getDatabase(account.npub).applicationDao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
+    val activities = Amber.instance.getHistoryDatabase(account.npub).dao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
     // State for the search query
     var searchQuery by remember { mutableStateOf("") }

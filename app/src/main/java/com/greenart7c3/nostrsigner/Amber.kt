@@ -16,6 +16,7 @@ import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
@@ -117,6 +118,7 @@ class Amber : Application(), LifecycleObserver {
 
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     private var logDatabases = ConcurrentHashMap<String, LogDatabase>()
+    private var historyDatabases = ConcurrentHashMap<String, HistoryDatabase>()
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
@@ -380,6 +382,13 @@ class Amber : Application(), LifecycleObserver {
             logDatabases[npub] = LogDatabase.getDatabase(this, npub)
         }
         return logDatabases[npub]!!
+    }
+
+    fun getHistoryDatabase(npub: String): HistoryDatabase {
+        if (!historyDatabases.containsKey(npub)) {
+            historyDatabases[npub] = HistoryDatabase.getDatabase(this, npub)
+        }
+        return historyDatabases[npub]!!
     }
 
     fun getSavedRelays(): Set<NormalizedRelayUrl> {

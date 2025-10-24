@@ -157,7 +157,7 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
-    abstract fun applicationDao(): ApplicationDao
+    abstract fun dao(): ApplicationDao
 
     companion object {
         fun getDatabase(

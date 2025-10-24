@@ -162,7 +162,7 @@ fun AmberTopAppBar(
                                 title = Route.QrCode.title
                             }
                             navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
-                                val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
+                                val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                 title = if (destinationRoute.startsWith("Activity/")) {
                                     "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                 } else {
@@ -170,7 +170,7 @@ fun AmberTopAppBar(
                                 }
                             }
                             navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
-                                val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(packageName)?.application
+                                val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                 title = if (destinationRoute.startsWith("Activity/")) {
                                     "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
                                 } else {
@@ -191,7 +191,7 @@ fun AmberTopAppBar(
                                     packageName
                                 }
 
-                                val application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key ?: "")?.application
+                                val application = Amber.instance.getDatabase(account.npub).dao().getByKey(key ?: "")?.application
                                 val titleTemp = application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName ?: ""
                                 title = if (titleTemp.isBlank()) {
                                     routes.find { it.route == destinationRoute }?.title ?: ""

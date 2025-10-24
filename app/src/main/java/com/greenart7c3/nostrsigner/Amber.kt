@@ -212,10 +212,10 @@ class Amber : Application(), LifecycleObserver {
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = getDatabase(it.npub)
             applicationIOScope.launch {
-                databases[it.npub]?.applicationDao()?.getAllNotConnected()?.forEach { app ->
+                databases[it.npub]?.dao()?.getAllNotConnected()?.forEach { app ->
                     if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
                         app.application.isConnected = true
-                        databases[it.npub]?.applicationDao()?.insertApplicationWithPermissions(app)
+                        databases[it.npub]?.dao()?.insertApplicationWithPermissions(app)
                     }
                 }
             }
@@ -307,7 +307,7 @@ class Amber : Application(), LifecycleObserver {
 
     suspend fun fixRejectedPermissions() {
         LocalPreferences.allSavedAccounts(this).forEach { account ->
-            val permissions = getDatabase(account.npub).applicationDao().getAllRejectedPermissions()
+            val permissions = getDatabase(account.npub).dao().getAllRejectedPermissions()
             val localPermissions =
                 permissions.map {
                     val isAcceptable = it.acceptable
@@ -321,13 +321,13 @@ class Amber : Application(), LifecycleObserver {
                         rememberType = RememberType.ALWAYS.screenCode,
                     )
                 }
-            getDatabase(account.npub).applicationDao().insertPermissions(localPermissions)
+            getDatabase(account.npub).dao().insertPermissions(localPermissions)
         }
     }
 
     suspend fun fixAcceptedPermissions() {
         LocalPreferences.allSavedAccounts(this).forEach { account ->
-            val permissions = getDatabase(account.npub).applicationDao().getAllAcceptedPermissions()
+            val permissions = getDatabase(account.npub).dao().getAllAcceptedPermissions()
             Log.d(TAG, "Found ${permissions.size} accepted permissions")
             val localPermissions =
                 permissions.map {
@@ -342,7 +342,7 @@ class Amber : Application(), LifecycleObserver {
                         rememberType = RememberType.ALWAYS.screenCode,
                     )
                 }
-            getDatabase(account.npub).applicationDao().insertPermissions(localPermissions)
+            getDatabase(account.npub).dao().insertPermissions(localPermissions)
         }
     }
 
@@ -395,7 +395,7 @@ class Amber : Application(), LifecycleObserver {
         val savedRelays = mutableSetOf<NormalizedRelayUrl>()
         LocalPreferences.allSavedAccounts(this).forEach { accountInfo ->
             val database = getDatabase(accountInfo.npub)
-            database.applicationDao().getAllApplications().forEach {
+            database.dao().getAllApplications().forEach {
                 it.application.relays.forEach { setupInfo ->
                     savedRelays.add(setupInfo)
                 }

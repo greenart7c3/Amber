@@ -131,7 +131,7 @@ object NostrConnectUtils {
         } catch (e: Exception) {
             Log.e(Amber.TAG, e.message, e)
             Amber.instance.applicationIOScope.launch {
-                Amber.instance.getLogDatabase(account.npub).logDao().insertLog(
+                Amber.instance.getLogDatabase(account.npub).dao().insertLog(
                     LogEntity(
                         0,
                         "nostrconnect",

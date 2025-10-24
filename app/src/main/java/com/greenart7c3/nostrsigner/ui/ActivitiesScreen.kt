@@ -182,7 +182,7 @@ fun ApplicationName(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             if (ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] == null) {
-                val app = database.applicationDao().getByKey(key)
+                val app = database.dao().getByKey(key)
                 app?.let {
                     name = it.application.name
                     ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] = it.application.name

@@ -128,9 +128,9 @@ class ConnectivityService : Service() {
                         scope.launch {
                             LocalPreferences.allSavedAccounts(Amber.instance).forEach { accountInfo ->
                                 val now = System.currentTimeMillis() / 1000
-                                val deleted = Amber.instance.getDatabase(accountInfo.npub).applicationDao().deleteOldApplications(now)
+                                val deleted = Amber.instance.getDatabase(accountInfo.npub).dao().deleteOldApplications(now)
                                 if (deleted > 0) {
-                                    Amber.instance.getLogDatabase(accountInfo.npub).logDao().insertLog(
+                                    Amber.instance.getLogDatabase(accountInfo.npub).dao().insertLog(
                                         LogEntity(
                                             id = 0,
                                             url = "",

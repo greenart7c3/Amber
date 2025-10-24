@@ -36,7 +36,7 @@ fun LogsScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val logsFlow = Amber.instance.getLogDatabase(account.npub).logDao().getLogs()
+    val logsFlow = Amber.instance.getLogDatabase(account.npub).dao().getLogs()
     val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val state = rememberLazyListState()
 
@@ -51,7 +51,7 @@ fun LogsScreen(
                 modifier = Modifier.padding(bottom = 8.dp),
                 onClick = {
                     scope.launch(Dispatchers.IO) {
-                        Amber.instance.getLogDatabase(account.npub).logDao().clearLogs()
+                        Amber.instance.getLogDatabase(account.npub).dao().clearLogs()
                     }
                 },
                 text = stringResource(R.string.clear_logs),

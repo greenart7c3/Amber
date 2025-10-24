@@ -151,7 +151,7 @@ object AmberUtils {
         )
 
         Amber.instance.getDatabase(account.npub)
-            .applicationDao()
+            .dao()
             .insertApplicationWithPermissions(application)
     }
 

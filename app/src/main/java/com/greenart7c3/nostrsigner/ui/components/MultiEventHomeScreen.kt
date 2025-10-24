@@ -225,7 +225,7 @@ fun IntentMultiEventHomeScreen(
 
                             val database = Amber.instance.getDatabase(thisAccount.npub)
                             val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
-                            val savedApplication = database.applicationDao().getByKey(localKey)
+                            val savedApplication = database.dao().getByKey(localKey)
 
                             val application =
                                 savedApplication ?: ApplicationWithPermissions(
@@ -267,7 +267,7 @@ fun IntentMultiEventHomeScreen(
                                     )
                                 }
 
-                                database.applicationDao().insertApplicationWithPermissions(application)
+                                database.dao().insertApplicationWithPermissions(application)
 
                                 historyDatabase.dao().addHistory(
                                     HistoryEntity(
@@ -321,7 +321,7 @@ fun IntentMultiEventHomeScreen(
                                     )
                                 }
 
-                                database.applicationDao().insertApplicationWithPermissions(application)
+                                database.dao().insertApplicationWithPermissions(application)
                                 historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
@@ -359,7 +359,7 @@ fun IntentMultiEventHomeScreen(
                                     )
                                 }
 
-                                database.applicationDao().insertApplicationWithPermissions(application)
+                                database.dao().insertApplicationWithPermissions(application)
 
                                 historyDatabase.dao().addHistory(
                                     HistoryEntity(
@@ -424,7 +424,7 @@ fun IntentMultiEventHomeScreen(
                         val database = Amber.instance.getDatabase(thisAccount.npub)
                         val application =
                             database
-                                .applicationDao()
+                                .dao()
                                 .getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
                                     localKey,
@@ -597,7 +597,7 @@ fun BunkerMultiEventHomeScreen(
                             val localKey = request.localKey
                             val database = Amber.instance.getDatabase(thisAccount.npub)
                             val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
-                            val savedApplication = database.applicationDao().getByKey(localKey)
+                            val savedApplication = database.dao().getByKey(localKey)
 
                             val secret = if (request.request is BunkerRequestConnect) {
                                 request.request.secret ?: ""
@@ -645,7 +645,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 }
 
-                                database.applicationDao().insertApplicationWithPermissions(application)
+                                database.dao().insertApplicationWithPermissions(application)
 
                                 historyDatabase.dao().addHistory(
                                     entity = HistoryEntity(
@@ -699,7 +699,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 }
 
-                                database.applicationDao().insertApplicationWithPermissions(application)
+                                database.dao().insertApplicationWithPermissions(application)
                                 historyDatabase.dao().addHistory(
                                     HistoryEntity(
                                         0,
@@ -742,7 +742,7 @@ fun BunkerMultiEventHomeScreen(
                                 }
                             } else if (request.request is BunkerRequestConnect) {
                                 if (savedApplication == null) {
-                                    database.applicationDao().insertApplicationWithPermissions(application)
+                                    database.dao().insertApplicationWithPermissions(application)
 
                                     historyDatabase.dao().addHistory(
                                         HistoryEntity(
@@ -797,7 +797,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
                                 }
 
-                                database.applicationDao().insertApplicationWithPermissions(application)
+                                database.dao().insertApplicationWithPermissions(application)
 
                                 historyDatabase.dao().addHistory(
                                     HistoryEntity(
@@ -878,7 +878,7 @@ fun BunkerMultiEventHomeScreen(
                         }
                         val application =
                             database
-                                .applicationDao()
+                                .dao()
                                 .getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
                                     localKey,

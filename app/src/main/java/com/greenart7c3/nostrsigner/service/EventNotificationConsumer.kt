@@ -67,7 +67,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             val accounts = LocalPreferences.allSavedAccounts(applicationContext)
             accounts.forEach {
                 LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
-                    val dao = Amber.instance.getLogDatabase(acc.npub).logDao()
+                    val dao = Amber.instance.getLogDatabase(acc.npub).dao()
                     dao.insertLog(
                         LogEntity(
                             0,
@@ -114,7 +114,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     ) {
         if (event.content.isEmpty()) return
 
-        val dao = Amber.instance.getLogDatabase(acc.npub).logDao()
+        val dao = Amber.instance.getLogDatabase(acc.npub).dao()
         Amber.instance.applicationIOScope.launch {
             dao.insertLog(
                 LogEntity(
@@ -148,8 +148,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     ) {
         val responseRelay = listOf(relay)
         val database = Amber.instance.getDatabase(acc.npub)
-        val dao = database.applicationDao()
-        val logDao = Amber.instance.getLogDatabase(acc.npub).logDao()
+        val dao = database.dao()
+        val logDao = Amber.instance.getLogDatabase(acc.npub).dao()
         val historyDao = Amber.instance.getHistoryDatabase(acc.npub).dao()
 
         val notification = Amber.instance.notificationCache[event.id]

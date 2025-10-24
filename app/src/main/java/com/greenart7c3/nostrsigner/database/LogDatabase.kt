@@ -15,7 +15,7 @@ import java.util.concurrent.Executors
 )
 @TypeConverters(Converters::class)
 abstract class LogDatabase : RoomDatabase() {
-    abstract fun logDao(): LogDao
+    abstract fun dao(): LogDao
 
     companion object {
         fun getDatabase(

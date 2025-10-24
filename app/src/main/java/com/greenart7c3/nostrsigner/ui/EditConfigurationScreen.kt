@@ -77,7 +77,7 @@ fun EditConfigurationScreen(
     var closeApp by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+            application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
             name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
             closeApp = application?.application?.closeApplication != false
 
@@ -288,8 +288,8 @@ fun EditConfigurationScreen(
                                     relays = relays,
                                     closeApplication = closeApp,
                                 )
-                            Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
-                            Amber.instance.getDatabase(account.npub).applicationDao().insertApplicationWithPermissions(
+                            Amber.instance.getDatabase(account.npub).dao().delete(it.application)
+                            Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     localApplicationData,
                                     it.permissions,
@@ -317,7 +317,7 @@ fun EditConfigurationScreen(
                 onClick = {
                     application?.let {
                         scope.launch(Dispatchers.IO) {
-                            Amber.instance.getDatabase(account.npub).applicationDao().delete(it.application)
+                            Amber.instance.getDatabase(account.npub).dao().delete(it.application)
                             Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
 
                             scope.launch(Dispatchers.Main) {

@@ -59,7 +59,7 @@ fun IntentSingleEventHomeScreen(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            applicationEntity = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+            applicationEntity = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
         }
     }
 

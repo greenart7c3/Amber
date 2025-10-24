@@ -69,9 +69,9 @@ fun BunkerSingleEventHomeScreen(
         launch(Dispatchers.IO) {
             applicationEntity =
                 if (bunkerRequest.request is BunkerRequestConnect && bunkerRequest.request.secret?.isNotBlank() == true) {
-                    Amber.instance.getDatabase(account.npub).applicationDao().getBySecret(bunkerRequest.request.secret!!)
+                    Amber.instance.getDatabase(account.npub).dao().getBySecret(bunkerRequest.request.secret!!)
                 } else {
-                    Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)
+                    Amber.instance.getDatabase(account.npub).dao().getByKey(key)
                 }
         }
     }
@@ -184,7 +184,7 @@ fun BunkerSingleEventHomeScreen(
 
                     if (bunkerRequest.name.isNotBlank()) {
                         Amber.instance.applicationIOScope.launch {
-                            val existingApp = Amber.instance.getDatabase(account.npub).applicationDao().getByName(bunkerRequest.name)
+                            val existingApp = Amber.instance.getDatabase(account.npub).dao().getByName(bunkerRequest.name)
                             if (existingApp == null) {
                                 BunkerRequestUtils.sendResult(
                                     context = context,

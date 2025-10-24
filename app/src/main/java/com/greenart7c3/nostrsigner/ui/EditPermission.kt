@@ -88,8 +88,8 @@ fun EditPermission(
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
-            permissions.addAll(Amber.instance.getDatabase(account.npub).applicationDao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            applicationData = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(selectedPackage)!!.application
+            permissions.addAll(Amber.instance.getDatabase(account.npub).dao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
+            applicationData = Amber.instance.getDatabase(account.npub).dao().getByKey(selectedPackage)!!.application
             checked = applicationData.useSecret
             val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
             val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
@@ -105,7 +105,7 @@ fun EditPermission(
         ) {
             scope.launch(Dispatchers.IO) {
                 Amber.instance.getDatabase(account.npub)
-                    .applicationDao()
+                    .dao()
                     .deletePermissions(applicationData.key)
 
                 permissions.clear()
@@ -231,7 +231,7 @@ fun EditPermission(
                                     permissions.clear()
                                     permissions.addAll(localPermissions)
                                     Amber.instance.getDatabase(account.npub)
-                                        .applicationDao()
+                                        .dao()
                                         .insertPermissions(localPermissions)
                                 }
                             },
@@ -262,7 +262,7 @@ fun EditPermission(
                                         }
                                     permissions.clear()
                                     permissions.addAll(localPermissions)
-                                    Amber.instance.getDatabase(account.npub).applicationDao().insertPermissions(localPermissions)
+                                    Amber.instance.getDatabase(account.npub).dao().insertPermissions(localPermissions)
                                 }
                             },
                         )
@@ -285,7 +285,7 @@ fun EditPermission(
                         onClick = {
                             scope.launch(Dispatchers.IO) {
                                 permissions.remove(permission)
-                                Amber.instance.getDatabase(account.npub).applicationDao().deletePermission(permission)
+                                Amber.instance.getDatabase(account.npub).dao().deletePermission(permission)
                             }
                         },
                     )

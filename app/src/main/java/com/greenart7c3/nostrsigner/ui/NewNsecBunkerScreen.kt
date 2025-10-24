@@ -258,7 +258,7 @@ fun NewNsecBunkerScreen(
                                 lastUsed = 0L,
                             )
 
-                        Amber.instance.getDatabase(account.npub).applicationDao().insertApplication(
+                        Amber.instance.getDatabase(account.npub).dao().insertApplication(
                             application,
                         )
                         scope.launch(Dispatchers.Main) {
@@ -285,7 +285,7 @@ fun NewNsecBunkerCreatedScreen(
     LaunchedEffect(Unit) {
         isLoading.value = true
         launch(Dispatchers.IO) {
-            application = Amber.instance.getDatabase(account.npub).applicationDao().getByKey(key)?.application ?: ApplicationEntity.empty()
+            application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)?.application ?: ApplicationEntity.empty()
             isLoading.value = false
         }
     }

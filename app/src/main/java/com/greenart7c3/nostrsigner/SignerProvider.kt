@@ -102,12 +102,12 @@ class SignerProvider : ContentProvider() {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permission =
                         database
-                            .applicationDao()
+                            .dao()
                             .getPermission(
                                 packageName,
                                 "SIGN_MESSAGE",
                             )
-                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val signPolicy = database.dao().getSignPolicy(packageName)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
@@ -186,7 +186,7 @@ class SignerProvider : ContentProvider() {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     var permission =
                         database
-                            .applicationDao()
+                            .dao()
                             .getPermission(
                                 packageName,
                                 "SIGN_EVENT",
@@ -199,7 +199,7 @@ class SignerProvider : ContentProvider() {
                                 null
                             } else {
                                 database
-                                    .applicationDao()
+                                    .dao()
                                     .getPermission(
                                         packageName,
                                         "NIP",
@@ -208,7 +208,7 @@ class SignerProvider : ContentProvider() {
                             }
                         }
                     }
-                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val signPolicy = database.dao().getSignPolicy(packageName)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
@@ -287,7 +287,7 @@ class SignerProvider : ContentProvider() {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     var permission =
                         database
-                            .applicationDao()
+                            .dao()
                             .getPermission(
                                 packageName,
                                 uri.toString().replace("content://$appId.", ""),
@@ -304,7 +304,7 @@ class SignerProvider : ContentProvider() {
                         nip?.let {
                             permission =
                                 database
-                                    .applicationDao()
+                                    .dao()
                                     .getPermission(
                                         packageName,
                                         "NIP",
@@ -312,7 +312,7 @@ class SignerProvider : ContentProvider() {
                                     )
                         }
                     }
-                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val signPolicy = database.dao().getSignPolicy(packageName)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
@@ -360,7 +360,7 @@ class SignerProvider : ContentProvider() {
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
                             scope.launch {
-                                logDatabase.logDao().insertLog(
+                                logDatabase.dao().insertLog(
                                     LogEntity(
                                         0,
                                         packageName,
@@ -399,7 +399,7 @@ class SignerProvider : ContentProvider() {
                     } else {
                         LocalPreferences.allSavedAccounts(context!!).firstNotNullOfOrNull { accountInfo ->
                             val localDatabase = Amber.instance.getDatabase(accountInfo.npub)
-                            val hasAccount = localDatabase.applicationDao().getByKeySync(packageName) != null
+                            val hasAccount = localDatabase.dao().getByKeySync(packageName) != null
                             if (hasAccount) {
                                 LocalPreferences.loadFromEncryptedStorageSync(context!!, accountInfo.npub)
                             } else {
@@ -414,13 +414,13 @@ class SignerProvider : ContentProvider() {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permission =
                         database
-                            .applicationDao()
+                            .dao()
                             .getPermission(
                                 packageName,
                                 "GET_PUBLIC_KEY",
                             )
 
-                    val signPolicy = database.applicationDao().getSignPolicy(packageName)
+                    val signPolicy = database.dao().getSignPolicy(packageName)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission)
                     if (isRemembered == null) {
                         return null
@@ -474,7 +474,7 @@ class SignerProvider : ContentProvider() {
             scope.launch {
                 LocalPreferences.allSavedAccounts(context!!).forEach { accInfo ->
                     val database = Amber.instance.getLogDatabase(accInfo.npub)
-                    database.logDao().insertLog(
+                    database.dao().insertLog(
                         LogEntity(
                             0,
                             packageName,

@@ -63,7 +63,7 @@ fun IncomingRequestScreen(
             loading = true
             try {
                 LocalPreferences.allSavedAccounts(context).forEach { account ->
-                    Amber.instance.getDatabase(account.npub).applicationDao().getAllApplications().forEach {
+                    Amber.instance.getDatabase(account.npub).dao().getAllApplications().forEach {
                         if (it.application.name.isNotBlank()) {
                             ApplicationNameCache.names["${account.npub.toShortenHex()}-${it.application.key}"] = it.application.name
                         }

@@ -50,7 +50,7 @@ class NostrClientLoggerListener(
     override fun onAuth(relay: IRelayClient, challenge: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -66,7 +66,7 @@ class NostrClientLoggerListener(
     override fun onBeforeSend(relay: IRelayClient, event: Event) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -82,7 +82,7 @@ class NostrClientLoggerListener(
     override fun onSend(relay: IRelayClient, msg: String, success: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -105,7 +105,7 @@ class NostrClientLoggerListener(
     override fun onSendResponse(relay: IRelayClient, eventId: String, success: Boolean, message: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -132,7 +132,7 @@ class NostrClientLoggerListener(
         if (error.message?.trim()?.equals("Relay sent notice:") == true) return
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -157,7 +157,7 @@ class NostrClientLoggerListener(
     override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -175,7 +175,7 @@ class NostrClientLoggerListener(
     override fun onNotify(relay: IRelayClient, description: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
@@ -191,7 +191,7 @@ class NostrClientLoggerListener(
     override fun onRelayStateChange(relay: IRelayClient, type: RelayState) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).logDao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,

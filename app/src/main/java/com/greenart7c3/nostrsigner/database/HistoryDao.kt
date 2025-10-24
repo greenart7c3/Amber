@@ -43,7 +43,7 @@ interface HistoryDao {
         try {
             innerAddHistory(entity)
             npub?.let {
-                Amber.instance.getDatabase(npub).applicationDao().updateLastUsed(entity.pkKey, entity.time)
+                Amber.instance.getDatabase(npub).dao().updateLastUsed(entity.pkKey, entity.time)
             }
         } catch (e: Exception) {
             Log.e(Amber.TAG, "Error adding history", e)

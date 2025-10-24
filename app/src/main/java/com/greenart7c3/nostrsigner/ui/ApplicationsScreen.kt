@@ -55,7 +55,7 @@ fun ApplicationsScreen(
     account: Account,
     navController: NavController,
 ) {
-    val applications = Amber.instance.getDatabase(account.npub).applicationDao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
+    val applications = Amber.instance.getDatabase(account.npub).dao().getAllFlow(account.hexKey).collectAsStateWithLifecycle(emptyList())
     var hasAccountsWithoutBackup by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {

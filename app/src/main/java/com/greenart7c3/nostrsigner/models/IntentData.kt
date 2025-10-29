@@ -20,7 +20,7 @@ data class IntentData(
     val rememberType: MutableState<RememberType>,
     val route: String?,
     val event: Event?,
-    val encryptedData: String?,
+    val encryptedData: EncryptedDataKind?,
     val isNostrConnectURI: Boolean = false,
     val unsignedEventKey: HexKey = "",
 )

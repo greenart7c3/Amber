@@ -25,17 +25,22 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.CompressionType
+import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -190,6 +195,32 @@ object IntentUtils {
                             "Could not decrypt the message"
                         }
 
+                    val encryptedDataKind = when (type) {
+                        else -> {
+                            if (type.name.contains("ENCRYPT")) {
+                                if (localData.startsWith("{")) {
+                                    val event = AmberEvent.fromJson(localData)
+                                    EventEncryptedDataKind(event, result)
+                                } else if (localData.startsWith("[")) {
+                                    val tagArray = JacksonMapper.fromJsonToTagArray(localData)
+                                    TagArrayEncryptedDataKind(tagArray, result)
+                                } else {
+                                    ClearTextEncryptedDataKind(localData, result)
+                                }
+                            } else {
+                                if (result.startsWith("{")) {
+                                    val event = AmberEvent.fromJson(result)
+                                    EventEncryptedDataKind(event, result)
+                                } else if (result.startsWith("[")) {
+                                    val tagArray = JacksonMapper.fromJsonToTagArray(result)
+                                    TagArrayEncryptedDataKind(tagArray, result)
+                                } else {
+                                    ClearTextEncryptedDataKind(localData, result)
+                                }
+                            }
+                        }
+                    }
+
                     IntentData(
                         data = localData,
                         name = appName,
@@ -205,7 +236,7 @@ object IntentUtils {
                         rememberType = mutableStateOf(RememberType.NEVER),
                         route = route,
                         event = null,
-                        encryptedData = result,
+                        encryptedData = encryptedDataKind,
                     )
                 }
                 SignerType.GET_PUBLIC_KEY -> {
@@ -378,6 +409,35 @@ object IntentUtils {
                     npub = parsePubKey(npub)
                 }
 
+                val encryptedDataKind = when (type) {
+                    SignerType.DECRYPT_ZAP_EVENT -> {
+                        PrivateZapEncryptedDataKind(result)
+                    }
+                    else -> {
+                        if (type.name.contains("ENCRYPT")) {
+                            if (data.startsWith("{")) {
+                                val event = AmberEvent.fromJson(data)
+                                EventEncryptedDataKind(event, result)
+                            } else if (data.startsWith("[")) {
+                                val tagArray = JacksonMapper.fromJsonToTagArray(data)
+                                TagArrayEncryptedDataKind(tagArray, result)
+                            } else {
+                                ClearTextEncryptedDataKind(data, result)
+                            }
+                        } else {
+                            if (result.startsWith("{")) {
+                                val event = AmberEvent.fromJson(result)
+                                EventEncryptedDataKind(event, result)
+                            } else if (result.startsWith("[")) {
+                                val tagArray = JacksonMapper.fromJsonToTagArray(result)
+                                TagArrayEncryptedDataKind(tagArray, result)
+                            } else {
+                                ClearTextEncryptedDataKind(data, result)
+                            }
+                        }
+                    }
+                }
+
                 IntentData(
                     data = data,
                     name = name,
@@ -393,7 +453,7 @@ object IntentUtils {
                     rememberType = mutableStateOf(RememberType.NEVER),
                     route = route,
                     event = null,
-                    encryptedData = result,
+                    encryptedData = encryptedDataKind,
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {

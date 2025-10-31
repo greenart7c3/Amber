@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.jackson.toTypedArray
+import com.vitorpamplona.quartz.nip02FollowList.tags.ContactTag
 import com.vitorpamplona.quartz.utils.TimeUtils
 
 @Immutable
@@ -60,7 +61,7 @@ open class AmberEvent(
         companion object {
             fun fromJson(jsonObject: JsonNode): AmberEvent =
                 AmberEvent(
-                    id = jsonObject.get("id")?.asText()?.intern() ?: "",
+                    id = jsonObject.get("id")?.asText() ?: "",
                     pubKey = jsonObject.get("pubkey")?.asText()?.intern() ?: "",
                     createdAt = jsonObject.get("created_at")?.asLong() ?: TimeUtils.now(),
                     kind = jsonObject.get("kind").asInt(),
@@ -72,6 +73,12 @@ open class AmberEvent(
                 )
         }
     }
+
+    fun relay(): String {
+        return tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
+    }
+
+    fun verifiedFollowKeySet(): Set<HexKey> = tags.mapNotNullTo(HashSet(), ContactTag::parseValidKey)
 
     companion object {
         val mapper: ObjectMapper =

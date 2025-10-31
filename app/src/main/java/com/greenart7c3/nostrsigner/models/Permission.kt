@@ -101,6 +101,7 @@ data class Permission(
                     11 -> context.getString(R.string.event_kind_11)
                     12 -> context.getString(R.string.event_kind_12)
                     13 -> context.getString(R.string.event_kind_13)
+                    14 -> context.getString(R.string.event_kind_14)
                     16 -> context.getString(R.string.event_kind_16)
                     17 -> context.getString(R.string.event_kind_17)
                     20 -> context.getString(R.string.event_kind_20)

@@ -26,6 +26,8 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
@@ -122,7 +124,21 @@ fun SeeDetailsScreen(
                         val event = intent.event!!
                         if (event.kind == 22242) AmberEvent.relay(event) else event.content
                     } else {
-                        intent.encryptedData ?: intent.data
+                        if (type.name.contains("ENCRYPT") && intent.encryptedData is ClearTextEncryptedDataKind) {
+                            intent.encryptedData.text
+                        } else if (intent.encryptedData is EventEncryptedDataKind) {
+                            if (intent.encryptedData.sealEncryptedDataKind != null) {
+                                if (intent.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                                    intent.encryptedData.sealEncryptedDataKind.event.content
+                                } else {
+                                    intent.encryptedData.sealEncryptedDataKind.result
+                                }
+                            } else {
+                                intent.encryptedData.event.content
+                            }
+                        } else {
+                            intent.encryptedData?.result ?: ""
+                        }
                     }
 
                     Text(

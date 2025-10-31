@@ -188,8 +188,7 @@ fun IntentSingleEventHomeScreen(
             EncryptDecryptData(
                 account = account,
                 modifier = modifier,
-                content = intentData.data,
-                encryptedData = intentData.encryptedData ?: "",
+                encryptedData = intentData.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 packageName = packageName,
                 applicationName = applicationName,
@@ -197,10 +196,10 @@ fun IntentSingleEventHomeScreen(
                 type = intentData.type,
                 onAccept = {
                     val result =
-                        if (intentData.encryptedData == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
+                        if (intentData.encryptedData?.result == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
                             ""
                         } else {
-                            intentData.encryptedData ?: ""
+                            intentData.encryptedData?.result ?: ""
                         }
 
                     IntentUtils.sendResult(

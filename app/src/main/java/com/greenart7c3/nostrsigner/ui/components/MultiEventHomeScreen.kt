@@ -48,10 +48,14 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
@@ -116,14 +120,41 @@ fun IntentMultiEventHomeScreen(
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val grouped = intents.groupBy { it.type }.filter { it.key != SignerType.SIGN_EVENT }
-    val grouped2 = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
-    val acceptEventsGroup1 = grouped.map {
+    val groupedEventEncryptedData = intents.filter { it.encryptedData is EventEncryptedDataKind }.groupBy { it.type }
+    val groupedTextEncryptedData = intents.filter { it.encryptedData is ClearTextEncryptedDataKind }.groupBy { it.type }
+    val groupedTagArrayEncryptedData = intents.filter { it.encryptedData is TagArrayEncryptedDataKind }.groupBy { it.type }
+    val groupedPrivateZapEncryptedDataKind = intents.filter { it.encryptedData is PrivateZapEncryptedDataKind }.groupBy { it.type }
+    val groupedOthers = intents.filter { it.encryptedData == null && it.type != SignerType.SIGN_EVENT }.groupBy { it.type }
+    val groupedEvents = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
+    val acceptedGroupedEventEncryptedData = groupedEventEncryptedData.map {
         remember {
             mutableStateOf(true)
         }
     }
-    val acceptEventsGroup2 = grouped2.map {
+    val acceptedGroupedTextEncryptedData = groupedTextEncryptedData.map {
+        remember {
+            mutableStateOf(true)
+        }
+    }
+    val acceptedGroupedTagArrayEncryptedData = groupedTagArrayEncryptedData.map {
+        remember {
+            mutableStateOf(true)
+        }
+    }
+
+    val acceptedGroupedPrivateZapEncryptedDataKind = groupedPrivateZapEncryptedDataKind.map {
+        remember {
+            mutableStateOf(true)
+        }
+    }
+
+    val acceptEventsGroupOthers = groupedOthers.map {
+        remember {
+            mutableStateOf(true)
+        }
+    }
+
+    val acceptEventsGroup2 = groupedEvents.map {
         remember {
             mutableStateOf(true)
         }
@@ -153,10 +184,10 @@ fun IntentMultiEventHomeScreen(
                 .padding(bottom = 20.dp),
         )
 
-        grouped.toList().forEachIndexed { index, it ->
+        groupedEventEncryptedData.toList().forEachIndexed { index, it ->
             PermissionCard(
                 context = context,
-                acceptEventsGroup = acceptEventsGroup1,
+                acceptEventsGroup = acceptedGroupedEventEncryptedData,
                 index = index,
                 item = it,
                 onDetailsClick = {
@@ -166,7 +197,59 @@ fun IntentMultiEventHomeScreen(
                 },
             )
         }
-        grouped2.toList().forEachIndexed { index, it ->
+        groupedTextEncryptedData.toList().forEachIndexed { index, it ->
+            PermissionCard(
+                context = context,
+                acceptEventsGroup = acceptedGroupedTextEncryptedData,
+                index = index,
+                item = it,
+                onDetailsClick = {
+                    MultiEventScreenIntents.intents = it
+                    MultiEventScreenIntents.appName = appName
+                    navController.navigate(Route.SeeDetails.route)
+                },
+            )
+        }
+        groupedTagArrayEncryptedData.toList().forEachIndexed { index, it ->
+            PermissionCard(
+                context = context,
+                acceptEventsGroup = acceptedGroupedTagArrayEncryptedData,
+                index = index,
+                item = it,
+                onDetailsClick = {
+                    MultiEventScreenIntents.intents = it
+                    MultiEventScreenIntents.appName = appName
+                    navController.navigate(Route.SeeDetails.route)
+                },
+            )
+        }
+        groupedPrivateZapEncryptedDataKind.toList().forEachIndexed { index, it ->
+            PermissionCard(
+                context = context,
+                acceptEventsGroup = acceptedGroupedPrivateZapEncryptedDataKind,
+                index = index,
+                item = it,
+                onDetailsClick = {
+                    MultiEventScreenIntents.intents = it
+                    MultiEventScreenIntents.appName = appName
+                    navController.navigate(Route.SeeDetails.route)
+                },
+            )
+        }
+        groupedOthers.toList().forEachIndexed { index, it ->
+            PermissionCard(
+                context = context,
+                acceptEventsGroup = acceptEventsGroupOthers,
+                index = index,
+                item = it,
+                onDetailsClick = {
+                    MultiEventScreenIntents.intents = it
+                    MultiEventScreenIntents.appName = appName
+                    navController.navigate(Route.SeeDetails.route)
+                },
+            )
+        }
+        groupedEvents.toList().forEachIndexed { index, it ->
             PermissionCard(
                 context = context,
                 acceptEventsGroup = acceptEventsGroup2,
@@ -373,7 +456,7 @@ fun IntentMultiEventHomeScreen(
                                     thisAccount.npub,
                                 )
 
-                                val signature = intentData.encryptedData ?: continue
+                                val signature = intentData.encryptedData?.result ?: continue
                                 if (intentData.checked.value) {
                                     results.add(
                                         Result(
@@ -1004,7 +1087,38 @@ fun PermissionCard(
                 val message = if (first == SignerType.CONNECT) {
                     stringResource(R.string.connect)
                 } else {
-                    permission.toLocalizedString(context)
+                    val encryptedData = item.second.first().encryptedData
+                    if (first.toString().contains("ENCRYPT")) {
+                        when (encryptedData) {
+                            is EventEncryptedDataKind -> {
+                                val permission = Permission("sign_event", encryptedData.event.kind)
+                                stringResource(R.string.encrypt_with, permission.toLocalizedString(context), first.toString().split("_").first())
+                            }
+
+                            is TagArrayEncryptedDataKind -> {
+                                stringResource(R.string.encrypt_this_list_of_tags_with, first.toString().split("_").first())
+                            }
+
+                            else -> stringResource(R.string.encrypt_this_text_with, first.toString().split("_").first())
+                        }
+                    } else {
+                        if (first.toString().contains("DECRYPT")) {
+                            when (encryptedData) {
+                                is EventEncryptedDataKind -> {
+                                    val permission = Permission("sign_event", encryptedData.event.kind)
+                                    stringResource(R.string.read_from_encrypted_content, permission.toLocalizedString(context), first.toString().split("_").first())
+                                }
+
+                                is TagArrayEncryptedDataKind -> {
+                                    stringResource(R.string.read_this_list_of_tags_from_encrypted_content, first.toString().split("_").first())
+                                }
+
+                                else -> stringResource(R.string.read_this_text_from_encrypted_content, first.toString().split("_").first())
+                            }
+                        } else {
+                            permission.toLocalizedString(context)
+                        }
+                    }
                 }
 
                 Text(

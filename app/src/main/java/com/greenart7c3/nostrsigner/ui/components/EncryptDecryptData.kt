@@ -127,19 +127,38 @@ fun EncryptDecryptData(
                 )
 
                 if (encryptedData is EventEncryptedDataKind) {
-                    val content = if (encryptedData.event.kind == 22242) encryptedData.event.relay() else encryptedData.event.content
-                    if (encryptedData.event.kind == ContactListEvent.KIND) {
-                        ContactListDetail(
-                            title = stringResource(R.string.following),
-                            text = "${encryptedData.event.verifiedFollowKeySet().size}",
-                        )
+                    if (encryptedData.sealEncryptedDataKind != null) {
+                        if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                            val content = if (encryptedData.sealEncryptedDataKind.event.kind == 22242) encryptedData.sealEncryptedDataKind.event.relay() else encryptedData.sealEncryptedDataKind.event.content
+                            if (encryptedData.event.kind == ContactListEvent.KIND) {
+                                ContactListDetail(
+                                    title = stringResource(R.string.following),
+                                    text = "${encryptedData.event.verifiedFollowKeySet().size}",
+                                )
+                            } else {
+                                Text(
+                                    content,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp),
+                                )
+                            }
+                        }
                     } else {
-                        Text(
-                            content,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                        )
+                        val content = if (encryptedData.event.kind == 22242) encryptedData.event.relay() else encryptedData.event.content
+                        if (encryptedData.event.kind == ContactListEvent.KIND) {
+                            ContactListDetail(
+                                title = stringResource(R.string.following),
+                                text = "${encryptedData.event.verifiedFollowKeySet().size}",
+                            )
+                        } else {
+                            Text(
+                                content,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(top = 8.dp),
+                            )
+                        }
                     }
                 } else {
                     val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) encryptedData.text else encryptedData?.result ?: ""

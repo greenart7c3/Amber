@@ -124,7 +124,21 @@ fun SeeDetailsScreen(
                         val event = intent.event!!
                         if (event.kind == 22242) AmberEvent.relay(event) else event.content
                     } else {
-                        if (type.name.contains("ENCRYPT") && intent.encryptedData is ClearTextEncryptedDataKind) intent.encryptedData.text else if (intent.encryptedData is EventEncryptedDataKind) intent.encryptedData.event.content else intent.encryptedData?.result ?: ""
+                        if (type.name.contains("ENCRYPT") && intent.encryptedData is ClearTextEncryptedDataKind) {
+                            intent.encryptedData.text
+                        } else if (intent.encryptedData is EventEncryptedDataKind) {
+                            if (intent.encryptedData.sealEncryptedDataKind != null) {
+                                if (intent.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                                    intent.encryptedData.sealEncryptedDataKind.event.content
+                                } else {
+                                    intent.encryptedData.sealEncryptedDataKind.result
+                                }
+                            } else {
+                                intent.encryptedData.event.content
+                            }
+                        } else {
+                            intent.encryptedData?.result ?: ""
+                        }
                     }
 
                     Text(

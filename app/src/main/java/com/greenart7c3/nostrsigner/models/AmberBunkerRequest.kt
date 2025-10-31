@@ -108,6 +108,7 @@ data class AmberBunkerRequest(
                 gen.writeStringField("name", value.name)
                 gen.writeStringField("signedEvent", value.signedEvent?.toJson())
                 gen.writeStringField("encryptDecryptResponse", value.encryptDecryptResponse)
+                gen.writeStringField("encryptionType", value.encryptionType.name)
                 gen.writeEndObject()
             }
         }

@@ -25,7 +25,6 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
@@ -595,22 +594,8 @@ object IntentUtils {
                 return null
             }
 
-            val bunkerRequest =
-                if (intent.getStringExtra("bunker") != null) {
-                    AmberBunkerRequest.mapper.readValue(
-                        intent.getStringExtra("bunker"),
-                        AmberBunkerRequest::class.java,
-                    )
-                } else {
-                    null
-                }
-
             var localAccount = currentLoggedInAccount
-            if (bunkerRequest != null) {
-                LocalPreferences.loadFromEncryptedStorageSync(context, bunkerRequest.currentAccount)?.let {
-                    localAccount = it
-                }
-            } else if (intent.getStringExtra("current_user") != null) {
+            if (intent.getStringExtra("current_user") != null) {
                 var npub = intent.getStringExtra("current_user")
                 if (npub != null) {
                     npub = parsePubKey(npub)
@@ -622,8 +607,6 @@ object IntentUtils {
 
             if (intent.dataString?.startsWith("nostrconnect:") == true) {
                 NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
-            } else if (bunkerRequest != null) {
-                BunkerRequestUtils.addRequest(bunkerRequest)
             } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
                 return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
             } else {

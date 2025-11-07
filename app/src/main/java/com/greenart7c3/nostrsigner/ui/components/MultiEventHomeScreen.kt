@@ -894,7 +894,7 @@ fun BunkerMultiEventHomeScreen(
                                     thisAccount.npub,
                                 )
 
-                                val signature = request.encryptDecryptResponse ?: continue
+                                val signature = request.encryptedData?.result ?: continue
                                 val localBunkerRequest = request.copy()
                                 BunkerRequestUtils.remove(request.request.id)
                                 if (request.checked.value) {

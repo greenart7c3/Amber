@@ -183,7 +183,21 @@ fun SeeDetailsScreen(
                         val event = bunkerRequest.signedEvent!!
                         if (event.kind == 22242) AmberEvent.relay(event) else event.content
                     } else {
-                        bunkerRequest.encryptDecryptResponse ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                        if (type.name.contains("ENCRYPT") && bunkerRequest.encryptedData is ClearTextEncryptedDataKind) {
+                            bunkerRequest.encryptedData.text
+                        } else if (bunkerRequest.encryptedData is EventEncryptedDataKind) {
+                            if (bunkerRequest.encryptedData.sealEncryptedDataKind != null) {
+                                if (bunkerRequest.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                                    bunkerRequest.encryptedData.sealEncryptedDataKind.event.content
+                                } else {
+                                    bunkerRequest.encryptedData.sealEncryptedDataKind.result
+                                }
+                            } else {
+                                bunkerRequest.encryptedData.event.content
+                            }
+                        } else {
+                            bunkerRequest.encryptedData?.result ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                        }
                     }
 
                     Text(

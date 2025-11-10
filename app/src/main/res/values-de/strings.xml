@@ -585,4 +585,6 @@
     <string name="read_from_encrypted_content">Read %1$s from %2$s encrypted content</string>
     <string name="read_this_list_of_tags_from_encrypted_content">Read this list of tags from %1$s encrypted content</string>
     <string name="read_this_text_from_encrypted_content">Read this text from %1$s encrypted content</string>
+    <string name="ping">Ping</string>
+    <string name="response">Response</string>
 </resources>

@@ -402,7 +402,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
-        val projection = if (type == SignerType.GET_PUBLIC_KEY) {
+        val projection = if (type == SignerType.GET_PUBLIC_KEY || type == SignerType.PING) {
             arrayOf(acc.npub)
         } else {
             arrayOf(data, pubKey, acc.npub)

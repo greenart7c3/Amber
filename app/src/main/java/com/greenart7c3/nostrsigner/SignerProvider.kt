@@ -456,7 +456,77 @@ class SignerProvider : ContentProvider() {
                     cursor.addRow(arrayOf<Any>(result, result))
                     return cursor
                 }
+                "content://$appId.PING" -> {
+                    val npub = if (projection != null && projection.isNotEmpty()) IntentUtils.parsePubKey(projection[0]) else null
+                    val account = if (npub != null) {
+                        LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
+                    } else {
+                        LocalPreferences.allSavedAccounts(context!!).firstNotNullOfOrNull { accountInfo ->
+                            val localDatabase = Amber.instance.getDatabase(accountInfo.npub)
+                            val hasAccount = localDatabase.dao().getByKeySync(packageName) != null
+                            if (hasAccount) {
+                                LocalPreferences.loadFromEncryptedStorageSync(context!!, accountInfo.npub)
+                            } else {
+                                null
+                            }
+                        }
+                    }
+                    if (account == null) {
+                        return null
+                    }
+                    val database = Amber.instance.getDatabase(account.npub)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
+                    val permission =
+                        database
+                            .dao()
+                            .getPermission(
+                                packageName,
+                                "PING",
+                            )
 
+                    val signPolicy = database.dao().getSignPolicy(packageName)
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    if (!isRemembered) {
+                        scope.launch {
+                            historyDatabase.dao().addHistory(
+                                HistoryEntity(
+                                    0,
+                                    packageName,
+                                    uri.toString().replace("content://$appId.", ""),
+                                    null,
+                                    TimeUtils.now(),
+                                    false,
+                                ),
+                                account.npub,
+                            )
+                        }
+
+                        val cursor =
+                            MatrixCursor(arrayOf("rejected")).also {
+                                it.addRow(arrayOf("true"))
+                            }
+
+                        return cursor
+                    }
+
+                    scope.launch {
+                        historyDatabase.dao().addHistory(
+                            HistoryEntity(
+                                0,
+                                packageName,
+                                uri.toString().replace("content://$appId.", ""),
+                                null,
+                                TimeUtils.now(),
+                                true,
+                            ),
+                            account.npub,
+                        )
+                    }
+
+                    val cursor = MatrixCursor(arrayOf("signature", "result"))
+                    cursor.addRow(arrayOf<Any>("pong", "pong"))
+                    return cursor
+                }
                 else -> null
             }
         } catch (e: Exception) {

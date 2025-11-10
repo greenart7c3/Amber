@@ -54,7 +54,7 @@
 
         <provider
             android:name=".SignerProvider"
-            android:authorities="${applicationId}.SIGN_MESSAGE;${applicationId}.SIGN_EVENT;${applicationId}.NIP04_ENCRYPT;${applicationId}.NIP04_DECRYPT;${applicationId}.NIP44_ENCRYPT;${applicationId}.NIP44_DECRYPT;${applicationId}.GET_PUBLIC_KEY;${applicationId}.DECRYPT_ZAP_EVENT"
+            android:authorities="${applicationId}.PING;${applicationId}.SIGN_MESSAGE;${applicationId}.SIGN_EVENT;${applicationId}.NIP04_ENCRYPT;${applicationId}.NIP04_DECRYPT;${applicationId}.NIP44_ENCRYPT;${applicationId}.NIP44_DECRYPT;${applicationId}.GET_PUBLIC_KEY;${applicationId}.DECRYPT_ZAP_EVENT"
             android:enabled="true"
             android:exported="true"
             tools:ignore="ExportedContentProvider" />

@@ -203,6 +203,7 @@ object BunkerRequestUtils {
             "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
             "nip44_decrypt" -> SignerType.NIP44_DECRYPT
             "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
+            "ping" -> SignerType.PING
             else -> SignerType.INVALID
         }
     }
@@ -216,6 +217,7 @@ object BunkerRequestUtils {
                 AmberEvent.toEvent(amberEvent).toJson()
             }
             "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
+            "ping" -> "pong"
             else -> ""
         }
     }

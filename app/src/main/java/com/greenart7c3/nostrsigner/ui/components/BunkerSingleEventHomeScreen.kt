@@ -46,6 +46,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Encrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestPing
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.utils.Hex
@@ -83,6 +84,62 @@ fun BunkerSingleEventHomeScreen(
     val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
 
     when (bunkerRequest.request) {
+        is BunkerRequestPing -> {
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString()
+                }
+
+            val acceptUntil = permission?.acceptUntil ?: 0
+            val rejectUntil = permission?.rejectUntil ?: 0
+
+            val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                null
+            } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                false
+            } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                true
+            } else {
+                null
+            }
+
+            BunkerPingScreen(
+                modifier = modifier,
+                account = account,
+                appName = appName,
+                shouldRunOnAccept = acceptOrReject,
+                onAccept = {
+                    val result = "pong"
+
+                    BunkerRequestUtils.sendResult(
+                        context = context,
+                        account = account,
+                        key = key,
+                        response = result,
+                        bunkerRequest = bunkerRequest,
+                        kind = null,
+                        onLoading = onLoading,
+                        permissions = null,
+                        appName = appName,
+                        signPolicy = null,
+                        shouldCloseApplication = null,
+                        rememberType = it,
+                    )
+                },
+                onReject = {
+                    BunkerRequestUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        bunkerRequest = bunkerRequest,
+                        appName = appName,
+                        rememberType = it,
+                        signerType = type,
+                        kind = null,
+                        onLoading = onLoading,
+                    )
+                },
+            )
+        }
         is BunkerRequestConnect -> {
             var showExistingAppDialog by remember { mutableStateOf(false) }
             var localPermissions by remember { mutableStateOf<List<Permission>?>(null) }

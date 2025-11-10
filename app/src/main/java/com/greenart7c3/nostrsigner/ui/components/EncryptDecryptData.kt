@@ -11,11 +11,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboard
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -193,7 +190,6 @@ fun EncryptDecryptData(
 fun BunkerEncryptDecryptData(
     account: Account,
     modifier: Modifier,
-    content: String,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
     appName: String,
@@ -201,12 +197,6 @@ fun BunkerEncryptDecryptData(
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
-    var showMore by androidx.compose.runtime.remember {
-        mutableStateOf(false)
-    }
-    val clipboardManager = LocalClipboard.current
-    val coroutineScope = rememberCoroutineScope()
-    val context = LocalContext.current
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }

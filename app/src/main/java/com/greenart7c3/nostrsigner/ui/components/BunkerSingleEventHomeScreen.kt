@@ -305,7 +305,6 @@ fun BunkerSingleEventHomeScreen(
             BunkerEncryptDecryptData(
                 account = account,
                 modifier = modifier,
-                content = bunkerRequest.request.message,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
@@ -370,7 +369,6 @@ fun BunkerSingleEventHomeScreen(
             BunkerEncryptDecryptData(
                 account = account,
                 modifier = modifier,
-                content = bunkerRequest.request.ciphertext,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
@@ -437,7 +435,6 @@ fun BunkerSingleEventHomeScreen(
             BunkerEncryptDecryptData(
                 account = account,
                 modifier = modifier,
-                content = bunkerRequest.request.message,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
@@ -504,7 +501,6 @@ fun BunkerSingleEventHomeScreen(
             BunkerEncryptDecryptData(
                 account = account,
                 modifier = modifier,
-                content = bunkerRequest.request.ciphertext,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
@@ -657,7 +653,6 @@ fun BunkerSingleEventHomeScreen(
                 BunkerEncryptDecryptData(
                     account = account,
                     modifier = modifier,
-                    content = bunkerRequest.request.params[1],
                     encryptedData = bunkerRequest.encryptedData,
                     shouldRunOnAccept = acceptOrReject,
                     appName = appName,

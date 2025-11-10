@@ -69,8 +69,9 @@ class SignerProvider : ContentProvider() {
         } else {
             if (Hex.isHex(sortOrder)) {
                 sortOrder
+            } else {
+                null
             }
-            null
         }
         if (packageName == null) {
             Log.d(Amber.TAG, "No package name")

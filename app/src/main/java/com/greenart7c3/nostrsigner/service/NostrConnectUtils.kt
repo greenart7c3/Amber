@@ -124,7 +124,7 @@ object NostrConnectUtils {
                     closeApplication = intent.getBooleanExtra("closeApplication", true),
                     name = name,
                     signedEvent = null,
-                    encryptDecryptResponse = null,
+                    encryptedData = null,
                     encryptionType = EncryptionType.NIP44,
                 ),
             )

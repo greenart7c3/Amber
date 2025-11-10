@@ -4,22 +4,18 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.util.Log
-import androidx.core.net.toUri
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
-import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents.intents
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
-import kotlin.text.isNotBlank
-import kotlin.text.startsWith
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -96,32 +92,13 @@ class MainViewModel(val context: Context) : ViewModel() {
         }
     }
 
-    fun showBunkerRequests(callingPackage: String?, accountStateViewModel: AccountStateViewModel? = null) {
+    fun showBunkerRequests(accountStateViewModel: AccountStateViewModel? = null) {
         val requests =
             BunkerRequestUtils.getBunkerRequests().map {
                 it.copy()
             }
 
         viewModelScope.launch(Dispatchers.IO) {
-            val account = LocalPreferences.loadFromEncryptedStorage(context)
-            account?.let { acc ->
-                requests.forEach {
-                    val contentIntent =
-                        Intent(Amber.instance, MainActivity::class.java).apply {
-                            data = "nostrsigner:".toUri()
-                        }
-                    contentIntent.putExtra("bunker", it.toJson())
-                    contentIntent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-                    val intentData = IntentUtils.getIntentData(context, contentIntent, callingPackage, Route.IncomingRequest.route, acc)
-                    contentIntent.putExtra("current_account", acc.npub)
-                    if (intentData != null) {
-                        if (intents.value.none { item -> item.id == intentData.id }) {
-                            intents.value += listOf(intentData)
-                        }
-                    }
-                }
-            }
-
             if (requests.isNotEmpty()) {
                 val npub = getAccount(null)
                 val currentAccount = LocalPreferences.currentAccount(context)

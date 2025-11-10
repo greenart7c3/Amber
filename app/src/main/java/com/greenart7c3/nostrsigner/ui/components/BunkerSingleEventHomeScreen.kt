@@ -306,7 +306,7 @@ fun BunkerSingleEventHomeScreen(
                 account = account,
                 modifier = modifier,
                 content = bunkerRequest.request.message,
-                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
@@ -315,7 +315,7 @@ fun BunkerSingleEventHomeScreen(
                         context = context,
                         account = account,
                         key = key,
-                        response = bunkerRequest.encryptDecryptResponse ?: "",
+                        response = bunkerRequest.encryptedData?.result ?: "",
                         bunkerRequest = bunkerRequest,
                         kind = null,
                         onLoading = onLoading,
@@ -371,12 +371,12 @@ fun BunkerSingleEventHomeScreen(
                 account = account,
                 modifier = modifier,
                 content = bunkerRequest.request.ciphertext,
-                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
                 onAccept = {
-                    val result = bunkerRequest.encryptDecryptResponse ?: ""
+                    val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
                         context = context,
@@ -438,12 +438,12 @@ fun BunkerSingleEventHomeScreen(
                 account = account,
                 modifier = modifier,
                 content = bunkerRequest.request.message,
-                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
                 onAccept = {
-                    val result = bunkerRequest.encryptDecryptResponse ?: ""
+                    val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
                         context = context,
@@ -505,12 +505,12 @@ fun BunkerSingleEventHomeScreen(
                 account = account,
                 modifier = modifier,
                 content = bunkerRequest.request.ciphertext,
-                encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
                 onAccept = {
-                    val result = bunkerRequest.encryptDecryptResponse ?: ""
+                    val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
                         context = context,
@@ -658,16 +658,16 @@ fun BunkerSingleEventHomeScreen(
                     account = account,
                     modifier = modifier,
                     content = bunkerRequest.request.params[1],
-                    encryptedData = bunkerRequest.encryptDecryptResponse ?: "",
+                    encryptedData = bunkerRequest.encryptedData,
                     shouldRunOnAccept = acceptOrReject,
                     appName = appName,
                     type = type,
                     onAccept = {
                         val result =
-                            if (bunkerRequest.encryptDecryptResponse == "Could not decrypt the message") {
+                            if (bunkerRequest.encryptedData?.result == "Could not decrypt the message") {
                                 ""
                             } else {
-                                bunkerRequest.encryptDecryptResponse ?: ""
+                                bunkerRequest.encryptedData?.result ?: ""
                             }
 
                         BunkerRequestUtils.sendResult(

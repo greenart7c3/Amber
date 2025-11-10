@@ -569,4 +569,18 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Would you like to send the recent crash report to Amber in a DM? No personal information will be shared</string>
     <string name="copy_crash_report_to_clipboard">Would you like to copy the crash report to your clipboard and open a Client to send it to Amber?</string>
     <string name="crashreport_found_send">Send it</string>
+    <string name="event_content">Event content</string>
+    <string name="event_kind_14">Direct Message</string>
+    <string name="wants_to_encrypt_with">" wants to encrypt %1$s with %2$s"</string>
+    <string name="wants_to_encrypt_this_list_of_tags_with">" wants to encrypt this list of tags with %1$s"</string>
+    <string name="wants_to_encrypt_this_text_with">" wants to encrypt this text with %1$s"</string>
+    <string name="wants_to_read_from_encrypted_content">" wants to read %1$s from %2$s encrypted content"</string>
+    <string name="wants_to_read_this_list_of_tags_from_encrypted_content">" wants to read this list of tags from %1$s encrypted content"</string>
+    <string name="wants_to_read_this_text_from_encrypted_content">" wants to read this text from %1$s encrypted content"</string>
+    <string name="encrypt_with">Encrypt %1$s with %2$s</string>
+    <string name="encrypt_this_list_of_tags_with">Encrypt this list of tags with %1$s</string>
+    <string name="encrypt_this_text_with">Encrypt this text with %1$s</string>
+    <string name="read_from_encrypted_content">Read %1$s from %2$s encrypted content</string>
+    <string name="read_this_list_of_tags_from_encrypted_content">Read this list of tags from %1$s encrypted content</string>
+    <string name="read_this_text_from_encrypted_content">Read this text from %1$s encrypted content</string>
 </resources>

@@ -64,7 +64,8 @@ import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
@@ -327,10 +328,13 @@ fun onAddRelay(
                             val ncSub = UUID.randomUUID().toString().substring(0, 4)
 
                             val listener = object : IRelayClientListener {
-                                override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
-                                    if (ncSub == subId && event.kind == NostrConnectEvent.KIND && event.id == signedEvent.id) {
-                                        filterResult = true
+                                override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                                    if (msg is EventMessage) {
+                                        if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
+                                            filterResult = true
+                                        }
                                     }
+                                    super.onIncomingMessage(relay, msgStr, msg)
                                 }
                             }
 
@@ -556,7 +560,7 @@ fun ActiveRelaysScreen(
                     ) {
                         Text(
                             modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (isConnected) "${RelayStats.get(relay).pingInMs}ms ping" else "Unavailable",
+                            text = if (isConnected) "${Amber.instance.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,

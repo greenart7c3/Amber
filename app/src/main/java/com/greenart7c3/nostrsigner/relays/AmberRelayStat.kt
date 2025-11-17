@@ -19,7 +19,6 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
@@ -79,7 +78,7 @@ class AmberRelayStats(
 
         val message = available.joinToString("\n") {
             val connected = "${it.url} ${if (it in connected) appContext.getString(R.string.connected) else appContext.getString(R.string.disconnected)}\n"
-            val ping = appContext.getString(R.string.ping_ms, RelayStats.get(it).pingInMs)
+            val ping = appContext.getString(R.string.ping_ms, Amber.instance.relayStats.get(it).pingInMs)
             val sent = if (get(it).sent > 0) {
                 appContext.getString(R.string.sent, get(it).sent)
             } else {
@@ -95,7 +94,7 @@ class AmberRelayStats(
             } else {
                 ""
             }
-            val error = if (RelayStats.get(it).errorCounter > 0) appContext.getString(R.string.error, RelayStats.get(it).errorCounter) else ""
+            val error = if (Amber.instance.relayStats.get(it).errorCounter > 0) appContext.getString(R.string.error, Amber.instance.relayStats.get(it).errorCounter) else ""
 
             connected + ping + sent + received + failed + error
         }

@@ -5,14 +5,14 @@ import android.app.NotificationManager
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
-import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayState
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -47,39 +47,24 @@ class NostrClientLoggerListener(
     val stats: AmberRelayStats,
     val scope: CoroutineScope,
 ) : IRelayClientListener {
-    override fun onAuth(relay: IRelayClient, challenge: String) {
+    override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
-                        type = "onAuth",
-                        message = "Authenticating",
+                        type = "onCannotConnect",
+                        message = errorMessage,
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
         }
+        super.onCannotConnect(relay, errorMessage)
     }
 
-    override fun onBeforeSend(relay: IRelayClient, event: Event) {
-        scope.launch {
-            LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).dao().insertLog(
-                    LogEntity(
-                        id = 0,
-                        url = relay.url.url,
-                        type = "onBeforeSend",
-                        message = "Sending event ${event.id}",
-                        time = System.currentTimeMillis(),
-                    ),
-                )
-            }
-        }
-    }
-
-    override fun onSend(relay: IRelayClient, msg: String, success: Boolean) {
+    override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
@@ -87,38 +72,14 @@ class NostrClientLoggerListener(
                         id = 0,
                         url = relay.url.url,
                         type = "onSend",
-                        message = "message: $msg success: $success",
+                        message = "message: $cmdStr success: $success",
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
         }
         if (!success) {
-            if (msg.isNotBlank()) {
-                AmberListenerSingleton.latestErrorMessages.add("Failed to send event.\n$msg")
-            } else {
-                AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
-            }
-        }
-    }
-
-    override fun onSendResponse(relay: IRelayClient, eventId: String, success: Boolean, message: String) {
-        scope.launch {
-            LocalPreferences.currentAccount(context)?.let { account ->
-                Amber.instance.getLogDatabase(account).dao().insertLog(
-                    LogEntity(
-                        id = 0,
-                        url = relay.url.url,
-                        type = "onSendResponse",
-                        message = "Success: $success Message: $message",
-                        time = System.currentTimeMillis(),
-                    ),
-                )
-            }
-        }
-
-        if (!success) {
-            AmberListenerSingleton.latestErrorMessages.add(message)
+            AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
         }
 
         if (success) {
@@ -126,81 +87,80 @@ class NostrClientLoggerListener(
         } else {
             stats.addFailed(relay.url)
         }
+
+        super.onSent(relay, cmdStr, cmd, success)
     }
 
-    override fun onError(relay: IRelayClient, subId: String, error: Error) {
-        if (error.message?.trim()?.equals("Relay sent notice:") == true) return
+    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
-                        type = "onError",
-                        message = "${error.message}",
+                        type = "onIncomingMessage",
+                        message = "message: $msgStr",
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
         }
-        if (error.message?.contains("EACCES (Permission denied)") == true) {
-            AmberListenerSingleton.latestErrorMessages.add(context.getString(R.string.network_permission_message))
-        } else if (error.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
-            AmberListenerSingleton.latestErrorMessages.add(context.getString(R.string.network_permission_message))
-        } else if (Amber.instance.settings.useProxy && error.message?.contains("(port ${Amber.instance.settings.proxyPort})") == true) {
-            AmberListenerSingleton.latestErrorMessages.add(context.getString(R.string.failed_to_connect_to_tor_orbot))
-        } else {
-            AmberListenerSingleton.latestErrorMessages.add(error.message ?: "Unknown error")
+
+        if (msg is OkMessage && !msg.success) {
+            AmberListenerSingleton.latestErrorMessages.add(msg.message)
         }
+
+        super.onIncomingMessage(relay, msgStr, msg)
     }
 
-    override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
+    override fun onDisconnected(relay: IRelayClient) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
-                        type = "onEvent",
-                        message = "Received event ${event.id} from subscription $subId afterEOSE: $afterEOSE",
+                        type = "onDisconnected",
+                        message = "Disconnected from relay ${relay.url.url}",
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
-
-            Amber.instance.stats.addReceived(relay.url)
         }
+        super.onDisconnected(relay)
     }
 
-    override fun onNotify(relay: IRelayClient, description: String) {
+    override fun onConnecting(relay: IRelayClient) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
-                        type = "onNotify",
-                        message = description,
+                        type = "onConnecting",
+                        message = "Connecting to relay ${relay.url.url}",
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
         }
+        super.onConnecting(relay)
     }
 
-    override fun onRelayStateChange(relay: IRelayClient, type: RelayState) {
+    override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url.url,
-                        type = "onRelayStateChange",
-                        message = type.name,
+                        type = "onConnected",
+                        message = "Connected to relay ${relay.url.url}",
                         time = System.currentTimeMillis(),
                     ),
                 )
             }
         }
+        super.onConnected(relay, pingMillis, compressed)
     }
 }

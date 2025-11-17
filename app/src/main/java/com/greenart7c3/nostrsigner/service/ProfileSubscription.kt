@@ -24,13 +24,15 @@ import android.content.Context
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EoseMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -54,45 +56,46 @@ class ProfileSubscription(
         client.subscribe(this)
     }
 
-    override fun onEOSE(relay: IRelayClient, subId: String, arrivalTime: Long) {
-        monitoringAccounts.forEach {
-            LocalPreferences.setLastCheck(Amber.instance, it.npub, TimeUtils.now())
+    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+        if (msg is EoseMessage) {
+            monitoringAccounts.forEach {
+                LocalPreferences.setLastCheck(Amber.instance, it.npub, TimeUtils.now())
+            }
         }
-    }
+        if (msg is EventMessage) {
+            if (this.subId == msg.subId) {
+                if (msg.event.kind == MetadataEvent.KIND) {
+                    (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
+                        val npub = msg.event.pubKey.hexToByteArray().toNpub()
+                        val account = LocalPreferences.loadFromEncryptedStorageSync(appContext, npub) ?: return
 
-    override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
-        if (this.subId == subId) {
-            if (event is MetadataEvent) {
-                event.contactMetaData()?.let { metadata ->
-                    val npub = event.pubKey.hexToByteArray().toNpub()
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(appContext, npub)
-                    if (account == null) return
+                        var atLeastOne = false
 
-                    var atLeastOne = false
-
-                    metadata.name?.let { name ->
-                        if (account.name.value != name) {
-                            account.name.update { name }
-                            atLeastOne = true
+                        metadata.name?.let { name ->
+                            if (account.name.value != name) {
+                                account.name.update { name }
+                                atLeastOne = true
+                            }
                         }
-                    }
 
-                    metadata.profilePicture()?.let { url ->
-                        if (account.picture.value != url) {
-                            account.picture.update { url }
-                            atLeastOne = true
+                        metadata.profilePicture()?.let { url ->
+                            if (account.picture.value != url) {
+                                account.picture.update { url }
+                                atLeastOne = true
+                            }
                         }
-                    }
 
-                    if (atLeastOne) {
-                        scope.launch {
-                            LocalPreferences.saveToEncryptedStorage(appContext, account)
-                            LocalPreferences.setLastMetadataUpdate(appContext, npub, TimeUtils.now())
+                        if (atLeastOne) {
+                            scope.launch {
+                                LocalPreferences.saveToEncryptedStorage(appContext, account)
+                                LocalPreferences.setLastMetadataUpdate(appContext, npub, TimeUtils.now())
+                            }
                         }
                     }
                 }
             }
         }
+        super.onIncomingMessage(relay, msgStr, msg)
     }
 
     /**

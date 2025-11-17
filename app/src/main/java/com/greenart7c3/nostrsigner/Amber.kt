@@ -35,8 +35,9 @@ import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
+import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
+import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
@@ -97,15 +98,13 @@ class Amber : Application(), LifecycleObserver {
     }
 
     // Authenticates with relays.
-    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { challenge, relay ->
-        LocalPreferences.allAccounts(this).forEach { account ->
-            val authed = account.createAuthEvent(
-                relayUrl = relay.url,
-                challenge = challenge,
-            )
-            client.sendIfExists(authed, relay.url)
+    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { event ->
+        LocalPreferences.allAccounts(this).map { account ->
+            account.signer.signerSync.sign(event)
         }
     }
+
+    val relayStats = RelayStats(client)
 
     // TODO: I assume you want this sub to stay active in the background
     // TODO: Find a way to call either client.reconnect or notificationSubscription.updateFilters() to

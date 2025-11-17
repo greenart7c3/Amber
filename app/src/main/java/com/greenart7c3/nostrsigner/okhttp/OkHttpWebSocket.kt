@@ -41,8 +41,7 @@ class OkHttpWebSocket(
 
     override fun needsReconnect(): Boolean {
         if (socket == null) return true
-        val myUsingOkHttp = usingOkHttp
-        if (myUsingOkHttp == null) return true
+        val myUsingOkHttp = usingOkHttp ?: return true
 
         val currentOkHttp = httpClient(url)
 
@@ -79,12 +78,6 @@ class OkHttpWebSocket(
             webSocket: okhttp3.WebSocket,
             text: String,
         ) = out.onMessage(text)
-
-        override fun onClosing(
-            webSocket: okhttp3.WebSocket,
-            code: Int,
-            reason: String,
-        ) = out.onClosing(code, reason)
 
         override fun onClosed(
             webSocket: okhttp3.WebSocket,

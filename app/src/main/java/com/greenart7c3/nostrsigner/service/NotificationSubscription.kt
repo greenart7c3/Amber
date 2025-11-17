@@ -24,11 +24,13 @@ import android.content.Context
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -48,15 +50,18 @@ class NotificationSubscription(
         client.subscribe(this)
     }
 
-    override fun onEvent(relay: IRelayClient, subId: String, event: Event, arrivalTime: Long, afterEOSE: Boolean) {
-        if (this.subId == subId) {
-            eventNotificationConsumer.consume(event, relay.url)
+    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+        if (msg is EventMessage) {
+            if (msg.subId == subId) {
+                eventNotificationConsumer.consume(msg.event, relay.url)
+            }
         }
+        super.onIncomingMessage(relay, msgStr, msg)
     }
 
-    override fun onSend(relay: IRelayClient, msg: String, success: Boolean) {
-        Log.d("NotificationSubscription", "onSend: ${relay.url}, $msg, $success")
-        super.onSend(relay, msg, success)
+    override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
+        Log.d("NotificationSubscription", "onSend: ${relay.url}, $cmdStr, $success")
+        super.onSent(relay, cmdStr, cmd, success)
     }
 
     /**

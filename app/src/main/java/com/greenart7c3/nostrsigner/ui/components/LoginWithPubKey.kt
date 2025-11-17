@@ -37,7 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowWidthSizeClass
+import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.R
@@ -51,7 +51,7 @@ import com.greenart7c3.nostrsigner.ui.theme.fromHex
 @Composable
 fun ProfilePicture(account: Account) {
     val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    if (windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT) {
+    if (windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)) {
         Column(
             modifier = Modifier.fillMaxWidth(),
             horizontalAlignment = Alignment.CenterHorizontally,

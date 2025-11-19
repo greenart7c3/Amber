@@ -152,7 +152,13 @@ fun EncryptDecryptData(
                         }
                     }
                 } else {
-                    val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) encryptedData.text else encryptedData?.result ?: ""
+                    val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+                        encryptedData.text
+                    } else if (encryptedData is TagArrayEncryptedDataKind) {
+                        encryptedData.tagArray.map { it.toList() }.toList().toString()
+                    } else {
+                        encryptedData?.result ?: ""
+                    }
                     Text(
                         content,
                         modifier = Modifier
@@ -288,7 +294,13 @@ fun BunkerEncryptDecryptData(
                         }
                     }
                 } else {
-                    val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) encryptedData.text else encryptedData?.result ?: ""
+                    val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+                        encryptedData.text
+                    } else if (encryptedData is TagArrayEncryptedDataKind) {
+                        encryptedData.tagArray.map { it.toList() }.toList().toString()
+                    } else {
+                        encryptedData?.result ?: ""
+                    }
                     Text(
                         content,
                         modifier = Modifier

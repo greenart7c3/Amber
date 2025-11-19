@@ -430,6 +430,34 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             message = "$name ${bunkerPermission.toLocalizedString(applicationContext)}"
         }
 
+        if (type.name.contains("ENCRYPT")) {
+            when (request.encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val permission = Permission("sign_event", request.encryptedData.event.kind)
+                    message = "$name ${applicationContext.getString(R.string.wants_to_encrypt_event_kind, permission.toLocalizedString(Amber.instance), type.name.split("_").first())}"
+                }
+
+                is TagArrayEncryptedDataKind -> {
+                    message = "$name ${applicationContext.getString(R.string.wants_to_encrypt_a_list_of_tags_with, type.name.split("_").first())}"
+                }
+
+                else -> message = "$name ${applicationContext.getString(R.string.wants_to_encrypt_a_text_with, type.name.split("_").first())}"
+            }
+        } else if (type.name.contains("DECRYPT")) {
+            when (request.encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val permission = Permission("sign_event", request.encryptedData.event.kind)
+                    message = "$name${applicationContext.getString(R.string.wants_to_read_from_encrypted_content, permission.toLocalizedString(Amber.instance), type.name.split("_").first())}"
+                }
+
+                is TagArrayEncryptedDataKind -> {
+                    message = "$name ${applicationContext.getString(R.string.wants_to_read_a_list_of_tags_from_encrypted_content, type.name.split("_").first())}"
+                }
+
+                else -> message = "$name ${applicationContext.getString(R.string.wants_to_read_a_text_from_encrypted_content, type.name.split("_").first())}"
+            }
+        }
+
         cursor.use { localCursor ->
             if (localCursor == null) {
                 notificationManager()

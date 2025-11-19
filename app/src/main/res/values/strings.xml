@@ -582,11 +582,16 @@
     <string name="event_content">Event content</string>
     <string name="event_kind_14">Direct Message</string>
     <string name="wants_to_encrypt_with">" wants to encrypt %1$s with %2$s"</string>
+    <string name="wants_to_encrypt_event_kind">wants to encrypt %1$s with %2$s</string>
     <string name="wants_to_encrypt_this_list_of_tags_with">" wants to encrypt this list of tags with %1$s"</string>
+    <string name="wants_to_encrypt_a_list_of_tags_with">wants to encrypt a list of tags with %1$s</string>
     <string name="wants_to_encrypt_this_text_with">" wants to encrypt this text with %1$s"</string>
+    <string name="wants_to_encrypt_a_text_with">wants to encrypt a text with %1$s</string>
     <string name="wants_to_read_from_encrypted_content">" wants to read %1$s from %2$s encrypted content"</string>
     <string name="wants_to_read_this_list_of_tags_from_encrypted_content">" wants to read this list of tags from %1$s encrypted content"</string>
+    <string name="wants_to_read_a_list_of_tags_from_encrypted_content">wants to read a list of tags from %1$s encrypted content</string>
     <string name="wants_to_read_this_text_from_encrypted_content">" wants to read this text from %1$s encrypted content"</string>
+    <string name="wants_to_read_a_text_from_encrypted_content">wants to read a text from %1$s encrypted content</string>
 
     <string name="encrypt_with">Encrypt %1$s with %2$s</string>
     <string name="encrypt_this_list_of_tags_with">Encrypt this list of tags with %1$s</string>

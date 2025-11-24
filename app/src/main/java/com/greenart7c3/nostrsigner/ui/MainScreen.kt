@@ -310,6 +310,10 @@ fun MainScreen(
                             scope = scope,
                             navController = navController,
                             onFinish = {
+                                Amber.instance.applicationIOScope.launch {
+                                    Amber.instance.profileSubscription.updateFilter()
+                                    Amber.instance.notificationSubscription.updateFilter()
+                                }
                                 navController.navigate(Route.Applications.route) {
                                     popUpTo(0)
                                 }

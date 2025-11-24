@@ -89,6 +89,7 @@ import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -235,7 +236,12 @@ fun MainLoginPage(
                     accountViewModel = accountViewModel,
                     scope = scope,
                     navController = navController,
-                    onFinish = {},
+                    onFinish = {
+                        Amber.instance.applicationIOScope.launch {
+                            Amber.instance.profileSubscription.updateFilter()
+                            Amber.instance.notificationSubscription.updateFilter()
+                        }
+                    },
                 )
             },
         )

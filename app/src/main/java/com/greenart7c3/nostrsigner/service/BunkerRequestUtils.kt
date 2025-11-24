@@ -142,7 +142,7 @@ object BunkerRequestUtils {
             account = account,
             localKey = bunkerRequest.localKey,
             encryptedContent = encryptedContent,
-            relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
+            relays = relays.ifEmpty { Amber.instance.getSavedRelays(account).toList() },
             onLoading = onLoading,
             onDone = onDone,
         )
@@ -341,7 +341,7 @@ object BunkerRequestUtils {
                     )
                 }
                 // check if application has any relay not in saved relays
-                val savedRelays = Amber.instance.getSavedRelays()
+                val savedRelays = Amber.instance.getSavedRelays(account)
                 if (relays.any { !savedRelays.contains(it) }) {
                     didChangeRelays = true
                 }

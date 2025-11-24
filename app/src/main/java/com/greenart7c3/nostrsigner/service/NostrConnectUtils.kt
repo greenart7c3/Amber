@@ -118,7 +118,7 @@ object NostrConnectUtils {
                         },
                     ),
                     localKey = pubKey,
-                    relays = relays.ifEmpty { Amber.instance.getSavedRelays().toList() },
+                    relays = relays.ifEmpty { Amber.instance.getSavedRelays(account).toList() },
                     currentAccount = account.npub,
                     nostrConnectSecret = nostrConnectSecret,
                     closeApplication = intent.getBooleanExtra("closeApplication", true),

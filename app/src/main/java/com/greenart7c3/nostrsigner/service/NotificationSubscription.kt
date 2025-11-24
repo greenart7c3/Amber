@@ -24,7 +24,7 @@ import android.content.Context
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -33,7 +33,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
@@ -43,7 +42,7 @@ class NotificationSubscription(
     val appContext: Context,
 ) : IRelayClientListener {
     private val eventNotificationConsumer = EventNotificationConsumer(appContext)
-    private val subId = UUID.randomUUID().toString()
+    private val subIds = mutableMapOf<String, String>()
 
     init {
         // listens until the app crashes.
@@ -52,7 +51,7 @@ class NotificationSubscription(
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EventMessage) {
-            if (msg.subId == subId) {
+            if (subIds.containsValue(msg.subId)) {
                 eventNotificationConsumer.consume(msg.event, relay.url)
             }
         }
@@ -67,22 +66,26 @@ class NotificationSubscription(
     /**
      * Call this method every time the relay list or the user list changes
      */
-    fun updateFilter() {
-        client.openReqSubscription(subId, createNotificationsFilter())
+    suspend fun updateFilter() {
+        LocalPreferences.allAccounts(Amber.instance).forEach {
+            if (!subIds.containsKey(it.hexKey)) {
+                subIds[it.hexKey] = UUID.randomUUID().toString()
+            }
+            client.openReqSubscription(subIds[it.hexKey]!!, createNotificationsFilter(it))
+        }
     }
 
-    private fun createNotificationsFilter(): Map<NormalizedRelayUrl, List<Filter>> {
-        // TODO: If you break relays per account, you can change this to only send the requests to the right relays for each account.
-        val relays = Amber.instance.getSavedRelays()
+    private fun createNotificationsFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {
+        val relays = Amber.instance.getSavedRelays(account)
 
         var since = TimeUtils.now()
-        val accounts = LocalPreferences.allSavedAccounts(appContext)
+
         val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L
         if (latest > 0) {
             since = latest
         }
 
-        val pubKeys = accounts.map { it.npub.bechToBytes().toHexKey() }
+        val pubKeys = listOf(account.hexKey)
 
         return relays.associateWith {
             listOf(

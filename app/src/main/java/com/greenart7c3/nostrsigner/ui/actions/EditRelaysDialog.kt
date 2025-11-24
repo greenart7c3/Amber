@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -86,6 +87,7 @@ import kotlinx.coroutines.withContext
 fun DefaultRelaysScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
+    account: Account,
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -162,6 +164,7 @@ fun DefaultRelaysScreen(
                                     relays2,
                                     scope,
                                     accountStateViewModel,
+                                    account,
                                     context,
                                     onDone = {
                                         Amber.instance.settings = Amber.instance.settings.copy(
@@ -198,6 +201,7 @@ fun DefaultRelaysScreen(
                                 relays2,
                                 scope,
                                 accountStateViewModel,
+                                account,
                                 context,
                                 onDone = {
                                     isLoading.value = true
@@ -259,6 +263,7 @@ fun onAddRelay(
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
     accountStateViewModel: AccountStateViewModel,
+    account: Account,
     context: Context,
     shouldCheckForBunker: Boolean = true,
     onDone: () -> Unit,
@@ -295,7 +300,7 @@ fun onAddRelay(
                 onInfo = { info ->
                     scope.launch(Dispatchers.IO) secondLaunch@{
                         if (shouldCheckForBunker) {
-                            val relays = Amber.instance.getSavedRelays()
+                            val relays = Amber.instance.getSavedRelays(account)
                             if (addedWSS in relays) {
                                 relays2.add(addedWSS)
                                 onDone()
@@ -507,6 +512,7 @@ fun RelayLogScreen(
 fun ActiveRelaysScreen(
     modifier: Modifier,
     navController: NavController,
+    account: Account,
 ) {
     val relays2 =
         remember {
@@ -515,7 +521,7 @@ fun ActiveRelaysScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            relays2.addAll(Amber.instance.getSavedRelays())
+            relays2.addAll(Amber.instance.getSavedRelays(account))
         }
     }
 

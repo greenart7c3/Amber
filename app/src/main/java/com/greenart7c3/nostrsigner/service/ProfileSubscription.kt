@@ -24,8 +24,8 @@ import android.content.Context
 import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
@@ -35,7 +35,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
@@ -48,7 +47,7 @@ class ProfileSubscription(
     val appContext: Context,
     val scope: CoroutineScope,
 ) : IRelayClientListener {
-    private val subId = UUID.randomUUID().toString()
+    private val subIds = mutableMapOf<String, String>()
     private val monitoringAccounts: List<AccountInfo> = emptyList()
 
     init {
@@ -63,7 +62,7 @@ class ProfileSubscription(
             }
         }
         if (msg is EventMessage) {
-            if (this.subId == msg.subId) {
+            if (this.subIds.containsValue(msg.subId)) {
                 if (msg.event.kind == MetadataEvent.KIND) {
                     (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
                         val npub = msg.event.pubKey.hexToByteArray().toNpub()
@@ -101,21 +100,27 @@ class ProfileSubscription(
     /**
      * Call this method every time the relay list or the user list changes
      */
-    fun updateFilter() {
-        client.openReqSubscription(subId, createProfileFilter())
+    suspend fun updateFilter() {
+        LocalPreferences.allAccounts(Amber.instance).forEach {
+            if (!subIds.containsKey(it.hexKey)) {
+                subIds[it.hexKey] = UUID.randomUUID().toString()
+            }
+            client.openReqSubscription(subIds[it.hexKey]!!, createProfileFilter(it))
+        }
     }
 
     /**
      * Call this function when you want to stop updates
      */
     fun closeSub() {
-        client.close(subId)
+        subIds.values.forEach {
+            client.close(it)
+        }
     }
 
-    private fun createProfileFilter(): Map<NormalizedRelayUrl, List<Filter>> {
+    private fun createProfileFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {
         val relays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays
-        val monitoringAccounts = LocalPreferences.allSavedAccounts(appContext)
-        val accounts = monitoringAccounts.map { it.npub.bechToBytes().toHexKey() }
+        val accounts = listOf(account.hexKey)
         return relays.associateWith {
             listOf(
                 Filter(

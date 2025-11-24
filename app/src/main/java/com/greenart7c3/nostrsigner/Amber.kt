@@ -390,14 +390,12 @@ class Amber : Application(), LifecycleObserver {
         return historyDatabases[npub]!!
     }
 
-    fun getSavedRelays(): Set<NormalizedRelayUrl> {
+    fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
         val savedRelays = mutableSetOf<NormalizedRelayUrl>()
-        LocalPreferences.allSavedAccounts(this).forEach { accountInfo ->
-            val database = getDatabase(accountInfo.npub)
-            database.dao().getAllApplications().forEach {
-                it.application.relays.forEach { setupInfo ->
-                    savedRelays.add(setupInfo)
-                }
+        val database = getDatabase(account.npub)
+        database.dao().getAllApplications().forEach {
+            it.application.relays.forEach { setupInfo ->
+                savedRelays.add(setupInfo)
             }
         }
 

@@ -502,6 +502,7 @@ fun MainScreen(
                         val scrollState = rememberScrollState()
                         ActiveRelaysScreen(
                             navController = navController,
+                            account = account,
                             modifier =
                             Modifier
                                 .fillMaxSize()
@@ -532,6 +533,7 @@ fun MainScreen(
                     Route.DefaultRelays.route,
                     content = {
                         DefaultRelaysScreen(
+                            account = account,
                             modifier =
                             Modifier
                                 .fillMaxSize()
@@ -807,6 +809,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             accountStateViewModel = accountStateViewModel,
+                            account = account,
                         )
                     },
                 )

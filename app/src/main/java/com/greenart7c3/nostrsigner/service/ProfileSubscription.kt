@@ -101,7 +101,7 @@ class ProfileSubscription(
      * Call this method every time the relay list or the user list changes
      */
     suspend fun updateFilter() {
-        LocalPreferences.allAccounts(Amber.instance).forEach {
+        LocalPreferences.allAccounts(appContext).forEach {
             if (!subIds.containsKey(it.hexKey)) {
                 subIds[it.hexKey] = UUID.randomUUID().toString()
             }

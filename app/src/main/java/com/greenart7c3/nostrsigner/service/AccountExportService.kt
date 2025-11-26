@@ -8,6 +8,7 @@ import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.openInputStream
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AccountExportData
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -45,7 +46,7 @@ object AccountExportService {
                     oi?.bufferedReader().use { reader ->
                         reader?.readLines()?.forEachIndexed { index, line ->
                             try {
-                                onText("Importing account ${index + 1}")
+                                onText(Amber.instance.getString(R.string.importing_account, index + 1))
 
                                 val accountData = AccountExportData.fromJson(line)
                                 val nsec = Nip49().decrypt(accountData.nsec, password)

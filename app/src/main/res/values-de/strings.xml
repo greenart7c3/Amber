@@ -592,4 +592,6 @@
     <string name="read_this_text_from_encrypted_content">Read this text from %1$s encrypted content</string>
     <string name="ping">Ping</string>
     <string name="response">Response</string>
+    <string name="recover_from_bac">Recover from backup</string>
+    <string name="recover_from_backup">Recover from backup</string>
 </resources>

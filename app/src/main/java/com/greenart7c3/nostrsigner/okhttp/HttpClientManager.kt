@@ -95,18 +95,17 @@ object HttpClientManager {
             .build()
     }
 
-    fun getHttpClient(useProxy: Boolean): OkHttpClient =
-        if (useProxy) {
-            if (defaultHttpClient == null) {
-                defaultHttpClient = buildHttpClient(currentProxy, defaultTimeout)
-            }
-            defaultHttpClient!!
-        } else {
-            if (defaultHttpClientWithoutProxy == null) {
-                defaultHttpClientWithoutProxy = buildHttpClient(null, defaultTimeout)
-            }
-            defaultHttpClientWithoutProxy!!
+    fun getHttpClient(useProxy: Boolean): OkHttpClient = if (useProxy) {
+        if (defaultHttpClient == null) {
+            defaultHttpClient = buildHttpClient(currentProxy, defaultTimeout)
         }
+        defaultHttpClient!!
+    } else {
+        if (defaultHttpClientWithoutProxy == null) {
+            defaultHttpClientWithoutProxy = buildHttpClient(null, defaultTimeout)
+        }
+        defaultHttpClientWithoutProxy!!
+    }
 
     fun setDefaultProxyOnPort(port: Int) {
         setDefaultProxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", port)))

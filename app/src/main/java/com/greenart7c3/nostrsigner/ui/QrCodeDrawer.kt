@@ -119,11 +119,10 @@ private fun createQrCode(contents: String): QRCode {
     )
 }
 
-fun newPath(withPath: Path.() -> Unit) =
-    Path().apply {
-        fillType = PathFillType.EvenOdd
-        withPath(this)
-    }
+fun newPath(withPath: Path.() -> Unit) = Path().apply {
+    fillType = PathFillType.EvenOdd
+    withPath(this)
+}
 
 fun DrawScope.drawAllQrCodeDataBits(
     bytes: ByteMatrix,

@@ -37,13 +37,12 @@ class EncryptedBlobInterceptor(
         return newBuilder().body(newBody).build()
     }
 
-    private fun Response.decryptOrNull(cipher: NostrCipher): Response? =
-        try {
-            decrypt(cipher)
-        } catch (e: Exception) {
-            Log.w("EncryptedBlobInterceptor", "Failed to decrypt", e)
-            null
-        }
+    private fun Response.decryptOrNull(cipher: NostrCipher): Response? = try {
+        decrypt(cipher)
+    } catch (e: Exception) {
+        Log.w("EncryptedBlobInterceptor", "Failed to decrypt", e)
+        null
+    }
 
     private fun Response.decryptOrNullWithErrorCorrection(cipher: NostrCipher): Response? {
         return decryptOrNull(cipher) ?: return if (cipher is AESGCM) {

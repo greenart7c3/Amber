@@ -59,7 +59,9 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-class Amber : Application(), LifecycleObserver {
+class Amber :
+    Application(),
+    LifecycleObserver {
     private var mainActivityRef: WeakReference<MainActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
 
@@ -68,9 +70,7 @@ class Amber : Application(), LifecycleObserver {
         mainActivityRef = WeakReference<MainActivity?>(activity)
     }
 
-    fun getMainActivity(): MainActivity? {
-        return if (mainActivityRef != null) mainActivityRef!!.get() else null
-    }
+    fun getMainActivity(): MainActivity? = if (mainActivityRef != null) mainActivityRef!!.get() else null
 
     // Exists to avoid exceptions stopping the coroutine
     val exceptionHandler =
@@ -437,27 +437,25 @@ class Amber : Application(), LifecycleObserver {
         }
     }
 
-    fun isPrivateIp(url: String): Boolean {
-        return url.contains("127.0.0.1") ||
-            url.contains("localhost") ||
-            url.contains("192.168.") ||
-            url.contains("172.16.") ||
-            url.contains("172.17.") ||
-            url.contains("172.18.") ||
-            url.contains("172.19.") ||
-            url.contains("172.20.") ||
-            url.contains("172.21.") ||
-            url.contains("172.22.") ||
-            url.contains("172.23.") ||
-            url.contains("172.24.") ||
-            url.contains("172.25.") ||
-            url.contains("172.26.") ||
-            url.contains("172.27.") ||
-            url.contains("172.28.") ||
-            url.contains("172.29.") ||
-            url.contains("172.30.") ||
-            url.contains("172.31.")
-    }
+    fun isPrivateIp(url: String): Boolean = url.contains("127.0.0.1") ||
+        url.contains("localhost") ||
+        url.contains("192.168.") ||
+        url.contains("172.16.") ||
+        url.contains("172.17.") ||
+        url.contains("172.18.") ||
+        url.contains("172.19.") ||
+        url.contains("172.20.") ||
+        url.contains("172.21.") ||
+        url.contains("172.22.") ||
+        url.contains("172.23.") ||
+        url.contains("172.24.") ||
+        url.contains("172.25.") ||
+        url.contains("172.26.") ||
+        url.contains("172.27.") ||
+        url.contains("172.28.") ||
+        url.contains("172.29.") ||
+        url.contains("172.30.") ||
+        url.contains("172.31.")
 
     override fun onTerminate() {
         super.onTerminate()

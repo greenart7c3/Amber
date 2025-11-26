@@ -9,9 +9,7 @@ import androidx.security.crypto.MasterKey
 object EncryptedStorage {
     private const val PREFERENCES_NAME = "secret_keeper"
 
-    private fun prefsFileName(npub: String? = null): String {
-        return if (npub == null) PREFERENCES_NAME else "${PREFERENCES_NAME}_$npub"
-    }
+    private fun prefsFileName(npub: String? = null): String = if (npub == null) PREFERENCES_NAME else "${PREFERENCES_NAME}_$npub"
 
     fun preferences(npub: String? = null, context: Context): EncryptedSharedPreferences {
         val masterKey: MasterKey =

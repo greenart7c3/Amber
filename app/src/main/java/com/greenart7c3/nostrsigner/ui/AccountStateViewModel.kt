@@ -242,7 +242,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         startUI(account, null)
     }
 
-    private fun startUI(
+    fun startUI(
         account: Account,
         route: String?,
     ) {

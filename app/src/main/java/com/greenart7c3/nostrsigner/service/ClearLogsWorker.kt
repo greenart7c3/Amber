@@ -10,8 +10,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import com.vitorpamplona.quartz.utils.TimeUtils.ONE_WEEK
 import kotlin.coroutines.cancellation.CancellationException
 
-class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) :
-    CoroutineWorker(appContext, workerParams) {
+class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : CoroutineWorker(appContext, workerParams) {
 
     override suspend fun doWork(): Result {
         LocalPreferences.allSavedAccounts(Amber.instance).forEach {

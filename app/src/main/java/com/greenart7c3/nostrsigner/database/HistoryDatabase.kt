@@ -21,24 +21,22 @@ abstract class HistoryDatabase : RoomDatabase() {
         fun getDatabase(
             context: Context,
             npub: String,
-        ): HistoryDatabase {
-            return synchronized(this) {
-                val executor = Executors.newCachedThreadPool()
-                val transactionExecutor = Executors.newCachedThreadPool()
+        ): HistoryDatabase = synchronized(this) {
+            val executor = Executors.newCachedThreadPool()
+            val transactionExecutor = Executors.newCachedThreadPool()
 
-                val instance =
-                    Room.databaseBuilder(
-                        context,
-                        HistoryDatabase::class.java,
-                        "history_db_$npub",
-                    )
-                        .setQueryExecutor(executor)
-                        .setTransactionExecutor(transactionExecutor)
-                        .build()
-                instance.openHelper.writableDatabase.execSQL("VACUUM")
+            val instance =
+                Room.databaseBuilder(
+                    context,
+                    HistoryDatabase::class.java,
+                    "history_db_$npub",
+                )
+                    .setQueryExecutor(executor)
+                    .setTransactionExecutor(transactionExecutor)
+                    .build()
+            instance.openHelper.writableDatabase.execSQL("VACUUM")
 
-                instance
-            }
+            instance
         }
     }
 }

@@ -24,22 +24,18 @@ data class BunkerMetadata(
                         .addDeserializer(BunkerMetadata::class.java, BunkerMetadataDeserializer()),
                 )
 
-        fun fromJson(jsonObject: JsonNode): BunkerMetadata {
-            return BunkerMetadata(
-                name = jsonObject.get("name")?.asText()?.intern() ?: "",
-                url = jsonObject.get("url")?.asText()?.intern() ?: "",
-                description = jsonObject.get("description")?.asText()?.intern() ?: "",
-                perms = jsonObject.get("perms")?.asText()?.intern() ?: "",
-            )
-        }
+        fun fromJson(jsonObject: JsonNode): BunkerMetadata = BunkerMetadata(
+            name = jsonObject.get("name")?.asText()?.intern() ?: "",
+            url = jsonObject.get("url")?.asText()?.intern() ?: "",
+            description = jsonObject.get("description")?.asText()?.intern() ?: "",
+            perms = jsonObject.get("perms")?.asText()?.intern() ?: "",
+        )
 
         private class BunkerMetadataDeserializer : StdDeserializer<BunkerMetadata>(BunkerMetadata::class.java) {
             override fun deserialize(
                 jp: JsonParser,
                 ctxt: DeserializationContext,
-            ): BunkerMetadata {
-                return fromJson(jp.codec.readTree(jp))
-            }
+            ): BunkerMetadata = fromJson(jp.codec.readTree(jp))
         }
     }
 }

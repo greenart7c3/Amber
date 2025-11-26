@@ -21,24 +21,22 @@ abstract class LogDatabase : RoomDatabase() {
         fun getDatabase(
             context: Context,
             npub: String,
-        ): LogDatabase {
-            return synchronized(this) {
-                val executor = Executors.newCachedThreadPool()
-                val transactionExecutor = Executors.newCachedThreadPool()
+        ): LogDatabase = synchronized(this) {
+            val executor = Executors.newCachedThreadPool()
+            val transactionExecutor = Executors.newCachedThreadPool()
 
-                val instance =
-                    Room.databaseBuilder(
-                        context,
-                        LogDatabase::class.java,
-                        "log_db_$npub",
-                    )
-                        .setQueryExecutor(executor)
-                        .setTransactionExecutor(transactionExecutor)
-                        .build()
-                instance.openHelper.writableDatabase.execSQL("VACUUM")
+            val instance =
+                Room.databaseBuilder(
+                    context,
+                    LogDatabase::class.java,
+                    "log_db_$npub",
+                )
+                    .setQueryExecutor(executor)
+                    .setTransactionExecutor(transactionExecutor)
+                    .build()
+            instance.openHelper.writableDatabase.execSQL("VACUUM")
 
-                instance
-            }
+            instance
         }
     }
 }

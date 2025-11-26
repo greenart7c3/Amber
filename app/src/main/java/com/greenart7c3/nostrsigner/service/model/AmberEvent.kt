@@ -59,24 +59,21 @@ open class AmberEvent(
 
     private class EventManualDeserializer {
         companion object {
-            fun fromJson(jsonObject: JsonNode): AmberEvent =
-                AmberEvent(
-                    id = jsonObject.get("id")?.asText() ?: "",
-                    pubKey = jsonObject.get("pubkey")?.asText()?.intern() ?: "",
-                    createdAt = jsonObject.get("created_at")?.asLong() ?: TimeUtils.now(),
-                    kind = jsonObject.get("kind").asInt(),
-                    tags = jsonObject.get("tags")?.toTypedArray {
-                        it.toTypedArray { s -> if (s.isNull) "" else s.asText().intern() }
-                    } ?: emptyArray(),
-                    content = jsonObject.get("content").asText(),
-                    sig = jsonObject.get("sig")?.asText() ?: "",
-                )
+            fun fromJson(jsonObject: JsonNode): AmberEvent = AmberEvent(
+                id = jsonObject.get("id")?.asText() ?: "",
+                pubKey = jsonObject.get("pubkey")?.asText()?.intern() ?: "",
+                createdAt = jsonObject.get("created_at")?.asLong() ?: TimeUtils.now(),
+                kind = jsonObject.get("kind").asInt(),
+                tags = jsonObject.get("tags")?.toTypedArray {
+                    it.toTypedArray { s -> if (s.isNull) "" else s.asText().intern() }
+                } ?: emptyArray(),
+                content = jsonObject.get("content").asText(),
+                sig = jsonObject.get("sig")?.asText() ?: "",
+            )
         }
     }
 
-    fun relay(): String {
-        return tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
-    }
+    fun relay(): String = tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
 
     fun verifiedFollowKeySet(): Set<HexKey> = tags.mapNotNullTo(HashSet(), ContactTag::parseValidKey)
 
@@ -94,20 +91,16 @@ open class AmberEvent(
 
         fun fromJson(json: String): AmberEvent = mapper.readValue(json, AmberEvent::class.java)
 
-        fun toEvent(amberEvent: AmberEvent): Event {
-            return Event(
-                amberEvent.id,
-                amberEvent.pubKey,
-                amberEvent.createdAt,
-                amberEvent.kind,
-                amberEvent.tags,
-                amberEvent.content,
-                amberEvent.sig,
-            )
-        }
+        fun toEvent(amberEvent: AmberEvent): Event = Event(
+            amberEvent.id,
+            amberEvent.pubKey,
+            amberEvent.createdAt,
+            amberEvent.kind,
+            amberEvent.tags,
+            amberEvent.content,
+            amberEvent.sig,
+        )
 
-        fun relay(event: Event): String {
-            return event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
-        }
+        fun relay(event: Event): String = event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
     }
 }

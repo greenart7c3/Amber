@@ -31,39 +31,37 @@ object AmberUtils {
         type: SignerType,
         account: Account,
         pubKey: HexKey,
-    ): String? {
-        return when (type) {
-            SignerType.DECRYPT_ZAP_EVENT -> {
-                decryptZapEvent(data, account)
-            }
-            SignerType.NIP04_DECRYPT -> {
-                Nip04.decrypt(
-                    data,
-                    account.signer.keyPair.privKey!!,
-                    Hex.decode(pubKey),
-                )
-            }
-            SignerType.NIP04_ENCRYPT -> {
-                Nip04.encrypt(
-                    data,
-                    account.signer.keyPair.privKey!!,
-                    Hex.decode(pubKey),
-                )
-            }
-            SignerType.NIP44_ENCRYPT -> {
-                Nip44.encrypt(
-                    data,
-                    account.signer.keyPair.privKey!!,
-                    pubKey.hexToByteArray(),
-                ).encodePayload()
-            }
-            else -> {
-                Nip44.decrypt(
-                    data,
-                    account.signer.keyPair.privKey!!,
-                    pubKey.hexToByteArray(),
-                )
-            }
+    ): String? = when (type) {
+        SignerType.DECRYPT_ZAP_EVENT -> {
+            decryptZapEvent(data, account)
+        }
+        SignerType.NIP04_DECRYPT -> {
+            Nip04.decrypt(
+                data,
+                account.signer.keyPair.privKey!!,
+                Hex.decode(pubKey),
+            )
+        }
+        SignerType.NIP04_ENCRYPT -> {
+            Nip04.encrypt(
+                data,
+                account.signer.keyPair.privKey!!,
+                Hex.decode(pubKey),
+            )
+        }
+        SignerType.NIP44_ENCRYPT -> {
+            Nip44.encrypt(
+                data,
+                account.signer.keyPair.privKey!!,
+                pubKey.hexToByteArray(),
+            ).encodePayload()
+        }
+        else -> {
+            Nip44.decrypt(
+                data,
+                account.signer.keyPair.privKey!!,
+                pubKey.hexToByteArray(),
+            )
         }
     }
 
@@ -252,6 +250,4 @@ fun String.toShortenHex(): String {
 fun isPrivateEvent(
     kind: Int,
     tags: Array<Array<String>>,
-): Boolean {
-    return kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }
-}
+): Boolean = kind == LnZapRequestEvent.KIND && tags.any { t -> t.size > 1 && t[0] == "anon" }

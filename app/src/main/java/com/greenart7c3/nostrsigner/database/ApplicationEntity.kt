@@ -61,9 +61,7 @@ data class ApplicationEntity(
         )
     }
 
-    fun shouldShowRelays(): Boolean {
-        return (secret.isNotEmpty() || relays.isNotEmpty()) && !isConnected
-    }
+    fun shouldShowRelays(): Boolean = (secret.isNotEmpty() || relays.isNotEmpty()) && !isConnected
 }
 
 data class ApplicationWithPermissions(
@@ -87,9 +85,7 @@ class Converters {
     }
 
     @TypeConverter
-    fun toString(relays: List<NormalizedRelayUrl>): String {
-        return relays.joinToString(separator = ",") {
-            it.url
-        }
+    fun toString(relays: List<NormalizedRelayUrl>): String = relays.joinToString(separator = ",") {
+        it.url
     }
 }

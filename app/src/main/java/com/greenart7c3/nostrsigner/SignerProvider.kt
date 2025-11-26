@@ -30,24 +30,16 @@ class SignerProvider : ContentProvider() {
         uri: Uri,
         selection: String?,
         selectionArgs: Array<String>?,
-    ): Int {
-        return 0
-    }
+    ): Int = 0
 
-    override fun getType(uri: Uri): String? {
-        return null
-    }
+    override fun getType(uri: Uri): String? = null
 
     override fun insert(
         uri: Uri,
         values: ContentValues?,
-    ): Uri? {
-        return null
-    }
+    ): Uri? = null
 
-    override fun onCreate(): Boolean {
-        return true
-    }
+    override fun onCreate(): Boolean = true
 
     override fun query(
         uri: Uri,
@@ -251,8 +243,7 @@ class SignerProvider : ContentProvider() {
                         MatrixCursor(arrayOf("signature", "event", "result")).also {
                             val signature =
                                 if (event.kind == LnZapRequestEvent.KIND &&
-                                    event.tags.any {
-                                            tag ->
+                                    event.tags.any { tag ->
                                         tag.any { t -> t == "anon" }
                                     }
                                 ) {
@@ -553,7 +544,5 @@ class SignerProvider : ContentProvider() {
         values: ContentValues?,
         selection: String?,
         selectionArgs: Array<String>?,
-    ): Int {
-        return 0
-    }
+    ): Int = 0
 }

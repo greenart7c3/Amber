@@ -163,39 +163,37 @@ abstract class AppDatabase : RoomDatabase() {
         fun getDatabase(
             context: Context,
             npub: String,
-        ): AppDatabase {
-            return synchronized(this) {
-                val executor = Executors.newCachedThreadPool()
-                val transactionExecutor = Executors.newCachedThreadPool()
+        ): AppDatabase = synchronized(this) {
+            val executor = Executors.newCachedThreadPool()
+            val transactionExecutor = Executors.newCachedThreadPool()
 
-                val instance =
-                    Room.databaseBuilder(
-                        context,
-                        AppDatabase::class.java,
-                        "amber_db_$npub",
-                    )
-                        .setQueryExecutor(executor)
-                        .setTransactionExecutor(transactionExecutor)
-                        .addMigrations(MIGRATION_1_2)
-                        .addMigrations(MIGRATION_2_3)
-                        .addMigrations(MIGRATION_3_4)
-                        .addMigrations(MIGRATION_4_5)
-                        .addMigrations(MIGRATION_5_6)
-                        .addMigrations(MIGRATION_6_7)
-                        .addMigrations(MIGRATION_7_8)
-                        .addMigrations(MIGRATION_8_9)
-                        .addMigrations(MIGRATION_9_10)
-                        .addMigrations(MIGRATION_10_11)
-                        .addMigrations(MIGRATION_11_12)
-                        .addMigrations(MIGRATION_12_13)
-                        .addMigrations(MIGRATION_13_14)
-                        .addMigrations(MIGRATION_14_15)
-                        .addMigrations(MIGRATION_15_16)
-                        .build()
-                instance.openHelper.writableDatabase.execSQL("VACUUM")
+            val instance =
+                Room.databaseBuilder(
+                    context,
+                    AppDatabase::class.java,
+                    "amber_db_$npub",
+                )
+                    .setQueryExecutor(executor)
+                    .setTransactionExecutor(transactionExecutor)
+                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_2_3)
+                    .addMigrations(MIGRATION_3_4)
+                    .addMigrations(MIGRATION_4_5)
+                    .addMigrations(MIGRATION_5_6)
+                    .addMigrations(MIGRATION_6_7)
+                    .addMigrations(MIGRATION_7_8)
+                    .addMigrations(MIGRATION_8_9)
+                    .addMigrations(MIGRATION_9_10)
+                    .addMigrations(MIGRATION_10_11)
+                    .addMigrations(MIGRATION_11_12)
+                    .addMigrations(MIGRATION_12_13)
+                    .addMigrations(MIGRATION_13_14)
+                    .addMigrations(MIGRATION_14_15)
+                    .addMigrations(MIGRATION_15_16)
+                    .build()
+            instance.openHelper.writableDatabase.execSQL("VACUUM")
 
-                instance
-            }
+            instance
         }
     }
 }

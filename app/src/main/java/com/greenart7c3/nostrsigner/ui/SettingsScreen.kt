@@ -465,15 +465,13 @@ enum class DeleteAfterType(val screenCode: Int, val resourceId: Int) {
     ONE_WEEK(5, R.string.one_week),
 }
 
-fun parseDeleteAfterType(screenCode: Int): DeleteAfterType {
-    return when (screenCode) {
-        DeleteAfterType.FIVE_MINUTES.screenCode -> DeleteAfterType.FIVE_MINUTES
-        DeleteAfterType.TEN_MINUTES.screenCode -> DeleteAfterType.TEN_MINUTES
-        DeleteAfterType.ONE_HOUR.screenCode -> DeleteAfterType.ONE_HOUR
-        DeleteAfterType.ONE_DAY.screenCode -> DeleteAfterType.ONE_DAY
-        DeleteAfterType.ONE_WEEK.screenCode -> DeleteAfterType.ONE_WEEK
-        else -> DeleteAfterType.NEVER
-    }
+fun parseDeleteAfterType(screenCode: Int): DeleteAfterType = when (screenCode) {
+    DeleteAfterType.FIVE_MINUTES.screenCode -> DeleteAfterType.FIVE_MINUTES
+    DeleteAfterType.TEN_MINUTES.screenCode -> DeleteAfterType.TEN_MINUTES
+    DeleteAfterType.ONE_HOUR.screenCode -> DeleteAfterType.ONE_HOUR
+    DeleteAfterType.ONE_DAY.screenCode -> DeleteAfterType.ONE_DAY
+    DeleteAfterType.ONE_WEEK.screenCode -> DeleteAfterType.ONE_WEEK
+    else -> DeleteAfterType.NEVER
 }
 
 fun deleteAfterToSeconds(deleteAfterType: DeleteAfterType): Long {
@@ -495,13 +493,11 @@ enum class BiometricsTimeType(val screenCode: Int, val resourceId: Int) {
     TEN_MINUTES(3, R.string.ten_minutes),
 }
 
-fun parseBiometricsTimeType(screenCode: Int): BiometricsTimeType {
-    return when (screenCode) {
-        BiometricsTimeType.ONE_MINUTE.screenCode -> BiometricsTimeType.ONE_MINUTE
-        BiometricsTimeType.FIVE_MINUTES.screenCode -> BiometricsTimeType.FIVE_MINUTES
-        BiometricsTimeType.TEN_MINUTES.screenCode -> BiometricsTimeType.TEN_MINUTES
-        else -> {
-            BiometricsTimeType.EVERY_TIME
-        }
+fun parseBiometricsTimeType(screenCode: Int): BiometricsTimeType = when (screenCode) {
+    BiometricsTimeType.ONE_MINUTE.screenCode -> BiometricsTimeType.ONE_MINUTE
+    BiometricsTimeType.FIVE_MINUTES.screenCode -> BiometricsTimeType.FIVE_MINUTES
+    BiometricsTimeType.TEN_MINUTES.screenCode -> BiometricsTimeType.TEN_MINUTES
+    else -> {
+        BiometricsTimeType.EVERY_TIME
     }
 }

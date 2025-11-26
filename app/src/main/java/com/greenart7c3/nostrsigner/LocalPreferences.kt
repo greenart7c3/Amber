@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
-import android.util.LruCache
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
 import com.greenart7c3.nostrsigner.models.Account
@@ -18,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
 import kotlin.collections.component1
 import kotlin.collections.component2
@@ -67,25 +67,21 @@ data class AccountInfo(
 object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
-    private var accountCache = LruCache<String, Account>(10)
+    private var accountCache = LargeCache<String, Account>()
 
-    fun allLegacySavedAccounts(context: Context): List<AccountInfo> {
-        return legacySavedAccounts(context).map { npub ->
-            AccountInfo(
-                npub,
-                true,
-            )
-        }.toSet().toList()
-    }
+    fun allLegacySavedAccounts(context: Context): List<AccountInfo> = legacySavedAccounts(context).map { npub ->
+        AccountInfo(
+            npub,
+            true,
+        )
+    }.toSet().toList()
 
-    fun allSavedAccounts(context: Context): List<AccountInfo> {
-        return savedAccounts(context).map { npub ->
-            AccountInfo(
-                npub,
-                true,
-            )
-        }.toSet().toList()
-    }
+    fun allSavedAccounts(context: Context): List<AccountInfo> = savedAccounts(context).map { npub ->
+        AccountInfo(
+            npub,
+            true,
+        )
+    }.toSet().toList()
 
     fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
@@ -144,9 +140,7 @@ object LocalPreferences {
         }
     }
 
-    fun getBatteryOptimization(context: Context): Boolean {
-        return sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
-    }
+    fun getBatteryOptimization(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.BATERRY_OPTIMIZATION.key, false)
 
     fun updateBatteryOptimization(context: Context, value: Boolean) {
         sharedPrefs(context).edit {
@@ -194,7 +188,7 @@ object LocalPreferences {
         val context = Amber.instance
         currentAccount = null
         savedAccounts = null
-        accountCache.evictAll()
+        accountCache.clear()
         allSavedAccounts(context).forEach {
             loadFromEncryptedStorage(context, it.npub)
         }
@@ -229,10 +223,8 @@ object LocalPreferences {
     private var savedAccounts: List<String>? = null
 
     @Suppress("DEPRECATION")
-    private fun legacySavedAccounts(context: Context): List<String> {
-        return encryptedPreferences(context)
-            .getString(SettingsKeys.SAVED_ACCOUNTS.key, null)?.split(COMMA) ?: listOf()
-    }
+    private fun legacySavedAccounts(context: Context): List<String> = encryptedPreferences(context)
+        .getString(SettingsKeys.SAVED_ACCOUNTS.key, null)?.split(COMMA) ?: listOf()
 
     private fun savedAccounts(context: Context): List<String> {
         if (savedAccounts == null) {
@@ -254,9 +246,7 @@ object LocalPreferences {
         }
     }
 
-    private fun getDirPath(context: Context): String {
-        return "${context.filesDir.parent}/shared_prefs/"
-    }
+    private fun getDirPath(context: Context): String = "${context.filesDir.parent}/shared_prefs/"
 
     private fun addAccount(context: Context, npub: String) {
         val accounts = savedAccounts(context).toMutableList()
@@ -275,9 +265,7 @@ object LocalPreferences {
         updateCurrentAccount(context, npub)
     }
 
-    fun containsAccount(context: Context, npub: String): Boolean {
-        return savedAccounts(context).contains(npub)
-    }
+    fun containsAccount(context: Context, npub: String): Boolean = savedAccounts(context).contains(npub)
 
     /**
      * Removes the account from the app level shared preferences
@@ -349,9 +337,7 @@ object LocalPreferences {
     private fun encryptedPreferences(
         context: Context,
         npub: String? = null,
-    ): SharedPreferences {
-        return EncryptedStorage.preferences(npub, context)
-    }
+    ): SharedPreferences = EncryptedStorage.preferences(npub, context)
 
     private fun sharedPrefs(
         context: Context,
@@ -451,9 +437,9 @@ object LocalPreferences {
         }
         if (npub == null) {
             val currentAccount = currentAccount(context) ?: return null
-            return accountCache[currentAccount]
+            return accountCache.get(currentAccount)
         }
-        return accountCache[npub]
+        return accountCache.get(npub)
     }
 
     fun setAccountName(

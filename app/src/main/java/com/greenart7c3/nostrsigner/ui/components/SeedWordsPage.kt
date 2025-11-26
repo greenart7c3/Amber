@@ -91,16 +91,14 @@ fun SeedWordsPage(
                 val size = seedWords.size
                 val count = size / 2
 
-                val firstColumnWords = seedWords.mapIndexedNotNull {
-                        index, word ->
+                val firstColumnWords = seedWords.mapIndexedNotNull { index, word ->
                     if (index < count) {
                         word
                     } else {
                         null
                     }
                 }
-                val secondColumnWords = seedWords.mapIndexedNotNull {
-                        index, word ->
+                val secondColumnWords = seedWords.mapIndexedNotNull { index, word ->
                     if (index >= count) {
                         word
                     } else {

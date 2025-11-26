@@ -16,9 +16,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
-    private fun metaDataFromJson(json: String): BunkerMetadata {
-        return BunkerMetadata.mapper.readValue(json, BunkerMetadata::class.java)
-    }
+    private fun metaDataFromJson(json: String): BunkerMetadata = BunkerMetadata.mapper.readValue(json, BunkerMetadata::class.java)
 
     fun getIntentFromNostrConnect(
         intent: Intent,

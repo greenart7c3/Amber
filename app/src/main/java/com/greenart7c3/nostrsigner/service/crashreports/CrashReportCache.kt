@@ -36,12 +36,11 @@ class CrashReportCache(
 
     private fun deleteReport() = appContext.deleteFile(STACK_TRACE_FILENAME)
 
-    private fun inputStreamOrNull(): FileInputStream? =
-        try {
-            appContext.openFileInput(STACK_TRACE_FILENAME)
-        } catch (_: FileNotFoundException) {
-            null
-        }
+    private fun inputStreamOrNull(): FileInputStream? = try {
+        appContext.openFileInput(STACK_TRACE_FILENAME)
+    } catch (_: FileNotFoundException) {
+        null
+    }
 
     fun writeReport(report: String) {
         val trace = outputStream()
@@ -49,15 +48,14 @@ class CrashReportCache(
         trace.close()
     }
 
-    suspend fun loadAndDelete(): String? =
-        withContext(Dispatchers.IO) {
-            val stack =
-                inputStreamOrNull()?.use { inStream ->
-                    InputStreamReader(inStream).use { reader ->
-                        reader.readText()
-                    }
+    suspend fun loadAndDelete(): String? = withContext(Dispatchers.IO) {
+        val stack =
+            inputStreamOrNull()?.use { inStream ->
+                InputStreamReader(inStream).use { reader ->
+                    reader.readText()
                 }
-            deleteReport()
-            stack
-        }
+            }
+        deleteReport()
+        stack
+    }
 }

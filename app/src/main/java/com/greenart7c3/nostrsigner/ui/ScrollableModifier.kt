@@ -14,35 +14,33 @@ fun Modifier.verticalScrollbar(
     state: ScrollState,
     scrollbarWidth: Dp = 6.dp,
     color: Color = Color.LightGray,
-): Modifier {
-    return this.then(
-        Modifier.drawWithContent {
-            drawContent()
+): Modifier = this.then(
+    Modifier.drawWithContent {
+        drawContent()
 
-            if (state.maxValue > 0) {
-                val width = size.width
-                val height = size.height
+        if (state.maxValue > 0) {
+            val width = size.width
+            val height = size.height
 
-                val scrollFraction = state.value.toFloat() / state.maxValue.toFloat()
-                val scrollbarHeight = (height * height / (state.maxValue + height))
-                    .coerceIn(10.dp.toPx()..height)
+            val scrollFraction = state.value.toFloat() / state.maxValue.toFloat()
+            val scrollbarHeight = (height * height / (state.maxValue + height))
+                .coerceIn(10.dp.toPx()..height)
 
-                val scrollableHeight = height - scrollbarHeight
-                val scrollbarY = scrollableHeight * scrollFraction
+            val scrollableHeight = height - scrollbarHeight
+            val scrollbarY = scrollableHeight * scrollFraction
 
-                drawRoundRect(
-                    color = color,
-                    topLeft = Offset(
-                        x = width - scrollbarWidth.toPx(),
-                        y = scrollbarY,
-                    ),
-                    size = Size(
-                        width = scrollbarWidth.toPx(),
-                        height = scrollbarHeight,
-                    ),
-                    cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
-                )
-            }
-        },
-    )
-}
+            drawRoundRect(
+                color = color,
+                topLeft = Offset(
+                    x = width - scrollbarWidth.toPx(),
+                    y = scrollbarY,
+                ),
+                size = Size(
+                    width = scrollbarWidth.toPx(),
+                    height = scrollbarHeight,
+                ),
+                cornerRadius = CornerRadius(scrollbarWidth.toPx() / 2),
+            )
+        }
+    },
+)

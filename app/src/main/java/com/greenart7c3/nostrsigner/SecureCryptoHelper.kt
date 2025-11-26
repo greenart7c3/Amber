@@ -84,6 +84,5 @@ object SecureCryptoHelper {
     }
 }
 
-fun Context.hasStrongBox(): Boolean =
-    Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-        packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+fun Context.hasStrongBox(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+    packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)

@@ -369,7 +369,7 @@ fun ExportAllAccountsScreen(
                     onClick = {
                         showConfirmationDialog = false
                         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                        exportLauncher.launch("amber_backup_$timestamp.dat")
+                        exportLauncher.launch("amber_backup_$timestamp.jsonl")
                     },
                 ) {
                     Text(text = stringResource(R.string.export))

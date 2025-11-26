@@ -83,9 +83,7 @@ class ConnectivityService : Service() {
             }
         }
 
-    override fun onBind(intent: Intent): IBinder? {
-        return null
-    }
+    override fun onBind(intent: Intent): IBinder? = null
 
     override fun onCreate() {
         Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: $isStarted")

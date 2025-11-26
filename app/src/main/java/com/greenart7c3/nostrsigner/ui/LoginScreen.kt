@@ -2,6 +2,8 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
 import android.widget.Toast
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -34,13 +36,17 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -58,6 +64,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -83,6 +90,7 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.text.toUpperCase
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
@@ -92,10 +100,12 @@ import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
 import com.halilibo.richtext.commonmark.MarkdownParseOptions
@@ -110,17 +120,131 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MainPage(
     scope: CoroutineScope,
     navController: NavController,
+    accountViewModel: AccountStateViewModel,
 ) {
+    var isLoading by remember { mutableStateOf(false) }
+    var text by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf(TextFieldValue()) }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
     val percentage = (screenWidthDp * 0.93f)
     val verticalPadding = (screenWidthDp - percentage)
     val context = LocalContext.current
+    var shouldShowBottomSheet by remember { mutableStateOf(false) }
+    val selectFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+        shouldShowBottomSheet = false
+        Amber.instance.applicationIOScope.launch {
+            uri?.let {
+                val hasAccounts = LocalPreferences.allAccounts(Amber.instance).isNotEmpty()
+                AccountExportService.importAccounts(
+                    uri = uri,
+                    password = password.text,
+                    onText = {
+                        text = it
+                    },
+                    onLoading = {
+                        isLoading = it
+                    },
+                    onFinish = {
+                        Amber.instance.applicationIOScope.launch {
+                            if (hasAccounts) {
+                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    navController.navigate(Route.Applications.route) {
+                                        popUpTo(0)
+                                    }
+                                }
+                            } else {
+                                val accounts = LocalPreferences.allAccounts(Amber.instance)
+                                if (accounts.isNotEmpty()) {
+                                    val account = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accounts.first().npub)
+                                    account?.let {
+                                        accountViewModel.startUI(account, null)
+                                    }
+                                }
+                            }
+                            Amber.instance.notificationSubscription.updateFilter()
+                            Amber.instance.profileSubscription.updateFilter()
+                        }
+                    },
+                )
+            }
+        }
+    }
+
+    val sheetState =
+        rememberModalBottomSheetState(
+            confirmValueChange = { it != SheetValue.PartiallyExpanded },
+            skipPartiallyExpanded = true,
+        )
+
+    if (shouldShowBottomSheet) {
+        var showCharsPassword by remember { mutableStateOf(false) }
+        ModalBottomSheet(
+            sheetState = sheetState,
+            onDismissRequest = {
+                shouldShowBottomSheet = false
+            },
+        ) {
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    LocalDensity.current.density,
+                    1f,
+                ),
+            ) {
+                Column(
+                    Modifier.padding(8.dp),
+                ) {
+                    OutlinedTextField(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .semantics {
+                                contentType = ContentType.Password
+                            },
+                        value = password,
+                        onValueChange = {
+                            password = it
+                        },
+                        keyboardOptions = KeyboardOptions(
+                            autoCorrectEnabled = false,
+                            keyboardType = KeyboardType.Password,
+                            imeAction = ImeAction.Next,
+                        ),
+                        label = {
+                            Text(text = stringResource(R.string.encryption_password))
+                        },
+                        placeholder = {
+                            Text(text = stringResource(R.string.enter_strong_password))
+                        },
+                        trailingIcon = {
+                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                Icon(
+                                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                    contentDescription = if (showCharsPassword) {
+                                        stringResource(R.string.hide_password)
+                                    } else {
+                                        stringResource(R.string.show_password)
+                                    },
+                                )
+                            }
+                        },
+                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                    )
+                    AmberButton(
+                        onClick = {
+                            selectFileLauncher.launch("*/*")
+                        },
+                        text = stringResource(R.string.recover_from_backup),
+                    )
+                }
+            }
+        }
+    }
 
     Scaffold {
         Column(
@@ -130,79 +254,93 @@ fun MainPage(
                 .padding(horizontal = verticalPadding)
                 .padding(top = verticalPadding * 1.5f),
         ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    text = stringResource(R.string.app_name_release).toUpperCase(Locale.current),
-                    fontSize = 36.sp,
+            if (isLoading) {
+                CenterCircularProgressIndicator(
+                    modifier = Modifier.fillMaxSize(),
+                    text = text,
                 )
-                Text(
-                    text = stringResource(R.string.a_nostr_secure_signer),
-                    fontSize = 16.sp,
-                    color = Color(0xFFC98500),
-                )
-
-                Image(
-                    modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
-                    imageVector = ImageVector.vectorResource(R.drawable.frame),
-                    contentDescription = "Logo",
-                )
-
+            } else {
                 Column(
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    modifier = Modifier
+                        .fillMaxSize(),
                     horizontalAlignment = Alignment.CenterHorizontally,
                 ) {
-                    AmberElevatedButton(
-                        contentColor = Color(0xFF4C4C4C),
-                        textColor = MaterialTheme.colorScheme.primary,
-                        onClick = {
-                            scope.launch {
-                                navController.navigate("loginPage")
-                            }
-                        },
-                        text = stringResource(R.string.add_a_key),
+                    Text(
+                        text = stringResource(R.string.app_name_release).toUpperCase(Locale.current),
+                        fontSize = 36.sp,
+                    )
+                    Text(
+                        text = stringResource(R.string.a_nostr_secure_signer),
+                        fontSize = 16.sp,
+                        color = Color(0xFFC98500),
                     )
 
-                    AmberButton(
-                        onClick = {
-                            scope.launch {
-                                navController.navigate("create")
-                            }
-                        },
-                        text = stringResource(R.string.generate_a_new_key),
+                    Image(
+                        modifier = Modifier.padding(top = 20.dp, bottom = 20.dp),
+                        imageVector = ImageVector.vectorResource(R.drawable.frame),
+                        contentDescription = "Logo",
                     )
-                }
 
-                Spacer(Modifier.weight(1f))
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        AmberElevatedButton(
+                            contentColor = Color(0xFF4C4C4C),
+                            textColor = MaterialTheme.colorScheme.primary,
+                            onClick = {
+                                scope.launch {
+                                    navController.navigate("loginPage")
+                                }
+                            },
+                            text = stringResource(R.string.add_a_key),
+                        )
 
-                Text(
-                    modifier = Modifier.padding(bottom = 20.dp),
-                    color = Color(0xFF8C8C8C),
-                    text = buildAnnotatedString {
-                        withStyle(
-                            style = ParagraphStyle(
-                                textAlign = TextAlign.Center,
-                            ),
-                        ) {
-                            append("Amber is a free and open source project\n")
-                            withLink(
-                                LinkAnnotation.Url(
-                                    context.getString(R.string.amber_github_uri),
-                                    styles = TextLinkStyles(
-                                        style = SpanStyle(
-                                            textDecoration = TextDecoration.Underline,
-                                        ),
-                                    ),
+                        AmberButton(
+                            onClick = {
+                                scope.launch {
+                                    navController.navigate("create")
+                                }
+                            },
+                            text = stringResource(R.string.generate_a_new_key),
+                        )
+
+                        AmberButton(
+                            onClick = {
+                                shouldShowBottomSheet = true
+                            },
+                            text = stringResource(R.string.recover_from_backup),
+                        )
+                    }
+
+                    Spacer(Modifier.weight(1f))
+
+                    Text(
+                        modifier = Modifier.padding(bottom = 20.dp),
+                        color = Color(0xFF8C8C8C),
+                        text = buildAnnotatedString {
+                            withStyle(
+                                style = ParagraphStyle(
+                                    textAlign = TextAlign.Center,
                                 ),
                             ) {
-                                append(context.getString(R.string.check_the_code))
+                                append("Amber is a free and open source project\n")
+                                withLink(
+                                    LinkAnnotation.Url(
+                                        context.getString(R.string.amber_github_uri),
+                                        styles = TextLinkStyles(
+                                            style = SpanStyle(
+                                                textDecoration = TextDecoration.Underline,
+                                            ),
+                                        ),
+                                    ),
+                                ) {
+                                    append(context.getString(R.string.check_the_code))
+                                }
                             }
-                        }
-                    },
-                )
+                        },
+                    )
+                }
             }
         }
     }
@@ -225,6 +363,7 @@ fun MainLoginPage(
                 MainPage(
                     scope = scope,
                     navController = navController,
+                    accountViewModel = accountViewModel,
                 )
             },
         )

@@ -27,9 +27,7 @@ class Account(
     suspend fun createAuthEvent(
         relayUrl: NormalizedRelayUrl,
         challenge: String,
-    ): RelayAuthEvent {
-        return RelayAuthEvent.create(relayUrl, challenge, signer)
-    }
+    ): RelayAuthEvent = RelayAuthEvent.create(relayUrl, challenge, signer)
 }
 
 class AccountLiveData(account: Account) : LiveData<AccountState>(AccountState(account))

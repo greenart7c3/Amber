@@ -298,6 +298,7 @@ fun MainScreen(
                         MainPage(
                             scope = scope,
                             navController = navController,
+                            accountViewModel = accountStateViewModel,
                         )
                     },
                 )

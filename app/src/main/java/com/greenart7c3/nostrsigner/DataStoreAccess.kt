@@ -17,13 +17,11 @@ import kotlinx.coroutines.flow.first
 object DataStoreAccess {
     private val storeCache = ConcurrentHashMap<String, DataStore<Preferences>>()
 
-    private fun getDataStore(context: Context, npub: String): DataStore<Preferences> {
-        return storeCache.computeIfAbsent(npub) {
-            Log.d(Amber.TAG, "Creating new DataStore for $npub")
-            PreferenceDataStoreFactory.create(
-                produceFile = { context.applicationContext.preferencesDataStoreFile("secure_datastore_$npub") },
-            )
-        }
+    private fun getDataStore(context: Context, npub: String): DataStore<Preferences> = storeCache.computeIfAbsent(npub) {
+        Log.d(Amber.TAG, "Creating new DataStore for $npub")
+        PreferenceDataStoreFactory.create(
+            produceFile = { context.applicationContext.preferencesDataStoreFile("secure_datastore_$npub") },
+        )
     }
 
     val NOSTR_PRIVKEY = stringPreferencesKey("nostr_privkey")

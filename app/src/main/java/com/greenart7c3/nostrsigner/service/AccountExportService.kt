@@ -1,17 +1,81 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
+import android.net.Uri
+import android.util.Log
+import android.widget.Toast
+import com.anggrayudi.storage.extension.toDocumentFile
+import com.anggrayudi.storage.file.openInputStream
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AccountExportData
-import com.greenart7c3.nostrsigner.models.BulkAccountExport
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
-import com.vitorpamplona.quartz.nip19Bech32.toNsec
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
+import com.vitorpamplona.quartz.utils.Hex
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 object AccountExportService {
+    suspend fun importAccounts(
+        uri: Uri,
+        password: String,
+        onLoading: (isLoading: Boolean) -> Unit,
+        onText: (text: String) -> Unit,
+        onFinish: () -> Unit,
+    ) {
+        onLoading(true)
+        try {
+            val file = uri.toDocumentFile(Amber.instance) ?: return
+            val name = file.name
+            if (name?.endsWith(".jsonl") == false) {
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    Toast.makeText(Amber.instance, "File is not a Amber backup", Toast.LENGTH_LONG).show()
+                }
+                return
+            }
+
+            if (file.isFile) {
+                file.openInputStream(Amber.instance).use { oi ->
+                    oi?.bufferedReader().use { reader ->
+                        reader?.readLines()?.forEachIndexed { index, line ->
+                            try {
+                                onText("Importing account ${index + 1}")
+
+                                val accountData = AccountExportData.fromJson(line)
+                                val nsec = Nip49().decrypt(accountData.nsec, password)
+                                val signer = NostrSignerInternal(KeyPair(privKey = Hex.decode(nsec)))
+                                val account = Account(
+                                    signer = signer,
+                                    name = MutableStateFlow(accountData.name),
+                                    picture = MutableStateFlow(accountData.picture ?: ""),
+                                    signPolicy = accountData.signPolicy,
+                                    seedWords = signer.signerSync.decrypt(accountData.seedWords, signer.keyPair.pubKey.toHexKey()).split(" ").toSet(),
+                                    didBackup = accountData.didBackup,
+                                )
+                                LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
+                                LocalPreferences.updatePrefsForLogin(Amber.instance, account)
+                            } catch (e: Exception) {
+                                if (e is CancellationException) throw e
+
+                                Log.e("Amber", "Error importing account", e)
+                            }
+                        }
+                        onFinish()
+                    }
+                }
+            }
+        } finally {
+            onText("")
+            onLoading(false)
+        }
+    }
+
     /**
      * Export all accounts as an encrypted JSON file
      *
@@ -33,27 +97,19 @@ object AccountExportService {
                 return@withContext Result.failure(Exception("No accounts to export"))
             }
 
-            val exportedAccounts = mutableListOf<AccountExportData>()
-
+            var data = ""
             accountInfos.forEachIndexed { index, accountInfo ->
                 onProgress(index + 1, totalAccounts)
 
                 val account = LocalPreferences.loadFromEncryptedStorage(context, accountInfo.npub)
                 account?.let {
                     val exportData = accountToExportData(it, password)
-                    exportedAccounts.add(exportData)
+                    data += "${AccountExportData.toJson(exportData)}\n"
                 }
             }
 
-            val bulkExport = BulkAccountExport(
-                accountCount = exportedAccounts.size,
-                accounts = exportedAccounts,
-            )
-
-            val json = BulkAccountExport.toJson(bulkExport)
-
             // Each private key is already encrypted with NIP-49 inside the JSON
-            Result.success(json)
+            Result.success(data)
         } catch (e: Exception) {
             Result.failure(e)
         }
@@ -66,16 +122,7 @@ object AccountExportService {
         val privKey = account.signer.keyPair.privKey
         val encrypedSeedWords = if (account.seedWords.isNotEmpty()) account.signer.signerSync.nip44Encrypt(account.seedWords.joinToString(" "), account.hexKey) else ""
 
-        // Encrypt private key with password (NIP-49) or use nsec if no password
-        val encryptedNsec = if (privKey != null) {
-            if (password.isNotBlank()) {
-                Nip49().encrypt(privKey.toHexKey(), password)
-            } else {
-                privKey.toNsec()
-            }
-        } else {
-            null
-        }
+        val encryptedNsec = Nip49().encrypt(privKey!!.toHexKey(), password)
 
         return AccountExportData(
             npub = account.npub,

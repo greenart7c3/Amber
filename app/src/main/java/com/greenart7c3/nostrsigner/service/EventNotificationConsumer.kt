@@ -513,7 +513,5 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    fun notificationManager(): NotificationManager {
-        return ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
-    }
+    fun notificationManager(): NotificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager
 }

@@ -199,11 +199,9 @@ fun ApplicationsScreen(
     }
 }
 
-fun Context.isZapstoreInstalled(): Boolean {
-    return try {
-        packageManager.getPackageInfo("dev.zapstore.app", 0)
-        true
-    } catch (_: Exception) {
-        false
-    }
+fun Context.isZapstoreInstalled(): Boolean = try {
+    packageManager.getPackageInfo("dev.zapstore.app", 0)
+    true
+} catch (_: Exception) {
+    false
 }

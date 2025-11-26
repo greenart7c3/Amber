@@ -95,7 +95,13 @@ fun AmberNavigationBar(
                             Icon(
                                 painterResource(it.icon),
                                 it.route,
-                                tint = if (selected) Color.Black else if (isSystemInDarkTheme()) Color.White else Color.Black,
+                                tint = if (selected) {
+                                    Color.Black
+                                } else if (isSystemInDarkTheme()) {
+                                    Color.White
+                                } else {
+                                    Color.Black
+                                },
                             )
                         }
                     },

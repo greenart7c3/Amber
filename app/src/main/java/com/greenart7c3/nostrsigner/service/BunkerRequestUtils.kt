@@ -49,9 +49,7 @@ object BunkerRequestUtils {
         state.tryEmit(state.value.filter { it.request.id != id })
     }
 
-    fun getBunkerRequests(): List<AmberBunkerRequest> {
-        return state.value
-    }
+    fun getBunkerRequests(): List<AmberBunkerRequest> = state.value
 
     suspend fun sendBunkerResponse(
         context: Context,
@@ -192,34 +190,30 @@ object BunkerRequestUtils {
         onLoading(false)
     }
 
-    fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType {
-        return when (bunkerRequest.method) {
-            "sign_message" -> SignerType.SIGN_MESSAGE
-            "connect" -> SignerType.CONNECT
-            "sign_event" -> SignerType.SIGN_EVENT
-            "get_public_key" -> SignerType.GET_PUBLIC_KEY
-            "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-            "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-            "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-            "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-            "ping" -> SignerType.PING
-            else -> SignerType.INVALID
-        }
+    fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType = when (bunkerRequest.method) {
+        "sign_message" -> SignerType.SIGN_MESSAGE
+        "connect" -> SignerType.CONNECT
+        "sign_event" -> SignerType.SIGN_EVENT
+        "get_public_key" -> SignerType.GET_PUBLIC_KEY
+        "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
+        "nip04_decrypt" -> SignerType.NIP04_DECRYPT
+        "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
+        "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+        "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
+        "ping" -> SignerType.PING
+        else -> SignerType.INVALID
     }
 
-    fun getDataFromBunker(bunkerRequest: BunkerRequest): String {
-        return when (bunkerRequest.method) {
-            "sign_message" -> bunkerRequest.params.first()
-            "connect" -> "ack"
-            "sign_event" -> {
-                val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-                AmberEvent.toEvent(amberEvent).toJson()
-            }
-            "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
-            "ping" -> "pong"
-            else -> ""
+    fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
+        "sign_message" -> bunkerRequest.params.first()
+        "connect" -> "ack"
+        "sign_event" -> {
+            val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
+            AmberEvent.toEvent(amberEvent).toJson()
         }
+        "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
+        "ping" -> "pong"
+        else -> ""
     }
 
     fun sendResult(

@@ -404,6 +404,7 @@ object BunkerRequestUtils {
         kind: Int?,
         onLoading: (Boolean) -> Unit,
     ) {
+        onLoading(true)
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             val savedApplication = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
             val defaultRelays = Amber.instance.settings.defaultRelays
@@ -431,6 +432,14 @@ object BunkerRequestUtils {
                     ),
                     permissions = mutableListOf(),
                 )
+
+            clearRequests()
+            EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
+            val activity = Amber.instance.getMainActivity()
+            activity?.intent = null
+            if (application.application.closeApplication) {
+                activity?.finish()
+            }
 
             if (rememberType != RememberType.NEVER) {
                 AmberUtils.acceptOrRejectPermission(

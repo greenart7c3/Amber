@@ -663,9 +663,10 @@ fun BunkerMultiEventHomeScreen(
                 Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                     try {
                         reconnectToRelays()
-                        var closeApp = true
-
+                        val closeApp = bunkerRequests.any { it.closeApplication }
                         BunkerRequestUtils.clearRequests()
+                        EventNotificationConsumer(context).notificationManager().cancelAll()
+                        finishActivity(closeApp)
                         for (request in bunkerRequests) {
                             val thisAccount =
                                 if (request.currentAccount.isNotBlank()) {
@@ -708,10 +709,6 @@ fun BunkerMultiEventHomeScreen(
                                     ),
                                     permissions = mutableListOf(),
                                 )
-
-                            if (!application.application.closeApplication) {
-                                closeApp = false
-                            }
 
                             if (request.request is BunkerRequestSign) {
                                 val localEvent = request.signedEvent!!
@@ -923,8 +920,6 @@ fun BunkerMultiEventHomeScreen(
                                 }
                             }
                         }
-                        EventNotificationConsumer(context).notificationManager().cancelAll()
-                        finishActivity(closeApp)
                     } finally {
                         onLoading(false)
                     }

@@ -591,4 +591,5 @@
     <string name="response">Response</string>
     <string name="recover_from_bac">Recover from backup</string>
     <string name="recover_from_backup">Recover from backup</string>
+    <string name="importing_account">Importing account %1$d</string>
 </resources>

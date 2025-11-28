@@ -103,6 +103,13 @@ com.greenart7c3.nostrsigner
 E8:AB:8C:69:33:3B:68:63:6D:D4:6C:E2:42:40:8C:79:55:3A:7F:D9:05:5D:05:4D:61:DA:AB:AB:AD:A5:3B:BF
 ```
 
+## fdroid
+
+``` bash
+com.greenart7c3.nostrsigner
+56:DC:63:19:96:A5:5C:22:84:79:04:48:C7:DC:9F:1D:D0:5D:F5:96:B2:CE:48:82:31:36:33:F5:60:2E:5F:E4
+```
+
 # Usage
 
 Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NIP 46](https://github.com/nostr-protocol/nips/blob/master/46.md) for more information.

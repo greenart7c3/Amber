@@ -21,7 +21,6 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import com.greenart7c3.nostrsigner.AccountInfo
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
@@ -48,7 +47,6 @@ class ProfileSubscription(
     val scope: CoroutineScope,
 ) : IRelayClientListener {
     private val subIds = mutableMapOf<String, String>()
-    private val monitoringAccounts: List<AccountInfo> = emptyList()
 
     init {
         // listens until the app crashes.
@@ -57,8 +55,12 @@ class ProfileSubscription(
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EoseMessage) {
-            monitoringAccounts.forEach {
-                LocalPreferences.setLastCheck(Amber.instance, it.npub, TimeUtils.now())
+            scope.launch {
+                LocalPreferences.allAccounts(appContext).forEach {
+                    if (msg.subId == subIds[it.hexKey]) {
+                        LocalPreferences.setLastCheck(Amber.instance, it.npub, TimeUtils.now())
+                    }
+                }
             }
         }
         if (msg is EventMessage) {
@@ -105,7 +107,13 @@ class ProfileSubscription(
             if (!subIds.containsKey(it.hexKey)) {
                 subIds[it.hexKey] = UUID.randomUUID().toString()
             }
-            client.openReqSubscription(subIds[it.hexKey]!!, createProfileFilter(it))
+            val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, it.npub)
+            val lastCheck = LocalPreferences.getLastCheck(appContext, it.npub)
+            val oneDayAgo = TimeUtils.oneDayAgo()
+            val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
+            if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
+                client.openReqSubscription(subIds[it.hexKey]!!, createProfileFilter(it))
+            }
         }
     }
 

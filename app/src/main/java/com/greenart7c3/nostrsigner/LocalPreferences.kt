@@ -150,6 +150,8 @@ object LocalPreferences {
         }
     }
 
+    fun getLastCheck(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.LAST_CHECK.key, 0)
+
     fun setLastCheck(context: Context, npub: String, time: Long) {
         sharedPrefs(context, npub).edit {
             apply {
@@ -157,6 +159,8 @@ object LocalPreferences {
             }
         }
     }
+
+    fun getLastMetadataUpdate(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.LAST_METADATA_UPDATE.key, 0)
 
     fun setLastMetadataUpdate(context: Context, npub: String, time: Long) {
         sharedPrefs(context, npub).edit {

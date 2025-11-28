@@ -137,6 +137,7 @@ class ConnectivityService : Service() {
                                             time = System.currentTimeMillis(),
                                         ),
                                     )
+                                    Amber.instance.notificationSubscription.updateFilter()
                                 }
                             }
                         }

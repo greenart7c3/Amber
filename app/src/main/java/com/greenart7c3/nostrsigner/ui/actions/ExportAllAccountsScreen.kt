@@ -32,7 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
@@ -49,6 +48,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.AccountExportService
@@ -73,7 +73,6 @@ fun ExportAllAccountsScreen(
     modifier: Modifier,
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var exportProgress by remember { mutableStateOf("") }
     var accountCount by remember { mutableIntStateOf(0) }
@@ -97,7 +96,7 @@ fun ExportAllAccountsScreen(
         ActivityResultContracts.CreateDocument("application/octet-stream"),
     ) { uri ->
         uri?.let {
-            scope.launch(Dispatchers.IO) {
+            Amber.instance.applicationIOScope.launch {
                 isLoading = true
                 exportProgress = context.getString(R.string.preparing_export)
 
@@ -328,7 +327,7 @@ fun ExportAllAccountsScreen(
                                         showConfirmationDialog = true
                                     },
                                     onError = { _, message ->
-                                        scope.launch {
+                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                             Toast.makeText(
                                                 context,
                                                 message,

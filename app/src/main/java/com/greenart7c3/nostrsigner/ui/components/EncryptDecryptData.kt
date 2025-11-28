@@ -5,7 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -109,14 +114,13 @@ fun EncryptDecryptData(
 
         Card(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .weight(1f),
+            colors = CardDefaults.cardColors().copy(
+                containerColor = MaterialTheme.colorScheme.background,
+            ),
         ) {
-            Column(Modifier.padding(6.dp)) {
-                Text(
-                    stringResource(R.string.content).capitalize(Locale.current),
-                    fontWeight = FontWeight.Bold,
-                )
-
+            Column {
                 if (encryptedData is EventEncryptedDataKind) {
                     if (encryptedData.sealEncryptedDataKind != null) {
                         if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
@@ -152,24 +156,69 @@ fun EncryptDecryptData(
                         }
                     }
                 } else {
-                    val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
-                        encryptedData.text
-                    } else if (encryptedData is TagArrayEncryptedDataKind) {
-                        encryptedData.tagArray.map { it.toList() }.toList().toString()
+                    if (encryptedData is TagArrayEncryptedDataKind) {
+                        val mappedTags = encryptedData.tagArray.mapNotNull { tag ->
+                            if (tag.isEmpty()) return@mapNotNull null
+
+                            TagItem(
+                                name = tag.first(),
+                                values = tag.drop(1),
+                            )
+                        }
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(top = 8.dp),
+                        ) {
+                            items(mappedTags) { item ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = item.name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 4.dp),
+                                    )
+
+                                    item.values.forEach { value ->
+                                        Text(
+                                            fontSize = 16.sp,
+                                            text = value,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 2.dp),
+                                        )
+                                    }
+                                }
+
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
                     } else {
-                        encryptedData?.result ?: ""
+                        val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+                            encryptedData.text
+                        } else {
+                            encryptedData?.result ?: ""
+                        }
+                        Text(
+                            content,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                        )
                     }
-                    Text(
-                        content,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (encryptedData !is TagArrayEncryptedDataKind) Spacer(modifier = Modifier.weight(1f))
 
         RememberMyChoice(
             shouldRunOnAccept,
@@ -191,6 +240,11 @@ fun EncryptDecryptData(
         )
     }
 }
+
+data class TagItem(
+    val name: String,
+    val values: List<String>,
+)
 
 @Composable
 fun BunkerEncryptDecryptData(

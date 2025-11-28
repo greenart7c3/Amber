@@ -96,6 +96,13 @@ docker run --rm amber-repro
 APKs match!
 ```
 
+# Certificate fingerprint for AppVerifier
+
+``` bash
+com.greenart7c3.nostrsigner
+E8:AB:8C:69:33:3B:68:63:6D:D4:6C:E2:42:40:8C:79:55:3A:7F:D9:05:5D:05:4D:61:DA:AB:AB:AD:A5:3B:BF
+```
+
 # Usage
 
 Check [NIP 55](https://github.com/nostr-protocol/nips/blob/master/55.md) and [NIP 46](https://github.com/nostr-protocol/nips/blob/master/46.md) for more information.

@@ -291,6 +291,7 @@ fun onAddRelay(
         }
 
         scope.launch(Dispatchers.IO) {
+            Nip11CachedRetriever.clearCache()
             Nip11CachedRetriever.loadRelayInfo(
                 relay = addedWSS,
                 okHttpClient = {

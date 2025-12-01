@@ -64,6 +64,11 @@ object Nip11CachedRetriever {
     private val relayInformationDocumentCache = LruCache<NormalizedRelayUrl, RetrieveResult?>(1000)
     private val retriever = Nip11Retriever()
 
+    fun clearCache() {
+        relayInformationEmptyCache.evictAll()
+        relayInformationDocumentCache.evictAll()
+    }
+
     fun getEmpty(relay: NormalizedRelayUrl): Nip11RelayInformation {
         relayInformationEmptyCache.get(relay)?.let { return it }
 

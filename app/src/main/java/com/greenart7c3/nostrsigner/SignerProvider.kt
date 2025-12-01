@@ -13,7 +13,6 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
@@ -22,6 +21,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class SignerProvider : ContentProvider() {
     val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
@@ -124,7 +124,7 @@ class SignerProvider : ContentProvider() {
                         return cursor
                     }
 
-                    val result = signString(message, account.signer.keyPair.privKey!!).toHexKey()
+                    val result = runBlocking { account.signString(message) }
                     scope.launch {
                         historyDatabase.dao().addHistory(
                             HistoryEntity(
@@ -223,7 +223,7 @@ class SignerProvider : ContentProvider() {
                         return cursor
                     }
 
-                    val signedEvent = account.signer.signerSync.sign<Event>(event.createdAt, event.kind, event.tags, event.content)
+                    val signedEvent = account.signSync<Event>(event.createdAt, event.kind, event.tags, event.content)
 
                     scope.launch {
                         historyDatabase.dao().addHistory(
@@ -335,12 +335,14 @@ class SignerProvider : ContentProvider() {
 
                     val result =
                         try {
-                            AmberUtils.encryptOrDecryptData(
-                                content,
-                                type,
-                                account,
-                                pubkey,
-                            ) ?: "Could not decrypt the message"
+                            runBlocking {
+                                AmberUtils.encryptOrDecryptData(
+                                    content,
+                                    type,
+                                    account,
+                                    pubkey,
+                                ) ?: "Could not decrypt the message"
+                            }
                         } catch (e: Exception) {
                             scope.launch {
                                 logDatabase.dao().insertLog(

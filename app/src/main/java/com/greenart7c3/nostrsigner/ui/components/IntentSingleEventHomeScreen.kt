@@ -133,7 +133,7 @@ fun IntentSingleEventHomeScreen(
                 type = intentData.type,
                 onAccept = {
                     Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        val result = signString(intentData.data, account.signer.keyPair.privKey!!).toHexKey()
+                        val result = account.signString(intentData.data)
                         IntentUtils.sendResult(
                             context,
                             packageName,

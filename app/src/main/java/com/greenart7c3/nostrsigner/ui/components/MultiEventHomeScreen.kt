@@ -66,7 +66,6 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.Result
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -417,7 +416,7 @@ fun IntentMultiEventHomeScreen(
                                     thisAccount.npub,
                                 )
 
-                                val signedMessage = signString(intentData.data, thisAccount.signer.keyPair.privKey!!).toHexKey()
+                                val signedMessage = thisAccount.signString(intentData.data)
                                 if (intentData.checked.value) {
                                     results.add(
                                         Result(
@@ -792,7 +791,7 @@ fun BunkerMultiEventHomeScreen(
                                     thisAccount.npub,
                                 )
 
-                                val signedMessage = signString(request.request.params.first(), thisAccount.signer.keyPair.privKey!!).toHexKey()
+                                val signedMessage = thisAccount.signString(request.request.params.first())
                                 val localBunkerRequest = request.copy()
                                 BunkerRequestUtils.remove(localBunkerRequest.request.id)
 

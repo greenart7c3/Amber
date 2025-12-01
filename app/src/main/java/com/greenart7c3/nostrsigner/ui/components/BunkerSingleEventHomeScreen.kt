@@ -778,7 +778,7 @@ fun BunkerSingleEventHomeScreen(
                     type = type,
                     onAccept = {
                         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val result = signString(bunkerRequest.request.params.first(), account.signer.keyPair.privKey!!).toHexKey()
+                            val result = account.signString(bunkerRequest.request.params.first())
 
                             BunkerRequestUtils.sendResult(
                                 context = context,

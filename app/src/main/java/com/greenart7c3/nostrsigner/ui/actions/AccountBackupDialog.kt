@@ -76,6 +76,7 @@ import androidx.navigation.NavHostController
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -95,11 +96,7 @@ import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
 import com.halilibo.richtext.ui.resolveDefaults
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
-import com.vitorpamplona.quartz.nip19Bech32.toNsec
-import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -226,9 +223,13 @@ fun AccountBackupScreen(
 
                     LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                         var localAccount by remember { mutableStateOf<Account?>(null) }
+                        var seedWords by remember { mutableStateOf("") }
                         LaunchedEffect(Unit) {
                             launch(Dispatchers.IO) {
                                 localAccount = LocalPreferences.loadFromEncryptedStorage(Amber.instance, it.npub)
+                                localAccount?.let { acc ->
+                                    seedWords = DataStoreAccess.getEncryptedKey(Amber.instance, acc.npub, DataStoreAccess.SEED_WORDS) ?: ""
+                                }
                             }
                         }
 
@@ -290,8 +291,8 @@ fun AccountBackupScreen(
                                 ) {
                                     NSecCopyButton(localAccount, password.value.text, onLoading = { value -> isLoading = value })
                                     NSecQrButton(localAccount, password.value.text, onLoading = { value -> isLoading = value }, navController = navController)
-                                    if (Nip06().isValidMnemonic(localAccount.seedWords.joinToString(separator = " "))) {
-                                        SeedWordsButton(localAccount)
+                                    if (Nip06().isValidMnemonic(seedWords)) {
+                                        SeedWordsButton(localAccount, seedWords)
                                     }
                                 }
                             }
@@ -317,13 +318,23 @@ private fun NSecQrButton(
     }
 
     if (showDialog) {
-        QrCodeDialog(
-            content = account.signer.keyPair.privKey!!.toNsec(),
-        ) {
-            Amber.instance.applicationIOScope.launch {
-                account.didBackup = true
-                LocalPreferences.saveToEncryptedStorage(context, account)
-                showDialog = false
+        var nsec by remember { mutableStateOf("") }
+
+        LaunchedEffect(Unit) {
+            launch(Dispatchers.IO) {
+                nsec = account.getNsec()
+            }
+        }
+
+        if (nsec.isNotBlank()) {
+            QrCodeDialog(
+                content = nsec,
+            ) {
+                Amber.instance.applicationIOScope.launch {
+                    account.didBackup = true
+                    LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
+                    showDialog = false
+                }
             }
         }
     }
@@ -334,9 +345,9 @@ private fun NSecQrButton(
                 if (password.isNotBlank()) {
                     Amber.instance.applicationIOScope.launch {
                         onLoading(true)
-                        val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password)
+                        val ncryptsec = account.nip49Encrypt(password)
                         account.didBackup = true
-                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                             navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
                         }
@@ -358,9 +369,9 @@ private fun NSecQrButton(
                     if (password.isNotBlank()) {
                         Amber.instance.applicationIOScope.launch {
                             onLoading(true)
-                            val ncryptsec = Nip49().encrypt(account.signer.keyPair.privKey!!.toHexKey(), password)
+                            val ncryptsec = account.nip49Encrypt(password)
                             account.didBackup = true
-                            LocalPreferences.saveToEncryptedStorage(context, account)
+                            LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
                             }
@@ -475,6 +486,7 @@ fun QrCodeDialog(
 @Composable
 private fun SeedWordsButton(
     account: Account,
+    seedWords: String,
 ) {
     var showSeedWords by remember { mutableStateOf(false) }
     val context = LocalContext.current
@@ -505,7 +517,7 @@ private fun SeedWordsButton(
                     ),
                 ) {
                     SeedWordsPage(
-                        seedWords = account.seedWords,
+                        seedWords = seedWords.split(" ").toSet(),
                         showNextButton = false,
                     )
                 }
@@ -524,7 +536,7 @@ private fun SeedWordsButton(
                         account.didBackup = true
                         showSeedWords = true
                         Amber.instance.applicationIOScope.launch {
-                            LocalPreferences.saveToEncryptedStorage(context, account)
+                            LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                         }
                     }
                 },
@@ -564,7 +576,7 @@ private fun NSecCopyButton(
                 if (password.isNotBlank()) {
                     encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading)
                 } else {
-                    copyNSec(context, scope, account, clipboardManager)
+                    copyNSec(account, clipboardManager)
                 }
             }
         }
@@ -578,11 +590,11 @@ private fun NSecCopyButton(
                 onApproved = {
                     scope.launch(Dispatchers.IO) {
                         account.didBackup = true
-                        LocalPreferences.saveToEncryptedStorage(context, account)
+                        LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                         if (password.isNotBlank()) {
                             encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading)
                         } else {
-                            copyNSec(context, scope, account, clipboardManager)
+                            copyNSec(account, clipboardManager)
                         }
                     }
                 },
@@ -607,30 +619,10 @@ private fun NSecCopyButton(
 }
 
 private fun copyNSec(
-    context: Context,
-    scope: CoroutineScope,
     account: Account,
     clipboardManager: Clipboard,
 ) {
-    account.signer.keyPair.privKey?.let {
-        account.didBackup = true
-        scope.launch(Dispatchers.IO) {
-            LocalPreferences.saveToEncryptedStorage(context, account)
-        }
-        scope.launch {
-            clipboardManager.setClipEntry(
-                ClipEntry(
-                    ClipData.newPlainText("", it.toNsec()),
-                ),
-            )
-
-            Toast.makeText(
-                context,
-                context.getString(R.string.secret_key_copied_to_clipboard),
-                Toast.LENGTH_SHORT,
-            ).show()
-        }
-    }
+    account.copyToClipboard(clipboardManager)
 }
 
 private fun encryptCopyNSec(
@@ -652,34 +644,32 @@ private fun encryptCopyNSec(
     } else {
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             onLoading(true)
-            account.signer.keyPair.privKey?.let {
-                try {
-                    val key = Nip49().encrypt(it.toHexKey(), password)
-                    account.didBackup = true
-                    LocalPreferences.saveToEncryptedStorage(context, account)
-                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                        clipboardManager.setClipEntry(
-                            ClipEntry(
-                                ClipData.newPlainText("", key),
-                            ),
-                        )
+            try {
+                val key = account.nip49Encrypt(password)
+                account.didBackup = true
+                LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    clipboardManager.setClipEntry(
+                        ClipEntry(
+                            ClipData.newPlainText("", key),
+                        ),
+                    )
 
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.secret_key_copied_to_clipboard),
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
-                    onLoading(false)
-                } catch (_: Exception) {
-                    onLoading(false)
-                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            context.getString(R.string.failed_to_encrypt_key),
-                            Toast.LENGTH_SHORT,
-                        ).show()
-                    }
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.secret_key_copied_to_clipboard),
+                        Toast.LENGTH_SHORT,
+                    ).show()
+                }
+                onLoading(false)
+            } catch (_: Exception) {
+                onLoading(false)
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    Toast.makeText(
+                        context,
+                        context.getString(R.string.failed_to_encrypt_key),
+                        Toast.LENGTH_SHORT,
+                    ).show()
                 }
             }
         }

@@ -138,7 +138,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         Amber.instance.applicationIOScope.launch {
-            val decrypted = acc.signer.decrypt(event.content, event.pubKey)
+            val decrypted = acc.decrypt(event.content, event.pubKey)
             notify(event, acc, decrypted, relay, encryptionType)
         }
     }
@@ -173,18 +173,18 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val bunkerRequest = JacksonMapper.mapper.readValue(request, BunkerRequest::class.java)
 
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {
-            acc.signer.signerSync.sign(bunkerRequest.event)
+            acc.sign(bunkerRequest.event)
         } else {
             null
         }
 
         val encryptedDataKind = if (bunkerRequest is BunkerRequestNip44Decrypt) {
-            val result = acc.signer.signerSync.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
+            val result = acc.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
 
             if (result.startsWith("{")) {
                 val event = AmberEvent.fromJson(result)
                 if (event.kind == SealedRumorEvent.KIND) {
-                    val decryptedSealData = acc.signer.signerSync.decrypt(event.content, acc.hexKey)
+                    val decryptedSealData = acc.decrypt(event.content, acc.hexKey)
                     if (decryptedSealData.startsWith("{")) {
                         val sealEvent = AmberEvent.fromJson(decryptedSealData)
                         EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
@@ -204,12 +204,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
             }
         } else if (bunkerRequest is BunkerRequestNip44Encrypt) {
-            val result = acc.signer.signerSync.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
+            val result = acc.nip44Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
             if (bunkerRequest.message.startsWith("{")) {
                 try {
                     val event = AmberEvent.fromJson(bunkerRequest.message)
                     if (event.kind == SealedRumorEvent.KIND) {
-                        val decryptedSealData = acc.signer.signerSync.decrypt(event.content, acc.hexKey)
+                        val decryptedSealData = acc.decrypt(event.content, acc.hexKey)
                         if (decryptedSealData.startsWith("{")) {
                             val sealEvent = AmberEvent.fromJson(decryptedSealData)
                             EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
@@ -233,12 +233,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ClearTextEncryptedDataKind(bunkerRequest.message, result)
             }
         } else if (bunkerRequest is BunkerRequestNip04Decrypt) {
-            val result = acc.signer.signerSync.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
+            val result = acc.nip04Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
 
             if (result.startsWith("{")) {
                 val event = AmberEvent.fromJson(result)
                 if (event.kind == SealedRumorEvent.KIND) {
-                    val decryptedSealData = acc.signer.signerSync.decrypt(event.content, acc.hexKey)
+                    val decryptedSealData = acc.decrypt(event.content, acc.hexKey)
                     if (decryptedSealData.startsWith("{")) {
                         val sealEvent = AmberEvent.fromJson(decryptedSealData)
                         EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
@@ -258,12 +258,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 ClearTextEncryptedDataKind(bunkerRequest.ciphertext, result)
             }
         } else if (bunkerRequest is BunkerRequestNip04Encrypt) {
-            val result = acc.signer.signerSync.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
+            val result = acc.nip04Encrypt(bunkerRequest.message, bunkerRequest.pubKey)
             if (bunkerRequest.message.startsWith("{")) {
                 try {
                     val event = AmberEvent.fromJson(bunkerRequest.message)
                     if (event.kind == SealedRumorEvent.KIND) {
-                        val decryptedSealData = acc.signer.signerSync.decrypt(event.content, acc.hexKey)
+                        val decryptedSealData = acc.decrypt(event.content, acc.hexKey)
                         if (decryptedSealData.startsWith("{")) {
                             val sealEvent = AmberEvent.fromJson(decryptedSealData)
                             EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)

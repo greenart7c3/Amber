@@ -8,10 +8,12 @@ import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.Dispatchers
@@ -156,46 +158,27 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         proxyPort: Int,
         signPolicy: Int,
     ) {
-        val account =
+        val keyPair =
             if (key.startsWith("ncryptsec")) {
                 val newKey = Nip49().decrypt(key, password)
-                Account(
-                    signer = NostrSignerInternal(KeyPair(Hex.decode(newKey))),
-                    name = MutableStateFlow(""),
-                    picture = MutableStateFlow(""),
-                    signPolicy = signPolicy,
-                    seedWords = emptySet(),
-                    didBackup = true,
-                )
+                KeyPair(Hex.decode(newKey))
             } else if (key.startsWith("nsec")) {
-                Account(
-                    signer = NostrSignerInternal(KeyPair(privKey = key.bechToBytes())),
-                    name = MutableStateFlow(""),
-                    picture = MutableStateFlow(""),
-                    signPolicy = signPolicy,
-                    seedWords = emptySet(),
-                    didBackup = true,
-                )
+                KeyPair(privKey = key.bechToBytes())
             } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
-                val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
-                Account(
-                    signer = NostrSignerInternal(keyPair),
-                    name = MutableStateFlow(""),
-                    picture = MutableStateFlow(""),
-                    signPolicy = signPolicy,
-                    seedWords = key.split(" ").toSet(),
-                    didBackup = true,
-                )
+                KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
             } else {
-                Account(
-                    signer = NostrSignerInternal(KeyPair(Hex.decode(key))),
-                    name = MutableStateFlow(""),
-                    picture = MutableStateFlow(""),
-                    signPolicy = signPolicy,
-                    seedWords = emptySet(),
-                    didBackup = true,
-                )
+                KeyPair(Hex.decode(key))
             }
+
+        val account = Account(
+            hexKey = keyPair.pubKey.toHexKey(),
+            npub = keyPair.pubKey.toNpub(),
+            name = MutableStateFlow(""),
+            picture = MutableStateFlow(""),
+            signPolicy = signPolicy,
+            didBackup = true,
+        )
+
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
             Amber.instance.settings = Amber.instance.settings.copy(
                 useProxy = useProxy,
@@ -205,7 +188,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Amber.instance.settings,
             )
         }
-        LocalPreferences.updatePrefsForLogin(Amber.instance, account)
+        LocalPreferences.updatePrefsForLogin(Amber.instance, account, keyPair.pubKey.toHexKey(), keyPair.privKey?.toHexKey(), null)
         startUI(account, route)
     }
 
@@ -218,12 +201,15 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     ) {
         val key = seedWords.joinToString(separator = " ") { it }
         val keyPair = KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
+        val hexKey = keyPair.pubKey.toHexKey()
+        val npub = keyPair.pubKey.toNpub()
+        val privKey = keyPair.privKey!!.toHexKey()
         val account = Account(
-            NostrSignerInternal(keyPair),
+            hexKey = hexKey,
+            npub = npub,
             name = MutableStateFlow(name),
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,
-            seedWords = seedWords,
             didBackup = false,
         )
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
@@ -238,7 +224,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Amber.instance.reconnect()
             }
         }
-        LocalPreferences.updatePrefsForLogin(Amber.instance, account)
+        LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey, privKey, key)
         startUI(account, null)
     }
 
@@ -256,7 +242,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
             Log.d(Amber.TAG, "Account saved")
-            LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account)
+            LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
         }
     }
 }

@@ -12,72 +12,33 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip04Dm.crypto.Nip04
-import com.vitorpamplona.quartz.nip44Encryption.Nip44
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
-import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
-import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
-import kotlinx.coroutines.CancellationException
 
 object AmberUtils {
-    fun encryptOrDecryptData(
+    suspend fun encryptOrDecryptData(
         data: String,
         type: SignerType,
         account: Account,
         pubKey: HexKey,
     ): String? = when (type) {
         SignerType.DECRYPT_ZAP_EVENT -> {
-            decryptZapEvent(data, account)
+            account.decryptZapEvent(data)
         }
         SignerType.NIP04_DECRYPT -> {
-            Nip04.decrypt(
-                data,
-                account.signer.keyPair.privKey!!,
-                Hex.decode(pubKey),
-            )
+            account.nip04Decrypt(data, pubKey)
         }
         SignerType.NIP04_ENCRYPT -> {
-            Nip04.encrypt(
-                data,
-                account.signer.keyPair.privKey!!,
-                Hex.decode(pubKey),
-            )
+            account.nip04Encrypt(data, pubKey)
         }
         SignerType.NIP44_ENCRYPT -> {
-            Nip44.encrypt(
-                data,
-                account.signer.keyPair.privKey!!,
-                pubKey.hexToByteArray(),
-            ).encodePayload()
+            account.nip44Encrypt(data, pubKey)
         }
         else -> {
-            Nip44.decrypt(
-                data,
-                account.signer.keyPair.privKey!!,
-                pubKey.hexToByteArray(),
-            )
-        }
-    }
-
-    private fun decryptZapEvent(
-        data: String,
-        account: Account,
-    ): String? {
-        val event = Event.fromJson(data) as LnZapRequestEvent
-        return try {
-            PrivateZapRequestBuilder().decryptZapEvent(
-                event = event,
-                signer = account.signer.signerSync,
-            ).toJson()
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            null
+            account.nip44Decrypt(data, pubKey)
         }
     }
 

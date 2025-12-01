@@ -12,8 +12,8 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AccountExportData
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip01Core.crypto.Nip01
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.CancellationException
@@ -49,18 +49,18 @@ object AccountExportService {
                                 onText(Amber.instance.getString(R.string.importing_account, index + 1))
 
                                 val accountData = AccountExportData.fromJson(line)
-                                val nsec = Nip49().decrypt(accountData.nsec, password)
-                                val signer = NostrSignerInternal(KeyPair(privKey = Hex.decode(nsec)))
+                                val privKey = Nip49().decrypt(accountData.nsec, password)
+                                val hexKey = Nip01.pubKeyCreate(Hex.decode(privKey))
                                 val account = Account(
-                                    signer = signer,
+                                    hexKey = hexKey.toHexKey(),
+                                    npub = hexKey.toNpub(),
                                     name = MutableStateFlow(accountData.name),
                                     picture = MutableStateFlow(accountData.picture ?: ""),
                                     signPolicy = accountData.signPolicy,
-                                    seedWords = signer.signerSync.decrypt(accountData.seedWords, signer.keyPair.pubKey.toHexKey()).split(" ").toSet(),
                                     didBackup = accountData.didBackup,
                                 )
                                 LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
-                                LocalPreferences.updatePrefsForLogin(Amber.instance, account)
+                                LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, accountData.seedWords)
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
 
@@ -119,11 +119,10 @@ object AccountExportService {
     /**
      * Convert an Account to exportable data with encrypted private key
      */
-    private fun accountToExportData(account: Account, password: String): AccountExportData {
-        val privKey = account.signer.keyPair.privKey
-        val encrypedSeedWords = if (account.seedWords.isNotEmpty()) account.signer.signerSync.nip44Encrypt(account.seedWords.joinToString(" "), account.hexKey) else ""
-
-        val encryptedNsec = Nip49().encrypt(privKey!!.toHexKey(), password)
+    private suspend fun accountToExportData(account: Account, password: String): AccountExportData {
+        val seedWords = account.seedWords()
+        val encrypedSeedWords = if (seedWords != null && seedWords.isNotBlank()) account.nip44Encrypt(seedWords, account.hexKey) else ""
+        val encryptedNsec = account.nip49Encrypt(password)
 
         return AccountExportData(
             npub = account.npub,

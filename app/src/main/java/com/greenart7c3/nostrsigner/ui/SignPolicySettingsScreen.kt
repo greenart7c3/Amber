@@ -107,7 +107,7 @@ fun SignPolicySettingsScreen(
             onClick = {
                 scope.launch(Dispatchers.IO) {
                     account.signPolicy = selectedOption
-                    LocalPreferences.saveToEncryptedStorage(context, account)
+                    LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                     scope.launch(Dispatchers.Main) {
                         navController.navigateUp()
                     }

@@ -103,12 +103,12 @@ object BunkerRequestUtils {
             val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
 
             if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-                account.signer.signerSync.nip44Encrypt(
+                account.nip44Encrypt(
                     plainText,
                     bunkerRequest.localKey,
                 )
             } else {
-                account.signer.signerSync.nip04Encrypt(
+                account.nip04Encrypt(
                     plainText,
                     bunkerRequest.localKey,
                 )
@@ -155,7 +155,7 @@ object BunkerRequestUtils {
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
-        var signedEvent = account.signer.signerSync.sign<Event>(
+        var signedEvent = account.signSync<Event>(
             TimeUtils.now(),
             NostrConnectEvent.KIND,
             arrayOf(arrayOf("p", localKey)),
@@ -171,7 +171,7 @@ object BunkerRequestUtils {
             if (!success) {
                 errorCount++
                 delay(1000)
-                signedEvent = account.signer.signerSync.sign(
+                signedEvent = account.signSync(
                     TimeUtils.now(),
                     NostrConnectEvent.KIND,
                     arrayOf(arrayOf("p", localKey)),

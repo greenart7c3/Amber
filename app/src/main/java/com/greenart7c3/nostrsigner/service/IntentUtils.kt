@@ -145,7 +145,7 @@ object IntentUtils {
                             localAccount = it
                         }
                     }
-                    val signedEvent = localAccount.signer.sign<Event>(
+                    val signedEvent = localAccount.signSync<Event>(
                         unsignedEvent.createdAt,
                         unsignedEvent.kind,
                         unsignedEvent.tags,
@@ -203,7 +203,7 @@ object IntentUtils {
                                     try {
                                         val event = AmberEvent.fromJson(localData)
                                         if (event.kind == SealedRumorEvent.KIND) {
-                                            val decryptedSealData = account.signer.signerSync.decrypt(event.content, account.hexKey)
+                                            val decryptedSealData = account.decrypt(event.content, account.hexKey)
                                             if (decryptedSealData.startsWith("{")) {
                                                 val sealEvent = AmberEvent.fromJson(decryptedSealData)
                                                 EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
@@ -230,7 +230,7 @@ object IntentUtils {
                                 if (result.startsWith("{")) {
                                     val event = AmberEvent.fromJson(result)
                                     if (event.kind == SealedRumorEvent.KIND) {
-                                        val decryptedSealData = account.signer.signerSync.decrypt(event.content, account.hexKey)
+                                        val decryptedSealData = account.decrypt(event.content, account.hexKey)
                                         if (decryptedSealData.startsWith("{")) {
                                             val sealEvent = AmberEvent.fromJson(decryptedSealData)
                                             EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
@@ -380,7 +380,7 @@ object IntentUtils {
                     }
                 }
 
-                val signed = localAccount.signer.sign<Event>(
+                val signed = localAccount.signSync<Event>(
                     unsignedEvent.createdAt,
                     unsignedEvent.kind,
                     unsignedEvent.tags,
@@ -451,7 +451,7 @@ object IntentUtils {
                                 try {
                                     val event = AmberEvent.fromJson(data)
                                     if (event.kind == SealedRumorEvent.KIND) {
-                                        val decryptedSealData = account.signer.signerSync.decrypt(event.content, account.hexKey)
+                                        val decryptedSealData = account.decrypt(event.content, account.hexKey)
                                         if (decryptedSealData.startsWith("{")) {
                                             val sealEvent = AmberEvent.fromJson(decryptedSealData)
                                             EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
@@ -478,7 +478,7 @@ object IntentUtils {
                             if (result.startsWith("{")) {
                                 val event = AmberEvent.fromJson(result)
                                 if (event.kind == SealedRumorEvent.KIND) {
-                                    val decryptedSealData = account.signer.signerSync.decrypt(event.content, account.hexKey)
+                                    val decryptedSealData = account.decrypt(event.content, account.hexKey)
                                     if (decryptedSealData.startsWith("{")) {
                                         val sealEvent = AmberEvent.fromJson(decryptedSealData)
                                         EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)

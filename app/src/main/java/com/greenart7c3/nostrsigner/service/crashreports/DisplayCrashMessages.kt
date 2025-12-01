@@ -53,7 +53,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
-import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip40Expiration.expiration
@@ -120,8 +119,7 @@ fun DisplayCrashMessages(
                             val thirtyDaysInSeconds = 30L * 86_400
                             expiration(TimeUtils.now() + thirtyDaysInSeconds)
                         }
-                        account.signer.signerSync.sign(template)
-                        val signedEvents = NIP17Factory().createMessageNIP17(template, account.signer)
+                        val signedEvents = account.createMessageNIP17(template)
                         signedEvents.wraps.forEach { wrap ->
                             client.send(
                                 event = wrap,

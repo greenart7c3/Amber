@@ -13,10 +13,8 @@ import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
 import kotlin.collections.component1
@@ -384,18 +382,30 @@ object LocalPreferences {
         return false
     }
 
-    fun updatePrefsForLogin(context: Context, account: Account) {
+    fun updatePrefsForLogin(
+        context: Context,
+        account: Account,
+        pubKey: String?,
+        privKey: String?,
+        seedWords: String?,
+    ) {
         setCurrentAccount(context, account)
         Amber.instance.applicationIOScope.launch {
-            saveToEncryptedStorage(context, account)
+            saveToEncryptedStorage(context, account, pubKey, privKey, seedWords)
         }
     }
 
-    suspend fun saveToEncryptedStorage(context: Context, account: Account) {
+    suspend fun saveToEncryptedStorage(
+        context: Context,
+        account: Account,
+        pubKey: String?,
+        privKey: String?,
+        seedWords: String?,
+    ) {
         val prefs = sharedPrefs(context = context, account.npub)
         prefs.edit {
             apply {
-                account.signer.keyPair.pubKey.let { putString(PrefKeys.NOSTR_PUBKEY.key, it.toHexKey()) }
+                pubKey?.let { putString(PrefKeys.NOSTR_PUBKEY.key, it) }
                 putString(PrefKeys.ACCOUNT_NAME.key, account.name.value)
                 putString(PrefKeys.PROFILE_URL.key, account.picture.value)
                 putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
@@ -403,16 +413,18 @@ object LocalPreferences {
             }
         }
 
-        account.signer.keyPair.privKey?.toHexKey()?.let {
+        privKey?.let {
             DataStoreAccess.saveEncryptedKey(context, account.npub, DataStoreAccess.NOSTR_PRIVKEY, it)
         }
 
-        DataStoreAccess.saveEncryptedKey(
-            context,
-            account.npub,
-            DataStoreAccess.SEED_WORDS,
-            account.seedWords.joinToString(" "),
-        )
+        seedWords?.let {
+            DataStoreAccess.saveEncryptedKey(
+                context,
+                account.npub,
+                DataStoreAccess.SEED_WORDS,
+                seedWords,
+            )
+        }
         accountCache.put(account.npub, account)
     }
 
@@ -486,21 +498,18 @@ object LocalPreferences {
         }
         sharedPrefs(context, npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
-            val privKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
             val picture = getString(PrefKeys.PROFILE_URL.key, "") ?: ""
             val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
-            val savedSeedWords = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS)
-            val seedWords = savedSeedWords?.split(" ")?.toSet() ?: emptySet()
             val didBackup = getBoolean(PrefKeys.DID_BACKUP.key, true)
 
             val account =
                 Account(
-                    signer = NostrSignerInternal(KeyPair(privKey = privKey?.hexToByteArray(), pubKey = pubKey.hexToByteArray())),
+                    hexKey = pubKey,
+                    npub = pubKey.hexToByteArray().toNpub(),
                     name = MutableStateFlow(name),
                     picture = MutableStateFlow(picture),
                     signPolicy = signPolicy,
-                    seedWords = seedWords,
                     didBackup = didBackup,
                 )
             accountCache.put(npub, account)

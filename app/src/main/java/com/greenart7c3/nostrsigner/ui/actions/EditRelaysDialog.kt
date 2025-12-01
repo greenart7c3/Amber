@@ -79,6 +79,7 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeoutOrNull
 
 @Composable
 fun DefaultRelaysScreen(
@@ -321,7 +322,14 @@ fun onAddRelay(
                 var filterResult = false
                 val ncSub = UUID.randomUUID().toString().substring(0, 4)
 
+                var canSendRequest = false
+
                 val listener = object : IRelayClientListener {
+                    override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
+                        canSendRequest = true
+                        super.onConnected(relay, pingMillis, compressed)
+                    }
+
                     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
                         accountStateViewModel.toast(
                             context.getString(R.string.relay),
@@ -355,6 +363,31 @@ fun onAddRelay(
                     ncSub,
                     mapOf(addedWSS to filters),
                 )
+
+                val canContinue = withTimeoutOrNull(30000) {
+                    while (!canSendRequest) {
+                        delay(200)
+                    }
+                    true
+                }
+
+                if (canContinue == null) {
+                    accountStateViewModel.toast(
+                        context.getString(R.string.relay),
+                        context.getString(R.string.could_not_connect_to_relay),
+                        onAccept = {
+                            relays2.add(addedWSS)
+                            onDone()
+                        },
+                        onReject = {},
+                    )
+                    Amber.instance.client.close(ncSub)
+                    Amber.instance.client.unsubscribe(listener)
+                    Amber.instance.client.reconnect()
+                    textFieldRelay.value = TextFieldValue("")
+                    isLoading.value = false
+                    return@secondLaunch
+                }
 
                 val result = Amber.instance.client.sendAndWaitForResponse(
                     event = signedEvent,

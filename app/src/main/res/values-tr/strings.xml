@@ -595,4 +595,5 @@
     <string name="recover_from_bac">Yedekten geri yükle</string>
     <string name="recover_from_backup">Yedekten geri yükle</string>
     <string name="importing_account">Hesap %1$d içe aktarılıyor</string>
+    <string name="could_not_connect_to_relay">Could not connect to relay. Would you like to add it anyway?</string>
 </resources>

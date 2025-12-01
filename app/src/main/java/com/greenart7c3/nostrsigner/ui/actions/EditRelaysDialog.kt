@@ -51,10 +51,7 @@ import com.greenart7c3.nostrsigner.checkNotInMainThread
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
-import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
-import com.greenart7c3.nostrsigner.service.Nip11CachedRetriever
-import com.greenart7c3.nostrsigner.service.Nip11Retriever
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.RelayCard
@@ -290,165 +287,117 @@ fun onAddRelay(
             return
         }
 
-        scope.launch(Dispatchers.IO) {
-            Nip11CachedRetriever.clearCache()
-            Nip11CachedRetriever.loadRelayInfo(
-                relay = addedWSS,
-                okHttpClient = {
-                    val useProxy = if (isPrivateIp) false else Amber.instance.settings.useProxy
-                    HttpClientManager.getHttpClient(useProxy)
-                },
-                onInfo = { info ->
-                    scope.launch(Dispatchers.IO) secondLaunch@{
-                        if (shouldCheckForBunker) {
-                            val relays = Amber.instance.getSavedRelays(account)
-                            if (addedWSS in relays) {
+        scope.launch(Dispatchers.IO) secondLaunch@{
+            if (shouldCheckForBunker) {
+                val relays = Amber.instance.getSavedRelays(account)
+                if (addedWSS in relays) {
+                    relays2.add(addedWSS)
+                    onDone()
+                    textFieldRelay.value = TextFieldValue("")
+                    isLoading.value = false
+                    return@secondLaunch
+                }
+
+                val signer = NostrSignerInternal(KeyPair())
+                val encryptedContent = signer.signerSync.nip04Encrypt(
+                    "Test bunker event",
+                    signer.keyPair.pubKey.toHexKey(),
+                )
+
+                val signedEvent = signer.signerSync.sign<Event>(
+                    TimeUtils.now(),
+                    NostrConnectEvent.KIND,
+                    arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+                    encryptedContent,
+                )
+
+                val filters = listOf(
+                    Filter(
+                        kinds = listOf(NostrConnectEvent.KIND),
+                        tags = mapOf("p" to listOf(signedEvent.pubKey)),
+                    ),
+                )
+
+                var filterResult = false
+                val ncSub = UUID.randomUUID().toString().substring(0, 4)
+
+                val listener = object : IRelayClientListener {
+                    override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
+                        accountStateViewModel.toast(
+                            context.getString(R.string.relay),
+                            context.getString(R.string.could_not_connect_to_relay),
+                            onAccept = {
                                 relays2.add(addedWSS)
                                 onDone()
-                                textFieldRelay.value = TextFieldValue("")
-                                isLoading.value = false
-                                return@secondLaunch
-                            }
+                            },
+                            onReject = {},
+                        )
+                        super.onCannotConnect(relay, errorMessage)
+                    }
 
-                            val signer = NostrSignerInternal(KeyPair())
-                            val encryptedContent = signer.signerSync.nip04Encrypt(
-                                "Test bunker event",
-                                signer.keyPair.pubKey.toHexKey(),
-                            )
-
-                            val signedEvent = signer.signerSync.sign<Event>(
-                                TimeUtils.now(),
-                                NostrConnectEvent.KIND,
-                                arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
-                                encryptedContent,
-                            )
-
-                            val filters = listOf(
-                                Filter(
-                                    kinds = listOf(NostrConnectEvent.KIND),
-                                    tags = mapOf("p" to listOf(signedEvent.pubKey)),
-                                ),
-                            )
-
-                            var filterResult = false
-                            val ncSub = UUID.randomUUID().toString().substring(0, 4)
-
-                            val listener = object : IRelayClientListener {
-                                override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-                                    if (msg is EventMessage) {
-                                        if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
-                                            filterResult = true
-                                        }
-                                    }
-                                    super.onIncomingMessage(relay, msgStr, msg)
-                                }
-                            }
-
-                            Amber.instance.client.subscribe(listener)
-
-                            Amber.instance.client.openReqSubscription(
-                                ncSub,
-                                mapOf(addedWSS to filters),
-                            )
-
-                            val result = Amber.instance.client.sendAndWaitForResponse(
-                                event = signedEvent,
-                                relayList = setOf(addedWSS),
-                            )
-
-                            delay(3000)
-
-                            if (result) {
-                                var count = 0
-                                while (!filterResult && count < 10) {
-                                    delay(1000)
-                                    count++
-                                }
-                            } else {
-                                AmberListenerSingleton.showErrorMessage()
+                    override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                        if (msg is EventMessage) {
+                            if (ncSub == msg.subId && msg.event.kind == NostrConnectEvent.KIND && msg.event.id == signedEvent.id) {
                                 filterResult = true
                             }
+                        }
+                        super.onIncomingMessage(relay, msgStr, msg)
+                    }
+                }
 
-                            Amber.instance.client.close(ncSub)
-                            Amber.instance.client.unsubscribe(listener)
-                            Amber.instance.client.reconnect()
+                Amber.instance.client.subscribe(listener)
 
-                            if (result && filterResult) {
-                                relays2.add(addedWSS)
-                                onDone()
-                            } else if (!filterResult) {
-                                accountStateViewModel.toast(
-                                    context.getString(R.string.relay),
-                                    context.getString(R.string.relay_filter_failed),
-                                    onAccept = {
-                                        relays2.add(addedWSS)
-                                        onDone()
-                                    },
-                                    onReject = {},
-                                )
-                            }
+                if (!Amber.instance.client.isActive()) {
+                    Amber.instance.client.connect()
+                }
 
-                            textFieldRelay.value = TextFieldValue("")
-                            isLoading.value = false
-                        } else {
+                Amber.instance.client.openReqSubscription(
+                    ncSub,
+                    mapOf(addedWSS to filters),
+                )
+
+                val result = Amber.instance.client.sendAndWaitForResponse(
+                    event = signedEvent,
+                    relayList = setOf(addedWSS),
+                )
+
+                if (result) {
+                    var count = 0
+                    while (!filterResult && count < 10) {
+                        delay(1000)
+                        count++
+                    }
+                } else {
+                    AmberListenerSingleton.showErrorMessage()
+                    filterResult = true
+                }
+
+                Amber.instance.client.close(ncSub)
+                Amber.instance.client.unsubscribe(listener)
+                Amber.instance.client.reconnect()
+
+                if (result && filterResult) {
+                    relays2.add(addedWSS)
+                    onDone()
+                } else if (!filterResult) {
+                    accountStateViewModel.toast(
+                        context.getString(R.string.relay),
+                        context.getString(R.string.relay_filter_failed),
+                        onAccept = {
                             relays2.add(addedWSS)
                             onDone()
-                            textFieldRelay.value = TextFieldValue("")
-                        }
-                    }
-                },
-                onError = { dirtyUrl, errorCode, exceptionMessage ->
-                    isLoading.value = false
-                    val msg =
-                        when (errorCode) {
-                            Nip11Retriever.ErrorCode.FAIL_TO_ASSEMBLE_URL ->
-                                context.getString(
-                                    R.string.relay_information_document_error_assemble_url,
-                                    dirtyUrl,
-                                    exceptionMessage,
-                                )
+                        },
+                        onReject = {},
+                    )
+                }
 
-                            Nip11Retriever.ErrorCode.FAIL_TO_REACH_SERVER ->
-                                context.getString(
-                                    R.string.relay_information_document_error_assemble_url,
-                                    dirtyUrl,
-                                    exceptionMessage,
-                                )
-
-                            Nip11Retriever.ErrorCode.FAIL_TO_PARSE_RESULT ->
-                                context.getString(
-                                    R.string.relay_information_document_error_assemble_url,
-                                    dirtyUrl,
-                                    exceptionMessage,
-                                )
-
-                            Nip11Retriever.ErrorCode.FAIL_WITH_HTTP_STATUS ->
-                                context.getString(
-                                    R.string.relay_information_document_error_assemble_url,
-                                    dirtyUrl,
-                                    exceptionMessage,
-                                )
-                        }
-
-                    if (exceptionMessage?.contains("EACCES (Permission denied)") == true) {
-                        accountStateViewModel.toast(
-                            context.getString(R.string.unable_to_download_relay_document),
-                            context.getString(R.string.network_permission_message),
-                        )
-                    } else if (exceptionMessage == "socket failed: EPERM (Operation not permitted)") {
-                        accountStateViewModel.toast(
-                            context.getString(R.string.unable_to_download_relay_document),
-                            context.getString(R.string.network_permission_message),
-                        )
-                    } else {
-                        accountStateViewModel.toast(
-                            context.getString(R.string.unable_to_download_relay_document),
-                            msg,
-                        )
-                    }
-                    textFieldRelay.value = TextFieldValue("")
-                },
-            )
+                textFieldRelay.value = TextFieldValue("")
+                isLoading.value = false
+            } else {
+                relays2.add(addedWSS)
+                onDone()
+                textFieldRelay.value = TextFieldValue("")
+            }
         }
     }
 }

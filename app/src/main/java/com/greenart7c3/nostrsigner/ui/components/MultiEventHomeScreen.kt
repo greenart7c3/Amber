@@ -69,7 +69,6 @@ import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
-import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers

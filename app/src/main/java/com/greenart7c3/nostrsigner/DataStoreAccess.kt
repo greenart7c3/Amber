@@ -49,5 +49,7 @@ object DataStoreAccess {
         getDataStore(context, npub).edit { prefs ->
             prefs.clear()
         }
+
+        storeCache.remove(npub)
     }
 }

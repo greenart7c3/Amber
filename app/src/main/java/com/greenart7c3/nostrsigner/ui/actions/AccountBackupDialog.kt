@@ -76,7 +76,6 @@ import androidx.navigation.NavHostController
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
-import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -228,7 +227,7 @@ fun AccountBackupScreen(
                             launch(Dispatchers.IO) {
                                 localAccount = LocalPreferences.loadFromEncryptedStorage(Amber.instance, it.npub)
                                 localAccount?.let { acc ->
-                                    seedWords = DataStoreAccess.getEncryptedKey(Amber.instance, acc.npub, DataStoreAccess.SEED_WORDS) ?: ""
+                                    seedWords = acc.seedWords() ?: ""
                                 }
                             }
                         }

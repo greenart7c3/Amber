@@ -71,8 +71,6 @@ class Account(
         return Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
     }
 
-    fun nip49Decrypt(nCryptSec: String, password: String): String = Nip49().decrypt(nCryptSec, password)
-
     suspend fun nip44Encrypt(plainText: String, toPublicKey: String): String {
         val signer = getSigner()
         return signer.signerSync.nip44Encrypt(plainText, toPublicKey)

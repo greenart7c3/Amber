@@ -78,7 +78,7 @@ class Account(
 
     suspend fun nip04Encrypt(plainText: String, toPublicKey: String): String {
         val signer = getSigner()
-        return signer.signerSync.nip44Encrypt(plainText, toPublicKey)
+        return signer.signerSync.nip04Encrypt(plainText, toPublicKey)
     }
 
     suspend fun nip44Decrypt(cipherText: String, fromPublicKey: String): String {
@@ -88,7 +88,7 @@ class Account(
 
     suspend fun nip04Decrypt(cipherText: String, fromPublicKey: String): String {
         val signer = getSigner()
-        return signer.signerSync.nip44Decrypt(cipherText, fromPublicKey)
+        return signer.signerSync.nip04Decrypt(cipherText, fromPublicKey)
     }
 
     suspend fun decrypt(encryptedContent: String, fromPublicKey: String): String {

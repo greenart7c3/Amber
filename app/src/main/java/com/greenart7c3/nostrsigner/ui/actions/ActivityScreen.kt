@@ -42,7 +42,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
@@ -56,20 +55,9 @@ fun ActivityScreen(
     account: Account,
     key: String,
 ) {
-    val activities = Amber.instance.getHistoryDatabase(account.npub).dao().getAllHistory(key).collectAsStateWithLifecycle(emptyList())
     val context = LocalContext.current
-    // State for the search query
     var searchQuery by remember { mutableStateOf("") }
-
-    // Filtered activities based on the search query
-    val filteredActivities = activities.value.filter { activity ->
-        if (searchQuery.isEmpty()) {
-            true
-        } else {
-            val permission = Permission(activity.type.toLowerCase(Locale.current), activity.kind)
-            permission.toLocalizedString(context, true).contains(searchQuery, ignoreCase = true)
-        }
-    }
+    val filteredActivities = if (searchQuery.isEmpty()) Amber.instance.getHistoryDatabase(account.npub).dao().getAllHistory(key).collectAsStateWithLifecycle(emptyList()) else Amber.instance.getHistoryDatabase(account.npub).dao().searchAllHistory(key, searchQuery.toLowerCase(Locale.current)).collectAsStateWithLifecycle(emptyList())
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
 
     Column(
@@ -94,7 +82,7 @@ fun ActivityScreen(
             ),
         ) {
             item {
-                if (filteredActivities.isEmpty()) {
+                if (filteredActivities.value.isEmpty()) {
                     Text(
                         stringResource(R.string.no_activities_found),
                         Modifier
@@ -107,12 +95,7 @@ fun ActivityScreen(
                 }
             }
 
-            items(filteredActivities) { activity ->
-                val permission =
-                    Permission(
-                        activity.type.toLowerCase(Locale.current),
-                        activity.kind,
-                    )
+            items(filteredActivities.value) { activity ->
                 Column {
                     Row(
                         modifier = Modifier
@@ -126,7 +109,7 @@ fun ActivityScreen(
                         ) {
                             Text(
                                 modifier = Modifier.padding(top = 16.dp),
-                                text = if (permission.type == "connect") stringResource(R.string.connect) else permission.toLocalizedString(context),
+                                text = activity.translatedPermission,
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
                                 color = if (activity.accepted) Color.Unspecified else Color.Gray,

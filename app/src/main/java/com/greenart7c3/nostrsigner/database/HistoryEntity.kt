@@ -33,4 +33,5 @@ data class HistoryEntity(
     val kind: Int?,
     val time: Long,
     val accepted: Boolean,
+    val translatedPermission: String = "",
 )

@@ -120,7 +120,7 @@ android {
             resValue "string", "app_name", "@string/app_name_release"
         }
         debug {
-            //applicationIdSuffix '.debug'
+            applicationIdSuffix '.debug'
             versionNameSuffix '-DEBUG'
             resValue "string", "app_name", "@string/app_name_debug"
         }

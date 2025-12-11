@@ -197,6 +197,8 @@ class Amber :
     override fun onCreate() {
         super.onCreate()
 
+        instance = this
+
         isStartingAppState.value = true
         isStartingApp.value = true
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
@@ -206,7 +208,6 @@ class Amber :
         startCleanLogsAlarm()
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
-        _instance = this
 
         LocalPreferences.allSavedAccounts(this).forEach {
             databases[it.npub] = getDatabase(it.npub)
@@ -371,21 +372,21 @@ class Amber :
 
     fun getDatabase(npub: String): AppDatabase {
         if (!databases.containsKey(npub)) {
-            databases[npub] = AppDatabase.getDatabase(this, npub)
+            databases[npub] = AppDatabase.getDatabase(applicationContext, npub)
         }
         return databases[npub]!!
     }
 
     fun getLogDatabase(npub: String): LogDatabase {
         if (!logDatabases.containsKey(npub)) {
-            logDatabases[npub] = LogDatabase.getDatabase(this, npub)
+            logDatabases[npub] = LogDatabase.getDatabase(applicationContext, npub)
         }
         return logDatabases[npub]!!
     }
 
     fun getHistoryDatabase(npub: String): HistoryDatabase {
         if (!historyDatabases.containsKey(npub)) {
-            historyDatabases[npub] = HistoryDatabase.getDatabase(this, npub)
+            historyDatabases[npub] = HistoryDatabase.getDatabase(applicationContext, npub)
         }
         return historyDatabases[npub]!!
     }
@@ -503,13 +504,8 @@ class Amber :
     companion object {
         var isAppInForeground = false
         const val TAG = "Amber"
-
-        @Volatile
-        private var _instance: Amber? = null
-        val instance: Amber get() =
-            _instance ?: synchronized(this) {
-                _instance ?: Amber().also { _instance = it }
-            }
+        lateinit var instance: Amber
+            private set
     }
 }
 

@@ -7,14 +7,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -27,20 +25,14 @@ import com.fasterxml.jackson.databind.SerializerProvider
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.service.ApplicationNameCache
-import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.BunkerSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
 
 @Composable
 fun IncomingRequestScreen(
@@ -55,25 +47,7 @@ fun IncomingRequestScreen(
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
-    val context = LocalContext.current
     var loading by remember { mutableStateOf(false) }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            loading = true
-            try {
-                LocalPreferences.allSavedAccounts(context).forEach { account ->
-                    Amber.instance.getDatabase(account.npub).dao().getAllApplications().forEach {
-                        if (it.application.name.isNotBlank()) {
-                            ApplicationNameCache.names["${account.npub.toShortenHex()}-${it.application.key}"] = it.application.name
-                        }
-                    }
-                }
-            } finally {
-                loading = false
-            }
-        }
-    }
 
     if (loading) {
         CenterCircularProgressIndicator(modifier)

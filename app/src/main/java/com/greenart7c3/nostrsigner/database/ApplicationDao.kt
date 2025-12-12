@@ -1,12 +1,12 @@
 package com.greenart7c3.nostrsigner.database
 
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface ApplicationDao {
@@ -21,7 +21,10 @@ interface ApplicationDao {
     suspend fun getAllNotConnected(): List<ApplicationWithPermissions>
 
     @Query("SELECT a.* FROM application a WHERE a.pubKey = :pubKey ORDER BY a.lastUsed DESC")
-    fun getAllFlow(pubKey: String): Flow<List<ApplicationEntity>>
+    fun getAllPaging(pubKey: String): PagingSource<Int, ApplicationEntity>
+
+    @Query("SELECT DISTINCT relays FROM application")
+    fun getAllRelayLists(): List<RelayListWrapper>
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
@@ -42,9 +45,8 @@ interface ApplicationDao {
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key and rememberType = 4")
     suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
 
-    @Query("SELECT * FROM application")
-    @Transaction
-    fun getAllApplications(): List<ApplicationWithPermissions>
+    @Query("SELECT `key`, `name` FROM application WHERE name <> ''")
+    fun getApplicationKeyNames(): List<ApplicationKeyName>
 
     @Query("SELECT * FROM applicationPermission WHERE acceptable = 0 AND rejectUntil = 0")
     @Transaction
@@ -70,6 +72,9 @@ interface ApplicationDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
     suspend fun insertApplication(event: ApplicationEntity): Long?
+
+    @Insert(onConflict = OnConflictStrategy.REPLACE)
+    fun insertAll(events: List<ApplicationEntity>): List<Long>?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction

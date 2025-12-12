@@ -45,6 +45,10 @@ interface HistoryDao {
     @Transaction
     suspend fun getOldHistory(time: Long): List<HistoryEntity>
 
+    @Query("DELETE FROM history WHERE time < :time")
+    @Transaction
+    suspend fun deleteOldHistory(time: Long): Int
+
     @Delete
     @Transaction
     suspend fun deleteHistory(historyEntity: HistoryEntity)

@@ -392,15 +392,13 @@ class Amber :
     }
 
     fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
-        val savedRelays = mutableSetOf<NormalizedRelayUrl>()
         val database = getDatabase(account.npub)
-        database.dao().getAllApplications().forEach {
-            it.application.relays.forEach { setupInfo ->
-                savedRelays.add(setupInfo)
+        val savedRelays = buildSet {
+            database.dao().getAllRelayLists().forEach {
+                addAll(it.relays)
             }
+            addAll(settings.defaultRelays)
         }
-
-        savedRelays.addAll(settings.defaultRelays)
 
         return savedRelays
     }

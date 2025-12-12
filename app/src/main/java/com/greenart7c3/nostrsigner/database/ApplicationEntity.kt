@@ -89,3 +89,12 @@ class Converters {
         it.url
     }
 }
+
+data class RelayListWrapper(
+    val relays: List<NormalizedRelayUrl>,
+)
+
+data class ApplicationKeyName(
+    val key: String,
+    val name: String,
+)

@@ -18,34 +18,15 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                 val oneWeek = System.currentTimeMillis() - (ONE_WEEK * 1000L)
                 val oneWeekAgo = TimeUtils.oneWeekAgo()
                 val historyDatabase = Amber.instance.getHistoryDatabase(it.npub)
-                val countHistory = historyDatabase.dao().countOldHistory(oneWeekAgo)
-                Log.d(Amber.TAG, "Deleting $countHistory old history entries")
-                if (countHistory > 0) {
-                    var logs = historyDatabase.dao().getOldHistory(oneWeekAgo)
-                    var count = 0
-                    while (logs.isNotEmpty()) {
-                        count++
-                        logs.forEach { history ->
-                            historyDatabase.dao().deleteHistory(history)
-                        }
-                        logs = historyDatabase.dao().getOldHistory(oneWeekAgo)
-                    }
+                val deletedHistory = historyDatabase.dao().deleteOldHistory(oneWeekAgo)
+                if (deletedHistory > 0) {
+                    Log.d(Amber.TAG, "Deleted $deletedHistory old history entries")
                 }
 
                 val logDatabase = Amber.instance.getLogDatabase(it.npub)
-                val countLog = logDatabase.dao().countOldLog(oneWeek)
-                Log.d(Amber.TAG, "Deleting $countLog old log entries from ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(oneWeek)}")
-                if (countLog > 0) {
-                    var logs = logDatabase.dao().getOldLog(oneWeek)
-                    var count = 0
-                    while (logs.isNotEmpty()) {
-                        count++
-                        logs.forEach { history ->
-                            Log.d(Amber.TAG, "Deleting log entry ${com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds(history.time)}")
-                            logDatabase.dao().deleteLog(history)
-                        }
-                        logs = logDatabase.dao().getOldLog(oneWeek)
-                    }
+                val deletedLogs = logDatabase.dao().deleteOldLog(oneWeek)
+                if (deletedLogs > 0) {
+                    Log.d(Amber.TAG, "Deleted $deletedLogs old log entries")
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

@@ -385,14 +385,10 @@ fun MainScreen(
                 composable(
                     Route.Applications.route,
                     content = {
-                        val scrollState = rememberScrollState()
-
                         ApplicationsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             account = account,

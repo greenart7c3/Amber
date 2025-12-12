@@ -33,13 +33,9 @@ interface LogDao {
     @Transaction
     suspend fun clearLogs()
 
-    @Query("SELECT COUNT(*) FROM amber_log WHERE time < :time")
+    @Query("DELETE FROM amber_log WHERE time < :time")
     @Transaction
-    suspend fun countOldLog(time: Long): Long
-
-    @Query("SELECT * FROM amber_log WHERE time < :time LIMIT 100")
-    @Transaction
-    suspend fun getOldLog(time: Long): List<LogEntity>
+    suspend fun deleteOldLog(time: Long): Int
 
     @Delete
     @Transaction

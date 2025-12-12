@@ -205,6 +205,9 @@ dependencies {
     implementation libs.work.runtime.ktx
     implementation libs.material3.window
     implementation libs.adaptive.android
+    implementation libs.paging.common
+    implementation libs.paging.compose
+    implementation libs.paging.runtime
 
     testImplementation libs.junit
     androidTestImplementation libs.ext.junit
@@ -234,6 +237,8 @@ dependencies {
 
     ksp(libs.room.compiler)
     implementation(libs.room.ktx)
+    implementation(libs.room.runtime)
+    implementation(libs.room.paging)
 
     freeImplementation libs.okhttp
     freeImplementation libs.okhttpCoroutines

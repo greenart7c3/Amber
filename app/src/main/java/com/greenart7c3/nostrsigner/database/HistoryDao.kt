@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.database
 import android.util.Log
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
+import androidx.paging.PagingSource
 import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
@@ -11,21 +12,27 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Permission
-import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface HistoryDao {
     @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
-    fun getAllHistory(pk: String): Flow<List<HistoryEntity>>
+    fun getAllHistoryPaging(pk: String): PagingSource<Int, HistoryEntity>
 
     @Query("SELECT * FROM history where (kind = :query OR LOWER(type) LIKE '%' || :query || '%' OR LOWER(translatedPermission) LIKE '%' || :query || '%') AND pkKey = :pk ORDER BY time DESC")
-    fun searchAllHistory(pk: String, query: String): Flow<List<HistoryEntity>>
+    fun searchAllHistoryPaging(pk: String, query: String): PagingSource<Int, HistoryEntity>
 
     @Query("SELECT * FROM history ORDER BY time DESC")
-    fun getAllHistory(): Flow<List<HistoryEntity>>
+    fun getAllHistoryPaging(): PagingSource<Int, HistoryEntity>
 
-    @Query("SELECT * FROM history where (kind = :query OR LOWER(type) LIKE '%' || :query || '%' OR LOWER(translatedPermission) LIKE '%' || :query || '%') ORDER BY time DESC")
-    fun searchAllHistory(query: String): Flow<List<HistoryEntity>>
+    @Query(
+        """
+    SELECT * FROM history
+    WHERE (kind = :query OR LOWER(type) LIKE '%' || :query || '%'
+    OR LOWER(translatedPermission) LIKE '%' || :query || '%')
+    ORDER BY time DESC
+    """,
+    )
+    fun searchAllHistoryPaging(query: String): PagingSource<Int, HistoryEntity>
 
     @Query("DELETE FROM history where pkKey = :pk")
     suspend fun deleteHistory(pk: String)

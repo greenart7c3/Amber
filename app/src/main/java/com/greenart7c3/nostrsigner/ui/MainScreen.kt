@@ -696,6 +696,7 @@ fun MainScreen(
                             val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
                             RelayLogScreen(
                                 url = localUrl,
+                                account = account,
                                 paddingValues = PaddingValues(
                                     top = padding.calculateTopPadding() + (verticalPadding * 1.5f),
                                     bottom = padding.calculateBottomPadding(),

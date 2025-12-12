@@ -191,7 +191,6 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_14_15)
                     .addMigrations(MIGRATION_15_16)
                     .build()
-            instance.openHelper.writableDatabase.execSQL("VACUUM")
 
             instance
         }

@@ -43,7 +43,6 @@ abstract class HistoryDatabase : RoomDatabase() {
                     .setTransactionExecutor(transactionExecutor)
                     .addMigrations(migration_1_2)
                     .build()
-            instance.openHelper.writableDatabase.execSQL("VACUUM")
 
             instance
         }

@@ -21,7 +21,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -36,8 +38,17 @@ fun LogsScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val logsFlow = Amber.instance.getLogDatabase(account.npub).dao().getLogs()
-    val logs = logsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
+    val pager =
+        Pager(
+            PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false,
+            ),
+        ) {
+            Amber.instance.getLogDatabase(account.npub).dao().getLogsPaging()
+        }
+
+    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
     val state = rememberLazyListState()
 
     LazyColumn(
@@ -57,45 +68,48 @@ fun LogsScreen(
                 text = stringResource(R.string.clear_logs),
             )
         }
-        items(logs.value) { log ->
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Center,
+        items(lazyPagingItems.itemCount) { index ->
+            val log = lazyPagingItems[index]
+            log?.let {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        modifier = Modifier.padding(top = 16.dp),
-                        text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp),
-                        text = log.url,
-                        fontSize = 20.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp),
-                        text = log.type,
-                        fontSize = 20.sp,
-                    )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                        text = log.message,
-                        fontSize = 20.sp,
-                    )
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(top = 16.dp),
+                            text = TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time),
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp),
+                            text = log.url,
+                            fontSize = 20.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp),
+                            text = log.type,
+                            fontSize = 20.sp,
+                        )
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                            text = log.message,
+                            fontSize = 20.sp,
+                        )
 
-                    Spacer(Modifier.weight(1f))
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                        Spacer(Modifier.weight(1f))
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             }
         }

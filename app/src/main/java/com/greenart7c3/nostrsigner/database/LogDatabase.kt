@@ -5,19 +5,27 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.TypeConverters
+import androidx.room.migration.Migration
+import androidx.sqlite.db.SupportSQLiteDatabase
 import java.util.concurrent.Executors
 
 @Database(
     entities = [
         LogEntity::class,
     ],
-    version = 1,
+    version = 2,
 )
 @TypeConverters(Converters::class)
 abstract class LogDatabase : RoomDatabase() {
     abstract fun dao(): LogDao
 
     companion object {
+        val migration_1_2 = object : Migration(1, 2) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("CREATE INDEX IF NOT EXISTS `log_by_time_key` ON `amber_log` (`time` DESC)")
+            }
+        }
+
         fun getDatabase(
             context: Context,
             npub: String,
@@ -33,8 +41,8 @@ abstract class LogDatabase : RoomDatabase() {
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
+                    .addMigrations(migration_1_2)
                     .build()
-            instance.openHelper.writableDatabase.execSQL("VACUUM")
 
             instance
         }

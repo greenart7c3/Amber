@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.HorizontalDivider
@@ -43,6 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -76,7 +78,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.merge
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
@@ -438,52 +439,59 @@ fun onAddRelay(
 @Composable
 fun RelayLogScreen(
     paddingValues: PaddingValues,
+    account: Account,
     url: String,
 ) {
-    val context = LocalContext.current
-
-    val flows = LocalPreferences.allSavedAccounts(context).map {
-        Amber.instance.getLogDatabase(it.npub).dao().getLogsByUrl(url)
-    }.merge()
-
-    val logs = flows.collectAsStateWithLifecycle(initialValue = emptyList())
+    val pager =
+        Pager(
+            PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false,
+            ),
+        ) {
+            Amber.instance.getLogDatabase(account.npub).dao().getLogsByUrlPaging(url)
+        }
+    val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
     LazyColumn(
         Modifier.fillMaxSize(),
         contentPadding = paddingValues,
     ) {
-        itemsIndexed(logs.value) { _, log ->
-            Row(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 4.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(
-                    verticalArrangement = Arrangement.Center,
+        items(lazyPagingItems.itemCount) { index ->
+            val log = lazyPagingItems[index]
+            log?.let {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(vertical = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(
-                        modifier = Modifier.padding(top = 16.dp),
-                        text = formatLongToCustomDateTimeWithSeconds(log.time),
-                        fontSize = 14.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp),
-                        text = log.type,
-                        fontSize = 20.sp,
-                    )
-                    Text(
-                        modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                        text = log.message,
-                        fontSize = 20.sp,
-                    )
+                    Column(
+                        verticalArrangement = Arrangement.Center,
+                    ) {
+                        Text(
+                            modifier = Modifier.padding(top = 16.dp),
+                            text = formatLongToCustomDateTimeWithSeconds(log.time),
+                            fontSize = 14.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp),
+                            text = log.type,
+                            fontSize = 20.sp,
+                        )
+                        Text(
+                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                            text = log.message,
+                            fontSize = 20.sp,
+                        )
 
-                    Spacer(Modifier.weight(1f))
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.primary,
-                    )
+                        Spacer(Modifier.weight(1f))
+                        HorizontalDivider(
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
                 }
             }
         }

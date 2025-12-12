@@ -89,8 +89,10 @@ fun SettingsScreen(
         isLoading = true
         launch(Dispatchers.IO) {
             val dbFile = context.getDatabasePath("amber_db_${account.npub}")
+            val logFile = context.getDatabasePath("log_db_${account.npub}")
+            val historyFile = context.getDatabasePath("history_db_${account.npub}")
             val df = DecimalFormat("#.###")
-            sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+            sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
             isLoading = false
         }
     }
@@ -285,9 +287,13 @@ fun SettingsScreen(
                                     if (deletedLogs > 0) {
                                         Log.d(Amber.TAG, "Deleted $deletedLogs old log entries")
                                     }
+
                                     val dbFile = context.getDatabasePath("amber_db_${account.npub}")
+                                    val logFile = context.getDatabasePath("log_db_${account.npub}")
+                                    val historyFile = context.getDatabasePath("history_db_${account.npub}")
                                     val df = DecimalFormat("#.###")
-                                    sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+                                    sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
+
                                     status = ""
                                     isLoading = false
                                 } catch (e: Exception) {
@@ -295,8 +301,10 @@ fun SettingsScreen(
                                     if (e is CancellationException) throw e
                                     Log.e(Amber.TAG, "Error deleting old log entries", e)
                                     val dbFile = context.getDatabasePath("amber_db_${account.npub}")
+                                    val logFile = context.getDatabasePath("log_db_${account.npub}")
+                                    val historyFile = context.getDatabasePath("history_db_${account.npub}")
                                     val df = DecimalFormat("#.###")
-                                    sizeInMBFormatted = df.format(dbFile.length() / (1024.0 * 1024.0))
+                                    sizeInMBFormatted = df.format((dbFile.length() + logFile.length() + historyFile.length()) / (1024.0 * 1024.0))
                                     status = ""
                                 }
                             }

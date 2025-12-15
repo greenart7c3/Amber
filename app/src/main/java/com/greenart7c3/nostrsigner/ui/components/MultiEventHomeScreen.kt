@@ -1005,7 +1005,7 @@ private fun finishActivity(closeApp: Boolean) {
     val activity = Amber.instance.getMainActivity()
     activity?.intent = null
     if (closeApp) {
-        activity?.finish()
+        activity?.finishAndRemoveTask()
     }
 }
 

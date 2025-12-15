@@ -107,7 +107,7 @@ fun IntentSingleEventHomeScreen(
                 onReject = {
                     val activity = Amber.instance.getMainActivity()
                     activity?.intent = null
-                    activity?.finish()
+                    activity?.finishAndRemoveTask()
                     onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                     onLoading(false)
                 },

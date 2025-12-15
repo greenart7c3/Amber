@@ -293,7 +293,7 @@ object BunkerRequestUtils {
             val activity = Amber.instance.getMainActivity()
             activity?.intent = null
             if (application.application.closeApplication) {
-                activity?.finish()
+                activity?.finishAndRemoveTask()
             }
 
             delay(500)
@@ -438,7 +438,7 @@ object BunkerRequestUtils {
             val activity = Amber.instance.getMainActivity()
             activity?.intent = null
             if (application.application.closeApplication) {
-                activity?.finish()
+                activity?.finishAndRemoveTask()
             }
 
             if (rememberType != RememberType.NEVER) {

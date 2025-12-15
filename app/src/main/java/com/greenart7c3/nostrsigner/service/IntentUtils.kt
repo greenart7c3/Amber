@@ -769,7 +769,7 @@ object IntentUtils {
                 activity?.setResult(RESULT_OK, intent)
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                 activity?.intent = null
-                activity?.finish()
+                activity?.finishAndRemoveTask()
             } else if (!intentData.callBackUrl.isNullOrBlank()) {
                 if (intentData.returnType == ReturnType.SIGNATURE) {
                     val intent = Intent(Intent.ACTION_VIEW)
@@ -798,7 +798,7 @@ object IntentUtils {
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                 val activity = Amber.instance.getMainActivity()
                 activity?.intent = null
-                activity?.finish()
+                activity?.finishAndRemoveTask()
             } else {
                 val result =
                     if (intentData.returnType == ReturnType.SIGNATURE) {
@@ -829,7 +829,7 @@ object IntentUtils {
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                 val activity = Amber.instance.getMainActivity()
                 activity?.intent = null
-                activity?.finish()
+                activity?.finishAndRemoveTask()
             }
         }
     }
@@ -902,7 +902,7 @@ object IntentUtils {
             activity?.intent = null
             activity?.setResult(RESULT_OK, Intent().also { it.putExtra("rejected", "") })
             if (application.application.closeApplication) {
-                activity?.finish()
+                activity?.finishAndRemoveTask()
             }
             onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
             onLoading(false)

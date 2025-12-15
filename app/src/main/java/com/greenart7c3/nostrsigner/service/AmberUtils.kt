@@ -66,7 +66,7 @@ object AmberUtils {
                     val activity = Amber.instance.getMainActivity()
                     activity?.intent = null
                     if (closeApplication) {
-                        activity?.finish()
+                        activity?.finishAndRemoveTask()
                     }
                 }
             },

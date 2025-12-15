@@ -141,7 +141,7 @@ class MainActivity : AppCompatActivity() {
                                                         isAuthenticated = true
                                                     },
                                                     { _, message ->
-                                                        this@MainActivity.finish()
+                                                        this@MainActivity.finishAndRemoveTask()
                                                         scope.launch {
                                                             Toast.makeText(
                                                                 context,
@@ -167,7 +167,7 @@ class MainActivity : AppCompatActivity() {
                                     properties = DialogProperties(usePlatformDefaultWidth = false),
                                     onDismissRequest = {
                                         showPinDialog = false
-                                        this@MainActivity.finish()
+                                        this@MainActivity.finishAndRemoveTask()
                                         scope.launch {
                                             Toast.makeText(
                                                 context,
@@ -281,7 +281,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-
+        setIntent(intent)
         mainViewModel.onNewIntent(intent, callingPackage)
     }
 

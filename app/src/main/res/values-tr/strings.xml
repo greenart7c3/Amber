@@ -595,9 +595,9 @@
     <string name="recover_from_bac">Yedekten geri yükle</string>
     <string name="recover_from_backup">Yedekten geri yükle</string>
     <string name="importing_account">Hesap %1$d içe aktarılıyor</string>
-    <string name="could_not_connect_to_relay">Could not connect to relay. Would you like to add it anyway?</string>
-    <string name="event_kind_25050">WebRTC Signaling</string>
-    <string name="event_kind_9733">Private zap</string>
-    <string name="event_kind_10101">Good wiki authors</string>
-    <string name="event_kind_10102">Good wiki relays</string>
+    <string name="could_not_connect_to_relay">Relay\'e bağlanılamadı. Yine de eklemek ister misiniz?</string>
+    <string name="event_kind_25050">WebRTC Sinyalleşmesi</string>
+    <string name="event_kind_9733">Özel zap</string>
+    <string name="event_kind_10101">İyi viki yazarları</string>
+    <string name="event_kind_10102">İyi viki relay\'leri</string>
 </resources>

@@ -363,6 +363,7 @@ object LocalPreferences {
      */
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
+        accountCache.get(npub)?.clearSignerCache()
         accountCache.remove(npub)
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }

@@ -24,11 +24,14 @@ import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
+import java.lang.ref.WeakReference
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 @Stable
 class Account(
@@ -41,9 +44,30 @@ class Account(
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
 
+    @Volatile
+    private var signerCache: WeakReference<NostrSignerInternal>? = null
+
+    private val signerMutex = Mutex()
+
     private suspend fun getSigner(): NostrSignerInternal {
-        val privKey = DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.NOSTR_PRIVKEY)!!
-        return NostrSignerInternal(KeyPair(privKey.hexToByteArray()))
+        signerCache?.get()?.let { return it }
+
+        return signerMutex.withLock {
+            signerCache?.get()?.let { return it }
+
+            val privKey = DataStoreAccess.getEncryptedKey(
+                Amber.instance,
+                npub,
+                DataStoreAccess.NOSTR_PRIVKEY,
+            ) ?: throw CancellationException("Signer unavailable")
+
+            val signer = NostrSignerInternal(
+                KeyPair(privKey.hexToByteArray()),
+            )
+
+            signerCache = WeakReference(signer)
+            signer
+        }
     }
 
     suspend fun <T : Event> sign(eventTemplate: EventTemplate<T>): T {
@@ -137,6 +161,11 @@ class Account(
                 ).show()
             }
         }
+    }
+
+    fun clearSignerCache() {
+        signerCache?.clear()
+        signerCache = null
     }
 }
 

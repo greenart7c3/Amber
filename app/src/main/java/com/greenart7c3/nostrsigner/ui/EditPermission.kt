@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.annotation.SuppressLint
 import android.content.ClipData
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
@@ -56,8 +55,8 @@ import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@SuppressLint("StringFormatInvalid")
 @Composable
 fun EditPermission(
     modifier: Modifier,
@@ -66,7 +65,6 @@ fun EditPermission(
     navController: NavController,
 ) {
     val clipboardManager = LocalClipboard.current
-    val context = LocalContext.current
     val permissions = remember {
         mutableStateListOf<ApplicationPermissionsEntity>()
     }
@@ -86,15 +84,29 @@ fun EditPermission(
         mutableStateOf("bunker://${account.hexKey}?$relayString$secret")
     }
 
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            permissions.addAll(Amber.instance.getDatabase(account.npub).dao().getAllByKey(selectedPackage).sortedBy { "${it.type}-${it.kind}" })
-            applicationData = Amber.instance.getDatabase(account.npub).dao().getByKey(selectedPackage)!!.application
-            checked = applicationData.useSecret
-            val relays = applicationData.relays.joinToString(separator = "&") { "relay=${it.url}" }
-            val localSecret = if (checked) "&secret=${applicationData.secret}" else ""
-            bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
+    LaunchedEffect(selectedPackage) {
+        val result = withContext(Dispatchers.IO) {
+            val dao = Amber.instance.getDatabase(account.npub).dao()
+            val perms = dao.getAllByKey(selectedPackage)
+                .sortedBy { "${it.type}-${it.kind}" }
+
+            val app = dao.getByKey(selectedPackage)?.application
+
+            perms to app
         }
+
+        val (perms, app) = result
+        if (app == null) return@LaunchedEffect
+
+        permissions.clear()
+        permissions.addAll(perms)
+
+        applicationData = app
+        checked = app.useSecret
+
+        val relays = app.relays.joinToString("&") { "relay=${it.url}" }
+        val localSecret = if (checked) "&secret=${app.secret}" else ""
+        bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
     }
 
     if (wantsToRemovePermissions) {
@@ -108,8 +120,10 @@ fun EditPermission(
                     .dao()
                     .deletePermissions(applicationData.key)
 
-                permissions.clear()
-                wantsToRemovePermissions = false
+                withContext(Dispatchers.Main) {
+                    permissions.clear()
+                    wantsToRemovePermissions = false
+                }
             }
         }
     }
@@ -174,123 +188,33 @@ fun EditPermission(
             text = stringResource(R.string.edit_permissions_description),
         )
 
-        permissions.forEachIndexed { _, permission ->
-            val localPermission =
-                Permission(
-                    permission.type.toLowerCase(Locale.current),
-                    permission.kind,
-                )
-
-            val message =
-                if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
-                    stringResource(R.string.sign, localPermission.toLocalizedString(context))
-                } else {
-                    localPermission.toLocalizedString(context)
-                }
-
-            Card(
-                modifier = Modifier
-                    .padding(vertical = 4.dp)
-                    .fillMaxWidth(),
-                border = BorderStroke(1.dp, Color.LightGray),
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .padding(vertical = 8.dp, horizontal = 8.dp)
-                        .fillMaxWidth(),
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 8.dp)
-                            .clickable {
-                                scope.launch(Dispatchers.IO) {
-                                    val localPermissions =
-                                        permissions.map {
-                                            if (it.id == permission.id) {
-                                                val isAcceptable = !permission.acceptable
-                                                val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
-                                                val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
-
-                                                it.copy(
-                                                    acceptable = !permission.acceptable,
-                                                    acceptUntil = acceptUntil,
-                                                    rejectUntil = rejectUntil,
-                                                    rememberType = RememberType.ALWAYS.screenCode,
-                                                )
-                                            } else {
-                                                it.copy()
-                                            }
-                                        }
-                                    permissions.clear()
-                                    permissions.addAll(localPermissions)
-                                    Amber.instance.getDatabase(account.npub)
-                                        .dao()
-                                        .insertPermissions(localPermissions)
-                                }
-                            },
-                    ) {
-                        Checkbox(
-                            colors = CheckboxDefaults.colors().copy(
-                                uncheckedBorderColor = Color.Gray,
-                            ),
-                            checked = permission.acceptable,
-                            onCheckedChange = {
-                                scope.launch(Dispatchers.IO) {
-                                    val localPermissions =
-                                        permissions.map {
-                                            if (it.id == permission.id) {
-                                                val isAcceptable = !permission.acceptable
-                                                val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
-                                                val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
-
-                                                it.copy(
-                                                    acceptable = !permission.acceptable,
-                                                    acceptUntil = acceptUntil,
-                                                    rejectUntil = rejectUntil,
-                                                    rememberType = RememberType.ALWAYS.screenCode,
-                                                )
-                                            } else {
-                                                it.copy()
-                                            }
-                                        }
-                                    permissions.clear()
-                                    permissions.addAll(localPermissions)
-                                    Amber.instance.getDatabase(account.npub).dao().insertPermissions(localPermissions)
-                                }
-                            },
-                        )
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = message,
-                            fontSize = 18.sp,
-                            color = if (permission.acceptable) Color.Unspecified else Color.Gray,
-                        )
+        permissions.forEach { permission ->
+            PermissionRow(
+                permission = permission,
+                onToggle = { updated ->
+                    val index = permissions.indexOfFirst { it.id == updated.id }
+                    if (index != -1) {
+                        permissions[index] = updated
                     }
-                    IconButton(
-                        content = {
-                            Icon(
-                                ImageVector.vectorResource(R.drawable.delete),
-                                stringResource(R.string.remove_permission),
-                                modifier = Modifier
-                                    .fillMaxHeight(),
-                            )
-                        },
-                        onClick = {
-                            scope.launch(Dispatchers.IO) {
-                                permissions.remove(permission)
-                                Amber.instance.getDatabase(account.npub).dao().deletePermission(permission)
-                            }
-                        },
-                    )
-                }
-            }
+
+                    scope.launch(Dispatchers.IO) {
+                        Amber.instance
+                            .getDatabase(account.npub)
+                            .dao()
+                            .insertPermissions(listOf(updated))
+                    }
+                },
+                onDelete = { deleted ->
+                    permissions.remove(deleted)
+
+                    scope.launch(Dispatchers.IO) {
+                        Amber.instance
+                            .getDatabase(account.npub)
+                            .dao()
+                            .deletePermission(deleted)
+                    }
+                },
+            )
         }
 
         if (permissions.isNotEmpty()) {
@@ -305,6 +229,110 @@ fun EditPermission(
                 text = stringResource(R.string.remove_all_permissions),
                 textColor = Color.White,
             )
+        }
+    }
+}
+
+@Composable
+fun PermissionRow(
+    permission: ApplicationPermissionsEntity,
+    onToggle: (ApplicationPermissionsEntity) -> Unit,
+    onDelete: (ApplicationPermissionsEntity) -> Unit,
+) {
+    val context = LocalContext.current
+
+    val message = remember(permission.type, permission.kind, permission.acceptable) {
+        val localPermission = Permission(
+            permission.type.toLowerCase(Locale.current),
+            permission.kind,
+        )
+
+        if (permission.type == "SIGN_EVENT" || permission.type == "NIP") {
+            context.getString(
+                R.string.sign,
+                localPermission.toLocalizedString(context),
+            )
+        } else {
+            localPermission.toLocalizedString(context)
+        }
+    }
+
+    Card(
+        modifier = Modifier
+            .padding(vertical = 4.dp)
+            .fillMaxWidth(),
+        border = BorderStroke(1.dp, Color.LightGray),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(vertical = 8.dp, horizontal = 8.dp)
+                .fillMaxWidth(),
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 8.dp)
+                    .clickable {
+                        val isAcceptable = !permission.acceptable
+                        val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
+                        val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
+
+                        onToggle(
+                            permission.copy(
+                                acceptable = isAcceptable,
+                                acceptUntil = acceptUntil,
+                                rejectUntil = rejectUntil,
+                                rememberType = RememberType.ALWAYS.screenCode,
+                            ),
+                        )
+                    },
+            ) {
+                Checkbox(
+                    colors = CheckboxDefaults.colors().copy(
+                        uncheckedBorderColor = Color.Gray,
+                    ),
+                    checked = permission.acceptable,
+                    onCheckedChange = {
+                        val isAcceptable = !permission.acceptable
+                        val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
+                        val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
+
+                        onToggle(
+                            permission.copy(
+                                acceptable = isAcceptable,
+                                acceptUntil = acceptUntil,
+                                rejectUntil = rejectUntil,
+                                rememberType = RememberType.ALWAYS.screenCode,
+                            ),
+                        )
+                    },
+                )
+
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = message,
+                    fontSize = 18.sp,
+                    color = if (permission.acceptable) Color.Unspecified else Color.Gray,
+                )
+            }
+
+            IconButton(
+                onClick = {
+                    onDelete(permission)
+                },
+            ) {
+                Icon(
+                    ImageVector.vectorResource(R.drawable.delete),
+                    contentDescription = stringResource(R.string.remove_permission),
+                    modifier = Modifier.fillMaxHeight(),
+                )
+            }
         }
     }
 }

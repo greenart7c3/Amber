@@ -39,7 +39,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import coil3.compose.AsyncImage
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
@@ -58,8 +58,7 @@ fun ProfilePicture(account: Account) {
             verticalArrangement = Arrangement.Center,
         ) {
             val profileUrl by account.picture.collectAsStateWithLifecycle()
-            @Suppress("KotlinConstantConditions")
-            if (profileUrl.isNotBlank() && BuildConfig.FLAVOR != "offline") {
+            if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
                 AsyncImage(
                     profileUrl,
                     Route.Accounts.route,

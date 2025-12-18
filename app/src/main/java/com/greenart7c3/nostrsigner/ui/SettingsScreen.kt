@@ -51,6 +51,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -171,8 +172,7 @@ fun SettingsScreen(
                 )
             }
 
-            @Suppress("KotlinConstantConditions")
-            if (BuildConfig.FLAVOR != "offline") {
+            if (!BuildFlavorChecker.isOfflineFlavor()) {
                 Box(
                     Modifier
                         .padding(vertical = 8.dp),

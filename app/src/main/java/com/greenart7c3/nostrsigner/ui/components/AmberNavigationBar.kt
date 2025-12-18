@@ -22,7 +22,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.SubcomposeAsyncImage
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -54,8 +54,7 @@ fun AmberNavigationBar(
                     },
                     icon = {
                         if (it.route == Route.Accounts.route) {
-                            @Suppress("KotlinConstantConditions")
-                            if (!profileUrl.isNullOrBlank() && BuildConfig.FLAVOR != "offline") {
+                            if (!profileUrl.isNullOrBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
                                 SubcomposeAsyncImage(
                                     profileUrl,
                                     it.route,

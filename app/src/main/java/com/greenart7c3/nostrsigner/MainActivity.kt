@@ -268,8 +268,7 @@ class MainActivity : AppCompatActivity() {
     override fun onResume() {
         Amber.instance.setMainActivity(this)
         mainViewModel.showBunkerRequests()
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR != "offline") {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
             connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {

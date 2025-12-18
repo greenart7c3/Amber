@@ -17,7 +17,7 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
@@ -26,8 +26,7 @@ fun AmberFloatingButton(
     navController: NavHostController,
     navBackStackEntry: NavBackStackEntry?,
 ) {
-    @Suppress("KotlinConstantConditions")
-    if (navBackStackEntry?.destination?.route == Route.Applications.route && BuildConfig.FLAVOR != "offline") {
+    if (navBackStackEntry?.destination?.route == Route.Applications.route && !BuildFlavorChecker.isOfflineFlavor()) {
         NewBunkerFloatingButton(
             onClick = {
                 navController.navigate(Route.NewApplication.route)

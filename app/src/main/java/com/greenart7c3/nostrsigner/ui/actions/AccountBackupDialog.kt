@@ -75,7 +75,7 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.navigation.NavHostController
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -241,8 +241,7 @@ fun AccountBackupScreen(
                         ) {
                             localAccount?.let { localAccount ->
                                 val profileUrl = localAccount.picture.value
-                                @Suppress("KotlinConstantConditions")
-                                if (profileUrl.isNotBlank() && BuildConfig.FLAVOR != "offline") {
+                                if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
                                     SubcomposeAsyncImage(
                                         profileUrl,
                                         "profile picture",

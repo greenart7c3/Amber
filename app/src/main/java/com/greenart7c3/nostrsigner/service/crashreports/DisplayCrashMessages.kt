@@ -47,7 +47,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -77,8 +77,7 @@ fun DisplayCrashMessages(
     }
 
     stackTrace.value?.let { stack ->
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR == "offline") {
+        if (BuildFlavorChecker.isOfflineFlavor()) {
             CrashReportAlertDialog(
                 text = stringResource(R.string.copy_crash_report_to_clipboard),
                 onDismiss = { stackTrace.value = null },

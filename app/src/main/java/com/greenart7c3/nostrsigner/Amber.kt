@@ -412,12 +412,7 @@ class Amber :
         }
 
         val wasActive = client.isActive()
-
-        @Suppress("KotlinConstantConditions")
-        // TODO: You can filter inside each update filter for only
-        // localhost relays and keep these alive even on the offline
-        // mode
-        if (BuildConfig.FLAVOR != "offline") {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
             // these update the relay list in the filters and send them to the
             // relay, reconnecting if needed
             if (isAppInForeground) {

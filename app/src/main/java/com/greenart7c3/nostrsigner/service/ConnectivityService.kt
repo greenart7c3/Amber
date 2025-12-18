@@ -8,7 +8,7 @@ import android.net.NetworkCapabilities
 import android.os.IBinder
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
 import java.util.Timer
@@ -30,8 +30,7 @@ class ConnectivityService : Service() {
 
             override fun onAvailable(network: Network) {
                 super.onAvailable(network)
-                @Suppress("KotlinConstantConditions")
-                if (BuildConfig.FLAVOR == "offline") return
+                if (BuildFlavorChecker.isOfflineFlavor()) return
                 if (Amber.instance.settings.killSwitch.value) return
 
                 if (lastNetwork != null && lastNetwork != network) {
@@ -52,8 +51,7 @@ class ConnectivityService : Service() {
             ) {
                 super.onCapabilitiesChanged(network, networkCapabilities)
 
-                @Suppress("KotlinConstantConditions")
-                if (BuildConfig.FLAVOR == "offline") return
+                if (BuildFlavorChecker.isOfflineFlavor()) return
                 if (Amber.instance.settings.killSwitch.value) return
 
                 scope.launch(Dispatchers.IO) {
@@ -70,8 +68,7 @@ class ConnectivityService : Service() {
 
             override fun onLost(network: Network) {
                 super.onLost(network)
-                @Suppress("KotlinConstantConditions")
-                if (BuildConfig.FLAVOR == "offline") return
+                if (BuildFlavorChecker.isOfflineFlavor()) return
 
                 lastNetwork = null
 
@@ -96,16 +93,14 @@ class ConnectivityService : Service() {
             while (Amber.instance.isStartingAppState.value) {
                 delay(1000)
             }
-            @Suppress("KotlinConstantConditions")
-            if (BuildConfig.FLAVOR != "offline" && !Amber.instance.settings.killSwitch.value) {
+            if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
                 Amber.instance.client.connect()
                 Amber.instance.applicationIOScope.launch {
                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                 }
             }
 
-            @Suppress("KotlinConstantConditions")
-            if (BuildConfig.FLAVOR != "offline") {
+            if (!BuildFlavorChecker.isOfflineFlavor()) {
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 connectivityManager.registerDefaultNetworkCallback(networkCallback)
@@ -117,10 +112,6 @@ class ConnectivityService : Service() {
             timer.schedule(
                 object : TimerTask() {
                     override fun run() {
-                        @Suppress("KotlinConstantConditions")
-                        if (BuildConfig.FLAVOR == "offline") {
-                            return
-                        }
                         if (Amber.instance.settings.killSwitch.value) return
 
                         scope.launch {
@@ -137,9 +128,15 @@ class ConnectivityService : Service() {
                                             time = System.currentTimeMillis(),
                                         ),
                                     )
-                                    Amber.instance.notificationSubscription.updateFilter()
+                                    if (!BuildFlavorChecker.isOfflineFlavor()) {
+                                        Amber.instance.notificationSubscription.updateFilter()
+                                    }
                                 }
                             }
+                        }
+
+                        if (BuildFlavorChecker.isOfflineFlavor()) {
+                            return
                         }
 
                         scope.launch {
@@ -160,8 +157,7 @@ class ConnectivityService : Service() {
     override fun onDestroy() {
         isStarted = false
         timer.cancel()
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR != "offline") {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
             try {
                 Log.d(Amber.TAG, "unregisterNetworkCallback")
                 val connectivityManager =

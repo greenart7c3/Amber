@@ -6,14 +6,13 @@ import android.content.Intent
 import android.os.Build
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        @Suppress("KotlinConstantConditions")
-        if (BuildConfig.FLAVOR == "offline") return
+        if (BuildFlavorChecker.isOfflineFlavor()) return
         Log.d(Amber.TAG, "Received intent: ${intent.action}")
 
         when (intent.action) {

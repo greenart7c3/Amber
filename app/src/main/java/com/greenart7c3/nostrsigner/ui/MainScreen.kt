@@ -55,7 +55,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navArgument
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -109,8 +109,7 @@ private fun askNotificationPermission(
 
 @SuppressLint("BatteryLife")
 fun requestIgnoreBatteryOptimizations(context: Context) {
-    @Suppress("KotlinConstantConditions")
-    if (BuildConfig.FLAVOR == "offline") return
+    if (BuildFlavorChecker.isOfflineFlavor()) return
     if (Amber.instance.client.relayStatusFlow().value.connected.isEmpty()) return
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
@@ -161,8 +160,7 @@ fun MainScreen(
 
     var showDialog by remember { mutableStateOf(false) }
 
-    @Suppress("KotlinConstantConditions")
-    if (BuildConfig.FLAVOR != "offline") {
+    if (!BuildFlavorChecker.isOfflineFlavor()) {
         LaunchedEffect(Unit) {
             launch(Dispatchers.IO) {
                 askNotificationPermission(

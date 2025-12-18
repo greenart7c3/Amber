@@ -46,7 +46,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.checkNotInMainThread
@@ -122,8 +122,7 @@ fun DefaultRelaysScreen(
                             )
                             LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                             scope.launch(Dispatchers.IO) {
-                                @Suppress("KotlinConstantConditions")
-                                if (BuildConfig.FLAVOR != "offline") {
+                                if (!BuildFlavorChecker.isOfflineFlavor()) {
                                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                     delay(2000)
                                     Amber.instance.client.reconnect()
@@ -171,8 +170,7 @@ fun DefaultRelaysScreen(
                                         )
                                         LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                         scope.launch(Dispatchers.IO) {
-                                            @Suppress("KotlinConstantConditions")
-                                            if (BuildConfig.FLAVOR != "offline") {
+                                            if (!BuildFlavorChecker.isOfflineFlavor()) {
                                                 Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                                 isLoading.value = false
                                             } else {
@@ -209,8 +207,7 @@ fun DefaultRelaysScreen(
                                     )
                                     LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                     scope.launch(Dispatchers.IO) {
-                                        @Suppress("KotlinConstantConditions")
-                                        if (BuildConfig.FLAVOR != "offline") {
+                                        if (!BuildFlavorChecker.isOfflineFlavor()) {
                                             Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                             isLoading.value = false
                                         } else {
@@ -239,8 +236,7 @@ fun DefaultRelaysScreen(
                                 )
                                 LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                 scope.launch(Dispatchers.IO) {
-                                    @Suppress("KotlinConstantConditions")
-                                    if (BuildConfig.FLAVOR != "offline") {
+                                    if (!BuildFlavorChecker.isOfflineFlavor()) {
                                         Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                         isLoading.value = false
                                     } else {

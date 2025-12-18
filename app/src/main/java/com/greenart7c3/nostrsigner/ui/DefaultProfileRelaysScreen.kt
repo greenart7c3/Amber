@@ -25,7 +25,7 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -104,8 +104,7 @@ fun DefaultProfileRelaysScreen(
                                         )
                                         LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                         scope.launch(Dispatchers.IO) {
-                                            @Suppress("KotlinConstantConditions")
-                                            if (BuildConfig.FLAVOR != "offline") {
+                                            if (!BuildFlavorChecker.isOfflineFlavor()) {
                                                 Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                                 isLoading.value = false
                                             } else {
@@ -143,8 +142,7 @@ fun DefaultProfileRelaysScreen(
                                     )
                                     LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                     scope.launch(Dispatchers.IO) {
-                                        @Suppress("KotlinConstantConditions")
-                                        if (BuildConfig.FLAVOR != "offline") {
+                                        if (!BuildFlavorChecker.isOfflineFlavor()) {
                                             Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                             isLoading.value = false
                                         } else {
@@ -173,8 +171,7 @@ fun DefaultProfileRelaysScreen(
                                 )
                                 LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
                                 scope.launch(Dispatchers.IO) {
-                                    @Suppress("KotlinConstantConditions")
-                                    if (BuildConfig.FLAVOR != "offline") {
+                                    if (!BuildFlavorChecker.isOfflineFlavor()) {
                                         Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                         isLoading.value = false
                                     } else {

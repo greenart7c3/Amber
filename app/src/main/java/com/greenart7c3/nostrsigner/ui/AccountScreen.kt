@@ -53,7 +53,6 @@ fun AccountScreen(
     navController: NavHostController,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
-    val intents by mainViewModel.intents.collectAsState(initial = emptyList())
     val context = LocalContext.current
 
     Column {
@@ -68,7 +67,8 @@ fun AccountScreen(
                     MainLoginPage(accountStateViewModel, newNavController)
                 }
                 is AccountState.LoggedIn -> {
-                    LaunchedEffect(intent, intents) {
+                    val intents by mainViewModel.intents.collectAsState(initial = emptyList())
+                    LaunchedEffect(intent) {
                         intent?.let {
                             IntentUtils.getIntentData(
                                 context,

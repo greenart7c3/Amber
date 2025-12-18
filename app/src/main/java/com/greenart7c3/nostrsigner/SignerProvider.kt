@@ -378,6 +378,7 @@ class SignerProvider : ContentProvider() {
                 }
 
                 "content://$appId.GET_PUBLIC_KEY" -> {
+                    if (selection != "Amber") return null // only accept content provider when it's a bunker request
                     val npub = if (projection != null && projection.isNotEmpty()) IntentUtils.parsePubKey(projection[0]) else null
                     val account = if (npub != null) {
                         LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)

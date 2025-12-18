@@ -49,6 +49,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
 import java.util.Base64
+import java.util.UUID
 import java.util.zip.GZIPOutputStream
 import kotlin.collections.ifEmpty
 import kotlinx.coroutines.Dispatchers
@@ -158,7 +159,7 @@ object IntentUtils {
                         name = appName,
                         type = type,
                         pubKey = pubKey,
-                        id = "",
+                        id = intent.getStringExtra("id") ?: "",
                         callBackUrl = callbackUrl,
                         compression = compressionType,
                         returnType = returnType,
@@ -204,7 +205,7 @@ object IntentUtils {
                         name = appName,
                         type = type,
                         pubKey = pubKey,
-                        id = "",
+                        id = intent.getStringExtra("id") ?: "",
                         callBackUrl = callbackUrl,
                         compression = compressionType,
                         returnType = returnType,
@@ -223,7 +224,7 @@ object IntentUtils {
                         name = appName,
                         type = type,
                         pubKey = pubKey,
-                        id = "",
+                        id = intent.getStringExtra("id") ?: "",
                         callBackUrl = callbackUrl,
                         compression = compressionType,
                         returnType = returnType,
@@ -242,7 +243,7 @@ object IntentUtils {
                         name = appName,
                         type = type,
                         pubKey = pubKey,
-                        id = "",
+                        id = intent.getStringExtra("id") ?: "",
                         callBackUrl = callbackUrl,
                         compression = compressionType,
                         returnType = returnType,
@@ -569,6 +570,18 @@ object IntentUtils {
         try {
             if (intent.data == null) {
                 return null
+            }
+
+            if (intent.extras?.getString("id") == null) {
+                intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
+            }
+
+            val id = intent.extras?.getString("id") ?: ""
+            val mainActivity = Amber.instance.getMainActivity()
+            mainActivity?.let {
+                if (mainActivity.mainViewModel.intents.value.any { it.id == id }) {
+                    return null
+                }
             }
 
             var localAccount = currentLoggedInAccount

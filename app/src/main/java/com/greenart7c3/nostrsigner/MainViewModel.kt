@@ -19,12 +19,27 @@ import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak")
 class MainViewModel(val context: Context) : ViewModel() {
-    val intents = MutableStateFlow<List<IntentData>>(listOf())
+    private val _intents = MutableStateFlow<List<IntentData>>(listOf())
+    val intents = _intents.asStateFlow()
     var navController: NavHostController? = null
+
+    fun addAll(list: List<IntentData>) {
+        val newList = list.filter { !intents.value.contains(it) }
+        _intents.value += newList
+    }
+
+    fun removeAll(intents: List<IntentData>) {
+        _intents.value -= intents.toSet()
+    }
+
+    fun clear() {
+        _intents.value = emptyList()
+    }
 
     fun getAccount(userFromIntent: String?): String? {
         val currentAccount = LocalPreferences.currentAccount(context)
@@ -48,8 +63,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                 intents.value.mapNotNull {
                     it.event?.pubKey
                 }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().mapNotNull {
-                    val parsed = Nip19Parser.uriToRoute(it.currentAccount)?.entity
-                    when (parsed) {
+                    when (val parsed = Nip19Parser.uriToRoute(it.currentAccount)?.entity) {
                         is NPub -> parsed.hex
                         else -> null
                     }
@@ -129,13 +143,7 @@ class MainViewModel(val context: Context) : ViewModel() {
             account?.let { acc ->
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
                 if (intentData != null) {
-                    if (intents.value.none { item -> item.id == intentData.id }) {
-                        intents.value += listOf(intentData)
-                    }
-                    intents.value =
-                        intents.value.map {
-                            it.copy()
-                        }.toMutableList()
+                    addAll(listOf(intentData))
 
                     intent.getStringExtra("route")?.let {
                         viewModelScope.launch(Dispatchers.Main) {

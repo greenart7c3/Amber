@@ -55,7 +55,7 @@ import kotlinx.coroutines.launch
 fun Intent.isLaunchFromHistory(): Boolean = this.flags and Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY == Intent.FLAG_ACTIVITY_LAUNCHED_FROM_HISTORY
 
 class MainActivity : AppCompatActivity() {
-    private lateinit var mainViewModel: MainViewModel
+    lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(Amber.TAG, "onCreate MainActivity")
@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
                                     intent = intent,
                                     packageName = packageName,
                                     appName = appName,
-                                    flow = mainViewModel.intents,
+                                    mainViewModel = mainViewModel,
                                     bunkerRequests = bunkerRequests.value,
                                     navController = navController,
                                 )
@@ -285,7 +285,7 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        mainViewModel.intents.value = emptyList()
+        mainViewModel.clear()
 
         super.onDestroy()
     }

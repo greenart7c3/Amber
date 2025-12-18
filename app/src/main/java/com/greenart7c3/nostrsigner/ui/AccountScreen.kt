@@ -33,14 +33,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.greenart7c3.nostrsigner.MainViewModel
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
-import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import kotlinx.coroutines.flow.MutableStateFlow
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
@@ -49,12 +48,12 @@ fun AccountScreen(
     intent: Intent?,
     packageName: String?,
     appName: String?,
-    flow: MutableStateFlow<List<IntentData>>,
+    mainViewModel: MainViewModel,
     bunkerRequests: List<AmberBunkerRequest>,
     navController: NavHostController,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
-    val intents by flow.collectAsState(initial = emptyList())
+    val intents by mainViewModel.intents.collectAsState(initial = emptyList())
     val context = LocalContext.current
 
     Column {
@@ -78,11 +77,7 @@ fun AccountScreen(
                                 intent.getStringExtra("route"),
                                 state.account,
                             )?.let { intentData ->
-                                if (intents.none { item -> item.id == intentData.id }) {
-                                    val oldIntents = intents.toMutableList()
-                                    oldIntents.add(intentData)
-                                    flow.value = oldIntents
-                                }
+                                mainViewModel.addAll(listOf(intentData))
                             }
                         }
                     }
@@ -107,18 +102,15 @@ fun AccountScreen(
                         route = localRoute,
                         navController = navController,
                         onRemoveIntentData = { results, type ->
-                            val oldIntents = intents.toMutableList()
                             when (type) {
                                 IntentResultType.ADD -> {
-                                    oldIntents.addAll(results)
+                                    mainViewModel.addAll(results)
                                 }
 
                                 IntentResultType.REMOVE -> {
-                                    oldIntents.removeAll(results)
+                                    mainViewModel.removeAll(results)
                                 }
                             }
-
-                            flow.value = oldIntents
                         },
                     )
                 }

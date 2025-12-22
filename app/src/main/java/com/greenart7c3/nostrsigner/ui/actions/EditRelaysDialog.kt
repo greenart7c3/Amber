@@ -302,7 +302,7 @@ fun onAddRelay(
                     signer.keyPair.pubKey.toHexKey(),
                 )
 
-                val signedEvent = signer.signerSync.sign<Event>(
+                var signedEvent = signer.signerSync.sign<Event>(
                     TimeUtils.now(),
                     NostrConnectEvent.KIND,
                     arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
@@ -386,12 +386,24 @@ fun onAddRelay(
                     return@secondLaunch
                 }
 
-                val result = Amber.instance.client.sendAndWaitForResponse(
-                    event = signedEvent,
-                    relayList = setOf(addedWSS),
-                )
+                var success = false
+                var errorCount = 0
+                while (!success && errorCount < 3) {
+                    success = Amber.instance.client.sendAndWaitForResponse(signedEvent, setOf(addedWSS))
+                    if (!success) {
+                        errorCount++
+                        delay(1000)
+                        signedEvent = signer.signerSync.sign(
+                            TimeUtils.now(),
+                            NostrConnectEvent.KIND,
+                            arrayOf(arrayOf("p", signer.keyPair.pubKey.toHexKey())),
+                            encryptedContent,
+                        )
+                    }
+                }
 
-                if (result) {
+                if (success) {
+                    AmberListenerSingleton.latestErrorMessages.clear()
                     var count = 0
                     while (!filterResult && count < 10) {
                         delay(1000)
@@ -406,7 +418,7 @@ fun onAddRelay(
                 Amber.instance.client.unsubscribe(listener)
                 Amber.instance.client.reconnect()
 
-                if (result && filterResult) {
+                if (success && filterResult) {
                     relays2.add(addedWSS)
                     onDone()
                 } else if (!filterResult) {

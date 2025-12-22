@@ -27,7 +27,6 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.toSet
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -99,47 +98,11 @@ object BunkerRequestUtils {
             }
         }
 
-        val encryptedContent = try {
-            val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
-
-            if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-                account.nip44Encrypt(
-                    plainText,
-                    bunkerRequest.localKey,
-                )
-            } else {
-                account.nip04Encrypt(
-                    plainText,
-                    bunkerRequest.localKey,
-                )
-            }
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            null
-        }
-
-        if (encryptedContent == null) {
-            onDone(false)
-            onLoading(false)
-            Amber.instance.applicationIOScope.launch {
-                Amber.instance.getLogDatabase(account.npub).dao().insertLog(
-                    LogEntity(
-                        id = 0,
-                        url = bunkerRequest.localKey,
-                        type = "bunker response",
-                        message = "Failed to encrypt bunker response",
-                        time = System.currentTimeMillis(),
-                    ),
-                )
-            }
-            return
-        }
-
         sendBunkerResponse(
+            bunkerResponse = bunkerResponse,
             bunkerRequest = bunkerRequest,
             account = account,
             localKey = bunkerRequest.localKey,
-            encryptedContent = encryptedContent,
             relays = relays.ifEmpty { Amber.instance.getSavedRelays(account).toList() },
             onLoading = onLoading,
             onDone = onDone,
@@ -147,14 +110,27 @@ object BunkerRequestUtils {
     }
 
     private suspend fun sendBunkerResponse(
+        bunkerResponse: BunkerResponse,
         bunkerRequest: AmberBunkerRequest,
         account: Account,
         localKey: String,
-        encryptedContent: String,
         relays: List<NormalizedRelayUrl>,
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
+        val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
+        var encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+            account.nip44Encrypt(
+                plainText,
+                bunkerRequest.localKey,
+            )
+        } else {
+            account.nip04Encrypt(
+                plainText,
+                bunkerRequest.localKey,
+            )
+        }
+
         var signedEvent = account.signSync<Event>(
             TimeUtils.now(),
             NostrConnectEvent.KIND,
@@ -171,6 +147,19 @@ object BunkerRequestUtils {
             if (!success) {
                 errorCount++
                 delay(1000)
+
+                encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+                    account.nip44Encrypt(
+                        plainText,
+                        bunkerRequest.localKey,
+                    )
+                } else {
+                    account.nip04Encrypt(
+                        plainText,
+                        bunkerRequest.localKey,
+                    )
+                }
+
                 signedEvent = account.signSync(
                     TimeUtils.now(),
                     NostrConnectEvent.KIND,

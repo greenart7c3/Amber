@@ -30,7 +30,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.MainViewModel
@@ -121,23 +120,26 @@ fun AccountScreen(
 
 @Composable
 private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
-    val context = LocalContext.current
-    val openDialogMsg = accountViewModel.toasts.collectAsStateWithLifecycle(null)
+    val openDialogMsg = accountViewModel.toasts.collectAsState(null)
 
     openDialogMsg.value?.let { obj ->
         when (obj) {
             is ResourceToastMsg ->
                 if (obj.params != null) {
+                    val title = stringResource(obj.titleResId)
+                    val content = stringResource(obj.resourceId, *obj.params)
                     InformationDialog(
-                        context.getString(obj.titleResId),
-                        context.getString(obj.resourceId, *obj.params),
+                        title,
+                        content,
                     ) {
                         accountViewModel.clearToasts()
                     }
                 } else {
+                    val title = stringResource(obj.titleResId)
+                    val content = stringResource(obj.resourceId)
                     InformationDialog(
-                        context.getString(obj.titleResId),
-                        context.getString(obj.resourceId),
+                        title,
+                        content,
                     ) {
                         accountViewModel.clearToasts()
                     }

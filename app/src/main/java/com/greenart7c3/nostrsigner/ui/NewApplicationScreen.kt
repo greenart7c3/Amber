@@ -6,11 +6,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -30,6 +28,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
@@ -39,22 +38,39 @@ fun NewApplicationScreen(
     account: Account,
     navController: NavController,
 ) {
-    var dialogOpen by remember { mutableStateOf(false) }
+    val dialogOpen = remember { mutableStateOf(false) }
     val clipboardManager = LocalClipboard.current
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-
-    if (dialogOpen) {
+    val title = stringResource(R.string.warning)
+    val message = stringResource(R.string.invalid_nostr_connect_uri)
+    if (dialogOpen.value) {
         SimpleQrCodeScanner {
-            dialogOpen = false
-            if (!it.isNullOrEmpty()) {
+            dialogOpen.value = false
+
+            if (it.isNullOrBlank()) {
+                accountStateViewModel.toast(
+                    title,
+                    message,
+                )
+                return@SimpleQrCodeScanner
+            }
+
+            if (!it.startsWith("nostrconnect://")) {
+                accountStateViewModel.toast(
+                    title,
+                    message,
+                )
+                return@SimpleQrCodeScanner
+            }
+
+            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                 val intent = Intent(Intent.ACTION_VIEW)
                 intent.data = it.toUri()
                 intent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
                 intent.putExtra("closeApplication", false)
                 intent.`package` = context.packageName
-                Amber.instance.getMainActivity()?.startActivity(intent)
-                accountStateViewModel.switchUser(account.npub, Route.IncomingRequest.route)
+                IntentUtils.getIntentData(context, intent, null, Route.IncomingRequest.route, account)
             }
         }
     }
@@ -75,23 +91,23 @@ fun NewApplicationScreen(
                     val clipboardText = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)
                     if (clipboardText == null) {
                         accountStateViewModel.toast(
-                            context.getString(R.string.warning),
-                            context.getString(R.string.invalid_nostr_connect_uri),
+                            title,
+                            message,
                         )
                         return@launch
                     }
 
                     if (clipboardText.text.isBlank()) {
                         accountStateViewModel.toast(
-                            context.getString(R.string.warning),
-                            context.getString(R.string.invalid_nostr_connect_uri),
+                            title,
+                            message,
                         )
                         return@launch
                     }
                     if (!clipboardText.text.startsWith("nostrconnect://")) {
                         accountStateViewModel.toast(
-                            context.getString(R.string.warning),
-                            context.getString(R.string.invalid_nostr_connect_uri),
+                            title,
+                            message,
                         )
                         return@launch
                     }
@@ -118,7 +134,7 @@ fun NewApplicationScreen(
 
         AmberButton(
             onClick = {
-                dialogOpen = true
+                dialogOpen.value = true
             },
             text = stringResource(R.string.scan_qr_code),
         )

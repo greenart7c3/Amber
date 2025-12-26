@@ -35,6 +35,43 @@ class AmberRelayStats(
     var oldMessage = ""
     val relayStatus = client.relayStatusFlow()
 
+    lateinit var group: NotificationChannelGroupCompat
+    lateinit var channel: NotificationChannelCompat
+    lateinit var statusGroup: NotificationChannelGroupCompat
+    lateinit var statusChannel: NotificationChannelCompat
+
+    fun createNotificationChannel() {
+        val channelId = "ServiceChannel"
+        val statusId = "StatusChannel"
+        group = NotificationChannelGroupCompat.Builder("ServiceGroup")
+            .setName(appContext.getString(R.string.service))
+            .setDescription(appContext.getString(R.string.service_description))
+            .build()
+        channel = NotificationChannelCompat.Builder(channelId, NotificationManager.IMPORTANCE_LOW)
+            .setName(appContext.getString(R.string.service))
+            .setDescription(appContext.getString(R.string.amber_is_running_in_background))
+            .setSound(null, null)
+            .setGroup(group.id)
+            .build()
+
+        statusGroup = NotificationChannelGroupCompat.Builder("StatusGroup")
+            .setName(appContext.getString(R.string.status))
+            .setDescription(appContext.getString(R.string.status_service_description))
+            .build()
+        statusChannel = NotificationChannelCompat.Builder(statusId, NotificationManager.IMPORTANCE_LOW)
+            .setName(appContext.getString(R.string.status))
+            .setDescription(appContext.getString(R.string.status_service_description))
+            .setSound(null, null)
+            .setGroup(statusGroup.id)
+            .build()
+
+        val notificationManager = NotificationManagerCompat.from(appContext)
+        notificationManager.createNotificationChannelGroup(group)
+        notificationManager.createNotificationChannel(channel)
+        notificationManager.createNotificationChannelGroup(statusGroup)
+        notificationManager.createNotificationChannel(statusChannel)
+    }
+
     @OptIn(FlowPreview::class)
     val relayStatusUpdater = client.relayStatusFlow().debounce(300).onEach {
         try {
@@ -55,27 +92,34 @@ class AmberRelayStats(
         forceCreate,
     )
 
+    fun createForegroundNotification(): Notification {
+        val contentIntent = Intent(appContext, MainActivity::class.java)
+        contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        val contentPendingIntent =
+            PendingIntent.getActivity(
+                appContext,
+                0,
+                contentIntent,
+                PendingIntent.FLAG_MUTABLE,
+            )
+
+        return NotificationCompat.Builder(appContext, channel.id)
+            .setContentTitle(appContext.getString(R.string.service))
+            .setContentText(appContext.getString(R.string.amber_is_running_in_background))
+            .setSmallIcon(R.drawable.ic_notification)
+            .setCategory(Notification.CATEGORY_SERVICE)
+            .setOngoing(true)
+            .setGroup(group.id)
+            .setGroupSummary(true)
+            .setContentIntent(contentPendingIntent)
+            .build()
+    }
+
     fun createNotification(
         connected: Set<NormalizedRelayUrl>,
         available: Set<NormalizedRelayUrl>,
         forceCreate: Boolean = false,
     ): Notification? {
-        val channelId = "ServiceChannel"
-        val group = NotificationChannelGroupCompat.Builder("ServiceGroup")
-            .setName(appContext.getString(R.string.service))
-            .setDescription(appContext.getString(R.string.service_description))
-            .build()
-        val channel = NotificationChannelCompat.Builder(channelId, NotificationManager.IMPORTANCE_DEFAULT)
-            .setName(appContext.getString(R.string.service))
-            .setDescription(appContext.getString(R.string.amber_is_running_in_background))
-            .setSound(null, null)
-            .setGroup(group.id)
-            .build()
-
-        val notificationManager = NotificationManagerCompat.from(appContext)
-        notificationManager.createNotificationChannelGroup(group)
-        notificationManager.createNotificationChannel(channel)
-
         val message = available.joinToString("\n") {
             val connected = "${it.url} ${if (it in connected) appContext.getString(R.string.connected) else appContext.getString(R.string.disconnected)}\n"
             val ping = appContext.getString(R.string.ping_ms, Amber.instance.relayStats.get(it).pingInMs)
@@ -128,8 +172,8 @@ class AmberRelayStats(
         )
 
         val notificationBuilder =
-            NotificationCompat.Builder(appContext, channelId)
-                .setGroup(group.id)
+            NotificationCompat.Builder(appContext, statusChannel.id)
+                .setGroup(statusGroup.id)
                 .setContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
                 .setStyle(NotificationCompat.BigTextStyle().bigText(message))
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
@@ -137,6 +181,7 @@ class AmberRelayStats(
                 .setContentIntent(contentPendingIntent)
                 .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)
                 .addAction(R.drawable.ic_notification, appContext.getString(if (Amber.instance.settings.killSwitch.value) R.string.disable_kill_switch else R.string.enable_kill_switch), killSwitchPendingIntent)
+                .setCategory(Notification.CATEGORY_STATUS)
 
         return notificationBuilder.build()
     }
@@ -146,7 +191,7 @@ class AmberRelayStats(
         if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createNotification()?.let {
                 Log.d(Amber.TAG, "updateNotification")
-                notificationManager.notify(1, it)
+                notificationManager.notify(2, it)
             }
         }
     }

@@ -86,9 +86,9 @@ class ConnectivityService : Service() {
         Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: $isStarted")
         if (isStarted) return
         isStarted = true
-        Amber.instance.stats.createNotification(forceCreate = true)?.let {
-            startForeground(1, it)
-        }
+
+        startForeground(1, Amber.instance.stats.createForegroundNotification())
+
         Amber.instance.applicationIOScope.launch {
             while (Amber.instance.isStartingAppState.value) {
                 delay(1000)
@@ -172,9 +172,6 @@ class ConnectivityService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(Amber.TAG, "onStartCommand")
-        Amber.instance.stats.createNotification(forceCreate = true)?.let {
-            startForeground(1, it)
-        }
         return START_STICKY
     }
 }

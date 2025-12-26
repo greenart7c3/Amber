@@ -199,6 +199,8 @@ class Amber :
 
         instance = this
 
+        stats.createNotificationChannel()
+
         isStartingAppState.value = true
         isStartingApp.value = true
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))

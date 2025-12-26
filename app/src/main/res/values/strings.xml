@@ -609,4 +609,6 @@
     <string name="event_kind_9733">Private zap</string>
     <string name="event_kind_10101">Good wiki authors</string>
     <string name="event_kind_10102">Good wiki relays</string>
+    <string name="status_service_description">Relay status notification</string>
+    <string name="status">Relay status</string>
 </resources>

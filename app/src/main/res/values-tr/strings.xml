@@ -600,4 +600,6 @@
     <string name="event_kind_9733">Özel zap</string>
     <string name="event_kind_10101">İyi viki yazarları</string>
     <string name="event_kind_10102">İyi viki relay\'leri</string>
+    <string name="status_service_description">Relay status notification</string>
+    <string name="status">Relay status</string>
 </resources>

@@ -11,16 +11,27 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
 import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 
 object DataStoreAccess {
+    private val dataStoreScope = CoroutineScope(
+        SupervisorJob() + Dispatchers.IO,
+    )
     private val storeCache = ConcurrentHashMap<String, DataStore<Preferences>>()
 
     private fun getDataStore(context: Context, npub: String): DataStore<Preferences> = storeCache.computeIfAbsent(npub) {
         Log.d(Amber.TAG, "Creating new DataStore for $npub")
+
         PreferenceDataStoreFactory.create(
-            produceFile = { context.applicationContext.preferencesDataStoreFile("secure_datastore_$npub") },
+            scope = dataStoreScope,
+            produceFile = {
+                context.applicationContext
+                    .preferencesDataStoreFile("secure_datastore_$npub")
+            },
         )
     }
 
@@ -49,7 +60,5 @@ object DataStoreAccess {
         getDataStore(context, npub).edit { prefs ->
             prefs.clear()
         }
-
-        storeCache.remove(npub)
     }
 }

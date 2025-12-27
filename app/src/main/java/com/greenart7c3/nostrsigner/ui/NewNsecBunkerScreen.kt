@@ -217,14 +217,18 @@ fun NewNsecBunkerScreen(
                 )
             }
 
+            val title = stringResource(R.string.relays)
+            val noRelaysMessage = stringResource(R.string.no_relays_added)
+            val noNameMessage = stringResource(R.string.name_cannot_be_empty)
+
             AmberButton(
                 Modifier.padding(top = 20.dp),
                 text = stringResource(R.string.create),
                 onClick = {
                     if (relays.isEmpty()) {
                         accountStateViewModel.toast(
-                            context.getString(R.string.relays),
-                            context.getString(R.string.no_relays_added),
+                            title,
+                            noRelaysMessage,
                         )
 
                         return@AmberButton
@@ -232,8 +236,8 @@ fun NewNsecBunkerScreen(
 
                     if (name.text.isBlank()) {
                         accountStateViewModel.toast(
-                            context.getString(R.string.name),
-                            context.getString(R.string.name_cannot_be_empty),
+                            title,
+                            noNameMessage,
                         )
 
                         return@AmberButton

@@ -7,6 +7,7 @@ import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.collection.LruCache
 import androidx.compose.runtime.mutableStateOf
+import androidx.core.content.ContextCompat
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
@@ -348,7 +349,17 @@ class Amber :
         }
     }
 
+    fun startServiceFromUi() {
+        if (isServiceStarted) return
+        Log.d(TAG, "Starting ConnectivityService from UI")
+        ContextCompat.startForegroundService(
+            applicationContext,
+            Intent(applicationContext, ConnectivityService::class.java),
+        )
+    }
+
     fun startService() {
+        if (isServiceStarted) return
         try {
             Log.d(TAG, "Starting ConnectivityService")
             val serviceIntent = Intent(this, ConnectivityService::class.java)
@@ -498,6 +509,7 @@ class Amber :
 
     companion object {
         var isAppInForeground = false
+        var isServiceStarted = false
         const val TAG = "Amber"
         lateinit var instance: Amber
             private set

@@ -20,7 +20,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
-    private var isStarted = false
     private val timer = Timer()
     private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
 
@@ -83,11 +82,9 @@ class ConnectivityService : Service() {
     override fun onBind(intent: Intent): IBinder? = null
 
     override fun onCreate() {
-        Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: $isStarted")
-        if (isStarted) return
-        isStarted = true
-
-        startForeground(1, Amber.instance.stats.createForegroundNotification())
+        Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: ${Amber.isServiceStarted}")
+        if (Amber.isServiceStarted) return
+        Amber.isServiceStarted = true
 
         Amber.instance.applicationIOScope.launch {
             while (Amber.instance.isStartingAppState.value) {
@@ -155,7 +152,7 @@ class ConnectivityService : Service() {
     }
 
     override fun onDestroy() {
-        isStarted = false
+        Amber.isServiceStarted = false
         timer.cancel()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             try {
@@ -172,6 +169,7 @@ class ConnectivityService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(Amber.TAG, "onStartCommand")
+        startForeground(1, Amber.instance.stats.createForegroundNotification())
         return START_STICKY
     }
 }

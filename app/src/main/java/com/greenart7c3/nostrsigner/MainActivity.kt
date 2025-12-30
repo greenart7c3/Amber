@@ -59,7 +59,6 @@ class MainActivity : AppCompatActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         Log.d(Amber.TAG, "onCreate MainActivity")
-        Amber.instance.startService()
         Amber.isAppInForeground = true
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -265,8 +264,17 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onPause() {
+        Log.d(Amber.TAG, "onPause MainActivity")
+        Amber.isAppInForeground = false
+        super.onPause()
+    }
+
     override fun onResume() {
+        Log.d(Amber.TAG, "onResume MainActivity")
+        Amber.isAppInForeground = true
         Amber.instance.setMainActivity(this)
+        Amber.instance.startServiceFromUi()
         mainViewModel.showBunkerRequests()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             val connectivityManager =

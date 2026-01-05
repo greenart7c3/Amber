@@ -54,12 +54,16 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalConfiguration
@@ -767,21 +771,26 @@ fun LoginPage(
     val screenWidthDp = configuration.screenWidthDp.dp
     val percentage = (screenWidthDp * 0.93f)
     val verticalPadding = (screenWidthDp - percentage)
-    val key = remember { mutableStateOf(TextFieldValue()) }
-    var dialogOpen by remember { mutableStateOf(false) }
-    var errorMessage by remember { mutableStateOf("") }
+    val key = rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(""))
+    }
+    var dialogOpen by rememberSaveable { mutableStateOf(false) }
+    var errorMessage by rememberSaveable { mutableStateOf("") }
     val needsPassword =
         remember {
             derivedStateOf {
                 key.value.text.startsWith("ncryptsec1")
             }
         }
-    val password = remember { mutableStateOf(TextFieldValue()) }
+    val password = rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(""))
+    }
     val context = LocalContext.current
     val pageState = rememberPagerState {
         2
     }
     val scope = rememberCoroutineScope()
+    val focusRequester = remember { FocusRequester() }
 
     Scaffold(
         topBar = {
@@ -825,6 +834,7 @@ fun LoginPage(
                 0 -> {
                     val scrollState = rememberScrollState()
                     val keyboardController = LocalSoftwareKeyboardController.current
+
                     Column(
                         modifier = Modifier
                             .fillMaxSize()
@@ -851,6 +861,7 @@ fun LoginPage(
                                 .semantics {
                                     contentType = ContentType.Password
                                 }
+                                .focusRequester(focusRequester)
                                 .padding(vertical = 20.dp),
                             shape = RoundedCornerShape(18.dp),
                             value = key.value,
@@ -926,6 +937,12 @@ fun LoginPage(
                                 },
                             ),
                         )
+
+                        LaunchedEffect(Unit) {
+                            withFrameNanos { }
+                            withFrameNanos { }
+                            focusRequester.requestFocus()
+                        }
 
                         if (needsPassword.value) {
                             OutlinedTextField(

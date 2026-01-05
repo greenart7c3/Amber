@@ -665,9 +665,7 @@ object IntentUtils {
         Amber.instance.applicationIOScope.launch {
             val database = Amber.instance.getDatabase(account.npub)
             val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-            val defaultRelays = Amber.instance.settings.defaultRelays
             val savedApplication = database.dao().getByKey(key)
-            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
             val localAppName =
                 if (packageName != null) {
                     val info = context.packageManager.getApplicationInfo(packageName, 0)
@@ -681,7 +679,7 @@ object IntentUtils {
                     application = ApplicationEntity(
                         key = key,
                         name = appName ?: localAppName ?: "",
-                        relays = if (packageName != null) emptyList() else relays,
+                        relays = emptyList(),
                         url = "",
                         icon = "",
                         description = "",
@@ -840,15 +838,13 @@ object IntentUtils {
                 return@launch
             }
 
-            val defaultRelays = Amber.instance.settings.defaultRelays
             val savedApplication = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
-            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: defaultRelays
             val application =
                 savedApplication ?: ApplicationWithPermissions(
                     application = ApplicationEntity(
                         key = key,
                         name = appName,
-                        relays = relays,
+                        relays = emptyList(),
                         url = "",
                         icon = "",
                         description = "",

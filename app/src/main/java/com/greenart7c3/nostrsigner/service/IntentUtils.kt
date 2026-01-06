@@ -667,8 +667,12 @@ object IntentUtils {
             val savedApplication = database.dao().getByKey(key)
             val localAppName =
                 if (packageName != null) {
-                    val info = context.packageManager.getApplicationInfo(packageName, 0)
-                    context.packageManager.getApplicationLabel(info).toString()
+                    try {
+                        val info = context.packageManager.getApplicationInfo(packageName, 0)
+                        context.packageManager.getApplicationLabel(info).toString()
+                    } catch (_: Exception) {
+                        null
+                    }
                 } else {
                     appName
                 }

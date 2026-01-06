@@ -81,8 +81,12 @@ class MainActivity : AppCompatActivity() {
                 val packageName = callingPackage
                 val appName =
                     if (packageName != null) {
-                        val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                        applicationContext.packageManager.getApplicationLabel(info).toString()
+                        try {
+                            val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
+                            applicationContext.packageManager.getApplicationLabel(info).toString()
+                        } catch (_: Exception) {
+                            null
+                        }
                     } else {
                         null
                     }

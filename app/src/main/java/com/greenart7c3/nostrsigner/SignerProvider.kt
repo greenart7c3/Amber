@@ -445,7 +445,7 @@ class SignerProvider : ContentProvider() {
                     }
 
                     val cursor = MatrixCursor(arrayOf("signature", "result"))
-                    val result = account.hexKey
+                    val result = if (sortOrder == null) account.npub else account.hexKey
                     cursor.addRow(arrayOf<Any>(result, result))
                     return cursor
                 }

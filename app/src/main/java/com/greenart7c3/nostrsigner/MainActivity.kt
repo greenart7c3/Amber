@@ -4,16 +4,11 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
-import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.ActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,27 +17,21 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
-import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
-import com.greenart7c3.nostrsigner.service.Biometrics
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
-import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
+import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -100,119 +89,18 @@ class MainActivity : AppCompatActivity() {
                     ) {
                         val navController = rememberNavController()
                         mainViewModel.navController = navController
-                        var isAuthenticated by remember { mutableStateOf(false) }
-                        var showPinDialog by remember { mutableStateOf(false) }
-                        val keyguardLauncher =
-                            rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
-                                if (result.resultCode == RESULT_OK) {
-                                    isAuthenticated = true
-                                }
-                            }
-                        val scope = rememberCoroutineScope()
                         val context = LocalContext.current
-
-                        LaunchedEffect(Unit) {
-                            launch(Dispatchers.IO) {
-                                val settings = Amber.instance.settings
-                                val lastAuthTime = settings.lastBiometricsTime
-                                val whenToAsk = settings.biometricsTimeType
-                                val isTimeToAsk = when (whenToAsk) {
-                                    BiometricsTimeType.EVERY_TIME -> true
-                                    BiometricsTimeType.ONE_MINUTE -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 1
-                                    BiometricsTimeType.FIVE_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 5
-                                    BiometricsTimeType.TEN_MINUTES -> minutesBetween(lastAuthTime, System.currentTimeMillis()) >= 10
-                                }
-                                val shouldAuthenticate = (settings.useAuth || settings.usePin) && isTimeToAsk
-                                if (!shouldAuthenticate) {
-                                    isAuthenticated = true
-                                } else {
-                                    if (!isAuthenticated) {
-                                        launch(Dispatchers.Main) {
-                                            if (settings.usePin) {
-                                                showPinDialog = true
-                                            } else {
-                                                Biometrics.authenticate(
-                                                    getString(R.string.authenticate),
-                                                    this@MainActivity,
-                                                    keyguardLauncher,
-                                                    {
-                                                        Amber.instance.settings = Amber.instance.settings.copy(
-                                                            lastBiometricsTime = System.currentTimeMillis(),
-                                                        )
-
-                                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                                                        isAuthenticated = true
-                                                    },
-                                                    { _, message ->
-                                                        this@MainActivity.finishAndRemoveTask()
-                                                        scope.launch {
-                                                            Toast.makeText(
-                                                                context,
-                                                                message,
-                                                                Toast.LENGTH_SHORT,
-                                                            ).show()
-                                                        }
-                                                    },
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
+                        var isAuthenticated by remember { mutableStateOf(false) }
 
                         Surface(
                             modifier = Modifier.fillMaxSize(),
                             color = MaterialTheme.colorScheme.background,
                         ) {
-                            if (showPinDialog) {
-                                Dialog(
-                                    properties = DialogProperties(usePlatformDefaultWidth = false),
-                                    onDismissRequest = {
-                                        showPinDialog = false
-                                        this@MainActivity.finishAndRemoveTask()
-                                        scope.launch {
-                                            Toast.makeText(
-                                                context,
-                                                getString(R.string.pin_does_not_match),
-                                                Toast.LENGTH_SHORT,
-                                            ).show()
-                                        }
-                                    },
-                                ) {
-                                    Surface(
-                                        modifier = Modifier
-                                            .fillMaxSize(),
-                                        color = MaterialTheme.colorScheme.background,
-                                    ) {
-                                        Box(
-                                            Modifier.padding(40.dp),
-                                        ) {
-                                            RandomPinInput(
-                                                text = getString(R.string.enter_pin),
-                                                onPinEntered = {
-                                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
-                                                    if (it == pin) {
-                                                        Amber.instance.settings = Amber.instance.settings.copy(
-                                                            lastBiometricsTime = System.currentTimeMillis(),
-                                                        )
-
-                                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                                                        isAuthenticated = true
-                                                        showPinDialog = false
-                                                    } else {
-                                                        Toast.makeText(
-                                                            context,
-                                                            getString(R.string.pin_does_not_match),
-                                                            Toast.LENGTH_SHORT,
-                                                        ).show()
-                                                    }
-                                                },
-                                            )
-                                        }
-                                    }
-                                }
-                            }
+                            BiometricAuthScreen(
+                                onAuth = {
+                                    isAuthenticated = it
+                                },
+                            )
 
                             if (!isAuthenticated) {
                                 Box(

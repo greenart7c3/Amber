@@ -186,7 +186,7 @@ object LocalPreferences {
         }
     }
 
-    suspend fun reloadApp() {
+    fun reloadApp() {
         val context = Amber.instance
         currentAccount = null
         savedAccounts = null
@@ -429,14 +429,14 @@ object LocalPreferences {
         accountCache.put(account.npub, account)
     }
 
-    suspend fun loadFromEncryptedStorage(context: Context): Account? {
+    fun loadFromEncryptedStorage(context: Context): Account? {
         currentAccount(context)?.let {
             return loadFromEncryptedStorage(context, it)
         }
         return null
     }
 
-    suspend fun allAccounts(context: Context): List<Account> {
+    fun allAccounts(context: Context): List<Account> {
         val accountInfos = allSavedAccounts(context)
         return accountInfos.mapNotNull {
             loadFromEncryptedStorage(context, it.npub)
@@ -493,7 +493,7 @@ object LocalPreferences {
         HttpClientManager.setDefaultProxyOnPort(port)
     }
 
-    suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
+    fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
         if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }

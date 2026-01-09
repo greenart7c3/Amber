@@ -25,4 +25,5 @@ data class AmberBunkerRequest(
     val checked: MutableState<Boolean> = mutableStateOf(true),
     val rememberType: MutableState<RememberType> = mutableStateOf(RememberType.NEVER),
     val encryptionType: EncryptionType,
+    val isNostrConnectUri: Boolean,
 )

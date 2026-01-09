@@ -6,6 +6,8 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -23,13 +25,18 @@ import com.greenart7c3.nostrsigner.models.Permission
 
 @Composable
 fun EnabledPermissions(
+    modifier: Modifier = Modifier,
     localPermissions: List<Permission>,
 ) {
     val enabledPermissions = localPermissions.map {
         remember { mutableStateOf(it.checked) }
     }
-    if (localPermissions.isNotEmpty()) {
-        localPermissions.forEachIndexed { index, permission ->
+    LazyColumn(
+        modifier
+            .fillMaxWidth()
+            .padding(8.dp),
+    ) {
+        itemsIndexed(localPermissions) { index, item ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -44,20 +51,20 @@ fun EnabledPermissions(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .clickable {
-                            permission.checked = !permission.checked
-                            enabledPermissions[index].value = permission.checked
+                            item.checked = !item.checked
+                            enabledPermissions[index].value = item.checked
                         },
                 ) {
                     Checkbox(
                         checked = enabledPermissions[index].value,
                         onCheckedChange = { _ ->
-                            permission.checked = !permission.checked
-                            enabledPermissions[index].value = permission.checked
+                            item.checked = !item.checked
+                            enabledPermissions[index].value = item.checked
                         },
                     )
                     Text(
                         modifier = Modifier.weight(1f),
-                        text = permission.toLocalizedString(LocalContext.current),
+                        text = item.toLocalizedString(LocalContext.current),
                     )
                 }
             }

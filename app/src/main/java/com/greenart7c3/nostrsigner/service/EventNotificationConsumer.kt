@@ -207,6 +207,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             signedEvent = signedEvent,
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
+            isNostrConnectUri = false,
         )
 
         var amberEvent: AmberEvent? = null

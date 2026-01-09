@@ -347,7 +347,7 @@
     <string name="next">Next</string>
     <string name="add_your_key">Add your key</string>
     <string name="sign_policy_basic">Approve basic actions</string>
-    <string name="sign_policy_basic_explainer">Recommended for most people. This will minimize the number of interruptions during your app usage.</string>
+    <string name="sign_policy_basic_explainer">Auto-approve most common requests.</string>
     <string name="sign_policy_manual">Manually approve each app</string>
     <string name="sign_policy_manual_explainer">Recommended for privacy-minded people who would like control over each app. Choosing this will prompt you set a preference every time you try a new app.</string>
     <string name="sign_policy_title">Select a signing policy</string>
@@ -359,7 +359,7 @@
     <string name="sign_policy">Sign policy</string>
     <string name="handle_application_permissions">How to handle this application permissions?</string>
     <string name="sign_policy_manual_new_app">Manually approve each permission</string>
-    <string name="sign_policy_manual_new_app_explainer">Recommended for privacy-minded people who would like control over each permission. Choosing this will prompt you set a preference every time you receive a new permission.</string>
+    <string name="sign_policy_manual_new_app_explainer">Ask me to approve each request.</string>
     <string name="sign_policy_fully">I fully trust this application</string>
     <string name="sign_policy_fully_explainer">Sign automatically every request</string>
     <string name="event_kind_10050">DM relays</string>

@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.models.containsNip
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import java.util.UUID
 import kotlinx.coroutines.launch
 
 object NostrConnectUtils {
@@ -22,6 +23,10 @@ object NostrConnectUtils {
         intent: Intent,
         account: Account,
     ) {
+        if (intent.extras?.getString("id") == null) {
+            intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
+        }
+
         try {
             val data = intent.dataString.toString().replace("nostrconnect://", "")
             val split = data.split("?")
@@ -107,6 +112,7 @@ object NostrConnectUtils {
             BunkerRequestUtils.addRequest(
                 AmberBunkerRequest(
                     BunkerRequestConnect(
+                        id = intent.extras?.getString("id") ?: UUID.randomUUID().toString().substring(0, 6),
                         remoteKey = pubKey,
                         secret = "",
                         permissions = if (permissions.isNotEmpty()) {
@@ -124,6 +130,7 @@ object NostrConnectUtils {
                     signedEvent = null,
                     encryptedData = null,
                     encryptionType = EncryptionType.NIP44,
+                    isNostrConnectUri = true,
                 ),
             )
         } catch (e: Exception) {

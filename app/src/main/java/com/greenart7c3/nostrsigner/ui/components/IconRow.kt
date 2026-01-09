@@ -22,6 +22,7 @@ import androidx.compose.ui.unit.sp
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun IconRow(
+    modifier: Modifier = Modifier,
     center: Boolean = false,
     title: String,
     icon: ImageVector,
@@ -31,7 +32,7 @@ fun IconRow(
     onLongClick: (() -> Unit)? = null,
 ) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
             .combinedClickable(
                 onClick = onClick,

@@ -70,24 +70,21 @@ fun IntentSingleEventHomeScreen(
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> {
             LoginWithPubKey(
-                shouldCloseApp = applicationEntity?.application?.closeApplication != false,
+                packageName = packageName,
                 modifier = modifier,
                 account = account,
-                packageName = packageName,
-                appName = appName,
-                applicationName = applicationName,
                 permissions = intentData.permissions,
-                onAccept = { permissions, signPolicy, closeApplication, rememberType ->
+                onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
                     val result = if (packageName == null) {
-                        account.hexKey
+                        acc.hexKey
                     } else {
-                        account.npub
+                        acc.npub
                     }
 
                     IntentUtils.sendResult(
                         context,
                         packageName,
-                        account,
+                        acc,
                         key,
                         clipboardManager,
                         result,

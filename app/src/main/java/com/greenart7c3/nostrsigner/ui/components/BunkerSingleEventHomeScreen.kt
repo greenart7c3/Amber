@@ -148,6 +148,7 @@ fun BunkerSingleEventHomeScreen(
             var localRememberType by remember { mutableStateOf(RememberType.NEVER) }
             var existingAppKey by remember { mutableStateOf("") }
             var localDeleteAfter by remember { mutableLongStateOf(0L) }
+            var selectedAccount by remember { mutableStateOf<Account>(account) }
 
             if (showExistingAppDialog) {
                 AlertDialog(
@@ -169,7 +170,7 @@ fun BunkerSingleEventHomeScreen(
                                     BunkerRequestUtils.sendResult(
                                         oldKey = existingAppKey,
                                         context = context,
-                                        account = account,
+                                        account = selectedAccount,
                                         key = key,
                                         response = result,
                                         bunkerRequest = bunkerRequest,
@@ -192,7 +193,7 @@ fun BunkerSingleEventHomeScreen(
 
                                     BunkerRequestUtils.sendResult(
                                         context = context,
-                                        account = account,
+                                        account = selectedAccount,
                                         key = key,
                                         response = result,
                                         bunkerRequest = bunkerRequest,
@@ -222,7 +223,7 @@ fun BunkerSingleEventHomeScreen(
                 modifier = modifier,
                 shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
                 account = account,
-                appName = appName,
+                bunkerRequest = bunkerRequest,
                 permissions = bunkerRequest.request.permissions?.split(",")?.map {
                     val split = it.split(":")
                     if (split.size > 1) {
@@ -231,21 +232,22 @@ fun BunkerSingleEventHomeScreen(
                         Permission(split[0].trim(), null)
                     }
                 },
-                onAccept = { permissions, signPolicy, closeApplication, rememberType, deleteAfter ->
+                onAccept = { permissions, signPolicy, closeApplication, rememberType, deleteAfter, acc ->
                     val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 
                     localPermissions = permissions
                     localSignPolicy = signPolicy
                     localCloseApplication = closeApplication
                     localRememberType = rememberType
+                    selectedAccount = acc
 
                     if (bunkerRequest.name.isNotBlank()) {
                         Amber.instance.applicationIOScope.launch {
-                            val existingApp = Amber.instance.getDatabase(account.npub).dao().getByName(bunkerRequest.name)
+                            val existingApp = Amber.instance.getDatabase(acc.npub).dao().getByName(bunkerRequest.name)
                             if (existingApp == null) {
                                 BunkerRequestUtils.sendResult(
                                     context = context,
-                                    account = account,
+                                    account = acc,
                                     key = key,
                                     response = result,
                                     bunkerRequest = bunkerRequest,

@@ -5,7 +5,6 @@ import android.graphics.drawable.Drawable
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.size
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Shield
 import androidx.compose.material3.CenterAlignedTopAppBar
@@ -91,8 +90,8 @@ fun AmberTopAppBar(
                                             horizontalArrangement = Arrangement.spacedBy(4.dp),
                                             verticalAlignment = Alignment.CenterVertically,
                                         ) {
-                                            val relayStats = Amber.instance.client.relayStatusFlow().collectAsStateWithLifecycle()
-                                            Text("${relayStats.value.connected.size}/${relayStats.value.available.size}")
+                                            val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                                            Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
                                             Icon(
                                                 imageVector = ImageVector.vectorResource(R.drawable.relays),
                                                 contentDescription = context.getString(R.string.reconnect),

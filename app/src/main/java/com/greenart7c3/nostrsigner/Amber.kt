@@ -91,7 +91,7 @@ class Amber :
 
     val client: NostrClient = NostrClient(factory, applicationIOScope)
 
-    val stats = AmberRelayStats(client, applicationIOScope, this)
+    val stats = AmberRelayStats(client, this)
 
     // logs and stat counts.
     val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {

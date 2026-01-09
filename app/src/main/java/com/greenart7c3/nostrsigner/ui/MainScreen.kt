@@ -110,7 +110,7 @@ private fun askNotificationPermission(
 @SuppressLint("BatteryLife")
 fun requestIgnoreBatteryOptimizations(context: Context) {
     if (BuildFlavorChecker.isOfflineFlavor()) return
-    if (Amber.instance.client.relayStatusFlow().value.connected.isEmpty()) return
+    if (Amber.instance.client.connectedRelaysFlow().value.isEmpty()) return
     val packageName = context.packageName
     val pm = context.getSystemService(PowerManager::class.java)
     if (!pm.isIgnoringBatteryOptimizations(packageName) && !LocalPreferences.getBatteryOptimization(context)) {

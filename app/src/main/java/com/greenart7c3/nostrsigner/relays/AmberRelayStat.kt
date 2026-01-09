@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.relays
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.app.Notification
 import android.app.NotificationManager
 import android.app.PendingIntent
@@ -20,20 +21,38 @@ import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
-import kotlinx.coroutines.flow.stateIn
 
 class AmberRelayStats(
     client: NostrClient,
-    scope: CoroutineScope,
     val appContext: Context,
 ) {
     var oldMessage = ""
-    val relayStatus = client.relayStatusFlow()
+    var available = emptySet<NormalizedRelayUrl>()
+    var connected = emptySet<NormalizedRelayUrl>()
+
+    @OptIn(FlowPreview::class)
+    @SuppressLint("MissingPermission")
+    val relayStatus = combine(client.availableRelaysFlow(), client.connectedRelaysFlow()) { available, connected ->
+        available to connected
+    }.debounce(300).onEach {
+        this.available = it.first
+        this.connected = it.second
+        val notificationManager = NotificationManagerCompat.from(appContext)
+        if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
+            createNotification(
+                it.second,
+                it.first,
+                false,
+            )?.let { notification ->
+                Log.d(Amber.TAG, "updateNotification")
+                notificationManager.notify(2, notification)
+            }
+        }
+    }
 
     lateinit var group: NotificationChannelGroupCompat
     lateinit var channel: NotificationChannelCompat
@@ -72,25 +91,7 @@ class AmberRelayStats(
         notificationManager.createNotificationChannel(statusChannel)
     }
 
-    @OptIn(FlowPreview::class)
-    val relayStatusUpdater = client.relayStatusFlow().debounce(300).onEach {
-        try {
-            updateNotification()
-        } catch (_: NullPointerException) {
-        }
-    }.stateIn(
-        scope,
-        SharingStarted.Eagerly,
-        relayStatus.value,
-    )
-
     private val innerCache = mutableMapOf<NormalizedRelayUrl, AmberRelayStat>()
-
-    fun createNotification(forceCreate: Boolean = false) = createNotification(
-        relayStatus.value.connected,
-        relayStatus.value.available,
-        forceCreate,
-    )
 
     fun createForegroundNotification(): Notification {
         val contentIntent = Intent(appContext, MainActivity::class.java)
@@ -189,7 +190,10 @@ class AmberRelayStats(
     fun updateNotification() {
         val notificationManager = NotificationManagerCompat.from(appContext)
         if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
-            createNotification()?.let {
+            createNotification(
+                connected,
+                available,
+            )?.let {
                 Log.d(Amber.TAG, "updateNotification")
                 notificationManager.notify(2, it)
             }
@@ -200,11 +204,6 @@ class AmberRelayStats(
 
     fun addSent(url: NormalizedRelayUrl) {
         get(url).addSent()
-        updateNotification()
-    }
-
-    fun addReceived(url: NormalizedRelayUrl) {
-        get(url).addReceived()
         updateNotification()
     }
 

@@ -547,9 +547,9 @@ fun ActiveRelaysScreen(
                 Column(
                     verticalArrangement = Arrangement.Center,
                 ) {
-                    val isConnected by Amber.instance.client.relayStatusFlow().map { status ->
-                        relay in status.connected
-                    }.collectAsStateWithLifecycle(relay in Amber.instance.client.relayStatusFlow().value.connected)
+                    val isConnected by Amber.instance.client.connectedRelaysFlow().map { status ->
+                        relay in status
+                    }.collectAsStateWithLifecycle(relay in Amber.instance.client.connectedRelaysFlow().value)
 
                     Text(
                         modifier = Modifier.padding(top = 16.dp),

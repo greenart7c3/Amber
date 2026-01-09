@@ -444,6 +444,14 @@ enum class RememberType(val screenCode: Int, val resourceId: Int) {
     ALWAYS(4, R.string.always),
 }
 
+fun parseRememberType(screenCode: Int): RememberType = when (screenCode) {
+    0 -> RememberType.NEVER
+    1 -> RememberType.ONE_MINUTE
+    2 -> RememberType.FIVE_MINUTES
+    3 -> RememberType.TEN_MINUTES
+    else -> RememberType.ALWAYS
+}
+
 enum class DeleteAfterType(val screenCode: Int, val resourceId: Int) {
     NEVER(0, R.string.never),
     FIVE_MINUTES(1, R.string.five_minutes),

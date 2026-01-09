@@ -1,21 +1,29 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.content.ClipData
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.animateDpAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -23,6 +31,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +39,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.ClipEntry
@@ -53,6 +63,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.orange
+import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -233,6 +244,55 @@ fun EditPermission(
     }
 }
 
+fun rememberTypeIndexToRememberType(rememberTypeIndex: Int): RememberType = when (rememberTypeIndex) {
+    0 -> RememberType.ALWAYS
+    1 -> RememberType.ONE_MINUTE
+    2 -> RememberType.FIVE_MINUTES
+    3 -> RememberType.TEN_MINUTES
+    else -> RememberType.NEVER
+}
+
+fun rememberTypeToIndex(rememberType: RememberType): Int = when (rememberType) {
+    RememberType.ALWAYS -> 0
+    RememberType.ONE_MINUTE -> 1
+    RememberType.FIVE_MINUTES -> 2
+    RememberType.TEN_MINUTES -> 3
+    else -> 0
+}
+
+fun onSetPermission(optionIndex: Int, rememberTypeIndex: Int, permission: ApplicationPermissionsEntity, onToggle: (ApplicationPermissionsEntity) -> Unit) {
+    val rememberType = rememberTypeIndexToRememberType(rememberTypeIndex)
+    val time = when (rememberType) {
+        RememberType.ALWAYS -> Long.MAX_VALUE / 1000
+        RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
+        RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
+        RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+        RememberType.NEVER -> 0L
+    }
+    val isAcceptable = optionIndex == 0 || optionIndex == 2
+
+    onToggle(
+        permission.copy(
+            acceptable = isAcceptable,
+            acceptUntil = if (optionIndex == 2) {
+                0L
+            } else if (isAcceptable) {
+                time
+            } else {
+                0L
+            },
+            rejectUntil = if (optionIndex == 2) {
+                0L
+            } else if (!isAcceptable) {
+                time
+            } else {
+                0L
+            },
+            rememberType = rememberTypeIndexToRememberType(rememberTypeIndex).screenCode,
+        ),
+    )
+}
+
 @Composable
 fun PermissionRow(
     permission: ApplicationPermissionsEntity,
@@ -240,7 +300,6 @@ fun PermissionRow(
     onDelete: (ApplicationPermissionsEntity) -> Unit,
 ) {
     val context = LocalContext.current
-
     val message = remember(permission.type, permission.kind, permission.acceptable) {
         val localPermission = Permission(
             permission.type.toLowerCase(Locale.current),
@@ -256,84 +315,249 @@ fun PermissionRow(
             localPermission.toLocalizedString(context)
         }
     }
+    val fixedSegmentWidth = 55.dp
+    val padding = 2.dp
+    val totalWidth = (fixedSegmentWidth * 3) + (padding * 2)
+    val totalWidthRememberType = (fixedSegmentWidth * 4) + (padding * 2)
+    var optionIndex by remember {
+        if (permission.acceptUntil > 0) {
+            mutableIntStateOf(0)
+        } else if (permission.rejectUntil > 0) {
+            mutableIntStateOf(1)
+        } else {
+            mutableIntStateOf(2)
+        }
+    }
+    var rememberTypeIndex by remember {
+        mutableIntStateOf(rememberTypeToIndex(parseRememberType(permission.rememberType)))
+    }
 
-    Card(
+    Column(
         modifier = Modifier
-            .padding(vertical = 4.dp)
-            .fillMaxWidth(),
-        border = BorderStroke(1.dp, Color.LightGray),
-        colors = CardDefaults.cardColors().copy(
-            containerColor = MaterialTheme.colorScheme.background,
-        ),
+            .padding(4.dp)
+            .fillMaxWidth()
+            .border(
+                BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
+                RoundedCornerShape(6.dp),
+            )
+            .padding(4.dp),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
+        Text(
             modifier = Modifier
-                .padding(vertical = 8.dp, horizontal = 8.dp)
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            text = message,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+        )
+
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(4.dp),
-                verticalAlignment = Alignment.CenterVertically,
+            Box(
                 modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 8.dp)
-                    .clickable {
-                        val isAcceptable = !permission.acceptable
-                        val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
-                        val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
-
-                        onToggle(
-                            permission.copy(
-                                acceptable = isAcceptable,
-                                acceptUntil = acceptUntil,
-                                rejectUntil = rejectUntil,
-                                rememberType = RememberType.ALWAYS.screenCode,
-                            ),
-                        )
-                    },
+                    .width(totalWidth)
+                    .height(32.dp)
+                    .clip(RoundedCornerShape(6.dp))
+                    .background(MaterialTheme.colorScheme.background)
+                    .padding(padding),
             ) {
-                Checkbox(
-                    colors = CheckboxDefaults.colors().copy(
-                        uncheckedBorderColor = Color.Gray,
-                    ),
-                    checked = permission.acceptable,
-                    onCheckedChange = {
-                        val isAcceptable = !permission.acceptable
-                        val acceptUntil = if (isAcceptable) Long.MAX_VALUE / 1000 else 0L
-                        val rejectUntil = if (!isAcceptable) Long.MAX_VALUE / 1000 else 0L
-
-                        onToggle(
-                            permission.copy(
-                                acceptable = isAcceptable,
-                                acceptUntil = acceptUntil,
-                                rejectUntil = rejectUntil,
-                                rememberType = RememberType.ALWAYS.screenCode,
-                            ),
-                        )
-                    },
+                val indicatorOffset by animateDpAsState(
+                    targetValue = fixedSegmentWidth * optionIndex,
+                    animationSpec = tween(durationMillis = 250),
+                    label = "indicatorOffset",
                 )
 
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = message,
-                    fontSize = 18.sp,
-                    color = if (permission.acceptable) Color.Unspecified else Color.Gray,
+                Box(
+                    modifier = Modifier
+                        .offset(x = indicatorOffset)
+                        .width(fixedSegmentWidth)
+                        .fillMaxHeight()
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(
+                            MaterialTheme.colorScheme.primary,
+                        ),
                 )
-            }
 
-            IconButton(
-                onClick = {
-                    onDelete(permission)
-                },
-            ) {
-                Icon(
-                    ImageVector.vectorResource(R.drawable.delete),
-                    contentDescription = stringResource(R.string.remove_permission),
-                    modifier = Modifier.fillMaxHeight(),
-                )
+                Row(modifier = Modifier.fillMaxSize()) {
+                    ToggleOption(
+                        text = "Allow",
+                        isSelected = optionIndex == 0,
+                        modifier = Modifier.width(fixedSegmentWidth),
+                        onClick = {
+                            optionIndex = 0
+
+                            onSetPermission(
+                                optionIndex,
+                                rememberTypeIndex,
+                                permission,
+                                onToggle,
+                            )
+                        },
+                    )
+                    ToggleOption(
+                        text = "Deny",
+                        isSelected = optionIndex == 1,
+                        modifier = Modifier.width(fixedSegmentWidth),
+                        onClick = {
+                            optionIndex = 1
+
+                            onSetPermission(
+                                optionIndex,
+                                rememberTypeIndex,
+                                permission,
+                                onToggle,
+                            )
+                        },
+                    )
+                    ToggleOption(
+                        text = "Ask",
+                        isSelected = optionIndex == 2,
+                        modifier = Modifier.width(fixedSegmentWidth),
+                        onClick = {
+                            optionIndex = 2
+
+                            onSetPermission(
+                                optionIndex,
+                                rememberTypeIndex,
+                                permission,
+                                onToggle,
+                            )
+                        },
+                    )
+                }
             }
         }
+
+        if (optionIndex != 2) {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Box(
+                    modifier = Modifier
+                        .width(totalWidthRememberType)
+                        .height(32.dp)
+                        .clip(RoundedCornerShape(6.dp))
+                        .background(MaterialTheme.colorScheme.background)
+                        .padding(padding),
+
+                ) {
+                    val indicatorOffset by animateDpAsState(
+                        targetValue = fixedSegmentWidth * rememberTypeIndex,
+                        animationSpec = tween(durationMillis = 250),
+                        label = "indicatorOffset",
+                    )
+
+                    Box(
+                        modifier = Modifier
+                            .offset(x = indicatorOffset)
+                            .width(fixedSegmentWidth)
+                            .fillMaxHeight()
+                            .clip(RoundedCornerShape(4.dp))
+                            .background(
+                                MaterialTheme.colorScheme.primary,
+                            ),
+                    )
+
+                    Row(
+                        modifier = Modifier.fillMaxSize(),
+                    ) {
+                        ToggleOption(
+                            text = "Always",
+                            isSelected = rememberTypeIndex == 0,
+                            modifier = Modifier.width(fixedSegmentWidth),
+                            onClick = {
+                                rememberTypeIndex = 0
+
+                                onSetPermission(
+                                    optionIndex,
+                                    rememberTypeIndex,
+                                    permission,
+                                    onToggle,
+                                )
+                            },
+                        )
+                        ToggleOption(
+                            text = "1m",
+                            isSelected = rememberTypeIndex == 1,
+                            modifier = Modifier.width(fixedSegmentWidth),
+                            onClick = {
+                                rememberTypeIndex = 1
+                                onSetPermission(
+                                    optionIndex,
+                                    rememberTypeIndex,
+                                    permission,
+                                    onToggle,
+                                )
+                            },
+                        )
+                        ToggleOption(
+                            text = "5m",
+                            isSelected = rememberTypeIndex == 2,
+                            modifier = Modifier.width(fixedSegmentWidth),
+                            onClick = {
+                                rememberTypeIndex = 2
+                                onSetPermission(
+                                    optionIndex,
+                                    rememberTypeIndex,
+                                    permission,
+                                    onToggle,
+                                )
+                            },
+                        )
+                        ToggleOption(
+                            text = "10m",
+                            isSelected = rememberTypeIndex == 3,
+                            modifier = Modifier.width(fixedSegmentWidth),
+                            onClick = {
+                                rememberTypeIndex = 3
+                                onSetPermission(
+                                    optionIndex,
+                                    rememberTypeIndex,
+                                    permission,
+                                    onToggle,
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ToggleOption(
+    text: String,
+    isSelected: Boolean,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+) {
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant,
+        animationSpec = tween(durationMillis = 200),
+        label = "textColor",
+    )
+
+    Box(
+        modifier = modifier
+            .fillMaxHeight()
+            .clip(RoundedCornerShape(4.dp))
+            .clickable(onClick = onClick),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodyMedium,
+            color = textColor,
+        )
     }
 }
 

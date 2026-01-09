@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui.actions
 
 import android.annotation.SuppressLint
 import android.content.Context
+import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -61,11 +62,14 @@ import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
@@ -267,6 +271,8 @@ fun onAddRelay(
     val url = textFieldRelay.value.text
     if (url.isNotBlank() && url != "/") {
         isLoading.value = true
+
+        val client = NostrClient(Amber.instance.factory)
         val isPrivateIp = Amber.instance.isPrivateIp(url)
         val addedWSS =
             if (!url.startsWith("wss://") && !url.startsWith("ws://")) {
@@ -322,6 +328,18 @@ fun onAddRelay(
                 var canSendRequest = false
 
                 val listener = object : IRelayClientListener {
+                    override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
+                        if (!success) {
+                            AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
+                        }
+
+                        super.onSent(relay, cmdStr, cmd, success)
+                    }
+
+                    override fun onDisconnected(relay: IRelayClient) {
+                        Log.d(Amber.TAG, "Disconnected from ${relay.url.url}")
+                        super.onDisconnected(relay)
+                    }
                     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
                         canSendRequest = true
                         super.onConnected(relay, pingMillis, compressed)
@@ -346,17 +364,22 @@ fun onAddRelay(
                                 filterResult = true
                             }
                         }
+
+                        if (msg is OkMessage && !msg.success) {
+                            AmberListenerSingleton.latestErrorMessages.add(msg.message)
+                        }
+
                         super.onIncomingMessage(relay, msgStr, msg)
                     }
                 }
 
-                Amber.instance.client.subscribe(listener)
+                client.subscribe(listener)
 
-                if (!Amber.instance.client.isActive()) {
-                    Amber.instance.client.connect()
+                if (!client.isActive()) {
+                    client.connect()
                 }
 
-                Amber.instance.client.openReqSubscription(
+                client.openReqSubscription(
                     ncSub,
                     mapOf(addedWSS to filters),
                 )
@@ -378,9 +401,9 @@ fun onAddRelay(
                         },
                         onReject = {},
                     )
-                    Amber.instance.client.close(ncSub)
-                    Amber.instance.client.unsubscribe(listener)
-                    Amber.instance.client.reconnect()
+                    client.close(ncSub)
+                    client.unsubscribe(listener)
+                    client.disconnect()
                     textFieldRelay.value = TextFieldValue("")
                     isLoading.value = false
                     return@secondLaunch
@@ -389,7 +412,7 @@ fun onAddRelay(
                 var success = false
                 var errorCount = 0
                 while (!success && errorCount < 3) {
-                    success = Amber.instance.client.sendAndWaitForResponse(signedEvent, setOf(addedWSS))
+                    success = client.sendAndWaitForResponse(signedEvent, setOf(addedWSS))
                     if (!success) {
                         errorCount++
                         delay(1000)
@@ -414,9 +437,9 @@ fun onAddRelay(
                     filterResult = true
                 }
 
-                Amber.instance.client.close(ncSub)
-                Amber.instance.client.unsubscribe(listener)
-                Amber.instance.client.reconnect()
+                client.close(ncSub)
+                client.disconnect()
+                client.unsubscribe(listener)
 
                 if (success && filterResult) {
                     relays2.add(addedWSS)

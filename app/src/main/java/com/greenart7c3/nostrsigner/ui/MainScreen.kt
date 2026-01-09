@@ -62,6 +62,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
@@ -340,7 +341,8 @@ fun MainScreen(
                     Route.IncomingRequest.route,
                     content = {
                         val scrollState = rememberScrollState()
-                        val modifier = if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
+                        val isConnectEvent = intents.firstOrNull()?.type == SignerType.GET_PUBLIC_KEY
+                        val modifier = if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route || !isConnectEvent) {
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)

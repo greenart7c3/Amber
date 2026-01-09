@@ -40,6 +40,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
@@ -62,7 +63,8 @@ fun AmberTopAppBar(
     bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
 ) {
-    if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
+    val isConnectEvent = intents.firstOrNull()?.type == SignerType.GET_PUBLIC_KEY
+    if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route || !isConnectEvent) {
         if (destinationRoute != "login" && destinationRoute != "create" && destinationRoute != "loginPage") {
             CenterAlignedTopAppBar(
                 actions = {

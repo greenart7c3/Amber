@@ -252,6 +252,9 @@
     <string name="one_minute">Une minute</string>
     <string name="five_minutes">Cinq minutes</string>
     <string name="ten_minutes">Dix minutes</string>
+    <string name="one_minute_short">1m</string>
+    <string name="five_minutes_short">5m</string>
+    <string name="ten_minutes_short">10m</string>
     <string name="event_kind_9000">Ajouter l\'utilisateur au groupe</string>
     <string name="event_kind_9001">Supprimer l\'utilisateur du groupe</string>
     <string name="event_kind_9002">Modifier les métadonnées du groupe</string>
@@ -442,6 +445,7 @@
     <string name="of_events">%1$s of %2$s events</string>
     <string name="see_details">See details</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s is requiring some permissions, please review them.</string>
+    <string name="is_requiring_some_permissions_please_review_them2">Is requiring some permissions, please review them.</string>
     <string name="always_approve_this_permission">Always approve this permission</string>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s is requiring to sign these events related to %2$s permission.</string>
     <string name="relay_filter_failed">Relay does not support retrieving Bunker events. Would you like to add it anyway?</string>
@@ -602,4 +606,11 @@
     <string name="event_kind_10102">Good wiki relays</string>
     <string name="status_service_description">Relay status notification</string>
     <string name="status">Relay status</string>
+    <string name="kind">Kind</string>
+    <string name="pubkey">Pubkey</string>
+    <string name="date">Date</string>
+    <string name="tags">Tags</string>
+    <string name="discard_all">Discard selected</string>
+    <string name="approve_all">Approve selected</string>
+    <string name="requests_message">Requests %1$s</string>
 </resources>

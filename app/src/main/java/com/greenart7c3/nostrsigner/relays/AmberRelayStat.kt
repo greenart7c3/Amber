@@ -25,7 +25,9 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
+import kotlinx.coroutines.launch
 
+@OptIn(FlowPreview::class)
 class AmberRelayStats(
     client: NostrClient,
     val appContext: Context,
@@ -44,8 +46,8 @@ class AmberRelayStats(
         val notificationManager = NotificationManagerCompat.from(appContext)
         if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createNotification(
-                it.second,
-                it.first,
+                client.connectedRelaysFlow().value,
+                client.availableRelaysFlow().value,
                 false,
             )?.let { notification ->
                 Log.d(Amber.TAG, "updateNotification")
@@ -89,6 +91,19 @@ class AmberRelayStats(
         notificationManager.createNotificationChannel(channel)
         notificationManager.createNotificationChannelGroup(statusGroup)
         notificationManager.createNotificationChannel(statusChannel)
+
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.client.availableRelaysFlow().debounce(300).collect {
+                available = it
+                updateNotification()
+            }
+        }
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.client.connectedRelaysFlow().debounce(300).collect {
+                connected = it
+                updateNotification()
+            }
+        }
     }
 
     private val innerCache = mutableMapOf<NormalizedRelayUrl, AmberRelayStat>()
@@ -143,7 +158,9 @@ class AmberRelayStats(
 
             connected + ping + sent + received + failed + error
         }
-        if (message == oldMessage && oldMessage.isNotBlank() && !forceCreate) return null
+        if (message == oldMessage && oldMessage.isNotBlank() && !forceCreate) {
+            return null
+        }
         this.oldMessage = message
 
         val contentIntent = Intent(appContext, MainActivity::class.java)

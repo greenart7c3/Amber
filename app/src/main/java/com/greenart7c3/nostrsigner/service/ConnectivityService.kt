@@ -11,6 +11,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.Timer
 import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
@@ -109,11 +110,10 @@ class ConnectivityService : Service() {
             timer.schedule(
                 object : TimerTask() {
                     override fun run() {
-                        if (Amber.instance.settings.killSwitch.value) return
-
                         scope.launch {
                             LocalPreferences.allSavedAccounts(Amber.instance).forEach { accountInfo ->
                                 val now = System.currentTimeMillis() / 1000
+                                Amber.instance.getDatabase(accountInfo.npub).dao().updateExpiredPermissions(TimeUtils.now())
                                 val deleted = Amber.instance.getDatabase(accountInfo.npub).dao().deleteOldApplications(now)
                                 if (deleted > 0) {
                                     Amber.instance.getLogDatabase(accountInfo.npub).dao().insertLog(
@@ -125,9 +125,6 @@ class ConnectivityService : Service() {
                                             time = System.currentTimeMillis(),
                                         ),
                                     )
-                                    if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                        Amber.instance.notificationSubscription.updateFilter()
-                                    }
                                 }
                             }
                         }
@@ -135,8 +132,11 @@ class ConnectivityService : Service() {
                         if (BuildFlavorChecker.isOfflineFlavor()) {
                             return
                         }
+                        if (Amber.instance.settings.killSwitch.value) return
 
                         scope.launch {
+                            Amber.instance.notificationSubscription.updateFilter()
+
                             if (!Amber.instance.client.isActive()) {
                                 Amber.instance.client.connect()
                             }

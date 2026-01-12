@@ -42,7 +42,10 @@ interface ApplicationDao {
     @Transaction
     suspend fun getBySecret(secret: String): ApplicationWithPermissions?
 
-    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key and rememberType = 4")
+    @Query("UPDATE applicationPermission set acceptUntil = 0, rejectUntil = 0, rememberType = 0 where (acceptUntil < :time OR rejectUntil < :time) AND rememberType <> 4")
+    fun updateExpiredPermissions(time: Long)
+
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key")
     suspend fun getAllByKey(key: String): List<ApplicationPermissionsEntity>
 
     @Query("SELECT `key`, `name` FROM application WHERE name <> ''")

@@ -24,17 +24,16 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -42,13 +41,10 @@ import com.vitorpamplona.quartz.nip02FollowList.ContactListEvent
 
 @Composable
 fun EncryptDecryptData(
-    account: Account,
     modifier: Modifier,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
     packageName: String?,
-    applicationName: String?,
-    appName: String,
     type: SignerType,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
@@ -60,54 +56,42 @@ fun EncryptDecryptData(
     Column(
         modifier,
     ) {
-        ProfilePicture(account)
+        LocalAppIcon(packageName)
 
-        packageName?.let {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                text = it,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center,
-            )
-            Spacer(Modifier.size(4.dp))
+        val text = if (type.name.contains("ENCRYPT")) {
+            when (encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val permission = Permission("sign_event", encryptedData.event.kind)
+                    stringResource(R.string.wants_to_encrypt_with, permission.toLocalizedString(Amber.instance), type.name.split("_").first())
+                }
+
+                is TagArrayEncryptedDataKind -> {
+                    stringResource(R.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first())
+                }
+
+                else -> stringResource(R.string.wants_to_encrypt_this_text_with, type.name.split("_").first())
+            }
+        } else {
+            when (encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val permission = Permission("sign_event", encryptedData.event.kind)
+                    stringResource(R.string.wants_to_read_from_encrypted_content, permission.toLocalizedString(Amber.instance), type.name.split("_").first())
+                }
+
+                is TagArrayEncryptedDataKind -> {
+                    stringResource(R.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first())
+                }
+
+                is PrivateZapEncryptedDataKind -> {
+                    stringResource(R.string.wants_you_to, stringResource(R.string.decrypt_zap_event))
+                }
+
+                else -> stringResource(R.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first())
+            }
         }
 
         Text(
-            buildAnnotatedString {
-                withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
-                    append(applicationName ?: appName)
-                }
-
-                if (type.name.contains("ENCRYPT")) {
-                    when (encryptedData) {
-                        is EventEncryptedDataKind -> {
-                            val permission = Permission("sign_event", encryptedData.event.kind)
-                            append(stringResource(R.string.wants_to_encrypt_with, permission.toLocalizedString(Amber.instance), type.name.split("_").first()))
-                        }
-
-                        is TagArrayEncryptedDataKind -> {
-                            append(stringResource(R.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first()))
-                        }
-
-                        else -> append(stringResource(R.string.wants_to_encrypt_this_text_with, type.name.split("_").first()))
-                    }
-                } else {
-                    when (encryptedData) {
-                        is EventEncryptedDataKind -> {
-                            val permission = Permission("sign_event", encryptedData.event.kind)
-                            append(stringResource(R.string.wants_to_read_from_encrypted_content, permission.toLocalizedString(Amber.instance), type.name.split("_").first()))
-                        }
-
-                        is TagArrayEncryptedDataKind -> {
-                            append(stringResource(R.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first()))
-                        }
-
-                        else -> append(stringResource(R.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first()))
-                    }
-                }
-            },
+            text.trim().capitalize(Locale.current),
             fontSize = 18.sp,
         )
         Spacer(Modifier.size(4.dp))
@@ -248,7 +232,6 @@ data class TagItem(
 
 @Composable
 fun BunkerEncryptDecryptData(
-    account: Account,
     modifier: Modifier,
     encryptedData: EncryptedDataKind?,
     shouldRunOnAccept: Boolean?,
@@ -264,8 +247,6 @@ fun BunkerEncryptDecryptData(
     Column(
         modifier,
     ) {
-        ProfilePicture(account)
-
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -305,14 +286,13 @@ fun BunkerEncryptDecryptData(
 
         Card(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .weight(1f),
+            colors = CardDefaults.cardColors().copy(
+                containerColor = MaterialTheme.colorScheme.background,
+            ),
         ) {
-            Column(Modifier.padding(6.dp)) {
-                Text(
-                    stringResource(R.string.content).capitalize(Locale.current),
-                    fontWeight = FontWeight.Bold,
-                )
-
+            Column {
                 if (encryptedData is EventEncryptedDataKind) {
                     if (encryptedData.sealEncryptedDataKind != null) {
                         if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
@@ -348,24 +328,69 @@ fun BunkerEncryptDecryptData(
                         }
                     }
                 } else {
-                    val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
-                        encryptedData.text
-                    } else if (encryptedData is TagArrayEncryptedDataKind) {
-                        encryptedData.tagArray.map { it.toList() }.toList().toString()
+                    if (encryptedData is TagArrayEncryptedDataKind) {
+                        val mappedTags = encryptedData.tagArray.mapNotNull { tag ->
+                            if (tag.isEmpty()) return@mapNotNull null
+
+                            TagItem(
+                                name = tag.first(),
+                                values = tag.drop(1),
+                            )
+                        }
+                        LazyColumn(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .weight(1f)
+                                .padding(top = 8.dp),
+                        ) {
+                            items(mappedTags) { item ->
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth(),
+                                ) {
+                                    Text(
+                                        text = item.name,
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 18.sp,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(bottom = 4.dp),
+                                    )
+
+                                    item.values.forEach { value ->
+                                        Text(
+                                            fontSize = 16.sp,
+                                            text = value,
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(bottom = 2.dp),
+                                        )
+                                    }
+                                }
+
+                                HorizontalDivider(
+                                    color = MaterialTheme.colorScheme.primary,
+                                )
+                            }
+                        }
                     } else {
-                        encryptedData?.result ?: ""
+                        val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+                            encryptedData.text
+                        } else {
+                            encryptedData?.result ?: ""
+                        }
+                        Text(
+                            content,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
+                        )
                     }
-                    Text(
-                        content,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 8.dp),
-                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
+        if (encryptedData !is TagArrayEncryptedDataKind) Spacer(modifier = Modifier.weight(1f))
 
         RememberMyChoice(
             shouldRunOnAccept,

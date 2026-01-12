@@ -22,12 +22,10 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.RememberType
 
 @Composable
 fun BunkerPingScreen(
-    account: Account,
     modifier: Modifier,
     shouldRunOnAccept: Boolean?,
     appName: String,
@@ -41,8 +39,6 @@ fun BunkerPingScreen(
     Column(
         modifier,
     ) {
-        ProfilePicture(account)
-
         val message = stringResource(R.string.ping)
 
         Text(

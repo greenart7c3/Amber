@@ -105,7 +105,6 @@ fun BunkerSingleEventHomeScreen(
 
             BunkerPingScreen(
                 modifier = modifier,
-                account = account,
                 appName = appName,
                 shouldRunOnAccept = acceptOrReject,
                 onAccept = {
@@ -300,7 +299,6 @@ fun BunkerSingleEventHomeScreen(
         is BunkerRequestGetPublicKey -> {
             BunkerGetPubKeyScreen(
                 modifier = modifier,
-                account = account,
                 applicationName = appName,
                 onAccept = { permissions, signPolicy, closeApplication, rememberType ->
                     val result = account.hexKey
@@ -362,7 +360,6 @@ fun BunkerSingleEventHomeScreen(
             }
 
             BunkerEncryptDecryptData(
-                account = account,
                 modifier = modifier,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
@@ -426,7 +423,6 @@ fun BunkerSingleEventHomeScreen(
             }
 
             BunkerEncryptDecryptData(
-                account = account,
                 modifier = modifier,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
@@ -492,7 +488,6 @@ fun BunkerSingleEventHomeScreen(
             }
 
             BunkerEncryptDecryptData(
-                account = account,
                 modifier = modifier,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
@@ -558,7 +553,6 @@ fun BunkerSingleEventHomeScreen(
             }
 
             BunkerEncryptDecryptData(
-                account = account,
                 modifier = modifier,
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
@@ -710,7 +704,6 @@ fun BunkerSingleEventHomeScreen(
                 }
 
                 BunkerEncryptDecryptData(
-                    account = account,
                     modifier = modifier,
                     encryptedData = bunkerRequest.encryptedData,
                     shouldRunOnAccept = acceptOrReject,
@@ -772,12 +765,10 @@ fun BunkerSingleEventHomeScreen(
                 }
 
                 BunkerSignMessage(
-                    account = account,
                     modifier = modifier,
                     content = bunkerRequest.request.params.first(),
                     shouldRunOnAccept = acceptOrReject,
                     appName = appName,
-                    type = type,
                     onAccept = {
                         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                             val result = account.signString(bunkerRequest.request.params.first())

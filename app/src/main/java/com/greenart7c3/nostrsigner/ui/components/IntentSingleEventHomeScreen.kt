@@ -119,14 +119,10 @@ fun IntentSingleEventHomeScreen(
             val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
             SignMessage(
-                account = account,
                 modifier = modifier,
                 content = intentData.data,
                 shouldRunOnAccept = acceptOrReject,
                 packageName = packageName,
-                applicationName = applicationName,
-                appName = appName,
-                type = intentData.type,
                 onAccept = {
                     Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         val result = account.signString(intentData.data)
@@ -182,13 +178,10 @@ fun IntentSingleEventHomeScreen(
             val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
             EncryptDecryptData(
-                account = account,
                 modifier = modifier,
                 encryptedData = intentData.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 packageName = packageName,
-                applicationName = applicationName,
-                appName = appName,
                 type = intentData.type,
                 onAccept = {
                     val result =
@@ -259,15 +252,10 @@ fun IntentSingleEventHomeScreen(
                 val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
                 EventData(
-                    account = account,
                     modifier = modifier,
                     shouldAcceptOrReject = acceptOrReject,
                     packageName = packageName,
-                    appName = appName,
-                    applicationName = applicationName,
                     event = event,
-                    rawJson = event.toJson(),
-                    type = intentData.type,
                     onAccept = {
                         if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             accountStateViewModel.toast(

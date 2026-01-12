@@ -30,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -137,7 +138,13 @@ fun SeeDetailsScreen(
                                 intent.encryptedData.event.content
                             }
                         } else {
-                            intent.encryptedData?.result ?: ""
+                            if (intent.encryptedData is TagArrayEncryptedDataKind) {
+                                intent.encryptedData.tagArray.joinToString(separator = ", ") {
+                                    "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]"
+                                }
+                            } else {
+                                intent.encryptedData?.result ?: ""
+                            }
                         }
                     }
 
@@ -196,7 +203,13 @@ fun SeeDetailsScreen(
                                 bunkerRequest.encryptedData.event.content
                             }
                         } else {
-                            bunkerRequest.encryptedData?.result ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                            if (bunkerRequest.encryptedData is TagArrayEncryptedDataKind) {
+                                bunkerRequest.encryptedData.tagArray.joinToString(separator = ", ") {
+                                    "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]"
+                                }
+                            } else {
+                                bunkerRequest.encryptedData?.result ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                            }
                         }
                     }
 

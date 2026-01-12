@@ -31,7 +31,6 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,7 +54,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.window.core.layout.WindowSizeClass.Companion.WIDTH_DP_MEDIUM_LOWER_BOUND
 import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
@@ -67,52 +65,6 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
-
-@Composable
-fun ProfilePicture(account: Account) {
-    val windowSizeClass = currentWindowAdaptiveInfo().windowSizeClass
-    if (windowSizeClass.isWidthAtLeastBreakpoint(WIDTH_DP_MEDIUM_LOWER_BOUND)) {
-        Column(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            val profileUrl by account.picture.collectAsStateWithLifecycle()
-            if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
-                AsyncImage(
-                    profileUrl,
-                    Route.Accounts.route,
-                    Modifier
-                        .clip(
-                            RoundedCornerShape(50),
-                        )
-                        .height(120.dp)
-                        .width(120.dp),
-                )
-            } else {
-                Icon(
-                    Icons.Outlined.Person,
-                    Route.Accounts.route,
-                    modifier = Modifier
-                        .border(
-                            2.dp,
-                            Color.fromHex(account.hexKey.slice(0..5)),
-                            CircleShape,
-                        )
-                        .height(120.dp)
-                        .width(120.dp),
-                )
-            }
-            val name by account.name.collectAsStateWithLifecycle()
-            Text(
-                name.ifBlank { account.npub.toShortenHex() },
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center,
-            )
-        }
-    }
-}
 
 @Composable
 fun ProfilePictureIcon(account: Account) {

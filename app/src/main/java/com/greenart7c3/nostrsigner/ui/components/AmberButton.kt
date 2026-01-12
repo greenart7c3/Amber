@@ -51,7 +51,7 @@ fun AmberButton(
             CompositionLocalProvider(
                 LocalDensity provides Density(
                     LocalDensity.current.density,
-                    1.5f,
+                    1f,
                 ),
             ) {
                 Text(
@@ -59,7 +59,7 @@ fun AmberButton(
                     color = textColor,
                     textAlign = textAlign,
                     maxLines = maxLines,
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }
@@ -96,7 +96,7 @@ fun AmberElevatedButton(
             CompositionLocalProvider(
                 LocalDensity provides Density(
                     LocalDensity.current.density,
-                    1.5f,
+                    1f,
                 ),
             ) {
                 Text(
@@ -104,7 +104,7 @@ fun AmberElevatedButton(
                     color = textColor,
                     textAlign = textAlign,
                     maxLines = maxLines,
-                    fontWeight = FontWeight.Normal,
+                    fontWeight = FontWeight.Bold,
                 )
             }
         }

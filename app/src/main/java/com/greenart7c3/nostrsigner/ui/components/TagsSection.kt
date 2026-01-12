@@ -1,0 +1,93 @@
+package com.greenart7c3.nostrsigner.ui.components
+
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.R
+
+@Composable
+fun TagsSection(
+    label: String,
+    tags: Array<Array<String>>,
+    onCopy: (String) -> Unit,
+) {
+    val tagsAsStringForCopy = remember(tags) {
+        tags.toString()
+    }
+
+    val tagsToShow = tags.take(10)
+    val moreCount = tags.size - 10
+
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.Top,
+    ) {
+        Column(modifier = Modifier.weight(1f)) {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.bodyLarge.copy(fontSize = 16.sp, lineHeight = 20.sp),
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+            )
+            if (tags.isNotEmpty()) {
+                Column(
+                    modifier = Modifier.padding(top = 12.dp),
+                    verticalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    tagsToShow.forEach { tag ->
+                        val formattedTag = tag.joinToString(separator = ", ") {
+                            "\"${it}\""
+                        }
+                        Text(
+                            text = formattedTag,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                lineHeight = 24.sp,
+                            ),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+
+                    if (moreCount > 0) {
+                        Text(
+                            text = stringResource(id = R.string.more, moreCount),
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                lineHeight = 24.sp,
+                            ),
+                            fontWeight = FontWeight.Bold,
+                        )
+                    }
+                }
+            }
+        }
+        Icon(
+            modifier = Modifier
+                .size(16.dp)
+                .clickable { onCopy(tagsAsStringForCopy) },
+            imageVector = Icons.Default.ContentCopy,
+            contentDescription = stringResource(id = R.string.copy_to_clipboard),
+        )
+    }
+}

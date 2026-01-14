@@ -13,7 +13,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -27,12 +26,8 @@ import com.greenart7c3.nostrsigner.R
 fun TagsSection(
     label: String,
     tags: Array<Array<String>>,
-    onCopy: (String) -> Unit,
+    onCopy: () -> Unit,
 ) {
-    val tagsAsStringForCopy = remember(tags) {
-        tags.toString()
-    }
-
     val tagsToShow = tags.take(10)
     val moreCount = tags.size - 10
 
@@ -85,7 +80,7 @@ fun TagsSection(
         Icon(
             modifier = Modifier
                 .size(16.dp)
-                .clickable { onCopy(tagsAsStringForCopy) },
+                .clickable { onCopy() },
             imageVector = Icons.Default.ContentCopy,
             contentDescription = stringResource(id = R.string.copy_to_clipboard),
         )

@@ -5,11 +5,8 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -108,83 +105,52 @@ fun EncryptDecryptData(
                 if (encryptedData is EventEncryptedDataKind) {
                     if (encryptedData.sealEncryptedDataKind != null) {
                         if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
-                            val content = if (encryptedData.sealEncryptedDataKind.event.kind == 22242) encryptedData.sealEncryptedDataKind.event.relay() else encryptedData.sealEncryptedDataKind.event.content
-                            if (encryptedData.event.kind == ContactListEvent.KIND) {
-                                ContactListDetail(
-                                    title = stringResource(R.string.following),
-                                    text = "${encryptedData.event.verifiedFollowKeySet().size}",
-                                )
-                            } else {
-                                Text(
-                                    content,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(top = 8.dp),
+                            var showDetails by remember {
+                                mutableStateOf(false)
+                            }
+                            RawJsonButton(
+                                onCLick = {
+                                    showDetails = !showDetails
+                                },
+                                stringResource(R.string.show_details),
+                            )
+                            if (showDetails) {
+                                EventDetailModal(
+                                    encryptedData.sealEncryptedDataKind.event.toEvent(),
+                                    {
+                                        showDetails = false
+                                    },
                                 )
                             }
                         }
                     } else {
-                        val content = if (encryptedData.event.kind == 22242) encryptedData.event.relay() else encryptedData.event.content
-                        if (encryptedData.event.kind == ContactListEvent.KIND) {
-                            ContactListDetail(
-                                title = stringResource(R.string.following),
-                                text = "${encryptedData.event.verifiedFollowKeySet().size}",
-                            )
-                        } else {
-                            Text(
-                                content,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
+                        var showDetails by remember {
+                            mutableStateOf(false)
+                        }
+                        RawJsonButton(
+                            onCLick = {
+                                showDetails = !showDetails
+                            },
+                            stringResource(R.string.show_details),
+                        )
+                        if (showDetails) {
+                            EventDetailModal(
+                                encryptedData.event.toEvent(),
+                                {
+                                    showDetails = false
+                                },
                             )
                         }
                     }
                 } else {
                     if (encryptedData is TagArrayEncryptedDataKind) {
-                        val mappedTags = encryptedData.tagArray.mapNotNull { tag ->
-                            if (tag.isEmpty()) return@mapNotNull null
-
-                            TagItem(
-                                name = tag.first(),
-                                values = tag.drop(1),
-                            )
-                        }
-                        LazyColumn(
+                        EncryptedTagArraySection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
                                 .padding(top = 8.dp),
-                        ) {
-                            items(mappedTags) { item ->
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                ) {
-                                    Text(
-                                        text = item.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 4.dp),
-                                    )
-
-                                    item.values.forEach { value ->
-                                        Text(
-                                            fontSize = 16.sp,
-                                            text = value,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 2.dp),
-                                        )
-                                    }
-                                }
-
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
+                            encryptedData.tagArray,
+                        )
                     } else {
                         val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
                             encryptedData.text
@@ -329,50 +295,13 @@ fun BunkerEncryptDecryptData(
                     }
                 } else {
                     if (encryptedData is TagArrayEncryptedDataKind) {
-                        val mappedTags = encryptedData.tagArray.mapNotNull { tag ->
-                            if (tag.isEmpty()) return@mapNotNull null
-
-                            TagItem(
-                                name = tag.first(),
-                                values = tag.drop(1),
-                            )
-                        }
-                        LazyColumn(
+                        EncryptedTagArraySection(
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .weight(1f)
                                 .padding(top = 8.dp),
-                        ) {
-                            items(mappedTags) { item ->
-                                Column(
-                                    modifier = Modifier
-                                        .fillMaxWidth(),
-                                ) {
-                                    Text(
-                                        text = item.name,
-                                        fontWeight = FontWeight.Bold,
-                                        fontSize = 18.sp,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(bottom = 4.dp),
-                                    )
-
-                                    item.values.forEach { value ->
-                                        Text(
-                                            fontSize = 16.sp,
-                                            text = value,
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(bottom = 2.dp),
-                                        )
-                                    }
-                                }
-
-                                HorizontalDivider(
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
+                            encryptedData.tagArray,
+                        )
                     } else {
                         val content = if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
                             encryptedData.text

@@ -638,7 +638,7 @@ object IntentUtils {
                 )
         }
 
-        return AmberEvent.toEvent(event)
+        return event.toEvent()
     }
 
     fun sendResult(

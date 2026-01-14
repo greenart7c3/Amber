@@ -198,7 +198,7 @@ object BunkerRequestUtils {
         "connect" -> "ack"
         "sign_event" -> {
             val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())
-            AmberEvent.toEvent(amberEvent).toJson()
+            amberEvent.toEvent().toJson()
         }
         "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
         "ping" -> "pong"

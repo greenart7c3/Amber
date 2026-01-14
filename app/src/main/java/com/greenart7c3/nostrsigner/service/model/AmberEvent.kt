@@ -77,6 +77,16 @@ open class AmberEvent(
 
     fun verifiedFollowKeySet(): Set<HexKey> = tags.mapNotNullTo(HashSet(), ContactTag::parseValidKey)
 
+    fun toEvent(): Event = Event(
+        id,
+        pubKey,
+        createdAt,
+        kind,
+        tags,
+        content,
+        sig,
+    )
+
     companion object {
         val mapper: ObjectMapper =
             jacksonObjectMapper()
@@ -90,16 +100,6 @@ open class AmberEvent(
                 )
 
         fun fromJson(json: String): AmberEvent = mapper.readValue(json, AmberEvent::class.java)
-
-        fun toEvent(amberEvent: AmberEvent): Event = Event(
-            amberEvent.id,
-            amberEvent.pubKey,
-            amberEvent.createdAt,
-            amberEvent.kind,
-            amberEvent.tags,
-            amberEvent.content,
-            amberEvent.sig,
-        )
 
         fun relay(event: Event): String = event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
     }

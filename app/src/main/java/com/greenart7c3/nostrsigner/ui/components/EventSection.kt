@@ -26,6 +26,7 @@ import com.greenart7c3.nostrsigner.R
 fun EventSection(
     label: String,
     displayValue: String,
+    onCopy: () -> Unit,
 ) {
     Row(
         modifier = Modifier
@@ -55,7 +56,9 @@ fun EventSection(
         Icon(
             modifier = Modifier
                 .size(16.dp)
-                .clickable { },
+                .clickable {
+                    onCopy()
+                },
             imageVector = Icons.Default.ContentCopy,
             contentDescription = stringResource(id = R.string.copy),
         )

@@ -633,13 +633,10 @@ fun BunkerSingleEventHomeScreen(
                 }
 
                 BunkerEventData(
-                    account = account,
                     modifier = modifier,
                     shouldAcceptOrReject = acceptOrReject,
                     appName = appName,
                     event = event,
-                    rawJson = event.toJson(),
-                    type = type,
                     onAccept = {
                         if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {

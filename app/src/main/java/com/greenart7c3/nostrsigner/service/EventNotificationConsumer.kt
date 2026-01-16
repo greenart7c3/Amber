@@ -106,10 +106,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         NotificationUtils.getOrCreateBunkerChannel(applicationContext)
         NotificationUtils.getOrCreateErrorsChannel(applicationContext)
 
-        val taggedKey = event.taggedUsers().firstOrNull() ?: return
-        LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())?.let { acc ->
-            notify(event, acc, relay)
+        val taggedKey = event.taggedUsers().firstOrNull()
+        if (taggedKey == null) {
+            saveLog("No tagged users found in event")
+            return
         }
+        val acc = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())
+        if (acc == null) {
+            saveLog("Tagged account not logged in")
+            return
+        }
+        notify(event, acc, relay)
     }
 
     private fun notify(

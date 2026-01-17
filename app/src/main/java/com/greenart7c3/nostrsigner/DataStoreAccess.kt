@@ -6,15 +6,12 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
-import androidx.datastore.preferences.core.emptyPreferences
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
-import java.io.IOException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
 
 object DataStoreAccess {
@@ -47,9 +44,6 @@ object DataStoreAccess {
 
     suspend fun getEncryptedKey(context: Context, npub: String, key: Preferences.Key<String>): String? {
         val prefs = getDataStore(context, npub).data
-            .catch { e ->
-                if (e is IOException) emit(emptyPreferences()) else throw e
-            }
             .first()
 
         val encrypted = prefs[key] ?: return null

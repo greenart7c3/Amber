@@ -140,25 +140,18 @@ object BunkerRequestUtils {
 
         Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
-        var success = false
-        var errorCount = 0
-        while (!success && errorCount < 3) {
-            success = Amber.instance.client.sendAndWaitForResponse(signedEvent, relays.toSet())
-            if (!success) {
-                errorCount++
-                delay(1000)
-
-                encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-                    account.nip44Encrypt(
-                        plainText,
-                        bunkerRequest.localKey,
-                    )
-                } else {
-                    account.nip04Encrypt(
-                        plainText,
-                        bunkerRequest.localKey,
-                    )
-                }
+        val success = retryWithBackoff {
+            val result = Amber.instance.client.sendAndWaitForResponse(
+                signedEvent,
+                relays.toSet(),
+            )
+            if (!result) {
+                encryptedContent =
+                    if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+                        account.nip44Encrypt(plainText, bunkerRequest.localKey)
+                    } else {
+                        account.nip04Encrypt(plainText, bunkerRequest.localKey)
+                    }
 
                 signedEvent = account.signSync(
                     TimeUtils.now(),
@@ -167,7 +160,9 @@ object BunkerRequestUtils {
                     encryptedContent,
                 )
             }
+            result
         }
+
         if (success) {
             Log.d(Amber.TAG, "Success response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
             onDone(true)
@@ -177,6 +172,28 @@ object BunkerRequestUtils {
             Log.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
         }
         onLoading(false)
+    }
+
+    suspend fun retryWithBackoff(
+        maxRetries: Int = 5,
+        initialDelayMs: Long = 200L,
+        maxDelayMs: Long = 3_200L,
+        block: suspend () -> Boolean,
+    ): Boolean {
+        var currentDelay = initialDelayMs
+
+        repeat(maxRetries) { attempt ->
+            delay(currentDelay)
+            if (block()) {
+                return true
+            }
+
+            if (attempt < maxRetries - 1) {
+                currentDelay = (currentDelay * 2).coerceAtMost(maxDelayMs)
+            }
+        }
+
+        return false
     }
 
     fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType = when (bunkerRequest.method) {
@@ -370,7 +387,21 @@ object BunkerRequestUtils {
                                         database.dao().deletePermissions(key, type.toString(), kind)
                                     }
                                 } else {
-                                    database.dao().deletePermissions(key, type.toString())
+                                    if (type == SignerType.CONNECT) {
+                                        database.dao().delete(application.application)
+                                        if (!bunkerRequest.isNostrConnectUri) {
+                                            database.dao().insertApplicationWithPermissions(
+                                                application.copy(
+                                                    application = application.application.copy(
+                                                        isConnected = false,
+                                                        key = application.application.secret,
+                                                    ),
+                                                ),
+                                            )
+                                        }
+                                    } else {
+                                        database.dao().deletePermissions(key, type.toString())
+                                    }
                                 }
                             }
 

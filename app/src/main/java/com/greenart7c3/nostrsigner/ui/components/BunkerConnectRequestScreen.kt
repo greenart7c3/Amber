@@ -95,7 +95,6 @@ fun BunkerConnectRequestScreen(
         snapshot
     }
     var selectedAccountIndex by remember { mutableIntStateOf(accounts.indexOf(account)) }
-    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     val deleteAfterItems =
         persistentListOf(
             TitleExplainer(stringResource(DeleteAfterType.NEVER.resourceId)),
@@ -303,7 +302,7 @@ fun BunkerConnectRequestScreen(
                     .padding(vertical = 20.dp)
                     .weight(1f),
                 onClick = {
-                    onReject(rememberType)
+                    onReject(RememberType.NEVER)
                 },
                 colors = ButtonDefaults.buttonColors(
                     containerColor = Color(0xFFFF6B00),
@@ -317,7 +316,7 @@ fun BunkerConnectRequestScreen(
                     .weight(1f),
                 onClick = {
                     val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
-                    onAccept(localPermissions, selectedOption, closeApp, rememberType, deleteAfter, accounts[selectedAccountIndex])
+                    onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])
                 },
                 text = stringResource(R.string.connect),
             )

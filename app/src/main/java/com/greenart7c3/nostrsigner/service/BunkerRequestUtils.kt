@@ -207,6 +207,7 @@ object BunkerRequestUtils {
         "nip44_decrypt" -> SignerType.NIP44_DECRYPT
         "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
         "ping" -> SignerType.PING
+        "switch_relays" -> SignerType.SWITCH_RELAYS
         else -> SignerType.INVALID
     }
 

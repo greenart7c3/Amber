@@ -300,6 +300,37 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
             return
         }
+
+        if (type == SignerType.SWITCH_RELAYS) {
+            permission?.let {
+                val defaultRelays = Amber.instance.settings.defaultRelays
+                BunkerRequestUtils.sendBunkerResponse(
+                    context = applicationContext,
+                    account = acc,
+                    bunkerRequest = request,
+                    bunkerResponse = BunkerResponse(bunkerRequest.id, if (defaultRelays.isEmpty()) null else "[${defaultRelays.joinToString(separator = ",") { "\"${it.url}\"" }}]", null),
+                    relays = relays,
+                    onLoading = { },
+                    onDone = {
+                        if (it) {
+                            Amber.instance.applicationIOScope.launch {
+                                dao.delete(permission.application.key)
+                                dao.insertApplicationWithPermissions(
+                                    permission.copy(
+                                        application = permission.application.copy(
+                                            relays = defaultRelays,
+                                        ),
+                                    ),
+                                )
+                                Amber.instance.notificationSubscription.updateFilter()
+                            }
+                        }
+                    },
+                )
+            }
+            return
+        }
+
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
         val projection = if (type == SignerType.GET_PUBLIC_KEY || type == SignerType.PING) {
             arrayOf(acc.npub)

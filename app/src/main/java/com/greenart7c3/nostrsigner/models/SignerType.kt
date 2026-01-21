@@ -12,4 +12,5 @@ enum class SignerType {
     DECRYPT_ZAP_EVENT,
     PING,
     INVALID,
+    SWITCH_RELAYS,
 }

@@ -16,8 +16,8 @@ android {
         applicationId "com.greenart7c3.nostrsigner"
         minSdk 26
         targetSdk 36
-        versionCode 169
-        versionName "4.1.0-pre2"
+        versionCode 170
+        versionName "4.1.0-pre3"
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

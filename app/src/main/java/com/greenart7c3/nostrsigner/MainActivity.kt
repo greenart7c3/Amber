@@ -62,7 +62,7 @@ class MainActivity : AppCompatActivity() {
             } else {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
-                if (intent.isLaunchFromHistory()) {
+                if (intent?.isLaunchFromHistory() == true) {
                     Log.d(Amber.TAG, "Cleared intent history")
                     intent = Intent()
                 }

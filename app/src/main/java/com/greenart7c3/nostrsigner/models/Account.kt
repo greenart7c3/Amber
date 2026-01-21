@@ -59,7 +59,7 @@ class Account(
                 Amber.instance,
                 npub,
                 DataStoreAccess.NOSTR_PRIVKEY,
-            ) ?: throw CancellationException("Signer unavailable")
+            )
 
             val signer = NostrSignerInternal(
                 KeyPair(privKey.hexToByteArray()),

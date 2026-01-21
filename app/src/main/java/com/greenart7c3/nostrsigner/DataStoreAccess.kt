@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStoreFile
+import java.util.concurrent.CancellationException
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.flow.first
 
@@ -36,11 +37,11 @@ object DataStoreAccess {
         }
     }
 
-    suspend fun getEncryptedKey(context: Context, npub: String, key: Preferences.Key<String>): String? {
+    suspend fun getEncryptedKey(context: Context, npub: String, key: Preferences.Key<String>): String {
         val prefs = getDataStore(context, npub).data
             .first()
 
-        val encrypted = prefs[key] ?: return null
+        val encrypted = prefs[key] ?: throw CancellationException("Private key not found in Datastore")
         return SecureCryptoHelper.decrypt(encrypted)
     }
 

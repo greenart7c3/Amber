@@ -150,7 +150,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         }
     }
 
-    fun startUI(
+    suspend fun startUI(
         key: String,
         password: String,
         route: String?,
@@ -188,11 +188,11 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 Amber.instance.settings,
             )
         }
-        LocalPreferences.updatePrefsForLogin(Amber.instance, account, keyPair.pubKey.toHexKey(), keyPair.privKey?.toHexKey(), null)
+        LocalPreferences.updatePrefsForLogin(Amber.instance, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
         startUI(account, route)
     }
 
-    fun newKey(
+    suspend fun newKey(
         useProxy: Boolean,
         proxyPort: Int,
         signPolicy: Int,

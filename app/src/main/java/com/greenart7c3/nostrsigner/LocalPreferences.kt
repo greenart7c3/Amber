@@ -23,7 +23,6 @@ import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 private enum class PrefKeys(val key: String) {
@@ -330,7 +329,7 @@ object LocalPreferences {
         return false
     }
 
-    fun updatePrefsForLogin(
+    suspend fun updatePrefsForLogin(
         context: Context,
         account: Account,
         pubKey: String?,
@@ -338,9 +337,7 @@ object LocalPreferences {
         seedWords: String?,
     ) {
         setCurrentAccount(context, account)
-        Amber.instance.applicationIOScope.launch {
-            saveToEncryptedStorage(context, account, pubKey, privKey, seedWords)
-        }
+        saveToEncryptedStorage(context, account, pubKey, privKey, seedWords)
     }
 
     suspend fun saveToEncryptedStorage(

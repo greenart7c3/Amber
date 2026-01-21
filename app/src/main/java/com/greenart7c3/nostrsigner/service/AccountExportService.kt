@@ -121,7 +121,7 @@ object AccountExportService {
      */
     private suspend fun accountToExportData(account: Account, password: String): AccountExportData {
         val seedWords = account.seedWords()
-        val encrypedSeedWords = if (seedWords != null && seedWords.isNotBlank()) account.nip44Encrypt(seedWords, account.hexKey) else ""
+        val encrypedSeedWords = if (seedWords.isNotBlank()) account.nip44Encrypt(seedWords, account.hexKey) else ""
         val encryptedNsec = account.nip49Encrypt(password)
 
         return AccountExportData(

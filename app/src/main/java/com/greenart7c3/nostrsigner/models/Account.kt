@@ -120,7 +120,7 @@ class Account(
         return signer.signerSync.decrypt(encryptedContent, fromPublicKey)
     }
 
-    suspend fun seedWords() = DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS)
+    suspend fun seedWords() = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
 
     suspend fun decryptZapEvent(
         data: String,

@@ -227,7 +227,7 @@ fun AccountBackupScreen(
                             launch(Dispatchers.IO) {
                                 localAccount = LocalPreferences.loadFromEncryptedStorage(Amber.instance, it.npub)
                                 localAccount?.let { acc ->
-                                    seedWords = acc.seedWords() ?: ""
+                                    seedWords = acc.seedWords()
                                 }
                             }
                         }

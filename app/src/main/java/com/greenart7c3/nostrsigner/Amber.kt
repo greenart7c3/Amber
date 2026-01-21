@@ -4,11 +4,9 @@ import android.app.Application
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
-import androidx.appcompat.app.AppCompatDelegate
 import androidx.collection.LruCache
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.content.ContextCompat
-import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -229,42 +227,11 @@ class Amber :
     fun runMigrations() {
         applicationIOScope.launch {
             try {
-                LocalPreferences.allSavedAccounts(this@Amber).forEach {
-                    if (LocalPreferences.didMigrateFromLegacyStorage(this@Amber, it.npub)) {
-                        LocalPreferences.deleteLegacyUserPreferenceFile(this@Amber, it.npub)
-                    }
-                }
-                if (LocalPreferences.existsLegacySettings(this@Amber)) {
-                    var error = false
-                    for (accountInfo in LocalPreferences.allLegacySavedAccounts(this@Amber)) {
-                        try {
-                            LocalPreferences.migrateFromSharedPrefs(this@Amber, accountInfo.npub)
-                            LocalPreferences.loadFromEncryptedStorage(this@Amber, accountInfo.npub)
-                        } catch (e: Exception) {
-                            error = true
-                            Log.e(TAG, "Failed to migrate settings for account ${accountInfo.npub}", e)
-                        }
-                    }
-                    if (!error) {
-                        LocalPreferences.migrateSettings(this@Amber)
-                        LocalPreferences.deleteSettingsPreferenceFile(this@Amber)
-                    } else {
-                        throw FailedMigrationException("Failed to migrate settings for all accounts")
-                    }
-                }
-                LocalPreferences.migrateTorSettings(this@Amber)
                 val currentAccount = LocalPreferences.currentAccount(this@Amber)
                 if (currentAccount.isNullOrBlank() && LocalPreferences.allSavedAccounts(this@Amber).isNotEmpty()) {
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
-                settings = LocalPreferences.loadSettingsFromEncryptedStorage()
-                settings.language?.let {
-                    AppCompatDelegate.setApplicationLocales(
-                        LocaleListCompat.forLanguageTags(it),
-                    )
-                }
                 LocalPreferences.reloadApp()
-
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {
                     client.disconnect()

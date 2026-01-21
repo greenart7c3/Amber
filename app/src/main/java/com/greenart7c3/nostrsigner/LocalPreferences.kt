@@ -4,8 +4,10 @@ import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
 import android.util.Log
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
+import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
@@ -20,18 +22,14 @@ import java.io.File
 import kotlin.collections.component1
 import kotlin.collections.component2
 import kotlin.collections.iterator
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
 
 private enum class PrefKeys(val key: String) {
-    NOSTR_PRIVKEY("nostr_privkey"),
     NOSTR_PUBKEY("nostr_pubkey"),
     ACCOUNT_NAME("account_name"),
     SIGN_POLICY("default_sign_policy"),
-    SEED_WORDS("seed_words"),
     PROFILE_URL("profile_url"),
     LAST_METADATA_UPDATE("last_metadata_update"),
     LAST_CHECK("last_check"),
@@ -66,13 +64,6 @@ object LocalPreferences {
     private const val COMMA = ","
     private var currentAccount: String? = null
     private var accountCache = LargeCache<String, Account>()
-
-    fun allLegacySavedAccounts(context: Context): List<AccountInfo> = legacySavedAccounts(context).map { npub ->
-        AccountInfo(
-            npub,
-            true,
-        )
-    }.toSet().toList()
 
     fun allSavedAccounts(context: Context): List<AccountInfo> = savedAccounts(context).map { npub ->
         AccountInfo(
@@ -195,6 +186,11 @@ object LocalPreferences {
             loadFromEncryptedStorage(context, it.npub)
         }
         context.settings = loadSettingsFromEncryptedStorage(context)
+        context.settings.language?.let {
+            AppCompatDelegate.setApplicationLocales(
+                LocaleListCompat.forLanguageTags(it),
+            )
+        }
     }
 
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
@@ -223,10 +219,6 @@ object LocalPreferences {
     }
 
     private var savedAccounts: List<String>? = null
-
-    @Suppress("DEPRECATION")
-    private fun legacySavedAccounts(context: Context): List<String> = encryptedPreferences(context)
-        .getString(SettingsKeys.SAVED_ACCOUNTS.key, null)?.split(COMMA) ?: listOf()
 
     private fun savedAccounts(context: Context): List<String> {
         if (savedAccounts == null) {
@@ -295,51 +287,6 @@ object LocalPreferences {
             }
         }
     }
-
-    fun deleteLegacyUserPreferenceFile(context: Context, npub: String) {
-        val prefsDir = File(getDirPath(context))
-        prefsDir.list()?.forEach {
-            if (it.contains(npub) && it.startsWith("secret_keeper")) {
-                try {
-                    val result = File(prefsDir, it).delete()
-                    Log.d(Amber.TAG, "deleted $it: $result")
-                } catch (e: Exception) {
-                    Log.d(Amber.TAG, "failed to delete $it", e)
-                }
-            }
-        }
-    }
-
-    fun existsLegacySettings(context: Context): Boolean {
-        val prefsDir = File(getDirPath(context))
-        var result = false
-        prefsDir.list()?.forEach {
-            if (it == "secret_keeper.xml") {
-                result = true
-            }
-        }
-        return result
-    }
-
-    fun deleteSettingsPreferenceFile(context: Context) {
-        val prefsDir = File(getDirPath(context))
-        prefsDir.list()?.forEach {
-            if (it == "secret_keeper.xml") {
-                try {
-                    val result = File(prefsDir, it).delete()
-                    Log.d(Amber.TAG, "deleted $it: $result")
-                } catch (e: Exception) {
-                    Log.d(Amber.TAG, "failed to delete $it", e)
-                }
-            }
-        }
-    }
-
-    @Deprecated("Use sharedPrefs instead")
-    private fun encryptedPreferences(
-        context: Context,
-        npub: String? = null,
-    ): SharedPreferences = EncryptedStorage.preferences(npub, context)
 
     private fun sharedPrefs(
         context: Context,
@@ -516,104 +463,5 @@ object LocalPreferences {
             accountCache.put(npub, account)
             return account
         }
-    }
-
-    suspend fun didMigrateFromLegacyStorage(context: Context, npub: String): Boolean {
-        val existingPrivKey = DataStoreAccess.getEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY)
-        return !existingPrivKey.isNullOrBlank()
-    }
-
-    @Suppress("DEPRECATION")
-    suspend fun migrateFromSharedPrefs(context: Context, npub: String) {
-        withContext(Dispatchers.IO) {
-            if (didMigrateFromLegacyStorage(context, npub)) return@withContext
-            val legacyPrefs = encryptedPreferences(context, npub)
-            val privKey = legacyPrefs.getString(PrefKeys.NOSTR_PRIVKEY.key, null)
-            if (privKey.isNullOrBlank()) {
-                return@withContext
-            }
-            val seedWords = legacyPrefs.getString(PrefKeys.SEED_WORDS.key, null)
-            DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.NOSTR_PRIVKEY, privKey)
-            if (!seedWords.isNullOrBlank()) {
-                DataStoreAccess.saveEncryptedKey(context, npub, DataStoreAccess.SEED_WORDS, seedWords)
-            }
-            legacyPrefs.edit {
-                apply {
-                    remove(PrefKeys.NOSTR_PRIVKEY.key)
-                    remove(PrefKeys.SEED_WORDS.key)
-                }
-            }
-            migrateUserSharedPrefs(context, npub)
-            deleteLegacyUserPreferenceFile(context, npub)
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    private fun migrateUserSharedPrefs(context: Context, npub: String) {
-        val legacyPrefs = encryptedPreferences(context, npub)
-        val sharedPrefs = sharedPrefs(context, npub)
-        for ((key, value) in legacyPrefs.all) {
-            when (value) {
-                is String -> sharedPrefs.edit { putString(key, value) }
-                is Boolean -> sharedPrefs.edit { putBoolean(key, value) }
-                is Int -> sharedPrefs.edit { putInt(key, value) }
-                is Long -> sharedPrefs.edit { putLong(key, value) }
-                is Float -> sharedPrefs.edit { putFloat(key, value) }
-                is Set<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    if (value.all { it is String }) {
-                        sharedPrefs.edit { putStringSet(key, value as Set<String>) }
-                    }
-                }
-                else -> {
-                    // Ignore unsupported types
-                }
-            }
-        }
-    }
-
-    @Suppress("DEPRECATION")
-    fun migrateSettings(context: Context) {
-        val settingsPrefs = sharedPrefs(context)
-        val legacySettingsPrefs = encryptedPreferences(context)
-        for ((key, value) in legacySettingsPrefs.all) {
-            when (value) {
-                is String -> settingsPrefs.edit { putString(key, value) }
-                is Boolean -> settingsPrefs.edit { putBoolean(key, value) }
-                is Int -> settingsPrefs.edit { putInt(key, value) }
-                is Long -> settingsPrefs.edit { putLong(key, value) }
-                is Float -> settingsPrefs.edit { putFloat(key, value) }
-                is Set<*> -> {
-                    @Suppress("UNCHECKED_CAST")
-                    if (value.all { it is String }) {
-                        settingsPrefs.edit { putStringSet(key, value as Set<String>) }
-                    }
-                }
-                else -> {
-                    // Ignore unsupported types
-                }
-            }
-        }
-    }
-
-    fun migrateTorSettings(context: Context) {
-        if (sharedPrefs(context).contains(SettingsKeys.USE_PROXY.key)) return
-
-        val useProxy = allSavedAccounts(context).any {
-            sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.key, false)
-        }
-        val proxyPort: Int = allSavedAccounts(context).firstNotNullOfOrNull {
-            if (sharedPrefs(context, it.npub).getBoolean(SettingsKeys.USE_PROXY.key, false)) {
-                sharedPrefs(context, it.npub).getInt(SettingsKeys.PROXY_PORT.key, 9050)
-            } else {
-                null
-            }
-        } ?: 9050
-        saveSettingsToEncryptedStorage(
-            settings = loadSettingsFromEncryptedStorage(context).copy(
-                useProxy = useProxy,
-                proxyPort = proxyPort,
-            ),
-        )
     }
 }

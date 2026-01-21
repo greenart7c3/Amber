@@ -17,6 +17,7 @@ import androidx.core.net.toUri
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
@@ -367,6 +368,7 @@ object IntentUtils {
                             pubKey,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
+                        if (e is FailedMigrationException) throw e
                         Amber.instance.applicationIOScope.launch {
                             val database = Amber.instance.getLogDatabase(account.npub)
                             database.dao().insertLog(
@@ -566,56 +568,41 @@ object IntentUtils {
         route: String?,
         currentLoggedInAccount: Account,
     ): IntentData? {
-        try {
-            if (intent.data == null) {
+        if (intent.data == null) {
+            return null
+        }
+
+        if (intent.extras?.getString("id") == null) {
+            intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
+        }
+
+        val id = intent.extras?.getString("id") ?: ""
+        val mainActivity = Amber.instance.getMainActivity()
+        mainActivity?.let {
+            if (mainActivity.mainViewModel.intents.value.any { it.id == id }) {
                 return null
             }
+        }
 
-            if (intent.extras?.getString("id") == null) {
-                intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
+        var localAccount = currentLoggedInAccount
+        if (intent.getStringExtra("current_user") != null) {
+            var npub = intent.getStringExtra("current_user")
+            if (npub != null) {
+                npub = parsePubKey(npub)
             }
-
-            val id = intent.extras?.getString("id") ?: ""
-            val mainActivity = Amber.instance.getMainActivity()
-            mainActivity?.let {
-                if (mainActivity.mainViewModel.intents.value.any { it.id == id }) {
-                    return null
-                }
-            }
-
-            var localAccount = currentLoggedInAccount
-            if (intent.getStringExtra("current_user") != null) {
-                var npub = intent.getStringExtra("current_user")
-                if (npub != null) {
-                    npub = parsePubKey(npub)
-                }
-                LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
-                    localAccount = it
-                }
-            }
-
-            if (intent.dataString?.startsWith("nostrconnect:") == true) {
-                NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
-            } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
-            } else {
-                return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
-            }
-        } catch (e: Exception) {
-            Amber.instance.applicationIOScope.launch {
-                LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-                    Amber.instance.getLogDatabase(it.npub).dao().insertLog(
-                        LogEntity(
-                            id = 0,
-                            url = "IntentUtils",
-                            type = "Error",
-                            message = e.stackTraceToString(),
-                            time = System.currentTimeMillis(),
-                        ),
-                    )
-                }
+            LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
+                localAccount = it
             }
         }
+
+        if (intent.dataString?.startsWith("nostrconnect:") == true) {
+            NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
+        } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
+            return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
+        } else {
+            return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
+        }
+
         return null
     }
 

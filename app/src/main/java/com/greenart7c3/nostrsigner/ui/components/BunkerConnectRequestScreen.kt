@@ -30,11 +30,14 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -45,15 +48,18 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.DeleteAfterType
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -62,6 +68,8 @@ import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
 import com.greenart7c3.nostrsigner.ui.parseDeleteAfterType
 import kotlin.collections.forEach
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -74,6 +82,7 @@ fun BunkerConnectRequestScreen(
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     val localPermissions = remember {
         val snapshot = mutableStateListOf<Permission>()
         permissions?.forEach {
@@ -95,6 +104,28 @@ fun BunkerConnectRequestScreen(
         snapshot
     }
     var selectedAccountIndex by remember { mutableIntStateOf(accounts.indexOf(account)) }
+
+    // Trust scores for connection request relays
+    val connectionRelays = remember { bunkerRequest.relays }
+    val trustScores = remember { mutableStateMapOf<String, Int?>() }
+    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+
+    // Fetch trust scores for connection relays
+    LaunchedEffect(connectionRelays) {
+        if (!BuildFlavorChecker.isOfflineFlavor() && connectionRelays.isNotEmpty()) {
+            connectionRelays.forEach { relay ->
+                val url = relay.url
+                if (!trustScores.containsKey(url)) {
+                    loadingScores[url] = true
+                    scope.launch(Dispatchers.IO) {
+                        val score = TrustScoreService.getScore(url)
+                        trustScores[url] = score
+                        loadingScores[url] = false
+                    }
+                }
+            }
+        }
+    }
     val deleteAfterItems =
         persistentListOf(
             TitleExplainer(stringResource(DeleteAfterType.NEVER.resourceId)),
@@ -190,6 +221,44 @@ fun BunkerConnectRequestScreen(
                         )
                     },
                 )
+            }
+
+            // Display relays with trust scores
+            if (connectionRelays.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(16.dp))
+                Text(
+                    text = stringResource(R.string.relays_used),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp,
+                    modifier = Modifier.padding(vertical = 8.dp),
+                )
+                connectionRelays.forEach { relay ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp)
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = RoundedCornerShape(8.dp),
+                            )
+                            .padding(12.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            text = relay.url,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 14.sp,
+                        )
+                        TrustScoreBadge(
+                            score = trustScores[relay.url],
+                            isLoading = loadingScores[relay.url] == true,
+                        )
+                    }
+                }
             }
         } else {
             var showModal by remember { mutableStateOf(false) }

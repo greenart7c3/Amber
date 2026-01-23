@@ -466,6 +466,8 @@ fun PermissionRow(
 fun RelayCard(
     modifier: Modifier = Modifier,
     relay: String,
+    trustScore: Int? = null,
+    isLoadingScore: Boolean = false,
     onClick: () -> Unit,
 ) {
     Card(
@@ -486,11 +488,16 @@ fun RelayCard(
             Text(
                 relay,
                 Modifier
-                    .weight(0.9f)
+                    .weight(1f)
                     .padding(8.dp)
                     .padding(start = 8.dp),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
+            )
+            com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge(
+                score = trustScore,
+                isLoading = isLoadingScore,
+                modifier = Modifier.padding(horizontal = 8.dp),
             )
             IconButton(
                 onClick = onClick,

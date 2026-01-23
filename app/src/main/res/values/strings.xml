@@ -622,4 +622,14 @@
     <string name="discard_all">Discard selected</string>
     <string name="approve_all">Approve selected</string>
     <string name="requests_message">Requests %1$s</string>
+
+    <!-- Trust Score strings -->
+    <string name="trust_score">Trust Score</string>
+    <string name="trust_excellent">Excellent</string>
+    <string name="trust_good">Good</string>
+    <string name="trust_fair">Fair</string>
+    <string name="trust_poor">Poor</string>
+    <string name="trust_unknown">Unknown</string>
+    <string name="relay_trust_warning">Warning: This relay has a low trust score</string>
+    <string name="relays_used">Relays used</string>
 </resources>

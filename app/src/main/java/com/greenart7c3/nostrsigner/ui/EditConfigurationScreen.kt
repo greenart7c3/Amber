@@ -28,6 +28,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -47,15 +48,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -75,6 +80,9 @@ fun EditConfigurationScreen(
     val textFieldRelay = remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val isLoading = remember { mutableStateOf(true) }
     var closeApp by remember { mutableStateOf(false) }
+    val trustScores = remember { mutableStateMapOf<String, Int?>() }
+    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
@@ -85,6 +93,20 @@ fun EditConfigurationScreen(
                 relays.add(
                     it.copy(),
                 )
+            }
+
+            if (!BuildFlavorChecker.isOfflineFlavor()) {
+                relays.forEach { relay ->
+                    val url = relay.url
+                    if (!trustScores.containsKey(url)) {
+                        loadingScores[url] = true
+                        scope.launch(Dispatchers.IO) {
+                            val score = TrustScoreService.getScore(url)
+                            trustScores[url] = score
+                            loadingScores[url] = false
+                        }
+                    }
+                }
             }
 
             isLoading.value = false
@@ -232,6 +254,11 @@ fun EditConfigurationScreen(
                                     .padding(start = 8.dp),
                                 maxLines = 1,
                                 overflow = TextOverflow.Ellipsis,
+                            )
+                            TrustScoreBadge(
+                                score = trustScores[relay.url],
+                                isLoading = loadingScores[relay.url] == true,
+                                modifier = Modifier.padding(horizontal = 8.dp),
                             )
                             IconButton(
                                 onClick = {

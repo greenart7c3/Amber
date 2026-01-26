@@ -13,7 +13,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -29,6 +31,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import kotlinx.coroutines.Dispatchers
@@ -52,6 +55,25 @@ fun DefaultProfileRelaysScreen(
         remember {
             mutableStateListOf(*Amber.instance.settings.defaultProfileRelays.toTypedArray())
         }
+    val trustScores = remember { mutableStateMapOf<String, Int?>() }
+    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+
+    // Fetch trust scores for all relays
+    LaunchedEffect(relays2.toList()) {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            relays2.forEach { relay ->
+                val url = relay.url
+                if (!trustScores.containsKey(url)) {
+                    loadingScores[url] = true
+                    scope.launch(Dispatchers.IO) {
+                        val score = TrustScoreService.getScore(url)
+                        trustScores[url] = score
+                        loadingScores[url] = false
+                    }
+                }
+            }
+        }
+    }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -162,6 +184,8 @@ fun DefaultProfileRelaysScreen(
                 ) {
                     items(relays2.size) {
                         RelayCard(
+                            trustScore = trustScores[relays2[it].url],
+                            isLoadingScore = loadingScores[relays2[it].url] == true,
                             relay = relays2[it].url,
                             onClick = {
                                 isLoading.value = true

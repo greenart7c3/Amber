@@ -103,7 +103,7 @@ object BunkerRequestUtils {
             bunkerRequest = bunkerRequest,
             account = account,
             localKey = bunkerRequest.localKey,
-            relays = relays.ifEmpty { Amber.instance.getSavedRelays(account).toList() },
+            relays = relays,
             onLoading = onLoading,
             onDone = onDone,
         )

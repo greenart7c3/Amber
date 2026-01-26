@@ -573,7 +573,7 @@ fun ActiveRelaysScreen(
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            relays2.addAll(Amber.instance.getSavedRelays(account))
+            relays2.addAll(Amber.instance.getSavedRelays(account) + Amber.instance.settings.defaultRelays)
         }
     }
 

@@ -333,7 +333,6 @@ class Amber :
             database.dao().getAllRelayLists().forEach {
                 addAll(it.relays)
             }
-            addAll(settings.defaultRelays)
         }
 
         return savedRelays

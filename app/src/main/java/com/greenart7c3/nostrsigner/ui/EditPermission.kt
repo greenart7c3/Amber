@@ -54,6 +54,7 @@ import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberToggles
 import com.greenart7c3.nostrsigner.ui.components.ToggleOption
+import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -494,7 +495,7 @@ fun RelayCard(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge(
+            TrustScoreBadge(
                 score = trustScore,
                 isLoading = isLoadingScore,
                 modifier = Modifier.padding(horizontal = 8.dp),

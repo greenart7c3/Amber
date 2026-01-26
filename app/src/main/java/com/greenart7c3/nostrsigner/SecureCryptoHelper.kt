@@ -20,6 +20,8 @@ object SecureCryptoHelper {
     private const val IV_SIZE = 12 // 96 bits
     private const val TAG_SIZE = 128 // bits
 
+    private var secretKey: SecretKey? = null
+
     fun encrypt(plainText: String): String {
         val key = getOrCreateSecretKey()
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -53,9 +55,12 @@ object SecureCryptoHelper {
     }
 
     private fun getOrCreateSecretKey(): SecretKey {
+        secretKey?.let { return it }
+
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         if (keyStore.containsAlias(KEY_ALIAS)) {
             val entry = keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry
+            secretKey = entry.secretKey
             return entry.secretKey
         }
 
@@ -80,7 +85,8 @@ object SecureCryptoHelper {
             keyGenerator.init(params.build())
         }
 
-        return keyGenerator.generateKey()
+        secretKey = keyGenerator.generateKey()
+        return secretKey!!
     }
 }
 

@@ -611,4 +611,5 @@
     <string name="discard_all">Descartar selecionado</string>
     <string name="approve_all">Aprovar selecionados</string>
     <string name="requests_message">Solicitações %1$s</string>
+    <string name="do_not_leave_the_app_until_the_key_is_generated">Do not leave the app until the key is generated</string>
 </resources>

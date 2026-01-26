@@ -24,7 +24,6 @@ import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
-import java.lang.ref.WeakReference
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -43,17 +42,15 @@ class Account(
     var didBackup: Boolean,
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
-
-    @Volatile
-    private var signerCache: WeakReference<NostrSignerInternal>? = null
+    private var signerCache: NostrSignerInternal? = null
 
     private val signerMutex = Mutex()
 
     private suspend fun getSigner(): NostrSignerInternal {
-        signerCache?.get()?.let { return it }
+        signerCache?.let { return it }
 
         return signerMutex.withLock {
-            signerCache?.get()?.let { return it }
+            signerCache?.let { return it }
 
             val privKey = DataStoreAccess.getEncryptedKey(
                 Amber.instance,
@@ -65,7 +62,7 @@ class Account(
                 KeyPair(privKey.hexToByteArray()),
             )
 
-            signerCache = WeakReference(signer)
+            signerCache = signer
             signer
         }
     }
@@ -164,7 +161,6 @@ class Account(
     }
 
     fun clearSignerCache() {
-        signerCache?.clear()
         signerCache = null
     }
 }

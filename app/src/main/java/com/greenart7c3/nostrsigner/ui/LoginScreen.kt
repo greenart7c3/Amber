@@ -97,7 +97,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavController
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -475,7 +474,10 @@ fun SignUpPage(
         },
     ) {
         if (loading) {
-            CenterCircularProgressIndicator(Modifier.fillMaxSize())
+            CenterCircularProgressIndicator(
+                Modifier.fillMaxSize(),
+                stringResource(R.string.do_not_leave_the_app_until_the_key_is_generated),
+            )
         } else {
             HorizontalPager(
                 modifier = Modifier
@@ -740,7 +742,7 @@ fun SignUpPage(
                                         return@AmberButton
                                     }
 
-                                    accountViewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    Amber.instance.applicationIOScope.launch {
                                         loading = true
                                         accountViewModel.newKey(
                                             useProxy = useProxy,
@@ -750,7 +752,7 @@ fun SignUpPage(
                                             name = nickname.text,
                                         )
                                         loading = false
-                                        accountViewModel.viewModelScope.launch(Dispatchers.Main) {
+                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                             onFinish()
                                         }
                                     }
@@ -838,7 +840,10 @@ fun LoginPage(
             userScrollEnabled = false,
         ) { page ->
             if (isLoading) {
-                CenterCircularProgressIndicator(Modifier)
+                CenterCircularProgressIndicator(
+                    Modifier,
+                    stringResource(R.string.do_not_leave_the_app_until_the_key_is_generated),
+                )
             } else {
                 when (page) {
                     0 -> {
@@ -1227,7 +1232,7 @@ fun LoginPage(
                                         return@AmberButton
                                     }
 
-                                    accountViewModel.viewModelScope.launch(Dispatchers.IO) {
+                                    Amber.instance.applicationIOScope.launch {
                                         isLoading = true
                                         accountViewModel.startUI(
                                             key = key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(),
@@ -1238,7 +1243,7 @@ fun LoginPage(
                                             proxyPort = proxyPort.text.toInt(),
                                         )
                                         isLoading = false
-                                        accountViewModel.viewModelScope.launch(Dispatchers.Main) {
+                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                             onFinish()
                                         }
                                     }

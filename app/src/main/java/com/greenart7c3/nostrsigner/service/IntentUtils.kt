@@ -568,41 +568,56 @@ object IntentUtils {
         route: String?,
         currentLoggedInAccount: Account,
     ): IntentData? {
-        if (intent.data == null) {
-            return null
-        }
-
-        if (intent.extras?.getString("id") == null) {
-            intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
-        }
-
-        val id = intent.extras?.getString("id") ?: ""
-        val mainActivity = Amber.instance.getMainActivity()
-        mainActivity?.let {
-            if (mainActivity.mainViewModel.intents.value.any { it.id == id }) {
+        try {
+            if (intent.data == null) {
                 return null
             }
-        }
 
-        var localAccount = currentLoggedInAccount
-        if (intent.getStringExtra("current_user") != null) {
-            var npub = intent.getStringExtra("current_user")
-            if (npub != null) {
-                npub = parsePubKey(npub)
+            if (intent.extras?.getString("id") == null) {
+                intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
             }
-            LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
-                localAccount = it
+
+            val id = intent.extras?.getString("id") ?: ""
+            val mainActivity = Amber.instance.getMainActivity()
+            mainActivity?.let {
+                if (mainActivity.mainViewModel.intents.value.any { it.id == id }) {
+                    return null
+                }
+            }
+
+            var localAccount = currentLoggedInAccount
+            if (intent.getStringExtra("current_user") != null) {
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub)
+                }
+                LocalPreferences.loadFromEncryptedStorageSync(context, npub)?.let {
+                    localAccount = it
+                }
+            }
+
+            if (intent.dataString?.startsWith("nostrconnect:") == true) {
+                NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
+            } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
+                return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
+            } else {
+                return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
+            }
+        } catch (e: Exception) {
+            Amber.instance.applicationIOScope.launch {
+                LocalPreferences.allSavedAccounts(Amber.instance).forEach {
+                    Amber.instance.getLogDatabase(it.npub).dao().insertLog(
+                        LogEntity(
+                            id = 0,
+                            url = "IntentUtils",
+                            type = "Error",
+                            message = e.stackTraceToString(),
+                            time = System.currentTimeMillis(),
+                        ),
+                    )
+                }
             }
         }
-
-        if (intent.dataString?.startsWith("nostrconnect:") == true) {
-            NostrConnectUtils.getIntentFromNostrConnect(intent, localAccount)
-        } else if (intent.extras?.getString(Browser.EXTRA_APPLICATION_ID) == null) {
-            return getIntentDataFromIntent(context, intent, packageName, route, localAccount)
-        } else {
-            return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
-        }
-
         return null
     }
 

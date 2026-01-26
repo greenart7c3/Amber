@@ -26,6 +26,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -55,10 +56,12 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWithSeconds
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -97,6 +100,25 @@ fun DefaultRelaysScreen(
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
     val isLoading = remember { mutableStateOf(false) }
     val relays2 = remember { mutableStateListOf(*Amber.instance.settings.defaultRelays.toTypedArray()) }
+    val trustScores = remember { mutableStateMapOf<String, Int?>() }
+    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+
+    // Fetch trust scores for all relays
+    LaunchedEffect(relays2.toList()) {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            relays2.forEach { relay ->
+                val url = relay.url
+                if (!trustScores.containsKey(url)) {
+                    loadingScores[url] = true
+                    scope.launch(Dispatchers.IO) {
+                        val score = TrustScoreService.getScore(url)
+                        trustScores[url] = score
+                        loadingScores[url] = false
+                    }
+                }
+            }
+        }
+    }
 
     Surface(
         color = MaterialTheme.colorScheme.background,
@@ -230,10 +252,15 @@ fun DefaultRelaysScreen(
                         .weight(1f),
                 ) {
                     items(relays2.size) {
+                        val relayUrl = relays2[it].url
                         RelayCard(
-                            relay = relays2[it].url,
+                            relay = relayUrl,
+                            trustScore = trustScores[relayUrl],
+                            isLoadingScore = loadingScores[relayUrl] == true,
                             onClick = {
                                 isLoading.value = true
+                                trustScores.remove(relayUrl)
+                                loadingScores.remove(relayUrl)
                                 relays2.removeAt(it)
                                 Amber.instance.settings = Amber.instance.settings.copy(
                                     defaultRelays = relays2,
@@ -536,14 +563,34 @@ fun ActiveRelaysScreen(
     navController: NavController,
     account: Account,
 ) {
+    val scope = rememberCoroutineScope()
     val relays2 =
         remember {
             mutableStateListOf<NormalizedRelayUrl>()
         }
+    val trustScores = remember { mutableStateMapOf<String, Int?>() }
+    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
             relays2.addAll(Amber.instance.getSavedRelays(account))
+        }
+    }
+
+    // Fetch trust scores for all relays
+    LaunchedEffect(relays2.toList()) {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            relays2.forEach { relay ->
+                val url = relay.url
+                if (!trustScores.containsKey(url)) {
+                    loadingScores[url] = true
+                    scope.launch(Dispatchers.IO) {
+                        val score = TrustScoreService.getScore(url)
+                        trustScores[url] = score
+                        loadingScores[url] = false
+                    }
+                }
+            }
         }
     }
 
@@ -574,14 +621,26 @@ fun ActiveRelaysScreen(
                         relay in status
                     }.collectAsStateWithLifecycle(relay in Amber.instance.client.connectedRelaysFlow().value)
 
-                    Text(
-                        modifier = Modifier.padding(top = 16.dp),
-                        text = relay.url,
-                        fontSize = 24.sp,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        color = if (isConnected) Color.Unspecified else Color.Gray,
-                    )
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = relay.url,
+                            fontSize = 24.sp,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            color = if (isConnected) Color.Unspecified else Color.Gray,
+                        )
+                        TrustScoreBadge(
+                            score = trustScores[relay.url],
+                            isLoading = loadingScores[relay.url] == true,
+                        )
+                    }
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.SpaceBetween,

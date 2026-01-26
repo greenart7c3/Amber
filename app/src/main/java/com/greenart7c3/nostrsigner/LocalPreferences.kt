@@ -442,12 +442,15 @@ object LocalPreferences {
         if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }
+        if (!containsAccount(context, npub)) {
+            return null
+        }
+        val privKey = DataStoreAccess.getEncryptedKey(
+            context,
+            npub,
+            DataStoreAccess.NOSTR_PRIVKEY,
+        )
         sharedPrefs(context, npub).apply {
-            val privKey = DataStoreAccess.getEncryptedKey(
-                context,
-                npub,
-                DataStoreAccess.NOSTR_PRIVKEY,
-            )
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
             val picture = getString(PrefKeys.PROFILE_URL.key, "") ?: ""

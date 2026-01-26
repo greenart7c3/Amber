@@ -55,7 +55,6 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.AsyncImage
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -119,7 +118,7 @@ fun LoginWithPubKey(
     var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
     val accounts = remember {
         val snapshot = mutableStateListOf<Account>()
-        LocalPreferences.allAccounts(Amber.instance).forEach {
+        LocalPreferences.allCachedAccounts().forEach {
             snapshot.add(it)
         }
         snapshot

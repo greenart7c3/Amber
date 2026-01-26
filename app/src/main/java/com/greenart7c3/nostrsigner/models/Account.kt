@@ -14,7 +14,6 @@ import com.greenart7c3.nostrsigner.R
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
@@ -28,12 +27,10 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 
 @Stable
 class Account(
+    val signer: NostrSignerInternal,
     val hexKey: HexKey,
     val npub: String,
     val name: MutableStateFlow<String>,
@@ -42,92 +39,40 @@ class Account(
     var didBackup: Boolean,
 ) {
     val saveable: AccountLiveData = AccountLiveData(this)
-    private var signerCache: NostrSignerInternal? = null
 
-    private val signerMutex = Mutex()
-
-    private suspend fun getSigner(): NostrSignerInternal {
-        signerCache?.let { return it }
-
-        return signerMutex.withLock {
-            signerCache?.let { return it }
-
-            val privKey = DataStoreAccess.getEncryptedKey(
-                Amber.instance,
-                npub,
-                DataStoreAccess.NOSTR_PRIVKEY,
-            )
-
-            val signer = NostrSignerInternal(
-                KeyPair(privKey.hexToByteArray()),
-            )
-
-            signerCache = signer
-            signer
-        }
-    }
-
-    suspend fun <T : Event> sign(eventTemplate: EventTemplate<T>): T {
-        val signer = getSigner()
-        return signer.sign(eventTemplate)
-    }
+    suspend fun <T : Event> sign(eventTemplate: EventTemplate<T>): T = signer.sign(eventTemplate)
 
     fun <T : Event> signSync(
         createdAt: Long,
         kind: Int,
         tags: Array<Array<String>>,
         content: String,
-    ): T {
-        val signer = runBlocking { getSigner() }
-        return signer.signerSync.sign(createdAt, kind, tags, content)
-    }
+    ): T = signer.signerSync.sign(createdAt, kind, tags, content)
 
-    suspend fun signString(message: String): String {
-        val signer = getSigner()
-        return signString(message, signer.keyPair.privKey!!).toHexKey()
-    }
+    fun signString(message: String): String = signString(message, signer.keyPair.privKey!!).toHexKey()
 
-    suspend fun nip49Encrypt(password: String): String {
-        val signer = getSigner()
-        return Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
-    }
+    fun nip49Encrypt(password: String): String = Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
 
-    suspend fun nip44Encrypt(plainText: String, toPublicKey: String): String {
-        val signer = getSigner()
-        return signer.signerSync.nip44Encrypt(plainText, toPublicKey)
-    }
+    suspend fun nip44Encrypt(plainText: String, toPublicKey: String): String = signer.nip44Encrypt(plainText, toPublicKey)
 
-    suspend fun nip04Encrypt(plainText: String, toPublicKey: String): String {
-        val signer = getSigner()
-        return signer.signerSync.nip04Encrypt(plainText, toPublicKey)
-    }
+    suspend fun nip04Encrypt(plainText: String, toPublicKey: String): String = signer.nip04Encrypt(plainText, toPublicKey)
 
-    suspend fun nip44Decrypt(cipherText: String, fromPublicKey: String): String {
-        val signer = getSigner()
-        return signer.signerSync.nip44Decrypt(cipherText, fromPublicKey)
-    }
+    suspend fun nip44Decrypt(cipherText: String, fromPublicKey: String): String = signer.nip44Decrypt(cipherText, fromPublicKey)
 
-    suspend fun nip04Decrypt(cipherText: String, fromPublicKey: String): String {
-        val signer = getSigner()
-        return signer.signerSync.nip04Decrypt(cipherText, fromPublicKey)
-    }
+    suspend fun nip04Decrypt(cipherText: String, fromPublicKey: String): String = signer.nip04Decrypt(cipherText, fromPublicKey)
 
-    suspend fun decrypt(encryptedContent: String, fromPublicKey: String): String {
-        val signer = getSigner()
-        return signer.signerSync.decrypt(encryptedContent, fromPublicKey)
-    }
+    suspend fun decrypt(encryptedContent: String, fromPublicKey: String): String = signer.decrypt(encryptedContent, fromPublicKey)
 
     suspend fun seedWords() = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
 
-    suspend fun decryptZapEvent(
+    fun decryptZapEvent(
         data: String,
     ): String? {
         val event = Event.fromJson(data) as LnZapRequestEvent
-        val signerSync = getSigner().signerSync
         return try {
             PrivateZapRequestBuilder().decryptZapEvent(
                 event = event,
-                signer = signerSync,
+                signer = signer.signerSync,
             ).toJson()
         } catch (e: Exception) {
             if (e is CancellationException) throw e
@@ -135,9 +80,9 @@ class Account(
         }
     }
 
-    suspend fun createMessageNIP17(template: EventTemplate<ChatMessageEvent>): NIP17Factory.Result = NIP17Factory().createMessageNIP17(template, getSigner())
+    suspend fun createMessageNIP17(template: EventTemplate<ChatMessageEvent>): NIP17Factory.Result = NIP17Factory().createMessageNIP17(template, signer)
 
-    suspend fun getNsec(): String = getSigner().keyPair.privKey!!.toNsec()
+    suspend fun getNsec(): String = signer.keyPair.privKey!!.toNsec()
 
     fun copyToClipboard(clipboardManager: Clipboard) {
         Amber.instance.applicationIOScope.launch {
@@ -158,10 +103,6 @@ class Account(
                 ).show()
             }
         }
-    }
-
-    fun clearSignerCache() {
-        signerCache = null
     }
 }
 

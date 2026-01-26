@@ -15,13 +15,12 @@ import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
-import kotlin.collections.component1
-import kotlin.collections.component2
-import kotlin.collections.iterator
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 
@@ -176,7 +175,7 @@ object LocalPreferences {
         }
     }
 
-    fun reloadApp() {
+    suspend fun reloadApp() {
         val context = Amber.instance
         currentAccount = null
         savedAccounts = null
@@ -309,7 +308,6 @@ object LocalPreferences {
      */
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
-        accountCache.get(npub)?.clearSignerCache()
         accountCache.remove(npub)
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
@@ -347,17 +345,6 @@ object LocalPreferences {
         privKey: String?,
         seedWords: String?,
     ) {
-        val prefs = sharedPrefs(context = context, account.npub)
-        prefs.edit {
-            apply {
-                pubKey?.let { putString(PrefKeys.NOSTR_PUBKEY.key, it) }
-                putString(PrefKeys.ACCOUNT_NAME.key, account.name.value)
-                putString(PrefKeys.PROFILE_URL.key, account.picture.value)
-                putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
-                putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
-            }
-        }
-
         privKey?.let {
             DataStoreAccess.saveEncryptedKey(context, account.npub, DataStoreAccess.NOSTR_PRIVKEY, it)
         }
@@ -370,17 +357,31 @@ object LocalPreferences {
                 seedWords,
             )
         }
+
+        val prefs = sharedPrefs(context = context, account.npub)
+        prefs.edit {
+            apply {
+                pubKey?.let { putString(PrefKeys.NOSTR_PUBKEY.key, it) }
+                putString(PrefKeys.ACCOUNT_NAME.key, account.name.value)
+                putString(PrefKeys.PROFILE_URL.key, account.picture.value)
+                putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
+                putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
+            }
+        }
+
         accountCache.put(account.npub, account)
     }
 
-    fun loadFromEncryptedStorage(context: Context): Account? {
+    suspend fun loadFromEncryptedStorage(context: Context): Account? {
         currentAccount(context)?.let {
             return loadFromEncryptedStorage(context, it)
         }
         return null
     }
 
-    fun allAccounts(context: Context): List<Account> {
+    fun allCachedAccounts(): List<Account> = accountCache.values().toList()
+
+    suspend fun allAccounts(context: Context): List<Account> {
         val accountInfos = allSavedAccounts(context)
         return accountInfos.mapNotNull {
             loadFromEncryptedStorage(context, it.npub)
@@ -437,11 +438,16 @@ object LocalPreferences {
         HttpClientManager.setDefaultProxyOnPort(port)
     }
 
-    fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
+    suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {
         if (accountCache.get(npub) != null) {
             return accountCache.get(npub)
         }
         sharedPrefs(context, npub).apply {
+            val privKey = DataStoreAccess.getEncryptedKey(
+                context,
+                npub,
+                DataStoreAccess.NOSTR_PRIVKEY,
+            )
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
             val picture = getString(PrefKeys.PROFILE_URL.key, "") ?: ""
@@ -450,6 +456,7 @@ object LocalPreferences {
 
             val account =
                 Account(
+                    signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                     hexKey = pubKey,
                     npub = pubKey.hexToByteArray().toNpub(),
                     name = MutableStateFlow(name),

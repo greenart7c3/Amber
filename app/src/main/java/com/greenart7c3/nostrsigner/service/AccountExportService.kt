@@ -11,8 +11,11 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AccountExportData
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.Nip01
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
@@ -58,6 +61,7 @@ object AccountExportService {
                                     picture = MutableStateFlow(accountData.picture ?: ""),
                                     signPolicy = accountData.signPolicy,
                                     didBackup = accountData.didBackup,
+                                    signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                                 )
                                 LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
                                 LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, accountData.seedWords)

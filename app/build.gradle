@@ -9,7 +9,7 @@ plugins {
 }
 
 android {
-    namespace 'com.greenart7c3.nostrsigner'
+    namespace = 'com.greenart7c3.nostrsigner'
     compileSdk = 36
 
     defaultConfig {
@@ -21,7 +21,7 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
-            useSupportLibrary true
+            useSupportLibrary = true
         }
         resourceConfigurations += [
                 'bn-rBD',
@@ -140,10 +140,10 @@ android {
 
     splits {
         abi {
-            enable true
+            enable = true
             reset()
             include "x86", "x86_64", "arm64-v8a", "armeabi-v7a"
-            universalApk true
+            universalApk = true
         }
     }
 
@@ -153,8 +153,8 @@ android {
     }
 
     buildFeatures {
-        compose true
-        buildConfig true
+        compose = true
+        buildConfig = true
     }
 
     packagingOptions {

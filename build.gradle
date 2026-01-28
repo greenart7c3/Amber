@@ -27,17 +27,17 @@ project(":app") {
 
 subprojects {
     tasks.withType(KotlinCompile).configureEach {
-        kotlinOptions {
-            var buildDirPath = project.layout.buildDirectory.get().asFile.absolutePath
+        compilerOptions {
+            def buildDirPath = project.layout.buildDirectory.get().asFile.absolutePath
             if (project.findProperty("composeCompilerReports") == "true") {
-                freeCompilerArgs += listOf(
+                freeCompilerArgs.addAll(
                         "-P",
                         "plugin:androidx.compose.compiler.plugins.kotlin:reportsDestination=" +
                                 buildDirPath + "/compose_compiler"
                 )
             }
             if (project.findProperty("composeCompilerMetrics") == "true") {
-                freeCompilerArgs += listOf(
+                freeCompilerArgs.addAll(
                         "-P",
                         "plugin:androidx.compose.compiler.plugins.kotlin:metricsDestination=" +
                                 buildDirPath + "/compose_compiler"

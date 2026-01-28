@@ -25,7 +25,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -107,7 +106,6 @@ fun SignPolicySettingsScreen(
             onClick = {
                 scope.launch(Dispatchers.IO) {
                     account.signPolicy = selectedOption
-                    LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                     scope.launch(Dispatchers.Main) {
                         navController.navigateUp()
                     }

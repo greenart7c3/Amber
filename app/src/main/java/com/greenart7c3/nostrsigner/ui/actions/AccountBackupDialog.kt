@@ -330,7 +330,6 @@ private fun NSecQrButton(
             ) {
                 Amber.instance.applicationIOScope.launch {
                     account.didBackup = true
-                    LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                     showDialog = false
                 }
             }
@@ -345,7 +344,6 @@ private fun NSecQrButton(
                         onLoading(true)
                         val ncryptsec = account.nip49Encrypt(password)
                         account.didBackup = true
-                        LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                             navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
                         }
@@ -369,7 +367,6 @@ private fun NSecQrButton(
                             onLoading(true)
                             val ncryptsec = account.nip49Encrypt(password)
                             account.didBackup = true
-                            LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                 navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
                             }
@@ -533,9 +530,6 @@ private fun SeedWordsButton(
                     Amber.instance.applicationIOScope.launch {
                         account.didBackup = true
                         showSeedWords = true
-                        Amber.instance.applicationIOScope.launch {
-                            LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
-                        }
                     }
                 },
                 onError = { _, message ->
@@ -588,7 +582,6 @@ private fun NSecCopyButton(
                 onApproved = {
                     scope.launch(Dispatchers.IO) {
                         account.didBackup = true
-                        LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                         if (password.isNotBlank()) {
                             encryptCopyNSec(password, Amber.instance, account, clipboardManager, onLoading)
                         } else {
@@ -645,7 +638,6 @@ private fun encryptCopyNSec(
             try {
                 val key = account.nip49Encrypt(password)
                 account.didBackup = true
-                LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     clipboardManager.setClipEntry(
                         ClipEntry(

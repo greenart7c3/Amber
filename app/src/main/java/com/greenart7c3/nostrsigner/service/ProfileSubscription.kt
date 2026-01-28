@@ -88,7 +88,6 @@ class ProfileSubscription(
 
                         if (atLeastOne) {
                             scope.launch {
-                                LocalPreferences.saveToEncryptedStorage(appContext, account, null, null, null)
                                 LocalPreferences.setLastMetadataUpdate(appContext, npub, TimeUtils.now())
                             }
                         }

@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -48,6 +49,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     private val _accountContent = MutableStateFlow<AccountState>(AccountState.LoggedOff)
     val accountContent = _accountContent.asStateFlow()
     val toasts = MutableSharedFlow<ToastMsg?>(0, 3, onBufferOverflow = BufferOverflow.DROP_OLDEST)
+    private var observerJob: Job? = null
 
     init {
         tryLoginExistingAccount(null, npub)
@@ -103,15 +105,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     }
 
     private fun prepareLogoutOrSwitch() {
-        when (val state = accountContent.value) {
-            is AccountState.LoggedIn -> {
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    state.account.saveable.removeObserver(saveListener)
-                }
-            }
-            else -> {}
-        }
-
+        observerJob?.cancel()
         _accountContent.update { AccountState.LoggedOff }
     }
 
@@ -236,15 +230,12 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     ) {
         _accountContent.update { AccountState.LoggedIn(account, route) }
 
-        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-            account.saveable.observeForever(saveListener)
-        }
-    }
-
-    private val saveListener: (com.greenart7c3.nostrsigner.models.AccountState) -> Unit = {
-        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-            Log.d(Amber.TAG, "Account saved")
-            LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
+        observerJob?.cancel()
+        observerJob = Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+            account.saveable.collect {
+                Log.d(Amber.TAG, "Account saved")
+                LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
+            }
         }
     }
 }

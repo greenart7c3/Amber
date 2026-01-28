@@ -58,7 +58,6 @@ room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomKtx
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomKtx" }
 room-paging = { module = "androidx.room:room-paging", version.ref = "roomKtx" }
-runtime-livedata = { module = "androidx.compose.runtime:runtime-livedata", version.ref = "compose_ui" }
 security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCryptoKtx" }
 security-crypto-ktx = { module = "androidx.security:security-crypto-ktx", version.ref = "securityCryptoKtx" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "compose_ui" }

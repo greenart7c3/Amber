@@ -122,7 +122,6 @@ fun ExportAllAccountsScreen(
                         LocalPreferences.allSavedAccounts(context).forEach { accountInfo ->
                             LocalPreferences.loadFromEncryptedStorage(context, accountInfo.npub)?.let { account ->
                                 account.didBackup = true
-                                LocalPreferences.saveToEncryptedStorage(context, account, null, null, null)
                             }
                         }
 

@@ -189,13 +189,8 @@ dependencies {
     implementation libs.ui
     implementation libs.ui.tooling.preview
 
-    implementation libs.runtime.livedata
-
     // Navigation
     implementation libs.navigation.compose
-
-    // Observe Live data as State
-    implementation libs.runtime.livedata
 
     implementation libs.material3
     implementation libs.material.icons.extended

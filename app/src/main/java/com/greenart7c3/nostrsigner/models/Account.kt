@@ -6,10 +6,8 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import androidx.lifecycle.LiveData
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.DataStoreAccess
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
@@ -26,6 +24,9 @@ import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.launch
 
 @Stable
@@ -35,10 +36,35 @@ class Account(
     val npub: String,
     val name: MutableStateFlow<String>,
     val picture: MutableStateFlow<String>,
-    var signPolicy: Int,
-    var didBackup: Boolean,
+    signPolicy: Int,
+    didBackup: Boolean,
 ) {
-    val saveable: AccountLiveData = AccountLiveData(this)
+    var signPolicy: Int = signPolicy
+        set(value) {
+            if (field != value) {
+                field = value
+                _saveable.value = AccountState(this)
+            }
+        }
+
+    var didBackup: Boolean = didBackup
+        set(value) {
+            if (field != value) {
+                field = value
+                _saveable.value = AccountState(this)
+            }
+        }
+
+    private val _saveable = MutableStateFlow(AccountState(this))
+    val saveable = _saveable.asStateFlow()
+
+    init {
+        Amber.instance.applicationIOScope.launch {
+            combine(name, picture) { _, _ -> }.drop(1).collect {
+                _saveable.value = AccountState(this@Account)
+            }
+        }
+    }
 
     suspend fun <T : Event> sign(eventTemplate: EventTemplate<T>): T = signer.sign(eventTemplate)
 
@@ -87,7 +113,6 @@ class Account(
     fun copyToClipboard(clipboardManager: Clipboard) {
         Amber.instance.applicationIOScope.launch {
             didBackup = true
-            LocalPreferences.saveToEncryptedStorage(Amber.instance, this@Account, null, null, null)
             val nsec = getNsec()
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                 clipboardManager.setClipEntry(
@@ -105,8 +130,6 @@ class Account(
         }
     }
 }
-
-class AccountLiveData(account: Account) : LiveData<AccountState>(AccountState(account))
 
 @Immutable
 class AccountState(val account: Account)

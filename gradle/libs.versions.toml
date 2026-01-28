@@ -4,7 +4,6 @@ appcompat = "1.7.1"
 biometricKtx = "1.2.0-alpha05"
 core = "3.5.4"
 coreKtx = "1.17.0"
-coreSplashscreen = "1.2.0"
 datastorePreferences = "1.2.0"
 espressoCore = "3.7.0"
 junit = "4.13.2"
@@ -40,7 +39,6 @@ appcompat = { module = "androidx.appcompat:appcompat", version.ref = "appcompat"
 biometric-ktx = { module = "androidx.biometric:biometric-ktx", version.ref = "biometricKtx" }
 core = { module = "com.google.zxing:core", version.ref = "core" }
 core-ktx = { module = "androidx.core:core-ktx", version.ref = "coreKtx" }
-core-splashscreen = { module = "androidx.core:core-splashscreen", version.ref = "coreSplashscreen" }
 espresso-core = { module = "androidx.test.espresso:espresso-core", version.ref = "espressoCore" }
 ext-junit = { module = "androidx.test.ext:junit", version.ref = "junitVersion" }
 junit = { module = "junit:junit", version.ref = "junit" }

@@ -183,7 +183,6 @@ dependencies {
     implementation(libs.jna) {
         artifact { type = "aar" }
     }
-    implementation libs.core.splashscreen
 
     implementation libs.core.ktx
     implementation libs.activity.compose

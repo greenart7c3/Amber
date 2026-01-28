@@ -26,7 +26,6 @@ ksp = "2.3.2"
 coil = "3.3.0"
 storage = "2.2.0"
 jna = "5.18.1"
-adaptiveAndroid = "1.2.0"
 materialIconsExtended = "1.7.8"
 collections = "0.4.0"
 pagingCommon = "3.3.6"
@@ -75,7 +74,6 @@ coil-svg = { group = "io.coil-kt.coil3", name = "coil-svg", version.ref = "coil"
 coil-okhttp = { group = "io.coil-kt.coil3", name = "coil-network-okhttp", version.ref = "coil" }
 storage = { module = "com.anggrayudi:storage", version.ref = "storage" }
 material3-window = { group = "androidx.compose.material3", name = "material3-window-size-class", version.ref = "material3" }
-adaptive-android = { group = "androidx.compose.material3.adaptive", name = "adaptive-android", version.ref = "adaptiveAndroid" }
 paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "pagingCommon" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCommon" }
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "pagingCommon" }

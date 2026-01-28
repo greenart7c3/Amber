@@ -198,7 +198,6 @@ dependencies {
     implementation libs.appcompat
     implementation libs.work.runtime.ktx
     implementation libs.material3.window
-    implementation libs.adaptive.android
     implementation libs.paging.common
     implementation libs.paging.compose
     implementation libs.paging.runtime

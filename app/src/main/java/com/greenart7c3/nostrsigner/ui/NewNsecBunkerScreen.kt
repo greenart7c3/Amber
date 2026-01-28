@@ -66,7 +66,7 @@ fun NewNsecBunkerScreen(
     accountStateViewModel: AccountStateViewModel,
     navController: NavController,
 ) {
-    val secret = remember { mutableStateOf(UUID.randomUUID().toString().substring(0, 6)) }
+    val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val context = LocalContext.current
 

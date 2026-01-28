@@ -111,8 +111,8 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
+import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
-import com.halilibo.richtext.commonmark.MarkdownParseOptions
 import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.material3.RichText
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -678,10 +678,11 @@ fun SignUpPage(
                                     val myMarkDownStyle =
                                         RichTextDefaults.copy(
                                             stringStyle = RichTextDefaults.stringStyle?.copy(
-                                                linkStyle =
-                                                SpanStyle(
-                                                    textDecoration = TextDecoration.Underline,
-                                                    color = MaterialTheme.colorScheme.primary,
+                                                linkStyle = TextLinkStyles(
+                                                    SpanStyle(
+                                                        textDecoration = TextDecoration.Underline,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                    ),
                                                 ),
                                             ),
                                         )
@@ -689,7 +690,7 @@ fun SignUpPage(
 
                                     val astNode1 =
                                         remember {
-                                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                                            CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content1)
                                         }
 
                                     RichText(
@@ -1168,10 +1169,11 @@ fun LoginPage(
                                     val myMarkDownStyle =
                                         RichTextDefaults.copy(
                                             stringStyle = RichTextDefaults.stringStyle?.copy(
-                                                linkStyle =
-                                                SpanStyle(
-                                                    textDecoration = TextDecoration.Underline,
-                                                    color = MaterialTheme.colorScheme.primary,
+                                                linkStyle = TextLinkStyles(
+                                                    SpanStyle(
+                                                        textDecoration = TextDecoration.Underline,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                    ),
                                                 ),
                                             ),
                                         )
@@ -1179,7 +1181,7 @@ fun LoginPage(
 
                                     val astNode1 =
                                         remember {
-                                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                                            CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content1)
                                         }
 
                                     RichText(

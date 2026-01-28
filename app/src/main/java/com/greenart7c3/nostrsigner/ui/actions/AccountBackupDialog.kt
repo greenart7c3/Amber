@@ -89,8 +89,8 @@ import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
-import com.halilibo.richtext.commonmark.MarkdownParseOptions
 import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
@@ -128,7 +128,7 @@ fun AccountBackupScreen(
 
                     val astNode =
                         remember {
-                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content)
+                            CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content)
                         }
 
                     RichText(
@@ -144,7 +144,7 @@ fun AccountBackupScreen(
 
                     val astNode1 =
                         remember {
-                            CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(content1)
+                            CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content1)
                         }
 
                     RichText(

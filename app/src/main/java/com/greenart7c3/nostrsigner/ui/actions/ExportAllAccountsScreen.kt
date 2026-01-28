@@ -55,8 +55,8 @@ import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
 import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
-import com.halilibo.richtext.commonmark.MarkdownParseOptions
 import com.halilibo.richtext.markdown.BasicMarkdown
 import com.halilibo.richtext.ui.RichTextStyle
 import com.halilibo.richtext.ui.material3.RichText
@@ -189,7 +189,7 @@ fun ExportAllAccountsScreen(
                 // Security warning
                 val warningContent = stringResource(R.string.export_all_accounts_warning)
                 val astNode = remember {
-                    CommonmarkAstNodeParser(MarkdownParseOptions.MarkdownWithLinks).parse(warningContent)
+                    CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(warningContent)
                 }
 
                 RichText(

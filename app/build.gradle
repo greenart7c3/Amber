@@ -1,8 +1,5 @@
-import org.jetbrains.kotlin.gradle.dsl.JvmTarget
-
 plugins {
     alias(libs.plugins.androidApplication)
-    alias(libs.plugins.jetbrainsKotlinAndroid)
     alias(libs.plugins.gradle.ktlint) version(libs.versions.ktlint)
     alias(libs.plugins.kotlin.ksp) version(libs.versions.ksp)
     alias(libs.plugins.jetbrainsComposeCompiler)
@@ -15,7 +12,6 @@ android {
     defaultConfig {
         applicationId "com.greenart7c3.nostrsigner"
         minSdk 26
-        targetSdk 36
         versionCode 172
         versionName "4.1.1"
 
@@ -95,6 +91,11 @@ android {
         arg("room.schemaLocation", "$projectDir/schemas")
     }
 
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
     if (System.getenv('SIGN_RELEASE')) {
         def keystorePropertiesFile = rootProject.file("keystore.properties")
         def keystoreProperties = new Properties()
@@ -129,11 +130,11 @@ android {
     flavorDimensions += "version"
 
     productFlavors {
-        create("free") {
+        register("free") {
             getIsDefault().set(true)
             dimension = "version"
         }
-        create("offline") {
+        register("offline") {
             dimension = "version"
         }
     }
@@ -155,6 +156,7 @@ android {
     buildFeatures {
         compose = true
         buildConfig = true
+        resValues = true
     }
 
     packagingOptions {
@@ -162,12 +164,6 @@ android {
             excludes += '/META-INF/{AL2.0,LGPL2.1}'
             excludes +='META-INF/versions/9/OSGI-INF/MANIFEST.MF'
         }
-    }
-}
-
-kotlin {
-    compilerOptions {
-        jvmTarget = JvmTarget.JVM_21
     }
 }
 

@@ -71,3 +71,4 @@
 -dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 -dontwarn java.lang.instrument.ClassDefinition
 -dontwarn java.lang.instrument.UnmodifiableClassException
+-dontwarn com.google.errorprone.annotations.Immutable

@@ -511,29 +511,34 @@ object IntentUtils {
                 }
             } else {
                 if (result.startsWith("{")) {
-                    val event = AmberEvent.fromJson(result)
-                    if (event.kind == SealedRumorEvent.KIND) {
-                        val decryptedSealData = try {
-                            account.decrypt(event.content, account.hexKey)
-                        } catch (_: Exception) {
-                            event.content
-                        }
-                        if (decryptedSealData.startsWith("{")) {
-                            val sealEvent = AmberEvent.fromJson(decryptedSealData)
-                            EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
-                        } else if (decryptedSealData.startsWith("[")) {
-                            try {
-                                val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
-                                EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
-                            } catch (e: Exception) {
-                                Log.e("IntentUtils", "Error parsing TagArray: ${e.message}")
+                    try {
+                        val event = AmberEvent.fromJson(result)
+                        if (event.kind == SealedRumorEvent.KIND) {
+                            val decryptedSealData = try {
+                                account.decrypt(event.content, account.hexKey)
+                            } catch (_: Exception) {
+                                event.content
+                            }
+                            if (decryptedSealData.startsWith("{")) {
+                                val sealEvent = AmberEvent.fromJson(decryptedSealData)
+                                EventEncryptedDataKind(event, EventEncryptedDataKind(sealEvent, null, decryptedSealData), result)
+                            } else if (decryptedSealData.startsWith("[")) {
+                                try {
+                                    val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
+                                    EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
+                                } catch (e: Exception) {
+                                    Log.e("IntentUtils", "Error parsing TagArray: ${e.message}")
+                                    EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
+                                }
+                            } else {
                                 EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                             }
                         } else {
-                            EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
+                            EventEncryptedDataKind(event, null, result)
                         }
-                    } else {
-                        EventEncryptedDataKind(event, null, result)
+                    } catch (e: Exception) {
+                        Log.e("IntentUtils", "Error parsing JSON: ${e.message}")
+                        ClearTextEncryptedDataKind(data, result)
                     }
                 } else if (result.startsWith("[")) {
                     try {

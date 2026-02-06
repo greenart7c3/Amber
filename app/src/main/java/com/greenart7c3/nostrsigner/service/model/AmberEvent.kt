@@ -101,6 +101,6 @@ open class AmberEvent(
 
         fun fromJson(json: String): AmberEvent = mapper.readValue(json, AmberEvent::class.java)
 
-        fun relay(event: Event): String = event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.first()
+        fun relay(event: Event): String? = event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.firstOrNull()
     }
 }

@@ -123,7 +123,7 @@ fun SeeDetailsScreen(
 
                     val data = if (intent.type == SignerType.SIGN_EVENT) {
                         val event = intent.event!!
-                        if (event.kind == 22242) AmberEvent.relay(event) else event.content
+                        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
                     } else {
                         if (type.name.contains("ENCRYPT") && intent.encryptedData is ClearTextEncryptedDataKind) {
                             intent.encryptedData.text
@@ -188,7 +188,7 @@ fun SeeDetailsScreen(
 
                     val data = if (bunkerRequest.request is BunkerRequestSign) {
                         val event = bunkerRequest.signedEvent!!
-                        if (event.kind == 22242) AmberEvent.relay(event) else event.content
+                        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
                     } else {
                         if (type.name.contains("ENCRYPT") && bunkerRequest.encryptedData is ClearTextEncryptedDataKind) {
                             bunkerRequest.encryptedData.text

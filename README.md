@@ -25,7 +25,7 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 
 [<img src="./assets/zapstore.svg"
 alt="Get it on Zap Store"
-height="70">](https://github.com/zapstore/zapstore/releases)
+height="70">](https://zapstore.dev/apps/naddr1qvzqqqr7pvpzqateqake4lc2fn77lflzq30jfpk8uhvtccalc66989er8cdmljceqqdkxmmd9enhyet9deshyaphvvejumn0wd68yumfvahx2usx8zmj2)
 [<img src="./assets/obtainium.png"
 alt="Get it on Obtaininum"
 height="70">](https://github.com/ImranR98/Obtainium)

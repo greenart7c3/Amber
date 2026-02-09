@@ -334,8 +334,8 @@ object LocalPreferences {
         privKey: String?,
         seedWords: String?,
     ) {
-        setCurrentAccount(context, account)
         saveToEncryptedStorage(context, account, pubKey, privKey, seedWords)
+        setCurrentAccount(context, account)
     }
 
     suspend fun saveToEncryptedStorage(

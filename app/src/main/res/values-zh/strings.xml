@@ -622,4 +622,5 @@
     <string name="relay_trust_warning">警告：该中继的信任评分很低</string>
     <string name="relays_used">已使用的中继</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">在密钥生成之前不要离开应用</string>
+    <string name="status_detail">Status Detail</string>
 </resources>

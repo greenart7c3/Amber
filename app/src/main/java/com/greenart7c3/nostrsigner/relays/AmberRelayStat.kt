@@ -21,6 +21,7 @@ import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -136,28 +137,25 @@ class AmberRelayStats(
         available: Set<NormalizedRelayUrl>,
         forceCreate: Boolean = false,
     ): Notification? {
-        val message = available.joinToString("\n") {
-            val connected = "${it.url} ${if (it in connected) appContext.getString(R.string.connected) else appContext.getString(R.string.disconnected)}\n"
-            val ping = appContext.getString(R.string.ping_ms, Amber.instance.relayStats.get(it).pingInMs)
-            val sent = if (get(it).sent > 0) {
-                appContext.getString(R.string.sent, get(it).sent)
-            } else {
-                ""
-            }
-            val received = if (get(it).received > 0) {
-                appContext.getString(R.string.received, get(it).received)
-            } else {
-                ""
-            }
-            val failed = if (get(it).failed > 0) {
-                appContext.getString(R.string.rejected_by_relay, get(it).failed)
-            } else {
-                ""
-            }
-            val error = if (Amber.instance.relayStats.get(it).errorCounter > 0) appContext.getString(R.string.error, Amber.instance.relayStats.get(it).errorCounter) else ""
+        val message = available.joinToString("\n") { relay ->
+            val stats = Amber.instance.relayStats.get(relay)
+            val session = get(relay)
 
-            connected + ping + sent + received + failed + error
-        }
+            val status = if (relay in connected) "✓" else "✗"
+            val ping = "${stats.pingInMs}ms"
+
+            // Build a comma-separated list of stats to save vertical space
+            val details = mutableListOf<String>()
+            if (session.sent > 0) details.add("S:${session.sent}")
+            if (session.received > 0) details.add("R:${session.received}")
+            if (session.failed > 0) details.add("F:${session.failed}")
+            if (stats.errorCounter > 0) details.add("E:${stats.errorCounter}")
+
+            val detailsStr = if (details.isNotEmpty()) " | ${details.joinToString(" ")}" else ""
+
+            // Result: wss://relay.url ✓ 474ms | S:1 R:2
+            "${relay.displayUrl()} $status $ping$detailsStr"
+        }.trim()
         if (message == oldMessage && oldMessage.isNotBlank() && !forceCreate) {
             return null
         }
@@ -193,7 +191,12 @@ class AmberRelayStats(
             NotificationCompat.Builder(appContext, statusChannel.id)
                 .setGroup(statusGroup.id)
                 .setContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
-                .setStyle(NotificationCompat.BigTextStyle().bigText(message))
+                .setStyle(
+                    NotificationCompat.BigTextStyle()
+                        .bigText(message.trim())
+                        .setBigContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
+                        .setSummaryText(appContext.getString(R.string.status_detail)),
+                )
                 .setPriority(NotificationCompat.PRIORITY_DEFAULT)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)

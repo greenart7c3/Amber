@@ -13,8 +13,10 @@ val defaultAppRelays = listOf(
 )
 
 val defaultIndexerRelays = listOf(
-    RelayUrlNormalizer.normalize("wss://relay.nostr.band/"),
     RelayUrlNormalizer.normalize("wss://purplepag.es/"),
+    RelayUrlNormalizer.normalize("wss://user.kindpag.es/"),
+    RelayUrlNormalizer.normalize("wss://profiles.nostr1.com/"),
+    RelayUrlNormalizer.normalize("wss://directory.yabu.me/"),
 )
 
 data class AmberSettings(

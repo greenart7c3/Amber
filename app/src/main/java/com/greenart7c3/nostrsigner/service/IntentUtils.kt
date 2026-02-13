@@ -65,6 +65,12 @@ object IntentUtils {
         return URLDecoder.decode(data.replace("nostrsigner:", "").replace("+", "%2b"), "utf-8")
     }
 
+    fun isUrlEncoded(input: String): Boolean {
+        // Regex matches a '%' followed by two hex digits (0-9, a-f, A-F)
+        val regex = Regex("%[0-9a-fA-F]{2}")
+        return regex.containsMatchIn(input)
+    }
+
     private suspend fun getIntentDataWithoutExtras(
         context: Context,
         data: String,
@@ -287,7 +293,8 @@ object IntentUtils {
 
         val data =
             try {
-                decodeData(intent.data?.toString() ?: "", packageName == null, packageName == null)
+                val originalData = intent.data?.toString() ?: ""
+                decodeData(originalData, packageName == null, isUrlEncoded(originalData))
             } catch (_: Exception) {
                 intent.data?.toString()?.replace("nostrsigner:", "") ?: ""
             }
@@ -609,6 +616,7 @@ object IntentUtils {
                 return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
             }
         } catch (e: Exception) {
+            Log.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
             Amber.instance.applicationIOScope.launch {
                 LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                     Amber.instance.getLogDatabase(it.npub).dao().insertLog(

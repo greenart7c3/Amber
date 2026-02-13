@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.content.Context
 import android.graphics.drawable.Drawable
 import android.widget.Toast
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TooltipAnchorPosition
 import androidx.compose.material3.TooltipBox
 import androidx.compose.material3.TooltipDefaults
+import androidx.compose.material3.minimumInteractiveComponentSize
 import androidx.compose.material3.rememberTooltipState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -25,6 +27,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
@@ -44,10 +47,10 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
-import java.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.util.Base64
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -79,27 +82,27 @@ fun AmberTopAppBar(
                                 },
                                 state = rememberTooltipState(),
                             ) {
-                                IconButton(
-                                    onClick = {
-                                        Amber.instance.applicationIOScope.launch {
-                                            Amber.instance.reconnect()
-                                        }
-                                    },
-                                    content = {
-                                        Row(
-                                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
-                                            Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
-                                            Icon(
-                                                imageVector = ImageVector.vectorResource(R.drawable.relays),
-                                                contentDescription = context.getString(R.string.reconnect),
-                                                tint = Color.Unspecified,
-                                            )
-                                        }
-                                    },
-                                )
+                                Row(
+                                    modifier = Modifier
+                                        .minimumInteractiveComponentSize()
+                                        .clickable(
+                                            onClick = {
+                                                Amber.instance.applicationIOScope.launch {
+                                                    Amber.instance.reconnect()
+                                                }
+                                            },
+                                        ),
+                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                ) {
+                                    val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                                    Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
+                                    Icon(
+                                        imageVector = ImageVector.vectorResource(R.drawable.relays),
+                                        contentDescription = context.getString(R.string.reconnect),
+                                        tint = Color.Unspecified,
+                                    )
+                                }
                             }
 
                             if (Amber.instance.settings.useProxy) {

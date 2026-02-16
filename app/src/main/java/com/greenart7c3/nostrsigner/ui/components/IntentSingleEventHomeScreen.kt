@@ -256,6 +256,7 @@ fun IntentSingleEventHomeScreen(
                     shouldAcceptOrReject = acceptOrReject,
                     packageName = packageName,
                     event = event,
+                    account = account,
                     onAccept = {
                         if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             accountStateViewModel.toast(

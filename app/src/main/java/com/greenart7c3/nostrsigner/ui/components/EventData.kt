@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.content.ClipData
+import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +15,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -23,10 +27,25 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.net.toUri
+import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
+import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
+import com.vitorpamplona.quartz.nip40Expiration.expiration
+import com.vitorpamplona.quartz.utils.Hex
+import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -35,6 +54,7 @@ fun EventData(
     shouldAcceptOrReject: Boolean?,
     packageName: String?,
     event: Event,
+    account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -52,11 +72,15 @@ fun EventData(
         LocalAppIcon(packageName)
 
         val permission = Permission("sign_event", event.kind)
-        val text = stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
+        val kindTranslation = permission.toLocalizedString(context)
+        val text = stringResource(R.string.wants_you_to_sign_a, kindTranslation)
         Text(
             text.capitalize(Locale.current),
             fontSize = 18.sp,
         )
+        if (kindTranslation == stringResource(R.string.event_kind, event.kind.toString())) {
+            ReportMissingEventKindButton(account, event.kind)
+        }
         Spacer(Modifier.size(4.dp))
 
         RawJsonButton(
@@ -103,6 +127,7 @@ fun BunkerEventData(
     shouldAcceptOrReject: Boolean?,
     appName: String,
     event: Event,
+    account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -118,7 +143,8 @@ fun BunkerEventData(
         modifier,
     ) {
         val permission = Permission("sign_event", event.kind)
-        val text = stringResource(R.string.wants_you_to_sign_a, permission.toLocalizedString(context))
+        val kindTranslation = permission.toLocalizedString(context)
+        val text = stringResource(R.string.wants_you_to_sign_a, kindTranslation)
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -128,6 +154,9 @@ fun BunkerEventData(
             },
             fontSize = 18.sp,
         )
+        if (kindTranslation == stringResource(R.string.event_kind, event.kind.toString())) {
+            ReportMissingEventKindButton(account, event.kind)
+        }
         Spacer(Modifier.size(4.dp))
 
         RawJsonButton(
@@ -181,4 +210,54 @@ fun ContactListDetail(title: String, text: String) {
             text,
         )
     }
+}
+
+@Composable
+fun ReportMissingEventKindButton(account: Account, kind: Int) {
+    val clipboardManager = LocalClipboard.current
+    AmberButton(
+        onClick = {
+            val text = "Missing event kind translation: $kind"
+            if (BuildFlavorChecker.isOfflineFlavor()) {
+                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                    clipboardManager.setClipEntry(
+                        ClipEntry(
+                            ClipData.newPlainText("", text),
+                        ),
+                    )
+                    val intent = Intent(Intent.ACTION_VIEW)
+                    val npub = Hex.decode("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19").toNpub()
+                    intent.data = "nostr:$npub".toUri()
+                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                    Amber.instance.startActivity(intent)
+                }
+            } else {
+                Amber.instance.applicationIOScope.launch {
+                    val client = NostrClient(Amber.instance.factory, Amber.instance.applicationIOScope)
+                    client.connect()
+                    val template = ChatMessageEvent.build(
+                        msg = text,
+                        to = listOf(PTag("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19")),
+                        createdAt = System.currentTimeMillis() / 1000,
+                    ) {
+                        val tenDaysInSeconds = 10L * 86_400
+                        expiration(TimeUtils.now() + tenDaysInSeconds)
+                    }
+                    val signedEvents = account.createMessageNIP17(template)
+                    signedEvents.wraps.forEach { wrap ->
+                        client.send(
+                            event = wrap,
+                            relayList = setOf(
+                                NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
+                                NormalizedRelayUrl(url = "wss://nostr.land"),
+                            ),
+                        )
+                    }
+                    delay(10000)
+                    client.disconnect()
+                }
+            }
+        },
+        text = stringResource(R.string.report_missing_event_kind_translation),
+    )
 }

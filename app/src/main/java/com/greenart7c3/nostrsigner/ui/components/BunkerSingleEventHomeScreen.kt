@@ -637,6 +637,7 @@ fun BunkerSingleEventHomeScreen(
                     shouldAcceptOrReject = acceptOrReject,
                     appName = appName,
                     event = event,
+                    account = account,
                     onAccept = {
                         if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
                             coroutineScope.launch {

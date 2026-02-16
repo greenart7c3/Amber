@@ -137,6 +137,13 @@ class AmberRelayStats(
         available: Set<NormalizedRelayUrl>,
         forceCreate: Boolean = false,
     ): Notification? {
+        if (available.isEmpty() && connected.isEmpty() && !Amber.instance.settings.killSwitch.value) {
+            Log.d(Amber.TAG, "No relays available, removing relay notification")
+            val notificationManager = NotificationManagerCompat.from(appContext)
+            notificationManager.cancel(2)
+            return null
+        }
+
         val message = available.joinToString("\n") { relay ->
             val stats = Amber.instance.relayStats.get(relay)
             val session = get(relay)

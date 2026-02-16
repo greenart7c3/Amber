@@ -941,14 +941,25 @@ fun LoginPage(
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                            if (isValid.first) {
-                                                scope.launch {
-                                                    pageState.animateScrollToPage(1)
+                                            Amber.instance.applicationIOScope.launch {
+                                                isLoading = true
+                                                try {
+                                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                    if (isValid.first) {
+                                                        scope.launch {
+                                                            pageState.animateScrollToPage(1)
+                                                        }
+                                                    } else {
+                                                        errorMessage = isValid.second
+                                                    }
+                                                } catch (e: Exception) {
+                                                    errorMessage = e.message.toString()
+                                                    isLoading = false
+                                                } finally {
+                                                    isLoading = false
                                                 }
-                                            } else {
-                                                errorMessage = isValid.second
                                             }
+
                                         }
                                     },
                                 ),
@@ -1014,14 +1025,25 @@ fun LoginPage(
                                             }
 
                                             if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                                val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                                if (isValid.first) {
-                                                    scope.launch {
-                                                        pageState.animateScrollToPage(1)
+                                                Amber.instance.applicationIOScope.launch {
+                                                    isLoading = true
+                                                    try {
+                                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                        if (isValid.first) {
+                                                            scope.launch {
+                                                                pageState.animateScrollToPage(1)
+                                                            }
+                                                        } else {
+                                                            errorMessage = isValid.second
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        errorMessage = e.message.toString()
+                                                        isLoading = false
+                                                    } finally {
+                                                        isLoading = false
                                                     }
-                                                } else {
-                                                    errorMessage = isValid.second
                                                 }
+
                                             }
                                         },
                                     ),
@@ -1047,14 +1069,24 @@ fun LoginPage(
                                     }
 
                                     if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                        if (isValid.first) {
-                                            keyboardController?.hide()
-                                            scope.launch {
-                                                pageState.animateScrollToPage(1)
+                                        Amber.instance.applicationIOScope.launch {
+                                            isLoading = true
+                                            try {
+                                                val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                if (isValid.first) {
+                                                    keyboardController?.hide()
+                                                    scope.launch {
+                                                        pageState.animateScrollToPage(1)
+                                                    }
+                                                } else {
+                                                    errorMessage = isValid.second
+                                                }
+                                            } catch (e: Exception) {
+                                                errorMessage = e.message.toString()
+                                                isLoading = false
+                                            } finally {
+                                                isLoading = false
                                             }
-                                        } else {
-                                            errorMessage = isValid.second
                                         }
                                     }
                                 },

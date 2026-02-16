@@ -122,6 +122,7 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.RandomInstance
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -945,8 +946,10 @@ fun LoginPage(
                                                 isLoading = true
                                                 try {
                                                     val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                    isLoading = false
                                                     if (isValid.first) {
                                                         scope.launch {
+                                                            delay(200)
                                                             pageState.animateScrollToPage(1)
                                                         }
                                                     } else {
@@ -954,8 +957,6 @@ fun LoginPage(
                                                     }
                                                 } catch (e: Exception) {
                                                     errorMessage = e.message.toString()
-                                                    isLoading = false
-                                                } finally {
                                                     isLoading = false
                                                 }
                                             }
@@ -1029,8 +1030,10 @@ fun LoginPage(
                                                     isLoading = true
                                                     try {
                                                         val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                        isLoading = false
                                                         if (isValid.first) {
                                                             scope.launch {
+                                                                delay(200)
                                                                 pageState.animateScrollToPage(1)
                                                             }
                                                         } else {
@@ -1038,8 +1041,6 @@ fun LoginPage(
                                                         }
                                                     } catch (e: Exception) {
                                                         errorMessage = e.message.toString()
-                                                        isLoading = false
-                                                    } finally {
                                                         isLoading = false
                                                     }
                                                 }
@@ -1073,9 +1074,11 @@ fun LoginPage(
                                             isLoading = true
                                             try {
                                                 val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                isLoading = false
                                                 if (isValid.first) {
                                                     keyboardController?.hide()
                                                     scope.launch {
+                                                        delay(200)
                                                         pageState.animateScrollToPage(1)
                                                     }
                                                 } else {
@@ -1083,8 +1086,6 @@ fun LoginPage(
                                                 }
                                             } catch (e: Exception) {
                                                 errorMessage = e.message.toString()
-                                                isLoading = false
-                                            } finally {
                                                 isLoading = false
                                             }
                                         }

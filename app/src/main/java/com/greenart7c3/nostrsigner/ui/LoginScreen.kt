@@ -802,6 +802,7 @@ fun LoginPage(
     }
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
+    var keyPair by remember { mutableStateOf(KeyPair()) }
 
     Scaffold(
         topBar = {
@@ -947,7 +948,8 @@ fun LoginPage(
                                                 try {
                                                     val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                                     isLoading = false
-                                                    if (isValid.first) {
+                                                    if (isValid.first != null) {
+                                                        keyPair = isValid.first!!
                                                         scope.launch {
                                                             delay(200)
                                                             pageState.animateScrollToPage(1)
@@ -1031,7 +1033,8 @@ fun LoginPage(
                                                     try {
                                                         val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                                         isLoading = false
-                                                        if (isValid.first) {
+                                                        if (isValid.first != null) {
+                                                            keyPair = isValid.first!!
                                                             scope.launch {
                                                                 delay(200)
                                                                 pageState.animateScrollToPage(1)
@@ -1075,7 +1078,8 @@ fun LoginPage(
                                             try {
                                                 val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
                                                 isLoading = false
-                                                if (isValid.first) {
+                                                if (isValid.first != null) {
+                                                    keyPair = isValid.first!!
                                                     keyboardController?.hide()
                                                     scope.launch {
                                                         delay(200)
@@ -1270,8 +1274,7 @@ fun LoginPage(
                                     Amber.instance.applicationIOScope.launch {
                                         isLoading = true
                                         accountViewModel.startUI(
-                                            key = key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(),
-                                            password = password.value.text,
+                                            keyPair = keyPair,
                                             route = null,
                                             useProxy = useProxy,
                                             signPolicy = selectedOption,

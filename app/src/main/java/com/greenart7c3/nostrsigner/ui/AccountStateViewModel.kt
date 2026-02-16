@@ -124,7 +124,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         tryLoginExistingAccount(route, npub)
     }
 
-    fun isValidKey(key: String, password: String): Pair<Boolean, String> {
+    fun isValidKey(key: String, password: String): Pair<KeyPair?, String> {
         try {
             val signer =
                 if (key.startsWith("ncryptsec")) {
@@ -138,32 +138,19 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 } else {
                     NostrSignerInternal(KeyPair(Hex.decode(key)))
                 }
-            return Pair(signer.keyPair.privKey != null, "")
+            return Pair(signer.keyPair, "")
         } catch (e: Exception) {
-            return Pair(false, e.message ?: "Unknown error")
+            return Pair(null, e.message ?: "Unknown error")
         }
     }
 
     suspend fun startUI(
-        key: String,
-        password: String,
+        keyPair: KeyPair,
         route: String?,
         useProxy: Boolean,
         proxyPort: Int,
         signPolicy: Int,
     ) {
-        val keyPair =
-            if (key.startsWith("ncryptsec")) {
-                val newKey = Nip49().decrypt(key, password)
-                KeyPair(Hex.decode(newKey))
-            } else if (key.startsWith("nsec")) {
-                KeyPair(privKey = key.bechToBytes())
-            } else if (key.contains(" ") && Nip06().isValidMnemonic(key)) {
-                KeyPair(privKey = Nip06().privateKeyFromMnemonic(key))
-            } else {
-                KeyPair(Hex.decode(key))
-            }
-
         val account = Account(
             hexKey = keyPair.pubKey.toHexKey(),
             npub = keyPair.pubKey.toNpub(),

@@ -5,6 +5,8 @@ import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -14,6 +16,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
@@ -24,6 +27,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -67,7 +71,8 @@ fun EventData(
     }
 
     Column(
-        modifier,
+        modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         LocalAppIcon(packageName)
 
@@ -77,6 +82,8 @@ fun EventData(
         Text(
             text.capitalize(Locale.current),
             fontSize = 18.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
         if (kindTranslation == stringResource(R.string.event_kind, event.kind.toString())) {
             ReportMissingEventKindButton(account, event.kind)
@@ -89,6 +96,11 @@ fun EventData(
             },
             stringResource(R.string.show_details),
         )
+
+        Spacer(Modifier.size(16.dp))
+
+        SigningAs(account)
+
         if (showMore) {
             EventDetailModal(
                 event = event,
@@ -140,8 +152,10 @@ fun BunkerEventData(
     }
 
     Column(
-        modifier,
+        modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
+        Spacer(Modifier.size(16.dp))
         val permission = Permission("sign_event", event.kind)
         val kindTranslation = permission.toLocalizedString(context)
         val text = stringResource(R.string.wants_you_to_sign_a, kindTranslation)
@@ -153,6 +167,8 @@ fun BunkerEventData(
                 append(" $text")
             },
             fontSize = 18.sp,
+            textAlign = TextAlign.Center,
+            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
         if (kindTranslation == stringResource(R.string.event_kind, event.kind.toString())) {
             ReportMissingEventKindButton(account, event.kind)
@@ -165,6 +181,11 @@ fun BunkerEventData(
             },
             stringResource(R.string.show_details),
         )
+
+        Spacer(Modifier.size(16.dp))
+
+        SigningAs(account)
+
         if (showMore) {
             EventDetailModal(
                 event = event,

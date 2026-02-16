@@ -188,7 +188,7 @@ fun AccountBackupScreen(
                         ),
                         placeholder = {
                             Text(
-                                text = stringResource(R.string.ncryptsec_password),
+                                text = stringResource(R.string.encryption_password),
                             )
                         },
                         trailingIcon = {

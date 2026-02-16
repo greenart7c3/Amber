@@ -216,6 +216,7 @@
     <string name="wants_you_to">%1$s yapmanızı istiyor</string>
     <string name="sign">%1$s İmzala</string>
     <string name="sign_message">mesajı imzala</string>
+    <string name="signing_as">Signing as</string>
     <string name="content">içerik</string>
     <string name="checking_connectivity">Bağlantı Kontrol Ediliyor</string>
     <string name="amber_is_running_in_background">Amber arka planda çalışıyor</string>
@@ -628,4 +629,6 @@
     <string name="do_not_leave_the_app_until_the_key_is_generated">Do not leave the app until the key is generated</string>
     <string name="status_detail">Status Detail</string>
     <string name="amber_is_a_free_and_open_source_project">Amber is a free and open source project\n</string>
+    <string name="report_missing_event_kind_translation">Report missing event kind translation</string>
+    <string name="account_picture">Account picture</string>
 </resources>

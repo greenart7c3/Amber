@@ -216,6 +216,7 @@
     <string name="wants_you_to">请求进行 %1$s</string>
     <string name="sign">签署 %1$s</string>
     <string name="sign_message">签署消息</string>
+    <string name="signing_as">Signing as</string>
     <string name="content">内容</string>
     <string name="checking_connectivity">正在检查网络连通性...</string>
     <string name="amber_is_running_in_background">Amber 正在后台运行</string>
@@ -628,4 +629,6 @@
     <string name="do_not_leave_the_app_until_the_key_is_generated">在密钥生成之前不要离开应用</string>
     <string name="status_detail">Status Detail</string>
     <string name="amber_is_a_free_and_open_source_project">Amber is a free and open source project\n</string>
+    <string name="report_missing_event_kind_translation">Report missing event kind translation</string>
+    <string name="account_picture">Account picture</string>
 </resources>

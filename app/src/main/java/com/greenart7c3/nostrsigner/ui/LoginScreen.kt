@@ -140,10 +140,9 @@ fun MainPage(
     val screenWidthDp = configuration.screenWidthDp.dp
     val percentage = (screenWidthDp * 0.93f)
     val verticalPadding = (screenWidthDp - percentage)
-    val context = LocalContext.current
-    var shouldShowBottomSheet by remember { mutableStateOf(false) }
+    val shouldShowBottomSheet = remember { mutableStateOf(false) }
     val selectFileLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        shouldShowBottomSheet = false
+        shouldShowBottomSheet.value = false
         Amber.instance.applicationIOScope.launch {
             uri?.let {
                 val hasAccounts = LocalPreferences.allAccounts(Amber.instance).isNotEmpty()
@@ -188,12 +187,12 @@ fun MainPage(
             skipPartiallyExpanded = true,
         )
 
-    if (shouldShowBottomSheet) {
+    if (shouldShowBottomSheet.value) {
         var showCharsPassword by remember { mutableStateOf(false) }
         ModalBottomSheet(
             sheetState = sheetState,
             onDismissRequest = {
-                shouldShowBottomSheet = false
+                shouldShowBottomSheet.value = false
             },
         ) {
             CompositionLocalProvider(
@@ -312,13 +311,17 @@ fun MainPage(
 
                         AmberButton(
                             onClick = {
-                                shouldShowBottomSheet = true
+                                shouldShowBottomSheet.value = true
                             },
                             text = stringResource(R.string.recover_from_backup),
                         )
                     }
 
                     Spacer(Modifier.weight(1f))
+
+                    val message = stringResource(R.string.amber_is_a_free_and_open_source_project)
+                    val githubUri = stringResource(R.string.amber_github_uri)
+                    val checkTheCodeMessage = stringResource(R.string.check_the_code)
 
                     Text(
                         modifier = Modifier.padding(bottom = 20.dp),
@@ -329,10 +332,10 @@ fun MainPage(
                                     textAlign = TextAlign.Center,
                                 ),
                             ) {
-                                append("Amber is a free and open source project\n")
+                                append(message)
                                 withLink(
                                     LinkAnnotation.Url(
-                                        context.getString(R.string.amber_github_uri),
+                                        githubUri,
                                         styles = TextLinkStyles(
                                             style = SpanStyle(
                                                 textDecoration = TextDecoration.Underline,
@@ -340,7 +343,7 @@ fun MainPage(
                                         ),
                                     ),
                                 ) {
-                                    append(context.getString(R.string.check_the_code))
+                                    append(checkTheCodeMessage)
                                 }
                             }
                         },
@@ -873,6 +876,9 @@ fun LoginPage(
                                 stringResource(R.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
                             )
 
+                            val keyRequiredMessage = stringResource(R.string.key_is_required)
+                            val passwordRequiredMessage = stringResource(R.string.password_is_required)
+
                             OutlinedTextField(
                                 modifier = Modifier
                                     .fillMaxWidth()
@@ -935,11 +941,11 @@ fun LoginPage(
                                 keyboardActions = KeyboardActions(
                                     onGo = {
                                         if (key.value.text.isBlank()) {
-                                            errorMessage = context.getString(R.string.key_is_required)
+                                            errorMessage = keyRequiredMessage
                                         }
 
                                         if (needsPassword.value && password.value.text.isBlank()) {
-                                            errorMessage = context.getString(R.string.password_is_required)
+                                            errorMessage = passwordRequiredMessage
                                         }
 
                                         if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
@@ -1020,11 +1026,11 @@ fun LoginPage(
                                     keyboardActions = KeyboardActions(
                                         onGo = {
                                             if (key.value.text.isBlank()) {
-                                                errorMessage = context.getString(R.string.key_is_required)
+                                                errorMessage = keyRequiredMessage
                                             }
 
                                             if (needsPassword.value && password.value.text.isBlank()) {
-                                                errorMessage = context.getString(R.string.password_is_required)
+                                                errorMessage = passwordRequiredMessage
                                             }
 
                                             if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
@@ -1065,11 +1071,11 @@ fun LoginPage(
                                 enabled = key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank()),
                                 onClick = {
                                     if (key.value.text.isBlank()) {
-                                        errorMessage = context.getString(R.string.key_is_required)
+                                        errorMessage = keyRequiredMessage
                                     }
 
                                     if (needsPassword.value && password.value.text.isBlank()) {
-                                        errorMessage = context.getString(R.string.password_is_required)
+                                        errorMessage = passwordRequiredMessage
                                     }
 
                                     if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {

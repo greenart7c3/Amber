@@ -58,6 +58,10 @@
     <string name="account_backup_tips3_md" tools:ignore="Typos">        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
         \n\nIf you lose your password, you will not be able to recover your key.
     </string>
+    <string name="account_backup_tips3_md_new" tools:ignore="Typos">        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
+        \n\nIf you lose your password, you will not be able to recover your key.
+        \n\nPress one of the buttons below to backup your key.
+    </string>
     <string name="ncryptsec_password">密码</string>
     <string name="password_is_required">需要密码</string>
     <string name="failed_to_encrypt_key">私钥加密失败</string>

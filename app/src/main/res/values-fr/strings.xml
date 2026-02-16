@@ -58,6 +58,10 @@
     <string name="account_backup_tips3_md" tools:ignore="Typos">        Pour plus de sécurité, vous pouvez chiffrer votre clé avec un mot de passe. Cette clé commence par **ncryptsec1** et ne peut être utilisée sans votre mot de passe.
         \n\nSi vous perdez votre mot de passe, vous ne pourrez pas récupérer votre clé.
     </string>
+    <string name="account_backup_tips3_md_new" tools:ignore="Typos">        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
+        \n\nIf you lose your password, you will not be able to recover your key.
+        \n\nPress one of the buttons below to backup your key.
+    </string>
     <string name="ncryptsec_password">mot de passe pour ouvrir la clé</string>
     <string name="password_is_required">Le mot de passe est nécessaire.</string>
     <string name="failed_to_encrypt_key">Impossible de chiffrer votre clé privée</string>

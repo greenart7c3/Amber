@@ -56,6 +56,10 @@
     <string name="shows_qr_code_with_you_private_key">Mostra o QR Code com sua chave privada</string>
     <string name="account_backup_tips3_md" tools:ignore="Typos">    Para segurança adicional, você pode criptografar sua chave com uma senha. Esta chave começa com **ncryptsec1** e não pode ser usada sem sua senha.
     \n\nSe você perder sua senha, não será possível recuperar sua chave.</string>
+    <string name="account_backup_tips3_md_new" tools:ignore="Typos">        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
+        \n\nIf you lose your password, you will not be able to recover your key.
+        \n\nPress one of the buttons below to backup your key.
+    </string>
     <string name="ncryptsec_password">senha para desbloquear a sua chave</string>
     <string name="password_is_required">Senha é obrigatória</string>
     <string name="failed_to_encrypt_key">Falha ao criptografar sua chave privada</string>

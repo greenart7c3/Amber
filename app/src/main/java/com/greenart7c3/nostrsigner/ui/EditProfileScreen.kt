@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -37,6 +38,7 @@ fun EditProfileScreen(
         modifier,
     ) {
         OutlinedTextField(
+            modifier = Modifier.fillMaxWidth(),
             value = textFieldvalue.text,
             onValueChange = {
                 textFieldvalue = TextFieldValue(it)

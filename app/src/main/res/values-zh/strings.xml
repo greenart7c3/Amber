@@ -623,4 +623,5 @@
     <string name="relays_used">已使用的中继</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">在密钥生成之前不要离开应用</string>
     <string name="status_detail">Status Detail</string>
+    <string name="amber_is_a_free_and_open_source_project">Amber is a free and open source project\n</string>
 </resources>

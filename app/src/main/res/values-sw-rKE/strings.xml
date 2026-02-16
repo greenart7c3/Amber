@@ -620,4 +620,5 @@
     <string name="relays_used">Relays used</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Do not leave the app until the key is generated</string>
     <string name="status_detail">Status Detail</string>
+    <string name="amber_is_a_free_and_open_source_project">Amber is a free and open source project\n</string>
 </resources>

@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.magnifier
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -84,6 +85,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -98,6 +100,8 @@ import com.halilibo.richtext.ui.resolveDefaults
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import androidx.compose.runtime.collectAsState
+import androidx.compose.ui.text.font.FontWeight
 
 @OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
 @Composable
@@ -122,7 +126,7 @@ fun AccountBackupScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 if (isLoading) {
-                    CenterCircularProgressIndicator(Modifier)
+                    CenterCircularProgressIndicator(Modifier, text = stringResource(R.string.do_not_leave_the_app_until_the_key_is_generated))
                 } else {
                     val content = stringResource(R.string.account_backup_tips_md)
 
@@ -232,66 +236,77 @@ fun AccountBackupScreen(
                             }
                         }
 
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.Start,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(4.dp),
-                        ) {
-                            localAccount?.let { localAccount ->
-                                val profileUrl = localAccount.picture.value
-                                if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
-                                    SubcomposeAsyncImage(
-                                        profileUrl,
-                                        "profile picture",
-                                        Modifier
-                                            .clip(
-                                                RoundedCornerShape(50),
-                                            )
-                                            .height(28.dp)
-                                            .width(28.dp),
-                                        loading = {
-                                            CenterCircularProgressIndicator(Modifier)
-                                        },
-                                        error = { error ->
-                                            Icon(
-                                                Icons.Outlined.Person,
-                                                "profile picture",
-                                                modifier = Modifier.border(
+                        localAccount?.let { localAccount ->
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp)
+                                    .border(
+                                        2.dp,
+                                        Color.LightGray,
+                                        RoundedCornerShape(8.dp),
+                                    )
+                                    .padding(8.dp),
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.Start,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(4.dp),
+                                ) {
+                                    val profileUrl = localAccount.picture.collectAsState()
+                                    val name = localAccount.name.collectAsState()
+                                    if (profileUrl.value.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
+                                        SubcomposeAsyncImage(
+                                            profileUrl,
+                                            "profile picture",
+                                            Modifier
+                                                .clip(
+                                                    RoundedCornerShape(50),
+                                                )
+                                                .height(40.dp)
+                                                .width(40.dp),
+                                            loading = {
+                                                CenterCircularProgressIndicator(Modifier)
+                                            },
+                                            error = { error ->
+                                                Icon(
+                                                    Icons.Outlined.Person,
+                                                    "profile picture",
+                                                    modifier = Modifier.border(
+                                                        2.dp,
+                                                        Color.fromHex(localAccount.hexKey.slice(0..5)),
+                                                        CircleShape,
+                                                    ),
+                                                )
+                                            },
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.Outlined.Person,
+                                            "profile picture",
+                                            modifier = Modifier
+                                                .height(40.dp)
+                                                .width(40.dp)
+                                                .border(
                                                     2.dp,
                                                     Color.fromHex(localAccount.hexKey.slice(0..5)),
                                                     CircleShape,
                                                 ),
-                                            )
-                                        },
-                                    )
-                                } else {
-                                    Icon(
-                                        Icons.Outlined.Person,
-                                        "profile picture",
-                                        modifier = Modifier.border(
-                                            2.dp,
-                                            Color.fromHex(localAccount.hexKey.slice(0..5)),
-                                            CircleShape,
-                                        ),
+                                        )
+                                    }
+                                    Text(
+                                        modifier = Modifier
+                                            .padding(start = 4.dp),
+                                        text = name.value.ifBlank { it.npub.toShortenHex() },
+                                        fontWeight = FontWeight.Bold,
                                     )
                                 }
-                                Text(
-                                    modifier = Modifier
-                                        .padding(start = 4.dp),
-                                    text = localAccount.name.value.ifBlank { it.npub.toShortenHex() },
-                                )
-
-                                Row(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalArrangement = Arrangement.End,
-                                ) {
-                                    NSecCopyButton(localAccount, password.value.text, onLoading = { value -> isLoading = value })
-                                    NSecQrButton(localAccount, password.value.text, onLoading = { value -> isLoading = value }, navController = navController)
-                                    if (Nip06().isValidMnemonic(seedWords)) {
-                                        SeedWordsButton(localAccount, seedWords)
-                                    }
+                                NSecCopyButton(localAccount, password.value.text, onLoading = { value -> isLoading = value })
+                                NSecQrButton(localAccount, password.value.text, onLoading = { value -> isLoading = value }, navController = navController)
+                                if (Nip06().isValidMnemonic(seedWords)) {
+                                    SeedWordsButton(localAccount, seedWords)
                                 }
                             }
                         }
@@ -355,10 +370,12 @@ private fun NSecQrButton(
             }
         }
 
-    IconButton(
+    val text = stringResource(R.string.show_qr_code)
+
+    AmberButton(
         onClick = {
             authenticate(
-                title = context.getString(R.string.show_qr_code),
+                title = text,
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
@@ -387,12 +404,8 @@ private fun NSecQrButton(
                 },
             )
         },
-        content = {
-            Icon(
-                imageVector = Icons.Outlined.QrCode,
-                contentDescription = context.getString(R.string.show_qr_code),
-            )
-        },
+        text = text,
+
     )
 }
 
@@ -520,10 +533,12 @@ private fun SeedWordsButton(
         }
     }
 
-    IconButton(
+    val text = stringResource(R.string.show_seed_words)
+
+    AmberButton(
         onClick = {
             authenticate(
-                title = context.getString(R.string.show_seed_words),
+                title = text,
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
@@ -543,12 +558,7 @@ private fun SeedWordsButton(
                 },
             )
         },
-        content = {
-            Icon(
-                imageVector = Icons.Outlined.FormatListNumbered,
-                contentDescription = context.getString(R.string.show_seed_words),
-            )
-        },
+        text = text,
     )
 }
 
@@ -573,10 +583,12 @@ private fun NSecCopyButton(
             }
         }
 
-    IconButton(
+    val text = stringResource(R.string.copy_to_clipboard)
+
+    AmberButton(
         onClick = {
             authenticate(
-                title = context.getString(R.string.copy_my_secret_key),
+                title = text,
                 context = context,
                 keyguardLauncher = keyguardLauncher,
                 onApproved = {
@@ -600,12 +612,7 @@ private fun NSecCopyButton(
                 },
             )
         },
-        content = {
-            Icon(
-                imageVector = Icons.Outlined.ContentCopy,
-                contentDescription = context.getString(R.string.copy_my_secret_key),
-            )
-        },
+        text = text,
     )
 }
 

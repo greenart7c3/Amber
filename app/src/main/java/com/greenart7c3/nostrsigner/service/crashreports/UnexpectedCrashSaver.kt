@@ -33,16 +33,12 @@ class UnexpectedCrashSaver(
         t: Thread,
         e: Throwable,
     ) {
-        if (e is RuntimeException && e.message?.contains("Unable to start service") == true) { // Usually happens on graphene when pressing restart app notification after an update (cant reproduce this crash)
-            defaultUEH!!.uncaughtException(t, e)
-        } else {
-            if (e !is OutOfMemoryError) {
-                // OOM reports are junk
-                scope.launch {
-                    cache.writeReport(ReportAssembler().buildReport(e))
-                }
+        if (e !is OutOfMemoryError) {
+            // OOM reports are junk
+            scope.launch {
+                cache.writeReport(ReportAssembler().buildReport(e))
             }
-            defaultUEH!!.uncaughtException(t, e)
         }
+        defaultUEH!!.uncaughtException(t, e)
     }
 }

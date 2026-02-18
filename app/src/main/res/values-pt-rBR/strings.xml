@@ -629,4 +629,6 @@
     <string name="amber_is_a_free_and_open_source_project">Amber is a free and open source project\n</string>
     <string name="report_missing_event_kind_translation">Report missing event kind translation</string>
     <string name="account_picture">Account picture</string>
+    <string name="encrypt_and_copy_to_clipboard">Encrypt and copy to clipboard</string>
+    <string name="encrypt_and_show_qr_code">Encrypt and show QR Code</string>
 </resources>

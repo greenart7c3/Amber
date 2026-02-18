@@ -266,7 +266,7 @@ fun AccountBackupScreen(
                                             loading = {
                                                 CenterCircularProgressIndicator(Modifier)
                                             },
-                                            error = { error ->
+                                            error = { _ ->
                                                 Icon(
                                                     Icons.Outlined.Person,
                                                     "profile picture",
@@ -322,11 +322,11 @@ private fun NSecQrButton(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var showDialog by remember {
+    val showDialog = remember {
         mutableStateOf(false)
     }
 
-    if (showDialog) {
+    if (showDialog.value) {
         var nsec by remember { mutableStateOf("") }
 
         LaunchedEffect(Unit) {
@@ -341,7 +341,7 @@ private fun NSecQrButton(
             ) {
                 Amber.instance.applicationIOScope.launch {
                     account.didBackup = true
-                    showDialog = false
+                    showDialog.value = false
                 }
             }
         }
@@ -361,7 +361,7 @@ private fun NSecQrButton(
                         onLoading(false)
                     }
                 } else {
-                    showDialog = true
+                    showDialog.value = true
                 }
             }
         }
@@ -386,7 +386,7 @@ private fun NSecQrButton(
                             onLoading(false)
                         }
                     } else {
-                        showDialog = true
+                        showDialog.value = true
                     }
                 },
                 onError = { _, message ->
@@ -492,19 +492,19 @@ private fun SeedWordsButton(
     account: Account,
     seedWords: String,
 ) {
-    var showSeedWords by remember { mutableStateOf(false) }
+    val showSeedWords = remember { mutableStateOf(false) }
     val context = LocalContext.current
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
             if (result.resultCode == Activity.RESULT_OK) {
-                showSeedWords = true
+                showSeedWords.value = true
             }
         }
 
-    if (showSeedWords) {
+    if (showSeedWords.value) {
         ModalBottomSheet(
             onDismissRequest = {
-                showSeedWords = false
+                showSeedWords.value = false
             },
             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
         ) {
@@ -540,7 +540,7 @@ private fun SeedWordsButton(
                 onApproved = {
                     Amber.instance.applicationIOScope.launch {
                         account.didBackup = true
-                        showSeedWords = true
+                        showSeedWords.value = true
                     }
                 },
                 onError = { _, message ->

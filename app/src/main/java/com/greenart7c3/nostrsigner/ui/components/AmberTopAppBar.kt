@@ -70,93 +70,96 @@ fun AmberTopAppBar(
             CenterAlignedTopAppBar(
                 actions = {
                     if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
-                        Row(
-                            horizontalArrangement = Arrangement.spacedBy(4.dp),
-                        ) {
-                            TooltipBox(
-                                positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
-                                tooltip = {
-                                    PlainTooltip {
-                                        Text(text = context.getString(R.string.reconnect))
-                                    }
-                                },
-                                state = rememberTooltipState(),
+                        val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                        if (relayStats.value.first.isNotEmpty() || relayStats.value.second.isNotEmpty()) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(4.dp),
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .minimumInteractiveComponentSize()
-                                        .clickable(
-                                            onClick = {
-                                                Amber.instance.applicationIOScope.launch {
-                                                    Amber.instance.reconnect()
-                                                }
-                                            },
-                                        ),
-                                    horizontalArrangement = Arrangement.spacedBy(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
-                                ) {
-                                    val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
-                                    Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
-                                    Icon(
-                                        imageVector = ImageVector.vectorResource(R.drawable.relays),
-                                        contentDescription = context.getString(R.string.reconnect),
-                                        tint = Color.Unspecified,
-                                    )
-                                }
-                            }
-
-                            if (Amber.instance.settings.useProxy) {
-                                var isProxyEnabled by remember { mutableStateOf(false) }
-                                DisposableEffect(lifecycleOwner) {
-                                    val observer = LifecycleEventObserver { _, event ->
-                                        when (event) {
-                                            Lifecycle.Event.ON_START -> {
-                                                Amber.instance.applicationIOScope.launch {
-                                                    isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
-                                                }
-                                            }
-
-                                            Lifecycle.Event.ON_RESUME -> {
-                                                Amber.instance.applicationIOScope.launch {
-                                                    isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
-                                                }
-                                            }
-
-                                            else -> {}
-                                        }
-                                    }
-                                    lifecycleOwner.lifecycle.addObserver(observer)
-
-                                    onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
-                                }
-
                                 TooltipBox(
                                     positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
                                     tooltip = {
                                         PlainTooltip {
-                                            Text(text = if (isProxyEnabled) context.getString(R.string.proxy_is_connected) else context.getString(R.string.proxy_is_not_working))
+                                            Text(text = context.getString(R.string.reconnect))
                                         }
                                     },
                                     state = rememberTooltipState(),
                                 ) {
-                                    IconButton(
-                                        onClick = {
-                                            scope.launch {
-                                                if (isProxyEnabled) {
-                                                    Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
-                                                } else {
-                                                    Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
+                                    Row(
+                                        modifier = Modifier
+                                            .minimumInteractiveComponentSize()
+                                            .clickable(
+                                                onClick = {
+                                                    Amber.instance.applicationIOScope.launch {
+                                                        Amber.instance.reconnect()
+                                                    }
+                                                },
+                                            ),
+                                        horizontalArrangement = Arrangement.spacedBy(4.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        val relayStats = Amber.instance.stats.relayStatus.collectAsStateWithLifecycle(Pair(emptySet(), emptySet()))
+                                        Text("${relayStats.value.second.size}/${relayStats.value.first.size}")
+                                        Icon(
+                                            imageVector = ImageVector.vectorResource(R.drawable.relays),
+                                            contentDescription = context.getString(R.string.reconnect),
+                                            tint = Color.Unspecified,
+                                        )
+                                    }
+                                }
+
+                                if (Amber.instance.settings.useProxy) {
+                                    var isProxyEnabled by remember { mutableStateOf(false) }
+                                    DisposableEffect(lifecycleOwner) {
+                                        val observer = LifecycleEventObserver { _, event ->
+                                            when (event) {
+                                                Lifecycle.Event.ON_START -> {
+                                                    Amber.instance.applicationIOScope.launch {
+                                                        isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                                    }
                                                 }
+
+                                                Lifecycle.Event.ON_RESUME -> {
+                                                    Amber.instance.applicationIOScope.launch {
+                                                        isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                                    }
+                                                }
+
+                                                else -> {}
+                                            }
+                                        }
+                                        lifecycleOwner.lifecycle.addObserver(observer)
+
+                                        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+                                    }
+
+                                    TooltipBox(
+                                        positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),
+                                        tooltip = {
+                                            PlainTooltip {
+                                                Text(text = if (isProxyEnabled) context.getString(R.string.proxy_is_connected) else context.getString(R.string.proxy_is_not_working))
                                             }
                                         },
-                                        content = {
-                                            Icon(
-                                                Icons.Outlined.Shield,
-                                                context.getString(R.string.proxy),
-                                                tint = if (isProxyEnabled) Color.Green else Color.Red,
-                                            )
-                                        },
-                                    )
+                                        state = rememberTooltipState(),
+                                    ) {
+                                        IconButton(
+                                            onClick = {
+                                                scope.launch {
+                                                    if (isProxyEnabled) {
+                                                        Toast.makeText(context, context.getString(R.string.proxy_is_connected), Toast.LENGTH_SHORT).show()
+                                                    } else {
+                                                        Toast.makeText(context, context.getString(R.string.proxy_is_not_working), Toast.LENGTH_SHORT).show()
+                                                    }
+                                                }
+                                            },
+                                            content = {
+                                                Icon(
+                                                    Icons.Outlined.Shield,
+                                                    context.getString(R.string.proxy),
+                                                    tint = if (isProxyEnabled) Color.Green else Color.Red,
+                                                )
+                                            },
+                                        )
+                                    }
                                 }
                             }
                         }

@@ -366,7 +366,7 @@ private fun NSecQrButton(
             }
         }
 
-    val text = stringResource(R.string.show_qr_code)
+    val text = stringResource(if (password.isBlank()) R.string.show_qr_code else R.string.encrypt_and_show_qr_code)
 
     AmberButton(
         onClick = {
@@ -579,7 +579,7 @@ private fun NSecCopyButton(
             }
         }
 
-    val text = stringResource(R.string.copy_to_clipboard)
+    val text = stringResource(if (password.isBlank()) R.string.copy_to_clipboard else R.string.encrypt_and_copy_to_clipboard)
 
     AmberButton(
         onClick = {

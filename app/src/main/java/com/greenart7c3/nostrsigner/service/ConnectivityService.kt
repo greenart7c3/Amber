@@ -83,9 +83,7 @@ class ConnectivityService : Service() {
     override fun onBind(intent: Intent): IBinder? = null
 
     override fun onCreate() {
-        Log.d(Amber.TAG, "onCreate ConnectivityService isStarted: ${Amber.isServiceStarted}")
-        if (Amber.isServiceStarted) return
-        Amber.isServiceStarted = true
+        Log.d(Amber.TAG, "onCreate ConnectivityService")
 
         Amber.instance.applicationIOScope.launch {
             while (Amber.instance.isStartingAppState.value) {
@@ -152,7 +150,6 @@ class ConnectivityService : Service() {
     }
 
     override fun onDestroy() {
-        Amber.isServiceStarted = false
         timer.cancel()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             try {

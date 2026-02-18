@@ -1,12 +1,13 @@
 package com.greenart7c3.nostrsigner
 
+import android.app.AlarmManager
 import android.app.Application
+import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
 import androidx.collection.LruCache
 import androidx.compose.runtime.mutableStateOf
-import androidx.core.content.ContextCompat
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -42,12 +43,6 @@ import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
-import java.lang.ref.WeakReference
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -56,6 +51,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import java.lang.ref.WeakReference
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 
 class Amber :
     Application(),
@@ -273,20 +274,20 @@ class Amber :
     }
 
     fun startServiceFromUi() {
-        if (isServiceStarted) return
-        Log.d(TAG, "Starting ConnectivityService from UI")
-        ContextCompat.startForegroundService(
-            applicationContext,
-            Intent(applicationContext, ConnectivityService::class.java),
-        )
+        startService()
     }
 
     fun startService() {
-        if (isServiceStarted) return
         try {
             Log.d(TAG, "Starting ConnectivityService")
-            val serviceIntent = Intent(this, ConnectivityService::class.java)
-            this.startForegroundService(serviceIntent)
+            val operation = PendingIntent.getForegroundService(
+                this,
+                10,
+                Intent(this, ConnectivityService::class.java),
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+            )
+            val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
+            alarmManager.set(AlarmManager.RTC_WAKEUP, 1000, operation)
         } catch (e: Exception) {
             Log.e(TAG, "Failed to start ConnectivityService", e)
             if (e is CancellationException) throw e
@@ -431,7 +432,6 @@ class Amber :
 
     companion object {
         var isAppInForeground = false
-        var isServiceStarted = false
         const val TAG = "Amber"
         lateinit var instance: Amber
             private set

@@ -12,6 +12,8 @@ import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 
 object SecureCryptoHelper {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
@@ -21,8 +23,9 @@ object SecureCryptoHelper {
     private const val TAG_SIZE = 128 // bits
 
     private var secretKey: SecretKey? = null
+    private val mutex = Mutex()
 
-    fun encrypt(plainText: String): String {
+    suspend fun encrypt(plainText: String): String = mutex.withLock {
         val key = getOrCreateSecretKey()
         val cipher = Cipher.getInstance(TRANSFORMATION)
 
@@ -38,7 +41,7 @@ object SecureCryptoHelper {
         return Base64.encodeToString(combined.array(), Base64.NO_WRAP)
     }
 
-    fun decrypt(encryptedText: String): String {
+    suspend fun decrypt(encryptedText: String): String = mutex.withLock {
         val key = getOrCreateSecretKey()
         val data = Base64.decode(encryptedText, Base64.NO_WRAP)
         val buffer = ByteBuffer.wrap(data)

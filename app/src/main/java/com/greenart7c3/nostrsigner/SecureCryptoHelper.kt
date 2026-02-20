@@ -6,6 +6,7 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
+import android.util.Log
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -58,12 +59,14 @@ object SecureCryptoHelper {
     private fun getOrCreateSecretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         if (keyStore.containsAlias(KEY_ALIAS)) {
-            val entry = keyStore.getEntry(KEY_ALIAS, null) as KeyStore.SecretKeyEntry
-            return entry.secretKey
+            val entry = keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
+            if (entry != null) {
+                return entry.secretKey
+            }
         }
 
         val keyGenerator = KeyGenerator.getInstance(KeyProperties.KEY_ALGORITHM_AES, ANDROID_KEYSTORE)
-        val params = KeyGenParameterSpec.Builder(
+        val paramsBuilder = KeyGenParameterSpec.Builder(
             KEY_ALIAS,
             KeyProperties.PURPOSE_ENCRYPT or KeyProperties.PURPOSE_DECRYPT,
         )
@@ -73,19 +76,29 @@ object SecureCryptoHelper {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
             try {
-                if (Amber.instance.hasStrongBox()) params.setIsStrongBoxBacked(true)
-                keyGenerator.init(params.build())
-            } catch (_: Exception) {
-                params.setIsStrongBoxBacked(false)
-                keyGenerator.init(params.build())
+                if (Amber.instance.hasStrongBox()) {
+                    paramsBuilder.setIsStrongBoxBacked(true)
+                }
+                keyGenerator.init(paramsBuilder.build())
+                return keyGenerator.generateKey()
+            } catch (e: Exception) {
+                Log.w("SecureCryptoHelper", "StrongBox generation failed, falling back to TEE", e)
+                paramsBuilder.setIsStrongBoxBacked(false)
+                keyGenerator.init(paramsBuilder.build())
+                return keyGenerator.generateKey()
             }
         } else {
-            keyGenerator.init(params.build())
+            keyGenerator.init(paramsBuilder.build())
+            return keyGenerator.generateKey()
         }
-
-        return keyGenerator.generateKey()
     }
 }
 
-fun Context.hasStrongBox(): Boolean = Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
-    packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+fun Context.hasStrongBox(): Boolean {
+    val isMediaTek = Build.HARDWARE.lowercase().contains("mt") ||
+        Build.BOARD.lowercase().contains("mt") ||
+        (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MANUFACTURER.lowercase().contains("mediatek")) // usually mediatek contains broken strongbox support
+
+    return !isMediaTek && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+        packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
+}

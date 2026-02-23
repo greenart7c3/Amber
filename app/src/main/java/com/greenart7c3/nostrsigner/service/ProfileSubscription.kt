@@ -47,6 +47,7 @@ class ProfileSubscription(
     val scope: CoroutineScope,
 ) : IRelayClientListener {
     private val subIds = mutableMapOf<String, String>()
+    private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
 
     init {
         // listens until the app crashes.
@@ -55,6 +56,16 @@ class ProfileSubscription(
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EoseMessage) {
+            val subId = msg.subId
+            val relays = relaysPerSubId[subId]
+            if (relays != null) {
+                relays.remove(relay.url)
+                if (relays.isEmpty()) {
+                    client.close(subId)
+                    relaysPerSubId.remove(subId)
+                }
+            }
+
             scope.launch {
                 LocalPreferences.allAccounts(appContext).forEach {
                     if (msg.subId == subIds[it.hexKey]) {
@@ -111,7 +122,10 @@ class ProfileSubscription(
             val oneDayAgo = TimeUtils.oneDayAgo()
             val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
             if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
-                client.openReqSubscription(subIds[it.hexKey]!!, createProfileFilter(it))
+                val subId = subIds[it.hexKey]!!
+                val profileFilter = createProfileFilter(it)
+                relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
+                client.openReqSubscription(subId, profileFilter)
             }
         }
     }
@@ -123,6 +137,7 @@ class ProfileSubscription(
         subIds.values.forEach {
             client.close(it)
         }
+        relaysPerSubId.clear()
     }
 
     private fun createProfileFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {

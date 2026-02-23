@@ -6,7 +6,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.flow.MutableStateFlow
 
 val defaultAppRelays = listOf(
-    RelayUrlNormalizer.normalize("wss://relay.nsec.app/"),
     RelayUrlNormalizer.normalize("wss://nostr.oxtr.dev/"),
     RelayUrlNormalizer.normalize("wss://theforest.nostr1.com/"),
     RelayUrlNormalizer.normalize("wss://relay.primal.net/"),

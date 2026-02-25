@@ -365,6 +365,7 @@ fun BunkerSingleEventHomeScreen(
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
+                account = account,
                 onAccept = {
                     BunkerRequestUtils.sendResult(
                         context = context,
@@ -428,6 +429,7 @@ fun BunkerSingleEventHomeScreen(
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
+                account = account,
                 onAccept = {
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
@@ -493,6 +495,7 @@ fun BunkerSingleEventHomeScreen(
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
+                account = account,
                 onAccept = {
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
@@ -558,6 +561,7 @@ fun BunkerSingleEventHomeScreen(
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
                 type = type,
+                account = account,
                 onAccept = {
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
@@ -707,6 +711,7 @@ fun BunkerSingleEventHomeScreen(
                     shouldRunOnAccept = acceptOrReject,
                     appName = appName,
                     type = type,
+                    account = account,
                     onAccept = {
                         val result =
                             if (bunkerRequest.encryptedData?.result == "Could not decrypt the message") {

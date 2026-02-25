@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
@@ -33,7 +34,9 @@ import com.greenart7c3.nostrsigner.ui.theme.fromHex
 @Composable
 fun SigningAs(account: Account, modifier: Modifier = Modifier) {
     Column(
-        modifier = modifier.padding(vertical = 8.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(

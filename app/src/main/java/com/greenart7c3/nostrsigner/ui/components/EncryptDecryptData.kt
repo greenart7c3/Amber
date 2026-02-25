@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
@@ -43,6 +44,7 @@ fun EncryptDecryptData(
     shouldRunOnAccept: Boolean?,
     packageName: String?,
     type: SignerType,
+    account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -91,7 +93,6 @@ fun EncryptDecryptData(
             text.trim().capitalize(Locale.current),
             fontSize = 18.sp,
         )
-        Spacer(Modifier.size(4.dp))
 
         Card(
             modifier = Modifier
@@ -144,6 +145,8 @@ fun EncryptDecryptData(
                     }
                 } else {
                     if (encryptedData is TagArrayEncryptedDataKind) {
+                        Spacer(Modifier.size(16.dp))
+                        SigningAs(account)
                         EncryptedTagArraySection(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -168,7 +171,11 @@ fun EncryptDecryptData(
             }
         }
 
-        if (encryptedData !is TagArrayEncryptedDataKind) Spacer(modifier = Modifier.weight(1f))
+        if (encryptedData !is TagArrayEncryptedDataKind) {
+            Spacer(Modifier.size(16.dp))
+            SigningAs(account)
+            Spacer(modifier = Modifier.weight(1f))
+        }
 
         RememberMyChoice(
             shouldRunOnAccept,
@@ -203,6 +210,7 @@ fun BunkerEncryptDecryptData(
     shouldRunOnAccept: Boolean?,
     appName: String,
     type: SignerType,
+    account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -248,7 +256,6 @@ fun BunkerEncryptDecryptData(
             },
             fontSize = 18.sp,
         )
-        Spacer(Modifier.size(4.dp))
 
         Card(
             modifier = Modifier
@@ -295,6 +302,8 @@ fun BunkerEncryptDecryptData(
                     }
                 } else {
                     if (encryptedData is TagArrayEncryptedDataKind) {
+                        Spacer(Modifier.size(16.dp))
+                        SigningAs(account)
                         EncryptedTagArraySection(
                             modifier = Modifier
                                 .fillMaxWidth()
@@ -319,7 +328,11 @@ fun BunkerEncryptDecryptData(
             }
         }
 
-        if (encryptedData !is TagArrayEncryptedDataKind) Spacer(modifier = Modifier.weight(1f))
+        if (encryptedData !is TagArrayEncryptedDataKind) {
+            Spacer(Modifier.size(16.dp))
+            SigningAs(account)
+            Spacer(modifier = Modifier.weight(1f))
+        }
 
         RememberMyChoice(
             shouldRunOnAccept,

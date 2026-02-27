@@ -209,10 +209,20 @@ fun MainScreen(
         )
     }
 
-    var localRoute by remember { mutableStateOf(route.value ?: if (intents.isEmpty() && bunkerRequests.isEmpty()) Route.Applications.route else Route.IncomingRequest.route) }
-    LaunchedEffect(Unit, route.value, intents, bunkerRequests) {
+    var localRoute by remember {
+        mutableStateOf(
+            if (isExternalRequest) {
+                Route.IncomingRequest.route
+            } else {
+                route.value ?: if (intents.isEmpty() && bunkerRequests.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
+            }
+        )
+    }
+    LaunchedEffect(Unit, route.value, intents, bunkerRequests, isExternalRequest) {
         launch(Dispatchers.Main) {
-            if (route.value != null) {
+            if (isExternalRequest) {
+                localRoute = Route.IncomingRequest.route
+            } else if (route.value != null) {
                 localRoute = route.value!!
                 route.value = null
             } else {

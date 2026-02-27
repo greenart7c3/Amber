@@ -30,8 +30,8 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
-import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
@@ -149,7 +149,7 @@ object NotificationUtils {
             }
         }
 
-        val contentIntent = Intent(applicationContext, MainActivity::class.java)
+        val contentIntent = Intent(applicationContext, SignerActivity::class.java)
         contentIntent.putExtra("route", Route.IncomingRequest.route)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val contentPendingIntent =
@@ -226,7 +226,7 @@ object NotificationUtils {
             }
         }
 
-        val contentIntent = Intent(applicationContext, MainActivity::class.java)
+        val contentIntent = Intent(applicationContext, SignerActivity::class.java)
         contentIntent.putExtra("route", Route.IncomingRequest.route)
         contentIntent.addFlags(Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         val contentPendingIntent =

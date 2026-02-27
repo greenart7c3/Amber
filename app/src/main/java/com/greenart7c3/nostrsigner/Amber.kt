@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
+import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
 import androidx.compose.runtime.mutableStateOf
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -61,15 +62,15 @@ import kotlin.coroutines.cancellation.CancellationException
 class Amber :
     Application(),
     LifecycleObserver {
-    private var mainActivityRef: WeakReference<MainActivity?>? = null
+    private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
 
-    fun setMainActivity(activity: MainActivity?) {
+    fun setMainActivity(activity: AppCompatActivity?) {
         Log.d(TAG, "Setting main activity ref to $activity")
-        mainActivityRef = WeakReference<MainActivity?>(activity)
+        mainActivityRef = WeakReference<AppCompatActivity?>(activity)
     }
 
-    fun getMainActivity(): MainActivity? = if (mainActivityRef != null) mainActivityRef!!.get() else null
+    fun getMainActivity(): AppCompatActivity? = if (mainActivityRef != null) mainActivityRef!!.get() else null
 
     // Exists to avoid exceptions stopping the coroutine
     val exceptionHandler =

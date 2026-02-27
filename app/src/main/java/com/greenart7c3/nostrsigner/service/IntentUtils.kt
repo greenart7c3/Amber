@@ -19,7 +19,9 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -590,9 +592,14 @@ object IntentUtils {
             }
 
             val id = intent.extras?.getString("id") ?: ""
-            val mainActivity = Amber.instance.getMainActivity()
-            mainActivity?.let {
-                if (mainActivity.mainViewModel.intents.value.any { it.id == id }) {
+            val mainViewModel = when (val mainActivity = Amber.instance.getMainActivity()) {
+                is MainActivity -> mainActivity.mainViewModel
+                is SignerActivity -> mainActivity.mainViewModel
+                else -> null
+            }
+
+            mainViewModel?.let {
+                if (it.intents.value.any { intent -> intent.id == id }) {
                     return null
                 }
             }

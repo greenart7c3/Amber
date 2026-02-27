@@ -134,6 +134,7 @@ fun MainScreen(
     route: MutableState<String?>,
     navController: NavHostController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+    isExternalRequest: Boolean = false,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
     val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -246,38 +247,44 @@ fun MainScreen(
 
     Scaffold(
         topBar = {
-            AmberTopAppBar(
-                destinationRoute = destinationRoute,
-                lifecycleOwner = lifecycleOwner,
-                scope = scope,
-                context = context,
-                navBackStackEntry = navBackStackEntry,
-                account = account,
-                intents = intents,
-                bunkerRequests = bunkerRequests,
-                packageName = packageName,
-            )
+            if (!isExternalRequest) {
+                AmberTopAppBar(
+                    destinationRoute = destinationRoute,
+                    lifecycleOwner = lifecycleOwner,
+                    scope = scope,
+                    context = context,
+                    navBackStackEntry = navBackStackEntry,
+                    account = account,
+                    intents = intents,
+                    bunkerRequests = bunkerRequests,
+                    packageName = packageName,
+                )
+            }
         },
         bottomBar = {
-            val profileUrl = account.picture.collectAsStateWithLifecycle()
-            AmberBottomBar(
-                items = items,
-                navController = navController,
-                destinationRoute = destinationRoute,
-                scope = scope,
-                sheetState = sheetState,
-                onShouldShowBottomSheet = {
-                    shouldShowBottomSheet = it
-                },
-                profileUrl = profileUrl.value,
-                account = account,
-            )
+            if (!isExternalRequest) {
+                val profileUrl = account.picture.collectAsStateWithLifecycle()
+                AmberBottomBar(
+                    items = items,
+                    navController = navController,
+                    destinationRoute = destinationRoute,
+                    scope = scope,
+                    sheetState = sheetState,
+                    onShouldShowBottomSheet = {
+                        shouldShowBottomSheet = it
+                    },
+                    profileUrl = profileUrl.value,
+                    account = account,
+                )
+            }
         },
         floatingActionButton = {
-            AmberFloatingButton(
-                navController = navController,
-                navBackStackEntry = navBackStackEntry,
-            )
+            if (!isExternalRequest) {
+                AmberFloatingButton(
+                    navController = navController,
+                    navBackStackEntry = navBackStackEntry,
+                )
+            }
         },
     ) { padding ->
         var isLoading by remember { mutableStateOf(false) }

@@ -50,6 +50,7 @@ fun AccountScreen(
     mainViewModel: MainViewModel,
     bunkerRequests: List<AmberBunkerRequest>,
     navController: NavHostController,
+    isExternalRequest: Boolean = false,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val context = LocalContext.current
@@ -100,6 +101,7 @@ fun AccountScreen(
                         appName = appName,
                         route = localRoute,
                         navController = navController,
+                        isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent?.getStringExtra("route") == Route.IncomingRequest.route)),
                         onRemoveIntentData = { results, type ->
                             when (type) {
                                 IntentResultType.ADD -> {

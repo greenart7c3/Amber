@@ -142,8 +142,10 @@ fun IntentMultiEventHomeScreen(
             stringResource(R.string.is_requiring_some_permissions_please_review_them2),
             Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 4.dp),
         )
+
+        SigningAs(accountParam)
 
         Column(
             Modifier

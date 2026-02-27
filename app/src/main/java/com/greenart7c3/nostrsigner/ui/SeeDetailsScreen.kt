@@ -4,8 +4,11 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
@@ -34,194 +37,210 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.RememberMyChoice
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 
 @Composable
 fun SeeDetailsScreen(
     modifier: Modifier = Modifier,
+    onBack: () -> Unit
 ) {
     val context = LocalContext.current
     Column(
         modifier = modifier
-            .fillMaxWidth(),
+            .fillMaxSize(),
     ) {
-        var rememberType by remember { mutableStateOf(MultiEventScreenIntents.intents.firstOrNull()?.rememberType?.value ?: MultiEventScreenIntents.bunkerRequests.first().rememberType.value) }
-        val type = if (MultiEventScreenIntents.intents.isNotEmpty()) {
-            MultiEventScreenIntents.intents.first().type
-        } else {
-            BunkerRequestUtils.getTypeFromBunker(MultiEventScreenIntents.bunkerRequests.first().request)
-        }
-        val permission = if (type == SignerType.SIGN_EVENT) {
-            val event = if (MultiEventScreenIntents.intents.isNotEmpty()) {
-                MultiEventScreenIntents.intents.first().event!!
-            } else {
-                MultiEventScreenIntents.bunkerRequests.first().signedEvent!!
-            }
-
-            Permission("sign_event", event.kind)
-        } else {
-            Permission(type.toString().toLowerCase(Locale.current), null)
-        }
-
-        val message = if (type == SignerType.CONNECT) {
-            stringResource(R.string.connect)
-        } else {
-            permission.toLocalizedString(context)
-        }
-        Text(
-            stringResource(R.string.is_requiring_to_sign_these_events_related_to_permission, MultiEventScreenIntents.appName, message),
+        Column(
             Modifier
-                .fillMaxWidth()
-                .padding(bottom = 20.dp),
-        )
-
-        Row(
-            Modifier.padding(vertical = 8.dp),
+                .weight(1f)
+                .verticalScroll(rememberScrollState())
         ) {
-            RememberMyChoice(
-                alwaysShow = true,
-                shouldRunAcceptOrReject = null,
-                onAccept = {},
-                onReject = {},
-                onChanged = {
-                    rememberType = it
-                    MultiEventScreenIntents.intents.forEach { intent ->
-                        intent.rememberType.value = rememberType
-                    }
-                },
-                packageName = null,
+            var rememberType by remember { mutableStateOf(MultiEventScreenIntents.intents.firstOrNull()?.rememberType?.value ?: MultiEventScreenIntents.bunkerRequests.first().rememberType.value) }
+            val type = if (MultiEventScreenIntents.intents.isNotEmpty()) {
+                MultiEventScreenIntents.intents.first().type
+            } else {
+                BunkerRequestUtils.getTypeFromBunker(MultiEventScreenIntents.bunkerRequests.first().request)
+            }
+            val permission = if (type == SignerType.SIGN_EVENT) {
+                val event = if (MultiEventScreenIntents.intents.isNotEmpty()) {
+                    MultiEventScreenIntents.intents.first().event!!
+                } else {
+                    MultiEventScreenIntents.bunkerRequests.first().signedEvent!!
+                }
+
+                Permission("sign_event", event.kind)
+            } else {
+                Permission(type.toString().toLowerCase(Locale.current), null)
+            }
+
+            val message = if (type == SignerType.CONNECT) {
+                stringResource(R.string.connect)
+            } else {
+                permission.toLocalizedString(context)
+            }
+            Text(
+                stringResource(R.string.is_requiring_to_sign_these_events_related_to_permission, MultiEventScreenIntents.appName, message),
+                Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 20.dp),
             )
-        }
 
-        MultiEventScreenIntents.intents.forEach { intent ->
-            Card(
-                Modifier
-                    .padding(4.dp),
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-                border = BorderStroke(1.dp, Color.Gray),
+            Row(
+                Modifier.padding(vertical = 8.dp),
             ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            intent.checked.value = !intent.checked.value
-                        },
-                ) {
-                    Checkbox(
-                        checked = intent.checked.value,
-                        onCheckedChange = { _ ->
-                            intent.checked.value = !intent.checked.value
-                        },
-                        colors = CheckboxDefaults.colors().copy(
-                            uncheckedBorderColor = Color.Gray,
-                        ),
-                    )
+                RememberMyChoice(
+                    alwaysShow = true,
+                    shouldRunAcceptOrReject = null,
+                    onAccept = {},
+                    onReject = {},
+                    onChanged = {
+                        rememberType = it
+                        MultiEventScreenIntents.intents.forEach { intent ->
+                            intent.rememberType.value = rememberType
+                        }
+                    },
+                    packageName = null,
+                )
+            }
 
-                    val data = if (intent.type == SignerType.SIGN_EVENT) {
-                        val event = intent.event!!
-                        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
-                    } else {
-                        if (type.name.contains("ENCRYPT") && intent.encryptedData is ClearTextEncryptedDataKind) {
-                            intent.encryptedData.text
-                        } else if (intent.encryptedData is EventEncryptedDataKind) {
-                            if (intent.encryptedData.sealEncryptedDataKind != null) {
-                                if (intent.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
-                                    intent.encryptedData.sealEncryptedDataKind.event.content
-                                } else {
-                                    intent.encryptedData.sealEncryptedDataKind.result
-                                }
-                            } else {
-                                intent.encryptedData.event.content
-                            }
+            MultiEventScreenIntents.intents.forEach { intent ->
+                Card(
+                    Modifier
+                        .padding(4.dp),
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
+                    border = BorderStroke(1.dp, Color.Gray),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                intent.checked.value = !intent.checked.value
+                            },
+                    ) {
+                        Checkbox(
+                            checked = intent.checked.value,
+                            onCheckedChange = { _ ->
+                                intent.checked.value = !intent.checked.value
+                            },
+                            colors = CheckboxDefaults.colors().copy(
+                                uncheckedBorderColor = Color.Gray,
+                            ),
+                        )
+
+                        val data = if (intent.type == SignerType.SIGN_EVENT) {
+                            val event = intent.event!!
+                            if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
                         } else {
-                            if (intent.encryptedData is TagArrayEncryptedDataKind) {
-                                intent.encryptedData.tagArray.joinToString(separator = ", ") {
-                                    "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]"
+                            if (type.name.contains("ENCRYPT") && intent.encryptedData is ClearTextEncryptedDataKind) {
+                                intent.encryptedData.text
+                            } else if (intent.encryptedData is EventEncryptedDataKind) {
+                                if (intent.encryptedData.sealEncryptedDataKind != null) {
+                                    if (intent.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                                        intent.encryptedData.sealEncryptedDataKind.event.content
+                                    } else {
+                                        intent.encryptedData.sealEncryptedDataKind.result
+                                    }
+                                } else {
+                                    intent.encryptedData.event.content
                                 }
                             } else {
-                                intent.encryptedData?.result ?: ""
+                                if (intent.encryptedData is TagArrayEncryptedDataKind) {
+                                    intent.encryptedData.tagArray.joinToString(separator = ", ") {
+                                        "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]"
+                                    }
+                                } else {
+                                    intent.encryptedData?.result ?: ""
+                                }
                             }
                         }
-                    }
 
-                    Text(
+                        Text(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(vertical = 8.dp),
+                            text = data.ifBlank { message },
+                            color = if (intent.checked.value) Color.Unspecified else Color.Gray,
+                        )
+                    }
+                }
+            }
+
+            MultiEventScreenIntents.bunkerRequests.forEach { bunkerRequest ->
+                Card(
+                    Modifier
+                        .padding(4.dp),
+                    colors = CardDefaults.cardColors().copy(
+                        containerColor = MaterialTheme.colorScheme.background,
+                    ),
+                    border = BorderStroke(1.dp, Color.Gray),
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 8.dp),
-                        text = data.ifBlank { message },
-                        color = if (intent.checked.value) Color.Unspecified else Color.Gray,
-                    )
+                            .fillMaxWidth()
+                            .clickable {
+                                bunkerRequest.checked.value = !bunkerRequest.checked.value
+                            },
+                    ) {
+                        Checkbox(
+                            checked = bunkerRequest.checked.value,
+                            onCheckedChange = { _ ->
+                                bunkerRequest.checked.value = !bunkerRequest.checked.value
+                            },
+                            colors = CheckboxDefaults.colors().copy(
+                                uncheckedBorderColor = Color.Gray,
+                            ),
+                        )
+
+                        val data = if (bunkerRequest.request is BunkerRequestSign) {
+                            val event = bunkerRequest.signedEvent!!
+                            if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
+                        } else {
+                            if (type.name.contains("ENCRYPT") && bunkerRequest.encryptedData is ClearTextEncryptedDataKind) {
+                                bunkerRequest.encryptedData.text
+                            } else if (bunkerRequest.encryptedData is EventEncryptedDataKind) {
+                                if (bunkerRequest.encryptedData.sealEncryptedDataKind != null) {
+                                    if (bunkerRequest.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                                        bunkerRequest.encryptedData.sealEncryptedDataKind.event.content
+                                    } else {
+                                        bunkerRequest.encryptedData.sealEncryptedDataKind.result
+                                    }
+                                } else {
+                                    bunkerRequest.encryptedData.event.content
+                                }
+                            } else {
+                                if (bunkerRequest.encryptedData is TagArrayEncryptedDataKind) {
+                                    bunkerRequest.encryptedData.tagArray.joinToString(separator = ", ") {
+                                        "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]"
+                                    }
+                                } else {
+                                    bunkerRequest.encryptedData?.result ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+                                }
+                            }
+                        }
+
+                        Text(
+                            modifier = Modifier
+                                .weight(1f)
+                                .padding(vertical = 8.dp),
+                            text = data.ifBlank { message },
+                            color = if (bunkerRequest.checked.value) Color.Unspecified else Color.Gray,
+                        )
+                    }
                 }
             }
         }
 
-        MultiEventScreenIntents.bunkerRequests.forEach { bunkerRequest ->
-            Card(
-                Modifier
-                    .padding(4.dp),
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-                border = BorderStroke(1.dp, Color.Gray),
-            ) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable {
-                            bunkerRequest.checked.value = !bunkerRequest.checked.value
-                        },
-                ) {
-                    Checkbox(
-                        checked = bunkerRequest.checked.value,
-                        onCheckedChange = { _ ->
-                            bunkerRequest.checked.value = !bunkerRequest.checked.value
-                        },
-                        colors = CheckboxDefaults.colors().copy(
-                            uncheckedBorderColor = Color.Gray,
-                        ),
-                    )
-
-                    val data = if (bunkerRequest.request is BunkerRequestSign) {
-                        val event = bunkerRequest.signedEvent!!
-                        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
-                    } else {
-                        if (type.name.contains("ENCRYPT") && bunkerRequest.encryptedData is ClearTextEncryptedDataKind) {
-                            bunkerRequest.encryptedData.text
-                        } else if (bunkerRequest.encryptedData is EventEncryptedDataKind) {
-                            if (bunkerRequest.encryptedData.sealEncryptedDataKind != null) {
-                                if (bunkerRequest.encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
-                                    bunkerRequest.encryptedData.sealEncryptedDataKind.event.content
-                                } else {
-                                    bunkerRequest.encryptedData.sealEncryptedDataKind.result
-                                }
-                            } else {
-                                bunkerRequest.encryptedData.event.content
-                            }
-                        } else {
-                            if (bunkerRequest.encryptedData is TagArrayEncryptedDataKind) {
-                                bunkerRequest.encryptedData.tagArray.joinToString(separator = ", ") {
-                                    "[${it.joinToString(separator = ", ") { tag -> "\"${tag}\"" }}]"
-                                }
-                            } else {
-                                bunkerRequest.encryptedData?.result ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
-                            }
-                        }
-                    }
-
-                    Text(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(vertical = 8.dp),
-                        text = data.ifBlank { message },
-                        color = if (bunkerRequest.checked.value) Color.Unspecified else Color.Gray,
-                    )
-                }
-            }
-        }
+        AmberButton(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 16.dp),
+            text = stringResource(R.string.go_back),
+            onClick = onBack
+        )
     }
 }

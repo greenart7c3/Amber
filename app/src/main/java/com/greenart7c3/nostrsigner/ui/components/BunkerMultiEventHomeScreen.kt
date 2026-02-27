@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -133,8 +134,10 @@ fun BunkerMultiEventHomeScreen(
             stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),
             Modifier
                 .fillMaxWidth()
-                .padding(bottom = 20.dp),
+                .padding(bottom = 4.dp),
         )
+
+        SigningAs(accountParam)
 
         Column(
             Modifier

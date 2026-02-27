@@ -67,7 +67,7 @@ class Amber :
 
     fun setMainActivity(activity: AppCompatActivity?) {
         Log.d(TAG, "Setting main activity ref to $activity")
-        mainActivityRef = WeakReference<AppCompatActivity?>(activity)
+        mainActivityRef = WeakReference(activity)
     }
 
     fun getMainActivity(): AppCompatActivity? = if (mainActivityRef != null) mainActivityRef!!.get() else null

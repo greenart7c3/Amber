@@ -780,15 +780,15 @@ fun MainScreen(
                 composable(
                     Route.SeeDetails.route,
                     content = {
-                        val scrollState = rememberScrollState()
                         SeeDetailsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
-                                .verticalScrollbar(scrollState)
-                                .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
+                            onBack = {
+                                navController.popBackStack()
+                            }
                         )
                     },
                 )

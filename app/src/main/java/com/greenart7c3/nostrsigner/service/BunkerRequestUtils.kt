@@ -142,8 +142,9 @@ object BunkerRequestUtils {
 
         val success = retryWithBackoff {
             val result = Amber.instance.client.sendAndWaitForResponse(
-                signedEvent,
-                relays.toSet(),
+                event = signedEvent,
+                relayList = relays.toSet(),
+                timeoutInSeconds = 5,
             )
             if (!result) {
                 encryptedContent =
@@ -154,10 +155,10 @@ object BunkerRequestUtils {
                     }
 
                 signedEvent = account.signSync(
-                    TimeUtils.now(),
-                    NostrConnectEvent.KIND,
-                    arrayOf(arrayOf("p", localKey)),
-                    encryptedContent,
+                    createdAt = TimeUtils.now(),
+                    kind = NostrConnectEvent.KIND,
+                    tags = arrayOf(arrayOf("p", localKey)),
+                    content = encryptedContent,
                 )
             }
             result

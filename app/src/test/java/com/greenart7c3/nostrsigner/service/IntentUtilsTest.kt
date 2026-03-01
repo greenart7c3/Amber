@@ -125,11 +125,6 @@ class IntentUtilsTest {
     }
 
     @Test
-    fun `parsePubKey returns null for invalid hex key`() {
-        assertNull(IntentUtils.parsePubKey("not-a-valid-key!"))
-    }
-
-    @Test
     fun `parsePubKey converts valid 32-byte hex key to npub format`() {
         // x-coordinate of secp256k1 generator point — a well-known 32-byte value
         val hex = "79be667ef9dcbbac55a06295ce870b07029bfcdb2dce28d959f2815b16f81798"

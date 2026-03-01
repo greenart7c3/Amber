@@ -28,7 +28,7 @@ class BunkerRequestUtilsTest {
 
     private fun mockBunkerRequest(
         method: String,
-        params: List<String> = emptyList(),
+        params: Array<String> = emptyArray(),
         id: String = "test-id",
     ): BunkerRequest = mockk(relaxed = true) {
         every { this@mockk.method } returns method
@@ -124,7 +124,7 @@ class BunkerRequestUtilsTest {
 
     @Test
     fun `getDataFromBunker returns first param for sign_message`() {
-        val request = mockBunkerRequest("sign_message", listOf("hello world"))
+        val request = mockBunkerRequest("sign_message", arrayOf("hello world"))
         assertEquals("hello world", BunkerRequestUtils.getDataFromBunker(request))
     }
 
@@ -140,37 +140,37 @@ class BunkerRequestUtilsTest {
 
     @Test
     fun `getDataFromBunker returns second param for nip04_encrypt`() {
-        val request = mockBunkerRequest("nip04_encrypt", listOf("pubkey123", "ciphertext456"))
+        val request = mockBunkerRequest("nip04_encrypt", arrayOf("pubkey123", "ciphertext456"))
         assertEquals("ciphertext456", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test
     fun `getDataFromBunker returns second param for nip04_decrypt`() {
-        val request = mockBunkerRequest("nip04_decrypt", listOf("pubkey123", "ciphertext456"))
+        val request = mockBunkerRequest("nip04_decrypt", arrayOf("pubkey123", "ciphertext456"))
         assertEquals("ciphertext456", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test
     fun `getDataFromBunker returns second param for nip44_encrypt`() {
-        val request = mockBunkerRequest("nip44_encrypt", listOf("pubkey123", "plaintext789"))
+        val request = mockBunkerRequest("nip44_encrypt", arrayOf("pubkey123", "plaintext789"))
         assertEquals("plaintext789", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test
     fun `getDataFromBunker returns second param for nip44_decrypt`() {
-        val request = mockBunkerRequest("nip44_decrypt", listOf("pubkey123", "ciphertext456"))
+        val request = mockBunkerRequest("nip44_decrypt", arrayOf("pubkey123", "ciphertext456"))
         assertEquals("ciphertext456", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test
     fun `getDataFromBunker returns second param for decrypt_zap_event`() {
-        val request = mockBunkerRequest("decrypt_zap_event", listOf("pubkey123", "event_json_string"))
+        val request = mockBunkerRequest("decrypt_zap_event", arrayOf("pubkey123", "event_json_string"))
         assertEquals("event_json_string", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test
     fun `getDataFromBunker returns empty string when second param is missing for encrypt or decrypt`() {
-        val request = mockBunkerRequest("nip04_encrypt", emptyList())
+        val request = mockBunkerRequest("nip04_encrypt", emptyArray())
         assertEquals("", BunkerRequestUtils.getDataFromBunker(request))
     }
 

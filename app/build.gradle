@@ -199,6 +199,8 @@ dependencies {
     implementation libs.paging.runtime
 
     testImplementation libs.junit
+    testImplementation libs.mockk
+    testImplementation libs.kotlinx.coroutines.test
     androidTestImplementation libs.ext.junit
     androidTestImplementation libs.espresso.core
     androidTestImplementation libs.ui.test.junit4

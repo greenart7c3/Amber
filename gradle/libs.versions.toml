@@ -29,6 +29,8 @@ jna = "5.18.1"
 materialIconsExtended = "1.7.8"
 collections = "0.4.0"
 pagingCommon = "3.4.1"
+mockk = "1.13.12"
+coroutinesTest = "1.10.1"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -77,6 +79,8 @@ material3-window = { group = "androidx.compose.material3", name = "material3-win
 paging-common = { group = "androidx.paging", name = "paging-common", version.ref = "pagingCommon" }
 paging-compose = { group = "androidx.paging", name = "paging-compose", version.ref = "pagingCommon" }
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "pagingCommon" }
+mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
+kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

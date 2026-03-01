@@ -63,7 +63,6 @@ import kotlinx.coroutines.launch
 fun NewNsecBunkerScreen(
     modifier: Modifier = Modifier,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     navController: NavController,
 ) {
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
@@ -163,7 +162,6 @@ fun NewNsecBunkerScreen(
                                     isLoading,
                                     relays,
                                     scope,
-                                    accountStateViewModel,
                                     account = account,
                                     context,
                                     onDone = {
@@ -187,7 +185,6 @@ fun NewNsecBunkerScreen(
                                         isLoading,
                                         relays,
                                         scope,
-                                        accountStateViewModel,
                                         account = account,
                                         context,
                                         onDone = {
@@ -226,7 +223,7 @@ fun NewNsecBunkerScreen(
                 text = stringResource(R.string.create),
                 onClick = {
                     if (relays.isEmpty()) {
-                        accountStateViewModel.toast(
+                        ToastManager.toast(
                             title,
                             noRelaysMessage,
                         )
@@ -235,7 +232,7 @@ fun NewNsecBunkerScreen(
                     }
 
                     if (name.text.isBlank()) {
-                        accountStateViewModel.toast(
+                        ToastManager.toast(
                             title,
                             noNameMessage,
                         )

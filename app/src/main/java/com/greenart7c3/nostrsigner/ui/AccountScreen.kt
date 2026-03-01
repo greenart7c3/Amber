@@ -36,7 +36,6 @@ import com.greenart7c3.nostrsigner.MainViewModel
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentResultType
-import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
@@ -89,9 +88,7 @@ fun AccountScreen(
                         } ?: state.route,
                     )
 
-                    AmberListenerSingleton.accountStateViewModel = accountStateViewModel
-
-                    DisplayErrorMessages(accountStateViewModel)
+                    DisplayErrorMessages()
                     MainScreen(
                         account = state.account,
                         accountStateViewModel = accountStateViewModel,
@@ -121,8 +118,8 @@ fun AccountScreen(
 }
 
 @Composable
-private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
-    val openDialogMsg = accountViewModel.toasts.collectAsState(null)
+private fun DisplayErrorMessages() {
+    val openDialogMsg = ToastManager.toasts.collectAsState(null)
 
     openDialogMsg.value?.let { obj ->
         when (obj) {
@@ -134,7 +131,7 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                         title,
                         content,
                     ) {
-                        accountViewModel.clearToasts()
+                        ToastManager.clearToasts()
                     }
                 } else {
                     val title = stringResource(obj.titleResId)
@@ -143,7 +140,7 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                         title,
                         content,
                     ) {
-                        accountViewModel.clearToasts()
+                        ToastManager.clearToasts()
                     }
                 }
 
@@ -152,7 +149,7 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                     obj.title,
                     obj.msg,
                 ) {
-                    accountViewModel.clearToasts()
+                    ToastManager.clearToasts()
                 }
             is ConfirmationToastMsg ->
                 InformationDialog(
@@ -160,7 +157,7 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                     obj.msg,
                 ) {
                     obj.onOk()
-                    accountViewModel.clearToasts()
+                    ToastManager.clearToasts()
                 }
             is AcceptRejectToastMsg ->
                 InformationDialog(
@@ -168,11 +165,11 @@ private fun DisplayErrorMessages(accountViewModel: AccountStateViewModel) {
                     obj.msg,
                     onAccept = {
                         obj.onAccept()
-                        accountViewModel.clearToasts()
+                        ToastManager.clearToasts()
                     },
                     onReject = {
                         obj.onReject()
-                        accountViewModel.clearToasts()
+                        ToastManager.clearToasts()
                     },
                 )
         }

@@ -1,10 +1,8 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.util.Log
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
@@ -18,69 +16,19 @@ import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
-import kotlinx.coroutines.channels.BufferOverflow
-import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-@Immutable
-open class ToastMsg
-
-@Immutable
-class StringToastMsg(val title: String, val msg: String) : ToastMsg()
-
-@Immutable
-class ConfirmationToastMsg(val title: String, val msg: String, val onOk: () -> Unit) : ToastMsg()
-
-@Immutable
-class AcceptRejectToastMsg(val title: String, val msg: String, val onAccept: () -> Unit, val onReject: () -> Unit) : ToastMsg()
-
-@Immutable
-class ResourceToastMsg(
-    val titleResId: Int,
-    val resourceId: Int,
-    val params: Array<out String>? = null,
-) : ToastMsg()
-
 @Stable
 class AccountStateViewModel(npub: String?) : ViewModel() {
     private val _accountContent = MutableStateFlow<AccountState>(AccountState.LoggedOff)
     val accountContent = _accountContent.asStateFlow()
-    val toasts = MutableSharedFlow<ToastMsg?>(0, 3, onBufferOverflow = BufferOverflow.DROP_OLDEST)
     private var observerJob: Job? = null
 
     init {
         tryLoginExistingAccount(null, npub)
-    }
-
-    fun clearToasts() {
-        viewModelScope.launch { toasts.emit(null) }
-    }
-
-    fun toast(
-        title: String,
-        message: String,
-    ) {
-        viewModelScope.launch { toasts.emit(StringToastMsg(title, message)) }
-    }
-
-    fun toast(
-        title: String,
-        message: String,
-        onOk: () -> Unit,
-    ) {
-        viewModelScope.launch { toasts.emit(ConfirmationToastMsg(title, message, onOk)) }
-    }
-
-    fun toast(
-        title: String,
-        message: String,
-        onAccept: () -> Unit,
-        onReject: () -> Unit,
-    ) {
-        viewModelScope.launch { toasts.emit(AcceptRejectToastMsg(title, message, onAccept, onReject)) }
     }
 
     private fun tryLoginExistingAccount(

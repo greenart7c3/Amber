@@ -34,7 +34,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun NewApplicationScreen(
     modifier: Modifier,
-    accountStateViewModel: AccountStateViewModel,
     account: Account,
     navController: NavController,
 ) {
@@ -49,7 +48,7 @@ fun NewApplicationScreen(
             dialogOpen.value = false
 
             if (it.isNullOrBlank()) {
-                accountStateViewModel.toast(
+                ToastManager.toast(
                     title,
                     message,
                 )
@@ -57,7 +56,7 @@ fun NewApplicationScreen(
             }
 
             if (!it.startsWith("nostrconnect://")) {
-                accountStateViewModel.toast(
+                ToastManager.toast(
                     title,
                     message,
                 )
@@ -90,7 +89,7 @@ fun NewApplicationScreen(
                 scope.launch {
                     val clipboardText = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)
                     if (clipboardText == null) {
-                        accountStateViewModel.toast(
+                        ToastManager.toast(
                             title,
                             message,
                         )
@@ -98,14 +97,14 @@ fun NewApplicationScreen(
                     }
 
                     if (clipboardText.text.isBlank()) {
-                        accountStateViewModel.toast(
+                        ToastManager.toast(
                             title,
                             message,
                         )
                         return@launch
                     }
                     if (!clipboardText.text.startsWith("nostrconnect://")) {
-                        accountStateViewModel.toast(
+                        ToastManager.toast(
                             title,
                             message,
                         )

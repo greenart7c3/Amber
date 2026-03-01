@@ -28,7 +28,6 @@ fun SetupPinScreen(
 @Composable
 fun ConfirmPinScreen(
     modifier: Modifier = Modifier,
-    accountStateViewModel: AccountStateViewModel,
     pin: String,
     navController: NavController,
 ) {
@@ -39,7 +38,7 @@ fun ConfirmPinScreen(
         RandomPinInput(
             onPinEntered = { enteredPin ->
                 if (enteredPin != pin) {
-                    accountStateViewModel.toast(context.getString(R.string.pin), context.getString(R.string.pin_does_not_match))
+                    ToastManager.toast(context.getString(R.string.pin), context.getString(R.string.pin_does_not_match))
                 } else {
                     val usePin = Amber.instance.settings.usePin
                     if (usePin) {

@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
+import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
@@ -134,9 +135,9 @@ class Amber :
             return true
         } catch (e: Exception) {
             if (e.message?.contains("EACCES (Permission denied)") == true) {
-                AmberListenerSingleton.accountStateViewModel?.toast(getString(R.string.warning), getString(R.string.network_permission_message))
+                ToastManager.toast(getString(R.string.warning), getString(R.string.network_permission_message))
             } else if (e.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
-                AmberListenerSingleton.accountStateViewModel?.toast(getString(R.string.warning), getString(R.string.network_permission_message))
+                ToastManager.toast(getString(R.string.warning), getString(R.string.network_permission_message))
             }
             Log.e(TAG, "Failed to connect to proxy", e)
             return false

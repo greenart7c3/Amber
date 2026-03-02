@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
@@ -14,6 +15,8 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
 object AmberListenerSingleton {
@@ -45,6 +48,8 @@ class NostrClientLoggerListener(
     val stats: AmberRelayStats,
     val scope: CoroutineScope,
 ) : IRelayClientListener {
+    private var reconnectJob: Job? = null
+
     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
@@ -123,6 +128,13 @@ class NostrClientLoggerListener(
                         time = System.currentTimeMillis(),
                     ),
                 )
+            }
+        }
+        reconnectJob?.cancel()
+        reconnectJob = scope.launch {
+            delay(5_000)
+            if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
+                Amber.instance.reconnect()
             }
         }
         super.onDisconnected(relay)

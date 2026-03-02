@@ -68,7 +68,6 @@ import kotlinx.coroutines.launch
 fun EditConfigurationScreen(
     modifier: Modifier = Modifier,
     key: String,
-    accountStateViewModel: AccountStateViewModel,
     account: Account,
     navController: NavController,
 ) {
@@ -188,7 +187,6 @@ fun EditConfigurationScreen(
                                     isLoading,
                                     relays,
                                     scope,
-                                    accountStateViewModel,
                                     account,
                                     context,
                                     onDone = {},
@@ -211,7 +209,6 @@ fun EditConfigurationScreen(
                                         isLoading,
                                         relays,
                                         scope,
-                                        accountStateViewModel,
                                         account,
                                         context,
                                         onDone = {},

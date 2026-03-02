@@ -31,7 +31,7 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -47,7 +47,6 @@ fun IntentSingleEventHomeScreen(
     applicationName: String?,
     intentData: IntentData,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
@@ -260,7 +259,7 @@ fun IntentSingleEventHomeScreen(
                     account = account,
                     onAccept = {
                         if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
-                            accountStateViewModel.toast(
+                            ToastManager.toast(
                                 title = context.getString(R.string.warning),
                                 message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
                             )

@@ -40,7 +40,6 @@ import kotlinx.coroutines.launch
 @Composable
 fun DefaultProfileRelaysScreen(
     modifier: Modifier,
-    accountStateViewModel: AccountStateViewModel,
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
@@ -116,7 +115,6 @@ fun DefaultProfileRelaysScreen(
                                     isLoading,
                                     relays2,
                                     scope,
-                                    accountStateViewModel,
                                     account,
                                     context,
                                     shouldCheckForBunker = false,
@@ -153,7 +151,6 @@ fun DefaultProfileRelaysScreen(
                                 isLoading,
                                 relays2,
                                 scope,
-                                accountStateViewModel,
                                 account,
                                 context,
                                 shouldCheckForBunker = false,

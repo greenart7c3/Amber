@@ -57,8 +57,8 @@ import com.greenart7c3.nostrsigner.models.TimeUtils.formatLongToCustomDateTimeWi
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.TrustScoreService
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
@@ -92,7 +92,6 @@ import kotlinx.coroutines.withTimeoutOrNull
 @Composable
 fun DefaultRelaysScreen(
     modifier: Modifier,
-    accountStateViewModel: AccountStateViewModel,
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
@@ -187,7 +186,6 @@ fun DefaultRelaysScreen(
                                     isLoading,
                                     relays2,
                                     scope,
-                                    accountStateViewModel,
                                     account,
                                     context,
                                     onDone = {
@@ -223,7 +221,6 @@ fun DefaultRelaysScreen(
                                 isLoading,
                                 relays2,
                                 scope,
-                                accountStateViewModel,
                                 account,
                                 context,
                                 onDone = {
@@ -288,7 +285,6 @@ fun onAddRelay(
     isLoading: MutableState<Boolean>,
     relays2: SnapshotStateList<NormalizedRelayUrl>,
     scope: CoroutineScope,
-    accountStateViewModel: AccountStateViewModel,
     account: Account,
     context: Context,
     shouldCheckForBunker: Boolean = true,
@@ -373,7 +369,7 @@ fun onAddRelay(
                     }
 
                     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
-                        accountStateViewModel.toast(
+                        ToastManager.toast(
                             context.getString(R.string.relay),
                             context.getString(R.string.could_not_connect_to_relay),
                             onAccept = {
@@ -419,7 +415,7 @@ fun onAddRelay(
                 }
 
                 if (canContinue == null) {
-                    accountStateViewModel.toast(
+                    ToastManager.toast(
                         context.getString(R.string.relay),
                         context.getString(R.string.could_not_connect_to_relay),
                         onAccept = {
@@ -472,7 +468,7 @@ fun onAddRelay(
                     relays2.add(addedWSS)
                     onDone()
                 } else if (!filterResult) {
-                    accountStateViewModel.toast(
+                    ToastManager.toast(
                         context.getString(R.string.relay),
                         context.getString(R.string.relay_filter_failed),
                         onAccept = {

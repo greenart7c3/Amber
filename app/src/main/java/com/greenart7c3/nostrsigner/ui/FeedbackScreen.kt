@@ -46,7 +46,6 @@ import kotlinx.coroutines.launch
 fun FeedbackScreen(
     modifier: Modifier = Modifier,
     account: Account,
-    accountStateViewModel: AccountStateViewModel,
     onDismiss: () -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
@@ -152,14 +151,14 @@ fun FeedbackScreen(
                                 account,
                             )
                             if (result) {
-                                accountStateViewModel.toast(
+                                ToastManager.toast(
                                     Amber.instance.getString(R.string.warning),
                                     Amber.instance.getString(R.string.feedback_sent),
                                 )
                                 onLoading(false)
                                 onDismiss()
                             } else {
-                                accountStateViewModel.toast(
+                                ToastManager.toast(
                                     Amber.instance.getString(R.string.warning),
                                     Amber.instance.getString(R.string.failed_to_send_event),
                                 )

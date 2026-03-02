@@ -7,7 +7,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
-import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
@@ -16,16 +16,14 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
-@SuppressLint("StaticFieldLeak")
 object AmberListenerSingleton {
-    var accountStateViewModel: AccountStateViewModel? = null
     val latestErrorMessages = mutableListOf<String>()
 
     fun showErrorMessage() {
         if (latestErrorMessages.isEmpty()) return
         if (latestErrorMessages.last().isBlank()) return
         if (Amber.isAppInForeground) {
-            accountStateViewModel?.toast("Error", latestErrorMessages.last())
+            ToastManager.toast("Error", latestErrorMessages.last())
         } else {
             val notificationManager: NotificationManager =
                 Amber.instance.applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

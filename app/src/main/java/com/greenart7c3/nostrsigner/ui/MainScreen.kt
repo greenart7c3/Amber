@@ -381,7 +381,6 @@ fun MainScreen(
                             packageName = packageName,
                             applicationName = appName,
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
                             navController = navController,
                             onRemoveIntentData = onRemoveIntentData,
                             onLoading = {
@@ -563,7 +562,6 @@ fun MainScreen(
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            accountStateViewModel = accountStateViewModel,
                         )
                     },
                 )
@@ -608,7 +606,6 @@ fun MainScreen(
                         val scrollState = rememberScrollState()
                         NewApplicationScreen(
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
                             navController = navController,
                             modifier =
                             Modifier
@@ -628,7 +625,6 @@ fun MainScreen(
                         val scrollState = rememberScrollState()
                         NewNsecBunkerScreen(
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
                             navController = navController,
                             modifier =
                             Modifier
@@ -746,7 +742,6 @@ fun MainScreen(
                                     .padding(top = verticalPadding * 1.5f)
                                     .imePadding(),
                                 key = key,
-                                accountStateViewModel = accountStateViewModel,
                                 account = account,
                                 navController = navController,
                             )
@@ -779,7 +774,6 @@ fun MainScreen(
                                     .padding(padding)
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
-                                accountStateViewModel = accountStateViewModel,
                                 pin = pin,
                                 navController = navController,
                             )
@@ -832,7 +826,6 @@ fun MainScreen(
                                 .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            accountStateViewModel = accountStateViewModel,
                             account = account,
                         )
                     },
@@ -908,7 +901,6 @@ fun MainScreen(
                                 .padding(top = verticalPadding * 1.5f)
                                 .imePadding(),
                             account = account,
-                            accountStateViewModel = accountStateViewModel,
                             onDismiss = {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                     navController.navigateUp()

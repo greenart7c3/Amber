@@ -54,6 +54,8 @@ class ConnectivityService : Service() {
                 if (BuildFlavorChecker.isOfflineFlavor()) return
                 if (Amber.instance.settings.killSwitch.value) return
 
+                val changed = Amber.instance.updateNetworkCapabilities(networkCapabilities)
+
                 scope.launch(Dispatchers.IO) {
                     Log.d(
                         "ServiceManager NetworkCallback",
@@ -62,7 +64,9 @@ class ConnectivityService : Service() {
                     if (!Amber.instance.client.isActive()) {
                         Amber.instance.client.connect()
                     }
-                    Amber.instance.client.reconnect(true)
+                    if (changed) {
+                        Amber.instance.client.reconnect(true)
+                    }
                 }
             }
 
@@ -143,7 +147,7 @@ class ConnectivityService : Service() {
                     }
                 },
                 5000,
-                61000,
+                30000,
             )
         }
         super.onCreate()

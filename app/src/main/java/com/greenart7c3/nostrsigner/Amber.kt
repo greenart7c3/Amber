@@ -120,6 +120,7 @@ class Amber :
     val isOnWifiDataState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
     private val isStartingApp = MutableStateFlow(false)
+    @Volatile var intentionalDisconnectTime = 0L
     val isStartingAppState = isStartingApp
     val notificationCache = LruCache<String, Long>(10)
 
@@ -233,7 +234,7 @@ class Amber :
                 LocalPreferences.reloadApp()
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {
-                    client.disconnect()
+                    disconnectIntentionally()
                 }
 
                 launch(Dispatchers.Main) {
@@ -292,6 +293,11 @@ class Amber :
         }
     }
 
+    fun disconnectIntentionally() {
+        intentionalDisconnectTime = System.currentTimeMillis()
+        client.disconnect()
+    }
+
     fun reconnect() {
         if (settings.killSwitch.value) {
             return
@@ -341,7 +347,7 @@ class Amber :
         shouldReconnect: Boolean = false,
     ) {
         if (settings.killSwitch.value) {
-            client.disconnect()
+            disconnectIntentionally()
             return
         }
 

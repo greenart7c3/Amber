@@ -61,6 +61,7 @@ class ProfileSubscription(
             if (relays != null) {
                 relays.remove(relay.url)
                 if (relays.isEmpty()) {
+                    Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
                     client.close(subId)
                     relaysPerSubId.remove(subId)
                 }
@@ -134,6 +135,7 @@ class ProfileSubscription(
      * Call this function when you want to stop updates
      */
     fun closeSub() {
+        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
         subIds.values.forEach {
             client.close(it)
         }

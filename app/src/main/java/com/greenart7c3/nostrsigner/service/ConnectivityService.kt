@@ -80,7 +80,7 @@ class ConnectivityService : Service() {
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 val capabilities = connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)
                 Amber.instance.updateNetworkCapabilities(capabilities)
-                Amber.instance.client.disconnect()
+                Amber.instance.disconnectIntentionally()
             }
         }
 

@@ -130,6 +130,10 @@ class NostrClientLoggerListener(
                 )
             }
         }
+        if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
+            super.onDisconnected(relay)
+            return
+        }
         reconnectJob?.cancel()
         reconnectJob = scope.launch {
             delay(5_000)

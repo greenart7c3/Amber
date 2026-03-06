@@ -409,7 +409,7 @@ fun IntentMultiEventHomeScreen(
                                             localEvent.kind,
                                             TimeUtils.now(),
                                             intentData.checked.value,
-                                            content = localEvent.content,
+                                            content = localEvent.toJson(),
                                         ),
                                         thisAccount.npub,
                                     )
@@ -503,7 +503,11 @@ fun IntentMultiEventHomeScreen(
                                             null,
                                             TimeUtils.now(),
                                             intentData.checked.value,
-                                            content = intentData.data,
+                                            content = if (intentData.type == SignerType.NIP04_DECRYPT || intentData.type == SignerType.NIP44_DECRYPT || intentData.type == SignerType.DECRYPT_ZAP_EVENT) {
+                                                intentData.encryptedData?.result ?: ""
+                                            } else {
+                                                intentData.data
+                                            },
                                         ),
                                         thisAccount.npub,
                                     )

@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -49,8 +50,13 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.components.EventSection
+import com.greenart7c3.nostrsigner.ui.components.TagsSection
+import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -147,6 +153,15 @@ fun ActivitiesScreen(
 
 @Composable
 fun ActivityRow(activity: HistoryEntity, account: Account) {
+    val clipboard = LocalClipboard.current
+    val parsedEvent = remember(activity.content) {
+        if (activity.content.isBlank()) {
+            null
+        } else {
+            runCatching { AmberEvent.fromJson(activity.content).toEvent() }.getOrNull()
+        }
+    }
+
     Column {
         Row(
             modifier = Modifier
@@ -172,7 +187,29 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                     color = if (activity.accepted) Color.Unspecified else Color.Gray,
                 )
 
-                if (activity.content.isNotBlank()) {
+                if (parsedEvent != null) {
+                    if (parsedEvent.content.isNotBlank()) {
+                        EventSection(
+                            label = stringResource(R.string.content),
+                            displayValue = parsedEvent.content,
+                            onCopy = { copyToClipboard(clipboard, parsedEvent.content) },
+                        )
+                    }
+                    if (parsedEvent.tags.isNotEmpty()) {
+                        TagsSection(
+                            label = stringResource(R.string.tags),
+                            tags = parsedEvent.tags,
+                            onCopy = {
+                                copyToClipboard(
+                                    clipboard,
+                                    parsedEvent.tags.joinToString(separator = ", ") {
+                                        "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
+                                    },
+                                )
+                            },
+                        )
+                    }
+                } else if (activity.content.isNotBlank()) {
                     Text(
                         modifier = Modifier.padding(top = 2.dp),
                         text = activity.content,

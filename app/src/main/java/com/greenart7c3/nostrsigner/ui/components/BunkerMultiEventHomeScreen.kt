@@ -398,7 +398,7 @@ fun BunkerMultiEventHomeScreen(
                                             kind = localEvent.kind,
                                             time = TimeUtils.now(),
                                             accepted = request.checked.value,
-                                            content = localEvent.content,
+                                            content = localEvent.toJson(),
                                         ),
                                         thisAccount.npub,
                                     )
@@ -553,7 +553,11 @@ fun BunkerMultiEventHomeScreen(
                                             null,
                                             TimeUtils.now(),
                                             request.checked.value,
-                                            content = request.request.params.getOrElse(1) { "" },
+                                            content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
+                                                request.encryptedData?.result ?: ""
+                                            } else {
+                                                request.request.params.getOrElse(1) { "" }
+                                            },
                                         ),
                                         thisAccount.npub,
                                     )

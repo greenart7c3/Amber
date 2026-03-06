@@ -211,7 +211,7 @@ class SignerProvider : ContentProvider() {
                                     event.kind,
                                     TimeUtils.now(),
                                     false,
-                                    content = event.content,
+                                    content = event.toJson(),
                                 ),
                                 account.npub,
                             )
@@ -236,7 +236,7 @@ class SignerProvider : ContentProvider() {
                                 event.kind,
                                 TimeUtils.now(),
                                 true,
-                                content = event.content,
+                                content = signedEvent.toJson(),
                             ),
                             account.npub,
                         )
@@ -371,7 +371,7 @@ class SignerProvider : ContentProvider() {
                                 null,
                                 TimeUtils.now(),
                                 true,
-                                content = content,
+                                content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) result else content,
                             ),
                             account.npub,
                         )

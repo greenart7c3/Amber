@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner
 import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
-import android.content.Context
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -410,7 +409,7 @@ class Amber :
             .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
             .build()
         val diskCache = DiskCache.Builder()
-            .directory((context as Context).cacheDir.resolve("coil_image_cache").toOkioPath())
+            .directory(context.cacheDir.resolve("coil_image_cache").toOkioPath())
             .maxSizeBytes(10 * 1024 * 1024) // 10 MB
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->

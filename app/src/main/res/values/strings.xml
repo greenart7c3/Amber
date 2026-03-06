@@ -23,6 +23,8 @@
     <string name="nsec">Nsec / private key</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
+    <string name="hide">Hide</string>
+    <string name="show_tips">Tips</string>
     <string name="invalid_key">Invalid key</string>
     <string name="key_is_required">Key is required</string>
     <string name="login">Login</string>

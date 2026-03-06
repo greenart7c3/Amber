@@ -251,4 +251,6 @@ dependencies {
 
     implementation libs.lifecycle.process
     implementation libs.kotlinx.collections.immutable
+
+    implementation project(':permission-translations')
 }

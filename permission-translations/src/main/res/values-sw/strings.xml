@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <string name="reset_permissions">Reset permissions</string>
+
+    <string name="do_you_want_to_reset_all_permissions">Do you want to reset all permissions?</string>
+
+    <string name="no_permissions_granted">No permissions granted</string>
+
+    <string name="permissions">Permissions</string>
+
+    <string name="grant_permissions">Grant Permissions</string>
+
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+</resources>

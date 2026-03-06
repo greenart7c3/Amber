@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="reset_permissions">İzinleri sıfırla</string>
+
+    <string name="do_you_want_to_reset_all_permissions">Tüm izinleri sıfırlamak istiyor musunuz?</string>
+
+    <string name="no_permissions_granted">Verilmiş izin yok</string>
+
+    <string name="permissions">İzinler</string>
+
+    <string name="grant_permissions">İzin Ver</string>
+
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" genel anahtarınızı okumak ve sizin adınıza etkinlikleri imzalamak için izninizi istiyor"</string>
+
+    <string name="event_kind_0">Metadata</string>
+
+    <string name="event_kind_1">Kısa metin notu</string>
+
+    <string name="event_kind_3">Takip listesi</string>
+
+    <string name="event_kind_4">Şifreli doğrudan mesajlar</string>
+
+    <string name="event_kind_5">Etkinlik silme</string>
+
+    <string name="event_kind_6">Yeniden gönderi (repost)</string>
+
+    <string name="event_kind_7">Tepki</string>
+
+    <string name="event_kind_8">Rozet ödülü</string>
+
+    <string name="event_kind_9">Grup sohbeti mesajı</string>
+
+    <string name="event_kind_10">Grup sohbeti iş parçacığı yanıtı</string>
+
+    <string name="event_kind_11">Grup iş parçacığı</string>
+
+    <string name="event_kind_12">Grup iş parçacığı yanıtı</string>
+
+    <string name="event_kind_13">Mühür (Seal)</string>
+
+    <string name="event_kind_16">Genel yeniden gönderi (repost)</string>
+
+    <string name="event_kind_40">Kanal oluşturma</string>
+
+    <string name="event_kind_41">Kanal metadatası</string>
+
+    <string name="event_kind_42">Kanal mesajı</string>
+
+    <string name="event_kind_43">Kanalda mesaj gizleme</string>
+
+    <string name="event_kind_44">Kanalda kullanıcıyı sessize alma</string>
+
+    <string name="event_kind_1021">Teklif</string>
+
+    <string name="event_kind_1022">Teklif onayı</string>
+
+    <string name="event_kind_1040">OpenTimestamps</string>
+
+    <string name="event_kind_1059">Hediye paketi (Gift Wrap)</string>
+
+    <string name="event_kind_1063">Dosya metadatası</string>
+
+    <string name="event_kind_1311">Canlı sohbet mesajı</string>
+
+    <string name="event_kind_1971">Sorun izleyici</string>
+
+    <string name="event_kind_1984">Raporlama</string>
+
+    <string name="event_kind_1985">Etiket</string>
+
+    <string name="event_kind_4550">Topluluk gönderi onayı</string>
+
+    <string name="event_kind_5000_5999">İş ilanı</string>
+
+    <string name="event_kind_6000_6999">İş sonucu</string>
+
+    <string name="event_kind_7000">İş geri bildirimi</string>
+
+    <string name="event_kind_9000_9030">Grup kontrol etkinlikleri</string>
+
+    <string name="event_kind_9041">Zap hedefi</string>
+
+    <string name="event_kind">Etkinlik türü %1$s</string>
+
+    <string name="event_kind_34550">Topluluk tanımı</string>
+
+    <string name="event_kind_39000_39009">Grup metadata etkinlikleri</string>
+
+    <string name="event_kind_9734">Zap isteği</string>
+
+    <string name="event_kind_9735">Zap</string>
+
+    <string name="event_kind_9802">Öne çıkanlar</string>
+
+    <string name="event_kind_10000">Sessize alınanlar listesi</string>
+
+    <string name="event_kind_10001">Sabitlenenler listesi</string>
+
+    <string name="event_kind_10002">Relay listesi metadatası</string>
+
+    <string name="event_kind_10003">Yer imleri listesi</string>
+
+    <string name="event_kind_10004">Topluluklar listesi</string>
+
+    <string name="event_kind_10005">Herkese açık sohbetler listesi</string>
+
+    <string name="event_kind_10006">Engellenen relay\'ler listesi</string>
+
+    <string name="event_kind_10007">Arama relay\'leri listesi</string>
+
+    <string name="event_kind_10009">Kullanıcı grupları</string>
+
+    <string name="event_kind_10015">İlgi alanları listesi</string>
+
+    <string name="event_kind_10030">Kullanıcı emoji listesi</string>
+
+    <string name="event_kind_10096">Dosya depolama sunucusu listesi</string>
+
+    <string name="event_kind_13194">Cüzdan Bilgisi</string>
+
+    <string name="event_kind_21000">Lightning Pub RPC</string>
+
+    <string name="event_kind_22242">İstemci kimlik doğrulaması</string>
+
+    <string name="event_kind_23194">Cüzdan isteği</string>
+
+    <string name="event_kind_23195">Cüzdan yanıtı</string>
+
+    <string name="event_kind_24133">Nostr Connect</string>
+
+    <string name="event_kind_27235">HTTP kimlik doğrulaması</string>
+
+    <string name="event_kind_30000">Takip setleri</string>
+
+    <string name="event_kind_30001">Genel listeler</string>
+
+    <string name="event_kind_30002">Relay setleri</string>
+
+    <string name="event_kind_30003">Yer imi setleri</string>
+
+    <string name="event_kind_30004">Kürasyon setleri</string>
+
+    <string name="event_kind_30008">Profil rozetleri</string>
+
+    <string name="event_kind_30009">Rozet tanımı</string>
+
+    <string name="event_kind_30015">İlgi alanı setleri</string>
+
+    <string name="event_kind_30017">Bir tezgah oluştur veya güncelle</string>
+
+    <string name="event_kind_30018">Bir ürün oluştur veya güncelle</string>
+
+    <string name="event_kind_30019">Pazar yeri arayüzü/kullanıcı deneyimi</string>
+
+    <string name="event_kind_30020">Açık artırma olarak satılan ürün</string>
+
+    <string name="event_kind_30023">Uzun formatlı içerik</string>
+
+    <string name="event_kind_30024">Taslak Uzun formatlı içerik</string>
+
+    <string name="event_kind_30030">Emoji setleri</string>
+
+    <string name="event_kind_30063">Sürüm yapıt setleri</string>
+
+    <string name="event_kind_30078">Uygulamaya özgü veriler</string>
+
+    <string name="event_kind_30311">Canlı etkinlik</string>
+
+    <string name="event_kind_30315">Kullanıcı durumları</string>
+
+    <string name="event_kind_30402">İlan</string>
+
+    <string name="event_kind_30403">Taslak ilan</string>
+
+    <string name="event_kind_31234">Genel taslak etkinlik</string>
+
+    <string name="event_kind_31922">Tarih-bazlı takvim etkinliği</string>
+
+    <string name="event_kind_31923">Zaman-bazlı takvim etkinliği</string>
+
+    <string name="event_kind_31924">Takvim</string>
+
+    <string name="event_kind_31925">Takvim etkinliği LCV</string>
+
+    <string name="event_kind_31989">İşleyici (handler) tavsiyesi</string>
+
+    <string name="event_kind_31990">İşleyici (handler) bilgisi</string>
+
+    <string name="event_kind_10013">Özel giden kutusu relay listesi</string>
+
+    <string name="remove_permission">İzni kaldır</string>
+
+    <string name="event_kind_9000">Gruba kullanıcı ekle</string>
+
+    <string name="event_kind_9001">Gruptan kullanıcı çıkar</string>
+
+    <string name="event_kind_9002">Grup metadatasını düzenle</string>
+
+    <string name="event_kind_9003">İzin ekle</string>
+
+    <string name="event_kind_9004">İzin kaldır</string>
+
+    <string name="event_kind_9005">Gruptan etkinlik sil</string>
+
+    <string name="event_kind_9006">Grup durumunu düzenle</string>
+
+    <string name="event_kind_9007">Grup oluştur</string>
+
+    <string name="event_kind_9021">Gruba katıl</string>
+
+    <string name="event_kind_39000">Grup metadatası</string>
+
+    <string name="event_kind_39001">Grup yöneticileri</string>
+
+    <string name="event_kind_39002">Grup üyeleri</string>
+
+    <string name="more_info">Bu izin hakkında daha fazla bilgi</string>
+
+    <string name="sign_policy_basic">Temel eylemleri onayla</string>
+
+    <string name="sign_policy_basic_explainer">Çoğu kişi için önerilir. Bu, uygulama kullanımınız sırasında kesinti sayısını en aza indirecektir.</string>
+
+    <string name="sign_policy_manual">Her uygulamayı manuel olarak onayla</string>
+
+    <string name="sign_policy_manual_explainer">Her uygulama üzerinde kontrol sahibi olmak isteyen, gizliliğe önem veren kişiler için önerilir. Bunu seçmek, yeni bir uygulamayı her denediğinizde bir tercih belirlemenizi isteyecektir.</string>
+
+    <string name="sign_policy_title">Bir imzalama politikası seçin</string>
+
+    <string name="sign_policy_explainer">Nostr etkinliklerini otomatik olarak mı onaylamalıyım, yoksa her uygulama için onları gözden geçirmek mi istersiniz?</string>
+
+    <string name="sign_policy">İmzalama politikası</string>
+
+    <string name="handle_application_permissions">Bu uygulama izinleri nasıl ele alınsın?</string>
+
+    <string name="sign_policy_manual_new_app">Her izni manuel olarak onayla</string>
+
+    <string name="sign_policy_manual_new_app_explainer">Her izin üzerinde kontrol sahibi olmak isteyen, gizliliğe önem veren kişiler için önerilir. Bunu seçmek, yeni bir izin aldığınızda bir tercih belirlemenizi isteyecektir.</string>
+
+    <string name="sign_policy_fully">Bu uygulamaya tamamen güveniyorum</string>
+
+    <string name="sign_policy_fully_explainer">Her isteği otomatik olarak imzala</string>
+
+    <string name="event_kind_10050">DM relay\'leri</string>
+
+    <string name="event_kind_1986">Relay değerlendirmeleri</string>
+
+    <string name="event_kind_1987">Yapay zeka gömüleri / Vektör listeleri</string>
+
+    <string name="event_kind_9467">Tidal girişi</string>
+
+    <string name="event_kind_10063">Kullanıcı sunucu listesi</string>
+
+    <string name="event_kind_24242">Medya sunucularında depolanan bloblar</string>
+
+    <string name="event_kind_30040">Modüler Makale Başlığı</string>
+
+    <string name="event_kind_30041">Modüler Makale İçeriği</string>
+
+    <string name="new_app_description">Genellikle Nostr uygulamalarında Amber\'ı harici bir imzalayıcı olarak kullanmaya izin veren bir \"Amber ile Giriş Yap\" seçeneği bulunur; bu düğmeye bastığınızda Amber başlatılır ve bazı izinleri onaylamanız istenir.\n\nAncak Amber\'ı kullanmak için başka seçenekleriniz de var:</string>
+
+    <string name="edit_permissions_description">Uygulama izinlerini geçici olarak devre dışı bırakarak veya tamamen geri alarak yönetin. Yeni izinler gerektiğinde uygulama tarafından eklenir.</string>
+
+    <string name="remove_all_permissions">Tüm izinleri kaldır</string>
+
+    <string name="permission_needed">İzin Gerekli</string>
+
+    <string name="is_requiring_some_permissions_please_review_them">%1$s bazı izinler talep ediyor, lütfen onları gözden geçirin.</string>
+
+    <string name="is_requiring_some_permissions_please_review_them2">Is requiring some permissions, please review them.</string>
+
+    <string name="always_approve_this_permission">Bu izni her zaman onayla/reddet</string>
+
+    <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s, %2$s izniyle ilgili bu etkinlikleri imzalamanızı istiyor.</string>
+
+    <string name="always_approve_these_permissions">Bu izinleri her zaman onayla/reddet</string>
+
+    <string name="permissions_and_connection">İzinler ve bağlantı</string>
+
+    <string name="your_account_is_ready_to_use">Artık Amber\'ı destekleyen uygulamaları kullanmaya başlayabilirsiniz, gerektiğinde Amber açılacak ve izinleri onaylamanızı isteyecektir.\nBu görünümde aktif izinlere sahip tüm uygulamaları bulacaksınız.\n\nAndroid için tüm Nostr uygulamalarını şurada keşfedin: </string>
+
+    <string name="close_application">Bir izni kabul ederken veya reddederken uygulamayı kapat</string>
+
+    <string name="event_kind_22456">Anlık bildirim ayarları</string>
+
+    <string name="event_kind_1111">Yorum</string>
+
+    <string name="event_kind_1068">Anket</string>
+
+    <string name="event_kind_9321">Nutzap</string>
+
+    <string name="event_kind_7376">Cashu Cüzdan Geçmişi</string>
+
+    <string name="event_kind_7375">Cashu Cüzdan Tokenları</string>
+
+    <string name="event_kind_7374">Ayrılmış Cashu Cüzdan Tokenları</string>
+
+    <string name="event_kind_2003">Torrent</string>
+
+    <string name="event_kind_2004">Torrent Yorumu</string>
+
+    <string name="event_kind_2022">Coinjoin Havuzu</string>
+
+    <string name="event_kind_1630_1633">Durum</string>
+
+    <string name="event_kind_1622">Yanıtlar</string>
+
+    <string name="event_kind_1621">Sorunlar</string>
+
+    <string name="event_kind_1617">Yorum</string>
+
+    <string name="event_kind_64">Satranç (PGN)</string>
+
+    <string name="event_kind_818">Birleştirme İstekleri</string>
+
+    <string name="event_kind_1018">Anket Yanıtı</string>
+
+    <string name="event_kind_17">Bir web sitesine tepki</string>
+
+    <string name="event_kind_20">Resim</string>
+
+    <string name="event_kind_38383">Eşler arası Sipariş etkinlikleri</string>
+
+    <string name="event_kind_37375">Cashu Cüzdan Etkinliği</string>
+
+    <string name="event_kind_34236">Kısa form Dikey Video Etkinliği</string>
+
+    <string name="event_kind_34235">Video Etkinliği</string>
+
+    <string name="event_kind_10000300">Primal cüzdan yetkilendirme etkinliği</string>
+
+    <string name="event_kind_39089">Başlangıç paketleri</string>
+
+    <string name="event_kind_39092">Medya başlangıç paketleri</string>
+
+    <string name="event_kind_10020">Medya takipleri</string>
+
+    <string name="event_kind_443">KeyPackage</string>
+
+    <string name="event_kind_10051">KeyPackage Relay Listesi</string>
+
+    <string name="event_kind_444">Hoş Geldiniz</string>
+
+    <string name="event_kind_445">Grup</string>
+
+    <string name="remove_all_message">Bu uygulamadan tüm izinleri kaldırmak istediğinizden emin misiniz?</string>
+
+    <string name="network_permission_message">Relay/proxy\'ye bağlanılamadı. Amber için ağ iznini etkinleştirip etkinleştirmediğinizi kontrol edin</string>
+
+    <string name="event_kind_14">Direkt Mesaj</string>
+
+    <string name="event_kind_25050">WebRTC Sinyalleşmesi</string>
+
+    <string name="event_kind_9733">Özel zap</string>
+
+    <string name="event_kind_10101">İyi viki yazarları</string>
+
+    <string name="event_kind_10102">İyi viki relay\'leri</string>
+</resources>

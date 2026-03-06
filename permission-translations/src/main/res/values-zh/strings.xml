@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="reset_permissions">重置权限</string>
+
+    <string name="do_you_want_to_reset_all_permissions">确认重置所有权限？</string>
+
+    <string name="no_permissions_granted">未授予任何权限</string>
+
+    <string name="permissions">权限</string>
+
+    <string name="grant_permissions">授权</string>
+
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"想要获取权限读取公钥并签署事件"</string>
+
+    <string name="event_kind_0">元数据</string>
+
+    <string name="event_kind_1">短文笔记</string>
+
+    <string name="event_kind_3">关注</string>
+
+    <string name="event_kind_4">加密私信</string>
+
+    <string name="event_kind_5">删除事件</string>
+
+    <string name="event_kind_6">转发</string>
+
+    <string name="event_kind_7">回应</string>
+
+    <string name="event_kind_8">已授予徽章</string>
+
+    <string name="event_kind_9">群组聊天消息</string>
+
+    <string name="event_kind_10">群组聊天线程回复</string>
+
+    <string name="event_kind_11">群组消息</string>
+
+    <string name="event_kind_12">群组消息回复</string>
+
+    <string name="event_kind_13">Seal 封装</string>
+
+    <string name="event_kind_16">通用转发</string>
+
+    <string name="event_kind_40">创建频道</string>
+
+    <string name="event_kind_41">频道元数据</string>
+
+    <string name="event_kind_42">频道消息</string>
+
+    <string name="event_kind_43">频道消息隐藏</string>
+
+    <string name="event_kind_44">频道用户静音</string>
+
+    <string name="event_kind_1021">出价</string>
+
+    <string name="event_kind_1022">出价确认</string>
+
+    <string name="event_kind_1040">OpenTimestamps</string>
+
+    <string name="event_kind_1059">事件包装</string>
+
+    <string name="event_kind_1063">文件元数据</string>
+
+    <string name="event_kind_1311">直播聊天消息</string>
+
+    <string name="event_kind_1971">问题追踪器</string>
+
+    <string name="event_kind_1984">举报</string>
+
+    <string name="event_kind_1985">标记</string>
+
+    <string name="event_kind_4550">社区帖子批准</string>
+
+    <string name="event_kind_5000_5999">数据作业请求</string>
+
+    <string name="event_kind_6000_6999">数据作业结果</string>
+
+    <string name="event_kind_7000">数据作业反馈</string>
+
+    <string name="event_kind_9000_9030">群组审核事件</string>
+
+    <string name="event_kind_9041">打闪目标</string>
+
+    <string name="event_kind">事件类型 %1$s</string>
+
+    <string name="event_kind_34550">社区定义</string>
+
+    <string name="event_kind_39000_39009">群组元数据事件</string>
+
+    <string name="event_kind_9734">打闪请求</string>
+
+    <string name="event_kind_9735">打闪</string>
+
+    <string name="event_kind_9802">亮点</string>
+
+    <string name="event_kind_10000">静音列表</string>
+
+    <string name="event_kind_10001">置顶列表</string>
+
+    <string name="event_kind_10002">中继列表元数据</string>
+
+    <string name="event_kind_10003">书签列表</string>
+
+    <string name="event_kind_10004">社区列表</string>
+
+    <string name="event_kind_10005">公共聊天列表</string>
+
+    <string name="event_kind_10006">被禁中继列表</string>
+
+    <string name="event_kind_10007">搜索中继列表</string>
+
+    <string name="event_kind_10009">用户组</string>
+
+    <string name="event_kind_10015">兴趣列表</string>
+
+    <string name="event_kind_10030">用户表情列表</string>
+
+    <string name="event_kind_10096">文件服务器列表</string>
+
+    <string name="event_kind_13194">钱包信息</string>
+
+    <string name="event_kind_21000">Lightning Pub RPC</string>
+
+    <string name="event_kind_22242">客户端验证</string>
+
+    <string name="event_kind_23194">钱包请求</string>
+
+    <string name="event_kind_23195">钱包响应</string>
+
+    <string name="event_kind_24133">远程签名请求</string>
+
+    <string name="event_kind_27235">HTTP 认证</string>
+
+    <string name="event_kind_30000">关注合集</string>
+
+    <string name="event_kind_30001">通用列表</string>
+
+    <string name="event_kind_30002">中继合集</string>
+
+    <string name="event_kind_30003">书签合集</string>
+
+    <string name="event_kind_30004">策展合集</string>
+
+    <string name="event_kind_30008">资料页徽章</string>
+
+    <string name="event_kind_30009">徽章定义</string>
+
+    <string name="event_kind_30015">兴趣(标签)合集</string>
+
+    <string name="event_kind_30017">创建或更新市场摊位</string>
+
+    <string name="event_kind_30018">创建或更新市场产品</string>
+
+    <string name="event_kind_30019">市场 UI/UX</string>
+
+    <string name="event_kind_30020">创建或更新市场产品出售形式为拍卖</string>
+
+    <string name="event_kind_30023">长篇内容</string>
+
+    <string name="event_kind_30024">长篇内容草稿</string>
+
+    <string name="event_kind_30030"></string>
+
+    <string name="event_kind_30063">发行产物合集</string>
+
+    <string name="event_kind_30078">特定应用数据</string>
+
+    <string name="event_kind_30311">直播事件</string>
+
+    <string name="event_kind_30315">状态</string>
+
+    <string name="event_kind_30402">分类列表</string>
+
+    <string name="event_kind_30403">分类列表草稿</string>
+
+    <string name="event_kind_31234">通用草稿事件</string>
+
+    <string name="event_kind_31922">日期基底日历事件</string>
+
+    <string name="event_kind_31923">时间基底日历事件</string>
+
+    <string name="event_kind_31924"> 日历</string>
+
+    <string name="event_kind_31925">日历事件回应</string>
+
+    <string name="event_kind_31989">事件处理推荐</string>
+
+    <string name="event_kind_31990">事件处理方信息</string>
+
+    <string name="event_kind_10013">私人发件箱中继列表</string>
+
+    <string name="remove_permission">移除权限</string>
+
+    <string name="event_kind_9000">添加用户到群组</string>
+
+    <string name="event_kind_9001">从群组中移除用户</string>
+
+    <string name="event_kind_9002">编辑群组信息</string>
+
+    <string name="event_kind_9003">添加权限</string>
+
+    <string name="event_kind_9004">移除权限</string>
+
+    <string name="event_kind_9005">从群组中删除事件</string>
+
+    <string name="event_kind_9006">编辑群组状态</string>
+
+    <string name="event_kind_9007">创建群组</string>
+
+    <string name="event_kind_9021">加入群组</string>
+
+    <string name="event_kind_39000">群组元数据</string>
+
+    <string name="event_kind_39001">群组管理员</string>
+
+    <string name="event_kind_39002">群组成员</string>
+
+    <string name="more_info">更多关于该权限的信息</string>
+
+    <string name="sign_policy_basic">自动批复基础请求</string>
+
+    <string name="sign_policy_basic_explainer">推荐用于大多数人。这将最大限度地减少在使用 Nostr 应用过程中的中断次数。</string>
+
+    <string name="sign_policy_manual">手动批复每个应用</string>
+
+    <string name="sign_policy_manual_explainer">推荐用于想要掌控每个应用的隐私优先人士。该选项将会要求手动调整新应用的每一个权限偏好。</string>
+
+    <string name="sign_policy_title">选择签署策略</string>
+
+    <string name="sign_policy_explainer">自动批复或手动审查每一个应用？</string>
+
+    <string name="sign_policy">签署策略</string>
+
+    <string name="handle_application_permissions">如何处理该应用的权限？</string>
+
+    <string name="sign_policy_manual_new_app">手动批复每项权限</string>
+
+    <string name="sign_policy_manual_new_app_explainer">推荐用于想要掌控每项权限的隐私优先人士。该选项将会要求手动调整每个新权限请求的偏好。</string>
+
+    <string name="sign_policy_fully">完全信任该应用</string>
+
+    <string name="sign_policy_fully_explainer">自动签署每个请求</string>
+
+    <string name="event_kind_10050">私信中继</string>
+
+    <string name="event_kind_1986">中继评价</string>
+
+    <string name="event_kind_1987">AI嵌入或向量列表</string>
+
+    <string name="event_kind_9467">TIDAL 登录</string>
+
+    <string name="event_kind_10063">用户服务器列表</string>
+
+    <string name="event_kind_24242">储存在媒体服务器中的 Blob</string>
+
+    <string name="event_kind_30040">模块化文章头部</string>
+
+    <string name="event_kind_30041">模块化文章内容</string>
+
+    <string name="new_app_description">Nostr 应用通常的「使用 Amber 登录」选项允许使用 Amber 作为外部签名器；当使用这个选项的时候会启动 Amber 并要求批复一些权限。\n\n但还有其他方式来使用 Amber：</string>
+
+    <string name="edit_permissions_description">通过临时禁用或完全恢复权限来管理应用权限。当应用需要时会添加新权限。</string>
+
+    <string name="remove_all_permissions">移除所有权限</string>
+
+    <string name="permission_needed">需要权限</string>
+
+    <string name="is_requiring_some_permissions_please_review_them">%1$s 需要一些权限，请检查它们。</string>
+
+    <string name="is_requiring_some_permissions_please_review_them2"> 请检查权限请求。</string>
+
+    <string name="always_approve_this_permission">总是批准该权限</string>
+
+    <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s 需要签署与权限「%2$s」相关的事件。</string>
+
+    <string name="always_approve_these_permissions">总是批准这些权限</string>
+
+    <string name="permissions_and_connection">权限与连接</string>
+
+    <string name="your_account_is_ready_to_use">现在可以开始通过 Amber 来使用 Nostr 应用，当需要时 Amber 会启动并去请求批复权限。\n该界面下能够找到所有拥有活动权限的应用。\n\n前往发现所有 Nostr 应用：</string>
+
+    <string name="close_application">接受或拒绝权限时关闭应用</string>
+
+    <string name="event_kind_22456">推送通知设置</string>
+
+    <string name="event_kind_1111">评论</string>
+
+    <string name="event_kind_1068">投票</string>
+
+    <string name="event_kind_9321">Nutzap</string>
+
+    <string name="event_kind_7376">Cashu 钱包历史</string>
+
+    <string name="event_kind_7375">Cashu 钱包代币</string>
+
+    <string name="event_kind_7374">Cashu 钱包保留代币</string>
+
+    <string name="event_kind_2003">Torrent</string>
+
+    <string name="event_kind_2004">Torrent 评论</string>
+
+    <string name="event_kind_2022">Coinjoint 池</string>
+
+    <string name="event_kind_1630_1633">状态</string>
+
+    <string name="event_kind_1622">回复</string>
+
+    <string name="event_kind_1621">议题</string>
+
+    <string name="event_kind_1617">评论</string>
+
+    <string name="event_kind_64">棋局(PGN)</string>
+
+    <string name="event_kind_818">合并请求</string>
+
+    <string name="event_kind_1018">投票回应</string>
+
+    <string name="event_kind_17">对网站回应</string>
+
+    <string name="event_kind_20">图片</string>
+
+    <string name="event_kind_38383">P2P 订单事件</string>
+
+    <string name="event_kind_37375">Cashu 钱包事件</string>
+
+    <string name="event_kind_34236">短视频事件</string>
+
+    <string name="event_kind_34235">视频事件</string>
+
+    <string name="event_kind_10000300">Primal 钱包授权事件</string>
+
+    <string name="event_kind_39089">入门包</string>
+
+    <string name="event_kind_39092">媒体入门包</string>
+
+    <string name="event_kind_10020">媒体关注</string>
+
+    <string name="event_kind_443">密钥包</string>
+
+    <string name="event_kind_10051">密钥包中继列表</string>
+
+    <string name="event_kind_444">欢迎</string>
+
+    <string name="event_kind_445">群组</string>
+
+    <string name="remove_all_message">确定要删除该应用的所有权限吗？</string>
+
+    <string name="network_permission_message">无法连接到中继或代理，请检查是否授予了 Amber 网络权限。</string>
+
+    <string name="event_kind_14">私信</string>
+
+    <string name="event_kind_25050">WebRTC 信令</string>
+
+    <string name="event_kind_9733">私密 Zap</string>
+
+    <string name="event_kind_10101">优质 Wiki 作者</string>
+
+    <string name="event_kind_10102">优质 Wiki 中继</string>
+</resources>

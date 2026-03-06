@@ -1,0 +1,101 @@
+plugins {
+    alias(libs.plugins.androidLibrary)
+    id 'maven-publish'
+}
+
+android {
+    namespace = 'com.greenart7c3.nostrsigner.permissiontranslations'
+    compileSdk = 36
+
+    defaultConfig {
+        minSdk 26
+        lint {
+            disable 'MissingTranslation'
+        }
+    }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+
+    resourceConfigurations += [
+            'ar',
+            'bn-rBD',
+            'cs',
+            'cy-rGB',
+            'da-rDK',
+            'de',
+            'el-rGR',
+            'en-rGB',
+            'eo',
+            'es',
+            'es-rES',
+            'es-rMX',
+            'es-rUS',
+            'et-rEE',
+            'fa',
+            'fi-rFI',
+            'fo-rFO',
+            'fr',
+            'gu-rIN',
+            'hi-rIN',
+            'hr-rHR',
+            'hu',
+            'in-rID',
+            'it-rIT',
+            'iw-rIL',
+            'ja',
+            'kk-rKZ',
+            'ko-rKR',
+            'ks-rIN',
+            'lt-rLT',
+            'ne-rNP',
+            'nl',
+            'pcm-rNG',
+            'pl-rPL',
+            'pt-rBR',
+            'pt-rPT',
+            'ru',
+            'ru-rUA',
+            'sa-rIN',
+            'sl-rSI',
+            'sr-rSP',
+            'sv-rSE',
+            'sw',
+            'sw-rKE',
+            'sw-rTZ',
+            'ta',
+            'th',
+            'tr',
+            'uk',
+            'uz-rUZ',
+            'vi-rVN',
+            'zh',
+            'zh-rCN',
+            'zh-rHK',
+            'zh-rMO',
+            'zh-rSG',
+            'zh-rTW'
+    ]
+
+    publishing {
+        singleVariant('release') {
+            withSourcesJar()
+        }
+    }
+}
+
+publishing {
+    publications {
+        release(MavenPublication) {
+            groupId = 'com.greenart7c3'
+            artifactId = 'permission-translations'
+            version = '1.0.0'
+
+            afterEvaluate {
+                from components.release
+            }
+        }
+    }
+}

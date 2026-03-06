@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="reset_permissions">Réinitialiser les autorisations</string>
+
+    <string name="do_you_want_to_reset_all_permissions">Voulez-vous réinitialiser toutes les autorisations ?</string>
+
+    <string name="no_permissions_granted">Pas d\'autorisations accordées</string>
+
+    <string name="permissions">Autorisations</string>
+
+    <string name="grant_permissions">Accorder les autorisations</string>
+
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" aimerait avoir la permission de lire votre clé publique et de signer des évènements en votre nom"</string>
+
+    <string name="event_kind_0">Métadonnées</string>
+
+    <string name="event_kind_1">Note courte</string>
+
+    <string name="event_kind_3">Abonnements</string>
+
+    <string name="event_kind_4">Messages privés chiffrés</string>
+
+    <string name="event_kind_5">Suppression d\'événement</string>
+
+    <string name="event_kind_6">Republier</string>
+
+    <string name="event_kind_7">Réaction</string>
+
+    <string name="event_kind_8">Badge récompense</string>
+
+    <string name="event_kind_9">Message de groupe de discussion</string>
+
+    <string name="event_kind_10">Réponse dans le chat du groupe de discussion.</string>
+
+    <string name="event_kind_11">Groupe de discussion</string>
+
+    <string name="event_kind_12">Réponse dans le groupe de discussion</string>
+
+    <string name="event_kind_13">Sceau</string>
+
+    <string name="event_kind_16">Republication générique</string>
+
+    <string name="event_kind_40">Création de la chaîne</string>
+
+    <string name="event_kind_41">Métadonnées de la chaîne</string>
+
+    <string name="event_kind_42">Message de la chaîne</string>
+
+    <string name="event_kind_43">Masquer le message de la chaîne</string>
+
+    <string name="event_kind_44">Mettre en sourdine l\'utilisateur de la chaîne</string>
+
+    <string name="event_kind_1021">Enchère</string>
+
+    <string name="event_kind_1022">Confirmation d\'enchère</string>
+
+    <string name="event_kind_1040">Horodatage</string>
+
+    <string name="event_kind_1059">Gift wrap</string>
+
+    <string name="event_kind_1063">Métadonnées de fichier</string>
+
+    <string name="event_kind_1311">Message de chat en direct</string>
+
+    <string name="event_kind_1971">Traqueur de problèmes</string>
+
+    <string name="event_kind_1984">Signalement</string>
+
+    <string name="event_kind_1985">Label</string>
+
+    <string name="event_kind_4550">Approbation du post de la communauté</string>
+
+    <string name="event_kind_5000_5999">Requête de tâche DVM</string>
+
+    <string name="event_kind_6000_6999">Résultat de la tâche DVM</string>
+
+    <string name="event_kind_7000">Retour de la tâche DVM</string>
+
+    <string name="event_kind_9000_9030">Événements de contrôle de groupe</string>
+
+    <string name="event_kind_9041">Objectif de zap</string>
+
+    <string name="event_kind">Type d\'événement %1$s</string>
+
+    <string name="event_kind_34550">Définition de communauté</string>
+
+    <string name="event_kind_39000_39009">Événements de métadonnées de groupe</string>
+
+    <string name="event_kind_9734">Demande de zap</string>
+
+    <string name="event_kind_9735">Zap</string>
+
+    <string name="event_kind_9802">Mises en avant</string>
+
+    <string name="event_kind_10000">Mettre la liste en sourdine</string>
+
+    <string name="event_kind_10001">Épingler la liste</string>
+
+    <string name="event_kind_10002">Métadonnées de la liste de relais</string>
+
+    <string name="event_kind_10003">Liste des favoris</string>
+
+    <string name="event_kind_10004">Liste des communautés</string>
+
+    <string name="event_kind_10005">Liste des chats publics</string>
+
+    <string name="event_kind_10006">Liste des relais bloqués</string>
+
+    <string name="event_kind_10007">Liste des relais de recherche</string>
+
+    <string name="event_kind_10009">Groupes d’utilisateur</string>
+
+    <string name="event_kind_10015">Liste des intérêts</string>
+
+    <string name="event_kind_10030">Liste des émoticônes de l\'utilisateur</string>
+
+    <string name="event_kind_10096">Liste des serveurs de stockage de fichiers</string>
+
+    <string name="event_kind_13194">Infos sur le portefeuille</string>
+
+    <string name="event_kind_21000">Lightning Pub RPC</string>
+
+    <string name="event_kind_22242">Authentification du client</string>
+
+    <string name="event_kind_23194">Requête du portefeuille</string>
+
+    <string name="event_kind_23195">Réponse du portefeuille</string>
+
+    <string name="event_kind_24133">Connexion Nostr</string>
+
+    <string name="event_kind_27235">Authentification HTTP</string>
+
+    <string name="event_kind_30000">Ensemble de suivis</string>
+
+    <string name="event_kind_30001">Listes génériques</string>
+
+    <string name="event_kind_30002">Ensemble de relais</string>
+
+    <string name="event_kind_30003">Ensemble de marque-pages</string>
+
+    <string name="event_kind_30004">Ensembles de curation</string>
+
+    <string name="event_kind_30008">Badges de profil</string>
+
+    <string name="event_kind_30009">Définition de badge</string>
+
+    <string name="event_kind_30015">Ensembles d\'intérêts</string>
+
+    <string name="event_kind_30017">Créer ou mettre à jour un étal</string>
+
+    <string name="event_kind_30018">Créer ou mettre à jour un produit</string>
+
+    <string name="event_kind_30019">Place de marché UI/UX</string>
+
+    <string name="event_kind_30020">Produit vendu aux enchères</string>
+
+    <string name="event_kind_30023">Contenu long</string>
+
+    <string name="event_kind_30024">Contenu long en brouillon</string>
+
+    <string name="event_kind_30030">Ensemble d\'émojis</string>
+
+    <string name="event_kind_30063"> Ensembles d\'artefacts d\'une release</string>
+
+    <string name="event_kind_30078">Données spécifiques à l\'application</string>
+
+    <string name="event_kind_30311">Événement en direct</string>
+
+    <string name="event_kind_30315">Statuts de l\'utilisateur</string>
+
+    <string name="event_kind_30402">Petites annonces</string>
+
+    <string name="event_kind_30403">Petites annonces en brouillon</string>
+
+    <string name="event_kind_31234">Événement brouillon générique</string>
+
+    <string name="event_kind_31922">Événement calendrier de type date</string>
+
+    <string name="event_kind_31923">Événement calendrier de type temps</string>
+
+    <string name="event_kind_31924">Calendrier</string>
+
+    <string name="event_kind_31925">Réponse d\'invitation à l\'événement du calendrier</string>
+
+    <string name="event_kind_31989">Recommandation du gestionnaire</string>
+
+    <string name="event_kind_31990">Informations du gestionnaire</string>
+
+    <string name="event_kind_10013">Liste des relais de messagerie privés</string>
+
+    <string name="remove_permission">Supprimer la permission</string>
+
+    <string name="event_kind_9000">Ajouter l\'utilisateur au groupe</string>
+
+    <string name="event_kind_9001">Supprimer l\'utilisateur du groupe</string>
+
+    <string name="event_kind_9002">Modifier les métadonnées du groupe</string>
+
+    <string name="event_kind_9003">Ajouter une permission</string>
+
+    <string name="event_kind_9004">Supprimer la permission</string>
+
+    <string name="event_kind_9005">Supprimer l\'événement du groupe</string>
+
+    <string name="event_kind_9006">Modifier le statut du groupe</string>
+
+    <string name="event_kind_9007">Créer un groupe</string>
+
+    <string name="event_kind_9021">Rejoindre le groupe</string>
+
+    <string name="event_kind_39000">Métadonnées du groupe</string>
+
+    <string name="event_kind_39001">Admins du groupe</string>
+
+    <string name="event_kind_39002">Membres du groupe</string>
+
+    <string name="more_info">Plus d\'informations sur cette autorisation</string>
+
+    <string name="sign_policy_basic">Approuver les actions de base</string>
+
+    <string name="sign_policy_basic_explainer">Recommandé pour la plupart des personnes. Cela minimisera le nombre d\'interruptions pendant l\'utilisation de l\'application.</string>
+
+    <string name="sign_policy_manual">Approuver manuellement chaque application</string>
+
+    <string name="sign_policy_manual_explainer">Recommandé pour les personnes soucieuses de la vie privée qui souhaitent contrôler chaque application. Choisir ceci vous demandera de définir une préférence chaque fois que vous essayerez une nouvelle application.</string>
+
+    <string name="sign_policy_title">Sélectionnez une politique de signature</string>
+
+    <string name="sign_policy_explainer">Devrais-je approuver automatiquement les événements nostr ou souhaitez-vous les examiner pour chaque application ?</string>
+
+    <string name="sign_policy">Politique de signature</string>
+
+    <string name="handle_application_permissions">Comment gérer les permissions de cette application ?</string>
+
+    <string name="sign_policy_manual_new_app">Approuver manuellement chaque permission</string>
+
+    <string name="sign_policy_manual_new_app_explainer">Recommandé pour les personnes soucieuses de la vie privée qui voudraient avoir le contrôle de chaque permission. Choisir ceci vous demandera de définir une préférence chaque fois que vous recevez une nouvelle permission.</string>
+
+    <string name="sign_policy_fully">Je fais entièrement confiance à cette application</string>
+
+    <string name="sign_policy_fully_explainer">Signer automatiquement chaque requête</string>
+
+    <string name="event_kind_10050">DM relays</string>
+
+    <string name="event_kind_1986">Relay reviews</string>
+
+    <string name="event_kind_1987">AI Embeddings / Vector lists</string>
+
+    <string name="event_kind_9467">Tidal login</string>
+
+    <string name="event_kind_10063">User server list</string>
+
+    <string name="event_kind_24242">Blobs stored on mediaservers</string>
+
+    <string name="event_kind_30040">Modular Article Header</string>
+
+    <string name="event_kind_30041">Modular Article Content</string>
+
+    <string name="new_app_description">Usually Nostr applications have a “Login with Amber” option that permits to use Amber as external signer; when you press that button Amber is launched and you are asked to approve some permissions.\n\nBut you have other options to use Amber:</string>
+
+    <string name="edit_permissions_description">Manage the app permissions by temporarily disabling or completely reverting them. New permission are added by the app when required.</string>
+
+    <string name="remove_all_permissions">Remove all permissions</string>
+
+    <string name="permission_needed">Permission Needed</string>
+
+    <string name="is_requiring_some_permissions_please_review_them">%1$s is requiring some permissions, please review them.</string>
+
+    <string name="is_requiring_some_permissions_please_review_them2">Is requiring some permissions, please review them.</string>
+
+    <string name="always_approve_this_permission">Always approve this permission</string>
+
+    <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s is requiring to sign these events related to %2$s permission.</string>
+
+    <string name="always_approve_these_permissions">Always approve these permissions</string>
+
+    <string name="permissions_and_connection">Permissions and connection</string>
+
+    <string name="your_account_is_ready_to_use">Now you can start using apps that support Amber, when needed Amber will open and ask you to confirm permissions.\nIn this view you will find all the apps that have active permissions.\n\nDiscover all Nostr apps for android at </string>
+
+    <string name="close_application">Close application when accepting or rejecting a permission</string>
+
+    <string name="event_kind_22456">Push notification settings</string>
+
+    <string name="event_kind_1111">Comment</string>
+
+    <string name="event_kind_1068">Poll</string>
+
+    <string name="event_kind_9321">Nutzap</string>
+
+    <string name="event_kind_7376">Cashu Wallet History</string>
+
+    <string name="event_kind_7375">Cashu Wallet Tokens</string>
+
+    <string name="event_kind_7374">Reserved Cashu Wallet Tokens</string>
+
+    <string name="event_kind_2003">Torrent</string>
+
+    <string name="event_kind_2004">Torrent Comment</string>
+
+    <string name="event_kind_2022">Coinjoin Pool</string>
+
+    <string name="event_kind_1630_1633">Status</string>
+
+    <string name="event_kind_1622">Replies</string>
+
+    <string name="event_kind_1621">Issues</string>
+
+    <string name="event_kind_1617">Comment</string>
+
+    <string name="event_kind_64">Chess (PGN)</string>
+
+    <string name="event_kind_818">Merge Requests</string>
+
+    <string name="event_kind_1018">Poll Response</string>
+
+    <string name="event_kind_17">Reaction to a website</string>
+
+    <string name="event_kind_20">Picture</string>
+
+    <string name="event_kind_38383">Peer-to-peer Order events</string>
+
+    <string name="event_kind_37375">Cashu Wallet Event</string>
+
+    <string name="event_kind_34236">Short-form Portrait Video Event</string>
+
+    <string name="event_kind_34235">Video Event</string>
+
+    <string name="event_kind_10000300">Primal wallet authorization event</string>
+
+    <string name="event_kind_39089">Starter packs</string>
+
+    <string name="event_kind_39092">Media starter packs</string>
+
+    <string name="event_kind_10020">Media follows</string>
+
+    <string name="event_kind_443">KeyPackage</string>
+
+    <string name="event_kind_10051">KeyPackage Relays List</string>
+
+    <string name="event_kind_444">Welcome</string>
+
+    <string name="event_kind_445">Group</string>
+
+    <string name="remove_all_message">Are you sure you want to remove all permissions from this application?</string>
+
+    <string name="network_permission_message">Failed to connect to relay/proxy. Check if you enabled the network permission for Amber</string>
+
+    <string name="event_kind_14">Direct Message</string>
+
+    <string name="event_kind_25050">WebRTC Signaling</string>
+
+    <string name="event_kind_9733">Private zap</string>
+
+    <string name="event_kind_10101">Good wiki authors</string>
+
+    <string name="event_kind_10102">Good wiki relays</string>
+</resources>

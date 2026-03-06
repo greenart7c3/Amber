@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="reset_permissions">Redefinir as permissões</string>
+
+    <string name="do_you_want_to_reset_all_permissions">Você deseja redefinir todas as permissões?</string>
+
+    <string name="no_permissions_granted">Nenhuma permissão concedida</string>
+
+    <string name="permissions">Permissões</string>
+
+    <string name="grant_permissions">Conceder permissões</string>
+
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" gostaria de sua permissão para ler sua chave pública e assinar eventos em seu nome"</string>
+
+    <string name="event_kind_0">Metadados</string>
+
+    <string name="event_kind_1">Nota de texto curta</string>
+
+    <string name="event_kind_3">Seguidores</string>
+
+    <string name="event_kind_4">Mensagens diretas criptografadas</string>
+
+    <string name="event_kind_5">Evento de exclusão</string>
+
+    <string name="event_kind_6">Republicar</string>
+
+    <string name="event_kind_7">Reação</string>
+
+    <string name="event_kind_8">Prêmio de emblema</string>
+
+    <string name="event_kind_9">Mensagem de grupo</string>
+
+    <string name="event_kind_10">Resposta no chat em grupo</string>
+
+    <string name="event_kind_11">Discussão do grupo</string>
+
+    <string name="event_kind_12">Resposta no chat em grupo</string>
+
+    <string name="event_kind_13">Selo</string>
+
+    <string name="event_kind_16">Repost genérico</string>
+
+    <string name="event_kind_40">Criação de canal</string>
+
+    <string name="event_kind_41">Metadados do canal</string>
+
+    <string name="event_kind_42">Mensagem do canal</string>
+
+    <string name="event_kind_43">Ocultar mensagem no canal</string>
+
+    <string name="event_kind_44">Silenciar usuário do canal</string>
+
+    <string name="event_kind_1021">Oferta</string>
+
+    <string name="event_kind_1022">Confirmação de oferta</string>
+
+    <string name="event_kind_1040">OpenTimestamps</string>
+
+    <string name="event_kind_1059">Gift wrap</string>
+
+    <string name="event_kind_1063">Metadados do arquivo</string>
+
+    <string name="event_kind_1311">Mensagem de bate-papo ao vivo</string>
+
+    <string name="event_kind_1971">Rastreador de problemas</string>
+
+    <string name="event_kind_1984">Denúncia</string>
+
+    <string name="event_kind_1985">Etiqueta</string>
+
+    <string name="event_kind_4550">Aprovação de postagem na comunidade</string>
+
+    <string name="event_kind_5000_5999">Solicitação de trabalho</string>
+
+    <string name="event_kind_6000_6999">Resultado do trabalho</string>
+
+    <string name="event_kind_7000">Feedback do trabalho</string>
+
+    <string name="event_kind_9000_9030">Eventos de controle de grupo</string>
+
+    <string name="event_kind_9041">Meta do Zap</string>
+
+    <string name="event_kind">Tipo de evento %1$s</string>
+
+    <string name="event_kind_34550">Definição da comunidade</string>
+
+    <string name="event_kind_39000_39009">Eventos de metadados do grupo</string>
+
+    <string name="event_kind_9734">Pedido de Zap</string>
+
+    <string name="event_kind_9735">Zap</string>
+
+    <string name="event_kind_9802">Destaques</string>
+
+    <string name="event_kind_10000">Lista de silenciados</string>
+
+    <string name="event_kind_10001">Lista de marcadores</string>
+
+    <string name="event_kind_10002">Metadados da lista de Relay</string>
+
+    <string name="event_kind_10003">Lista de Favoritos</string>
+
+    <string name="event_kind_10004">Lista de comunidades</string>
+
+    <string name="event_kind_10005">Lista de chats públicos</string>
+
+    <string name="event_kind_10006">Lista de relays bloqueados</string>
+
+    <string name="event_kind_10007">Lista de relays de pesquisa</string>
+
+    <string name="event_kind_10009">Usuários do grupo</string>
+
+    <string name="event_kind_10015">Lista de interesses</string>
+
+    <string name="event_kind_10030">Lista de emojis</string>
+
+    <string name="event_kind_10096">Lista de servidores de armazenamento de aquivos</string>
+
+    <string name="event_kind_13194">Informações da carteira</string>
+
+    <string name="event_kind_21000">Lightning Pub RPC</string>
+
+    <string name="event_kind_22242">Autenticação do cliente</string>
+
+    <string name="event_kind_23194">Solicitação da carteira</string>
+
+    <string name="event_kind_23195">Resposta da carteira</string>
+
+    <string name="event_kind_24133">Nostr connect</string>
+
+    <string name="event_kind_27235">Autenticação HTTP</string>
+
+    <string name="event_kind_30000">Follow sets</string>
+
+    <string name="event_kind_30001">Listas genéricas</string>
+
+    <string name="event_kind_30002">Relay sets</string>
+
+    <string name="event_kind_30003">Bookmark sets</string>
+
+    <string name="event_kind_30004">Curation sets</string>
+
+    <string name="event_kind_30008">Emblemas de perfil</string>
+
+    <string name="event_kind_30009">Definição do Emblema</string>
+
+    <string name="event_kind_30015">Interest sets</string>
+
+    <string name="event_kind_30017">Create or update a stall</string>
+
+    <string name="event_kind_30018">Criar ou atualizar um produto</string>
+
+    <string name="event_kind_30019">UI/UX do Marketplace</string>
+
+    <string name="event_kind_30020">Produto vendido como leilão</string>
+
+    <string name="event_kind_30023">Conteúdo de forma longa</string>
+
+    <string name="event_kind_30024">Rascunho do conteúdo de formulário longa</string>
+
+    <string name="event_kind_30030">Conjunto de emojis</string>
+
+    <string name="event_kind_30063">Release artifact sets</string>
+
+    <string name="event_kind_30078">Dados específicos da aplicação</string>
+
+    <string name="event_kind_30311">Evento ao vivo</string>
+
+    <string name="event_kind_30315">Status do usuário.</string>
+
+    <string name="event_kind_30402">Anúncio classificado</string>
+
+    <string name="event_kind_30403">Rascunho de anúncio classificado</string>
+
+    <string name="event_kind_31234">Evento genérico de rascunho</string>
+
+    <string name="event_kind_31922">Evento de calendário baseado em data</string>
+
+    <string name="event_kind_31923">Evento de calendário baseado em tempo</string>
+
+    <string name="event_kind_31924">Calendário</string>
+
+    <string name="event_kind_31925">RSVP do evento do calendário</string>
+
+    <string name="event_kind_31989">Recomendação do gerenciador</string>
+
+    <string name="event_kind_31990">Informações sobre o gerenciador</string>
+
+    <string name="event_kind_10013">Lista de relay privada</string>
+
+    <string name="remove_permission">Remover permissão</string>
+
+    <string name="event_kind_9000">Adicionar usuário ao grupo</string>
+
+    <string name="event_kind_9001">Remover usuário do grupo</string>
+
+    <string name="event_kind_9002">Editar metadados do grupo</string>
+
+    <string name="event_kind_9003">Adicionar permissão</string>
+
+    <string name="event_kind_9004">Remover permissão</string>
+
+    <string name="event_kind_9005">Excluir evento do grupo</string>
+
+    <string name="event_kind_9006">Editar status do grupo</string>
+
+    <string name="event_kind_9007">Criar grupo</string>
+
+    <string name="event_kind_9021">Entrar no Grupo</string>
+
+    <string name="event_kind_39000">Metadados do grupo</string>
+
+    <string name="event_kind_39001">Administradores do grupo</string>
+
+    <string name="event_kind_39002">Membros do grupo</string>
+
+    <string name="more_info">Mais informações sobre esta permissão</string>
+
+    <string name="sign_policy_basic">Aprovar ações básicas</string>
+
+    <string name="sign_policy_basic_explainer">Recomendado para a maioria das pessoas. Isso minimizará o número de interrupções durante o uso do seu aplicativo.</string>
+
+    <string name="sign_policy_manual">Aprovar manualmente cada app</string>
+
+    <string name="sign_policy_manual_explainer">Recomendado para pessoas preocupadas com privacidade que gostariam de ter controle sobre cada aplicativo. Escolher isso fará com que você defina uma preferência sempre que testar um novo aplicativo.</string>
+
+    <string name="sign_policy_title">Selecione uma política de assinatura</string>
+
+    <string name="sign_policy_explainer">Devo aprovar eventos de nostr automaticamente ou você gostaria de revisá-los para cada aplicativo?</string>
+
+    <string name="sign_policy">Política de assinatura</string>
+
+    <string name="handle_application_permissions">Como lidar com as permissões desta aplicação?</string>
+
+    <string name="sign_policy_manual_new_app">Aprovar manualmente cada permissão</string>
+
+    <string name="sign_policy_manual_new_app_explainer">Recomendado para pessoas preocupadas com privacidade que gostariam de ter controle sobre cada permissão. Escolher isso fará com que você defina uma preferência toda vez que receber uma nova permissão.</string>
+
+    <string name="sign_policy_fully">Eu confio totalmente neste aplicativo</string>
+
+    <string name="sign_policy_fully_explainer">Assine automaticamente cada solicitação</string>
+
+    <string name="event_kind_10050">DM relays</string>
+
+    <string name="event_kind_1986">Revisões de Relay</string>
+
+    <string name="event_kind_1987">Embeddings de IA / Listas de vetores</string>
+
+    <string name="event_kind_9467">Tidal login</string>
+
+    <string name="event_kind_10063">Lista de servidores de usuários</string>
+
+    <string name="event_kind_24242">Blobs armazenados em mediaservers</string>
+
+    <string name="event_kind_30040">Cabeçalho de Artigo Modular</string>
+
+    <string name="event_kind_30041">Conteúdo de Artigo Modular</string>
+
+    <string name="new_app_description">Geralmente as aplicações Nostr têm uma opção \"Login com Amber\" que permite usar o Amber como assinante externo; quando você pressionar esse botão Amber é aberto e você é solicitado a aprovar algumas permissões.\n\nMas você tem outras opções para usar o Amber:</string>
+
+    <string name="edit_permissions_description">Gerencie as permissões do aplicativo temporariamente desativando ou revertendo todas elas. Novas permissões são adicionadas pelo aplicativo quando necessário.</string>
+
+    <string name="remove_all_permissions">Remover todas as permissões</string>
+
+    <string name="permission_needed">Permissão Necessária</string>
+
+    <string name="is_requiring_some_permissions_please_review_them">%1$s precisa de algumas permissões, por favor, revise-as.</string>
+
+    <string name="is_requiring_some_permissions_please_review_them2">Está exigindo algumas permissões, por favor, revise-as.</string>
+
+    <string name="always_approve_this_permission">Sempre aprove esta permissão</string>
+
+    <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s precisa assinar estes eventos relacionados à permissão %2$s.</string>
+
+    <string name="always_approve_these_permissions">Sempre aprove estas permissões</string>
+
+    <string name="permissions_and_connection">Permissões e conexões</string>
+
+    <string name="your_account_is_ready_to_use">Agora você pode começar a usar aplicativos compatíveis com Amber. Quando necessário, o Amber abrirá e solicitará que você confirme as permissões.\nNesta visualização você encontrará todos os aplicativos que possuem permissões ativas.\n\nDescubra todos os aplicativos Nostr para Android em </string>
+
+    <string name="close_application">Fechar aplicativo quando aceitar ou rejeitar uma permissão</string>
+
+    <string name="event_kind_22456">Configurações de Notificações Push</string>
+
+    <string name="event_kind_1111">Comentário</string>
+
+    <string name="event_kind_1068">Enquete</string>
+
+    <string name="event_kind_9321">Nutzap</string>
+
+    <string name="event_kind_7376">Histórico de Carteiras Cashu</string>
+
+    <string name="event_kind_7375">Tokens de Carteira Cashu</string>
+
+    <string name="event_kind_7374">Tokens de Carteira Cashu Reservados</string>
+
+    <string name="event_kind_2003">Torrent</string>
+
+    <string name="event_kind_2004">Comentário do Torrent</string>
+
+    <string name="event_kind_2022">Pool de Coinjoin</string>
+
+    <string name="event_kind_1630_1633">Status</string>
+
+    <string name="event_kind_1622">Respostas</string>
+
+    <string name="event_kind_1621">Problemas</string>
+
+    <string name="event_kind_1617">Comentário</string>
+
+    <string name="event_kind_64">Xadrez (PGN)</string>
+
+    <string name="event_kind_818">Solicitações de merge</string>
+
+    <string name="event_kind_1018">Resposta da Enquete</string>
+
+    <string name="event_kind_17">Reação a um site</string>
+
+    <string name="event_kind_20">Foto</string>
+
+    <string name="event_kind_38383">Pedido de evento peer-to-peer</string>
+
+    <string name="event_kind_37375">Evento Carteira Cashu</string>
+
+    <string name="event_kind_34236">Evento de vídeo de retrato em formato curto</string>
+
+    <string name="event_kind_34235">Evento de vídeo</string>
+
+    <string name="event_kind_10000300">Evento de autorização de carteira do Primal</string>
+
+    <string name="event_kind_39089">Pacotes Iniciais</string>
+
+    <string name="event_kind_39092">Pacotes iniciais de mídia</string>
+
+    <string name="event_kind_10020">Conjunto de mídia</string>
+
+    <string name="event_kind_443">KeyPackage</string>
+
+    <string name="event_kind_10051">Lista de relay KeyPackage</string>
+
+    <string name="event_kind_444">Bem-vindo</string>
+
+    <string name="event_kind_445">Grupo</string>
+
+    <string name="remove_all_message">Tem certeza que deseja remover todas as permissões deste aplicativo?</string>
+
+    <string name="network_permission_message">Falha ao se conectar a relay/proxy. Verifique se você ativou a permissão de rede para o Amber</string>
+
+    <string name="event_kind_14">Mensagem direta</string>
+
+    <string name="event_kind_25050"></string>
+
+    <string name="event_kind_9733">Zap privado</string>
+
+    <string name="event_kind_10101">Bons autores da wiki</string>
+
+    <string name="event_kind_10102"></string>
+</resources>

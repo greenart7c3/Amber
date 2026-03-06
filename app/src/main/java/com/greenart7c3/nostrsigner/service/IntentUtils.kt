@@ -766,6 +766,14 @@ object IntentUtils {
                         kind,
                         TimeUtils.now(),
                         true,
+                        content = when (intentData.type) {
+                            SignerType.SIGN_EVENT -> event
+                            SignerType.NIP04_DECRYPT,
+                            SignerType.NIP44_DECRYPT,
+                            SignerType.DECRYPT_ZAP_EVENT,
+                            -> value
+                            else -> intentData.data
+                        },
                     ),
                     account.npub,
                 )
@@ -905,6 +913,7 @@ object IntentUtils {
                     kind,
                     TimeUtils.now(),
                     false,
+                    content = intentData.data,
                 ),
                 account.npub,
             )

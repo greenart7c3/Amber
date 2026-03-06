@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldState
@@ -28,6 +29,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -43,14 +45,17 @@ import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.components.EventSection
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
+import com.greenart7c3.nostrsigner.ui.components.TagsSection
+import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -147,6 +152,15 @@ fun ActivitiesScreen(
 
 @Composable
 fun ActivityRow(activity: HistoryEntity, account: Account) {
+    val clipboard = LocalClipboard.current
+    val parsedEvent = remember(activity.content) {
+        if (activity.content.isBlank()) {
+            null
+        } else {
+            runCatching { AmberEvent.fromJson(activity.content).toEvent() }.getOrNull()
+        }
+    }
+
     Column {
         Row(
             modifier = Modifier
@@ -161,7 +175,6 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                 ApplicationName(
                     key = activity.pkKey,
                     accepted = activity.accepted,
-                    database = Amber.instance.getDatabase(account.npub),
                     account = account,
                 )
 
@@ -171,6 +184,45 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                     overflow = TextOverflow.Ellipsis,
                     color = if (activity.accepted) Color.Unspecified else Color.Gray,
                 )
+
+                if (parsedEvent != null) {
+                    if (parsedEvent.content.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
+                        EventSection(
+                            padding = 0.dp,
+                            label = stringResource(R.string.content),
+                            displayValue = parsedEvent.content,
+                            onCopy = { copyToClipboard(clipboard, parsedEvent.content) },
+                        )
+                    }
+                    if (parsedEvent.tags.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
+                        TagsSection(
+                            horizontalPadding = 0,
+                            verticalPadding = 0,
+                            label = stringResource(R.string.tags),
+                            tags = parsedEvent.tags,
+                            onCopy = {
+                                copyToClipboard(
+                                    clipboard,
+                                    parsedEvent.tags.joinToString(separator = ", ") {
+                                        "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
+                                    },
+                                )
+                            },
+                        )
+                    }
+                } else if (activity.content.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = activity.content,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 14.sp,
+                        color = if (activity.accepted) Color.Unspecified else Color.Gray,
+                    )
+                }
 
                 Text(
                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
@@ -197,7 +249,6 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
 fun ApplicationName(
     key: String,
     accepted: Boolean,
-    database: AppDatabase,
     account: Account,
 ) {
     var name by remember { mutableStateOf("") }
@@ -205,7 +256,7 @@ fun ApplicationName(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             if (ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] == null) {
-                val app = database.dao().getByKey(key)
+                val app = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
                 app?.let {
                     name = it.application.name
                     ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] = it.application.name

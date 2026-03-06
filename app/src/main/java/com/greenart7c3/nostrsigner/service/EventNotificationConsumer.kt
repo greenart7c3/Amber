@@ -243,6 +243,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             amberEvent?.kind,
                             TimeUtils.now(),
                             true,
+                            content = amberEvent?.content ?: "",
                         ),
                         acc.npub,
                     )

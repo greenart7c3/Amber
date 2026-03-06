@@ -364,6 +364,14 @@ object BunkerRequestUtils {
                     kind,
                     TimeUtils.now(),
                     true,
+                    content = when (type) {
+                        SignerType.SIGN_EVENT,
+                        SignerType.NIP04_DECRYPT,
+                        SignerType.NIP44_DECRYPT,
+                        SignerType.DECRYPT_ZAP_EVENT,
+                        -> response
+                        else -> getDataFromBunker(bunkerRequest.request)
+                    },
                 ),
                 account.npub,
             )
@@ -486,6 +494,7 @@ object BunkerRequestUtils {
                         null,
                         TimeUtils.now(),
                         false,
+                        content = getDataFromBunker(bunkerRequest.request),
                     ),
                     account.npub,
                 )

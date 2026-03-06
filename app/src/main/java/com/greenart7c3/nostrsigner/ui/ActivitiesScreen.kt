@@ -54,10 +54,9 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.EventSection
+import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 import com.greenart7c3.nostrsigner.ui.components.TagsSection
 import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
-import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
-import com.vitorpamplona.quartz.nip01Core.core.Event
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 

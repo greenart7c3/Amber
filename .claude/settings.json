@@ -9,17 +9,6 @@
           }
         ]
       }
-    ],
-    "PreToolUse": [
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "/bin/bash .claude/hooks/pre-tool-use.sh"
-          }
-        ]
-      }
     ]
   }
 }

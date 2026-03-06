@@ -176,7 +176,6 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                 ApplicationName(
                     key = activity.pkKey,
                     accepted = activity.accepted,
-                    database = Amber.instance.getDatabase(account.npub),
                     account = account,
                 )
 
@@ -251,7 +250,6 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
 fun ApplicationName(
     key: String,
     accepted: Boolean,
-    database: AppDatabase,
     account: Account,
 ) {
     var name by remember { mutableStateOf("") }
@@ -259,7 +257,7 @@ fun ApplicationName(
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             if (ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] == null) {
-                val app = database.dao().getByKey(key)
+                val app = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
                 app?.let {
                     name = it.application.name
                     ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] = it.application.name

@@ -111,6 +111,7 @@ class SignerProvider : ContentProvider() {
                                     null,
                                     TimeUtils.now(),
                                     false,
+                                    content = message,
                                 ),
                                 account.npub,
                             )
@@ -133,6 +134,7 @@ class SignerProvider : ContentProvider() {
                                 null,
                                 TimeUtils.now(),
                                 true,
+                                content = message,
                             ),
                             account.npub,
                         )
@@ -209,6 +211,7 @@ class SignerProvider : ContentProvider() {
                                     event.kind,
                                     TimeUtils.now(),
                                     false,
+                                    content = event.content,
                                 ),
                                 account.npub,
                             )
@@ -233,6 +236,7 @@ class SignerProvider : ContentProvider() {
                                 event.kind,
                                 TimeUtils.now(),
                                 true,
+                                content = event.content,
                             ),
                             account.npub,
                         )
@@ -309,6 +313,7 @@ class SignerProvider : ContentProvider() {
                                     null,
                                     TimeUtils.now(),
                                     false,
+                                    content = content,
                                 ),
                                 account.npub,
                             )
@@ -366,6 +371,7 @@ class SignerProvider : ContentProvider() {
                                 null,
                                 TimeUtils.now(),
                                 true,
+                                content = content,
                             ),
                             account.npub,
                         )

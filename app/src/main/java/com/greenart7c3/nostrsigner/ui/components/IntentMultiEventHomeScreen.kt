@@ -409,6 +409,7 @@ fun IntentMultiEventHomeScreen(
                                             localEvent.kind,
                                             TimeUtils.now(),
                                             intentData.checked.value,
+                                            content = localEvent.content,
                                         ),
                                         thisAccount.npub,
                                     )
@@ -462,6 +463,7 @@ fun IntentMultiEventHomeScreen(
                                             null,
                                             TimeUtils.now(),
                                             intentData.checked.value,
+                                            content = intentData.data,
                                         ),
                                         thisAccount.npub,
                                     )
@@ -501,6 +503,7 @@ fun IntentMultiEventHomeScreen(
                                             null,
                                             TimeUtils.now(),
                                             intentData.checked.value,
+                                            content = intentData.data,
                                         ),
                                         thisAccount.npub,
                                     )

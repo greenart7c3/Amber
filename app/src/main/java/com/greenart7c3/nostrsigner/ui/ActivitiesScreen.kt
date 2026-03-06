@@ -172,6 +172,17 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                     color = if (activity.accepted) Color.Unspecified else Color.Gray,
                 )
 
+                if (activity.content.isNotBlank()) {
+                    Text(
+                        modifier = Modifier.padding(top = 2.dp),
+                        text = activity.content,
+                        maxLines = 3,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 14.sp,
+                        color = if (activity.accepted) Color.Unspecified else Color.Gray,
+                    )
+                }
+
                 Text(
                     modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
                     text = TimeUtils.formatLongToCustomDateTimeWithSeconds(activity.time * 1000),

@@ -766,6 +766,7 @@ object IntentUtils {
                         kind,
                         TimeUtils.now(),
                         true,
+                        content = intentData.data,
                     ),
                     account.npub,
                 )
@@ -905,6 +906,7 @@ object IntentUtils {
                     kind,
                     TimeUtils.now(),
                     false,
+                    content = intentData.data,
                 ),
                 account.npub,
             )

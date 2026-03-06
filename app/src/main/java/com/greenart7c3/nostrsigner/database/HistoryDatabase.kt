@@ -15,11 +15,17 @@ val migration_1_2 = object : Migration(1, 2) {
     }
 }
 
+val migration_2_3 = object : Migration(2, 3) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE history ADD COLUMN content TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 @Database(
     entities = [
         HistoryEntity::class,
     ],
-    version = 2,
+    version = 3,
 )
 @TypeConverters(Converters::class)
 abstract class HistoryDatabase : RoomDatabase() {
@@ -41,7 +47,7 @@ abstract class HistoryDatabase : RoomDatabase() {
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
-                    .addMigrations(migration_1_2)
+                    .addMigrations(migration_1_2, migration_2_3)
                     .build()
 
             instance

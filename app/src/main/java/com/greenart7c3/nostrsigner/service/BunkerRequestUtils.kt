@@ -364,6 +364,7 @@ object BunkerRequestUtils {
                     kind,
                     TimeUtils.now(),
                     true,
+                    content = getDataFromBunker(bunkerRequest.request),
                 ),
                 account.npub,
             )
@@ -486,6 +487,7 @@ object BunkerRequestUtils {
                         null,
                         TimeUtils.now(),
                         false,
+                        content = getDataFromBunker(bunkerRequest.request),
                     ),
                     account.npub,
                 )

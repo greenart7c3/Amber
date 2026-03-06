@@ -398,6 +398,7 @@ fun BunkerMultiEventHomeScreen(
                                             kind = localEvent.kind,
                                             time = TimeUtils.now(),
                                             accepted = request.checked.value,
+                                            content = localEvent.content,
                                         ),
                                         thisAccount.npub,
                                     )
@@ -451,6 +452,7 @@ fun BunkerMultiEventHomeScreen(
                                             null,
                                             TimeUtils.now(),
                                             request.checked.value,
+                                            content = request.request.params.first(),
                                         ),
                                         thisAccount.npub,
                                     )
@@ -495,6 +497,7 @@ fun BunkerMultiEventHomeScreen(
                                                 null,
                                                 TimeUtils.now(),
                                                 request.checked.value,
+                                                content = "",
                                             ),
                                             thisAccount.npub,
                                         )
@@ -550,6 +553,7 @@ fun BunkerMultiEventHomeScreen(
                                             null,
                                             TimeUtils.now(),
                                             request.checked.value,
+                                            content = request.request.params.getOrElse(1) { "" },
                                         ),
                                         thisAccount.npub,
                                     )

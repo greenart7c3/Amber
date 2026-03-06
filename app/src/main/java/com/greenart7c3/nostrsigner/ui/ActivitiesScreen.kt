@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.input.TextFieldState
@@ -189,14 +190,19 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
 
                 if (parsedEvent != null) {
                     if (parsedEvent.content.isNotBlank()) {
+                        Spacer(Modifier.height(4.dp))
                         EventSection(
+                            padding = 0.dp,
                             label = stringResource(R.string.content),
                             displayValue = parsedEvent.content,
                             onCopy = { copyToClipboard(clipboard, parsedEvent.content) },
                         )
                     }
                     if (parsedEvent.tags.isNotEmpty()) {
+                        Spacer(Modifier.height(4.dp))
                         TagsSection(
+                            horizontalPadding = 0,
+                            verticalPadding = 0,
                             label = stringResource(R.string.tags),
                             tags = parsedEvent.tags,
                             onCopy = {
@@ -210,6 +216,7 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                         )
                     }
                 } else if (activity.content.isNotBlank()) {
+                    Spacer(Modifier.height(4.dp))
                     Text(
                         modifier = Modifier.padding(top = 2.dp),
                         text = activity.content,

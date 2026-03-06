@@ -24,7 +24,6 @@ import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
-import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
@@ -45,6 +44,12 @@ import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.lang.ref.WeakReference
+import java.net.InetSocketAddress
+import java.net.Socket
+import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.TimeUnit
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -53,12 +58,6 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
-import java.lang.ref.WeakReference
-import java.net.InetSocketAddress
-import java.net.Socket
-import java.util.concurrent.ConcurrentHashMap
-import java.util.concurrent.TimeUnit
-import kotlin.coroutines.cancellation.CancellationException
 
 class Amber :
     Application(),
@@ -120,6 +119,7 @@ class Amber :
     val isOnWifiDataState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
     private val isStartingApp = MutableStateFlow(false)
+
     @Volatile var intentionalDisconnectTime = 0L
     val isStartingAppState = isStartingApp
     val notificationCache = LruCache<String, Long>(10)

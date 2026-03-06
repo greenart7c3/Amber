@@ -215,7 +215,7 @@ fun MainScreen(
                 Route.IncomingRequest.route
             } else {
                 route.value ?: if (intents.isEmpty() && bunkerRequests.isEmpty()) Route.Applications.route else Route.IncomingRequest.route
-            }
+            },
         )
     }
     LaunchedEffect(Unit, route.value, intents, bunkerRequests, isExternalRequest) {
@@ -792,7 +792,7 @@ fun MainScreen(
                                 .padding(top = verticalPadding * 1.5f),
                             onBack = {
                                 navController.popBackStack()
-                            }
+                            },
                         )
                     },
                 )

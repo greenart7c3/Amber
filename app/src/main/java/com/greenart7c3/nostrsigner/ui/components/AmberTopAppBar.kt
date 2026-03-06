@@ -47,10 +47,10 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import java.util.Base64
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.util.Base64
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

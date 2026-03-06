@@ -968,7 +968,6 @@ fun LoginPage(
                                                     isLoading = false
                                                 }
                                             }
-
                                         }
                                     },
                                 ),
@@ -1053,7 +1052,6 @@ fun LoginPage(
                                                         isLoading = false
                                                     }
                                                 }
-
                                             }
                                         },
                                     ),

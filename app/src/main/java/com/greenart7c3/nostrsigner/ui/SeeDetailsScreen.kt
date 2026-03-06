@@ -44,7 +44,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 @Composable
 fun SeeDetailsScreen(
     modifier: Modifier = Modifier,
-    onBack: () -> Unit
+    onBack: () -> Unit,
 ) {
     val context = LocalContext.current
     Column(
@@ -54,7 +54,7 @@ fun SeeDetailsScreen(
         Column(
             Modifier
                 .weight(1f)
-                .verticalScroll(rememberScrollState())
+                .verticalScroll(rememberScrollState()),
         ) {
             var rememberType by remember { mutableStateOf(MultiEventScreenIntents.intents.firstOrNull()?.rememberType?.value ?: MultiEventScreenIntents.bunkerRequests.first().rememberType.value) }
             val type = if (MultiEventScreenIntents.intents.isNotEmpty()) {
@@ -240,7 +240,7 @@ fun SeeDetailsScreen(
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
             text = stringResource(R.string.go_back),
-            onClick = onBack
+            onClick = onBack,
         )
     }
 }

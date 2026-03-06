@@ -100,7 +100,7 @@ class SignerActivity : AppCompatActivity() {
                             sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                             containerColor = MaterialTheme.colorScheme.background,
                             scrimColor = Color.Transparent,
-                            dragHandle = { BottomSheetDefaults.DragHandle() }
+                            dragHandle = { BottomSheetDefaults.DragHandle() },
                         ) {
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),
@@ -157,7 +157,7 @@ class SignerActivity : AppCompatActivity() {
                                         mainViewModel = mainViewModel,
                                         bunkerRequests = bunkerRequests.value,
                                         navController = navController,
-                                        isExternalRequest = true
+                                        isExternalRequest = true,
                                     )
                                 }
                             }

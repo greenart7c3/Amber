@@ -99,6 +99,7 @@ fun Context.hasStrongBox(): Boolean {
         Build.BOARD.lowercase().contains("mt") ||
         (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S && Build.SOC_MANUFACTURER.lowercase().contains("mediatek")) // usually mediatek contains broken strongbox support
 
-    return !isMediaTek && Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
+    return !isMediaTek &&
+        Build.VERSION.SDK_INT >= Build.VERSION_CODES.P &&
         packageManager.hasSystemFeature(PackageManager.FEATURE_STRONGBOX_KEYSTORE)
 }

@@ -37,16 +37,16 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
         modifier = modifier
             .fillMaxWidth()
             .padding(vertical = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Text(
             text = stringResource(R.string.signing_as),
             style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row(
             modifier = Modifier.padding(top = 4.dp),
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             val profileUrl by account.picture.collectAsStateWithLifecycle()
             if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
@@ -68,7 +68,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
                                     CircleShape,
                                 )
                                 .height(30.dp)
-                                .width(30.dp)
+                                .width(30.dp),
                         )
                     },
                 )
@@ -83,7 +83,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
                             CircleShape,
                         )
                         .height(30.dp)
-                        .width(30.dp)
+                        .width(30.dp),
                 )
             }
 
@@ -92,7 +92,7 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
                 modifier = Modifier.padding(start = 8.dp),
                 text = name.ifBlank { account.npub.toShortenHex() },
                 fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium
+                style = MaterialTheme.typography.bodyMedium,
             )
         }
     }

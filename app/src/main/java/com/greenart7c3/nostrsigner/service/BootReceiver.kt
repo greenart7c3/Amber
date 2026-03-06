@@ -16,7 +16,8 @@ class BootReceiver : BroadcastReceiver() {
 
         when (intent.action) {
             Intent.ACTION_MY_PACKAGE_REPLACED,
-            Intent.ACTION_BOOT_COMPLETED -> {
+            Intent.ACTION_BOOT_COMPLETED,
+            -> {
                 Log.d(Amber.TAG, "Received ${intent.action}")
                 Amber.instance.applicationIOScope.launch {
                     Amber.instance.isStartingAppState.first { !it }

@@ -2,7 +2,9 @@ package com.greenart7c3.nostrsigner.relays
 
 import android.app.NotificationManager
 import android.content.Context
+import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -13,8 +15,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
-import android.util.Log
-import com.greenart7c3.nostrsigner.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay

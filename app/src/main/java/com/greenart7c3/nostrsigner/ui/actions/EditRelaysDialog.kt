@@ -58,8 +58,8 @@ import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
-import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.RelayCard
+import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.vitorpamplona.quartz.nip01Core.core.Event

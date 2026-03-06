@@ -23,6 +23,7 @@ import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
 import coil3.request.ErrorResult
 import coil3.request.ImageRequest
 import coil3.request.SuccessResult
@@ -412,10 +413,16 @@ class Amber :
             .directory((context as Context).cacheDir.resolve("coil_image_cache").toOkioPath())
             .maxSizeBytes(10 * 1024 * 1024) // 10 MB
             .build()
+        val coilCallFactory = okhttp3.Call.Factory { request ->
+            val url = request.url.toString()
+            val useProxy = if (isPrivateIp(url)) false else settings.useProxy
+            HttpClientManager.getHttpClient(useProxy).newCall(request)
+        }
         return ImageLoader.Builder(context)
             .memoryCache { memCache }
             .diskCache { diskCache }
             .crossfade(true)
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { coilCallFactory })) }
             .eventListener(
                 object : EventListener() {
                     override fun onStart(request: ImageRequest) {

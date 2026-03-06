@@ -45,7 +45,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils

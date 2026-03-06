@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.relays
 
-import android.annotation.SuppressLint
 import android.app.NotificationManager
 import android.content.Context
 import com.greenart7c3.nostrsigner.Amber
@@ -14,6 +13,8 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
+import android.util.Log
+import com.greenart7c3.nostrsigner.BuildConfig
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -51,6 +52,7 @@ class NostrClientLoggerListener(
     private var reconnectJob: Job? = null
 
     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
+        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onCannotConnect: ${relay.url.url} error: $errorMessage")
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
@@ -68,6 +70,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
+        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onSent: ${relay.url.url} success: $success cmd: $cmdStr")
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
@@ -95,6 +98,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onIncomingMessage: ${relay.url.url} msg: $msgStr")
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
@@ -117,6 +121,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onDisconnected(relay: IRelayClient) {
+        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onDisconnected: ${relay.url.url}")
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
@@ -131,6 +136,7 @@ class NostrClientLoggerListener(
             }
         }
         if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
+            if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onDisconnected: ${relay.url.url} intentional, skipping reconnect")
             super.onDisconnected(relay)
             return
         }
@@ -145,6 +151,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onConnecting(relay: IRelayClient) {
+        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onConnecting: ${relay.url.url}")
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(
@@ -162,6 +169,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
+        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onConnected: ${relay.url.url} ping: ${pingMillis}ms compressed: $compressed")
         scope.launch {
             LocalPreferences.currentAccount(context)?.let { account ->
                 Amber.instance.getLogDatabase(account).dao().insertLog(

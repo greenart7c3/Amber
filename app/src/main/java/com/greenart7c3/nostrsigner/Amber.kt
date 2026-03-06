@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner
 import android.app.AlarmManager
 import android.app.Application
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.util.Log
@@ -16,6 +17,12 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.request.crossfade
+import coil3.SingletonImageLoader
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
@@ -33,6 +40,7 @@ import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
+import okio.Path.Companion.toOkioPath
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
@@ -61,7 +69,8 @@ import kotlinx.coroutines.launch
 
 class Amber :
     Application(),
-    LifecycleObserver {
+    LifecycleObserver,
+    SingletonImageLoader.Factory {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
 
@@ -390,6 +399,22 @@ class Amber :
         url.contains("172.29.") ||
         url.contains("172.30.") ||
         url.contains("172.31.")
+
+    override fun newImageLoader(context: PlatformContext): ImageLoader =
+        ImageLoader.Builder(context)
+            .memoryCache {
+                MemoryCache.Builder()
+                    .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
+                    .build()
+            }
+            .diskCache {
+                DiskCache.Builder()
+                    .directory((context as Context).cacheDir.resolve("coil_image_cache").toOkioPath())
+                    .maxSizeBytes(10 * 1024 * 1024) // 10 MB
+                    .build()
+            }
+            .crossfade(true)
+            .build()
 
     override fun onTerminate() {
         super.onTerminate()

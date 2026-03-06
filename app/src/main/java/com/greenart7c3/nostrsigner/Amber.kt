@@ -16,6 +16,17 @@ import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import coil3.EventListener
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.disk.DiskCache
+import coil3.memory.MemoryCache
+import coil3.network.okhttp.OkHttpNetworkFetcherFactory
+import coil3.request.ErrorResult
+import coil3.request.ImageRequest
+import coil3.request.SuccessResult
+import coil3.request.crossfade
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
@@ -58,10 +69,12 @@ import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import okio.Path.Companion.toOkioPath
 
 class Amber :
     Application(),
-    LifecycleObserver {
+    LifecycleObserver,
+    SingletonImageLoader.Factory {
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
 
@@ -390,6 +403,51 @@ class Amber :
         url.contains("172.29.") ||
         url.contains("172.30.") ||
         url.contains("172.31.")
+
+    override fun newImageLoader(context: PlatformContext): ImageLoader {
+        val memCache = MemoryCache.Builder()
+            .maxSizeBytes(32 * 1024 * 1024) // 32 MB cap to prevent DMA-BUF OOM
+            .build()
+        val diskCache = DiskCache.Builder()
+            .directory(context.cacheDir.resolve("coil_image_cache").toOkioPath())
+            .maxSizeBytes(10 * 1024 * 1024) // 10 MB
+            .build()
+        val coilCallFactory = okhttp3.Call.Factory { request ->
+            val url = request.url.toString()
+            val useProxy = if (isPrivateIp(url)) false else settings.useProxy
+            HttpClientManager.getHttpClient(useProxy).newCall(request)
+        }
+        return ImageLoader.Builder(context)
+            .memoryCache { memCache }
+            .diskCache { diskCache }
+            .crossfade(true)
+            .components { add(OkHttpNetworkFetcherFactory(callFactory = { coilCallFactory })) }
+            .eventListener(
+                object : EventListener() {
+                    override fun onStart(request: ImageRequest) {
+                        Log.d(TAG, "Coil: loading ${request.data}")
+                    }
+
+                    override fun onSuccess(request: ImageRequest, result: SuccessResult) {
+                        Log.d(
+                            TAG,
+                            "Coil: loaded ${request.data} from ${result.dataSource}" +
+                                " | mem=${memCache.size / 1024}/${memCache.maxSize / 1024} KB" +
+                                " | disk=${diskCache.size / 1024}/${diskCache.maxSize / 1024} KB",
+                        )
+                    }
+
+                    override fun onError(request: ImageRequest, result: ErrorResult) {
+                        Log.w(TAG, "Coil: error loading ${request.data}", result.throwable)
+                    }
+
+                    override fun onCancel(request: ImageRequest) {
+                        Log.d(TAG, "Coil: cancelled ${request.data}")
+                    }
+                },
+            )
+            .build()
+    }
 
     override fun onTerminate() {
         super.onTerminate()

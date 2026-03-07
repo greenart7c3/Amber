@@ -88,7 +88,6 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
-import androidx.navigation.NavHostController
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
@@ -102,7 +101,6 @@ import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
@@ -119,7 +117,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AccountBackupScreen(
     modifier: Modifier,
-    navController: NavHostController,
+    onShowQrCode: (String) -> Unit,
 ) {
     var isLoading by remember { mutableStateOf(false) }
 
@@ -183,7 +181,7 @@ fun AccountBackupScreen(
                             password = password.value.text,
                             seedWords = seedWords,
                             onLoading = { isLoading = it },
-                            navController = navController,
+                            onShowQrCode = onShowQrCode,
                         )
                         Spacer(modifier = Modifier.height(12.dp))
                     }
@@ -330,7 +328,7 @@ private fun AccountBackupCard(
     password: String,
     seedWords: String,
     onLoading: (Boolean) -> Unit,
-    navController: NavHostController,
+    onShowQrCode: (String) -> Unit,
 ) {
     val profileUrl = account.picture.collectAsState()
     val name = account.name.collectAsState()
@@ -429,7 +427,7 @@ private fun AccountBackupCard(
                     modifier = Modifier.weight(1f),
                     onLoading = onLoading,
                     onBackupDone = { didBackup = true },
-                    navController = navController,
+                    onShowQrCode = onShowQrCode,
                 )
             }
 
@@ -453,7 +451,7 @@ private fun NSecQrButton(
     modifier: Modifier = Modifier,
     onLoading: (Boolean) -> Unit,
     onBackupDone: () -> Unit,
-    navController: NavHostController,
+    onShowQrCode: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -485,9 +483,7 @@ private fun NSecQrButton(
                     val ncryptsec = account.nip49Encrypt(password)
                     account.didBackup = true
                     onBackupDone()
-                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                        navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
-                    }
+                    onShowQrCode(ncryptsec)
                     onLoading(false)
                 }
             } else {
@@ -514,9 +510,7 @@ private fun NSecQrButton(
                             val ncryptsec = account.nip49Encrypt(password)
                             account.didBackup = true
                             onBackupDone()
-                            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                navController.navigate(Route.QrCode.route.replace("{content}", ncryptsec))
-                            }
+                            onShowQrCode(ncryptsec)
                             onLoading(false)
                         }
                     } else {

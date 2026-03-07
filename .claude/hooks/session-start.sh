@@ -51,6 +51,12 @@ systemProp.http.proxyPassword=$pass
 # Override nonProxyHosts: route all external traffic (incl. *.google.com) through proxy
 systemProp.http.nonProxyHosts=localhost|127.0.0.1
 systemProp.https.nonProxyHosts=localhost|127.0.0.1
+# Use Ubuntu's Java trust store (includes Anthropic TLS inspection CA) for all Gradle JVMs.
+# This is needed because Gradle may download a custom JDK (e.g. JetBrains) whose bundled
+# trust store doesn't include the Anthropic CA, causing TLS inspection failures.
+systemProp.javax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts
+systemProp.javax.net.ssl.trustStoreType=JKS
+systemProp.javax.net.ssl.trustStorePassword=changeit
 EOF
 
   echo "Configured Maven/Gradle proxy from HTTPS_PROXY" >&2

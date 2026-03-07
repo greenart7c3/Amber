@@ -1,5 +1,6 @@
 plugins {
     alias(libs.plugins.androidLibrary)
+    alias(libs.plugins.kotlinAndroid)
     id 'maven-publish'
 }
 
@@ -79,11 +80,19 @@ android {
             'zh-rTW'
     ]
 
+    kotlinOptions {
+        jvmTarget = '21'
+    }
+
     publishing {
         singleVariant('release') {
             withSourcesJar()
         }
     }
+}
+
+dependencies {
+    implementation libs.quartz
 }
 
 publishing {

@@ -24,7 +24,6 @@
     <string name="login">Login</string>
     <string name="generate_a_new_key">Generate a new key</string>
     <string name="backup_keys">Backup Keys</string>
-    <string name="read_your_public_key">Read your public key</string>
     <string name="remember_my_choice_and_don_t_ask_again">Remember my choice and don\'t ask again</string>
     <string name="reject">Reject</string>
     <string name="accept">Accept</string>

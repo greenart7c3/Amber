@@ -89,3 +89,4 @@ gradle_ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "ktlint" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin_ksp = { id = "com.google.devtools.ksp", version = "ksp" }
 jetbrainsComposeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinAndroid = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }

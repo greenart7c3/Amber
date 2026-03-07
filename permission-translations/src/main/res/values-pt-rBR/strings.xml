@@ -356,4 +356,156 @@
     <string name="event_kind_10101">Bons autores da wiki</string>
 
     <string name="event_kind_10102"></string>
+
+    <string name="read_your_public_key">Ler sua chave pública</string>
+
+    <string name="encrypt_data_using_nip_4">Criptografar dados usando nip 4</string>
+
+    <string name="decrypt_data_using_nip_4">Descriptografar dados usando nip 4</string>
+
+    <string name="decrypt_data_using_nip_44">Descriptografar dados usando nip 44</string>
+
+    <string name="encrypt_data_using_nip_44">Criptografar dados usando nip 44</string>
+
+    <string name="decrypt_private_zaps">Descriptografar zaps privados</string>
+
+    <string name="connect">Conectar</string>
+
+    <string name="sign_message">Assinar a mensagem</string>
+
+    <string name="nip_kind">Nip %1$s</string>
+
+    <string name="nip_01">Descrição do fluxo de protocolo básico</string>
+
+    <string name="nip_02">Lista de seguidores</string>
+
+    <string name="nip_03">Atestados OpenTimestamps para eventos</string>
+
+    <string name="nip_04">Mensagens diretas criptografadas</string>
+
+    <string name="nip_05">Mapeando as chaves Nostr para identificadores de internet baseados em DNS</string>
+
+    <string name="nip_06">Derivação básica da seed phrase</string>
+
+    <string name="nip_07">window.nostr recurso para navegadores da web</string>
+
+    <string name="nip_08">Tratamento de Menções</string>
+
+    <string name="nip_09">Evento de exclusão</string>
+
+    <string name="nip_10">Convenções para clientes</string>
+
+    <string name="nip_11">Documento de informação do Relay</string>
+
+    <string name="nip_13">Prova de Trabalho</string>
+
+    <string name="nip_14">Tag de assunto em eventos de texto</string>
+
+    <string name="nip_15">Nostr Marketplace (para mercados resilientes)</string>
+
+    <string name="nip_17">Mensagens Diretas Privadas</string>
+
+    <string name="nip_18">Reposts</string>
+
+    <string name="nip_19">entidades codificadas por bech32</string>
+
+    <string name="nip_21">nostr: URI scheme</string>
+
+    <string name="nip_23">Conteúdo de longa forma</string>
+
+    <string name="nip_24">Campos e tags extras de metadados</string>
+
+    <string name="nip_25">Reações</string>
+
+    <string name="nip_26">Assinatura de Evento Delegado</string>
+
+    <string name="nip_27">Referências de notas de texto</string>
+
+    <string name="nip_28">Chat Público</string>
+
+    <string name="nip_29">Grupos baseados em Relays</string>
+
+    <string name="nip_30">Emoji personalizado</string>
+
+    <string name="nip_31">Lidando com eventos desconhecidos</string>
+
+    <string name="nip_32">Rotulagem</string>
+
+    <string name="nip_34">coisas do git</string>
+
+    <string name="nip_35">Torrents</string>
+
+    <string name="nip_36">Conteúdo sensível</string>
+
+    <string name="nip_38">Status do usuário.</string>
+
+    <string name="nip_39">Identidades externas em Perfis</string>
+
+    <string name="nip_40">Data de expiração</string>
+
+    <string name="nip_42">Autenticação de clientes para relays</string>
+
+    <string name="nip_44">Criptografia versionada</string>
+
+    <string name="nip_45">Resultados da contagem</string>
+
+    <string name="nip_46">Nostr Connect</string>
+
+    <string name="nip_47">Wallet Connect</string>
+
+    <string name="nip_48">Tags Proxy</string>
+
+    <string name="nip_49">Criptografia de chave privada</string>
+
+    <string name="nip_50">Capacidade de pesquisa</string>
+
+    <string name="nip_51">Listas</string>
+
+    <string name="nip_52">Eventos de calendário</string>
+
+    <string name="nip_53">Atividades ao vivo</string>
+
+    <string name="nip_54">Wiki</string>
+
+    <string name="nip_55">Aplicativo Android Signer</string>
+
+    <string name="nip_56">Denúncia</string>
+
+    <string name="nip_57">Zaps Lightning</string>
+
+    <string name="nip_58">Emblemas</string>
+
+    <string name="nip_59">Gift Wrap</string>
+
+    <string name="nip_65">Metadados da lista de Relay</string>
+
+    <string name="nip_70">Eventos protegidos</string>
+
+    <string name="nip_71">Eventos de Vídeo</string>
+
+    <string name="nip_72">Comunidades Moderadas</string>
+
+    <string name="nip_75">Metas do Zap</string>
+
+    <string name="nip_78">Dados específicos da aplicação</string>
+
+    <string name="nip_84">Destaques</string>
+
+    <string name="nip_89">Manipuladores de aplicativos recomendados</string>
+
+    <string name="nip_90">Máquinas de venda de dados</string>
+
+    <string name="nip_92">Anexos de mídia</string>
+
+    <string name="nip_94">Metadados de arquivos</string>
+
+    <string name="nip_96">Integração de armazenamento de arquivos HTTP</string>
+
+    <string name="nip_98">Autenticação HTTP</string>
+
+    <string name="nip_99">Anúncio classificado</string>
+
+    <string name="nip_not_found">Nip %1$s não encontrada</string>
+
+    <string name="nip_not_found_for_the_event_kind">Nip não foi encontrada para o tipo de evento %1$s</string>
 </resources>

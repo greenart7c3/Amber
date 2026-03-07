@@ -13,7 +13,7 @@ import com.fasterxml.jackson.databind.deser.std.StdDeserializer
 import com.fasterxml.jackson.databind.module.SimpleModule
 import com.fasterxml.jackson.databind.ser.std.StdSerializer
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
-import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.permissiontranslations.R
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.Companion.defaultPrettyPrinter
 
 data class Permission(

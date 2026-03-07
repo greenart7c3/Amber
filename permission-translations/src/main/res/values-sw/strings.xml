@@ -12,4 +12,6 @@
     <string name="grant_permissions">Grant Permissions</string>
 
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+
+    <string name="read_your_public_key">Read your public key</string>
 </resources>

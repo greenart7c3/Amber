@@ -20,15 +20,17 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun AmberToggles(
     selectedIndex: Int,
     count: Int,
+    segmentWidth: Dp = 55.dp,
     content: @Composable RowScope.() -> Unit,
 ) {
-    val fixedSegmentWidth = 55.dp
+    val fixedSegmentWidth = segmentWidth
     val padding = 2.dp
     val totalWidth = (fixedSegmentWidth * count) + (padding * 2)
 

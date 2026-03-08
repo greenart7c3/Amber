@@ -148,12 +148,20 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
     }
 }
 
+val MIGRATION_16_17 = object : Migration(16, 17) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `applicationPermission` ADD COLUMN `relay` TEXT NOT NULL DEFAULT ''")
+        db.execSQL("DROP INDEX IF EXISTS `permissions_unique`")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `permissions_unique` ON `applicationPermission` (`pkKey`, `type`, `kind`, `relay`)")
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
     ],
-    version = 16,
+    version = 17,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -190,6 +198,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_13_14)
                     .addMigrations(MIGRATION_14_15)
                     .addMigrations(MIGRATION_15_16)
+                    .addMigrations(MIGRATION_16_17)
                     .build()
 
             instance

@@ -18,7 +18,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -36,7 +35,6 @@ fun IncomingRequestScreen(
     packageName: String?,
     applicationName: String?,
     account: Account,
-    navController: NavController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
@@ -86,7 +84,6 @@ fun IncomingRequestScreen(
                 bunkerRequests = bunkerRequests,
                 packageName = packageName,
                 accountParam = account,
-                navController = navController,
                 onRemoveIntentData = onRemoveIntentData,
                 onLoading = onLoading,
             )

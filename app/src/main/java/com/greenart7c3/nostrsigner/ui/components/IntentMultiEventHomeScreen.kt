@@ -1,7 +1,10 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -11,6 +14,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -18,11 +26,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -41,11 +53,9 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
-import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -60,55 +70,15 @@ fun IntentMultiEventHomeScreen(
     intents: List<IntentData>,
     packageName: String?,
     accountParam: Account,
-    navController: NavController,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val groupedEventEncryptedData = intents.filter { it.encryptedData is EventEncryptedDataKind }.groupBy { it.type }
-    val groupedTextEncryptedData = intents.filter { it.encryptedData is ClearTextEncryptedDataKind }.groupBy { it.type }
-    val groupedTagArrayEncryptedData = intents.filter { it.encryptedData is TagArrayEncryptedDataKind }.groupBy { it.type }
-    val groupedPrivateZapEncryptedDataKind = intents.filter { it.encryptedData is PrivateZapEncryptedDataKind }.groupBy { it.type }
-    val groupedOthers = intents.filter { it.encryptedData == null && it.type != SignerType.SIGN_EVENT }.groupBy { it.type }
-    val groupedEvents = intents.filter { it.type == SignerType.SIGN_EVENT }.groupBy { it.event?.kind }
-    val acceptedGroupedEventEncryptedData = groupedEventEncryptedData.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-    val acceptedGroupedTextEncryptedData = groupedTextEncryptedData.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-    val acceptedGroupedTagArrayEncryptedData = groupedTagArrayEncryptedData.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-
-    val acceptedGroupedPrivateZapEncryptedDataKind = groupedPrivateZapEncryptedDataKind.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-
-    val acceptEventsGroupOthers = groupedOthers.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-
-    val acceptEventsGroup2 = groupedEvents.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
+    val hasRelayAuthEvents = intents.any { it.type == SignerType.SIGN_EVENT && it.event?.kind == 22242 }
     var localAccount by remember { mutableStateOf("") }
     val key = "$packageName"
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
-    val hasRelayAuthEvents = groupedEvents.keys.contains(22242)
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -156,83 +126,8 @@ fun IntentMultiEventHomeScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
-            groupedEventEncryptedData.toList().forEachIndexed { index, it ->
-                PermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedEventEncryptedData,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.intents = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedTextEncryptedData.toList().forEachIndexed { index, it ->
-                PermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedTextEncryptedData,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.intents = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedTagArrayEncryptedData.toList().forEachIndexed { index, it ->
-                PermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedTagArrayEncryptedData,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.intents = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedPrivateZapEncryptedDataKind.toList().forEachIndexed { index, it ->
-                PermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedPrivateZapEncryptedDataKind,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.intents = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedOthers.toList().forEachIndexed { index, it ->
-                PermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptEventsGroupOthers,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.intents = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedEvents.toList().forEachIndexed { index, it ->
-                PermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptEventsGroup2,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.intents = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
+            intents.forEach { intent ->
+                IntentRequestCard(context = context, intent = intent)
             }
         }
 
@@ -595,6 +490,116 @@ fun IntentMultiEventHomeScreen(
                     }
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun IntentRequestCard(context: Context, intent: IntentData) {
+    val type = intent.type
+    val permission = if (type == SignerType.SIGN_EVENT) {
+        Permission("sign_event", intent.event!!.kind)
+    } else {
+        Permission(type.toString().toLowerCase(Locale.current), null)
+    }
+
+    val label = if (type == SignerType.CONNECT) {
+        stringResource(R.string.connect)
+    } else {
+        val encryptedData = intent.encryptedData
+        if (type.toString().contains("ENCRYPT")) {
+            when (encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val p = Permission("sign_event", encryptedData.event.kind)
+                    stringResource(R.string.encrypt_with, p.toLocalizedString(context), type.toString().split("_").first())
+                }
+                is TagArrayEncryptedDataKind -> {
+                    stringResource(R.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
+                }
+                else -> stringResource(R.string.encrypt_this_text_with, type.toString().split("_").first())
+            }
+        } else if (type.toString().contains("DECRYPT")) {
+            when (encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val p = Permission("sign_event", encryptedData.event.kind)
+                    stringResource(R.string.read_from_encrypted_content, p.toLocalizedString(context), type.toString().split("_").first())
+                }
+                is TagArrayEncryptedDataKind -> {
+                    stringResource(R.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
+                }
+                is PrivateZapEncryptedDataKind -> {
+                    stringResource(R.string.decrypt_zap_event).capitalize(Locale.current)
+                }
+                else -> stringResource(R.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
+            }
+        } else {
+            permission.toLocalizedString(context)
+        }
+    }
+
+    val preview = if (type == SignerType.SIGN_EVENT) {
+        val event = intent.event!!
+        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
+    } else {
+        val encryptedData = intent.encryptedData
+        if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+            encryptedData.text
+        } else if (encryptedData is EventEncryptedDataKind) {
+            if (encryptedData.sealEncryptedDataKind != null) {
+                if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                    encryptedData.sealEncryptedDataKind.event.content
+                } else {
+                    encryptedData.sealEncryptedDataKind.result
+                }
+            } else {
+                encryptedData.event.content
+            }
+        } else if (encryptedData is TagArrayEncryptedDataKind) {
+            encryptedData.tagArray.joinToString(separator = ", ") {
+                "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
+            }
+        } else {
+            encryptedData?.result ?: ""
+        }
+    }
+
+    Card(
+        Modifier.padding(4.dp),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+        border = BorderStroke(1.dp, Color.Gray),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { intent.checked.value = !intent.checked.value },
+        ) {
+            Checkbox(
+                checked = intent.checked.value,
+                onCheckedChange = { intent.checked.value = !intent.checked.value },
+                colors = CheckboxDefaults.colors().copy(
+                    uncheckedBorderColor = Color.Gray,
+                ),
+            )
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(top = 8.dp, bottom = 8.dp, end = 8.dp),
+            ) {
+                Text(
+                    text = label,
+                    color = if (intent.checked.value) Color.Unspecified else Color.Gray,
+                )
+                if (preview.isNotBlank()) {
+                    Text(
+                        text = preview,
+                        color = Color.Gray,
+                        maxLines = 2,
+                    )
+                }
+            }
         }
     }
 }

@@ -1,5 +1,8 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import android.content.Context
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -9,6 +12,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.CheckboxDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -16,11 +24,15 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.capitalize
+import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -31,6 +43,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
@@ -38,11 +51,9 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
-import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
@@ -59,54 +70,14 @@ fun BunkerMultiEventHomeScreen(
     bunkerRequests: List<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
-    navController: NavController,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val groupedEventEncryptedData = bunkerRequests.filter { it.encryptedData is EventEncryptedDataKind }.groupBy { BunkerRequestUtils.getTypeFromBunker(it.request) }
-    val groupedTextEncryptedData = bunkerRequests.filter { it.encryptedData is ClearTextEncryptedDataKind }.groupBy { BunkerRequestUtils.getTypeFromBunker(it.request) }
-    val groupedTagArrayEncryptedData = bunkerRequests.filter { it.encryptedData is TagArrayEncryptedDataKind }.groupBy { BunkerRequestUtils.getTypeFromBunker(it.request) }
-    val groupedPrivateZapEncryptedDataKind = bunkerRequests.filter { it.encryptedData is PrivateZapEncryptedDataKind }.groupBy { BunkerRequestUtils.getTypeFromBunker(it.request) }
-    val groupedOthers = bunkerRequests.filter { it.encryptedData == null && it.request !is BunkerRequestSign }.groupBy { BunkerRequestUtils.getTypeFromBunker(it.request) }
-    val groupedEvents = bunkerRequests.filter { it.request is BunkerRequestSign }.groupBy { (it.request as BunkerRequestSign).event.kind }
-    val acceptedGroupedEventEncryptedData = groupedEventEncryptedData.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-    val acceptedGroupedTextEncryptedData = groupedTextEncryptedData.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-    val acceptedGroupedTagArrayEncryptedData = groupedTagArrayEncryptedData.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-
-    val acceptedGroupedPrivateZapEncryptedDataKind = groupedPrivateZapEncryptedDataKind.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-
-    val acceptEventsGroupOthers = groupedOthers.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
-
-    val acceptEventsGroup2 = groupedEvents.map {
-        remember {
-            mutableStateOf(true)
-        }
-    }
+    val hasRelayAuthEvents = bunkerRequests.any { it.request is BunkerRequestSign && (it.request as BunkerRequestSign).event.kind == 22242 }
     var localAccount by remember { mutableStateOf("") }
     val key = bunkerRequests.first().localKey
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
-    val hasRelayAuthEvents = groupedEvents.keys.contains(22242)
     var appName by remember { mutableStateOf(ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()) }
 
     LaunchedEffect(Unit) {
@@ -147,83 +118,8 @@ fun BunkerMultiEventHomeScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
-            groupedEventEncryptedData.toList().forEachIndexed { index, it ->
-                BunkerPermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedEventEncryptedData,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.bunkerRequests = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedTextEncryptedData.toList().forEachIndexed { index, it ->
-                BunkerPermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedTextEncryptedData,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.bunkerRequests = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedTagArrayEncryptedData.toList().forEachIndexed { index, it ->
-                BunkerPermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedTagArrayEncryptedData,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.bunkerRequests = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedPrivateZapEncryptedDataKind.toList().forEachIndexed { index, it ->
-                BunkerPermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptedGroupedPrivateZapEncryptedDataKind,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.bunkerRequests = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedOthers.toList().forEachIndexed { index, it ->
-                BunkerPermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptEventsGroupOthers,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.bunkerRequests = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
-            }
-            groupedEvents.toList().forEachIndexed { index, it ->
-                BunkerPermissionCard(
-                    context = context,
-                    acceptEventsGroup = acceptEventsGroup2,
-                    index = index,
-                    item = it,
-                    onDetailsClick = {
-                        MultiEventScreenIntents.bunkerRequests = it
-                        MultiEventScreenIntents.appName = appName
-                        navController.navigate(Route.SeeDetails.route)
-                    },
-                )
+            bunkerRequests.forEach { bunkerRequest ->
+                BunkerRequestCard(context = context, bunkerRequest = bunkerRequest)
             }
         }
 
@@ -665,6 +561,117 @@ fun BunkerMultiEventHomeScreen(
                     }
                 },
             )
+        }
+    }
+}
+
+@Composable
+private fun BunkerRequestCard(context: Context, bunkerRequest: AmberBunkerRequest) {
+    val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
+    val permission = if (type == SignerType.SIGN_EVENT) {
+        val kind = (bunkerRequest.request as? BunkerRequestSign)?.event?.kind ?: 0
+        Permission("sign_event", kind)
+    } else {
+        Permission(type.toString().toLowerCase(Locale.current), null)
+    }
+
+    val label = if (type == SignerType.CONNECT) {
+        stringResource(R.string.connect)
+    } else {
+        val encryptedData = bunkerRequest.encryptedData
+        if (type.toString().contains("ENCRYPT")) {
+            when (encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val p = Permission("sign_event", encryptedData.event.kind)
+                    stringResource(R.string.encrypt_with, p.toLocalizedString(context), type.toString().split("_").first())
+                }
+                is TagArrayEncryptedDataKind -> {
+                    stringResource(R.string.encrypt_this_list_of_tags_with, type.toString().split("_").first())
+                }
+                else -> stringResource(R.string.encrypt_this_text_with, type.toString().split("_").first())
+            }
+        } else if (type.toString().contains("DECRYPT")) {
+            when (encryptedData) {
+                is EventEncryptedDataKind -> {
+                    val p = Permission("sign_event", encryptedData.event.kind)
+                    stringResource(R.string.read_from_encrypted_content, p.toLocalizedString(context), type.toString().split("_").first())
+                }
+                is TagArrayEncryptedDataKind -> {
+                    stringResource(R.string.read_this_list_of_tags_from_encrypted_content, type.toString().split("_").first())
+                }
+                is PrivateZapEncryptedDataKind -> {
+                    stringResource(R.string.decrypt_zap_event).capitalize(Locale.current)
+                }
+                else -> stringResource(R.string.read_this_text_from_encrypted_content, type.toString().split("_").first())
+            }
+        } else {
+            permission.toLocalizedString(context)
+        }
+    }
+
+    val preview = if (bunkerRequest.request is BunkerRequestSign) {
+        val event = bunkerRequest.signedEvent!!
+        if (event.kind == 22242) AmberEvent.relay(event) ?: event.content else event.content
+    } else {
+        val encryptedData = bunkerRequest.encryptedData
+        if (type.name.contains("ENCRYPT") && encryptedData is ClearTextEncryptedDataKind) {
+            encryptedData.text
+        } else if (encryptedData is EventEncryptedDataKind) {
+            if (encryptedData.sealEncryptedDataKind != null) {
+                if (encryptedData.sealEncryptedDataKind is EventEncryptedDataKind) {
+                    encryptedData.sealEncryptedDataKind.event.content
+                } else {
+                    encryptedData.sealEncryptedDataKind.result
+                }
+            } else {
+                encryptedData.event.content
+            }
+        } else if (encryptedData is TagArrayEncryptedDataKind) {
+            encryptedData.tagArray.joinToString(separator = ", ") {
+                "[${it.joinToString(separator = ", ") { tag -> "\"$tag\"" }}]"
+            }
+        } else {
+            encryptedData?.result ?: BunkerRequestUtils.getDataFromBunker(bunkerRequest.request)
+        }
+    }
+
+    Card(
+        Modifier.padding(4.dp),
+        colors = CardDefaults.cardColors().copy(
+            containerColor = MaterialTheme.colorScheme.background,
+        ),
+        border = BorderStroke(1.dp, Color.Gray),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { bunkerRequest.checked.value = !bunkerRequest.checked.value },
+        ) {
+            Checkbox(
+                checked = bunkerRequest.checked.value,
+                onCheckedChange = { bunkerRequest.checked.value = !bunkerRequest.checked.value },
+                colors = CheckboxDefaults.colors().copy(
+                    uncheckedBorderColor = Color.Gray,
+                ),
+            )
+            Column(
+                Modifier
+                    .weight(1f)
+                    .padding(top = 8.dp, bottom = 8.dp, end = 8.dp),
+            ) {
+                Text(
+                    text = label,
+                    color = if (bunkerRequest.checked.value) Color.Unspecified else Color.Gray,
+                )
+                if (preview.isNotBlank()) {
+                    Text(
+                        text = preview,
+                        color = Color.Gray,
+                        maxLines = 2,
+                    )
+                }
+            }
         }
     }
 }

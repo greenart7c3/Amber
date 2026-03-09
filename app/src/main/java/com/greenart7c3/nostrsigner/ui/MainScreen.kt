@@ -381,7 +381,6 @@ fun MainScreen(
                             packageName = packageName,
                             applicationName = appName,
                             account = account,
-                            navController = navController,
                             onRemoveIntentData = onRemoveIntentData,
                             onLoading = {
                                 isLoading = it

@@ -59,7 +59,7 @@ interface ApplicationDao {
     @Transaction
     fun getAllAcceptedPermissions(): List<ApplicationPermissionsEntity>
 
-    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND  kind = :kind")
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = ''")
     fun getPermission(
         key: String,
         type: String,
@@ -70,6 +70,21 @@ interface ApplicationDao {
     fun getPermission(
         key: String,
         type: String,
+    ): ApplicationPermissionsEntity?
+
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = :relay LIMIT 1")
+    fun getPermissionForRelay(
+        key: String,
+        type: String,
+        kind: Int,
+        relay: String,
+    ): ApplicationPermissionsEntity?
+
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = '*' LIMIT 1")
+    fun getWildcardRelayPermission(
+        key: String,
+        type: String,
+        kind: Int,
     ): ApplicationPermissionsEntity?
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
@@ -84,7 +99,17 @@ interface ApplicationDao {
     suspend fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
         permissions.forEach {
             if (it.kind != null) {
-                deletePermissions(it.pkKey, it.type, it.kind)
+                if (it.relay.isNotEmpty()) {
+                    // For relay-specific permissions (kind 22242): wildcard "*" clears all relay entries,
+                    // specific relay only clears its own entry
+                    if (it.relay == "*") {
+                        deletePermissionsForKind(it.pkKey, it.type, it.kind)
+                    } else {
+                        deletePermissions(it.pkKey, it.type, it.kind, it.relay)
+                    }
+                } else {
+                    deletePermissions(it.pkKey, it.type, it.kind)
+                }
             } else {
                 deletePermissions(it.pkKey, it.type)
             }
@@ -107,9 +132,26 @@ interface ApplicationDao {
         type: String,
     )
 
-    @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type and kind = :kind")
+    @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = ''")
     @Transaction
     suspend fun deletePermissions(
+        key: String,
+        type: String,
+        kind: Int,
+    )
+
+    @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = :relay")
+    @Transaction
+    suspend fun deletePermissions(
+        key: String,
+        type: String,
+        kind: Int,
+        relay: String,
+    )
+
+    @Query("DELETE FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind")
+    @Transaction
+    suspend fun deletePermissionsForKind(
         key: String,
         type: String,
         kind: Int,

@@ -240,6 +240,7 @@ object BunkerRequestUtils {
         rememberType: RememberType,
         oldKey: String = "",
         deleteAfter: Long = 0L,
+        relay: String = "",
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -319,6 +320,7 @@ object BunkerRequestUtils {
                     type = type,
                     kind = kind,
                     rememberType = rememberType,
+                    relay = relay,
                 )
             }
 
@@ -434,6 +436,7 @@ object BunkerRequestUtils {
         signerType: SignerType,
         kind: Int?,
         onLoading: (Boolean) -> Unit,
+        relay: String = "",
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
@@ -481,6 +484,7 @@ object BunkerRequestUtils {
                     false,
                     rememberType,
                     account,
+                    relay,
                 )
             }
 

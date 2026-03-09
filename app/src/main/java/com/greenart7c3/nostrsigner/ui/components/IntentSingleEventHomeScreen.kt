@@ -30,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -242,6 +243,75 @@ fun IntentSingleEventHomeScreen(
                     Spacer(Modifier.size(8.dp))
                     Text("Not logged in")
                 }
+            } else if (event.kind == 22242) {
+                // Kind 22242 = relay client authentication (NIP-42)
+                // Permission is per-relay URL extracted from the event's "relay" tag
+                val relayUrl = AmberEvent.relay(event) ?: ""
+
+                // Check for relay-specific permission first, then wildcard "*" (all relays)
+                val permission = applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && it.relay == relayUrl
+                } ?: applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && it.relay == "*"
+                }
+
+                val acceptOrReject = if (permission == null) {
+                    IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, null)
+                } else {
+                    IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+                }
+
+                BunkerRelayAuthScreen(
+                    modifier = modifier,
+                    appName = appName,
+                    relayUrl = relayUrl,
+                    shouldAcceptOrReject = acceptOrReject,
+                    defaultScope = RelayAuthScope.SPECIFIC,
+                    account = account,
+                    onAccept = { rememberType, scope ->
+                        if (intentData.unsignedEventKey.isNotBlank() && intentData.unsignedEventKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                            ToastManager.toast(
+                                title = context.getString(R.string.warning),
+                                message = context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                            )
+                            return@BunkerRelayAuthScreen
+                        }
+
+                        val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        IntentUtils.sendResult(
+                            context = context,
+                            packageName = packageName,
+                            account = account,
+                            key = key,
+                            clipboardManager = clipboardManager,
+                            event = event.toJson(),
+                            value = event.sig,
+                            intentData = intentData,
+                            kind = event.kind,
+                            onLoading = onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                            signPolicy = null,
+                            appName = applicationName ?: appName,
+                            permissions = null,
+                            rememberType = rememberType,
+                            relay = relayPermission,
+                        )
+                    },
+                    onReject = { rememberType, scope ->
+                        val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        IntentUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            intentData = intentData,
+                            appName = appName,
+                            rememberType = rememberType,
+                            onLoading = onLoading,
+                            onRemoveIntentData = onRemoveIntentData,
+                            kind = event.kind,
+                            relay = relayPermission,
+                        )
+                    },
+                )
             } else {
                 val permission =
                     applicationEntity?.permissions?.firstOrNull {

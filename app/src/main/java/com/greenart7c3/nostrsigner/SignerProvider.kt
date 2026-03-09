@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
@@ -175,7 +176,12 @@ class SignerProvider : ContentProvider() {
 
                     val database = Amber.instance.getDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    var permission =
+                    var permission = if (event.kind == 22242) {
+                        // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
+                        val relayUrl = AmberEvent.relay(event) ?: ""
+                        database.dao().getPermissionForRelay(packageName, "SIGN_EVENT", 22242, relayUrl)
+                            ?: database.dao().getWildcardRelayPermission(packageName, "SIGN_EVENT", 22242)
+                    } else {
                         database
                             .dao()
                             .getPermission(
@@ -183,7 +189,8 @@ class SignerProvider : ContentProvider() {
                                 "SIGN_EVENT",
                                 event.kind,
                             )
-                    if (permission == null) {
+                    }
+                    if (permission == null && event.kind != 22242) {
                         event.kind.kindToNip()?.let {
                             val nipNumber = it.toIntOrNull()
                             permission = if (nipNumber == null) {

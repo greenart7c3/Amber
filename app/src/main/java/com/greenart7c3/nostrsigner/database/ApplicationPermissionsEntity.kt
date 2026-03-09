@@ -21,7 +21,7 @@ import androidx.room.PrimaryKey
             name = "permissions_by_pk_key",
         ),
         Index(
-            value = ["pkKey", "type", "kind"],
+            value = ["pkKey", "type", "kind", "relay"],
             name = "permissions_unique",
             unique = true,
         ),
@@ -37,4 +37,5 @@ data class ApplicationPermissionsEntity(
     val rememberType: Int,
     var acceptUntil: Long,
     var rejectUntil: Long,
+    val relay: String = "",
 )

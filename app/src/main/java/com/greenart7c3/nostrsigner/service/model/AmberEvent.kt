@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.jackson.toTypedArray
+import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
 import com.vitorpamplona.quartz.nip02FollowList.tags.ContactTag
 import com.vitorpamplona.quartz.utils.TimeUtils
 
@@ -102,5 +103,7 @@ open class AmberEvent(
         fun fromJson(json: String): AmberEvent = mapper.readValue(json, AmberEvent::class.java)
 
         fun relay(event: Event): String? = event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.firstOrNull()
+
+        fun relay(event: EventTemplate<Event>): String? = event.tags.filter { it.size > 1 && it[0] == "relay" }.map { it[1] }.firstOrNull()
     }
 }

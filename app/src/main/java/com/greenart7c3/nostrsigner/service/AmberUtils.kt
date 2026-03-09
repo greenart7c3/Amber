@@ -81,6 +81,7 @@ object AmberUtils {
         value: Boolean,
         rememberType: RememberType,
         account: Account,
+        relay: String = "",
     ) {
         val until = when (rememberType) {
             RememberType.ALWAYS -> Long.MAX_VALUE / 1000
@@ -91,7 +92,17 @@ object AmberUtils {
         }
 
         if (kind != null) {
-            application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() }
+            if (relay.isNotEmpty()) {
+                // For relay-specific permissions: wildcard "*" removes all relay entries for this kind,
+                // specific relay removes only its own entry
+                if (relay == "*") {
+                    application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() }
+                } else {
+                    application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() && it.relay == relay }
+                }
+            } else {
+                application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() && it.relay.isEmpty() }
+            }
         } else {
             application.permissions.removeIf { it.type == signerType.toString() && it.type != "SIGN_EVENT" }
         }
@@ -106,6 +117,7 @@ object AmberUtils {
                 rememberType.screenCode,
                 if (value) until else 0L,
                 if (!value) until else 0L,
+                relay,
             ),
         )
 
@@ -173,6 +185,7 @@ object AmberUtils {
         type: SignerType,
         kind: Int?,
         rememberType: RememberType,
+        relay: String = "",
     ) {
         val until = when (rememberType) {
             RememberType.ALWAYS -> Long.MAX_VALUE / 1000
@@ -183,7 +196,15 @@ object AmberUtils {
         }
 
         if (kind != null) {
-            application.permissions.removeIf { it.kind == kind && it.type == type.toString() }
+            if (relay.isNotEmpty()) {
+                if (relay == "*") {
+                    application.permissions.removeIf { it.kind == kind && it.type == type.toString() }
+                } else {
+                    application.permissions.removeIf { it.kind == kind && it.type == type.toString() && it.relay == relay }
+                }
+            } else {
+                application.permissions.removeIf { it.kind == kind && it.type == type.toString() && it.relay.isEmpty() }
+            }
         } else {
             application.permissions.removeIf { it.type == type.toString() && it.type != "SIGN_EVENT" }
         }
@@ -198,6 +219,7 @@ object AmberUtils {
                 rememberType.screenCode,
                 until,
                 0,
+                relay,
             ),
         )
     }

@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -41,6 +42,7 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -105,6 +107,8 @@ fun IntentMultiEventHomeScreen(
     var localAccount by remember { mutableStateOf("") }
     val key = "$packageName"
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
+    var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
+    val hasRelayAuthEvents = groupedEvents.keys.contains(22242)
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -232,6 +236,34 @@ fun IntentMultiEventHomeScreen(
             }
         }
 
+        if (hasRelayAuthEvents) {
+            LabeledBorderBox(
+                label = stringResource(R.string.relay_auth_scope),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+            ) {
+                AmberToggles(
+                    selectedIndex = if (relayAuthScope == RelayAuthScope.SPECIFIC) 0 else 1,
+                    count = 2,
+                    segmentWidth = 120.dp,
+                ) {
+                    ToggleOption(
+                        modifier = Modifier.width(120.dp),
+                        text = stringResource(R.string.for_this_relay_only),
+                        isSelected = relayAuthScope == RelayAuthScope.SPECIFIC,
+                        onClick = { relayAuthScope = RelayAuthScope.SPECIFIC },
+                    )
+                    ToggleOption(
+                        modifier = Modifier.width(120.dp),
+                        text = stringResource(R.string.for_all_relays),
+                        isSelected = relayAuthScope == RelayAuthScope.ALL,
+                        onClick = { relayAuthScope = RelayAuthScope.ALL },
+                    )
+                }
+            }
+        }
+
         RememberMyChoice(
             alwaysShow = true,
             shouldRunAcceptOrReject = null,
@@ -298,14 +330,21 @@ fun IntentMultiEventHomeScreen(
                                 )
 
                             if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
+                                val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
+                                    if (relayAuthScope == RelayAuthScope.ALL) "*" else (intentData.event?.let { AmberEvent.relay(it) } ?: "")
+                                } else {
+                                    ""
+                                }
                                 AmberUtils.acceptOrRejectPermission(
                                     application,
                                     localKey,
                                     intentData.type,
-                                    null,
+                                    rejectKind,
                                     false,
                                     intentData.rememberType.value,
                                     thisAccount,
+                                    relay = rejectRelay,
                                 )
                             }
 
@@ -388,6 +427,11 @@ fun IntentMultiEventHomeScreen(
                                     val localEvent = intentData.event!!
 
                                     if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                        val signRelay = if (localEvent.kind == 22242) {
+                                            if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(localEvent) ?: "")
+                                        } else {
+                                            ""
+                                        }
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             localKey,
@@ -396,6 +440,7 @@ fun IntentMultiEventHomeScreen(
                                             true,
                                             intentData.rememberType.value,
                                             thisAccount,
+                                            relay = signRelay,
                                         )
                                     }
 

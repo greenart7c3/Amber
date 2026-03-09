@@ -35,6 +35,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -616,6 +617,82 @@ fun BunkerSingleEventHomeScreen(
                     Spacer(Modifier.size(8.dp))
                     Text("Not logged in")
                 }
+            } else if (event.kind == 22242) {
+                // Kind 22242 = relay client authentication (NIP-42)
+                // Permission is per-relay URL extracted from the event's "relay" tag
+                val relayUrl = AmberEvent.relay(event) ?: ""
+
+                // Check for a relay-specific permission first, then wildcard "*" (all relays)
+                val permission = applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString() && it.kind == 22242 && it.relay == relayUrl
+                } ?: applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString() && it.kind == 22242 && it.relay == "*"
+                }
+
+                val acceptUntil = permission?.acceptUntil ?: 0
+                val rejectUntil = permission?.rejectUntil ?: 0
+
+                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                    null
+                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
+                    false
+                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0 && permission?.acceptable == true) {
+                    true
+                } else {
+                    null
+                }
+
+                BunkerRelayAuthScreen(
+                    modifier = modifier,
+                    appName = appName,
+                    relayUrl = relayUrl,
+                    shouldAcceptOrReject = acceptOrReject,
+                    defaultScope = RelayAuthScope.SPECIFIC,
+                    account = account,
+                    onAccept = { rememberType, scope ->
+                        if (event.pubKey != account.hexKey && !isPrivateEvent(event.kind, event.tags)) {
+                            coroutineScope.launch {
+                                Toast.makeText(
+                                    context,
+                                    context.getString(R.string.event_pubkey_is_not_equal_to_current_logged_in_user),
+                                    Toast.LENGTH_SHORT,
+                                ).show()
+                            }
+                            return@BunkerRelayAuthScreen
+                        }
+
+                        val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            response = event.toJson(),
+                            bunkerRequest = bunkerRequest,
+                            kind = event.kind,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = appName,
+                            signPolicy = null,
+                            shouldCloseApplication = bunkerRequest.closeApplication,
+                            rememberType = rememberType,
+                            relay = relayPermission,
+                        )
+                    },
+                    onReject = { rememberType, scope ->
+                        val relayPermission = if (scope == RelayAuthScope.ALL) "*" else relayUrl
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = rememberType,
+                            signerType = type,
+                            kind = event.kind,
+                            onLoading = onLoading,
+                            relay = relayPermission,
+                        )
+                    },
+                )
             } else {
                 val permission =
                     applicationEntity?.permissions?.firstOrNull {

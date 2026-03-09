@@ -681,6 +681,7 @@ object IntentUtils {
         shouldCloseApplication: Boolean? = null,
         rememberType: RememberType,
         deleteAfter: Long = 0L,
+        relay: String = "",
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -732,6 +733,7 @@ object IntentUtils {
                     type = intentData.type,
                     kind = kind,
                     rememberType = rememberType,
+                    relay = relay,
                 )
             }
 
@@ -864,6 +866,7 @@ object IntentUtils {
         kind: Int?,
         onLoading: (Boolean) -> Unit,
         onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
+        relay: String = "",
     ) {
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             if (key == "null") {
@@ -901,6 +904,7 @@ object IntentUtils {
                     false,
                     rememberType,
                     account,
+                    relay,
                 )
             }
 

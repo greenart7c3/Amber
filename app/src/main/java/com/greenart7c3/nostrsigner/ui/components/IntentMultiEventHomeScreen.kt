@@ -41,6 +41,7 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -298,14 +299,21 @@ fun IntentMultiEventHomeScreen(
                                 )
 
                             if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
+                                val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
+                                    intentData.event?.let { AmberEvent.relay(it) } ?: ""
+                                } else {
+                                    ""
+                                }
                                 AmberUtils.acceptOrRejectPermission(
                                     application,
                                     localKey,
                                     intentData.type,
-                                    null,
+                                    rejectKind,
                                     false,
                                     intentData.rememberType.value,
                                     thisAccount,
+                                    relay = rejectRelay,
                                 )
                             }
 
@@ -388,6 +396,11 @@ fun IntentMultiEventHomeScreen(
                                     val localEvent = intentData.event!!
 
                                     if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                        val signRelay = if (localEvent.kind == 22242) {
+                                            AmberEvent.relay(localEvent) ?: ""
+                                        } else {
+                                            ""
+                                        }
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             localKey,
@@ -396,6 +409,7 @@ fun IntentMultiEventHomeScreen(
                                             true,
                                             intentData.rememberType.value,
                                             thisAccount,
+                                            relay = signRelay,
                                         )
                                     }
 

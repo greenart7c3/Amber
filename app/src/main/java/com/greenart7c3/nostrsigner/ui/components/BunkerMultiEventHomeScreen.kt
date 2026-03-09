@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
+import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -294,14 +295,21 @@ fun BunkerMultiEventHomeScreen(
                                 )
 
                             if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
+                                val rejectKind = if (request.request is BunkerRequestSign) request.request.event.kind else null
+                                val rejectRelay = if (request.request is BunkerRequestSign && request.request.event.kind == 22242) {
+                                    AmberEvent.relay(request.request.event) ?: ""
+                                } else {
+                                    ""
+                                }
                                 AmberUtils.acceptOrRejectPermission(
                                     application,
                                     localKey,
                                     BunkerRequestUtils.getTypeFromBunker(request.request),
-                                    null,
+                                    rejectKind,
                                     false,
                                     request.rememberType.value,
                                     thisAccount,
+                                    relay = rejectRelay,
                                 )
                             }
 
@@ -376,6 +384,11 @@ fun BunkerMultiEventHomeScreen(
                                     val localEvent = request.signedEvent!!
 
                                     if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
+                                        val signRelay = if (localEvent.kind == 22242) {
+                                            AmberEvent.relay(localEvent) ?: ""
+                                        } else {
+                                            ""
+                                        }
                                         AmberUtils.acceptOrRejectPermission(
                                             application = application,
                                             key = localKey,
@@ -384,6 +397,7 @@ fun BunkerMultiEventHomeScreen(
                                             value = true,
                                             rememberType = request.rememberType.value,
                                             account = thisAccount,
+                                            relay = signRelay,
                                         )
                                     }
 

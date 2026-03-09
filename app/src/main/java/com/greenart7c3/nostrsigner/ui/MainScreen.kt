@@ -358,7 +358,15 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
 
-                        val modifier = if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
+                        val isMultiEvent = (intents.size > 1) || (bunkerRequests.size > 1)
+                        val modifier = if (isMultiEvent && destinationRoute == Route.IncomingRequest.route) {
+                            // Multi-event screens manage internal scrolling with weight(1f); outer
+                            // verticalScroll would give unbounded height breaking the layout on small screens.
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .padding(horizontal = verticalPadding)
+                        } else if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)

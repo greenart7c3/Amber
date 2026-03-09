@@ -332,7 +332,19 @@ fun IntentMultiEventHomeScreen(
                             if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                 val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
                                 val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
-                                    if (relayAuthScope == RelayAuthScope.ALL) "*" else (intentData.event?.let { AmberEvent.relay(it) } ?: "")
+                                    if (relayAuthScope == RelayAuthScope.ALL) {
+                                        "*"
+                                    } else {
+                                        (
+                                            AmberEvent.relay(intentData.event)?.let { url ->
+                                                try {
+                                                    java.net.URI(url).host ?: url
+                                                } catch (e: Exception) {
+                                                    url
+                                                }
+                                            } ?: ""
+                                            )
+                                    }
                                 } else {
                                     ""
                                 }

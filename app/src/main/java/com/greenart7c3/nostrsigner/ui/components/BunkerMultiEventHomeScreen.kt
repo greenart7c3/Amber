@@ -328,7 +328,19 @@ fun BunkerMultiEventHomeScreen(
                             if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                 val rejectKind = if (request.request is BunkerRequestSign) request.request.event.kind else null
                                 val rejectRelay = if (request.request is BunkerRequestSign && request.request.event.kind == 22242) {
-                                    if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(request.request.event) ?: "")
+                                    if (relayAuthScope == RelayAuthScope.ALL) {
+                                        "*"
+                                    } else {
+                                        (
+                                            AmberEvent.relay(request.request.event)?.let { url ->
+                                                try {
+                                                    java.net.URI(url).host ?: url
+                                                } catch (e: Exception) {
+                                                    url
+                                                }
+                                            } ?: ""
+                                            )
+                                    }
                                 } else {
                                     ""
                                 }
@@ -416,7 +428,19 @@ fun BunkerMultiEventHomeScreen(
 
                                     if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                         val signRelay = if (localEvent.kind == 22242) {
-                                            if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(localEvent) ?: "")
+                                            if (relayAuthScope == RelayAuthScope.ALL) {
+                                                "*"
+                                            } else {
+                                                (
+                                                    AmberEvent.relay(localEvent)?.let { url ->
+                                                        try {
+                                                            java.net.URI(url).host ?: url
+                                                        } catch (e: Exception) {
+                                                            url
+                                                        }
+                                                    } ?: ""
+                                                    )
+                                            }
                                         } else {
                                             ""
                                         }

@@ -80,7 +80,7 @@ interface ApplicationDao {
         relay: String,
     ): ApplicationPermissionsEntity?
 
-    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = '*' LIMIT 1")
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND (relay = '*' OR relay = '' OR relay IS NULL) LIMIT 1")
     fun getWildcardRelayPermission(
         key: String,
         type: String,

@@ -245,8 +245,14 @@ fun IntentSingleEventHomeScreen(
                 }
             } else if (event.kind == 22242) {
                 // Kind 22242 = relay client authentication (NIP-42)
-                // Permission is per-relay URL extracted from the event's "relay" tag
-                val relayUrl = AmberEvent.relay(event) ?: ""
+                // Permission is per-relay hostname extracted from the event's "relay" tag
+                val relayUrl = AmberEvent.relay(event)?.let { url ->
+                    try {
+                        java.net.URI(url).host ?: url
+                    } catch (e: Exception) {
+                        url
+                    }
+                } ?: ""
 
                 // Check for relay-specific permission first, then wildcard "*" (all relays)
                 val permission = applicationEntity?.permissions?.firstOrNull {

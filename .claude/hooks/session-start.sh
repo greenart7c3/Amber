@@ -57,6 +57,8 @@ systemProp.https.nonProxyHosts=localhost|127.0.0.1
 systemProp.javax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts
 systemProp.javax.net.ssl.trustStoreType=JKS
 systemProp.javax.net.ssl.trustStorePassword=changeit
+systemProp.jdk.http.auth.tunneling.disabledSchemes=
+systemProp.jdk.http.auth.proxying.disabledSchemes=
 EOF
 
   echo "Configured Maven/Gradle proxy from HTTPS_PROXY" >&2
@@ -171,5 +173,8 @@ if [ -n "${CLAUDE_ENV_FILE:-}" ]; then
   echo "export ANDROID_SDK_ROOT=$ANDROID_SDK_DIR" >> "$CLAUDE_ENV_FILE"
   echo "export PATH=\$PATH:$ANDROID_SDK_DIR/platform-tools" >> "$CLAUDE_ENV_FILE"
 fi
+
+cd "$CLAUDE_PROJECT_DIR"
+./gradlew --version > /dev/null 2>&1
 
 echo "Android SDK setup complete."

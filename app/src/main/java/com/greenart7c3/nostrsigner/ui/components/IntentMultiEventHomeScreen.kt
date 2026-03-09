@@ -497,6 +497,9 @@ fun IntentMultiEventHomeScreen(
 @Composable
 private fun IntentRequestCard(context: Context, intent: IntentData) {
     val type = intent.type
+    var showDetails by remember { mutableStateOf(false) }
+    val hasDetails = (type == SignerType.SIGN_EVENT && intent.event != null) ||
+        ((type.toString().contains("ENCRYPT") || type.toString().contains("DECRYPT")) && intent.encryptedData != null)
     val permission = if (type == SignerType.SIGN_EVENT) {
         Permission("sign_event", intent.event!!.kind)
     } else {
@@ -599,7 +602,28 @@ private fun IntentRequestCard(context: Context, intent: IntentData) {
                         maxLines = 2,
                     )
                 }
+                if (hasDetails) {
+                    RawJsonButton(
+                        onCLick = { showDetails = true },
+                        text = stringResource(R.string.show_details),
+                    )
+                }
             }
+        }
+    }
+
+    if (showDetails) {
+        if (type == SignerType.SIGN_EVENT) {
+            EventDetailModal(
+                event = intent.event!!,
+                onDismiss = { showDetails = false },
+            )
+        } else {
+            EncryptDecryptDetailModal(
+                type = type,
+                encryptedData = intent.encryptedData,
+                onDismiss = { showDetails = false },
+            )
         }
     }
 }

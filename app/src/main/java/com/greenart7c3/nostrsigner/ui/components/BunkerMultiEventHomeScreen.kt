@@ -568,6 +568,9 @@ fun BunkerMultiEventHomeScreen(
 @Composable
 private fun BunkerRequestCard(context: Context, bunkerRequest: AmberBunkerRequest) {
     val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
+    var showDetails by remember { mutableStateOf(false) }
+    val hasDetails = (type == SignerType.SIGN_EVENT && bunkerRequest.signedEvent != null) ||
+        ((type.toString().contains("ENCRYPT") || type.toString().contains("DECRYPT")) && bunkerRequest.encryptedData != null)
     val permission = if (type == SignerType.SIGN_EVENT) {
         val kind = (bunkerRequest.request as? BunkerRequestSign)?.event?.kind ?: 0
         Permission("sign_event", kind)
@@ -671,7 +674,28 @@ private fun BunkerRequestCard(context: Context, bunkerRequest: AmberBunkerReques
                         maxLines = 2,
                     )
                 }
+                if (hasDetails) {
+                    RawJsonButton(
+                        onCLick = { showDetails = true },
+                        text = stringResource(R.string.show_details),
+                    )
+                }
             }
+        }
+    }
+
+    if (showDetails) {
+        if (type == SignerType.SIGN_EVENT) {
+            EventDetailModal(
+                event = bunkerRequest.signedEvent!!,
+                onDismiss = { showDetails = false },
+            )
+        } else {
+            EncryptDecryptDetailModal(
+                type = type,
+                encryptedData = bunkerRequest.encryptedData,
+                onDismiss = { showDetails = false },
+            )
         }
     }
 }

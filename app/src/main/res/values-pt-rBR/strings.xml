@@ -20,6 +20,8 @@
     <string name="nsec">chave privada nsec / hex</string>
     <string name="show_password">Mostrar senha</string>
     <string name="hide_password">Ocultar Senha</string>
+    <string name="hide">Hide</string>
+    <string name="show_tips">Tips</string>
     <string name="invalid_key">Chave inválida</string>
     <string name="key_is_required">Chave é obrigatória</string>
     <string name="login">Entrar</string>
@@ -631,4 +633,9 @@
     <string name="account_picture">Account picture</string>
     <string name="encrypt_and_copy_to_clipboard">Encrypt and copy to clipboard</string>
     <string name="encrypt_and_show_qr_code">Encrypt and show QR Code</string>
+    <string name="relay_authentication">Relay authentication</string>
+    <string name="relay_auth_request">%1$s wants to authenticate to relay</string>
+    <string name="for_this_relay_only">This relay only</string>
+    <string name="for_all_relays">All relays</string>
+    <string name="relay_auth_scope">Authentication scope</string>
 </resources>

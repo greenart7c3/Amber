@@ -335,7 +335,19 @@ fun IntentMultiEventHomeScreen(
 
                                     if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                         val signRelay = if (localEvent.kind == 22242) {
-                                            if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(localEvent) ?: "")
+                                            if (relayAuthScope == RelayAuthScope.ALL) {
+                                                "*"
+                                            } else {
+                                                (
+                                                    AmberEvent.relay(localEvent)?.let { url ->
+                                                        try {
+                                                            java.net.URI(url).host ?: url
+                                                        } catch (e: Exception) {
+                                                            url
+                                                        }
+                                                    } ?: ""
+                                                    )
+                                            }
                                         } else {
                                             ""
                                         }

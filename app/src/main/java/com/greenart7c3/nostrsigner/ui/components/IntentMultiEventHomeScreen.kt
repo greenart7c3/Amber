@@ -20,6 +20,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -31,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
@@ -120,6 +122,30 @@ fun IntentMultiEventHomeScreen(
         )
 
         SigningAs(accountParam)
+
+        val allCheckedState = when {
+            intents.all { it.checked.value } -> ToggleableState.On
+            intents.none { it.checked.value } -> ToggleableState.Off
+            else -> ToggleableState.Indeterminate
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    val newValue = allCheckedState != ToggleableState.On
+                    intents.forEach { it.checked.value = newValue }
+                },
+        ) {
+            TriStateCheckbox(
+                state = allCheckedState,
+                onClick = {
+                    val newValue = allCheckedState != ToggleableState.On
+                    intents.forEach { it.checked.value = newValue }
+                },
+            )
+            Text(stringResource(R.string.select_deselect_all))
+        }
 
         Column(
             Modifier

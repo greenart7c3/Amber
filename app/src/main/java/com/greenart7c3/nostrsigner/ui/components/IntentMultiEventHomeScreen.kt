@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -106,6 +107,8 @@ fun IntentMultiEventHomeScreen(
     var localAccount by remember { mutableStateOf("") }
     val key = "$packageName"
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
+    var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
+    val hasRelayAuthEvents = groupedEvents.keys.contains(22242)
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -233,6 +236,34 @@ fun IntentMultiEventHomeScreen(
             }
         }
 
+        if (hasRelayAuthEvents) {
+            LabeledBorderBox(
+                label = stringResource(R.string.relay_auth_scope),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+            ) {
+                AmberToggles(
+                    selectedIndex = if (relayAuthScope == RelayAuthScope.SPECIFIC) 0 else 1,
+                    count = 2,
+                    segmentWidth = 120.dp,
+                ) {
+                    ToggleOption(
+                        modifier = Modifier.width(120.dp),
+                        text = stringResource(R.string.for_this_relay_only),
+                        isSelected = relayAuthScope == RelayAuthScope.SPECIFIC,
+                        onClick = { relayAuthScope = RelayAuthScope.SPECIFIC },
+                    )
+                    ToggleOption(
+                        modifier = Modifier.width(120.dp),
+                        text = stringResource(R.string.for_all_relays),
+                        isSelected = relayAuthScope == RelayAuthScope.ALL,
+                        onClick = { relayAuthScope = RelayAuthScope.ALL },
+                    )
+                }
+            }
+        }
+
         RememberMyChoice(
             alwaysShow = true,
             shouldRunAcceptOrReject = null,
@@ -301,7 +332,7 @@ fun IntentMultiEventHomeScreen(
                             if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                 val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
                                 val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
-                                    intentData.event?.let { AmberEvent.relay(it) } ?: ""
+                                    if (relayAuthScope == RelayAuthScope.ALL) "*" else (intentData.event?.let { AmberEvent.relay(it) } ?: "")
                                 } else {
                                     ""
                                 }
@@ -397,7 +428,7 @@ fun IntentMultiEventHomeScreen(
 
                                     if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
                                         val signRelay = if (localEvent.kind == 22242) {
-                                            AmberEvent.relay(localEvent) ?: ""
+                                            if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(localEvent) ?: "")
                                         } else {
                                             ""
                                         }

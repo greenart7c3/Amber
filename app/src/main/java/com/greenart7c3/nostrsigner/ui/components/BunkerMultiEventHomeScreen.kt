@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ButtonDefaults
@@ -104,6 +105,8 @@ fun BunkerMultiEventHomeScreen(
     var localAccount by remember { mutableStateOf("") }
     val key = bunkerRequests.first().localKey
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
+    var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
+    val hasRelayAuthEvents = groupedEvents.keys.contains(22242)
     var appName by remember { mutableStateOf(ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()) }
 
     LaunchedEffect(Unit) {
@@ -224,6 +227,34 @@ fun BunkerMultiEventHomeScreen(
             }
         }
 
+        if (hasRelayAuthEvents) {
+            LabeledBorderBox(
+                label = stringResource(R.string.relay_auth_scope),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp, vertical = 8.dp),
+            ) {
+                AmberToggles(
+                    selectedIndex = if (relayAuthScope == RelayAuthScope.SPECIFIC) 0 else 1,
+                    count = 2,
+                    segmentWidth = 120.dp,
+                ) {
+                    ToggleOption(
+                        modifier = Modifier.width(120.dp),
+                        text = stringResource(R.string.for_this_relay_only),
+                        isSelected = relayAuthScope == RelayAuthScope.SPECIFIC,
+                        onClick = { relayAuthScope = RelayAuthScope.SPECIFIC },
+                    )
+                    ToggleOption(
+                        modifier = Modifier.width(120.dp),
+                        text = stringResource(R.string.for_all_relays),
+                        isSelected = relayAuthScope == RelayAuthScope.ALL,
+                        onClick = { relayAuthScope = RelayAuthScope.ALL },
+                    )
+                }
+            }
+        }
+
         RememberMyChoice(
             alwaysShow = true,
             shouldRunAcceptOrReject = null,
@@ -297,7 +328,7 @@ fun BunkerMultiEventHomeScreen(
                             if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                 val rejectKind = if (request.request is BunkerRequestSign) request.request.event.kind else null
                                 val rejectRelay = if (request.request is BunkerRequestSign && request.request.event.kind == 22242) {
-                                    AmberEvent.relay(request.request.event) ?: ""
+                                    if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(request.request.event) ?: "")
                                 } else {
                                     ""
                                 }
@@ -385,7 +416,7 @@ fun BunkerMultiEventHomeScreen(
 
                                     if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
                                         val signRelay = if (localEvent.kind == 22242) {
-                                            AmberEvent.relay(localEvent) ?: ""
+                                            if (relayAuthScope == RelayAuthScope.ALL) "*" else (AmberEvent.relay(localEvent) ?: "")
                                         } else {
                                             ""
                                         }

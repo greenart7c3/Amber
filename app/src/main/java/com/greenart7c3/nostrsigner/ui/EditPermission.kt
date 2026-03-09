@@ -294,7 +294,7 @@ fun PermissionRow(
     onDelete: (ApplicationPermissionsEntity) -> Unit,
 ) {
     val context = LocalContext.current
-    val message = remember(permission.type, permission.kind, permission.acceptable) {
+    val message = remember(permission.type, permission.kind, permission.acceptable, permission.relay) {
         val localPermission = Permission(
             permission.type.toLowerCase(Locale.current),
             permission.kind,
@@ -343,6 +343,22 @@ fun PermissionRow(
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
         )
+
+        if (permission.kind == 22242 && permission.relay.isNotEmpty()) {
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, bottom = 8.dp),
+                text = if (permission.relay == "*") {
+                    context.getString(R.string.for_all_relays)
+                } else {
+                    permission.relay
+                },
+                style = MaterialTheme.typography.bodySmall,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
 
         AmberToggles(
             count = 3,

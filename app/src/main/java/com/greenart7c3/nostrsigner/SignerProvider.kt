@@ -178,7 +178,13 @@ class SignerProvider : ContentProvider() {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     var permission = if (event.kind == 22242) {
                         // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
-                        val relayUrl = AmberEvent.relay(event) ?: ""
+                        val relayUrl = AmberEvent.relay(event)?.let { url ->
+                            try {
+                                java.net.URI(url).host ?: url
+                            } catch (e: Exception) {
+                                url
+                            }
+                        } ?: ""
                         database.dao().getPermissionForRelay(packageName, "SIGN_EVENT", 22242, relayUrl)
                             ?: database.dao().getWildcardRelayPermission(packageName, "SIGN_EVENT", 22242)
                     } else {

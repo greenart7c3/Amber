@@ -15,6 +15,7 @@ import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
+import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Surface
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.CompositionLocalProvider
@@ -94,6 +95,7 @@ class SignerActivity : AppCompatActivity() {
                         var isAuthenticated by remember { mutableStateOf(false) }
 
                         ModalBottomSheet(
+                            sheetGesturesEnabled = false,
                             onDismissRequest = {
                                 finishAndRemoveTask()
                             },
@@ -101,6 +103,10 @@ class SignerActivity : AppCompatActivity() {
                             containerColor = MaterialTheme.colorScheme.background,
                             scrimColor = Color.Transparent,
                             dragHandle = { BottomSheetDefaults.DragHandle() },
+                            properties = ModalBottomSheetProperties(
+                                shouldDismissOnBackPress = false,
+                                shouldDismissOnClickOutside = false,
+                            ),
                         ) {
                             Surface(
                                 modifier = Modifier.fillMaxWidth(),

@@ -71,6 +71,7 @@
         <activity
             android:name=".SignerActivity"
             android:exported="true"
+            android:taskAffinity=""
             android:theme="@style/Theme.NostrSigner.Modal">
             <intent-filter>
                 <action android:name="com.greenart7c3.nostrsigner.MAIN_ACTIVITY" />

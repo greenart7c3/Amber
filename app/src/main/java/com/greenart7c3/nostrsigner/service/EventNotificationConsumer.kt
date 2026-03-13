@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
@@ -90,8 +91,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     fun consume(event: Event, relay: NormalizedRelayUrl) {
         saveLog("New event ${event.toJson()}")
 
-        if (!notificationManager().areNotificationsEnabled()) {
-            saveLog("notifications disabled")
+        if (!notificationManager().areNotificationsEnabled() && !Amber.isAppInForeground) {
+            saveLog("notifications disabled and app is not in foreground")
             return
         }
         if (event.kind != NostrConnectEvent.KIND) {
@@ -359,6 +360,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                         applicationContext,
                         request,
                     )
+                if (Amber.isAppInForeground) {
+                    ToastManager.toast(
+                        applicationContext.getString(R.string.incoming_request),
+                        message,
+                    )
+                }
             } else {
                 if (localCursor.moveToFirst()) {
                     if (localCursor.getColumnIndex("rejected") > -1) {
@@ -399,6 +406,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                             applicationContext,
                             request,
                         )
+                    if (Amber.isAppInForeground) {
+                        ToastManager.toast(
+                            applicationContext.getString(R.string.incoming_request),
+                            message,
+                        )
+                    }
                 }
             }
         }

@@ -18,7 +18,7 @@ interface HistoryDao {
     @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
     fun getAllHistoryPaging(pk: String): PagingSource<Int, HistoryEntity>
 
-    @Query("SELECT * FROM history where (kind = :query OR LOWER(type) LIKE '%' || :query || '%' OR LOWER(translatedPermission) LIKE '%' || :query || '%') AND pkKey = :pk ORDER BY time DESC")
+    @Query("SELECT * FROM history where (kind = :query OR LOWER(type) LIKE '%' || :query || '%' OR LOWER(translatedPermission) LIKE '%' || :query || '%' OR LOWER(content) LIKE '%' || :query || '%') AND pkKey = :pk ORDER BY time DESC")
     fun searchAllHistoryPaging(pk: String, query: String): PagingSource<Int, HistoryEntity>
 
     @Query("SELECT * FROM history ORDER BY time DESC")
@@ -28,7 +28,8 @@ interface HistoryDao {
         """
     SELECT * FROM history
     WHERE (kind = :query OR LOWER(type) LIKE '%' || :query || '%'
-    OR LOWER(translatedPermission) LIKE '%' || :query || '%')
+    OR LOWER(translatedPermission) LIKE '%' || :query || '%'
+    OR LOWER(content) LIKE '%' || :query || '%')
     ORDER BY time DESC
     """,
     )

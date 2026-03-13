@@ -25,8 +25,10 @@ data class AmberSettings(
     val useAuth: Boolean = false,
     val biometricsTimeType: BiometricsTimeType = BiometricsTimeType.EVERY_TIME,
     val usePin: Boolean = false,
-    val useProxy: Boolean = false,
+    val torMode: TorMode = TorMode.DISABLED,
     val proxyPort: Int = 9050,
     val killSwitch: MutableStateFlow<Boolean> = MutableStateFlow(false),
     var language: String? = null,
-)
+) {
+    val useProxy: Boolean get() = torMode != TorMode.DISABLED
+}

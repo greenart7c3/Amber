@@ -37,10 +37,12 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
@@ -138,6 +140,9 @@ class Amber :
     val notificationCache = LruCache<String, Long>(10)
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
+        if (settings.torMode == TorMode.BUILTIN) {
+            return TorManager.isRunning.value
+        }
         try {
             val socket = Socket()
             socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
@@ -245,6 +250,9 @@ class Amber :
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp()
+                if (settings.torMode == TorMode.BUILTIN) {
+                    TorManager.start(this@Amber, applicationIOScope)
+                }
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {
                     disconnectIntentionally()

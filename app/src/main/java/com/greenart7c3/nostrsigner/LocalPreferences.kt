@@ -10,6 +10,7 @@ import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -47,6 +48,7 @@ private enum class SettingsKeys(val key: String) {
     SAVED_ACCOUNTS("all_saved_accounts"),
     USE_PROXY("use_proxy"),
     PROXY_PORT("proxy_port"),
+    TOR_MODE("tor_mode"),
     BATERRY_OPTIMIZATION("battery_optimization"),
     KILL_SWITCH("kill_switch"),
     LANGUAGE_PREFS("languagePreferences"),
@@ -119,7 +121,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.USE_AUTH.key, settings.useAuth)
                 putInt(SettingsKeys.BIOMETRICS_TYPE.key, settings.biometricsTimeType.screenCode)
                 putBoolean(SettingsKeys.USE_PIN.key, settings.usePin)
-                putBoolean(SettingsKeys.USE_PROXY.key, settings.useProxy)
+                putString(SettingsKeys.TOR_MODE.key, settings.torMode.name)
                 putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
                 putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch.value)
                 putString(SettingsKeys.LANGUAGE_PREFS.key, settings.language)
@@ -192,8 +194,23 @@ object LocalPreferences {
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
         sharedPrefs(context).apply {
+            // Migrate old use_proxy boolean to TorMode enum
+            val torMode = if (contains(SettingsKeys.TOR_MODE.key)) {
+                try {
+                    TorMode.valueOf(getString(SettingsKeys.TOR_MODE.key, TorMode.DISABLED.name)!!)
+                } catch (e: IllegalArgumentException) {
+                    TorMode.DISABLED
+                }
+            } else if (getBoolean(SettingsKeys.USE_PROXY.key, false)) {
+                TorMode.ORBOT
+            } else {
+                TorMode.DISABLED
+            }
+
             val proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050)
-            HttpClientManager.setDefaultProxyOnPort(proxyPort)
+            if (torMode == TorMode.ORBOT) {
+                HttpClientManager.setDefaultProxyOnPort(proxyPort)
+            }
 
             return AmberSettings(
                 defaultRelays = getStringSet(SettingsKeys.DEFAULT_RELAYS.key, null)?.mapNotNull {
@@ -206,8 +223,8 @@ object LocalPreferences {
                 useAuth = getBoolean(SettingsKeys.USE_AUTH.key, false),
                 biometricsTimeType = parseBiometricsTimeType(getInt(SettingsKeys.BIOMETRICS_TYPE.key, 0)),
                 usePin = getBoolean(SettingsKeys.USE_PIN.key, false),
-                useProxy = getBoolean(SettingsKeys.USE_PROXY.key, false),
-                proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050),
+                torMode = torMode,
+                proxyPort = proxyPort,
                 killSwitch = MutableStateFlow(getBoolean(SettingsKeys.KILL_SWITCH.key, false)),
                 language = getString(SettingsKeys.LANGUAGE_PREFS.key, null),
             )
@@ -426,14 +443,27 @@ object LocalPreferences {
         useProxy: Boolean,
         port: Int,
     ) {
+        val torMode = if (useProxy) TorMode.ORBOT else TorMode.DISABLED
+        updateTorMode(context, torMode, port)
+    }
+
+    fun updateTorMode(
+        context: Context,
+        torMode: TorMode,
+        port: Int = Amber.instance.settings.proxyPort,
+    ) {
         sharedPrefs(context).edit {
             apply {
-                putBoolean(SettingsKeys.USE_PROXY.key, useProxy)
+                putString(SettingsKeys.TOR_MODE.key, torMode.name)
                 putInt(SettingsKeys.PROXY_PORT.key, port)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
-        HttpClientManager.setDefaultProxyOnPort(port)
+        when (torMode) {
+            TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(port)
+            TorMode.DISABLED -> HttpClientManager.clearProxy()
+            TorMode.BUILTIN -> { /* Proxy port set by TorManager once Tor starts */ }
+        }
     }
 
     suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {

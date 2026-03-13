@@ -31,6 +31,8 @@ collections = "0.4.0"
 pagingCommon = "3.4.1"
 mockk = "1.14.9"
 coroutinesTest = "1.10.2"
+kmpTor = "2.6.0"
+kmpTorResource = "408.19.0"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -81,6 +83,8 @@ paging-compose = { group = "androidx.paging", name = "paging-compose", version.r
 paging-runtime = { group = "androidx.paging", name = "paging-runtime", version.ref = "pagingCommon" }
 mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
+kmptor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmpTor" }
+kmptor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor", version.ref = "kmpTorResource" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

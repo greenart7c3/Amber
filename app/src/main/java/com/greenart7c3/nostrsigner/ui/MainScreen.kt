@@ -58,10 +58,13 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
@@ -848,7 +851,25 @@ fun MainScreen(
                                 .padding(top = verticalPadding * 1.5f),
                             onPost = {
                                 scope.launch(Dispatchers.IO) {
+                                    if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
+                                        TorManager.stop()
+                                    }
                                     LocalPreferences.updateProxy(context, true, it)
+                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                    scope.launch {
+                                        navController.navigate(Route.Settings.route) {
+                                            popUpTo(0)
+                                        }
+                                    }
+                                }
+                            },
+                            onBuiltinTor = {
+                                scope.launch(Dispatchers.IO) {
+                                    if (Amber.instance.settings.torMode == TorMode.ORBOT) {
+                                        HttpClientManager.clearProxy()
+                                    }
+                                    LocalPreferences.updateTorMode(context, TorMode.BUILTIN)
+                                    TorManager.start(context, Amber.instance.applicationIOScope)
                                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                     scope.launch {
                                         navController.navigate(Route.Settings.route) {

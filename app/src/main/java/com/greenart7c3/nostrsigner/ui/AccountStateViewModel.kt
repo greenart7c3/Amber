@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -111,7 +112,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
             Amber.instance.settings = Amber.instance.settings.copy(
-                useProxy = useProxy,
+                torMode = if (useProxy) TorMode.ORBOT else TorMode.DISABLED,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
@@ -145,7 +146,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         )
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
             Amber.instance.settings = Amber.instance.settings.copy(
-                useProxy = useProxy,
+                torMode = if (useProxy) TorMode.ORBOT else TorMode.DISABLED,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(

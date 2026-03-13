@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 object TorManager {
     private const val TAG = "TorManager"
@@ -61,7 +62,7 @@ object TorManager {
                 }
 
                 torRuntime = runtime
-                runtime.startDaemonSync()
+                runtime.startDaemonAsync()
                 _isRunning.value = true
                 Log.i(TAG, "Built-in Tor started")
             } catch (e: Exception) {
@@ -73,14 +74,14 @@ object TorManager {
     }
 
     fun stop() {
+        val runtime = torRuntime ?: return
+        torRuntime = null
+        _isRunning.value = false
         try {
-            torRuntime?.stopDaemonSync()
+            runBlocking(Dispatchers.IO) { runtime.stopDaemonAsync() }
             Log.i(TAG, "Built-in Tor stopped")
         } catch (e: Exception) {
             Log.e(TAG, "Error stopping built-in Tor", e)
-        } finally {
-            torRuntime = null
-            _isRunning.value = false
         }
     }
 }

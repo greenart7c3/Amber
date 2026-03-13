@@ -2,10 +2,12 @@ package com.greenart7c3.nostrsigner.models
 
 val basicPermissions = listOf(
     Permission("get_public_key", null),
-    Permission("nip04_encrypt", null),
-    Permission("nip04_decrypt", null),
-    Permission("nip44_decrypt", null),
-    Permission("nip44_encrypt", null),
+    Permission("encrypt_clear_text", null),
+    Permission("decrypt_clear_text", null),
+    Permission("encrypt_event", null),
+    Permission("decrypt_event", null),
+    Permission("encrypt_tag_array", null),
+    Permission("decrypt_tag_array", null),
     Permission("decrypt_zap_event", null),
     Permission("sign_event", 0),
     Permission("sign_event", 1),

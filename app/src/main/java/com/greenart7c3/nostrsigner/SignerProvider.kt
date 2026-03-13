@@ -10,6 +10,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
+import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -287,13 +288,59 @@ class SignerProvider : ContentProvider() {
                     val database = Amber.instance.getDatabase(account.npub)
                     val logDatabase = Amber.instance.getLogDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-                    var permission =
-                        database
-                            .dao()
-                            .getPermission(
-                                packageName,
-                                uri.toString().replace("content://$appId.", ""),
-                            )
+                    val type =
+                        when (stringType) {
+                            "NIP04_DECRYPT" -> SignerType.NIP04_DECRYPT
+                            "NIP44_DECRYPT" -> SignerType.NIP44_DECRYPT
+                            "NIP04_ENCRYPT" -> SignerType.NIP04_ENCRYPT
+                            "NIP44_ENCRYPT" -> SignerType.NIP44_ENCRYPT
+                            "DECRYPT_ZAP_EVENT" -> SignerType.DECRYPT_ZAP_EVENT
+                            else -> null
+                        } ?: return null
+
+                    val isEncrypt = type == SignerType.NIP04_ENCRYPT || type == SignerType.NIP44_ENCRYPT
+
+                    // For ENCRYPT: classify plaintext input; for DECRYPT: perform operation first then classify result
+                    val result =
+                        if (isEncrypt) {
+                            null // defer until after permission check
+                        } else {
+                            try {
+                                runBlocking {
+                                    AmberUtils.encryptOrDecryptData(
+                                        content,
+                                        type,
+                                        account,
+                                        pubkey,
+                                    ) ?: "Could not decrypt the message"
+                                }
+                            } catch (e: Exception) {
+                                scope.launch {
+                                    logDatabase.dao().insertLog(
+                                        LogEntity(
+                                            0,
+                                            packageName,
+                                            uri.toString().replace("content://$appId.", ""),
+                                            e.message ?: "Could not decrypt the message",
+                                            System.currentTimeMillis(),
+                                        ),
+                                    )
+                                }
+                                "Could not decrypt the message"
+                            }
+                        }
+
+                    // Classify the content to determine EncryptedDataKind-based permission type
+                    val classifyContent = if (isEncrypt) content else (result ?: content)
+                    val permType = permissionTypeFromContent(classifyContent, isEncrypt, type)
+
+                    var permission = database.dao().getPermission(packageName, permType)
+                    if (permission == null) {
+                        permission = database.dao().getPermission(
+                            packageName,
+                            type.toString(),
+                        )
+                    }
                     if (permission == null) {
                         val nip = when (stringType) {
                             "NIP04_DECRYPT" -> 4
@@ -340,18 +387,9 @@ class SignerProvider : ContentProvider() {
                         return cursor
                     }
 
-                    val type =
-                        when (stringType) {
-                            "NIP04_DECRYPT" -> SignerType.NIP04_DECRYPT
-                            "NIP44_DECRYPT" -> SignerType.NIP44_DECRYPT
-                            "NIP04_ENCRYPT" -> SignerType.NIP04_ENCRYPT
-                            "NIP44_ENCRYPT" -> SignerType.NIP44_ENCRYPT
-                            "DECRYPT_ZAP_EVENT" -> SignerType.DECRYPT_ZAP_EVENT
-                            else -> null
-                        } ?: return null
-
-                    val result =
-                        try {
+                    // For encrypt: perform the operation now after permission is confirmed
+                    val finalResult =
+                        result ?: try {
                             runBlocking {
                                 AmberUtils.encryptOrDecryptData(
                                     content,
@@ -384,14 +422,14 @@ class SignerProvider : ContentProvider() {
                                 null,
                                 TimeUtils.now(),
                                 true,
-                                content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) result else content,
+                                content = if (!isEncrypt) finalResult else content,
                             ),
                             account.npub,
                         )
                     }
 
                     val cursor = MatrixCursor(arrayOf("signature", "event", "result"))
-                    cursor.addRow(arrayOf<Any>(result, result, result))
+                    cursor.addRow(arrayOf<Any>(finalResult, finalResult, finalResult))
                     return cursor
                 }
 

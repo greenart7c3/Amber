@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
+import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -336,10 +337,17 @@ fun BunkerSingleEventHomeScreen(
 
         is BunkerRequestNip04Encrypt -> {
             val nip = 4
+            val permType = bunkerRequest.encryptedData.toPermissionType(isEncrypt = true)
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString()
+                    it.pkKey == key && it.type == permType
                 }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+            }
             if (permission == null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {
@@ -400,10 +408,17 @@ fun BunkerSingleEventHomeScreen(
 
         is BunkerRequestNip04Decrypt -> {
             val nip = 4
+            val permType = bunkerRequest.encryptedData.toPermissionType(isEncrypt = false)
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString()
+                    it.pkKey == key && it.type == permType
                 }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+            }
             if (permission == null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {
@@ -466,10 +481,17 @@ fun BunkerSingleEventHomeScreen(
 
         is BunkerRequestNip44Encrypt -> {
             val nip = 44
+            val permType = bunkerRequest.encryptedData.toPermissionType(isEncrypt = true)
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString()
+                    it.pkKey == key && it.type == permType
                 }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+            }
             if (permission == null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {
@@ -532,10 +554,17 @@ fun BunkerSingleEventHomeScreen(
 
         is BunkerRequestNip44Decrypt -> {
             val nip = 44
+            val permType = bunkerRequest.encryptedData.toPermissionType(isEncrypt = false)
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == type.toString()
+                    it.pkKey == key && it.type == permType
                 }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+            }
             if (permission == null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {

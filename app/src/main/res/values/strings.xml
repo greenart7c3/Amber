@@ -134,6 +134,12 @@
     <string name="decrypt_data_using_nip_44">Decrypt data using nip 44</string>
     <string name="encrypt_data_using_nip_44">Encrypt data using nip 44</string>
     <string name="decrypt_private_zaps">Decrypt private zaps</string>
+    <string name="encrypt_clear_text">Encrypt text messages</string>
+    <string name="decrypt_clear_text">Decrypt text messages</string>
+    <string name="encrypt_event">Encrypt events</string>
+    <string name="decrypt_event">Decrypt events</string>
+    <string name="encrypt_tag_array">Encrypt tag arrays</string>
+    <string name="decrypt_tag_array">Decrypt tag arrays</string>
     <string name="event_kind_0">Metadata</string>
     <string name="event_kind_1">Short text note</string>
     <string name="event_kind_3">Follows</string>

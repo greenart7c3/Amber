@@ -14,7 +14,7 @@
         android:launchMode="singleTop"
         android:supportsRtl="true"
         android:theme="@style/Theme.NostrSigner"
-        android:usesCleartextTraffic="true"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:windowSoftInputMode="adjustResize"
         tools:targetApi="33">
 

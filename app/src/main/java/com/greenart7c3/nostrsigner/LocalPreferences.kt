@@ -159,20 +159,18 @@ object LocalPreferences {
 
     fun loadPinFromEncryptedStorage(): String? {
         val context = Amber.instance
-        return sharedPrefs(context).getString(SettingsKeys.PIN.key, null)
+        // Migration: move PIN from plain SharedPreferences to encrypted DataStore
+        val legacyPin = sharedPrefs(context).getString(SettingsKeys.PIN.key, null)
+        if (legacyPin != null) {
+            runBlocking { DataStoreAccess.savePin(context, legacyPin) }
+            sharedPrefs(context).edit { remove(SettingsKeys.PIN.key) }
+        }
+        return runBlocking { DataStoreAccess.loadPin(context) }
     }
 
     fun savePinToEncryptedStorage(pin: String?) {
         val context = Amber.instance
-        sharedPrefs(context).edit {
-            apply {
-                if (pin == null) {
-                    remove(SettingsKeys.PIN.key)
-                } else {
-                    putString(SettingsKeys.PIN.key, pin)
-                }
-            }
-        }
+        runBlocking { DataStoreAccess.savePin(context, pin) }
     }
 
     suspend fun reloadApp() {

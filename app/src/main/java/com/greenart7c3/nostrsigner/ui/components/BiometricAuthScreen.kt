@@ -15,6 +15,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -36,6 +37,7 @@ fun BiometricAuthScreen(
     onAuth: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var showPinDialog by remember { mutableStateOf(false) }
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { result: ActivityResult ->
@@ -117,22 +119,25 @@ fun BiometricAuthScreen(
                 ) {
                     RandomPinInput(
                         text = stringResource(R.string.enter_pin),
-                        onPinEntered = {
-                            val pin = LocalPreferences.loadPinFromEncryptedStorage()
-                            if (it == pin) {
-                                Amber.instance.settings = Amber.instance.settings.copy(
-                                    lastBiometricsTime = System.currentTimeMillis(),
-                                )
-
-                                LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                                onAuth(true)
-                                showPinDialog = false
-                            } else {
-                                Toast.makeText(
-                                    context,
-                                    context.getString(R.string.pin_does_not_match),
-                                    Toast.LENGTH_SHORT,
-                                ).show()
+                        onPinEntered = { enteredPin ->
+                            scope.launch(Dispatchers.IO) {
+                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                scope.launch(Dispatchers.Main) {
+                                    if (enteredPin == pin) {
+                                        Amber.instance.settings = Amber.instance.settings.copy(
+                                            lastBiometricsTime = System.currentTimeMillis(),
+                                        )
+                                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                        onAuth(true)
+                                        showPinDialog = false
+                                    } else {
+                                        Toast.makeText(
+                                            context,
+                                            context.getString(R.string.pin_does_not_match),
+                                            Toast.LENGTH_SHORT,
+                                        ).show()
+                                    }
+                                }
                             }
                         },
                     )

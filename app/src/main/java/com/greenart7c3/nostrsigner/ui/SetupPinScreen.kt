@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavController
@@ -10,6 +11,8 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.RandomPinInput
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 @Composable
 fun SetupPinScreen(
@@ -32,6 +35,7 @@ fun ConfirmPinScreen(
     navController: NavController,
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     Column(
         modifier,
     ) {
@@ -41,22 +45,21 @@ fun ConfirmPinScreen(
                     ToastManager.toast(context.getString(R.string.pin), context.getString(R.string.pin_does_not_match))
                 } else {
                     val usePin = Amber.instance.settings.usePin
-                    if (usePin) {
-                        Amber.instance.settings = Amber.instance.settings.copy(usePin = false)
-                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                        LocalPreferences.savePinToEncryptedStorage(null)
-                        navController.navigate(Route.Security.route) {
-                            popUpTo(Route.Security.route) {
-                                inclusive = true
-                            }
+                    scope.launch(Dispatchers.IO) {
+                        if (usePin) {
+                            Amber.instance.settings = Amber.instance.settings.copy(usePin = false)
+                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            LocalPreferences.savePinToEncryptedStorage(null)
+                        } else {
+                            Amber.instance.settings = Amber.instance.settings.copy(usePin = true)
+                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                            LocalPreferences.savePinToEncryptedStorage(pin)
                         }
-                    } else {
-                        Amber.instance.settings = Amber.instance.settings.copy(usePin = true)
-                        LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                        LocalPreferences.savePinToEncryptedStorage(pin)
-                        navController.navigate(Route.Security.route) {
-                            popUpTo(Route.Security.route) {
-                                inclusive = true
+                        scope.launch(Dispatchers.Main) {
+                            navController.navigate(Route.Security.route) {
+                                popUpTo(Route.Security.route) {
+                                    inclusive = true
+                                }
                             }
                         }
                     }

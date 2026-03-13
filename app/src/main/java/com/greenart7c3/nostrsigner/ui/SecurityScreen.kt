@@ -90,8 +90,12 @@ fun SecurityScreen(
                         .padding(horizontal = 8.dp)
                         .clickable {
                             if (setupPin) {
-                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
-                                navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+                                scope.launch(Dispatchers.IO) {
+                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                    scope.launch(Dispatchers.Main) {
+                                        navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+                                    }
+                                }
                             } else {
                                 navController.navigate(Route.SetupPin.route)
                             }
@@ -105,8 +109,12 @@ fun SecurityScreen(
                         checked = setupPin,
                         onCheckedChange = {
                             if (setupPin) {
-                                val pin = LocalPreferences.loadPinFromEncryptedStorage()
-                                navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+                                scope.launch(Dispatchers.IO) {
+                                    val pin = LocalPreferences.loadPinFromEncryptedStorage()
+                                    scope.launch(Dispatchers.Main) {
+                                        navController.navigate("${Route.ConfirmPin.route.split("/")[0]}/$pin")
+                                    }
+                                }
                             } else {
                                 navController.navigate(Route.SetupPin.route)
                             }

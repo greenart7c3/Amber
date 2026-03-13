@@ -26,8 +26,21 @@ object DataStoreAccess {
         )
     }
 
+    @Volatile
+    private var appDataStore: DataStore<Preferences>? = null
+
+    private fun getAppDataStore(context: Context): DataStore<Preferences> = appDataStore ?: synchronized(this) {
+        appDataStore ?: PreferenceDataStoreFactory.create(
+            scope = Amber.instance.applicationIOScope,
+            produceFile = {
+                context.applicationContext.preferencesDataStoreFile("app_datastore")
+            },
+        ).also { appDataStore = it }
+    }
+
     val NOSTR_PRIVKEY = stringPreferencesKey("nostr_privkey")
     val SEED_WORDS = stringPreferencesKey("seed_words")
+    val PIN = stringPreferencesKey("pin")
 
     suspend fun saveEncryptedKey(context: Context, npub: String, key: Preferences.Key<String>, value: String) {
         val encrypted = SecureCryptoHelper.encrypt(value)
@@ -51,5 +64,21 @@ object DataStoreAccess {
         getDataStore(context, npub).edit { prefs ->
             prefs.clear()
         }
+    }
+
+    suspend fun savePin(context: Context, pin: String?) {
+        getAppDataStore(context).edit { prefs ->
+            if (pin == null) {
+                prefs.remove(PIN)
+            } else {
+                prefs[PIN] = SecureCryptoHelper.encrypt(pin)
+            }
+        }
+    }
+
+    suspend fun loadPin(context: Context): String? {
+        val prefs = getAppDataStore(context).data.first()
+        val encrypted = prefs[PIN] ?: return null
+        return SecureCryptoHelper.decrypt(encrypted)
     }
 }

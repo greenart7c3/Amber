@@ -55,6 +55,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
@@ -78,7 +79,7 @@ fun SettingsScreen(
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
-    var checked by remember { mutableStateOf(Amber.instance.settings.useProxy) }
+    var torMode by remember { mutableStateOf(Amber.instance.settings.torMode) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
     val proxyPort = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
     val scope = rememberCoroutineScope()
@@ -178,10 +179,10 @@ fun SettingsScreen(
                         .padding(vertical = 8.dp),
                 ) {
                     IconRow(
-                        title = if (checked) {
-                            stringResource(R.string.disconnect_from_your_orbot_setup)
-                        } else {
-                            stringResource(R.string.connect_via_tor_short)
+                        title = when (torMode) {
+                            TorMode.BUILTIN -> stringResource(R.string.disconnect_builtin_tor)
+                            TorMode.ORBOT -> stringResource(R.string.disconnect_from_your_orbot_setup)
+                            TorMode.DISABLED -> stringResource(R.string.connect_via_tor_short)
                         },
                         icon = R.drawable.ic_tor,
                         tint = MaterialTheme.colorScheme.onBackground,
@@ -189,7 +190,7 @@ fun SettingsScreen(
                             navController.navigate(Route.TorSettings.route)
                         },
                         onClick = {
-                            if (checked) {
+                            if (torMode != TorMode.DISABLED) {
                                 disconnectTorDialog = true
                             } else {
                                 navController.navigate(Route.TorSettings.route)
@@ -369,9 +370,12 @@ fun SettingsScreen(
                 TextButton(
                     onClick = {
                         disconnectTorDialog = false
-                        checked = false
+                        torMode = TorMode.DISABLED
                         scope.launch(Dispatchers.IO) {
-                            LocalPreferences.updateProxy(context, false, proxyPort.value.toInt())
+                            if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
+                                com.greenart7c3.nostrsigner.service.TorManager.stop()
+                            }
+                            LocalPreferences.updateTorMode(context, TorMode.DISABLED)
                             Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                         }
                     },

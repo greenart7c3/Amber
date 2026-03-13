@@ -29,6 +29,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
@@ -39,12 +40,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
 import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
@@ -57,6 +60,7 @@ import kotlinx.coroutines.CancellationException
 fun ConnectOrbotScreen(
     modifier: Modifier,
     onPost: (Int) -> Unit,
+    onBuiltinTor: () -> Unit,
     onError: (String) -> Unit,
 ) {
     val portNumber = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
@@ -64,6 +68,46 @@ fun ConnectOrbotScreen(
     Column(
         modifier = modifier,
     ) {
+        Text(
+            text = stringResource(R.string.builtin_tor_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Text(
+            text = stringResource(R.string.builtin_tor_description),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        AmberButton(
+            modifier = Modifier.fillMaxWidth(),
+            onClick = onBuiltinTor,
+            text = if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
+                stringResource(R.string.builtin_tor_active)
+            } else {
+                stringResource(R.string.use_builtin_tor)
+            },
+            enabled = Amber.instance.settings.torMode != TorMode.BUILTIN,
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        HorizontalDivider()
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        Text(
+            text = stringResource(R.string.orbot_title),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
         val myMarkDownStyle =
             RichTextDefaults.copy(
                 stringStyle = RichTextDefaults.stringStyle?.copy(

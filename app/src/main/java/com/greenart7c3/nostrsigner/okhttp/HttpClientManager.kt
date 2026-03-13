@@ -110,4 +110,8 @@ object HttpClientManager {
     fun setDefaultProxyOnPort(port: Int) {
         setDefaultProxy(Proxy(Proxy.Type.SOCKS, InetSocketAddress("127.0.0.1", port)))
     }
+
+    fun clearProxy() {
+        setDefaultProxy(null)
+    }
 }

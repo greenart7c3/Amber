@@ -104,6 +104,12 @@
     <string name="connect_via_tor_short">Tor/Orbot kurulumu</string>
     <string name="do_you_really_want_to_disable_tor_title">Orbot/Tor bağlantısı kesilsin mi?</string>
     <string name="do_you_really_want_to_disable_tor_text">Verileriniz hemen normal ağ üzerinden aktarılacaktır</string>
+    <string name="builtin_tor_title">Built-in Tor</string>
+    <string name="builtin_tor_description">Run Tor directly inside the app. No external app required.</string>
+    <string name="use_builtin_tor">Use Built-in Tor</string>
+    <string name="builtin_tor_active">Built-in Tor Active</string>
+    <string name="disconnect_builtin_tor">Disconnect Built-in Tor</string>
+    <string name="orbot_title">Orbot (External App)</string>
     <string name="yes">Evet</string>
     <string name="no">Hayır</string>
     <string name="could_not_connect_to_tor">Tor\'a bağlanılamadı</string>
@@ -126,6 +132,12 @@
     <string name="decrypt_data_using_nip_44">Verinin şifresini NIP-44 kullanarak çöz</string>
     <string name="encrypt_data_using_nip_44">Veriyi NIP-44 kullanarak şifrele</string>
     <string name="decrypt_private_zaps">Özel zapların şifresini çöz</string>
+    <string name="encrypt_clear_text">Encrypt text messages</string>
+    <string name="decrypt_clear_text">Decrypt text messages</string>
+    <string name="encrypt_event">Encrypt events</string>
+    <string name="decrypt_event">Decrypt events</string>
+    <string name="encrypt_tag_array">Encrypt tag arrays</string>
+    <string name="decrypt_tag_array">Decrypt tag arrays</string>
     <string name="event_kind_0">Metadata</string>
     <string name="event_kind_1">Kısa metin notu</string>
     <string name="event_kind_3">Takip listesi</string>
@@ -547,6 +559,9 @@
     <string name="proxy_is_connected">Proxy bağlı</string>
     <string name="proxy_is_not_working">Proxy çalışmıyor. Proxy ayarlarınızı/uygulamanızı kontrol edin.</string>
     <string name="failed_to_connect_to_tor_orbot">Tor/Orbot\'a bağlanılamadı</string>
+    <string name="tor_starting">Starting Tor\u2026</string>
+    <string name="tor_retrying">Retrying Tor connection\u2026</string>
+    <string name="tor_status_channel_description">Built-in Tor status notifications</string>
     <string name="event_kind_443">KeyPackage</string>
     <string name="event_kind_10051">KeyPackage Relay Listesi</string>
     <string name="event_kind_444">Hoş Geldiniz</string>

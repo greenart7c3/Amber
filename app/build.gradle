@@ -148,11 +148,6 @@ android {
         }
     }
 
-    compileOptions {
-        sourceCompatibility JavaVersion.VERSION_21
-        targetCompatibility JavaVersion.VERSION_21
-    }
-
     buildFeatures {
         compose = true
         buildConfig = true
@@ -245,7 +240,6 @@ dependencies {
     implementation libs.coil.svg
     // enables network for coil
     implementation libs.coil.okhttp
-    implementation libs.okhttpCoroutines
 
     implementation libs.storage
 

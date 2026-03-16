@@ -101,7 +101,7 @@ class Amber :
     var settings: AmberSettings = AmberSettings()
 
     val factory = OkHttpWebSocket.Builder { url ->
-        val useProxy = if (isPrivateIp(url.url)) false else settings.useProxy
+        val useProxy = if (isPrivateIp(url.url)) false else settings.torMode != TorMode.DISABLED
         HttpClientManager.getHttpClient(useProxy)
     }
 
@@ -446,7 +446,7 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
-            val useProxy = if (isPrivateIp(url)) false else settings.useProxy
+            val useProxy = if (isPrivateIp(url)) false else settings.torMode != TorMode.DISABLED
             HttpClientManager.getHttpClient(useProxy).newCall(request)
         }
         return ImageLoader.Builder(context)

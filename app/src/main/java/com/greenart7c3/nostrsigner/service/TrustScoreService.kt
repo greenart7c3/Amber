@@ -4,6 +4,7 @@ import android.util.Log
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.net.URLEncoder
 import java.util.concurrent.ConcurrentHashMap
@@ -92,7 +93,7 @@ object TrustScoreService {
                 val encodedUrl = URLEncoder.encode(normalizedUrl, "UTF-8")
                 val requestUrl = "$API_BASE_URL$encodedUrl"
 
-                val client = HttpClientManager.getHttpClient(Amber.instance.settings.useProxy)
+                val client = HttpClientManager.getHttpClient(Amber.instance.settings.torMode != TorMode.DISABLED)
                 val request = Request.Builder()
                     .url(requestUrl)
                     .get()

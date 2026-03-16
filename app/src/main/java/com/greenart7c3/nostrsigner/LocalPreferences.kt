@@ -14,6 +14,7 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -212,7 +213,7 @@ object LocalPreferences {
                 TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(proxyPort)
                 // For built-in Tor, set a fail-closed placeholder proxy so no clearnet
                 // traffic can leak before TorManager configures the real SOCKS port.
-                TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(1)
+                TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
                 TorMode.DISABLED -> {}
             }
 
@@ -467,7 +468,7 @@ object LocalPreferences {
             TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(port)
             TorMode.DISABLED -> HttpClientManager.clearProxy()
             // Fail-closed placeholder; TorManager will update to the real port once running.
-            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(1)
+            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
         }
     }
 

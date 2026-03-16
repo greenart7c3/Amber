@@ -84,6 +84,24 @@ data class Permission(
         "decrypt_zap_event" -> {
             context.getString(R.string.decrypt_private_zaps)
         }
+        "encrypt_clear_text" -> {
+            context.getString(R.string.encrypt_clear_text)
+        }
+        "decrypt_clear_text" -> {
+            context.getString(R.string.decrypt_clear_text)
+        }
+        "encrypt_event" -> {
+            context.getString(R.string.encrypt_event)
+        }
+        "decrypt_event" -> {
+            context.getString(R.string.decrypt_event)
+        }
+        "encrypt_tag_array" -> {
+            context.getString(R.string.encrypt_tag_array)
+        }
+        "decrypt_tag_array" -> {
+            context.getString(R.string.decrypt_tag_array)
+        }
         "sign_event" -> {
             when (kind) {
                 0 -> context.getString(R.string.event_kind_0)
@@ -585,5 +603,11 @@ val supportedKindNumbers = listOf(
     Permission("nip44_decrypt", null),
     Permission("nip44_encrypt", null),
     Permission("decrypt_zap_event", null),
+    Permission("encrypt_clear_text", null),
+    Permission("decrypt_clear_text", null),
+    Permission("encrypt_event", null),
+    Permission("decrypt_event", null),
+    Permission("encrypt_tag_array", null),
+    Permission("decrypt_tag_array", null),
     Permission("get_public_key", null),
 )

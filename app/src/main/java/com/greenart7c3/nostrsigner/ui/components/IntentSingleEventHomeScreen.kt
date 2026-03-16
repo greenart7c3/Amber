@@ -28,6 +28,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
+import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -164,10 +165,18 @@ fun IntentSingleEventHomeScreen(
                 SignerType.DECRYPT_ZAP_EVENT -> null
                 else -> null
             }
+            val isEncrypt = intentData.type == SignerType.NIP04_ENCRYPT || intentData.type == SignerType.NIP44_ENCRYPT
+            val permType = intentData.encryptedData.toPermissionType(isEncrypt = isEncrypt)
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString()
+                    it.pkKey == key && it.type == permType
                 }
+            if (permission == null) {
+                permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == intentData.type.toString()
+                    }
+            }
             if (permission == null && nip != null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {

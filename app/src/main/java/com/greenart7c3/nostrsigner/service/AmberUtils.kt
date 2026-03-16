@@ -8,9 +8,12 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.basicPermissions
+import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
+import com.greenart7c3.nostrsigner.models.toPermissionTypeString
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -186,6 +189,7 @@ object AmberUtils {
         kind: Int?,
         rememberType: RememberType,
         relay: String = "",
+        encryptedData: EncryptedDataKind? = null,
     ) {
         val until = when (rememberType) {
             RememberType.ALWAYS -> Long.MAX_VALUE / 1000
@@ -195,25 +199,31 @@ object AmberUtils {
             else -> 0L
         }
 
+        val permissionTypeStr = type.toPermissionTypeString(encryptedData)
+
         if (kind != null) {
             if (relay.isNotEmpty()) {
                 if (relay == "*") {
-                    application.permissions.removeIf { it.kind == kind && it.type == type.toString() }
+                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr }
                 } else {
-                    application.permissions.removeIf { it.kind == kind && it.type == type.toString() && it.relay == relay }
+                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay == relay }
                 }
             } else {
-                application.permissions.removeIf { it.kind == kind && it.type == type.toString() && it.relay.isEmpty() }
+                application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay.isEmpty() }
             }
         } else {
-            application.permissions.removeIf { it.type == type.toString() && it.type != "SIGN_EVENT" }
+            application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
+            // Also remove any old NIP-based permission entries for this operation type
+            if (type in encryptDecryptSignerTypes) {
+                application.permissions.removeIf { it.type == type.toString() }
+            }
         }
 
         application.permissions.add(
             ApplicationPermissionsEntity(
                 null,
                 key,
-                type.toString(),
+                permissionTypeStr,
                 kind,
                 true,
                 rememberType.screenCode,

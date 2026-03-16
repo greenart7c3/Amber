@@ -16,7 +16,13 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
@@ -34,6 +40,7 @@ import androidx.compose.runtime.snapshots.SnapshotStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
@@ -96,6 +103,7 @@ fun DefaultRelaysScreen(
 ) {
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
     val isLoading = remember { mutableStateOf(false) }
     val relays2 = remember { mutableStateListOf(*Amber.instance.settings.defaultRelays.toTypedArray()) }
@@ -207,41 +215,63 @@ fun DefaultRelaysScreen(
                         },
                     ),
                     label = {
-                        Text("Relay")
+                        Text(stringResource(R.string.wss))
                     },
-                )
-
-                AmberButton(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    onClick = {
-                        scope.launch(Dispatchers.IO) {
-                            onAddRelay(
-                                textFieldRelay,
-                                isLoading,
-                                relays2,
-                                scope,
-                                account,
-                                context,
-                                onDone = {
-                                    isLoading.value = true
-                                    Amber.instance.settings = Amber.instance.settings.copy(
-                                        defaultRelays = relays2,
-                                    )
-                                    LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
-                                    scope.launch(Dispatchers.IO) {
-                                        if (!BuildFlavorChecker.isOfflineFlavor()) {
-                                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
-                                            isLoading.value = false
-                                        } else {
-                                            isLoading.value = false
-                                        }
+                    leadingIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    val text = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
+                                    if (!text.isNullOrBlank()) {
+                                        textFieldRelay.value = TextFieldValue(text)
                                     }
-                                },
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.ContentPaste,
+                                contentDescription = stringResource(R.string.paste_from_clipboard),
                             )
                         }
                     },
-                    text = stringResource(R.string.add),
+                    trailingIcon = {
+                        IconButton(
+                            colors = IconButtonDefaults.iconButtonColors().copy(
+                                containerColor = MaterialTheme.colorScheme.primary,
+                            ),
+                            onClick = {
+                                scope.launch(Dispatchers.IO) {
+                                    onAddRelay(
+                                        textFieldRelay,
+                                        isLoading,
+                                        relays2,
+                                        scope,
+                                        account,
+                                        context,
+                                        onDone = {
+                                            Amber.instance.settings = Amber.instance.settings.copy(
+                                                defaultRelays = relays2,
+                                            )
+                                            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+                                            scope.launch(Dispatchers.IO) {
+                                                if (!BuildFlavorChecker.isOfflineFlavor()) {
+                                                    Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+                                                    isLoading.value = false
+                                                } else {
+                                                    isLoading.value = false
+                                                }
+                                            }
+                                        },
+                                    )
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.Add,
+                                contentDescription = stringResource(R.string.add),
+                            )
+                        }
+                    },
                 )
 
                 LazyColumn(

@@ -23,6 +23,7 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Context
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -67,6 +68,7 @@ class NotificationSubscription(
      * Call this method every time the relay list or the user list changes
      */
     suspend fun updateFilter() {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
         LocalPreferences.allAccounts(appContext).forEach {
             if (!subIds.containsKey(it.hexKey)) {
                 subIds[it.hexKey] = UUID.randomUUID().toString()

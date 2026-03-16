@@ -41,10 +41,10 @@ import androidx.navigation.NavBackStackEntry
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.TorMode
-import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes

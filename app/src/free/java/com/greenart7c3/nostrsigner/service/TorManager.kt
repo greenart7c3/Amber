@@ -4,6 +4,8 @@ import android.content.Context
 import android.util.Log
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import io.matthewnelson.kmp.tor.resource.exec.tor.ResourceLoaderTorExec
+import io.matthewnelson.kmp.tor.runtime.Action.Companion.startDaemonAsync
+import io.matthewnelson.kmp.tor.runtime.Action.Companion.stopDaemonAsync
 import io.matthewnelson.kmp.tor.runtime.RuntimeEvent
 import io.matthewnelson.kmp.tor.runtime.TorRuntime
 import io.matthewnelson.kmp.tor.runtime.core.OnEvent

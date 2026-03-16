@@ -42,6 +42,9 @@ object TorManager {
     @Volatile
     private var torRuntime: TorRuntime? = null
 
+    @Volatile
+    private var portCollectorStarted = false
+
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
@@ -101,6 +104,16 @@ object TorManager {
             appContext = context.applicationContext
             createNotificationChannel()
         }
+        if (!portCollectorStarted) {
+            portCollectorStarted = true
+            scope.launch(Dispatchers.IO) {
+                _socksPort.collect { port ->
+                    if (port > 0) {
+                        HttpClientManager.setDefaultProxyOnPort(port)
+                    }
+                }
+            }
+        }
         if (torRuntime != null) return
         showNotification(context.getString(R.string.tor_starting))
         scope.launch(Dispatchers.IO) {
@@ -126,7 +139,6 @@ object TorManager {
                                 val port = addr.port.value
                                 Log.i(TAG, "Built-in Tor SOCKS proxy on port $port")
                                 _socksPort.value = port
-                                HttpClientManager.setDefaultProxyOnPort(port)
                                 _isRunning.value = true
                                 appContext?.let { showNotification(it.getString(R.string.builtin_tor_active)) }
                             } catch (e: Exception) {

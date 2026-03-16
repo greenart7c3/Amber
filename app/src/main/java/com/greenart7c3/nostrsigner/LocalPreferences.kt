@@ -208,8 +208,12 @@ object LocalPreferences {
             }
 
             val proxyPort = getInt(SettingsKeys.PROXY_PORT.key, 9050)
-            if (torMode == TorMode.ORBOT) {
-                HttpClientManager.setDefaultProxyOnPort(proxyPort)
+            when (torMode) {
+                TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(proxyPort)
+                // For built-in Tor, set a fail-closed placeholder proxy so no clearnet
+                // traffic can leak before TorManager configures the real SOCKS port.
+                TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(1)
+                TorMode.DISABLED -> {}
             }
 
             return AmberSettings(
@@ -462,7 +466,8 @@ object LocalPreferences {
         when (torMode) {
             TorMode.ORBOT -> HttpClientManager.setDefaultProxyOnPort(port)
             TorMode.DISABLED -> HttpClientManager.clearProxy()
-            TorMode.BUILTIN -> { /* Proxy port set by TorManager once Tor starts */ }
+            // Fail-closed placeholder; TorManager will update to the real port once running.
+            TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(1)
         }
     }
 

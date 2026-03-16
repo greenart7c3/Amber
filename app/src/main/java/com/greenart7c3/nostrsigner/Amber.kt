@@ -218,6 +218,7 @@ class Amber :
         instance = this
 
         stats.createNotificationChannel()
+        TorManager.init(this)
 
         isStartingAppState.value = true
         isStartingApp.value = true
@@ -252,11 +253,20 @@ class Amber :
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp()
-                if (settings.torMode == TorMode.BUILTIN) {
-                    TorManager.start(this@Amber, applicationIOScope)
-                    withTimeoutOrNull(120_000L) {
-                        TorManager.isRunning.first { it }
-                    } ?: Log.w(TAG, "Timed out waiting for built-in Tor to start, proceeding anyway")
+                if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
+                    var attempt = 0
+                    while (!TorManager.isRunning.value) {
+                        if (attempt > 0) {
+                            TorManager.showRetrying()
+                            TorManager.stop()
+                            delay(3000)
+                        }
+                        TorManager.start(this@Amber, applicationIOScope)
+                        attempt++
+                        withTimeoutOrNull(120_000L) {
+                            TorManager.isRunning.first { it }
+                        }
+                    }
                 }
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {

@@ -14,11 +14,24 @@ object TorManager {
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
     @Suppress("UNUSED_PARAMETER")
+    fun init(context: Context) {
+        // No-op in offline flavor
+    }
+
+    @Suppress("UNUSED_PARAMETER")
     fun start(context: Context, scope: CoroutineScope) {
         // No-op in offline flavor
     }
 
     fun stop() {
+        // No-op in offline flavor
+    }
+
+    fun showRetrying() {
+        // No-op in offline flavor
+    }
+
+    fun cancelNotification() {
         // No-op in offline flavor
     }
 }

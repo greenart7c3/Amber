@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ContentPaste
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -68,6 +69,7 @@ fun NewNsecBunkerScreen(
     val secret = remember { mutableStateOf(UUID.randomUUID().toString()) }
     var name by remember { mutableStateOf(TextFieldValue(AnnotatedString(""))) }
     val context = LocalContext.current
+    val clipboardManager = LocalClipboard.current
 
     val relays =
         remember {
@@ -99,7 +101,7 @@ fun NewNsecBunkerScreen(
     if (isLoading.value) {
         CenterCircularProgressIndicator(
             modifier = Modifier,
-            text = "Testing the relay...",
+            text = stringResource(R.string.testing_relay),
         )
     } else {
         Column(
@@ -172,6 +174,23 @@ fun NewNsecBunkerScreen(
                     ),
                     label = {
                         Text(stringResource(R.string.wss))
+                    },
+                    leadingIcon = {
+                        IconButton(
+                            onClick = {
+                                scope.launch {
+                                    val text = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)?.text?.toString()
+                                    if (!text.isNullOrBlank()) {
+                                        textFieldRelay.value = TextFieldValue(text)
+                                    }
+                                }
+                            },
+                        ) {
+                            Icon(
+                                Icons.Default.ContentPaste,
+                                contentDescription = stringResource(R.string.paste_from_clipboard),
+                            )
+                        }
                     },
                     trailingIcon = {
                         IconButton(

@@ -109,9 +109,15 @@
     <string name="invalid_port_number">Invalid port number</string>
     <string name="use_orbot">Use Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Disconnect Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor setup</string>
+    <string name="do_you_really_want_to_disable_tor_title">Disconnect from Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Your data will be immediately transferred in the regular network</string>
+    <string name="builtin_tor_title">Built-in Tor</string>
+    <string name="builtin_tor_description">Run Tor directly inside the app. No external app required.</string>
+    <string name="use_builtin_tor">Use Built-in Tor</string>
+    <string name="builtin_tor_active">Built-in Tor Active</string>
+    <string name="disconnect_builtin_tor">Disconnect Built-in Tor</string>
+    <string name="orbot_title">Orbot (External App)</string>
     <string name="yes">Yes</string>
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">Could not connect to Tor</string>
@@ -562,6 +568,9 @@
     <string name="proxy_is_connected">Proxy is connected</string>
     <string name="proxy_is_not_working">Proxy is not working. Check your proxy settings/application.</string>
     <string name="failed_to_connect_to_tor_orbot">Failed to connect to Tor/Orbot</string>
+    <string name="tor_starting">Starting Tor\u2026</string>
+    <string name="tor_retrying">Retrying Tor connection\u2026</string>
+    <string name="tor_status_channel_description">Built-in Tor status notifications</string>
     <string name="event_kind_443">KeyPackage</string>
     <string name="event_kind_10051">KeyPackage Relays List</string>
     <string name="event_kind_444">Welcome</string>

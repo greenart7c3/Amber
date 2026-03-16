@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
@@ -41,6 +42,7 @@ import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
@@ -68,7 +70,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import okio.Path.Companion.toOkioPath
 
 class Amber :
@@ -97,7 +101,7 @@ class Amber :
     var settings: AmberSettings = AmberSettings()
 
     val factory = OkHttpWebSocket.Builder { url ->
-        val useProxy = if (isPrivateIp(url.url)) false else settings.useProxy
+        val useProxy = if (isPrivateIp(url.url)) false else settings.torMode != TorMode.DISABLED
         HttpClientManager.getHttpClient(useProxy)
     }
 
@@ -138,6 +142,18 @@ class Amber :
     val notificationCache = LruCache<String, Long>(10)
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
+        if (settings.torMode == TorMode.BUILTIN) {
+            val port = TorManager.socksPort.value
+            if (port == 0) return false
+            return try {
+                val socket = Socket()
+                socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                socket.close()
+                true
+            } catch (e: Exception) {
+                false
+            }
+        }
         try {
             val socket = Socket()
             socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
@@ -211,6 +227,7 @@ class Amber :
         instance = this
 
         stats.createNotificationChannel()
+        TorManager.init(this)
 
         isStartingAppState.value = true
         isStartingApp.value = true
@@ -245,6 +262,21 @@ class Amber :
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp()
+                if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
+                    var attempt = 0
+                    while (!TorManager.isRunning.value) {
+                        if (attempt > 0) {
+                            TorManager.showRetrying()
+                            TorManager.stop()
+                            delay(3000)
+                        }
+                        TorManager.start(this@Amber, applicationIOScope)
+                        attempt++
+                        withTimeoutOrNull(120_000L) {
+                            TorManager.isRunning.first { it }
+                        }
+                    }
+                }
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {
                     disconnectIntentionally()
@@ -414,7 +446,7 @@ class Amber :
             .build()
         val coilCallFactory = okhttp3.Call.Factory { request ->
             val url = request.url.toString()
-            val useProxy = if (isPrivateIp(url)) false else settings.useProxy
+            val useProxy = if (isPrivateIp(url)) false else settings.torMode != TorMode.DISABLED
             HttpClientManager.getHttpClient(useProxy).newCall(request)
         }
         return ImageLoader.Builder(context)

@@ -45,6 +45,9 @@ object TorManager {
     private val _isRunning = MutableStateFlow(false)
     val isRunning: StateFlow<Boolean> = _isRunning.asStateFlow()
 
+    private val _socksPort = MutableStateFlow(0)
+    val socksPort: StateFlow<Int> = _socksPort.asStateFlow()
+
     fun init(context: Context) {
         if (appContext != null) return
         appContext = context.applicationContext
@@ -122,6 +125,7 @@ object TorManager {
                             try {
                                 val port = addr.port.value
                                 Log.i(TAG, "Built-in Tor SOCKS proxy on port $port")
+                                _socksPort.value = port
                                 HttpClientManager.setDefaultProxyOnPort(port)
                                 _isRunning.value = true
                                 appContext?.let { showNotification(it.getString(R.string.builtin_tor_active)) }
@@ -151,6 +155,7 @@ object TorManager {
         val runtime = torRuntime ?: return
         torRuntime = null
         _isRunning.value = false
+        _socksPort.value = 0
         cancelNotification()
         try {
             runBlocking(Dispatchers.IO) { runtime.stopDaemonAsync() }

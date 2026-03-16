@@ -143,7 +143,16 @@ class Amber :
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {
-            return TorManager.isRunning.value
+            val port = TorManager.socksPort.value
+            if (port == 0) return false
+            return try {
+                val socket = Socket()
+                socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                socket.close()
+                true
+            } catch (e: Exception) {
+                false
+            }
         }
         try {
             val socket = Socket()

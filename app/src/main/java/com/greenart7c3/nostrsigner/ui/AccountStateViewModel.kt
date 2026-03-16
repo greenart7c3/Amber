@@ -7,6 +7,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -118,6 +119,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             LocalPreferences.saveSettingsToEncryptedStorage(
                 Amber.instance.settings,
             )
+            if (torMode == TorMode.BUILTIN) {
+                TorManager.start(Amber.instance, Amber.instance.applicationIOScope)
+            }
         }
         LocalPreferences.updatePrefsForLogin(Amber.instance, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
         startUI(account, route)
@@ -152,6 +156,9 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             LocalPreferences.saveSettingsToEncryptedStorage(
                 Amber.instance.settings,
             )
+            if (torMode == TorMode.BUILTIN) {
+                TorManager.start(Amber.instance, Amber.instance.applicationIOScope)
+            }
             Amber.instance.applicationIOScope.launch {
                 Amber.instance.reconnect()
             }

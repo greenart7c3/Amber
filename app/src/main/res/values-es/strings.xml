@@ -552,6 +552,8 @@
     <string name="event_kind_444">Welcome</string>
     <string name="event_kind_445">Group</string>
     <string name="give_us_feedback">Give us feedback</string>
+    <string name="feedback_type">Feedback type</string>
+    <string name="required">Required</string>
     <string name="bug_report">Bug report</string>
     <string name="enhancement_request">Enhancement request</string>
     <string name="subject">Subject</string>
@@ -640,4 +642,13 @@
     <string name="for_this_relay_only">This relay only</string>
     <string name="for_all_relays">All relays</string>
     <string name="relay_auth_scope">Authentication scope</string>
+    <string name="event_kind_10086">Indexer relays</string>
+    <string name="event_kind_10087">Proxy relays</string>
+    <string name="event_kind_100">Broadcast relays</string>
+    <string name="event_kind_10088">Broadcast relays</string>
+    <string name="event_kind_10089">Trusted relays</string>
+    <string name="event_kind_3063">Software Asset</string>
+    <string name="event_kind_32267">Software Application</string>
+    <string name="event_kind_10012">Favorite relays list</string>
+    <string name="event_kind_30267">App curation sets</string>
 </resources>

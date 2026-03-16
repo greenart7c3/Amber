@@ -70,7 +70,9 @@ import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withTimeoutOrNull
 import okio.Path.Companion.toOkioPath
 
 class Amber :
@@ -252,6 +254,9 @@ class Amber :
                 LocalPreferences.reloadApp()
                 if (settings.torMode == TorMode.BUILTIN) {
                     TorManager.start(this@Amber, applicationIOScope)
+                    withTimeoutOrNull(120_000L) {
+                        TorManager.isRunning.first { it }
+                    } ?: Log.w(TAG, "Timed out waiting for built-in Tor to start, proceeding anyway")
                 }
                 checkForNewRelaysAndUpdateAllFilters(true)
                 if (settings.killSwitch.value) {

@@ -52,6 +52,7 @@ object TorManager {
                                 val port = addr.port.value
                                 Log.i(TAG, "Built-in Tor SOCKS proxy on port $port")
                                 HttpClientManager.setDefaultProxyOnPort(port)
+                                _isRunning.value = true
                             } catch (e: Exception) {
                                 Log.e(TAG, "Failed to read Tor SOCKS port", e)
                             }
@@ -65,7 +66,6 @@ object TorManager {
 
                 torRuntime = runtime
                 runtime.startDaemonAsync()
-                _isRunning.value = true
                 Log.i(TAG, "Built-in Tor started")
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to start built-in Tor", e)

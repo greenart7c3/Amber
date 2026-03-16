@@ -41,6 +41,8 @@ import androidx.navigation.NavBackStackEntry
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -108,19 +110,18 @@ fun AmberTopAppBar(
                                 }
 
                                 if (Amber.instance.settings.useProxy) {
-                                    var isProxyEnabled by remember { mutableStateOf(false) }
+                                    val torIsRunning by TorManager.isRunning.collectAsStateWithLifecycle()
+                                    var orbotProxyEnabled by remember { mutableStateOf(false) }
                                     DisposableEffect(lifecycleOwner) {
                                         val observer = LifecycleEventObserver { _, event ->
                                             when (event) {
-                                                Lifecycle.Event.ON_START -> {
-                                                    Amber.instance.applicationIOScope.launch {
-                                                        isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
-                                                    }
-                                                }
-
-                                                Lifecycle.Event.ON_RESUME -> {
-                                                    Amber.instance.applicationIOScope.launch {
-                                                        isProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                                Lifecycle.Event.ON_START,
+                                                Lifecycle.Event.ON_RESUME,
+                                                -> {
+                                                    if (Amber.instance.settings.torMode != TorMode.BUILTIN) {
+                                                        Amber.instance.applicationIOScope.launch {
+                                                            orbotProxyEnabled = Amber.instance.isSocksProxyAlive("127.0.0.1", Amber.instance.settings.proxyPort)
+                                                        }
                                                     }
                                                 }
 
@@ -131,6 +132,7 @@ fun AmberTopAppBar(
 
                                         onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
                                     }
+                                    val isProxyEnabled = if (Amber.instance.settings.torMode == TorMode.BUILTIN) torIsRunning else orbotProxyEnabled
 
                                     TooltipBox(
                                         positionProvider = TooltipDefaults.rememberTooltipPositionProvider(TooltipAnchorPosition.Above),

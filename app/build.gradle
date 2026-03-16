@@ -243,8 +243,9 @@ dependencies {
     implementation libs.coil.gif
     // view svgs
     implementation libs.coil.svg
-    // enables network for coil (free only — offline has no network stack)
-    freeImplementation libs.coil.okhttp
+    // enables network for coil
+    implementation libs.coil.okhttp
+    implementation libs.okhttpCoroutines
 
     implementation libs.storage
 

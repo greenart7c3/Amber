@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -104,6 +105,7 @@ import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
@@ -589,7 +591,7 @@ fun SignUpPage(
                             ),
                         )
                         var selectedOption by remember { mutableIntStateOf(0) }
-                        var useProxy by remember { mutableStateOf(false) }
+                        var torMode by remember { mutableStateOf(TorMode.DISABLED) }
                         var proxyPort by remember { mutableStateOf(TextFieldValue("9050")) }
                         Column(
                             Modifier
@@ -660,25 +662,58 @@ fun SignUpPage(
                                     modifier = Modifier
                                         .padding(vertical = 20.dp)
                                         .clickable {
-                                            useProxy = !useProxy
+                                            torMode = if (torMode == TorMode.DISABLED) TorMode.BUILTIN else TorMode.DISABLED
                                         },
                                 ) {
                                     Switch(
                                         modifier = Modifier.scale(0.85f),
-                                        checked = useProxy,
+                                        checked = torMode != TorMode.DISABLED,
                                         onCheckedChange = { value ->
-                                            useProxy = value
+                                            torMode = if (value) TorMode.BUILTIN else TorMode.DISABLED
                                         },
                                     )
                                     Text(
                                         modifier = Modifier
                                             .weight(1f)
                                             .padding(start = 8.dp),
-                                        text = stringResource(R.string.connect_through_your_orbot_setup),
+                                        text = stringResource(R.string.connect_via_tor_short),
                                     )
                                 }
 
-                                if (useProxy) {
+                                if (torMode != TorMode.DISABLED) {
+                                    Text(
+                                        text = stringResource(R.string.builtin_tor_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.builtin_tor_description),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    AmberButton(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { torMode = TorMode.BUILTIN },
+                                        text = if (torMode == TorMode.BUILTIN) {
+                                            stringResource(R.string.builtin_tor_active)
+                                        } else {
+                                            stringResource(R.string.use_builtin_tor)
+                                        },
+                                        enabled = torMode != TorMode.BUILTIN,
+                                    )
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    HorizontalDivider()
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Text(
+                                        text = stringResource(R.string.orbot_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
                                     val myMarkDownStyle =
                                         RichTextDefaults.copy(
                                             stringStyle = RichTextDefaults.stringStyle?.copy(
@@ -730,7 +765,17 @@ fun SignUpPage(
                                         ),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(bottom = 20.dp),
+                                            .padding(bottom = 8.dp),
+                                    )
+                                    AmberButton(
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                                        onClick = { torMode = TorMode.ORBOT },
+                                        text = if (torMode == TorMode.ORBOT) {
+                                            stringResource(R.string.use_orbot) + " ✓"
+                                        } else {
+                                            stringResource(R.string.use_orbot)
+                                        },
+                                        enabled = torMode != TorMode.ORBOT,
                                     )
                                 }
                             }
@@ -738,7 +783,7 @@ fun SignUpPage(
                                 modifier = Modifier
                                     .padding(vertical = 20.dp),
                                 onClick = {
-                                    if (proxyPort.text.toIntOrNull() == null) {
+                                    if (torMode == TorMode.ORBOT && proxyPort.text.toIntOrNull() == null) {
                                         Toast.makeText(
                                             context,
                                             "Invalid port number",
@@ -750,9 +795,9 @@ fun SignUpPage(
                                     Amber.instance.applicationIOScope.launch {
                                         loading = true
                                         accountViewModel.newKey(
-                                            useProxy = useProxy,
+                                            torMode = torMode,
                                             signPolicy = selectedOption,
-                                            proxyPort = proxyPort.text.toInt(),
+                                            proxyPort = if (torMode == TorMode.ORBOT) proxyPort.text.toInt() else 9050,
                                             seedWords = seedWords,
                                             name = nickname.text,
                                         )
@@ -1116,7 +1161,7 @@ fun LoginPage(
                             ),
                         )
                         var selectedOption by remember { mutableIntStateOf(0) }
-                        var useProxy by remember { mutableStateOf(false) }
+                        var torMode by remember { mutableStateOf(TorMode.DISABLED) }
                         var proxyPort by remember { mutableStateOf(TextFieldValue("9050")) }
                         val scrollState = rememberScrollState()
 
@@ -1188,25 +1233,58 @@ fun LoginPage(
                                     modifier = Modifier
                                         .padding(vertical = 20.dp)
                                         .clickable {
-                                            useProxy = !useProxy
+                                            torMode = if (torMode == TorMode.DISABLED) TorMode.BUILTIN else TorMode.DISABLED
                                         },
                                 ) {
                                     Switch(
                                         modifier = Modifier.scale(0.85f),
-                                        checked = useProxy,
+                                        checked = torMode != TorMode.DISABLED,
                                         onCheckedChange = { value ->
-                                            useProxy = value
+                                            torMode = if (value) TorMode.BUILTIN else TorMode.DISABLED
                                         },
                                     )
                                     Text(
                                         modifier = Modifier
                                             .weight(1f)
                                             .padding(start = 8.dp),
-                                        text = stringResource(R.string.connect_through_your_orbot_setup),
+                                        text = stringResource(R.string.connect_via_tor_short),
                                     )
                                 }
 
-                                if (useProxy) {
+                                if (torMode != TorMode.DISABLED) {
+                                    Text(
+                                        text = stringResource(R.string.builtin_tor_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    Text(
+                                        text = stringResource(R.string.builtin_tor_description),
+                                        style = MaterialTheme.typography.bodyMedium,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    AmberButton(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        onClick = { torMode = TorMode.BUILTIN },
+                                        text = if (torMode == TorMode.BUILTIN) {
+                                            stringResource(R.string.builtin_tor_active)
+                                        } else {
+                                            stringResource(R.string.use_builtin_tor)
+                                        },
+                                        enabled = torMode != TorMode.BUILTIN,
+                                    )
+
+                                    Spacer(modifier = Modifier.height(24.dp))
+                                    HorizontalDivider()
+                                    Spacer(modifier = Modifier.height(24.dp))
+
+                                    Text(
+                                        text = stringResource(R.string.orbot_title),
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+
                                     val myMarkDownStyle =
                                         RichTextDefaults.copy(
                                             stringStyle = RichTextDefaults.stringStyle?.copy(
@@ -1258,7 +1336,17 @@ fun LoginPage(
                                         ),
                                         modifier = Modifier
                                             .fillMaxWidth()
-                                            .padding(bottom = 20.dp),
+                                            .padding(bottom = 8.dp),
+                                    )
+                                    AmberButton(
+                                        modifier = Modifier.fillMaxWidth().padding(bottom = 20.dp),
+                                        onClick = { torMode = TorMode.ORBOT },
+                                        text = if (torMode == TorMode.ORBOT) {
+                                            stringResource(R.string.use_orbot) + " ✓"
+                                        } else {
+                                            stringResource(R.string.use_orbot)
+                                        },
+                                        enabled = torMode != TorMode.ORBOT,
                                     )
                                 }
                             }
@@ -1266,7 +1354,7 @@ fun LoginPage(
                                 modifier = Modifier
                                     .padding(vertical = 20.dp),
                                 onClick = {
-                                    if (proxyPort.text.toIntOrNull() == null) {
+                                    if (torMode == TorMode.ORBOT && proxyPort.text.toIntOrNull() == null) {
                                         Toast.makeText(
                                             context,
                                             "Invalid port number",
@@ -1280,9 +1368,9 @@ fun LoginPage(
                                         accountViewModel.startUI(
                                             keyPair = keyPair,
                                             route = null,
-                                            useProxy = useProxy,
+                                            torMode = torMode,
                                             signPolicy = selectedOption,
-                                            proxyPort = proxyPort.text.toInt(),
+                                            proxyPort = if (torMode == TorMode.ORBOT) proxyPort.text.toInt() else 9050,
                                         )
                                         isLoading = false
                                         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {

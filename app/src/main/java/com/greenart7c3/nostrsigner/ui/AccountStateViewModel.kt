@@ -96,7 +96,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     suspend fun startUI(
         keyPair: KeyPair,
         route: String?,
-        useProxy: Boolean,
+        torMode: TorMode,
         proxyPort: Int,
         signPolicy: Int,
     ) {
@@ -112,7 +112,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
             Amber.instance.settings = Amber.instance.settings.copy(
-                torMode = if (useProxy) TorMode.ORBOT else TorMode.DISABLED,
+                torMode = torMode,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(
@@ -124,7 +124,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     }
 
     suspend fun newKey(
-        useProxy: Boolean,
+        torMode: TorMode,
         proxyPort: Int,
         signPolicy: Int,
         seedWords: Set<String>,
@@ -146,7 +146,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         )
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
             Amber.instance.settings = Amber.instance.settings.copy(
-                torMode = if (useProxy) TorMode.ORBOT else TorMode.DISABLED,
+                torMode = torMode,
                 proxyPort = proxyPort,
             )
             LocalPreferences.saveSettingsToEncryptedStorage(

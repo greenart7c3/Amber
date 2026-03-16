@@ -104,6 +104,12 @@
     <string name="connect_via_tor_short">Configuration de Tor/Orbot</string>
     <string name="do_you_really_want_to_disable_tor_title">Se déconnecter de Orbot/Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Vos données seront immédiatement transférées sur le réseau normal</string>
+    <string name="builtin_tor_title">Built-in Tor</string>
+    <string name="builtin_tor_description">Run Tor directly inside the app. No external app required.</string>
+    <string name="use_builtin_tor">Use Built-in Tor</string>
+    <string name="builtin_tor_active">Built-in Tor Active</string>
+    <string name="disconnect_builtin_tor">Disconnect Built-in Tor</string>
+    <string name="orbot_title">Orbot (External App)</string>
     <string name="yes">Oui</string>
     <string name="no">Non</string>
     <string name="could_not_connect_to_tor">Impossible de se connecter à Tor</string>
@@ -126,6 +132,12 @@
     <string name="decrypt_data_using_nip_44">Déchiffrer les données en utilisant nip 44</string>
     <string name="encrypt_data_using_nip_44">Chiffrer les données en utilisant nip 44</string>
     <string name="decrypt_private_zaps">Déchiffrer les zaps privés</string>
+    <string name="encrypt_clear_text">Encrypt text messages</string>
+    <string name="decrypt_clear_text">Decrypt text messages</string>
+    <string name="encrypt_event">Encrypt events</string>
+    <string name="decrypt_event">Decrypt events</string>
+    <string name="encrypt_tag_array">Encrypt tag arrays</string>
+    <string name="decrypt_tag_array">Decrypt tag arrays</string>
     <string name="event_kind_0">Métadonnées</string>
     <string name="event_kind_1">Note courte</string>
     <string name="event_kind_3">Abonnements</string>
@@ -547,6 +559,9 @@
     <string name="proxy_is_connected">Proxy is connected</string>
     <string name="proxy_is_not_working">Proxy is not working. Check your proxy settings/application.</string>
     <string name="failed_to_connect_to_tor_orbot">Failed to connect to Tor/Orbot</string>
+    <string name="tor_starting">Starting Tor\u2026</string>
+    <string name="tor_retrying">Retrying Tor connection\u2026</string>
+    <string name="tor_status_channel_description">Built-in Tor status notifications</string>
     <string name="event_kind_443">KeyPackage</string>
     <string name="event_kind_10051">KeyPackage Relays List</string>
     <string name="event_kind_444">Welcome</string>

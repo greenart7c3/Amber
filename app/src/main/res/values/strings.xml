@@ -561,6 +561,8 @@
     <string name="event_kind_444">Welcome</string>
     <string name="event_kind_445">Group</string>
     <string name="give_us_feedback">Give us feedback</string>
+    <string name="feedback_type">Feedback type</string>
+    <string name="required">Required</string>
     <string name="bug_report">Bug report</string>
     <string name="enhancement_request">Enhancement request</string>
     <string name="subject">Subject</string>

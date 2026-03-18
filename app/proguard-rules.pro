@@ -72,3 +72,6 @@
 -dontwarn java.lang.instrument.ClassDefinition
 -dontwarn java.lang.instrument.UnmodifiableClassException
 -dontwarn com.google.errorprone.annotations.Immutable
+
+-dontwarn java.lang.management.ManagementFactory
+-dontwarn java.lang.management.RuntimeMXBean

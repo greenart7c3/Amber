@@ -262,24 +262,10 @@ class Amber :
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp()
+
+                // Start Tor immediately in the background without blocking app startup
                 if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
-                    var attempt = 0
-                    while (!TorManager.isRunning.value) {
-                        if (attempt > 0) {
-                            TorManager.showRetrying()
-                            TorManager.stop()
-                            delay(3000)
-                        }
-                        TorManager.start(this@Amber, applicationIOScope)
-                        attempt++
-                        withTimeoutOrNull(120_000L) {
-                            TorManager.isRunning.first { it }
-                        }
-                    }
-                }
-                checkForNewRelaysAndUpdateAllFilters(true)
-                if (settings.killSwitch.value) {
-                    disconnectIntentionally()
+                    TorManager.start(this@Amber, applicationIOScope)
                 }
 
                 launch(Dispatchers.Main) {
@@ -307,13 +293,43 @@ class Amber :
                         }
                     })
                 }
+
+                // Signal app startup complete so UI shows immediately
                 isStartingApp.value = false
+
+                // Wait for Tor to be ready before establishing relay connections
+                if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
+                    var attempt = 0
+                    while (!TorManager.isRunning.value) {
+                        if (attempt > 0) {
+                            TorManager.showRetrying()
+                            TorManager.stop()
+                            delay(3000)
+                            TorManager.start(this@Amber, applicationIOScope)
+                        }
+                        attempt++
+                        withTimeoutOrNull(120_000L) {
+                            TorManager.isRunning.first { it }
+                        }
+                    }
+                }
+
+                checkForNewRelaysAndUpdateAllFilters(true)
+                if (settings.killSwitch.value) {
+                    disconnectIntentionally()
+                }
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false
                 if (e is CancellationException) throw e
                 if (e is FailedMigrationException) throw e
             }
+        }
+    }
+
+    suspend fun waitForTorIfNeeded() {
+        if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
+            TorManager.isRunning.first { it }
         }
     }
 

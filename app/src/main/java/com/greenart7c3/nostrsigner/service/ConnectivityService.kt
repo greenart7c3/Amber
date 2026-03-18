@@ -93,6 +93,8 @@ class ConnectivityService : Service() {
             while (Amber.instance.isStartingAppState.value) {
                 delay(1000)
             }
+            // Wait for Tor to be ready before connecting (if using built-in Tor)
+            Amber.instance.waitForTorIfNeeded()
             if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
                 Amber.instance.client.connect()
                 Amber.instance.applicationIOScope.launch {

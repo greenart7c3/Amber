@@ -339,6 +339,7 @@ class Amber :
     }
 
     fun startService() {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
         try {
             Log.d(TAG, "Starting ConnectivityService")
             val operation = PendingIntent.getForegroundService(

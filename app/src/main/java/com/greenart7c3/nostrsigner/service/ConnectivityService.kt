@@ -2,11 +2,14 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.Service
 import android.content.Intent
+import android.content.pm.ServiceInfo
 import android.net.ConnectivityManager
 import android.net.Network
 import android.net.NetworkCapabilities
+import android.os.Build
 import android.os.IBinder
 import android.util.Log
+import androidx.core.app.ServiceCompat
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -169,7 +172,18 @@ class ConnectivityService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         Log.d(Amber.TAG, "onStartCommand")
-        startForeground(1, Amber.instance.stats.createForegroundNotification())
+        val foregroundServiceType =
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+                ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
+            } else {
+                0
+            }
+        ServiceCompat.startForeground(
+            this,
+            1,
+            Amber.instance.stats.createForegroundNotification(),
+            foregroundServiceType,
+        )
         return START_STICKY
     }
 }

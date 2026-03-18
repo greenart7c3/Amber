@@ -36,7 +36,7 @@ jobs:
       - name: Generate merged manifest for offline build
         run: ./gradlew processOfflineDebugManifest --no-daemon
 
-      - name: Check for INTERNET permission in offline merged manifest
+      - name: Check for network permissions in offline merged manifest
         run: |
           MANIFEST=$(find app/build/intermediates/merged_manifests -name "AndroidManifest.xml" | grep -i offline | head -1)
           if [ -z "$MANIFEST" ]; then
@@ -44,14 +44,18 @@ jobs:
             exit 1
           fi
           echo "Checking: $MANIFEST"
-          if grep -q 'android.permission.INTERNET' "$MANIFEST"; then
-            echo ""
-            echo "ERROR: android.permission.INTERNET found in offline build manifest!"
-            echo "The offline flavor must not include INTERNET permission."
-            echo ""
-            echo "Offending lines:"
-            grep 'android.permission.INTERNET' "$MANIFEST"
-            exit 1
-          else
-            echo "OK: No INTERNET permission in offline build manifest"
-          fi
+          FAILED=0
+          for PERMISSION in android.permission.INTERNET android.permission.CHANGE_NETWORK_STATE android.permission.ACCESS_NETWORK_STATE; do
+            if grep -q "$PERMISSION" "$MANIFEST"; then
+              echo ""
+              echo "ERROR: $PERMISSION found in offline build manifest!"
+              echo "The offline flavor must not include network permissions."
+              echo ""
+              echo "Offending lines:"
+              grep "$PERMISSION" "$MANIFEST"
+              FAILED=1
+            else
+              echo "OK: No $PERMISSION in offline build manifest"
+            fi
+          done
+          exit $FAILED

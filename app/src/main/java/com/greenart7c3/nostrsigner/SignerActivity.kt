@@ -186,10 +186,12 @@ class SignerActivity : AppCompatActivity() {
         Amber.instance.setMainActivity(this)
         Amber.instance.startServiceFromUi()
         mainViewModel.showBunkerRequests()
-        val connectivityManager =
-            (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
-        connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
-            Amber.instance.updateNetworkCapabilities(it)
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            val connectivityManager =
+                (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
+            connectivityManager.getNetworkCapabilities(connectivityManager.activeNetwork)?.let {
+                Amber.instance.updateNetworkCapabilities(it)
+            }
         }
         super.onResume()
     }

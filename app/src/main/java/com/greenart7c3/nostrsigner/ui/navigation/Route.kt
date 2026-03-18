@@ -190,6 +190,12 @@ sealed class Route(
         route = "Activities",
         icon = R.drawable.incoming_request,
     )
+
+    data object CrashReport : Route(
+        title = Amber.instance.getString(R.string.crashreport_found),
+        route = "CrashReport",
+        icon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -221,4 +227,5 @@ val routes = listOf(
     Route.EditProfile,
     Route.Feedback,
     Route.Activities,
+    Route.CrashReport,
 )

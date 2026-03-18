@@ -66,6 +66,7 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
+import com.greenart7c3.nostrsigner.ui.CrashReportScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -936,9 +937,29 @@ fun MainScreen(
                         )
                     },
                 )
+
+                composable(
+                    Route.CrashReport.route,
+                    content = {
+                        CrashReportScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .consumeWindowInsets(padding)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                            account = account,
+                            onDismiss = {
+                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    navController.navigateUp()
+                                }
+                            },
+                        )
+                    },
+                )
             }
         }
 
-        DisplayCrashMessages(account)
+        DisplayCrashMessages(account, navController)
     }
 }

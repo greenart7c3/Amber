@@ -50,6 +50,7 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import java.util.Base64
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -63,8 +64,8 @@ fun AmberTopAppBar(
     context: Context,
     navBackStackEntry: NavBackStackEntry?,
     account: Account,
-    intents: List<IntentData>,
-    bunkerRequests: List<AmberBunkerRequest>,
+    intents: ImmutableList<IntentData>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
 ) {
     if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {

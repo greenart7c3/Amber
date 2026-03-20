@@ -6,12 +6,13 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun MultiEventHomeScreen(
     modifier: Modifier,
-    intents: List<IntentData>,
-    bunkerRequests: List<AmberBunkerRequest>,
+    intents: ImmutableList<IntentData>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,

@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -126,7 +127,7 @@ class SignerActivity : AppCompatActivity() {
                                         CircularProgressIndicator()
                                     }
                                 } else {
-                                    val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(emptyList())
+                                    val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
                                     val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
                                     val accountStateViewModel: AccountStateViewModel =

@@ -38,6 +38,7 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
 import java.time.Duration
 import java.time.Instant
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -110,7 +111,7 @@ class MainActivity : AppCompatActivity() {
                                     CircularProgressIndicator()
                                 }
                             } else {
-                                val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(emptyList())
+                                val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
                                 val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
                                 val accountStateViewModel: AccountStateViewModel =

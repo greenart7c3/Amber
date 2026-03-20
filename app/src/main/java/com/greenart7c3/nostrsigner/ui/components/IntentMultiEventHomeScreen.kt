@@ -64,13 +64,14 @@ import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.forEach
 import kotlin.collections.set
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun IntentMultiEventHomeScreen(
     modifier: Modifier,
-    intents: List<IntentData>,
+    intents: ImmutableList<IntentData>,
     packageName: String?,
     accountParam: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,

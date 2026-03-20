@@ -28,25 +28,28 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.toSet
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 object BunkerRequestUtils {
-    val state = MutableStateFlow(listOf<AmberBunkerRequest>())
+    val state = MutableStateFlow<ImmutableList<AmberBunkerRequest>>(persistentListOf())
 
     fun addRequest(request: AmberBunkerRequest) {
         if (state.value.any { it.request.id == request.request.id }) return
-        state.tryEmit(state.value + request)
+        state.tryEmit((state.value + request).toPersistentList())
     }
 
     fun clearRequests() {
-        state.tryEmit(emptyList())
+        state.tryEmit(persistentListOf())
     }
 
     fun remove(id: String) {
-        state.tryEmit(state.value.filter { it.request.id != id })
+        state.tryEmit(state.value.filter { it.request.id != id }.toPersistentList())
     }
 
     fun getBunkerRequests(): List<AmberBunkerRequest> = state.value

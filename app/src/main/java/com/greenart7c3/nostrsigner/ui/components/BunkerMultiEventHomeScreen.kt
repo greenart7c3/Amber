@@ -64,19 +64,20 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.forEach
 import kotlin.collections.set
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun BunkerMultiEventHomeScreen(
     modifier: Modifier,
-    bunkerRequests: List<AmberBunkerRequest>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val hasRelayAuthEvents = bunkerRequests.any { it.request is BunkerRequestSign && (it.request as BunkerRequestSign).event.kind == 22242 }
+    val hasRelayAuthEvents = bunkerRequests.any { it.request is BunkerRequestSign && it.request.event.kind == 22242 }
     var localAccount by remember { mutableStateOf("") }
     val key = bunkerRequests.first().localKey
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }

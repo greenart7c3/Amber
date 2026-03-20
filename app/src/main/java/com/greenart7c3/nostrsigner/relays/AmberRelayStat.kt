@@ -15,6 +15,7 @@ import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
@@ -215,6 +216,7 @@ class AmberRelayStats(
     }
 
     fun updateNotification() {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
         val notificationManager = NotificationManagerCompat.from(appContext)
         if (ActivityCompat.checkSelfPermission(appContext, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) {
             createNotification(

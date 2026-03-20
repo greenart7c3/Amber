@@ -227,8 +227,10 @@ class Amber :
 
         instance = this
 
-        stats.createNotificationChannel()
-        TorManager.init(this)
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            stats.createNotificationChannel()
+            TorManager.init(this)
+        }
 
         isStartingAppState.value = true
         isStartingApp.value = true
@@ -339,6 +341,7 @@ class Amber :
     }
 
     fun startService() {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
         try {
             Log.d(TAG, "Starting ConnectivityService")
             val operation = PendingIntent.getForegroundService(
@@ -370,7 +373,9 @@ class Amber :
             client.connect()
         }
         client.reconnect(wasActive)
-        stats.updateNotification()
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            stats.updateNotification()
+        }
     }
 
     fun getDatabase(npub: String): AppDatabase {

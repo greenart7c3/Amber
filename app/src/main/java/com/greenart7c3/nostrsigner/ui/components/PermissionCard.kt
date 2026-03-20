@@ -16,6 +16,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -66,14 +67,14 @@ fun PermissionCard(
                     .fillMaxWidth()
                     .clickable {
                         acceptEventsGroup[index].value = !acceptEventsGroup[index].value
-                        item.second.forEach { it.checked.value = acceptEventsGroup[index].value }
+                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.id] = acceptEventsGroup[index].value }
                     },
             ) {
                 Checkbox(
                     checked = acceptEventsGroup[index].value,
                     onCheckedChange = { _ ->
                         acceptEventsGroup[index].value = !acceptEventsGroup[index].value
-                        item.second.forEach { it.checked.value = acceptEventsGroup[index].value }
+                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.id] = acceptEventsGroup[index].value }
                     },
                     colors = CheckboxDefaults.colors().copy(
                         uncheckedBorderColor = Color.Gray,
@@ -134,7 +135,7 @@ fun PermissionCard(
                 )
             }
             if (acceptEventsGroup[index].value) {
-                val selected = item.second.filter { it.checked.value }.size
+                val selected = item.second.filter { MultiEventScreenIntents.checkedStates[it.id] ?: true }.size
                 val total = item.second.size
                 Row(
                     Modifier

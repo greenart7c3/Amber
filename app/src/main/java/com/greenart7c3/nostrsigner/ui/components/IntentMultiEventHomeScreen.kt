@@ -55,6 +55,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
+import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -81,6 +82,12 @@ fun IntentMultiEventHomeScreen(
     val key = "$packageName"
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
+
+    LaunchedEffect(Unit) {
+        MultiEventScreenIntents.checkedStates.clear()
+        MultiEventScreenIntents.rememberType = RememberType.NEVER
+        intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = true }
+    }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -124,8 +131,8 @@ fun IntentMultiEventHomeScreen(
         SigningAs(accountParam)
 
         val allCheckedState = when {
-            intents.all { it.checked.value } -> ToggleableState.On
-            intents.none { it.checked.value } -> ToggleableState.Off
+            intents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.On
+            intents.none { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.Off
             else -> ToggleableState.Indeterminate
         }
         Row(
@@ -134,14 +141,14 @@ fun IntentMultiEventHomeScreen(
                 .fillMaxWidth()
                 .clickable {
                     val newValue = allCheckedState != ToggleableState.On
-                    intents.forEach { it.checked.value = newValue }
+                    intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = newValue }
                 },
         ) {
             TriStateCheckbox(
                 state = allCheckedState,
                 onClick = {
                     val newValue = allCheckedState != ToggleableState.On
-                    intents.forEach { it.checked.value = newValue }
+                    intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = newValue }
                 },
             )
             Text(stringResource(R.string.select_deselect_all))
@@ -153,7 +160,15 @@ fun IntentMultiEventHomeScreen(
                 .verticalScroll(rememberScrollState()),
         ) {
             intents.forEach { intent ->
-                IntentRequestCard(context = context, intent = intent)
+                IntentRequestCard(
+                    context = context,
+                    intent = intent,
+                    checked = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
+                    onToggleChecked = {
+                        val current = MultiEventScreenIntents.checkedStates[intent.id] ?: true
+                        MultiEventScreenIntents.checkedStates[intent.id] = !current
+                    },
+                )
             }
         }
 
@@ -192,9 +207,7 @@ fun IntentMultiEventHomeScreen(
             onReject = {},
             onChanged = {
                 rememberType = it
-                intents.forEach { intent ->
-                    intent.rememberType.value = rememberType
-                }
+                MultiEventScreenIntents.rememberType = it
             },
             packageName = packageName,
         )
@@ -250,7 +263,8 @@ fun IntentMultiEventHomeScreen(
                                     permissions = mutableListOf(),
                                 )
 
-                            if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                            val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                            if (rememberType != RememberType.NEVER && isChecked) {
                                 val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
                                 val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
                                     if (relayAuthScope == RelayAuthScope.ALL) {
@@ -275,7 +289,7 @@ fun IntentMultiEventHomeScreen(
                                     intentData.type,
                                     rejectKind,
                                     false,
-                                    intentData.rememberType.value,
+                                    rememberType,
                                     thisAccount,
                                     relay = rejectRelay,
                                 )
@@ -356,10 +370,12 @@ fun IntentMultiEventHomeScreen(
                                     closeApp = false
                                 }
 
+                                val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+
                                 if (intentData.type == SignerType.SIGN_EVENT) {
                                     val localEvent = intentData.event!!
 
-                                    if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                    if (rememberType != RememberType.NEVER && isChecked) {
                                         val signRelay = if (localEvent.kind == 22242) {
                                             if (relayAuthScope == RelayAuthScope.ALL) {
                                                 "*"
@@ -383,7 +399,7 @@ fun IntentMultiEventHomeScreen(
                                             intentData.type,
                                             localEvent.kind,
                                             true,
-                                            intentData.rememberType.value,
+                                            rememberType,
                                             thisAccount,
                                             relay = signRelay,
                                         )
@@ -398,13 +414,13 @@ fun IntentMultiEventHomeScreen(
                                             intentData.type.toString(),
                                             localEvent.kind,
                                             TimeUtils.now(),
-                                            intentData.checked.value,
+                                            isChecked,
                                             content = localEvent.toJson(),
                                         ),
                                         thisAccount.npub,
                                     )
 
-                                    if (intentData.checked.value) {
+                                    if (isChecked) {
                                         results.add(
                                             Result(
                                                 null,
@@ -432,14 +448,14 @@ fun IntentMultiEventHomeScreen(
                                         )
                                     }
                                 } else if (intentData.type == SignerType.SIGN_MESSAGE) {
-                                    if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                    if (rememberType != RememberType.NEVER && isChecked) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             localKey,
                                             intentData.type,
                                             null,
                                             true,
-                                            intentData.rememberType.value,
+                                            rememberType,
                                             thisAccount,
                                         )
                                     }
@@ -452,14 +468,14 @@ fun IntentMultiEventHomeScreen(
                                             intentData.type.toString(),
                                             null,
                                             TimeUtils.now(),
-                                            intentData.checked.value,
+                                            isChecked,
                                             content = intentData.data,
                                         ),
                                         thisAccount.npub,
                                     )
 
                                     val signedMessage = thisAccount.signString(intentData.data)
-                                    if (intentData.checked.value) {
+                                    if (isChecked) {
                                         results.add(
                                             Result(
                                                 null,
@@ -471,14 +487,14 @@ fun IntentMultiEventHomeScreen(
                                         )
                                     }
                                 } else {
-                                    if (intentData.rememberType.value != RememberType.NEVER && intentData.checked.value) {
+                                    if (rememberType != RememberType.NEVER && isChecked) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             localKey,
                                             intentData.type,
                                             null,
                                             true,
-                                            intentData.rememberType.value,
+                                            rememberType,
                                             thisAccount,
                                         )
                                     }
@@ -492,7 +508,7 @@ fun IntentMultiEventHomeScreen(
                                             intentData.type.toString(),
                                             null,
                                             TimeUtils.now(),
-                                            intentData.checked.value,
+                                            isChecked,
                                             content = if (intentData.type == SignerType.NIP04_DECRYPT || intentData.type == SignerType.NIP44_DECRYPT || intentData.type == SignerType.DECRYPT_ZAP_EVENT) {
                                                 intentData.encryptedData?.result ?: ""
                                             } else {
@@ -503,7 +519,7 @@ fun IntentMultiEventHomeScreen(
                                     )
 
                                     val signature = intentData.encryptedData?.result ?: continue
-                                    if (intentData.checked.value) {
+                                    if (isChecked) {
                                         results.add(
                                             Result(
                                                 null,
@@ -533,7 +549,12 @@ fun IntentMultiEventHomeScreen(
 }
 
 @Composable
-private fun IntentRequestCard(context: Context, intent: IntentData) {
+private fun IntentRequestCard(
+    context: Context,
+    intent: IntentData,
+    checked: Boolean,
+    onToggleChecked: () -> Unit,
+) {
     val type = intent.type
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && intent.event != null) ||
@@ -615,11 +636,11 @@ private fun IntentRequestCard(context: Context, intent: IntentData) {
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { intent.checked.value = !intent.checked.value },
+                .clickable { onToggleChecked() },
         ) {
             Checkbox(
-                checked = intent.checked.value,
-                onCheckedChange = { intent.checked.value = !intent.checked.value },
+                checked = checked,
+                onCheckedChange = { onToggleChecked() },
                 colors = CheckboxDefaults.colors().copy(
                     uncheckedBorderColor = Color.Gray,
                 ),
@@ -631,7 +652,7 @@ private fun IntentRequestCard(context: Context, intent: IntentData) {
             ) {
                 Text(
                     text = label,
-                    color = if (intent.checked.value) Color.Unspecified else Color.Gray,
+                    color = if (checked) Color.Unspecified else Color.Gray,
                 )
                 if (preview.isNotBlank()) {
                     Text(

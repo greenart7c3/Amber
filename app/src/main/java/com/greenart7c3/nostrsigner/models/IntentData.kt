@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.models
 
-import androidx.compose.runtime.MutableState
-import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 
@@ -16,8 +14,6 @@ data class IntentData(
     val returnType: ReturnType,
     val permissions: List<Permission>?,
     val currentAccount: String,
-    val checked: MutableState<Boolean>,
-    val rememberType: MutableState<RememberType>,
     val route: String?,
     val event: Event?,
     val encryptedData: EncryptedDataKind?,

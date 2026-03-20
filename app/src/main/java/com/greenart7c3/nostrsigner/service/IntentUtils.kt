@@ -8,7 +8,6 @@ import android.net.Uri
 import android.provider.Browser
 import android.util.Log
 import android.widget.Toast
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.text.intl.Locale
@@ -173,8 +172,6 @@ object IntentUtils {
                         returnType = returnType,
                         permissions = listOf(),
                         currentAccount = Hex.decode(signedEvent.pubKey).toNpub(),
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
                         route = route,
                         event = signedEvent,
                         encryptedData = null,
@@ -219,8 +216,6 @@ object IntentUtils {
                         returnType = returnType,
                         permissions = listOf(),
                         currentAccount = Hex.decode(pubKey).toNpub(),
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
                         route = route,
                         event = null,
                         encryptedData = encryptedDataKind,
@@ -238,8 +233,6 @@ object IntentUtils {
                         returnType = returnType,
                         permissions = listOf(),
                         currentAccount = "",
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
                         route = route,
                         event = null,
                         encryptedData = null,
@@ -257,8 +250,6 @@ object IntentUtils {
                         returnType = returnType,
                         permissions = listOf(),
                         currentAccount = "",
-                        checked = mutableStateOf(true),
-                        rememberType = mutableStateOf(RememberType.NEVER),
                         route = route,
                         event = null,
                         encryptedData = null,
@@ -359,8 +350,6 @@ object IntentUtils {
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                     currentAccount = npub ?: Hex.decode(signed.pubKey).toNpub(),
-                    checked = mutableStateOf(true),
-                    rememberType = mutableStateOf(RememberType.NEVER),
                     route = route,
                     event = signed,
                     encryptedData = null,
@@ -411,8 +400,6 @@ object IntentUtils {
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                     currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                    checked = mutableStateOf(true),
-                    rememberType = mutableStateOf(RememberType.NEVER),
                     route = route,
                     event = null,
                     encryptedData = encryptedDataKind,
@@ -435,8 +422,6 @@ object IntentUtils {
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                     currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                    checked = mutableStateOf(true),
-                    rememberType = mutableStateOf(RememberType.NEVER),
                     route = route,
                     event = null,
                     encryptedData = null,
@@ -459,8 +444,6 @@ object IntentUtils {
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                     currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                    checked = mutableStateOf(true),
-                    rememberType = mutableStateOf(RememberType.NEVER),
                     route = route,
                     event = null,
                     encryptedData = null,

@@ -16,6 +16,9 @@ import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -24,21 +27,21 @@ import kotlinx.coroutines.launch
 
 @SuppressLint("StaticFieldLeak")
 class MainViewModel(val context: Context) : ViewModel() {
-    private val _intents = MutableStateFlow<List<IntentData>>(listOf())
+    private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
     val intents = _intents.asStateFlow()
     var navController: NavHostController? = null
 
     fun addAll(list: List<IntentData>) {
         val newList = list.filter { !intents.value.contains(it) }
-        _intents.value += newList
+        _intents.value = (_intents.value + newList).toPersistentList()
     }
 
     fun removeAll(intents: List<IntentData>) {
-        _intents.value -= intents.toSet()
+        _intents.value = (_intents.value - intents.toSet()).toPersistentList()
     }
 
     fun clear() {
-        _intents.value = emptyList()
+        _intents.value = persistentListOf()
     }
 
     fun getAccount(userFromIntent: String?): String? {

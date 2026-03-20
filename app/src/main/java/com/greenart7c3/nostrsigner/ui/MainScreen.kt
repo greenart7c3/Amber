@@ -81,6 +81,7 @@ import com.greenart7c3.nostrsigner.ui.components.AmberFloatingButton
 import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import java.util.Base64
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -131,8 +132,8 @@ fun requestIgnoreBatteryOptimizations(context: Context) {
 fun MainScreen(
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    intents: List<IntentData>,
-    bunkerRequests: List<AmberBunkerRequest>,
+    intents: ImmutableList<IntentData>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
     appName: String?,
     route: MutableState<String?>,

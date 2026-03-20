@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
+import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import kotlin.collections.forEach
 
 @Composable
@@ -66,14 +67,14 @@ fun BunkerPermissionCard(
                     .fillMaxWidth()
                     .clickable {
                         acceptEventsGroup[index].value = !acceptEventsGroup[index].value
-                        item.second.forEach { it.checked.value = acceptEventsGroup[index].value }
+                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = acceptEventsGroup[index].value }
                     },
             ) {
                 Checkbox(
                     checked = acceptEventsGroup[index].value,
                     onCheckedChange = { _ ->
                         acceptEventsGroup[index].value = !acceptEventsGroup[index].value
-                        item.second.forEach { it.checked.value = acceptEventsGroup[index].value }
+                        item.second.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = acceptEventsGroup[index].value }
                     },
                     colors = CheckboxDefaults.colors().copy(
                         uncheckedBorderColor = Color.Gray,
@@ -134,7 +135,7 @@ fun BunkerPermissionCard(
                 )
             }
             if (acceptEventsGroup[index].value) {
-                val selected = item.second.filter { it.checked.value }.size
+                val selected = item.second.filter { MultiEventScreenIntents.checkedStates[it.request.id] ?: true }.size
                 val total = item.second.size
                 Row(
                     Modifier

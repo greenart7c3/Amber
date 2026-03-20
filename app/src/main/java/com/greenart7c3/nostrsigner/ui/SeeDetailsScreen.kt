@@ -56,7 +56,7 @@ fun SeeDetailsScreen(
                 .weight(1f)
                 .verticalScroll(rememberScrollState()),
         ) {
-            var rememberType by remember { mutableStateOf(MultiEventScreenIntents.intents.firstOrNull()?.rememberType?.value ?: MultiEventScreenIntents.bunkerRequests.first().rememberType.value) }
+            var rememberType by remember { mutableStateOf(MultiEventScreenIntents.rememberType) }
             val type = if (MultiEventScreenIntents.intents.isNotEmpty()) {
                 MultiEventScreenIntents.intents.first().type
             } else {
@@ -96,15 +96,14 @@ fun SeeDetailsScreen(
                     onReject = {},
                     onChanged = {
                         rememberType = it
-                        MultiEventScreenIntents.intents.forEach { intent ->
-                            intent.rememberType.value = rememberType
-                        }
+                        MultiEventScreenIntents.rememberType = it
                     },
                     packageName = null,
                 )
             }
 
             MultiEventScreenIntents.intents.forEach { intent ->
+                val intentChecked = MultiEventScreenIntents.checkedStates[intent.id] ?: true
                 Card(
                     Modifier
                         .padding(4.dp),
@@ -118,13 +117,13 @@ fun SeeDetailsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                intent.checked.value = !intent.checked.value
+                                MultiEventScreenIntents.checkedStates[intent.id] = !intentChecked
                             },
                     ) {
                         Checkbox(
-                            checked = intent.checked.value,
+                            checked = intentChecked,
                             onCheckedChange = { _ ->
-                                intent.checked.value = !intent.checked.value
+                                MultiEventScreenIntents.checkedStates[intent.id] = !intentChecked
                             },
                             colors = CheckboxDefaults.colors().copy(
                                 uncheckedBorderColor = Color.Gray,
@@ -163,13 +162,14 @@ fun SeeDetailsScreen(
                                 .weight(1f)
                                 .padding(vertical = 8.dp),
                             text = data.ifBlank { message },
-                            color = if (intent.checked.value) Color.Unspecified else Color.Gray,
+                            color = if (intentChecked) Color.Unspecified else Color.Gray,
                         )
                     }
                 }
             }
 
             MultiEventScreenIntents.bunkerRequests.forEach { bunkerRequest ->
+                val bunkerChecked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
                 Card(
                     Modifier
                         .padding(4.dp),
@@ -183,13 +183,13 @@ fun SeeDetailsScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .clickable {
-                                bunkerRequest.checked.value = !bunkerRequest.checked.value
+                                MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !bunkerChecked
                             },
                     ) {
                         Checkbox(
-                            checked = bunkerRequest.checked.value,
+                            checked = bunkerChecked,
                             onCheckedChange = { _ ->
-                                bunkerRequest.checked.value = !bunkerRequest.checked.value
+                                MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !bunkerChecked
                             },
                             colors = CheckboxDefaults.colors().copy(
                                 uncheckedBorderColor = Color.Gray,
@@ -228,7 +228,7 @@ fun SeeDetailsScreen(
                                 .weight(1f)
                                 .padding(vertical = 8.dp),
                             text = data.ifBlank { message },
-                            color = if (bunkerRequest.checked.value) Color.Unspecified else Color.Gray,
+                            color = if (bunkerChecked) Color.Unspecified else Color.Gray,
                         )
                     }
                 }

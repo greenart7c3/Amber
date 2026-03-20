@@ -9,8 +9,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.verticalScroll
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -53,6 +53,7 @@ import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
+import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -63,24 +64,31 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.forEach
 import kotlin.collections.set
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun BunkerMultiEventHomeScreen(
     modifier: Modifier,
-    bunkerRequests: List<AmberBunkerRequest>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
     accountParam: Account,
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val hasRelayAuthEvents = bunkerRequests.any { it.request is BunkerRequestSign && (it.request as BunkerRequestSign).event.kind == 22242 }
+    val hasRelayAuthEvents = bunkerRequests.any { it.request is BunkerRequestSign && it.request.event.kind == 22242 }
     var localAccount by remember { mutableStateOf("") }
     val key = bunkerRequests.first().localKey
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
     var appName by remember { mutableStateOf(ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()) }
+
+    LaunchedEffect(Unit) {
+        MultiEventScreenIntents.checkedStates.clear()
+        MultiEventScreenIntents.rememberType = RememberType.NEVER
+        bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = true }
+    }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -116,8 +124,8 @@ fun BunkerMultiEventHomeScreen(
         SigningAs(accountParam)
 
         val allCheckedState = when {
-            bunkerRequests.all { it.checked.value } -> ToggleableState.On
-            bunkerRequests.none { it.checked.value } -> ToggleableState.Off
+            bunkerRequests.all { MultiEventScreenIntents.checkedStates[it.request.id] ?: true } -> ToggleableState.On
+            bunkerRequests.none { MultiEventScreenIntents.checkedStates[it.request.id] ?: true } -> ToggleableState.Off
             else -> ToggleableState.Indeterminate
         }
         Row(
@@ -126,26 +134,32 @@ fun BunkerMultiEventHomeScreen(
                 .fillMaxWidth()
                 .clickable {
                     val newValue = allCheckedState != ToggleableState.On
-                    bunkerRequests.forEach { it.checked.value = newValue }
+                    MultiEventScreenIntents.checkedStates.putAll(bunkerRequests.associate { it.request.id to newValue })
                 },
         ) {
             TriStateCheckbox(
                 state = allCheckedState,
                 onClick = {
                     val newValue = allCheckedState != ToggleableState.On
-                    bunkerRequests.forEach { it.checked.value = newValue }
+                    MultiEventScreenIntents.checkedStates.putAll(bunkerRequests.associate { it.request.id to newValue })
                 },
             )
             Text(stringResource(R.string.select_deselect_all))
         }
 
-        Column(
-            Modifier
-                .weight(1f)
-                .verticalScroll(rememberScrollState()),
+        LazyColumn(
+            Modifier.weight(1f),
         ) {
-            bunkerRequests.forEach { bunkerRequest ->
-                BunkerRequestCard(context = context, bunkerRequest = bunkerRequest)
+            items(bunkerRequests, key = { it.request.id }) { bunkerRequest ->
+                BunkerRequestCard(
+                    context = context,
+                    bunkerRequest = bunkerRequest,
+                    checked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
+                    onToggleChecked = {
+                        val current = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
+                        MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !current
+                    },
+                )
             }
         }
 
@@ -184,9 +198,7 @@ fun BunkerMultiEventHomeScreen(
             onReject = {},
             onChanged = {
                 rememberType = it
-                bunkerRequests.forEach { bunkerRequest ->
-                    bunkerRequest.rememberType.value = rememberType
-                }
+                MultiEventScreenIntents.rememberType = it
             },
             packageName = packageName,
         )
@@ -247,7 +259,8 @@ fun BunkerMultiEventHomeScreen(
                                     permissions = mutableListOf(),
                                 )
 
-                            if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
+                            val isChecked = MultiEventScreenIntents.checkedStates[request.request.id] ?: true
+                            if (rememberType != RememberType.NEVER && isChecked) {
                                 val rejectKind = if (request.request is BunkerRequestSign) request.request.event.kind else null
                                 val rejectRelay = if (request.request is BunkerRequestSign && request.request.event.kind == 22242) {
                                     if (relayAuthScope == RelayAuthScope.ALL) {
@@ -272,7 +285,7 @@ fun BunkerMultiEventHomeScreen(
                                     BunkerRequestUtils.getTypeFromBunker(request.request),
                                     rejectKind,
                                     false,
-                                    request.rememberType.value,
+                                    rememberType,
                                     thisAccount,
                                     relay = rejectRelay,
                                 )
@@ -345,10 +358,12 @@ fun BunkerMultiEventHomeScreen(
                                         permissions = mutableListOf(),
                                     )
 
+                                val isChecked = MultiEventScreenIntents.checkedStates[request.request.id] ?: true
+
                                 if (request.request is BunkerRequestSign) {
                                     val localEvent = request.signedEvent!!
 
-                                    if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
+                                    if (rememberType != RememberType.NEVER && isChecked) {
                                         val signRelay = if (localEvent.kind == 22242) {
                                             if (relayAuthScope == RelayAuthScope.ALL) {
                                                 "*"
@@ -372,7 +387,7 @@ fun BunkerMultiEventHomeScreen(
                                             signerType = SignerType.SIGN_EVENT,
                                             kind = localEvent.kind,
                                             value = true,
-                                            rememberType = request.rememberType.value,
+                                            rememberType = rememberType,
                                             account = thisAccount,
                                             relay = signRelay,
                                         )
@@ -387,7 +402,7 @@ fun BunkerMultiEventHomeScreen(
                                             type = SignerType.SIGN_EVENT.toString(),
                                             kind = localEvent.kind,
                                             time = TimeUtils.now(),
-                                            accepted = request.checked.value,
+                                            accepted = isChecked,
                                             content = localEvent.toJson(),
                                         ),
                                         thisAccount.npub,
@@ -395,7 +410,7 @@ fun BunkerMultiEventHomeScreen(
 
                                     BunkerRequestUtils.remove(request.request.id)
 
-                                    if (request.checked.value) {
+                                    if (isChecked) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
                                             thisAccount,
@@ -416,14 +431,14 @@ fun BunkerMultiEventHomeScreen(
                                         )
                                     }
                                 } else if (request.request.method == "sign_message") {
-                                    if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
+                                    if (rememberType != RememberType.NEVER && isChecked) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             localKey,
                                             SignerType.SIGN_MESSAGE,
                                             null,
                                             true,
-                                            request.rememberType.value,
+                                            rememberType,
                                             thisAccount,
                                         )
                                     }
@@ -436,7 +451,7 @@ fun BunkerMultiEventHomeScreen(
                                             SignerType.SIGN_MESSAGE.toString(),
                                             null,
                                             TimeUtils.now(),
-                                            request.checked.value,
+                                            isChecked,
                                             content = request.request.params.first(),
                                         ),
                                         thisAccount.npub,
@@ -445,7 +460,7 @@ fun BunkerMultiEventHomeScreen(
                                     val signedMessage = thisAccount.signString(request.request.params.first())
                                     BunkerRequestUtils.remove(request.request.id)
 
-                                    if (request.checked.value) {
+                                    if (isChecked) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
                                             thisAccount,
@@ -476,14 +491,14 @@ fun BunkerMultiEventHomeScreen(
                                                 SignerType.CONNECT.toString(),
                                                 null,
                                                 TimeUtils.now(),
-                                                request.checked.value,
+                                                isChecked,
                                                 content = "",
                                             ),
                                             thisAccount.npub,
                                         )
 
                                         BunkerRequestUtils.remove(request.request.id)
-                                        if (request.checked.value) {
+                                        if (isChecked) {
                                             BunkerRequestUtils.sendBunkerResponse(
                                                 context,
                                                 thisAccount,
@@ -506,14 +521,14 @@ fun BunkerMultiEventHomeScreen(
                                     }
                                 } else {
                                     val type = BunkerRequestUtils.getTypeFromBunker(request.request)
-                                    if (request.rememberType.value != RememberType.NEVER && request.checked.value) {
+                                    if (rememberType != RememberType.NEVER && isChecked) {
                                         AmberUtils.acceptOrRejectPermission(
                                             application,
                                             localKey,
                                             type,
                                             null,
                                             true,
-                                            request.rememberType.value,
+                                            rememberType,
                                             thisAccount,
                                         )
                                     }
@@ -527,7 +542,7 @@ fun BunkerMultiEventHomeScreen(
                                             type.toString(),
                                             null,
                                             TimeUtils.now(),
-                                            request.checked.value,
+                                            isChecked,
                                             content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
                                                 request.encryptedData?.result ?: ""
                                             } else {
@@ -539,7 +554,7 @@ fun BunkerMultiEventHomeScreen(
 
                                     val signature = request.encryptedData?.result ?: continue
                                     BunkerRequestUtils.remove(request.request.id)
-                                    if (request.checked.value) {
+                                    if (isChecked) {
                                         BunkerRequestUtils.sendBunkerResponse(
                                             context,
                                             thisAccount,
@@ -572,7 +587,12 @@ fun BunkerMultiEventHomeScreen(
 }
 
 @Composable
-private fun BunkerRequestCard(context: Context, bunkerRequest: AmberBunkerRequest) {
+private fun BunkerRequestCard(
+    context: Context,
+    bunkerRequest: AmberBunkerRequest,
+    checked: Boolean,
+    onToggleChecked: () -> Unit,
+) {
     val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
     var showDetails by remember { mutableStateOf(false) }
     val hasDetails = (type == SignerType.SIGN_EVENT && bunkerRequest.signedEvent != null) ||
@@ -655,11 +675,11 @@ private fun BunkerRequestCard(context: Context, bunkerRequest: AmberBunkerReques
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { bunkerRequest.checked.value = !bunkerRequest.checked.value },
+                .clickable { onToggleChecked() },
         ) {
             Checkbox(
-                checked = bunkerRequest.checked.value,
-                onCheckedChange = { bunkerRequest.checked.value = !bunkerRequest.checked.value },
+                checked = checked,
+                onCheckedChange = { onToggleChecked() },
                 colors = CheckboxDefaults.colors().copy(
                     uncheckedBorderColor = Color.Gray,
                 ),
@@ -671,7 +691,7 @@ private fun BunkerRequestCard(context: Context, bunkerRequest: AmberBunkerReques
             ) {
                 Text(
                     text = label,
-                    color = if (bunkerRequest.checked.value) Color.Unspecified else Color.Gray,
+                    color = if (checked) Color.Unspecified else Color.Gray,
                 )
                 if (preview.isNotBlank()) {
                     Text(

@@ -26,12 +26,13 @@ import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.ui.components.BunkerSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun IncomingRequestScreen(
     modifier: Modifier,
-    intents: List<IntentData>,
-    bunkerRequests: List<AmberBunkerRequest>,
+    intents: ImmutableList<IntentData>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
     applicationName: String?,
     account: Account,

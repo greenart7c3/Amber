@@ -38,6 +38,8 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @SuppressLint("StateFlowValueCalledInComposition", "UnrememberedMutableState")
 @Composable
@@ -47,7 +49,7 @@ fun AccountScreen(
     packageName: String?,
     appName: String?,
     mainViewModel: MainViewModel,
-    bunkerRequests: List<AmberBunkerRequest>,
+    bunkerRequests: ImmutableList<AmberBunkerRequest>,
     navController: NavHostController,
     isExternalRequest: Boolean = false,
 ) {
@@ -66,7 +68,7 @@ fun AccountScreen(
                     MainLoginPage(accountStateViewModel, newNavController)
                 }
                 is AccountState.LoggedIn -> {
-                    val intents by mainViewModel.intents.collectAsState(initial = emptyList())
+                    val intents by mainViewModel.intents.collectAsState(initial = persistentListOf())
                     LaunchedEffect(intent) {
                         intent?.let {
                             IntentUtils.getIntentData(

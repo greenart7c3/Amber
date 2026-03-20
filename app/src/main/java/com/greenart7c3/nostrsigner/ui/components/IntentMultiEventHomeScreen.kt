@@ -54,16 +54,12 @@ import com.greenart7c3.nostrsigner.models.Result
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
-import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
-import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
-import kotlin.collections.forEach
-import kotlin.collections.set
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -79,8 +75,6 @@ fun IntentMultiEventHomeScreen(
 ) {
     val context = LocalContext.current
     val hasRelayAuthEvents = intents.any { it.type == SignerType.SIGN_EVENT && it.event?.kind == 22242 }
-    var localAccount by remember { mutableStateOf("") }
-    val key = "$packageName"
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
 
@@ -88,33 +82,6 @@ fun IntentMultiEventHomeScreen(
         MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
         intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = true }
-    }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            localAccount = LocalPreferences.loadFromEncryptedStorage(
-                context,
-                intents.firstOrNull()?.currentAccount ?: "",
-            )?.npub?.toShortenHex() ?: ""
-        }
-    }
-
-    var appName by remember { mutableStateOf(ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()) }
-
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            if (ApplicationNameCache.names["$localAccount-$key"] == null) {
-                val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
-                app?.let {
-                    appName = it.application.name
-                    ApplicationNameCache.names["$localAccount-$key"] = it.application.name
-                }
-            } else {
-                ApplicationNameCache.names["$localAccount-$key"]?.let {
-                    appName = it
-                }
-            }
-        }
     }
 
     Column(

@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.models
 
+import androidx.compose.runtime.Immutable
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -9,6 +10,7 @@ enum class EncryptionType {
     NIP04,
 }
 
+@Immutable
 data class AmberBunkerRequest(
     val request: BunkerRequest,
     val localKey: String,

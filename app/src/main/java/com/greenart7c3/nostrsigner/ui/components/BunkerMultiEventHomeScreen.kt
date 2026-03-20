@@ -393,7 +393,6 @@ fun BunkerMultiEventHomeScreen(
                                         thisAccount.npub,
                                     )
 
-                                    val localBunkerRequest = request.copy()
                                     BunkerRequestUtils.remove(request.request.id)
 
                                     if (request.checked.value) {
@@ -404,11 +403,7 @@ fun BunkerMultiEventHomeScreen(
                                             BunkerResponse(request.request.id, localEvent.toJson(), null),
                                             application.application.relays,
                                             onLoading = {},
-                                            onDone = {
-                                                if (!it) {
-                                                    BunkerRequestUtils.addRequest(localBunkerRequest)
-                                                }
-                                            },
+                                            onDone = {},
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(
@@ -448,8 +443,7 @@ fun BunkerMultiEventHomeScreen(
                                     )
 
                                     val signedMessage = thisAccount.signString(request.request.params.first())
-                                    val localBunkerRequest = request.copy()
-                                    BunkerRequestUtils.remove(localBunkerRequest.request.id)
+                                    BunkerRequestUtils.remove(request.request.id)
 
                                     if (request.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
@@ -459,11 +453,7 @@ fun BunkerMultiEventHomeScreen(
                                             BunkerResponse(request.request.id, signedMessage, null),
                                             application.application.relays,
                                             onLoading = {},
-                                            onDone = {
-                                                if (!it) {
-                                                    BunkerRequestUtils.addRequest(localBunkerRequest)
-                                                }
-                                            },
+                                            onDone = {},
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(
@@ -492,7 +482,6 @@ fun BunkerMultiEventHomeScreen(
                                             thisAccount.npub,
                                         )
 
-                                        val localBunkerRequest = request.copy()
                                         BunkerRequestUtils.remove(request.request.id)
                                         if (request.checked.value) {
                                             BunkerRequestUtils.sendBunkerResponse(
@@ -502,11 +491,7 @@ fun BunkerMultiEventHomeScreen(
                                                 BunkerResponse(request.request.id, "", null),
                                                 application.application.relays,
                                                 onLoading = {},
-                                                onDone = {
-                                                    if (!it) {
-                                                        BunkerRequestUtils.addRequest(localBunkerRequest)
-                                                    }
-                                                },
+                                                onDone = {},
                                             )
                                         } else {
                                             AmberUtils.sendBunkerError(
@@ -553,7 +538,6 @@ fun BunkerMultiEventHomeScreen(
                                     )
 
                                     val signature = request.encryptedData?.result ?: continue
-                                    val localBunkerRequest = request.copy()
                                     BunkerRequestUtils.remove(request.request.id)
                                     if (request.checked.value) {
                                         BunkerRequestUtils.sendBunkerResponse(
@@ -563,11 +547,7 @@ fun BunkerMultiEventHomeScreen(
                                             BunkerResponse(request.request.id, signature, null),
                                             application.application.relays,
                                             onLoading = {},
-                                            onDone = {
-                                                if (!it) {
-                                                    BunkerRequestUtils.addRequest(localBunkerRequest)
-                                                }
-                                            },
+                                            onDone = {},
                                         )
                                     } else {
                                         AmberUtils.sendBunkerError(

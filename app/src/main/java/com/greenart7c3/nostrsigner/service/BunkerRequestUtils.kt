@@ -354,7 +354,6 @@ object BunkerRequestUtils {
                 }
             }
 
-            val localBunkerRequest = bunkerRequest.copy()
             clearRequests()
 
             // assume that everything worked and try to revert it if it fails
@@ -421,7 +420,6 @@ object BunkerRequestUtils {
                             }
 
                             onLoading(false)
-                            addRequest(localBunkerRequest)
                         }
                     }
                 },

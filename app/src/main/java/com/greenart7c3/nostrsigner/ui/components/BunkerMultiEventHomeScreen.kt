@@ -133,14 +133,14 @@ fun BunkerMultiEventHomeScreen(
                 .fillMaxWidth()
                 .clickable {
                     val newValue = allCheckedState != ToggleableState.On
-                    bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = newValue }
+                    MultiEventScreenIntents.checkedStates.putAll(bunkerRequests.associate { it.request.id to newValue })
                 },
         ) {
             TriStateCheckbox(
                 state = allCheckedState,
                 onClick = {
                     val newValue = allCheckedState != ToggleableState.On
-                    bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = newValue }
+                    MultiEventScreenIntents.checkedStates.putAll(bunkerRequests.associate { it.request.id to newValue })
                 },
             )
             Text(stringResource(R.string.select_deselect_all))

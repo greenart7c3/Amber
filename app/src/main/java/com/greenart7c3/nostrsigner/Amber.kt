@@ -151,7 +151,7 @@ class Amber :
                 socket.connect(InetSocketAddress(proxyHost, port), 5000)
                 socket.close()
                 true
-            } catch (e: Exception) {
+            } catch (_: Exception) {
                 false
             }
         }
@@ -521,7 +521,7 @@ class Amber :
 
         val repositoryEvent = GitRepositoryEvent(
             "",
-            "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19",
+            DEVELOPER_HEX_KEY,
             TimeUtils.now(),
             tags = arrayOf(arrayOf("d", "Amber")),
             "",
@@ -532,7 +532,7 @@ class Amber :
             subject,
             body,
             EventHintBundle(repositoryEvent),
-            listOf(PTag("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19", null)),
+            listOf(PTag(DEVELOPER_HEX_KEY, null)),
             listOf(if (type == FeedbackType.BUG_REPORT) "bug" else "enhancement"),
         )
 
@@ -551,6 +551,8 @@ class Amber :
         const val TAG = "Amber"
         lateinit var instance: Amber
             private set
+
+        const val DEVELOPER_HEX_KEY = "7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19"
     }
 }
 

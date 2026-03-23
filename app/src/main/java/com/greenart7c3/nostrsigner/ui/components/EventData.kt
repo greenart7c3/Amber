@@ -247,7 +247,7 @@ fun ReportMissingEventKindButton(account: Account, kind: Int) {
                         ),
                     )
                     val intent = Intent(Intent.ACTION_VIEW)
-                    val npub = Hex.decode("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19").toNpub()
+                    val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
                     intent.data = "nostr:$npub".toUri()
                     intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     Amber.instance.startActivity(intent)
@@ -258,7 +258,7 @@ fun ReportMissingEventKindButton(account: Account, kind: Int) {
                     client.connect()
                     val template = ChatMessageEvent.build(
                         msg = text,
-                        to = listOf(PTag("7579076d9aff0a4cfdefa7e2045f2486c7e5d8bc63bfc6b45397233e1bbfcb19")),
+                        to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
                         createdAt = System.currentTimeMillis() / 1000,
                     ) {
                         val tenDaysInSeconds = 10L * 86_400

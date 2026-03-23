@@ -666,4 +666,5 @@
     <string name="event_kind_32267">Software Application</string>
     <string name="event_kind_10012">Favorite relays list</string>
     <string name="event_kind_30267">App curation sets</string>
+    <string name="event_kind_34237">Video View</string>
 </resources>

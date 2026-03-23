@@ -39,8 +39,12 @@ import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+
+private const val EOSE_TIMEOUT_MS = 30_000L
 
 class ProfileSubscription(
     val client: NostrClient,
@@ -49,6 +53,7 @@ class ProfileSubscription(
 ) : IRelayClientListener {
     private val subIds = mutableMapOf<String, String>()
     private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
+    private val timeoutJobs = mutableMapOf<String, Job>()
 
     init {
         // listens until the app crashes.
@@ -62,6 +67,7 @@ class ProfileSubscription(
             if (relays != null) {
                 relays.remove(relay.url)
                 if (relays.isEmpty()) {
+                    timeoutJobs.remove(subId)?.cancel()
                     Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
                     client.close(subId)
                     relaysPerSubId.remove(subId)
@@ -129,6 +135,15 @@ class ProfileSubscription(
                 val profileFilter = createProfileFilter(it)
                 relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
                 client.openReqSubscription(subId, profileFilter)
+                timeoutJobs[subId] = scope.launch {
+                    delay(EOSE_TIMEOUT_MS)
+                    if (relaysPerSubId.containsKey(subId)) {
+                        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+                        client.close(subId)
+                        relaysPerSubId.remove(subId)
+                        timeoutJobs.remove(subId)
+                    }
+                }
             }
         }
     }
@@ -139,6 +154,7 @@ class ProfileSubscription(
     fun closeSub() {
         Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
         subIds.values.forEach {
+            timeoutJobs.remove(it)?.cancel()
             client.close(it)
         }
         relaysPerSubId.clear()

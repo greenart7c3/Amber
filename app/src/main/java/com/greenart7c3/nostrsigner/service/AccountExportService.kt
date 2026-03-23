@@ -14,7 +14,7 @@ import com.greenart7c3.nostrsigner.models.AccountExportData
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
-import com.vitorpamplona.quartz.nip01Core.crypto.Nip01
+import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
@@ -53,7 +53,7 @@ object AccountExportService {
 
                                 val accountData = AccountExportData.fromJson(line)
                                 val privKey = Nip49().decrypt(accountData.nsec, password)
-                                val hexKey = Nip01.pubKeyCreate(Hex.decode(privKey))
+                                val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
                                 val account = Account(
                                     hexKey = hexKey.toHexKey(),
                                     npub = hexKey.toNpub(),

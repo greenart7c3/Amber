@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -13,6 +14,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Permission
@@ -38,11 +40,13 @@ fun BunkerGetPubKeyScreen(
             textAlign = TextAlign.Center,
         )
 
+        Spacer(modifier = Modifier.height(8.dp))
+
         Text(
             stringResource(R.string.would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf),
         )
 
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.height(16.dp))
 
         RememberMyChoice(
             alwaysShow = true,

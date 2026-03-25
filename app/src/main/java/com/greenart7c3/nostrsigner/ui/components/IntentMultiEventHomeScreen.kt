@@ -258,6 +258,7 @@ fun IntentMultiEventHomeScreen(
                                     rememberType,
                                     thisAccount,
                                     relay = rejectRelay,
+                                    encryptedData = intentData.encryptedData,
                                 )
                             }
 
@@ -368,6 +369,7 @@ fun IntentMultiEventHomeScreen(
                                             rememberType,
                                             thisAccount,
                                             relay = signRelay,
+                                            encryptedData = intentData.encryptedData,
                                         )
                                     }
 
@@ -423,6 +425,7 @@ fun IntentMultiEventHomeScreen(
                                             true,
                                             rememberType,
                                             thisAccount,
+                                            encryptedData = intentData.encryptedData,
                                         )
                                     }
 
@@ -462,6 +465,7 @@ fun IntentMultiEventHomeScreen(
                                             true,
                                             rememberType,
                                             thisAccount,
+                                            encryptedData = intentData.encryptedData,
                                         )
                                     }
 

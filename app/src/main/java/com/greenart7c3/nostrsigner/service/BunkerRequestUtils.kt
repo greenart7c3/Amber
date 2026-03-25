@@ -488,6 +488,7 @@ object BunkerRequestUtils {
                     rememberType,
                     account,
                     relay,
+                    bunkerRequest.encryptedData,
                 )
             }
 

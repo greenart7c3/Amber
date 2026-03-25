@@ -288,6 +288,7 @@ fun BunkerMultiEventHomeScreen(
                                     rememberType,
                                     thisAccount,
                                     relay = rejectRelay,
+                                    encryptedData = request.encryptedData,
                                 )
                             }
 
@@ -390,6 +391,7 @@ fun BunkerMultiEventHomeScreen(
                                             rememberType = rememberType,
                                             account = thisAccount,
                                             relay = signRelay,
+                                            encryptedData = request.encryptedData,
                                         )
                                     }
 
@@ -440,6 +442,7 @@ fun BunkerMultiEventHomeScreen(
                                             true,
                                             rememberType,
                                             thisAccount,
+                                            encryptedData = request.encryptedData,
                                         )
                                     }
 
@@ -530,6 +533,7 @@ fun BunkerMultiEventHomeScreen(
                                             true,
                                             rememberType,
                                             thisAccount,
+                                            encryptedData = request.encryptedData,
                                         )
                                     }
 

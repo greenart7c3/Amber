@@ -85,6 +85,7 @@ object AmberUtils {
         rememberType: RememberType,
         account: Account,
         relay: String = "",
+        encryptedData: EncryptedDataKind?,
     ) {
         val until = when (rememberType) {
             RememberType.ALWAYS -> Long.MAX_VALUE / 1000
@@ -94,27 +95,31 @@ object AmberUtils {
             RememberType.NEVER -> 0L
         }
 
+        val permissionTypeStr = signerType.toPermissionTypeString(encryptedData)
+
         if (kind != null) {
             if (relay.isNotEmpty()) {
-                // For relay-specific permissions: wildcard "*" removes all relay entries for this kind,
-                // specific relay removes only its own entry
                 if (relay == "*") {
-                    application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() }
+                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr }
                 } else {
-                    application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() && it.relay == relay }
+                    application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay == relay }
                 }
             } else {
-                application.permissions.removeIf { it.kind == kind && it.type == signerType.toString() && it.relay.isEmpty() }
+                application.permissions.removeIf { it.kind == kind && it.type == permissionTypeStr && it.relay.isEmpty() }
             }
         } else {
-            application.permissions.removeIf { it.type == signerType.toString() && it.type != "SIGN_EVENT" }
+            application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
+            // Also remove any old NIP-based permission entries for this operation type
+            if (signerType in encryptDecryptSignerTypes) {
+                application.permissions.removeIf { it.type == signerType.toString() }
+            }
         }
 
         application.permissions.add(
             ApplicationPermissionsEntity(
                 null,
                 key,
-                signerType.toString(),
+                permissionTypeStr,
                 kind,
                 value,
                 rememberType.screenCode,

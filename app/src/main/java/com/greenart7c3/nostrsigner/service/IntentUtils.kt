@@ -889,6 +889,7 @@ object IntentUtils {
                     rememberType,
                     account,
                     relay,
+                    intentData.encryptedData,
                 )
             }
 

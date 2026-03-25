@@ -203,7 +203,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
-        val request = AmberBunkerRequest(
+        var request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
             relays = responseRelay,
@@ -301,6 +301,20 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             )
             return
         }
+
+        request = AmberBunkerRequest(
+            request = bunkerRequest,
+            localKey = event.pubKey,
+            relays = relays,
+            currentAccount = acc.npub,
+            nostrConnectSecret = "",
+            closeApplication = true,
+            name = "",
+            signedEvent = signedEvent,
+            encryptedData = encryptedDataKind,
+            encryptionType = encryptionType,
+            isNostrConnectUri = false,
+        )
 
         if (type == SignerType.SWITCH_RELAYS) {
             permission?.let {

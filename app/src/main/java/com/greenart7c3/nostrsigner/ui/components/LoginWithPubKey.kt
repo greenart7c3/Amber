@@ -48,7 +48,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
@@ -63,6 +62,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun ProfilePictureIcon(account: Account) {
@@ -100,7 +100,7 @@ fun LoginWithPubKey(
     modifier: Modifier,
     account: Account,
     packageName: String?,
-    permissions: List<Permission>?,
+    permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -62,7 +63,9 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
 import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
 import com.greenart7c3.nostrsigner.ui.parseDeleteAfterType
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlin.collections.forEach
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -74,7 +77,7 @@ fun BunkerConnectRequestScreen(
     shouldCloseApp: Boolean,
     account: Account,
     bunkerRequest: AmberBunkerRequest,
-    permissions: List<Permission>?,
+    permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -104,6 +107,14 @@ fun BunkerConnectRequestScreen(
     val connectionRelays = remember { bunkerRequest.relays }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+    val appName = remember { mutableStateOf(bunkerRequest.name) }
+
+    LaunchedEffect(selectedAccountIndex) {
+        scope.launch(Dispatchers.IO) {
+            val account = accounts[selectedAccountIndex]
+            appName.value = bunkerRequest.name.ifBlank { Amber.instance.getDatabase(account.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: bunkerRequest.localKey.toShortenHex() }
+        }
+    }
 
     // Fetch trust scores for connection relays
     LaunchedEffect(connectionRelays) {
@@ -146,17 +157,15 @@ fun BunkerConnectRequestScreen(
                 .weight(1f)
                 .verticalScroll(scrollState),
         ) {
-            if (bunkerRequest.name.isNotBlank()) {
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    text = bunkerRequest.name,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                )
-            }
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                text = appName.value,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center,
+            )
 
             // Account selection
             accounts.forEachIndexed { index, acc ->

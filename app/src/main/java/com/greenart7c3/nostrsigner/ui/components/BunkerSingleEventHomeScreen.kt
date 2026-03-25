@@ -53,6 +53,7 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -232,7 +233,7 @@ fun BunkerSingleEventHomeScreen(
                     } else {
                         Permission(split[0].trim(), null)
                     }
-                },
+                }?.toImmutableList(),
                 onAccept = { permissions, signPolicy, closeApplication, rememberType, deleteAfter, acc ->
                     val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 

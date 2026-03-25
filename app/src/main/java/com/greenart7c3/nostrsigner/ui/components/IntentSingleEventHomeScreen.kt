@@ -39,6 +39,7 @@ import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -74,7 +75,7 @@ fun IntentSingleEventHomeScreen(
                 packageName = packageName,
                 modifier = modifier,
                 account = account,
-                permissions = intentData.permissions,
+                permissions = intentData.permissions?.toImmutableList(),
                 onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
                     val result = if (packageName == null) {
                         acc.hexKey

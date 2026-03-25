@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
@@ -45,6 +46,7 @@ import kotlinx.coroutines.launch
 
 @Composable
 fun IntentSingleEventHomeScreen(
+    horizontalPadding: Dp,
     modifier: Modifier,
     packageName: String?,
     applicationName: String?,
@@ -72,6 +74,7 @@ fun IntentSingleEventHomeScreen(
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> {
             LoginWithPubKey(
+                horizontalPadding = horizontalPadding,
                 packageName = packageName,
                 modifier = modifier,
                 account = account,

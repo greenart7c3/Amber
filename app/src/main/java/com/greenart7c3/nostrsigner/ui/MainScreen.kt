@@ -66,7 +66,6 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
-import com.greenart7c3.nostrsigner.ui.CrashReportScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -380,6 +379,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                         }
                         IncomingRequestScreen(
+                            horizontalPadding = verticalPadding,
                             modifier = modifier,
                             intents = intents,
                             bunkerRequests = bunkerRequests,

@@ -16,6 +16,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
@@ -30,6 +31,7 @@ import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun IncomingRequestScreen(
+    horizontalPadding: Dp,
     modifier: Modifier,
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
@@ -63,6 +65,7 @@ fun IncomingRequestScreen(
             }
         } else if (intents.size == 1) {
             IntentSingleEventHomeScreen(
+                horizontalPadding = horizontalPadding,
                 modifier = modifier,
                 packageName = packageName,
                 applicationName = applicationName,
@@ -73,6 +76,7 @@ fun IncomingRequestScreen(
             )
         } else if (bunkerRequests.size == 1) {
             BunkerSingleEventHomeScreen(
+                horizontalPadding = horizontalPadding,
                 modifier = modifier,
                 bunkerRequest = bunkerRequests.first(),
                 account = account,

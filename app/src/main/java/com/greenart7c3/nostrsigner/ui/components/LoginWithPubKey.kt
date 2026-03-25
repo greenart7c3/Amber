@@ -11,11 +11,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.BottomAppBar
@@ -48,6 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
@@ -97,6 +96,7 @@ fun ProfilePictureIcon(account: Account) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginWithPubKey(
+    horizontalPadding: Dp,
     modifier: Modifier,
     account: Account,
     packageName: String?,
@@ -126,15 +126,11 @@ fun LoginWithPubKey(
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
-    val scrollState = rememberScrollState()
 
-    Column(
-        modifier,
-    ) {
+    Column {
         Column(
-            modifier = Modifier
-                .weight(1f)
-                .verticalScroll(scrollState),
+            modifier = modifier
+                .weight(1f),
         ) {
             packageName?.let {
                 val appDisplayInfo = rememberAppDisplayInfo(packageName)
@@ -273,7 +269,8 @@ fun LoginWithPubKey(
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 10.dp, vertical = 8.dp),
+                .padding(horizontal = horizontalPadding)
+                .padding(vertical = 8.dp),
             Arrangement.spacedBy(8.dp),
             Alignment.CenterVertically,
         ) {

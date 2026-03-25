@@ -667,4 +667,7 @@
     <string name="event_kind_10012">收藏的中继列表</string>
     <string name="event_kind_30267">应用策展合集</string>
     <string name="event_kind_34237">视频浏览</string>
+    <string name="event_kind_15128">Root nsite manifest</string>
+    <string name="event_kind_10443">MLS Key Package</string>
+    <string name="event_kind_16767">Active profile theme</string>
 </resources>

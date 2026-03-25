@@ -61,7 +61,11 @@ fun EncryptDecryptData(
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val permission = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(R.string.wants_to_encrypt_with, permission.toLocalizedString(Amber.instance), type.name.split("_").first())
+                    val kindTranslation = permission.toLocalizedString(Amber.instance)
+                    val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                    val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+                    val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+                    stringResource(R.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first())
                 }
 
                 is TagArrayEncryptedDataKind -> {
@@ -74,7 +78,11 @@ fun EncryptDecryptData(
             when (encryptedData) {
                 is EventEncryptedDataKind -> {
                     val permission = Permission("sign_event", encryptedData.event.kind)
-                    stringResource(R.string.wants_to_read_from_encrypted_content, permission.toLocalizedString(Amber.instance), type.name.split("_").first())
+                    val kindTranslation = permission.toLocalizedString(Amber.instance)
+                    val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                    val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+                    val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+                    stringResource(R.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first())
                 }
 
                 is TagArrayEncryptedDataKind -> {
@@ -230,7 +238,11 @@ fun BunkerEncryptDecryptData(
                     when (encryptedData) {
                         is EventEncryptedDataKind -> {
                             val permission = Permission("sign_event", encryptedData.event.kind)
-                            append(stringResource(R.string.wants_to_encrypt_with, permission.toLocalizedString(Amber.instance), type.name.split("_").first()))
+                            val kindTranslation = permission.toLocalizedString(Amber.instance)
+                            val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                            val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+                            val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+                            append(stringResource(R.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first()))
                         }
 
                         is TagArrayEncryptedDataKind -> {
@@ -243,7 +255,11 @@ fun BunkerEncryptDecryptData(
                     when (encryptedData) {
                         is EventEncryptedDataKind -> {
                             val permission = Permission("sign_event", encryptedData.event.kind)
-                            append(stringResource(R.string.wants_to_read_from_encrypted_content, permission.toLocalizedString(Amber.instance), type.name.split("_").first()))
+                            val kindTranslation = permission.toLocalizedString(Amber.instance)
+                            val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
+                            val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+                            val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+                            append(stringResource(R.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first()))
                         }
 
                         is TagArrayEncryptedDataKind -> {

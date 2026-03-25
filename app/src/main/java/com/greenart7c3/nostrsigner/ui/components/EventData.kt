@@ -78,14 +78,17 @@ fun EventData(
 
         val permission = Permission("sign_event", event.kind)
         val kindTranslation = permission.toLocalizedString(context)
-        val text = stringResource(R.string.wants_you_to_sign_a, kindTranslation)
+        val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())
+        val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+        val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+        val text = stringResource(R.string.wants_you_to_sign_a, displayTranslation)
         Text(
             text.capitalize(Locale.current),
             fontSize = 18.sp,
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
-        if (kindTranslation == stringResource(R.string.event_kind, event.kind.toString())) {
+        if (kindTranslation == unknownKindString && altTag == null) {
             ReportMissingEventKindButton(account, event.kind)
         }
         Spacer(Modifier.size(4.dp))
@@ -158,7 +161,10 @@ fun BunkerEventData(
         Spacer(Modifier.size(16.dp))
         val permission = Permission("sign_event", event.kind)
         val kindTranslation = permission.toLocalizedString(context)
-        val text = stringResource(R.string.wants_you_to_sign_a, kindTranslation)
+        val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())
+        val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+        val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
+        val text = stringResource(R.string.wants_you_to_sign_a, displayTranslation)
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
@@ -170,7 +176,7 @@ fun BunkerEventData(
             textAlign = TextAlign.Center,
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
-        if (kindTranslation == stringResource(R.string.event_kind, event.kind.toString())) {
+        if (kindTranslation == unknownKindString && altTag == null) {
             ReportMissingEventKindButton(account, event.kind)
         }
         Spacer(Modifier.size(4.dp))

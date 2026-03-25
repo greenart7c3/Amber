@@ -77,7 +77,19 @@ fun SeeDetailsScreen(
             val message = if (type == SignerType.CONNECT) {
                 stringResource(R.string.connect)
             } else {
-                permission.toLocalizedString(context)
+                val kindTranslation = permission.toLocalizedString(context)
+                val unknownKindString = stringResource(R.string.event_kind, permission.kind?.toString() ?: "")
+                if (kindTranslation == unknownKindString && type == SignerType.SIGN_EVENT) {
+                    val event = if (MultiEventScreenIntents.intents.isNotEmpty()) {
+                        MultiEventScreenIntents.intents.first().event!!
+                    } else {
+                        MultiEventScreenIntents.bunkerRequests.first().signedEvent!!
+                    }
+                    val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+                    altTag ?: kindTranslation
+                } else {
+                    kindTranslation
+                }
             }
             Text(
                 stringResource(R.string.is_requiring_to_sign_these_events_related_to_permission, MultiEventScreenIntents.appName, message),

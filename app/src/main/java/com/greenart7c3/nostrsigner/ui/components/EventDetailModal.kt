@@ -55,6 +55,10 @@ fun EventDetailModal(
         event.kind,
     )
     val context = LocalContext.current
+    val kindTranslation = permission.toLocalizedString(context)
+    val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())
+    val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+    val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
@@ -92,9 +96,9 @@ fun EventDetailModal(
             ) {
                 EventSection(
                     stringResource(R.string.kind),
-                    "${event.kind} - ${permission.toLocalizedString(LocalContext.current)}",
+                    "${event.kind} - $displayTranslation",
                     {
-                        copyToClipboard(clipboard, "${event.kind} - ${permission.toLocalizedString(context)}")
+                        copyToClipboard(clipboard, "${event.kind} - $displayTranslation")
                     },
                 )
                 EventSection(

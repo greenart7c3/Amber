@@ -1,13 +1,11 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -28,7 +26,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -49,7 +46,7 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
@@ -64,6 +61,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun ProfilePictureIcon(account: Account) {
@@ -98,10 +96,11 @@ fun ProfilePictureIcon(account: Account) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LoginWithPubKey(
+    horizontalPadding: Dp,
     modifier: Modifier,
     account: Account,
     packageName: String?,
-    permissions: List<Permission>?,
+    permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -114,7 +113,6 @@ fun LoginWithPubKey(
     }
 
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
     val accounts = remember {
         val snapshot = mutableStateListOf<Account>()
@@ -124,90 +122,50 @@ fun LoginWithPubKey(
         snapshot
     }
     var selectedAccountIndex by remember { mutableIntStateOf(accounts.indexOf(account)) }
+    var showModal by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
 
-    Column(
-        modifier,
-    ) {
-        packageName?.let {
-            val appDisplayInfo = rememberAppDisplayInfo(packageName)
-            Column(
-                modifier = Modifier.padding(vertical = 16.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                if (appDisplayInfo.icon != null) {
-                    Image(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(MaterialTheme.shapes.small),
-                        bitmap = appDisplayInfo.icon.toBitmap().asImageBitmap(),
-                        contentDescription = appDisplayInfo.name,
-                        contentScale = ContentScale.Crop,
-                    )
-                }
-
-                Text(
-                    text = appDisplayInfo.name,
-                    style = MaterialTheme.typography.titleLarge.copy(
-                        fontSize = 18.sp,
-                        lineHeight = 24.sp,
-                    ),
-                    fontWeight = FontWeight.Bold,
-                )
-
-                Text(
-                    modifier = Modifier
-                        .fillMaxWidth(),
-                    text = packageName,
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 18.sp,
-                    textAlign = TextAlign.Center,
-                )
-            }
-        }
-
-        PrimaryTabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            indicator = {
-                Box(
-                    modifier = Modifier
-                        .tabIndicatorOffset(selectedTabIndex)
-                        .height(6.dp)
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 2.dp)
-                        .clip(CircleShape)
-                        .background(color = MaterialTheme.colorScheme.primary),
-                )
-            },
-            divider = {
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            },
+    Column {
+        Column(
+            modifier = modifier
+                .weight(1f),
         ) {
-            SignerConnectAppTab(
-                text = stringResource(id = R.string.login).uppercase(),
-                selected = selectedTabIndex == 0,
-                onClick = {
-                    selectedTabIndex = 0
-                },
-            )
+            packageName?.let {
+                val appDisplayInfo = rememberAppDisplayInfo(packageName)
+                Row(
+                    modifier = Modifier.padding(vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    if (appDisplayInfo.icon != null) {
+                        Image(
+                            modifier = Modifier
+                                .size(36.dp)
+                                .clip(MaterialTheme.shapes.small),
+                            bitmap = appDisplayInfo.icon.toBitmap().asImageBitmap(),
+                            contentDescription = appDisplayInfo.name,
+                            contentScale = ContentScale.Crop,
+                        )
+                    }
 
-            SignerConnectAppTab(
-                text = stringResource(id = R.string.permissions).uppercase(),
-                selected = selectedTabIndex == 0,
-                onClick = {
-                    selectedTabIndex = 1
-                },
-            )
-        }
+                    Column {
+                        Text(
+                            text = appDisplayInfo.name,
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                        )
+                        Text(
+                            text = packageName,
+                            fontSize = 12.sp,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                }
+            }
 
-        Spacer(modifier = Modifier.size(8.dp))
-
-        if (selectedTabIndex == 0) {
+            // Account selection
             accounts.forEachIndexed { index, acc ->
                 ListItem(
                     modifier = Modifier
@@ -220,7 +178,6 @@ fun LoginWithPubKey(
                             },
                             shape = RoundedCornerShape(8.dp),
                         )
-                        .padding(4.dp)
                         .selectable(
                             selected = selectedAccountIndex == index,
                             onClick = {
@@ -229,7 +186,6 @@ fun LoginWithPubKey(
                         ),
                     colors = ListItemDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.background,
-
                     ),
                     leadingContent = {
                         ProfilePictureIcon(
@@ -241,16 +197,16 @@ fun LoginWithPubKey(
                         Text(
                             name.ifBlank { acc.npub.toShortenHex() },
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center,
+                            fontSize = 16.sp,
                         )
                     },
                 )
             }
-        } else {
-            var showModal by remember { mutableStateOf(false) }
-            val sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outline,
             )
 
             ChooseSignPolicy(
@@ -310,19 +266,16 @@ fun LoginWithPubKey(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(horizontal = horizontalPadding)
+                .padding(vertical = 8.dp),
             Arrangement.spacedBy(8.dp),
             Alignment.CenterVertically,
         ) {
             AmberButton(
-                modifier = Modifier
-                    .padding(vertical = 20.dp)
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 onClick = {
                     onReject(rememberType)
                 },
@@ -333,9 +286,7 @@ fun LoginWithPubKey(
             )
 
             AmberButton(
-                modifier = Modifier
-                    .padding(vertical = 20.dp)
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 onClick = {
                     onAccept(localPermissions, selectedOption, true, rememberType, accounts[selectedAccountIndex])
                 },

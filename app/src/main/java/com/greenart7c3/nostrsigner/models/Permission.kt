@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.models
 
 import android.content.Context
+import androidx.compose.runtime.Immutable
 import com.fasterxml.jackson.core.JsonGenerator
 import com.fasterxml.jackson.core.JsonParser
 import com.fasterxml.jackson.core.json.JsonReadFeature
@@ -16,6 +17,7 @@ import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.R
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper.Companion.defaultPrettyPrinter
 
+@Immutable
 data class Permission(
     val type: String,
     val kind: Int?,

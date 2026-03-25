@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
@@ -50,14 +51,15 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Encrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestPing
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
-import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun BunkerSingleEventHomeScreen(
+    horizontalPadding: Dp,
     modifier: Modifier,
     bunkerRequest: AmberBunkerRequest,
     account: Account,
@@ -149,7 +151,7 @@ fun BunkerSingleEventHomeScreen(
             var localRememberType by remember { mutableStateOf(RememberType.NEVER) }
             var existingAppKey by remember { mutableStateOf("") }
             var localDeleteAfter by remember { mutableLongStateOf(0L) }
-            var selectedAccount by remember { mutableStateOf<Account>(account) }
+            var selectedAccount by remember { mutableStateOf(account) }
 
             if (showExistingAppDialog) {
                 AlertDialog(
@@ -221,6 +223,7 @@ fun BunkerSingleEventHomeScreen(
             }
 
             BunkerConnectRequestScreen(
+                horizontalPadding = horizontalPadding,
                 modifier = modifier,
                 shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
                 account = account,
@@ -232,7 +235,7 @@ fun BunkerSingleEventHomeScreen(
                     } else {
                         Permission(split[0].trim(), null)
                     }
-                },
+                }?.toImmutableList(),
                 onAccept = { permissions, signPolicy, closeApplication, rememberType, deleteAfter, acc ->
                     val result = bunkerRequest.nostrConnectSecret.ifBlank { "ack" }
 

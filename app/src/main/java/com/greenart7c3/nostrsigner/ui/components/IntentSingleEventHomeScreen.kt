@@ -17,6 +17,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
@@ -39,11 +40,13 @@ import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 @Composable
 fun IntentSingleEventHomeScreen(
+    horizontalPadding: Dp,
     modifier: Modifier,
     packageName: String?,
     applicationName: String?,
@@ -71,10 +74,11 @@ fun IntentSingleEventHomeScreen(
     when (intentData.type) {
         SignerType.GET_PUBLIC_KEY -> {
             LoginWithPubKey(
+                horizontalPadding = horizontalPadding,
                 packageName = packageName,
                 modifier = modifier,
                 account = account,
-                permissions = intentData.permissions,
+                permissions = intentData.permissions?.toImmutableList(),
                 onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
                     val result = if (packageName == null) {
                         acc.hexKey

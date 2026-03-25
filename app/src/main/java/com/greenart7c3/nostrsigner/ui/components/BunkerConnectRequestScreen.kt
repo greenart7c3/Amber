@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -11,9 +10,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.selection.selectable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
@@ -24,7 +21,6 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -41,7 +37,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
@@ -49,9 +44,11 @@ import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -65,7 +62,8 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
 import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
 import com.greenart7c3.nostrsigner.ui.parseDeleteAfterType
-import kotlin.collections.forEach
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -73,11 +71,12 @@ import kotlinx.coroutines.launch
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BunkerConnectRequestScreen(
+    horizontalPadding: Dp,
     modifier: Modifier,
     shouldCloseApp: Boolean,
     account: Account,
     bunkerRequest: AmberBunkerRequest,
-    permissions: List<Permission>?,
+    permissions: ImmutableList<Permission>?,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
@@ -89,7 +88,6 @@ fun BunkerConnectRequestScreen(
         }
         snapshot
     }
-    var selectedTabIndex by remember { mutableIntStateOf(0) }
     var selectedOption by remember { mutableIntStateOf(account.signPolicy) }
     val accounts = remember {
         val snapshot = mutableStateListOf<Account>()
@@ -108,6 +106,14 @@ fun BunkerConnectRequestScreen(
     val connectionRelays = remember { bunkerRequest.relays }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+    val appName = remember { mutableStateOf(bunkerRequest.name) }
+
+    LaunchedEffect(selectedAccountIndex) {
+        scope.launch(Dispatchers.IO) {
+            val account = accounts[selectedAccountIndex]
+            appName.value = bunkerRequest.name.ifBlank { Amber.instance.getDatabase(account.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: bunkerRequest.localKey.toShortenHex() }
+        }
+    }
 
     // Fetch trust scores for connection relays
     LaunchedEffect(connectionRelays) {
@@ -136,52 +142,27 @@ fun BunkerConnectRequestScreen(
         )
     var deleteAfterIndex by remember { mutableIntStateOf(DeleteAfterType.NEVER.screenCode) }
     var closeApp by remember { mutableStateOf(shouldCloseApp) }
+    var showModal by remember { mutableStateOf(false) }
+    val sheetState = rememberModalBottomSheetState(
+        skipPartiallyExpanded = true,
+    )
 
-    Column(
-        modifier,
-    ) {
-        PrimaryTabRow(
-            selectedTabIndex = selectedTabIndex,
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.onSurface,
-            indicator = {
-                Box(
-                    modifier = Modifier
-                        .tabIndicatorOffset(selectedTabIndex)
-                        .height(6.dp)
-                        .padding(horizontal = 16.dp)
-                        .padding(bottom = 2.dp)
-                        .clip(CircleShape)
-                        .background(color = MaterialTheme.colorScheme.primary),
-                )
-            },
-            divider = {
-                HorizontalDivider(
-                    thickness = 0.5.dp,
-                    color = MaterialTheme.colorScheme.outline,
-                )
-            },
+    Column {
+        Column(
+            modifier = modifier
+                .weight(1f),
         ) {
-            SignerConnectAppTab(
-                text = stringResource(id = R.string.login).uppercase(),
-                selected = selectedTabIndex == 0,
-                onClick = {
-                    selectedTabIndex = 0
-                },
+            Text(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                text = appName.value,
+                fontWeight = FontWeight.Bold,
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center,
             )
 
-            SignerConnectAppTab(
-                text = stringResource(id = R.string.permissions).uppercase(),
-                selected = selectedTabIndex == 0,
-                onClick = {
-                    selectedTabIndex = 1
-                },
-            )
-        }
-
-        Spacer(modifier = Modifier.size(8.dp))
-
-        if (selectedTabIndex == 0) {
+            // Account selection
             accounts.forEachIndexed { index, acc ->
                 ListItem(
                     modifier = Modifier
@@ -194,7 +175,6 @@ fun BunkerConnectRequestScreen(
                             },
                             shape = RoundedCornerShape(8.dp),
                         )
-                        .padding(4.dp)
                         .selectable(
                             selected = selectedAccountIndex == index,
                             onClick = {
@@ -203,7 +183,6 @@ fun BunkerConnectRequestScreen(
                         ),
                     colors = ListItemDefaults.colors(
                         containerColor = MaterialTheme.colorScheme.background,
-
                     ),
                     leadingContent = {
                         ProfilePictureIcon(
@@ -215,33 +194,32 @@ fun BunkerConnectRequestScreen(
                         Text(
                             name.ifBlank { acc.npub.toShortenHex() },
                             fontWeight = FontWeight.Bold,
-                            fontSize = 18.sp,
-                            textAlign = TextAlign.Center,
+                            fontSize = 16.sp,
                         )
                     },
                 )
             }
 
-            // Display relays with trust scores
+            // Relays with trust scores
             if (connectionRelays.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = stringResource(R.string.relays_used),
                     fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp,
-                    modifier = Modifier.padding(vertical = 8.dp),
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 4.dp),
                 )
                 connectionRelays.forEach { relay ->
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(vertical = 4.dp)
+                            .padding(vertical = 2.dp)
                             .border(
                                 width = 1.dp,
                                 color = MaterialTheme.colorScheme.outline,
                                 shape = RoundedCornerShape(8.dp),
                             )
-                            .padding(12.dp),
+                            .padding(8.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -250,7 +228,7 @@ fun BunkerConnectRequestScreen(
                             modifier = Modifier.weight(1f),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            fontSize = 14.sp,
+                            fontSize = 13.sp,
                         )
                         TrustScoreBadge(
                             score = trustScores[relay.url],
@@ -259,17 +237,19 @@ fun BunkerConnectRequestScreen(
                     }
                 }
             }
-        } else {
-            var showModal by remember { mutableStateOf(false) }
-            val sheetState = rememberModalBottomSheetState(
-                skipPartiallyExpanded = true,
+
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outline,
             )
 
+            // Close app toggle
             Row(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .padding(vertical = 8.dp)
+                    .fillMaxWidth()
                     .clickable {
                         closeApp = !closeApp
                     },
@@ -277,6 +257,7 @@ fun BunkerConnectRequestScreen(
                 Text(
                     modifier = Modifier.weight(1f),
                     text = stringResource(R.string.close_application),
+                    fontSize = 14.sp,
                 )
                 Switch(
                     checked = closeApp,
@@ -287,7 +268,7 @@ fun BunkerConnectRequestScreen(
             }
 
             Box(
-                Modifier.padding(4.dp),
+                Modifier.padding(vertical = 2.dp),
             ) {
                 SettingsRow(
                     R.string.delete_after,
@@ -356,19 +337,16 @@ fun BunkerConnectRequestScreen(
             }
         }
 
-        Spacer(modifier = Modifier.weight(1f))
-
         Row(
             Modifier
                 .fillMaxWidth()
-                .padding(10.dp),
+                .padding(horizontal = horizontalPadding)
+                .padding(vertical = 8.dp),
             Arrangement.spacedBy(8.dp),
             Alignment.CenterVertically,
         ) {
             AmberButton(
-                modifier = Modifier
-                    .padding(vertical = 20.dp)
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 onClick = {
                     onReject(RememberType.NEVER)
                 },
@@ -379,9 +357,7 @@ fun BunkerConnectRequestScreen(
             )
 
             AmberButton(
-                modifier = Modifier
-                    .padding(vertical = 20.dp)
-                    .weight(1f),
+                modifier = Modifier.weight(1f),
                 onClick = {
                     val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
                     onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])

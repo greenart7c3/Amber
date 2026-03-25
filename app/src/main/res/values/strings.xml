@@ -677,4 +677,7 @@
     <string name="event_kind_10012">Favorite relays list</string>
     <string name="event_kind_30267">App curation sets</string>
     <string name="event_kind_34237">Video View</string>
+    <string name="event_kind_15128">Root nsite manifest</string>
+    <string name="event_kind_10443">MLS Key Package</string>
+    <string name="event_kind_16767">Active profile theme</string>
 </resources>

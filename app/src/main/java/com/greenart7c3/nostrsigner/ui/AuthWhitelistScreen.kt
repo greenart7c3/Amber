@@ -48,7 +48,12 @@ fun AuthWhitelistScreen(
     }
 
     fun addEntry() {
-        val url = textFieldRelay.value.text.trim()
+        val input = textFieldRelay.value.text.trim()
+        val url = try {
+            java.net.URI(input).host ?: input
+        } catch (e: Exception) {
+            input
+        }
         if (url.isNotBlank() && url !in whitelist) {
             whitelist.add(url)
             Amber.instance.settings = Amber.instance.settings.copy(authWhitelist = whitelist.toList())

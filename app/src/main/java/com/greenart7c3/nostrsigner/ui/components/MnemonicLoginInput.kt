@@ -30,7 +30,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -42,6 +41,7 @@ import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 
 @Composable
 fun MnemonicLoginInput(
@@ -54,14 +54,7 @@ fun MnemonicLoginInput(
 ) {
     val focusRequesters = remember(wordCount) { List(wordCount) { FocusRequester() } }
     val halfCount = wordCount / 2
-
-    val context = LocalContext.current
-    val wordList = remember {
-        context.resources.openRawResource(R.raw.bip39_english)
-            .bufferedReader()
-            .readLines()
-            .filter { it.isNotBlank() }
-    }
+    val wordList = remember { Bip39Mnemonics.englishWordlist.toList() }
 
     Column(modifier = modifier) {
         Row(
@@ -95,7 +88,6 @@ fun MnemonicLoginInput(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
         ) {
-            // Left column: words 1..halfCount
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -113,7 +105,6 @@ fun MnemonicLoginInput(
                 }
             }
 
-            // Right column: words halfCount+1..wordCount
             Column(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(6.dp),
@@ -157,7 +148,10 @@ private fun WordField(
     nextFocusRequester: FocusRequester?,
     imeAction: ImeAction,
 ) {
-    var dismissed by remember(word) { mutableStateOf(false) }
+    // Tracks the last word that was chosen from the dropdown so we can suppress
+    // the menu after selection (selecting changes `word`, which would otherwise
+    // re-open the menu immediately).
+    var selectedWord by remember { mutableStateOf("") }
 
     val suggestions = remember(word) {
         if (word.length >= 2) {
@@ -167,7 +161,7 @@ private fun WordField(
         }
     }
 
-    val menuExpanded = suggestions.isNotEmpty() && !dismissed
+    val menuExpanded = suggestions.isNotEmpty() && word != selectedWord
 
     Box {
         OutlinedTextField(
@@ -181,7 +175,7 @@ private fun WordField(
                     }
                     nextFocusRequester?.requestFocus()
                 } else {
-                    dismissed = false
+                    selectedWord = "" // reset so menu can reappear while typing
                     onWordChange(cleaned)
                 }
             },
@@ -213,20 +207,15 @@ private fun WordField(
 
         DropdownMenu(
             expanded = menuExpanded,
-            onDismissRequest = { dismissed = true },
+            onDismissRequest = { selectedWord = word },
             modifier = Modifier.heightIn(max = 200.dp),
         ) {
             suggestions.forEach { suggestion ->
                 DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = suggestion,
-                            fontSize = 14.sp,
-                        )
-                    },
+                    text = { Text(text = suggestion, fontSize = 14.sp) },
                     onClick = {
+                        selectedWord = suggestion
                         onWordChange(suggestion)
-                        dismissed = true
                         nextFocusRequester?.requestFocus()
                     },
                 )

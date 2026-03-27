@@ -378,7 +378,7 @@ fun BunkerSingleEventHomeScreen(
                 appName = appName,
                 type = type,
                 account = account,
-                onAccept = {
+                onAccept = { rememberType, scope ->
                     BunkerRequestUtils.sendResult(
                         context = context,
                         account = account,
@@ -391,19 +391,21 @@ fun BunkerSingleEventHomeScreen(
                         appName = appName,
                         signPolicy = null,
                         shouldCloseApplication = bunkerRequest.closeApplication,
-                        rememberType = it,
+                        rememberType = rememberType,
+                        decryptTypeScope = scope,
                     )
                 },
-                onReject = {
+                onReject = { rememberType, scope ->
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
                         appName = appName,
-                        rememberType = it,
+                        rememberType = rememberType,
                         signerType = type,
                         kind = null,
                         onLoading = onLoading,
+                        decryptTypeScope = scope,
                     )
                 },
             )
@@ -449,7 +451,7 @@ fun BunkerSingleEventHomeScreen(
                 appName = appName,
                 type = type,
                 account = account,
-                onAccept = {
+                onAccept = { rememberType, scope ->
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
@@ -464,19 +466,21 @@ fun BunkerSingleEventHomeScreen(
                         appName = appName,
                         signPolicy = null,
                         shouldCloseApplication = bunkerRequest.closeApplication,
-                        rememberType = it,
+                        rememberType = rememberType,
+                        decryptTypeScope = scope,
                     )
                 },
-                onReject = {
+                onReject = { rememberType, scope ->
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
                         appName = appName,
-                        rememberType = it,
+                        rememberType = rememberType,
                         signerType = type,
                         kind = null,
                         onLoading = onLoading,
+                        decryptTypeScope = scope,
                     )
                 },
             )
@@ -522,7 +526,7 @@ fun BunkerSingleEventHomeScreen(
                 appName = appName,
                 type = type,
                 account = account,
-                onAccept = {
+                onAccept = { rememberType, scope ->
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
@@ -537,19 +541,21 @@ fun BunkerSingleEventHomeScreen(
                         appName = appName,
                         signPolicy = null,
                         shouldCloseApplication = bunkerRequest.closeApplication,
-                        rememberType = it,
+                        rememberType = rememberType,
+                        decryptTypeScope = scope,
                     )
                 },
-                onReject = {
+                onReject = { rememberType, scope ->
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
                         appName = appName,
-                        rememberType = it,
+                        rememberType = rememberType,
                         signerType = type,
                         kind = null,
                         onLoading = onLoading,
+                        decryptTypeScope = scope,
                     )
                 },
             )
@@ -595,7 +601,7 @@ fun BunkerSingleEventHomeScreen(
                 appName = appName,
                 type = type,
                 account = account,
-                onAccept = {
+                onAccept = { rememberType, scope ->
                     val result = bunkerRequest.encryptedData?.result ?: ""
 
                     BunkerRequestUtils.sendResult(
@@ -610,19 +616,21 @@ fun BunkerSingleEventHomeScreen(
                         appName = appName,
                         signPolicy = null,
                         shouldCloseApplication = bunkerRequest.closeApplication,
-                        rememberType = it,
+                        rememberType = rememberType,
+                        decryptTypeScope = scope,
                     )
                 },
-                onReject = {
+                onReject = { rememberType, scope ->
                     BunkerRequestUtils.sendRejection(
                         key = key,
                         account = account,
                         bunkerRequest = bunkerRequest,
                         appName = appName,
-                        rememberType = it,
+                        rememberType = rememberType,
                         signerType = type,
                         kind = null,
                         onLoading = onLoading,
+                        decryptTypeScope = scope,
                     )
                 },
             )
@@ -827,7 +835,7 @@ fun BunkerSingleEventHomeScreen(
                     appName = appName,
                     type = type,
                     account = account,
-                    onAccept = {
+                    onAccept = { rememberType, scope ->
                         val result =
                             if (bunkerRequest.encryptedData?.result == "Could not decrypt the message") {
                                 ""
@@ -847,19 +855,21 @@ fun BunkerSingleEventHomeScreen(
                             appName = appName,
                             signPolicy = null,
                             shouldCloseApplication = bunkerRequest.closeApplication,
-                            rememberType = it,
+                            rememberType = rememberType,
+                            decryptTypeScope = scope,
                         )
                     },
-                    onReject = {
+                    onReject = { rememberType, scope ->
                         BunkerRequestUtils.sendRejection(
                             key = key,
                             account = account,
                             bunkerRequest = bunkerRequest,
                             appName = appName,
-                            rememberType = it,
+                            rememberType = rememberType,
                             signerType = type,
                             kind = null,
                             onLoading = onLoading,
+                            decryptTypeScope = scope,
                         )
                     },
                 )

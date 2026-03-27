@@ -5,12 +5,14 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -206,6 +208,16 @@ fun EncryptDecryptData(
     }
 }
 
+/**
+ * Scope for an encrypt/decrypt permission.
+ * [SPECIFIC] means the permission applies only to this specific encryption method (e.g., NIP-04 only).
+ * [ALL] means the permission applies to all encryption/decryption methods (NIP-04 and NIP-44).
+ */
+enum class DecryptTypeScope {
+    SPECIFIC,
+    ALL,
+}
+
 data class TagItem(
     val name: String,
     val values: List<String>,
@@ -219,12 +231,16 @@ fun BunkerEncryptDecryptData(
     appName: String,
     type: SignerType,
     account: Account,
-    onAccept: (RememberType) -> Unit,
-    onReject: (RememberType) -> Unit,
+    defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
+    onAccept: (RememberType, DecryptTypeScope) -> Unit,
+    onReject: (RememberType, DecryptTypeScope) -> Unit,
 ) {
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
+    var scope by remember { mutableStateOf(defaultScope) }
+    val scopeIndex by remember(scope) { mutableIntStateOf(if (scope == DecryptTypeScope.SPECIFIC) 0 else 1) }
+    val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
 
     Column(
         modifier,
@@ -350,22 +366,53 @@ fun BunkerEncryptDecryptData(
             Spacer(modifier = Modifier.weight(1f))
         }
 
+        if (showScopeToggle) {
+            Spacer(Modifier.size(8.dp))
+            LabeledBorderBox(
+                label = stringResource(R.string.encryption_scope),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            ) {
+                AmberToggles(
+                    selectedIndex = scopeIndex,
+                    count = 2,
+                    segmentWidth = 120.dp,
+                    content = {
+                        ToggleOption(
+                            modifier = Modifier.width(120.dp),
+                            text = stringResource(R.string.for_this_method_only),
+                            isSelected = scope == DecryptTypeScope.SPECIFIC,
+                            onClick = { scope = DecryptTypeScope.SPECIFIC },
+                        )
+                        ToggleOption(
+                            modifier = Modifier.width(120.dp),
+                            text = stringResource(R.string.for_all_methods),
+                            isSelected = scope == DecryptTypeScope.ALL,
+                            onClick = { scope = DecryptTypeScope.ALL },
+                        )
+                    },
+                )
+            }
+            Spacer(Modifier.size(8.dp))
+        }
+
         RememberMyChoice(
             shouldRunOnAccept,
             null,
             true,
-            onAccept,
-            onReject,
+            onAccept = { onAccept(it, scope) },
+            onReject = { onReject(it, scope) },
         ) {
             rememberType = it
         }
 
         AcceptRejectButtons(
             onAccept = {
-                onAccept(rememberType)
+                onAccept(rememberType, scope)
             },
             onReject = {
-                onReject(rememberType)
+                onReject(rememberType, scope)
             },
         )
     }

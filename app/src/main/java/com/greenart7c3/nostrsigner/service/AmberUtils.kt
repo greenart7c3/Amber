@@ -15,6 +15,7 @@ import com.greenart7c3.nostrsigner.models.basicPermissions
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.toPermissionTypeString
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -86,6 +87,7 @@ object AmberUtils {
         account: Account,
         relay: String = "",
         encryptedData: EncryptedDataKind?,
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         val until = when (rememberType) {
             RememberType.ALWAYS -> Long.MAX_VALUE / 1000
@@ -95,7 +97,11 @@ object AmberUtils {
             RememberType.NEVER -> 0L
         }
 
-        val permissionTypeStr = signerType.toPermissionTypeString(encryptedData)
+        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.SPECIFIC && signerType in encryptDecryptSignerTypes) {
+            signerType.toString()
+        } else {
+            signerType.toPermissionTypeString(encryptedData)
+        }
 
         if (kind != null) {
             if (relay.isNotEmpty()) {
@@ -111,7 +117,12 @@ object AmberUtils {
             application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
             // Also remove any old NIP-based permission entries for this operation type
             if (signerType in encryptDecryptSignerTypes) {
-                application.permissions.removeIf { it.type == signerType.toString() }
+                if (decryptTypeScope == DecryptTypeScope.SPECIFIC) {
+                    // Remove the content-classified counterpart so SPECIFIC wins
+                    application.permissions.removeIf { it.type == signerType.toPermissionTypeString(encryptedData) }
+                } else {
+                    application.permissions.removeIf { it.type == signerType.toString() }
+                }
             }
         }
 
@@ -195,6 +206,7 @@ object AmberUtils {
         rememberType: RememberType,
         relay: String = "",
         encryptedData: EncryptedDataKind? = null,
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         val until = when (rememberType) {
             RememberType.ALWAYS -> Long.MAX_VALUE / 1000
@@ -204,7 +216,11 @@ object AmberUtils {
             else -> 0L
         }
 
-        val permissionTypeStr = type.toPermissionTypeString(encryptedData)
+        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.SPECIFIC && type in encryptDecryptSignerTypes) {
+            type.toString()
+        } else {
+            type.toPermissionTypeString(encryptedData)
+        }
 
         if (kind != null) {
             if (relay.isNotEmpty()) {
@@ -220,7 +236,12 @@ object AmberUtils {
             application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
             // Also remove any old NIP-based permission entries for this operation type
             if (type in encryptDecryptSignerTypes) {
-                application.permissions.removeIf { it.type == type.toString() }
+                if (decryptTypeScope == DecryptTypeScope.SPECIFIC) {
+                    // Remove the content-classified counterpart so SPECIFIC wins
+                    application.permissions.removeIf { it.type == type.toPermissionTypeString(encryptedData) }
+                } else {
+                    application.permissions.removeIf { it.type == type.toString() }
+                }
             }
         }
 

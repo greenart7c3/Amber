@@ -47,12 +47,16 @@ fun EncryptDecryptData(
     packageName: String?,
     type: SignerType,
     account: Account,
-    onAccept: (RememberType) -> Unit,
-    onReject: (RememberType) -> Unit,
+    defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
+    onAccept: (RememberType, DecryptTypeScope) -> Unit,
+    onReject: (RememberType, DecryptTypeScope) -> Unit,
 ) {
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
     }
+    var scope by remember { mutableStateOf(defaultScope) }
+    val scopeIndex by remember(scope) { mutableIntStateOf(if (scope == DecryptTypeScope.SPECIFIC) 0 else 1) }
+    val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
 
     Column(
         modifier,
@@ -187,22 +191,53 @@ fun EncryptDecryptData(
             Spacer(modifier = Modifier.weight(1f))
         }
 
+        if (showScopeToggle) {
+            Spacer(Modifier.size(8.dp))
+            LabeledBorderBox(
+                label = stringResource(R.string.encryption_scope),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            ) {
+                AmberToggles(
+                    selectedIndex = scopeIndex,
+                    count = 2,
+                    segmentWidth = 120.dp,
+                    content = {
+                        ToggleOption(
+                            modifier = Modifier.width(120.dp),
+                            text = stringResource(R.string.for_this_method_only),
+                            isSelected = scope == DecryptTypeScope.SPECIFIC,
+                            onClick = { scope = DecryptTypeScope.SPECIFIC },
+                        )
+                        ToggleOption(
+                            modifier = Modifier.width(120.dp),
+                            text = stringResource(R.string.for_all_methods),
+                            isSelected = scope == DecryptTypeScope.ALL,
+                            onClick = { scope = DecryptTypeScope.ALL },
+                        )
+                    },
+                )
+            }
+            Spacer(Modifier.size(8.dp))
+        }
+
         RememberMyChoice(
             shouldRunOnAccept,
             packageName,
             false,
-            onAccept,
-            onReject,
+            onAccept = { onAccept(it, scope) },
+            onReject = { onReject(it, scope) },
         ) {
             rememberType = it
         }
 
         AcceptRejectButtons(
             onAccept = {
-                onAccept(rememberType)
+                onAccept(rememberType, scope)
             },
             onReject = {
-                onReject(rememberType)
+                onReject(rememberType, scope)
             },
         )
     }

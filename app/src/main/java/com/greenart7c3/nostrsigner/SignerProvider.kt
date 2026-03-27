@@ -191,7 +191,23 @@ class SignerProvider : ContentProvider() {
                         when {
                             authWhitelist.isEmpty() -> false
                             relayUrl in authWhitelist -> true
-                            else -> return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                            else -> {
+                                scope.launch {
+                                    historyDatabase.dao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            packageName,
+                                            uri.toString().replace("content://$appId.", ""),
+                                            event.kind,
+                                            TimeUtils.now(),
+                                            false,
+                                            content = event.toJson(),
+                                        ),
+                                        account.npub,
+                                    )
+                                }
+                                return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                            }
                         }
                     } else {
                         false

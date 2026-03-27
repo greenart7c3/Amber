@@ -147,195 +147,192 @@ fun BunkerConnectRequestScreen(
         skipPartiallyExpanded = true,
     )
 
-    Column {
-        Column(
-            modifier = modifier
-                .weight(1f),
-        ) {
-            Text(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 8.dp),
-                text = appName.value,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
-                textAlign = TextAlign.Center,
-            )
+    Column(modifier = modifier) {
+        Text(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 8.dp),
+            text = appName.value,
+            fontWeight = FontWeight.Bold,
+            fontSize = 18.sp,
+            textAlign = TextAlign.Center,
+        )
 
-            // Account selection
-            accounts.forEachIndexed { index, acc ->
-                ListItem(
-                    modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = if (selectedAccountIndex == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                Color.Transparent
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                        )
-                        .selectable(
-                            selected = selectedAccountIndex == index,
-                            onClick = {
-                                selectedAccountIndex = index
-                            },
-                        ),
-                    colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.background,
+        // Account selection
+        accounts.forEachIndexed { index, acc ->
+            ListItem(
+                modifier = Modifier
+                    .border(
+                        width = 1.dp,
+                        color = if (selectedAccountIndex == index) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            Color.Transparent
+                        },
+                        shape = RoundedCornerShape(8.dp),
+                    )
+                    .selectable(
+                        selected = selectedAccountIndex == index,
+                        onClick = {
+                            selectedAccountIndex = index
+                        },
                     ),
-                    leadingContent = {
-                        ProfilePictureIcon(
-                            account = acc,
-                        )
-                    },
-                    headlineContent = {
-                        val name by acc.name.collectAsStateWithLifecycle()
-                        Text(
-                            name.ifBlank { acc.npub.toShortenHex() },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                        )
-                    },
-                )
-            }
-
-            // Relays with trust scores
-            if (connectionRelays.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.relays_used),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(vertical = 4.dp),
-                )
-                connectionRelays.forEach { relay ->
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 2.dp)
-                            .border(
-                                width = 1.dp,
-                                color = MaterialTheme.colorScheme.outline,
-                                shape = RoundedCornerShape(8.dp),
-                            )
-                            .padding(8.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            text = relay.url,
-                            modifier = Modifier.weight(1f),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            fontSize = 13.sp,
-                        )
-                        TrustScoreBadge(
-                            score = trustScores[relay.url],
-                            isLoading = loadingScores[relay.url] == true,
-                        )
-                    }
-                }
-            }
-
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline,
-            )
-
-            // Close app toggle
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        closeApp = !closeApp
-                    },
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.close_application),
-                    fontSize = 14.sp,
-                )
-                Switch(
-                    checked = closeApp,
-                    onCheckedChange = {
-                        closeApp = it
-                    },
-                )
-            }
-
-            Box(
-                Modifier.padding(vertical = 2.dp),
-            ) {
-                SettingsRow(
-                    R.string.delete_after,
-                    null,
-                    deleteAfterItems,
-                    deleteAfterIndex,
-                ) {
-                    deleteAfterIndex = it
-                }
-            }
-
-            ChooseSignPolicy(
-                selectedOption = selectedOption,
-                onSelected = {
-                    selectedOption = it
+                colors = ListItemDefaults.colors(
+                    containerColor = MaterialTheme.colorScheme.background,
+                ),
+                leadingContent = {
+                    ProfilePictureIcon(
+                        account = acc,
+                    )
+                },
+                headlineContent = {
+                    val name by acc.name.collectAsStateWithLifecycle()
+                    Text(
+                        name.ifBlank { acc.npub.toShortenHex() },
+                        fontWeight = FontWeight.Bold,
+                        fontSize = 16.sp,
+                    )
                 },
             )
+        }
 
-            if (selectedOption == 1 && localPermissions.isNotEmpty()) {
-                Box(
-                    Modifier.fillMaxWidth(),
-                    contentAlignment = Alignment.Center,
+        // Relays with trust scores
+        if (connectionRelays.isNotEmpty()) {
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = stringResource(R.string.relays_used),
+                fontWeight = FontWeight.Bold,
+                fontSize = 14.sp,
+                modifier = Modifier.padding(vertical = 4.dp),
+            )
+            connectionRelays.forEach { relay ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                        .border(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.outline,
+                            shape = RoundedCornerShape(8.dp),
+                        )
+                        .padding(8.dp),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    ElevatedButton(
-                        colors = ButtonDefaults.buttonColors().copy(
-                            contentColor = Color.Black,
-                        ),
-                        shape = RoundedCornerShape(20),
-                        content = {
-                            Text(stringResource(R.string.permissions))
-                        },
-                        onClick = {
-                            showModal = true
-                        },
+                    Text(
+                        text = relay.url,
+                        modifier = Modifier.weight(1f),
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                        fontSize = 13.sp,
+                    )
+                    TrustScoreBadge(
+                        score = trustScores[relay.url],
+                        isLoading = loadingScores[relay.url] == true,
                     )
                 }
-                if (showModal) {
-                    ModalBottomSheet(
-                        sheetState = sheetState,
-                        onDismissRequest = {
-                            showModal = false
+            }
+        }
+
+        HorizontalDivider(
+            modifier = Modifier.padding(vertical = 8.dp),
+            thickness = 0.5.dp,
+            color = MaterialTheme.colorScheme.outline,
+        )
+
+        // Close app toggle
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    closeApp = !closeApp
+                },
+        ) {
+            Text(
+                modifier = Modifier.weight(1f),
+                text = stringResource(R.string.close_application),
+                fontSize = 14.sp,
+            )
+            Switch(
+                checked = closeApp,
+                onCheckedChange = {
+                    closeApp = it
+                },
+            )
+        }
+
+        Box(
+            Modifier.padding(vertical = 2.dp),
+        ) {
+            SettingsRow(
+                R.string.delete_after,
+                null,
+                deleteAfterItems,
+                deleteAfterIndex,
+            ) {
+                deleteAfterIndex = it
+            }
+        }
+
+        ChooseSignPolicy(
+            selectedOption = selectedOption,
+            onSelected = {
+                selectedOption = it
+            },
+        )
+
+        if (selectedOption == 1 && localPermissions.isNotEmpty()) {
+            Box(
+                Modifier.fillMaxWidth(),
+                contentAlignment = Alignment.Center,
+            ) {
+                ElevatedButton(
+                    colors = ButtonDefaults.buttonColors().copy(
+                        contentColor = Color.Black,
+                    ),
+                    shape = RoundedCornerShape(20),
+                    content = {
+                        Text(stringResource(R.string.permissions))
+                    },
+                    onClick = {
+                        showModal = true
+                    },
+                )
+            }
+            if (showModal) {
+                ModalBottomSheet(
+                    sheetState = sheetState,
+                    onDismissRequest = {
+                        showModal = false
+                    },
+                ) {
+                    Scaffold(
+                        bottomBar = {
+                            BottomAppBar {
+                                IconRow(
+                                    center = true,
+                                    title = stringResource(R.string.go_back),
+                                    icon = ImageVector.vectorResource(R.drawable.back),
+                                    onClick = {
+                                        showModal = false
+                                    },
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
                         },
                     ) {
-                        Scaffold(
-                            bottomBar = {
-                                BottomAppBar {
-                                    IconRow(
-                                        center = true,
-                                        title = stringResource(R.string.go_back),
-                                        icon = ImageVector.vectorResource(R.drawable.back),
-                                        onClick = {
-                                            showModal = false
-                                        },
-                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            },
-                        ) {
-                            EnabledPermissions(
-                                Modifier.padding(it),
-                                localPermissions,
-                            )
-                        }
+                        EnabledPermissions(
+                            Modifier.padding(it),
+                            localPermissions,
+                        )
                     }
                 }
             }
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         Row(
             Modifier

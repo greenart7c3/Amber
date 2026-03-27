@@ -6,6 +6,9 @@ on:
   push:
     branches: [master]
 
+permissions:
+  contents: read
+
 jobs:
   check-offline-permissions:
     runs-on: ubuntu-latest

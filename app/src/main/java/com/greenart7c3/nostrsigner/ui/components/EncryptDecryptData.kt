@@ -210,8 +210,8 @@ fun EncryptDecryptData(
 
 /**
  * Scope for an encrypt/decrypt permission.
- * [SPECIFIC] means the permission applies only to this specific encryption method (e.g., NIP-04 only).
- * [ALL] means the permission applies to all encryption/decryption methods (NIP-04 and NIP-44).
+ * [SPECIFIC] means the permission applies only to this specific content type (e.g., clear text, tag array, event).
+ * [ALL] means the permission applies to all content types for this NIP (e.g., NIP-04 or NIP-44 in full).
  */
 enum class DecryptTypeScope {
     SPECIFIC,

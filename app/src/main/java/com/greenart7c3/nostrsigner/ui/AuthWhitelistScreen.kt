@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.TrustScoreService
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -59,7 +60,8 @@ fun AuthWhitelistScreen(
                 if (!trustScores.containsKey(hostname)) {
                     loadingScores[hostname] = true
                     scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(hostname)
+                        val normalizedUrl = RelayUrlNormalizer.normalizeOrNull("wss://$hostname")
+                        val score = normalizedUrl?.let { TrustScoreService.getScore(it.url) }
                         trustScores[hostname] = score
                         loadingScores[hostname] = false
                     }

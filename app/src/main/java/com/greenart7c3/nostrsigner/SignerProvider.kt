@@ -186,6 +186,11 @@ class SignerProvider : ContentProvider() {
                                 url
                             }
                         } ?: ""
+                        // If the auth whitelist is non-empty and this relay is not in it, reject immediately
+                        val authWhitelist = Amber.instance.settings.authWhitelist
+                        if (authWhitelist.isNotEmpty() && relayUrl !in authWhitelist) {
+                            return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                        }
                         database.dao().getPermissionForRelay(packageName, "SIGN_EVENT", 22242, relayUrl)
                             ?: database.dao().getWildcardRelayPermission(packageName, "SIGN_EVENT", 22242)
                     } else {

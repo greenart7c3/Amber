@@ -247,6 +247,20 @@ fun SettingsScreen(
                     .padding(vertical = 8.dp),
             ) {
                 IconRow(
+                    title = stringResource(R.string.auth_whitelist),
+                    icon = Icons.Default.FilterList,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = {
+                        navController.navigate(Route.AuthWhitelist.route)
+                    },
+                )
+            }
+
+            Box(
+                Modifier
+                    .padding(vertical = 8.dp),
+            ) {
+                IconRow(
                     title = stringResource(R.string.give_us_feedback),
                     icon = Icons.Default.Feedback,
                     tint = MaterialTheme.colorScheme.onBackground,

@@ -29,6 +29,7 @@ data class AmberSettings(
     val proxyPort: Int = 9050,
     val killSwitch: MutableStateFlow<Boolean> = MutableStateFlow(false),
     var language: String? = null,
+    val authWhitelist: List<String> = emptyList(),
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

@@ -958,6 +958,22 @@ fun MainScreen(
                         )
                     },
                 )
+
+                composable(
+                    Route.AuthWhitelist.route,
+                    content = {
+                        val scrollState = rememberScrollState()
+                        AuthWhitelistScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                        )
+                    },
+                )
             }
         }
 

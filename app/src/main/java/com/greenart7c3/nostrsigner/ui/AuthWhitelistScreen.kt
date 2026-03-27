@@ -19,7 +19,9 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -31,8 +33,10 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -45,6 +49,23 @@ fun AuthWhitelistScreen(
     val textFieldRelay = remember { mutableStateOf(TextFieldValue("")) }
     val whitelist = remember {
         mutableStateListOf(*Amber.instance.settings.authWhitelist.toTypedArray())
+    }
+    val trustScores = remember { mutableStateMapOf<String, Int?>() }
+    val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+
+    LaunchedEffect(whitelist.toList()) {
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            whitelist.forEach { hostname ->
+                if (!trustScores.containsKey(hostname)) {
+                    loadingScores[hostname] = true
+                    scope.launch(Dispatchers.IO) {
+                        val score = TrustScoreService.getScore(hostname)
+                        trustScores[hostname] = score
+                        loadingScores[hostname] = false
+                    }
+                }
+            }
+        }
     }
 
     fun addEntry() {
@@ -129,8 +150,11 @@ fun AuthWhitelistScreen(
                 Modifier.weight(1f),
             ) {
                 items(whitelist.size) { index ->
+                    val hostname = whitelist[index]
                     RelayCard(
-                        relay = whitelist[index],
+                        relay = hostname,
+                        trustScore = trustScores[hostname],
+                        isLoadingScore = loadingScores[hostname] == true,
                         onClick = {
                             whitelist.removeAt(index)
                             Amber.instance.settings = Amber.instance.settings.copy(

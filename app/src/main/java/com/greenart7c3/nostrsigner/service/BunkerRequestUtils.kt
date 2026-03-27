@@ -18,6 +18,7 @@ import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.ToastManager
+import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
@@ -245,6 +246,7 @@ object BunkerRequestUtils {
         deleteAfter: Long = 0L,
         relay: String = "",
         encryptedData: com.greenart7c3.nostrsigner.models.EncryptedDataKind? = null,
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -326,6 +328,7 @@ object BunkerRequestUtils {
                     rememberType = rememberType,
                     relay = relay,
                     encryptedData = encryptedData ?: bunkerRequest.encryptedData,
+                    decryptTypeScope = decryptTypeScope,
                 )
             }
 
@@ -440,6 +443,7 @@ object BunkerRequestUtils {
         kind: Int?,
         onLoading: (Boolean) -> Unit,
         relay: String = "",
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
@@ -489,6 +493,7 @@ object BunkerRequestUtils {
                     account,
                     relay,
                     bunkerRequest.encryptedData,
+                    decryptTypeScope,
                 )
             }
 

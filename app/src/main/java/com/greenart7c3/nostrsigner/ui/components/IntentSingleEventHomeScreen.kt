@@ -197,7 +197,7 @@ fun IntentSingleEventHomeScreen(
                 packageName = packageName,
                 type = intentData.type,
                 account = account,
-                onAccept = {
+                onAccept = { rememberType, scope ->
                     val result =
                         if (intentData.encryptedData?.result == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
                             ""
@@ -217,19 +217,21 @@ fun IntentSingleEventHomeScreen(
                         null,
                         onRemoveIntentData = onRemoveIntentData,
                         onLoading = onLoading,
-                        rememberType = it,
+                        rememberType = rememberType,
+                        decryptTypeScope = scope,
                     )
                 },
-                onReject = {
+                onReject = { rememberType, scope ->
                     IntentUtils.sendRejection(
                         key = key,
                         account = account,
                         intentData = intentData,
                         appName = appName,
-                        rememberType = it,
+                        rememberType = rememberType,
                         onLoading = onLoading,
                         onRemoveIntentData = onRemoveIntentData,
                         kind = null,
+                        decryptTypeScope = scope,
                     )
                 },
             )

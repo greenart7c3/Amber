@@ -41,6 +41,7 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.EventHasher
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
@@ -665,6 +666,7 @@ object IntentUtils {
         rememberType: RememberType,
         deleteAfter: Long = 0L,
         relay: String = "",
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
@@ -718,6 +720,7 @@ object IntentUtils {
                     rememberType = rememberType,
                     relay = relay,
                     encryptedData = intentData.encryptedData,
+                    decryptTypeScope = decryptTypeScope,
                 )
             }
 
@@ -851,6 +854,7 @@ object IntentUtils {
         onLoading: (Boolean) -> Unit,
         onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
         relay: String = "",
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             if (key == "null") {
@@ -890,6 +894,7 @@ object IntentUtils {
                     account,
                     relay,
                     intentData.encryptedData,
+                    decryptTypeScope,
                 )
             }
 

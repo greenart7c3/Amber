@@ -1,16 +1,20 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.ContentPaste
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -18,11 +22,15 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -46,6 +54,14 @@ fun MnemonicLoginInput(
 ) {
     val focusRequesters = remember(wordCount) { List(wordCount) { FocusRequester() } }
     val halfCount = wordCount / 2
+
+    val context = LocalContext.current
+    val wordList = remember {
+        context.resources.openRawResource(R.raw.bip39_english)
+            .bufferedReader()
+            .readLines()
+            .filter { it.isNotBlank() }
+    }
 
     Column(modifier = modifier) {
         Row(
@@ -88,6 +104,7 @@ fun MnemonicLoginInput(
                     WordField(
                         displayNumber = i + 1,
                         word = words.getOrElse(i) { "" },
+                        wordList = wordList,
                         onWordChange = { onWordChange(i, it) },
                         focusRequester = focusRequesters[i],
                         nextFocusRequester = focusRequesters.getOrNull(i + 1),
@@ -105,6 +122,7 @@ fun MnemonicLoginInput(
                     WordField(
                         displayNumber = i + 1,
                         word = words.getOrElse(i) { "" },
+                        wordList = wordList,
                         onWordChange = { onWordChange(i, it) },
                         focusRequester = focusRequesters[i],
                         nextFocusRequester = focusRequesters.getOrNull(i + 1),
@@ -133,48 +151,86 @@ fun MnemonicLoginInput(
 private fun WordField(
     displayNumber: Int,
     word: String,
+    wordList: List<String>,
     onWordChange: (String) -> Unit,
     focusRequester: FocusRequester,
     nextFocusRequester: FocusRequester?,
     imeAction: ImeAction,
 ) {
-    OutlinedTextField(
-        value = word,
-        onValueChange = { raw ->
-            val cleaned = raw.trimStart().toLowerCase(Locale.current)
-            if (cleaned.contains(" ")) {
-                val firstWord = cleaned.substringBefore(" ").trim()
-                if (firstWord.isNotEmpty()) {
-                    onWordChange(firstWord)
+    var dismissed by remember(word) { mutableStateOf(false) }
+
+    val suggestions = remember(word) {
+        if (word.length >= 2) {
+            wordList.filter { it.startsWith(word) }.take(5)
+        } else {
+            emptyList()
+        }
+    }
+
+    val menuExpanded = suggestions.isNotEmpty() && !dismissed
+
+    Box {
+        OutlinedTextField(
+            value = word,
+            onValueChange = { raw ->
+                val cleaned = raw.trimStart().toLowerCase(Locale.current)
+                if (cleaned.contains(" ")) {
+                    val firstWord = cleaned.substringBefore(" ").trim()
+                    if (firstWord.isNotEmpty()) {
+                        onWordChange(firstWord)
+                    }
+                    nextFocusRequester?.requestFocus()
+                } else {
+                    dismissed = false
+                    onWordChange(cleaned)
                 }
-                nextFocusRequester?.requestFocus()
-            } else {
-                onWordChange(cleaned)
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .focusRequester(focusRequester),
+            shape = RoundedCornerShape(12.dp),
+            singleLine = true,
+            prefix = {
+                Text(
+                    text = "$displayNumber.",
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            },
+            textStyle = TextStyle(fontSize = 14.sp),
+            keyboardOptions = KeyboardOptions(
+                capitalization = KeyboardCapitalization.None,
+                autoCorrectEnabled = false,
+                keyboardType = KeyboardType.Text,
+                imeAction = imeAction,
+            ),
+            keyboardActions = KeyboardActions(
+                onNext = { nextFocusRequester?.requestFocus() },
+                onDone = {},
+            ),
+        )
+
+        DropdownMenu(
+            expanded = menuExpanded,
+            onDismissRequest = { dismissed = true },
+            modifier = Modifier.heightIn(max = 200.dp),
+        ) {
+            suggestions.forEach { suggestion ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = suggestion,
+                            fontSize = 14.sp,
+                        )
+                    },
+                    onClick = {
+                        onWordChange(suggestion)
+                        dismissed = true
+                        nextFocusRequester?.requestFocus()
+                    },
+                )
             }
-        },
-        modifier = Modifier
-            .fillMaxWidth()
-            .focusRequester(focusRequester),
-        shape = RoundedCornerShape(12.dp),
-        singleLine = true,
-        prefix = {
-            Text(
-                text = "$displayNumber.",
-                fontSize = 11.sp,
-                fontWeight = FontWeight.Medium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        },
-        textStyle = TextStyle(fontSize = 14.sp),
-        keyboardOptions = KeyboardOptions(
-            capitalization = KeyboardCapitalization.None,
-            autoCorrectEnabled = false,
-            keyboardType = KeyboardType.Text,
-            imeAction = imeAction,
-        ),
-        keyboardActions = KeyboardActions(
-            onNext = { nextFocusRequester?.requestFocus() },
-            onDone = {},
-        ),
-    )
+        }
+    }
 }

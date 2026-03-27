@@ -655,6 +655,9 @@
     <string name="for_this_relay_only">This relay only</string>
     <string name="for_all_relays">All relays</string>
     <string name="relay_auth_scope">Authentication scope</string>
+    <string name="encryption_scope">Encryption scope</string>
+    <string name="for_this_method_only">This method only</string>
+    <string name="for_all_methods">All methods</string>
     <string name="event_kind_10086">Indexer relays</string>
     <string name="event_kind_10087">Proxy relays</string>
     <string name="event_kind_100">Broadcast relays</string>

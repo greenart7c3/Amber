@@ -657,6 +657,9 @@
     <string name="for_this_relay_only">仅此中继</string>
     <string name="for_all_relays">所有中继</string>
     <string name="relay_auth_scope">验证范围</string>
+    <string name="encryption_scope">Encryption scope</string>
+    <string name="for_this_method_only">This method only</string>
+    <string name="for_all_methods">All methods</string>
     <string name="event_kind_10086">索引器中继</string>
     <string name="event_kind_10087">代理中继</string>
     <string name="event_kind_100">广播中继</string>

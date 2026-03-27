@@ -97,7 +97,9 @@ object AmberUtils {
             RememberType.NEVER -> 0L
         }
 
-        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.SPECIFIC && signerType in encryptDecryptSignerTypes) {
+        // ALL = entire NIP (NIP04_DECRYPT / NIP44_DECRYPT), covers every content type for that NIP
+        // SPECIFIC = only this content type (DECRYPT_CLEAR_TEXT, DECRYPT_TAG_ARRAY, etc.)
+        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.ALL && signerType in encryptDecryptSignerTypes) {
             signerType.toString()
         } else {
             signerType.toPermissionTypeString(encryptedData)
@@ -115,12 +117,12 @@ object AmberUtils {
             }
         } else {
             application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
-            // Also remove any old NIP-based permission entries for this operation type
             if (signerType in encryptDecryptSignerTypes) {
-                if (decryptTypeScope == DecryptTypeScope.SPECIFIC) {
-                    // Remove the content-classified counterpart so SPECIFIC wins
+                if (decryptTypeScope == DecryptTypeScope.ALL) {
+                    // Remove any narrower content-classified permission so ALL wins
                     application.permissions.removeIf { it.type == signerType.toPermissionTypeString(encryptedData) }
                 } else {
+                    // Remove any broader NIP-level permission so SPECIFIC wins
                     application.permissions.removeIf { it.type == signerType.toString() }
                 }
             }
@@ -216,7 +218,9 @@ object AmberUtils {
             else -> 0L
         }
 
-        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.SPECIFIC && type in encryptDecryptSignerTypes) {
+        // ALL = entire NIP (NIP04_DECRYPT / NIP44_DECRYPT), covers every content type for that NIP
+        // SPECIFIC = only this content type (DECRYPT_CLEAR_TEXT, DECRYPT_TAG_ARRAY, etc.)
+        val permissionTypeStr = if (decryptTypeScope == DecryptTypeScope.ALL && type in encryptDecryptSignerTypes) {
             type.toString()
         } else {
             type.toPermissionTypeString(encryptedData)
@@ -234,12 +238,12 @@ object AmberUtils {
             }
         } else {
             application.permissions.removeIf { it.type == permissionTypeStr && it.type != "SIGN_EVENT" }
-            // Also remove any old NIP-based permission entries for this operation type
             if (type in encryptDecryptSignerTypes) {
-                if (decryptTypeScope == DecryptTypeScope.SPECIFIC) {
-                    // Remove the content-classified counterpart so SPECIFIC wins
+                if (decryptTypeScope == DecryptTypeScope.ALL) {
+                    // Remove any narrower content-classified permission so ALL wins
                     application.permissions.removeIf { it.type == type.toPermissionTypeString(encryptedData) }
                 } else {
+                    // Remove any broader NIP-level permission so SPECIFIC wins
                     application.permissions.removeIf { it.type == type.toString() }
                 }
             }

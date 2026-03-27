@@ -5,13 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
@@ -62,6 +66,7 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
 import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
 import com.greenart7c3.nostrsigner.ui.parseDeleteAfterType
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -72,7 +77,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun BunkerConnectRequestScreen(
     horizontalPadding: Dp,
-    modifier: Modifier,
+    scaffoldPadding: PaddingValues,
     shouldCloseApp: Boolean,
     account: Account,
     bunkerRequest: AmberBunkerRequest,
@@ -147,10 +152,48 @@ fun BunkerConnectRequestScreen(
         skipPartiallyExpanded = true,
     )
 
-    Column {
+    val scrollState = rememberScrollState()
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
+        bottomBar = {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalPadding)
+                    .padding(vertical = 8.dp),
+                Arrangement.spacedBy(8.dp),
+                Alignment.CenterVertically,
+            ) {
+                AmberButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        onReject(RememberType.NEVER)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF6B00),
+                    ),
+                    text = stringResource(R.string.cancel),
+                )
+
+                AmberButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
+                        onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])
+                    },
+                    text = stringResource(R.string.connect),
+                )
+            }
+        },
+    ) { innerPadding ->
         Column(
-            modifier = modifier
-                .weight(1f),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScrollbar(scrollState)
+                .verticalScroll(scrollState)
+                .padding(horizontal = horizontalPadding),
         ) {
             Text(
                 modifier = Modifier
@@ -335,35 +378,8 @@ fun BunkerConnectRequestScreen(
                     }
                 }
             }
-        }
 
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = horizontalPadding)
-                .padding(vertical = 8.dp),
-            Arrangement.spacedBy(8.dp),
-            Alignment.CenterVertically,
-        ) {
-            AmberButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    onReject(RememberType.NEVER)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF6B00),
-                ),
-                text = stringResource(R.string.cancel),
-            )
-
-            AmberButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
-                    onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])
-                },
-                text = stringResource(R.string.connect),
-            )
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -33,6 +34,7 @@ import kotlinx.collections.immutable.ImmutableList
 fun IncomingRequestScreen(
     horizontalPadding: Dp,
     modifier: Modifier,
+    scaffoldPadding: PaddingValues,
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     packageName: String?,
@@ -78,6 +80,7 @@ fun IncomingRequestScreen(
             BunkerSingleEventHomeScreen(
                 horizontalPadding = horizontalPadding,
                 modifier = modifier,
+                scaffoldPadding = scaffoldPadding,
                 bunkerRequest = bunkerRequests.first(),
                 account = account,
                 onLoading = onLoading,

@@ -5,13 +5,17 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
@@ -62,6 +66,7 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.SettingsRow
 import com.greenart7c3.nostrsigner.ui.deleteAfterToSeconds
 import com.greenart7c3.nostrsigner.ui.parseDeleteAfterType
+import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
@@ -72,7 +77,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun BunkerConnectRequestScreen(
     horizontalPadding: Dp,
-    modifier: Modifier,
+    scaffoldPadding: PaddingValues,
     shouldCloseApp: Boolean,
     account: Account,
     bunkerRequest: AmberBunkerRequest,
@@ -147,220 +152,234 @@ fun BunkerConnectRequestScreen(
         skipPartiallyExpanded = true,
     )
 
-    Column(modifier = modifier) {
-        Text(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp),
-            text = appName.value,
-            fontWeight = FontWeight.Bold,
-            fontSize = 18.sp,
-            textAlign = TextAlign.Center,
-        )
+    val scrollState = rememberScrollState()
 
-        // Account selection
-        accounts.forEachIndexed { index, acc ->
-            ListItem(
-                modifier = Modifier
-                    .border(
-                        width = 1.dp,
-                        color = if (selectedAccountIndex == index) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            Color.Transparent
-                        },
-                        shape = RoundedCornerShape(8.dp),
-                    )
-                    .selectable(
-                        selected = selectedAccountIndex == index,
-                        onClick = {
-                            selectedAccountIndex = index
-                        },
+    Scaffold(
+        modifier = Modifier.fillMaxSize().padding(scaffoldPadding),
+        bottomBar = {
+            Row(
+                Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalPadding)
+                    .padding(vertical = 8.dp),
+                Arrangement.spacedBy(8.dp),
+                Alignment.CenterVertically,
+            ) {
+                AmberButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        onReject(RememberType.NEVER)
+                    },
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = Color(0xFFFF6B00),
                     ),
-                colors = ListItemDefaults.colors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                ),
-                leadingContent = {
-                    ProfilePictureIcon(
-                        account = acc,
-                    )
-                },
-                headlineContent = {
-                    val name by acc.name.collectAsStateWithLifecycle()
-                    Text(
-                        name.ifBlank { acc.npub.toShortenHex() },
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 16.sp,
-                    )
-                },
-            )
-        }
+                    text = stringResource(R.string.cancel),
+                )
 
-        // Relays with trust scores
-        if (connectionRelays.isNotEmpty()) {
-            Spacer(modifier = Modifier.height(4.dp))
+                AmberButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
+                        onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])
+                    },
+                    text = stringResource(R.string.connect),
+                )
+            }
+        },
+    ) { innerPadding ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .verticalScrollbar(scrollState)
+                .verticalScroll(scrollState)
+                .padding(horizontal = horizontalPadding),
+        ) {
             Text(
-                text = stringResource(R.string.relays_used),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 8.dp),
+                text = appName.value,
                 fontWeight = FontWeight.Bold,
-                fontSize = 14.sp,
-                modifier = Modifier.padding(vertical = 4.dp),
+                fontSize = 18.sp,
+                textAlign = TextAlign.Center,
             )
-            connectionRelays.forEach { relay ->
-                Row(
+
+            // Account selection
+            accounts.forEachIndexed { index, acc ->
+                ListItem(
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 2.dp)
                         .border(
                             width = 1.dp,
-                            color = MaterialTheme.colorScheme.outline,
+                            color = if (selectedAccountIndex == index) {
+                                MaterialTheme.colorScheme.primary
+                            } else {
+                                Color.Transparent
+                            },
                             shape = RoundedCornerShape(8.dp),
                         )
-                        .padding(8.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = relay.url,
-                        modifier = Modifier.weight(1f),
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        fontSize = 13.sp,
-                    )
-                    TrustScoreBadge(
-                        score = trustScores[relay.url],
-                        isLoading = loadingScores[relay.url] == true,
-                    )
-                }
-            }
-        }
-
-        HorizontalDivider(
-            modifier = Modifier.padding(vertical = 8.dp),
-            thickness = 0.5.dp,
-            color = MaterialTheme.colorScheme.outline,
-        )
-
-        // Close app toggle
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    closeApp = !closeApp
-                },
-        ) {
-            Text(
-                modifier = Modifier.weight(1f),
-                text = stringResource(R.string.close_application),
-                fontSize = 14.sp,
-            )
-            Switch(
-                checked = closeApp,
-                onCheckedChange = {
-                    closeApp = it
-                },
-            )
-        }
-
-        Box(
-            Modifier.padding(vertical = 2.dp),
-        ) {
-            SettingsRow(
-                R.string.delete_after,
-                null,
-                deleteAfterItems,
-                deleteAfterIndex,
-            ) {
-                deleteAfterIndex = it
-            }
-        }
-
-        ChooseSignPolicy(
-            selectedOption = selectedOption,
-            onSelected = {
-                selectedOption = it
-            },
-        )
-
-        if (selectedOption == 1 && localPermissions.isNotEmpty()) {
-            Box(
-                Modifier.fillMaxWidth(),
-                contentAlignment = Alignment.Center,
-            ) {
-                ElevatedButton(
-                    colors = ButtonDefaults.buttonColors().copy(
-                        contentColor = Color.Black,
+                        .selectable(
+                            selected = selectedAccountIndex == index,
+                            onClick = {
+                                selectedAccountIndex = index
+                            },
+                        ),
+                    colors = ListItemDefaults.colors(
+                        containerColor = MaterialTheme.colorScheme.background,
                     ),
-                    shape = RoundedCornerShape(20),
-                    content = {
-                        Text(stringResource(R.string.permissions))
+                    leadingContent = {
+                        ProfilePictureIcon(
+                            account = acc,
+                        )
                     },
-                    onClick = {
-                        showModal = true
+                    headlineContent = {
+                        val name by acc.name.collectAsStateWithLifecycle()
+                        Text(
+                            name.ifBlank { acc.npub.toShortenHex() },
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                        )
                     },
                 )
             }
-            if (showModal) {
-                ModalBottomSheet(
-                    sheetState = sheetState,
-                    onDismissRequest = {
-                        showModal = false
-                    },
-                ) {
-                    Scaffold(
-                        bottomBar = {
-                            BottomAppBar {
-                                IconRow(
-                                    center = true,
-                                    title = stringResource(R.string.go_back),
-                                    icon = ImageVector.vectorResource(R.drawable.back),
-                                    onClick = {
-                                        showModal = false
-                                    },
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                )
-                            }
-                        },
+
+            // Relays with trust scores
+            if (connectionRelays.isNotEmpty()) {
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = stringResource(R.string.relays_used),
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 14.sp,
+                    modifier = Modifier.padding(vertical = 4.dp),
+                )
+                connectionRelays.forEach { relay ->
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                            .border(
+                                width = 1.dp,
+                                color = MaterialTheme.colorScheme.outline,
+                                shape = RoundedCornerShape(8.dp),
+                            )
+                            .padding(8.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        EnabledPermissions(
-                            Modifier.padding(it),
-                            localPermissions,
+                        Text(
+                            text = relay.url,
+                            modifier = Modifier.weight(1f),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            fontSize = 13.sp,
+                        )
+                        TrustScoreBadge(
+                            score = trustScores[relay.url],
+                            isLoading = loadingScores[relay.url] == true,
                         )
                     }
                 }
             }
-        }
 
-        Spacer(modifier = Modifier.height(8.dp))
-
-        Row(
-            Modifier
-                .fillMaxWidth()
-                .padding(horizontal = horizontalPadding)
-                .padding(vertical = 8.dp),
-            Arrangement.spacedBy(8.dp),
-            Alignment.CenterVertically,
-        ) {
-            AmberButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    onReject(RememberType.NEVER)
-                },
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = Color(0xFFFF6B00),
-                ),
-                text = stringResource(R.string.cancel),
+            HorizontalDivider(
+                modifier = Modifier.padding(vertical = 8.dp),
+                thickness = 0.5.dp,
+                color = MaterialTheme.colorScheme.outline,
             )
 
-            AmberButton(
-                modifier = Modifier.weight(1f),
-                onClick = {
-                    val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
-                    onAccept(localPermissions, selectedOption, closeApp, RememberType.ALWAYS, deleteAfter, accounts[selectedAccountIndex])
+            // Close app toggle
+            Row(
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable {
+                        closeApp = !closeApp
+                    },
+            ) {
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = stringResource(R.string.close_application),
+                    fontSize = 14.sp,
+                )
+                Switch(
+                    checked = closeApp,
+                    onCheckedChange = {
+                        closeApp = it
+                    },
+                )
+            }
+
+            Box(
+                Modifier.padding(vertical = 2.dp),
+            ) {
+                SettingsRow(
+                    R.string.delete_after,
+                    null,
+                    deleteAfterItems,
+                    deleteAfterIndex,
+                ) {
+                    deleteAfterIndex = it
+                }
+            }
+
+            ChooseSignPolicy(
+                selectedOption = selectedOption,
+                onSelected = {
+                    selectedOption = it
                 },
-                text = stringResource(R.string.connect),
             )
+
+            if (selectedOption == 1 && localPermissions.isNotEmpty()) {
+                Box(
+                    Modifier.fillMaxWidth(),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    ElevatedButton(
+                        colors = ButtonDefaults.buttonColors().copy(
+                            contentColor = Color.Black,
+                        ),
+                        shape = RoundedCornerShape(20),
+                        content = {
+                            Text(stringResource(R.string.permissions))
+                        },
+                        onClick = {
+                            showModal = true
+                        },
+                    )
+                }
+                if (showModal) {
+                    ModalBottomSheet(
+                        sheetState = sheetState,
+                        onDismissRequest = {
+                            showModal = false
+                        },
+                    ) {
+                        Scaffold(
+                            bottomBar = {
+                                BottomAppBar {
+                                    IconRow(
+                                        center = true,
+                                        title = stringResource(R.string.go_back),
+                                        icon = ImageVector.vectorResource(R.drawable.back),
+                                        onClick = {
+                                            showModal = false
+                                        },
+                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                            },
+                        ) {
+                            EnabledPermissions(
+                                Modifier.padding(it),
+                                localPermissions,
+                            )
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
         }
     }
 }

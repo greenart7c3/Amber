@@ -381,6 +381,7 @@ fun MainScreen(
                         IncomingRequestScreen(
                             horizontalPadding = verticalPadding,
                             modifier = modifier,
+                            scaffoldPadding = padding,
                             intents = intents,
                             bunkerRequests = bunkerRequests,
                             packageName = packageName,

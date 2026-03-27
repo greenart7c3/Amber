@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.widget.Toast
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
@@ -61,6 +62,7 @@ import kotlinx.coroutines.launch
 fun BunkerSingleEventHomeScreen(
     horizontalPadding: Dp,
     modifier: Modifier,
+    scaffoldPadding: PaddingValues,
     bunkerRequest: AmberBunkerRequest,
     account: Account,
     onLoading: (Boolean) -> Unit,
@@ -224,7 +226,7 @@ fun BunkerSingleEventHomeScreen(
 
             BunkerConnectRequestScreen(
                 horizontalPadding = horizontalPadding,
-                modifier = modifier,
+                scaffoldPadding = scaffoldPadding,
                 shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
                 account = account,
                 bunkerRequest = bunkerRequest,

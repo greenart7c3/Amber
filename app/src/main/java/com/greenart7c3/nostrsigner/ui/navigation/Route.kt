@@ -196,6 +196,12 @@ sealed class Route(
         route = "CrashReport",
         icon = R.drawable.settings,
     )
+
+    data object AuthWhitelist : Route(
+        title = Amber.instance.getString(R.string.auth_whitelist),
+        route = "AuthWhitelist",
+        icon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(

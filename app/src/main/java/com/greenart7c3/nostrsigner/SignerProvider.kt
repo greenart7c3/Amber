@@ -177,6 +177,42 @@ class SignerProvider : ContentProvider() {
 
                     val database = Amber.instance.getDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
+
+                    // For kind 22242 (NIP-42 relay auth), check the auth whitelist first
+                    val whitelistAutoAccept = if (event.kind == 22242) {
+                        val relayUrl = AmberEvent.relay(event)?.let { url ->
+                            try {
+                                java.net.URI(url).host ?: url
+                            } catch (e: Exception) {
+                                url
+                            }
+                        } ?: ""
+                        val authWhitelist = Amber.instance.settings.authWhitelist
+                        when {
+                            authWhitelist.isEmpty() -> false
+                            relayUrl in authWhitelist -> true
+                            else -> {
+                                scope.launch {
+                                    historyDatabase.dao().addHistory(
+                                        HistoryEntity(
+                                            0,
+                                            packageName,
+                                            uri.toString().replace("content://$appId.", ""),
+                                            event.kind,
+                                            TimeUtils.now(),
+                                            false,
+                                            content = event.toJson(),
+                                        ),
+                                        account.npub,
+                                    )
+                                }
+                                return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                            }
+                        }
+                    } else {
+                        false
+                    }
+
                     var permission = if (event.kind == 22242) {
                         // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
                         val relayUrl = AmberEvent.relay(event)?.let { url ->
@@ -214,7 +250,7 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.dao().getSignPolicy(packageName)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = whitelistAutoAccept || IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(

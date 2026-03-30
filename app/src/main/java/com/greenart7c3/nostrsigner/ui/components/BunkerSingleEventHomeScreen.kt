@@ -680,7 +680,13 @@ fun BunkerSingleEventHomeScreen(
                 val acceptUntil = permission?.acceptUntil ?: 0
                 val rejectUntil = permission?.rejectUntil ?: 0
 
-                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                // If the auth whitelist is non-empty and this relay is not in it, auto-reject
+                val authWhitelist = Amber.instance.settings.authWhitelist
+                val blockedByWhitelist = authWhitelist.isNotEmpty() && relayUrl !in authWhitelist
+
+                val acceptOrReject = if (blockedByWhitelist) {
+                    false
+                } else if (rejectUntil == 0L && acceptUntil == 0L) {
                     null
                 } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0 && permission?.acceptable == false) {
                     false

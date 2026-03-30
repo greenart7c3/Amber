@@ -53,6 +53,7 @@ private enum class SettingsKeys(val key: String) {
     BATERRY_OPTIMIZATION("battery_optimization"),
     KILL_SWITCH("kill_switch"),
     LANGUAGE_PREFS("languagePreferences"),
+    AUTH_WHITELIST("auth_whitelist"),
 }
 
 @Immutable
@@ -126,6 +127,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.PROXY_PORT.key, settings.proxyPort)
                 putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch.value)
                 putString(SettingsKeys.LANGUAGE_PREFS.key, settings.language)
+                putStringSet(SettingsKeys.AUTH_WHITELIST.key, settings.authWhitelist.toSet())
             }
         }
     }
@@ -232,6 +234,7 @@ object LocalPreferences {
                 proxyPort = proxyPort,
                 killSwitch = MutableStateFlow(getBoolean(SettingsKeys.KILL_SWITCH.key, false)),
                 language = getString(SettingsKeys.LANGUAGE_PREFS.key, null),
+                authWhitelist = getStringSet(SettingsKeys.AUTH_WHITELIST.key, null)?.toList() ?: emptyList(),
             )
         }
     }

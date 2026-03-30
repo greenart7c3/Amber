@@ -276,7 +276,13 @@ fun IntentSingleEventHomeScreen(
                     it.pkKey == key && it.type == intentData.type.toString() && it.kind == 22242 && it.relay == "*"
                 }
 
-                val acceptOrReject = if (permission == null) {
+                // If the auth whitelist is non-empty and this relay is not in it, auto-reject
+                val authWhitelist = Amber.instance.settings.authWhitelist
+                val blockedByWhitelist = authWhitelist.isNotEmpty() && relayUrl !in authWhitelist
+
+                val acceptOrReject = if (blockedByWhitelist) {
+                    false
+                } else if (permission == null) {
                     IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, null)
                 } else {
                     IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)

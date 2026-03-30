@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="account_backup_tips_md" tools:ignore="Typos">        ## Anahtar Yedekleme ve Güvenlik İpuçları
-        \n\nHesabınız gizli bir anahtar ile güvence altına alınmıştır. Bu anahtar, **nsec1** ile başlayan uzun ve rastgele bir karakter dizisidir. Gizli anahtarınıza erişimi olan herkes, sizin kimliğinizi kullanarak içerik yayınlayabilir.
+        \n\nHesabınız gizli bir anahtarla güvence altına alınmıştır. Bu anahtar **nsec1** ile başlayan uzun ve rastgele bir dizidir. Gizli anahtarınıza erişimi olan herkes, kimliğinizi kullanarak içerik yayınlayabilir.
         \n\n- Gizli anahtarınızı güvenmediğiniz hiçbir web sitesine veya yazılıma **girmeyin**.
         \n- Amber geliştiricileri sizden **asla** gizli anahtarınızı istemez.
-        \n- Hesap kurtarma için gizli anahtarınızın güvenli bir yedeğini **mutlaka** saklayın. Bir şifre yöneticisi kullanmanızı öneririz.
+        \n- Hesap kurtarma için gizli anahtarınızın güvenli bir yedeğini **mutlaka** alın. Bir şifre yöneticisi kullanmanızı öneririz.
     </string>
     <string name="secret_key_copied_to_clipboard">Gizli anahtar (nsec) panoya kopyalandı</string>
     <string name="copy_my_secret_key">Gizli anahtarımı kopyala</string>
@@ -21,12 +21,12 @@
     <string name="nsec">Nsec / özel anahtar</string>
     <string name="show_password">Şifreyi göster</string>
     <string name="hide_password">Şifreyi gizle</string>
-    <string name="hide">Hide</string>
-    <string name="show_tips">Tips</string>
+    <string name="hide">Gizle</string>
+    <string name="show_tips">İpuçları</string>
     <string name="invalid_key">Geçersiz anahtar</string>
     <string name="key_is_required">Anahtar gerekli</string>
     <string name="login">Giriş yap</string>
-    <string name="generate_a_new_key">Yeni bir anahtar oluştur</string>
+    <string name="generate_a_new_key">Yeni bir Nostr hesabı oluştur</string>
     <string name="backup_keys">Anahtarları Yedekle</string>
     <string name="read_your_public_key">Genel anahtarınızı okuma</string>
     <string name="no_permissions_granted">Verilmiş izin yok</string>
@@ -58,11 +58,11 @@
     <string name="show_qr_code">QR Kodu Göster</string>
     <string name="shows_qr_code_with_you_private_key">Özel anahtarınızı içeren QR Kodunu gösterir</string>
     <string name="account_backup_tips3_md" tools:ignore="Typos">        Ek güvenlik için anahtarınızı bir şifre ile şifreleyebilirsiniz. Bu anahtar **ncryptsec1** ile başlar ve şifreniz olmadan kullanılamaz.
-        \n\nŞifrenizi kaybederseniz anahtarınızı kurtaramazsınız.
+        \n\nŞifrenizi kaybederseniz, anahtarınızı kurtaramazsınız.
     </string>
-    <string name="account_backup_tips3_md_new" tools:ignore="Typos">        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
-        \n\nIf you lose your password, you will not be able to recover your key.
-        \n\nPress one of the buttons below to backup your key.
+    <string name="account_backup_tips3_md_new" tools:ignore="Typos">        Ek güvenlik için anahtarınızı bir şifre ile şifreleyebilirsiniz. Bu anahtar **ncryptsec1** ile başlar ve şifreniz olmadan kullanılamaz.
+        \n\nŞifrenizi kaybederseniz, anahtarınızı kurtaramazsınız.
+        \n\nAnahtarınızı yedeklemek için aşağıdaki düğmelerden birine basın.
     </string>
     <string name="ncryptsec_password">Anahtarı açmak için şifre</string>
     <string name="password_is_required">Şifre gerekli</string>
@@ -80,36 +80,36 @@
     <string name="adjust">Ayarla</string>
     <string name="more">%1$s tane daha...</string>
     <string name="and_more">...ve daha fazlası</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" genel anahtarınızı okumak ve sizin adınıza etkinlikleri imzalamak için izninizi istiyor"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"Açık anahtarınızı okumak ve sizin adınıza olayları imzalamak için izninizi istiyor"</string>
     <string name="new_app">Yeni Uygulama</string>
-    <string name="connect_through_your_orbot_setup_markdown">        ## Orbot ile Tor üzerinden bağlanın
-        \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) uygulamasını yükleyin
+    <string name="connect_through_your_orbot_setup_markdown">        ## Orbot aracılığıyla Tor\'a bağlanın
+        \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\'u yükleyin
         \n2. Orbot\'u başlatın
-        \n3. Orbot\'ta Socks portunu kontrol edin. Varsayılan olarak 9050 kullanılır
-        \n4. Gerekirse Orbot\'taki portu değiştirin
-        \n5. Bu ekranda Socks portunu yapılandırın
-        \n6. Orbot\'u bir proxy olarak kullanmak için Etkinleştir düğmesine basın
+        \n3. Orbot\'ta Socks bağlantı noktasını (Socks port) kontrol edin. Varsayılan olarak 9050 kullanılır
+        \n4. Gerekirse Orbot\'taki bağlantı noktasını değiştirin
+        \n5. Bu ekranda Socks bağlantı noktasını yapılandırın
+        \n6. Orbot\'u proxy olarak kullanmak için Aktifleştir (Activate) düğmesine basın
     </string>
-    <string name="connect_through_your_orbot_setup_markdown2">        1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) uygulamasını yükleyin
+    <string name="connect_through_your_orbot_setup_markdown2">        1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\'u yükleyin
         \n2. Orbot\'u başlatın
-        \n3. Orbot\'ta Socks portunu kontrol edin. Varsayılan olarak 9050 kullanılır
-        \n4. Gerekirse Orbot\'taki portu değiştirin
-        \n5. Bu ekranda Socks portunu yapılandırın
-        \n6. Orbot\'u bir proxy olarak kullanmak için Etkinleştir düğmesine basın
+        \n3. Orbot\'ta Socks bağlantı noktasını (Socks port) kontrol edin. Varsayılan olarak 9050 kullanılır
+        \n4. Gerekirse Orbot\'taki bağlantı noktasını değiştirin
+        \n5. Bu ekranda Socks bağlantı noktasını yapılandırın
+        \n6. Orbot\'u proxy olarak kullanmak için Aktifleştir (Activate) düğmesine basın
     </string>
     <string name="orbot_socks_port">Orbot Socks Portu</string>
     <string name="invalid_port_number">Geçersiz port numarası</string>
     <string name="use_orbot">Orbot Kullan</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot bağlantısını kes</string>
-    <string name="connect_via_tor_short">Tor/Orbot kurulumu</string>
-    <string name="do_you_really_want_to_disable_tor_title">Orbot/Tor bağlantısı kesilsin mi?</string>
+    <string name="connect_via_tor_short">Tor kurulumu</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor bağlantısı kesilsin mi?</string>
     <string name="do_you_really_want_to_disable_tor_text">Verileriniz hemen normal ağ üzerinden aktarılacaktır</string>
-    <string name="builtin_tor_title">Built-in Tor</string>
-    <string name="builtin_tor_description">Run Tor directly inside the app. No external app required.</string>
-    <string name="use_builtin_tor">Use Built-in Tor</string>
-    <string name="builtin_tor_active">Built-in Tor Active</string>
-    <string name="disconnect_builtin_tor">Disconnect Built-in Tor</string>
-    <string name="orbot_title">Orbot (External App)</string>
+    <string name="builtin_tor_title">Yerleşik Tor</string>
+    <string name="builtin_tor_description">Tor\'u doğrudan uygulamanın içinde çalıştırın. Harici bir uygulamaya gerek yoktur.</string>
+    <string name="use_builtin_tor">Yerleşik Tor\'u Kullan</string>
+    <string name="builtin_tor_active">Yerleşik Tor Aktif</string>
+    <string name="disconnect_builtin_tor">Yerleşik Tor Bağlantısını Kes</string>
+    <string name="orbot_title">Orbot (Harici Uygulama)</string>
     <string name="yes">Evet</string>
     <string name="no">Hayır</string>
     <string name="could_not_connect_to_tor">Tor\'a bağlanılamadı</string>
@@ -118,7 +118,7 @@
     <string name="direct_connection">Doğrudan Bağlantı</string>
     <string name="notification_type">Bildirim Türü</string>
     <string name="select_the_type_of_notification_you_want_to_receive">Almak istediğiniz bildirim türünü seçin</string>
-    <string name="activity">Aktivite</string>
+    <string name="activity">Aktiviteyi göster</string>
     <string name="accepted">Kabul edildi</string>
     <string name="rejected">Reddedildi</string>
     <string name="language">Dil</string>
@@ -132,17 +132,17 @@
     <string name="decrypt_data_using_nip_44">Verinin şifresini NIP-44 kullanarak çöz</string>
     <string name="encrypt_data_using_nip_44">Veriyi NIP-44 kullanarak şifrele</string>
     <string name="decrypt_private_zaps">Özel zapların şifresini çöz</string>
-    <string name="encrypt_clear_text">Encrypt text messages</string>
-    <string name="decrypt_clear_text">Decrypt text messages</string>
-    <string name="encrypt_event">Encrypt events</string>
-    <string name="decrypt_event">Decrypt events</string>
-    <string name="encrypt_tag_array">Encrypt tag arrays</string>
-    <string name="decrypt_tag_array">Decrypt tag arrays</string>
-    <string name="event_kind_0">Metadata</string>
+    <string name="encrypt_clear_text">Metin mesajlarını şifrele</string>
+    <string name="decrypt_clear_text">Metin mesajlarının şifresini çöz</string>
+    <string name="encrypt_event">Olayları şifrele</string>
+    <string name="decrypt_event">Olayların şifresini çöz</string>
+    <string name="encrypt_tag_array">Etiket dizilerini şifrele</string>
+    <string name="decrypt_tag_array">Etiket dizilerinin şifresini çöz</string>
+    <string name="event_kind_0">Meta veri</string>
     <string name="event_kind_1">Kısa metin notu</string>
     <string name="event_kind_3">Takip listesi</string>
     <string name="event_kind_4">Şifreli doğrudan mesajlar</string>
-    <string name="event_kind_5">Etkinlik silme</string>
+    <string name="event_kind_5">Olay silme isteği</string>
     <string name="event_kind_6">Yeniden gönderi (repost)</string>
     <string name="event_kind_7">Tepki</string>
     <string name="event_kind_8">Rozet ödülü</string>
@@ -230,14 +230,14 @@
     <string name="wants_you_to">%1$s yapmanızı istiyor</string>
     <string name="sign">%1$s İmzala</string>
     <string name="sign_message">mesajı imzala</string>
-    <string name="signing_as">Signing as</string>
+    <string name="signing_as">Olarak imzalanıyor:</string>
     <string name="content">içerik</string>
     <string name="checking_connectivity">Bağlantı Kontrol Ediliyor</string>
     <string name="amber_is_running_in_background">Amber arka planda çalışıyor</string>
     <string name="bunker_notifications">Bunker Bildirimleri</string>
     <string name="error_notifications">Hata Bildirimleri</string>
     <string name="notifications_for_approving_or_rejecting_bunker_requests">Bunker isteklerini onaylamak veya reddetmek için bildirimler.</string>
-    <string name="notifications_for_showing_errors_bunker_requests">Bunker isteklerinde hata bildirimlerinin gösterilmesi.</string>
+    <string name="notifications_for_showing_errors_bunker_requests">Bunker isteklerindeki hataları gösterme bildirimleri.</string>
     <string name="new_event_to_sign">imzalanacak yeni etkinlik</string>
     <string name="event_kind_10013">Özel giden kutusu relay listesi</string>
     <string name="remove_permission">İzni kaldır</string>
@@ -250,7 +250,7 @@
     <string name="select_distributor">Anlık bildirim dağıtıcısını seçin</string>
     <string name="select_push_server">Bir UnifiedPush Uygulaması Seçin</string>
     <string name="push_server_install_app">Anlık Bildirim Kurulumu</string>
-    <string name="push_server_install_app_description">        Anlık bildirimleri almak için [Unified Push](https://unifiedpush.org/) destekleyen herhangi bir uygulamayı, örneğin [Nfty](https://ntfy.sh/) uygulamasını yükleyin.
+    <string name="push_server_install_app_description">        Anlık bildirimleri almak için [Nfty](https://ntfy.sh/) gibi [Unified Push](https://unifiedpush.org/) destekleyen herhangi bir uygulamayı yükleyin.
         Yükledikten sonra, Ayarlar\'dan kullanmak istediğiniz uygulamayı seçin.
     </string>
     <string name="push_server_uses_app_explainer">%1$s uygulamasını kullanır</string>
@@ -271,9 +271,9 @@
     <string name="one_minute">Bir dakika</string>
     <string name="five_minutes">Beş dakika</string>
     <string name="ten_minutes">On Dakika</string>
-    <string name="one_minute_short">1m</string>
-    <string name="five_minutes_short">5m</string>
-    <string name="ten_minutes_short">10m</string>
+    <string name="one_minute_short">1d</string>
+    <string name="five_minutes_short">5d</string>
+    <string name="ten_minutes_short">10d</string>
     <string name="event_kind_9000">Gruba kullanıcı ekle</string>
     <string name="event_kind_9001">Gruptan kullanıcı çıkar</string>
     <string name="event_kind_9002">Grup metadatasını düzenle</string>
@@ -326,7 +326,7 @@
     <string name="nip_44">Sürümlü Şifreleme</string>
     <string name="nip_45">Sonuçları sayma</string>
     <string name="nip_46">Nostr Connect</string>
-    <string name="nip_47">Wallet Connect</string>
+    <string name="nip_47">Wallet Connect (Cüzdan Bağlantısı)</string>
     <string name="nip_48">Proxy Etiketleri</string>
     <string name="nip_49">Özel Anahtar Şifrelemesi</string>
     <string name="nip_50">Arama Yeteneği</string>
@@ -361,7 +361,7 @@
     <string name="next">İleri</string>
     <string name="add_your_key">Anahtarınızı ekleyin</string>
     <string name="sign_policy_basic">Temel eylemleri onayla</string>
-    <string name="sign_policy_basic_explainer">Çoğu kişi için önerilir. Bu, uygulama kullanımınız sırasında kesinti sayısını en aza indirecektir.</string>
+    <string name="sign_policy_basic_explainer">En yaygın istekleri otomatik olarak onaylar.</string>
     <string name="sign_policy_manual">Her uygulamayı manuel olarak onayla</string>
     <string name="sign_policy_manual_explainer">Her uygulama üzerinde kontrol sahibi olmak isteyen, gizliliğe önem veren kişiler için önerilir. Bunu seçmek, yeni bir uygulamayı her denediğinizde bir tercih belirlemenizi isteyecektir.</string>
     <string name="sign_policy_title">Bir imzalama politikası seçin</string>
@@ -370,10 +370,16 @@
     <string name="seed_words_title">Kurtarma ifadeniz</string>
     <string name="seed_words_explainer">Bu kelimeler, erişiminizi kaybetmeniz durumunda hesabınızı yeniden oluşturmanızı sağlar. Onları güvenli bir yere yazın</string>
     <string name="show_seed_words">Tohum kelimeleri göster</string>
+    <string name="login_mode_private_key">Private key</string>
+    <string name="login_mode_recovery_phrase">Recovery phrase</string>
+    <string name="enter_recovery_phrase_description">Enter each word of your seed phrase in order. You can also paste the full phrase using the clipboard button.</string>
+    <string name="mnemonic_12_words">12 words</string>
+    <string name="mnemonic_24_words">24 words</string>
+    <string name="mnemonic_words_entered">%1$d of %2$d words entered</string>
     <string name="sign_policy">İmzalama politikası</string>
     <string name="handle_application_permissions">Bu uygulama izinleri nasıl ele alınsın?</string>
     <string name="sign_policy_manual_new_app">Her izni manuel olarak onayla</string>
-    <string name="sign_policy_manual_new_app_explainer">Her izin üzerinde kontrol sahibi olmak isteyen, gizliliğe önem veren kişiler için önerilir. Bunu seçmek, yeni bir izin aldığınızda bir tercih belirlemenizi isteyecektir.</string>
+    <string name="sign_policy_manual_new_app_explainer">Benden her isteği onaylamamı iste.</string>
     <string name="sign_policy_fully">Bu uygulamaya tamamen güveniyorum</string>
     <string name="sign_policy_fully_explainer">Her isteği otomatik olarak imzala</string>
     <string name="event_kind_10050">DM relay\'leri</string>
@@ -390,7 +396,7 @@
     <string name="direct_notifications_explainer">Relay bağlantılarını her zaman açık tutun. Bu seçeneği kullanmak daha hızlıdır ve daha iyi bir deneyimle sonuçlanır</string>
     <string name="notification_settings">Bildirim Ayarları</string>
     <string name="please_configure_your_notification_settings_before_continuing">Lütfen devam etmeden önce bildirim ayarlarınızı yapılandırın.</string>
-    <string name="relay">Relay</string>
+    <string name="relay">Röle</string>
     <string name="paid_relays_are_not_supported">Ücretli relay\'ler desteklenmiyor</string>
     <string name="auth_required_message">Kimlik doğrulaması gerektiren relay\'ler desteklenmiyor</string>
     <string name="relay_information_document_error_assemble_url">%1$s adresine ulaşılamadı: %2$s</string>
@@ -416,23 +422,23 @@
     <string name="add_a_new_application">Yeni bir uygulama ekle</string>
     <string name="account_backup">Hesap yedeği</string>
     <string name="export_all_accounts_title">Tüm Hesapları Dışa Aktar</string>
-    <string name="export_all_accounts_warning" tools:ignore="Typos">## ÖNEMLİ GÜVENLİK BİLDİRİMİ\n\n**TÜM** Amber hesaplarınızı dışa aktarmak üzeresiniz. Bu dosya özel anahtarlarınızı içerecektir.\n\n- Dışa aktarma dosyanızı güçlü bir parola ile **parola koruması altına alın**\n- **Güvenli bir şekilde saklayın** - bunu cüzdanınız gibi düşünün\n- **Asla** kimseyle paylaşmayın\n- Güvenli bir şekilde sakladıktan sonra cihazınızdan **silin**\n\n**Bu dosyaya erişimi olan herkes TÜM hesaplarınızı kontrol edebilir!**</string>
+    <string name="export_all_accounts_warning" tools:ignore="Typos">## ÖNEMLİ GÜVENLİK UYARISI\n\n**TÜM** Amber hesaplarınızı dışa aktarmak üzeresiniz. Bu dosya özel anahtarlarınızı içerecektir.\n\n- Dışa aktarma dosyanızı güçlü bir şifreyle **şifreleyerek koruyun**\n- **Güvenli bir şekilde saklayın** - buna cüzdanınız gibi davranın\n- **Asla** kimseyle paylaşmayın\n- Güvenli bir şekilde sakladıktan sonra cihazınızdan **silin**\n\n**Bu dosyaya erişimi olan herkes TÜM hesaplarınızı kontrol edebilir!**</string>
     <string name="accounts_to_export">Dışa aktarılacak hesaplar: %d</string>
     <string name="encryption_password">Şifreleme Parolası</string>
-    <string name="enter_strong_password">Güçlü bir parola girin (en az 8 karakter)</string>
-    <string name="confirm_password">Parolayı Onayla</string>
-    <string name="password_too_short">Parola en az 8 karakter olmalıdır</string>
-    <string name="passwords_do_not_match">Parolalar eşleşmiyor</string>
+    <string name="enter_strong_password">Güçlü bir şifre girin (en az 8 karakter)</string>
+    <string name="confirm_password">Şifreyi Onayla</string>
+    <string name="password_too_short">Şifre en az 8 karakter olmalıdır</string>
+    <string name="passwords_do_not_match">Şifreler eşleşmiyor</string>
     <string name="export_all_accounts_button">Tüm Hesapları Dışa Aktar</string>
-    <string name="preparing_export">Dışa aktarma hazırlanıyor...</string>
-    <string name="exporting_accounts_progress">%2$d hesabın %1$d tanesi dışa aktarılıyor...</string>
+    <string name="preparing_export">Dışa aktarmaya hazırlanıyor...</string>
+    <string name="exporting_accounts_progress">Hesap dışa aktarılıyor %1$d / %2$d...</string>
     <string name="export_success">%d hesap başarıyla dışa aktarıldı</string>
     <string name="export_failed">Dışa aktarma başarısız: %s</string>
     <string name="confirm_export_title">Dışa Aktarmayı Onayla</string>
-    <string name="confirm_export_message">%d hesabı şifreli bir dosyaya aktarmak üzeresiniz.</string>
+    <string name="confirm_export_message">%d hesabı şifrelenmiş bir dosyaya aktarmak üzeresiniz.</string>
     <string name="confirm_export_warning">Bu dosya tüm özel anahtarlarınızı içerecektir. Güvenli bir şekilde saklayın!</string>
     <string name="export">Dışa Aktar</string>
-    <string name="create_nsecbunker_description">Yeni bir nsecbunker oluşturmak için ona bir isim vermeniz ve bir veya daha fazla relay seçmeniz yeterli, hepsi bu!</string>
+    <string name="create_nsecbunker_description">Yeni bir nsecbunker oluşturmak için ona bir isim vermeniz ve bir veya daha fazla röle seçmeniz yeterlidir, hepsi bu!</string>
     <string name="create">Oluştur</string>
     <string name="name">İsim</string>
     <string name="no_relays_added">Eklenmiş relay yok</string>
@@ -449,7 +455,7 @@
     <string name="update">Güncelle</string>
     <string name="add">Ekle</string>
     <string name="setup_pin">PIN Ayarla</string>
-    <string name="pin">Pin</string>
+    <string name="pin">PIN</string>
     <string name="pin_does_not_match">Pin eşleşmiyor</string>
     <string name="confirm_pin">PIN\'i Onayla</string>
     <string name="enter_pin">PIN girin</string>
@@ -464,7 +470,7 @@
     <string name="of_events">%2$s etkinliğin %1$s tanesi</string>
     <string name="see_details">Ayrıntıları gör</string>
     <string name="is_requiring_some_permissions_please_review_them">%1$s bazı izinler talep ediyor, lütfen onları gözden geçirin.</string>
-    <string name="is_requiring_some_permissions_please_review_them2">Is requiring some permissions, please review them.</string>
+    <string name="is_requiring_some_permissions_please_review_them2">Bazı izinler talep ediyor, lütfen bunları gözden geçirin.</string>
     <string name="always_approve_this_permission">Bu izni her zaman onayla/reddet</string>
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s, %2$s izniyle ilgili bu etkinlikleri imzalamanızı istiyor.</string>
     <string name="relay_filter_failed">Relay, Bunker etkinliklerini almayı desteklemiyor. Yine de eklemek ister misiniz?</string>
@@ -511,7 +517,7 @@
     <string name="database_size_mb">Veritabanı boyutu: %1$s MB</string>
     <string name="connected">bağlı</string>
     <string name="disconnected">bağlantı kesildi</string>
-    <string name="ping_ms">Ping: %1$dms</string>
+    <string name="ping_ms">Gecikme (Ping): %1$dms</string>
     <string name="sent">" Gönderilen: %1$d"</string>
     <string name="received">" Alınan: %1$d"</string>
     <string name="rejected_by_relay">" Relay tarafından reddedilen: %1$d"</string>
@@ -559,16 +565,16 @@
     <string name="proxy_is_connected">Proxy bağlı</string>
     <string name="proxy_is_not_working">Proxy çalışmıyor. Proxy ayarlarınızı/uygulamanızı kontrol edin.</string>
     <string name="failed_to_connect_to_tor_orbot">Tor/Orbot\'a bağlanılamadı</string>
-    <string name="tor_starting">Starting Tor\u2026</string>
-    <string name="tor_retrying">Retrying Tor connection\u2026</string>
-    <string name="tor_status_channel_description">Built-in Tor status notifications</string>
-    <string name="event_kind_443">KeyPackage</string>
+    <string name="tor_starting">Tor başlatılıyor\u2026</string>
+    <string name="tor_retrying">Tor bağlantısı yeniden deneniyor\u2026</string>
+    <string name="tor_status_channel_description">Yerleşik Tor durum bildirimleri</string>
+    <string name="event_kind_443">Anahtar Paketi (KeyPackage)</string>
     <string name="event_kind_10051">KeyPackage Relay Listesi</string>
     <string name="event_kind_444">Hoş Geldiniz</string>
     <string name="event_kind_445">Grup</string>
     <string name="give_us_feedback">Bize geri bildirimde bulunun</string>
-    <string name="feedback_type">Feedback type</string>
-    <string name="required">Required</string>
+    <string name="feedback_type">Geri bildirim türü</string>
+    <string name="required">Gerekli</string>
     <string name="bug_report">Hata raporu</string>
     <string name="enhancement_request">Geliştirme talebi</string>
     <string name="subject">Konu</string>
@@ -584,93 +590,93 @@
     <string name="create_a_new_connection">Yeni bir bağlantı oluştur</string>
     <string name="network_permission_message">Relay/proxy\'ye bağlanılamadı. Amber için ağ iznini etkinleştirip etkinleştirmediğinizi kontrol edin</string>
     <string name="reconnect">Yeniden Bağlan</string>
-    <string name="of_connected_relays">%2$d röleden %1$d\'i bağlı</string>
+    <string name="of_connected_relays">%1$d / %2$d bağlı röle</string>
     <string name="proxy">Proxy</string>
     <string name="default_relay_text">Varsayılan</string>
-    <string name="enable_kill_switch">Kill switch\'i etkinleştir</string>
-    <string name="disable_kill_switch">Kill switch\'i devre dışı bırak</string>
-    <string name="kill_switch_message">Kill switch etkinleştirildi, uzaktan oturum açma ve profil getirme çalışmayacaktır.</string>
-    <string name="edit_relays">Gecikmeleri Düzenle</string>
+    <string name="enable_kill_switch">Acil anahtarını (Kill switch) etkinleştir</string>
+    <string name="disable_kill_switch">Acil anahtarını (Kill switch) devre dışı bırak</string>
+    <string name="kill_switch_message">Acil Anahtarı etkinleştirildiğinde, uzaktan giriş ve profil getirme işlemleri çalışmaz</string>
+    <string name="edit_relays">Röleleri Düzenle</string>
     <string name="one_hour">Bir saat</string>
     <string name="one_day">Bir gün</string>
     <string name="one_week">Bir hafta</string>
-    <string name="delete_after">Sonrasında sil</string>
+    <string name="delete_after">Şundan sonra sil:</string>
     <string name="crashreport_found">Çökme Raporu bulundu</string>
-    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu Amber\'e bir DM ile göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
-    <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalayıp Amber\'e göndermek için bir istemci açmak ister misiniz?</string>
+    <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu bir DM ile Amber\'a göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
+    <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber\'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
-    <string name="event_content">Etkinlik içeriği</string>
-    <string name="event_kind_14">Direkt Mesaj</string>
-    <string name="wants_to_encrypt_with">" %1$s'i %2$s ile şifrelemek istiyor"</string>
-    <string name="wants_to_encrypt_event_kind">%1$s\'i %2$s ile şifrelemek istiyor</string>
+    <string name="event_content">Olay içeriği</string>
+    <string name="event_kind_14">Doğrudan Mesaj</string>
+    <string name="wants_to_encrypt_with">" %1$s ögesini %2$s ile şifrelemek istiyor"</string>
+    <string name="wants_to_encrypt_event_kind">%1$s ögesini %2$s ile şifrelemek istiyor</string>
     <string name="wants_to_encrypt_this_list_of_tags_with">" bu etiket listesini %1$s ile şifrelemek istiyor"</string>
     <string name="wants_to_encrypt_a_list_of_tags_with">bir etiket listesini %1$s ile şifrelemek istiyor</string>
     <string name="wants_to_encrypt_this_text_with">" bu metni %1$s ile şifrelemek istiyor"</string>
     <string name="wants_to_encrypt_a_text_with">bir metni %1$s ile şifrelemek istiyor</string>
-    <string name="wants_to_read_from_encrypted_content">" %2$s şifrelenmiş içeriğinden %1$s'i okumak istiyor"</string>
-    <string name="wants_to_read_this_list_of_tags_from_encrypted_content">" %1$s şifrelenmiş içeriğinden bu etiket listesini okumak istiyor"</string>
-    <string name="wants_to_read_a_list_of_tags_from_encrypted_content">%1$s şifrelenmiş içeriğinden bir etiket listesini okumak istiyor</string>
-    <string name="wants_to_read_this_text_from_encrypted_content">" %1$s şifrelenmiş içeriğinden bu metni okumak istiyor"</string>
-    <string name="wants_to_read_a_text_from_encrypted_content">%1$s şifrelenmiş içeriğinden bir metni okumak istiyor</string>
-    <string name="encrypt_with">%1$s\'i %2$s ile şifrele</string>
+    <string name="wants_to_read_from_encrypted_content">" %1$s ögesini %2$s şifrelenmiş içeriğinden okumak istiyor"</string>
+    <string name="wants_to_read_this_list_of_tags_from_encrypted_content">" bu etiket listesini %1$s şifrelenmiş içeriğinden okumak istiyor"</string>
+    <string name="wants_to_read_a_list_of_tags_from_encrypted_content">bir etiket listesini %1$s şifrelenmiş içeriğinden okumak istiyor</string>
+    <string name="wants_to_read_this_text_from_encrypted_content">" bu metni %1$s şifrelenmiş içeriğinden okumak istiyor"</string>
+    <string name="wants_to_read_a_text_from_encrypted_content">bir metni %1$s şifrelenmiş içeriğinden okumak istiyor</string>
+    <string name="encrypt_with">%1$s ögesini %2$s ile şifrele</string>
     <string name="encrypt_this_list_of_tags_with">Bu etiket listesini %1$s ile şifrele</string>
     <string name="encrypt_this_text_with">Bu metni %1$s ile şifrele</string>
-    <string name="read_from_encrypted_content">%2$s şifrelenmiş içeriğinden %1$s\'i oku</string>
-    <string name="read_this_list_of_tags_from_encrypted_content">%1$s şifrelenmiş içeriğinden bu etiket listesini oku</string>
-    <string name="read_this_text_from_encrypted_content">%1$s şifrelenmiş içeriğinden bu metni oku</string>
+    <string name="read_from_encrypted_content">%1$s ögesini %2$s şifrelenmiş içeriğinden oku</string>
+    <string name="read_this_list_of_tags_from_encrypted_content">Bu etiket listesini %1$s şifrelenmiş içeriğinden oku</string>
+    <string name="read_this_text_from_encrypted_content">Bu metni %1$s şifrelenmiş içeriğinden oku</string>
     <string name="ping">Ping</string>
     <string name="response">Yanıt</string>
-    <string name="recover_from_bac">Yedekten geri yükle</string>
-    <string name="recover_from_backup">Yedekten geri yükle</string>
-    <string name="importing_account">Hesap %1$d içe aktarılıyor</string>
-    <string name="could_not_connect_to_relay">Relay\'e bağlanılamadı. Yine de eklemek ister misiniz?</string>
-    <string name="event_kind_25050">WebRTC Sinyalleşmesi</string>
-    <string name="event_kind_9733">Özel zap</string>
-    <string name="event_kind_10101">İyi viki yazarları</string>
-    <string name="event_kind_10102">İyi viki relay\'leri</string>
-    <string name="status_service_description">Relay status notification</string>
-    <string name="status">Relay status</string>
-    <string name="kind">Kind</string>
-    <string name="pubkey">Pubkey</string>
-    <string name="date">Date</string>
-    <string name="tags">Tags</string>
-    <string name="discard_all">Discard selected</string>
-    <string name="approve_all">Approve selected</string>
-    <string name="requests_message">Requests %1$s</string>
-    <string name="trust_score">Trust Score</string>
-    <string name="trust_excellent">Excellent</string>
-    <string name="trust_good">Good</string>
-    <string name="trust_fair">Fair</string>
-    <string name="trust_poor">Poor</string>
-    <string name="trust_unknown">Unknown</string>
-    <string name="relay_trust_warning">Warning: This relay has a low trust score</string>
-    <string name="relays_used">Relays used</string>
-    <string name="do_not_leave_the_app_until_the_key_is_generated">Do not leave the app until the key is generated</string>
-    <string name="status_detail">Status Detail</string>
-    <string name="amber_is_a_free_and_open_source_project">Amber is a free and open source project\n</string>
-    <string name="report_missing_event_kind_translation">Report missing event kind translation</string>
-    <string name="account_picture">Account picture</string>
-    <string name="encrypt_and_copy_to_clipboard">Encrypt and copy to clipboard</string>
-    <string name="encrypt_and_show_qr_code">Encrypt and show QR Code</string>
-    <string name="relay_authentication">Relay authentication</string>
-    <string name="relay_auth_request">%1$s wants to authenticate to relay</string>
-    <string name="for_this_relay_only">This relay only</string>
-    <string name="for_all_relays">All relays</string>
-    <string name="relay_auth_scope">Authentication scope</string>
-    <string name="encryption_scope">Encryption scope</string>
-    <string name="for_this_method_only">This method only</string>
-    <string name="for_all_methods">All methods</string>
-    <string name="event_kind_10086">Indexer relays</string>
-    <string name="event_kind_10087">Proxy relays</string>
-    <string name="event_kind_100">Broadcast relays</string>
-    <string name="event_kind_10088">Broadcast relays</string>
-    <string name="event_kind_10089">Trusted relays</string>
-    <string name="event_kind_3063">Software Asset</string>
-    <string name="event_kind_32267">Software Application</string>
-    <string name="event_kind_10012">Favorite relays list</string>
-    <string name="event_kind_30267">App curation sets</string>
-    <string name="event_kind_34237">Video View</string>
-    <string name="event_kind_15128">Root nsite manifest</string>
-    <string name="event_kind_10443">MLS Key Package</string>
-    <string name="event_kind_16767">Active profile theme</string>
+    <string name="recover_from_bac">Yedekten kurtar</string>
+    <string name="recover_from_backup">Yedekten kurtar</string>
+    <string name="importing_account">Hesap içe aktarılıyor: %1$d</string>
+    <string name="could_not_connect_to_relay">Röleye bağlanılamadı. Yine de eklemek ister misiniz?</string>
+    <string name="event_kind_25050">WebRTC Sinyalizasyonu</string>
+    <string name="event_kind_9733">Gizli zap</string>
+    <string name="event_kind_10101">İyi wiki yazarları</string>
+    <string name="event_kind_10102">İyi wiki röleleri</string>
+    <string name="status_service_description">Röle durumu bildirimi</string>
+    <string name="status">Röle durumu</string>
+    <string name="kind">Tür</string>
+    <string name="pubkey">Pubkey (Açık anahtar)</string>
+    <string name="date">Tarih</string>
+    <string name="tags">Etiketler</string>
+    <string name="discard_all">Seçilenleri yoksay</string>
+    <string name="approve_all">Seçilenleri onayla</string>
+    <string name="requests_message">İstekler: %1$s</string>
+    <string name="trust_score">Güven Puanı</string>
+    <string name="trust_excellent">Mükemmel</string>
+    <string name="trust_good">İyi</string>
+    <string name="trust_fair">Orta</string>
+    <string name="trust_poor">Zayıf</string>
+    <string name="trust_unknown">Bilinmiyor</string>
+    <string name="relay_trust_warning">Uyarı: Bu rölenin güven puanı düşük</string>
+    <string name="relays_used">Kullanılan röleler</string>
+    <string name="do_not_leave_the_app_until_the_key_is_generated">Anahtar oluşturulana kadar uygulamadan ayrılmayın</string>
+    <string name="status_detail">Durum Detayı</string>
+    <string name="amber_is_a_free_and_open_source_project">Amber, ücretsiz ve açık kaynaklı bir projedir\n</string>
+    <string name="report_missing_event_kind_translation">Eksik olay türü çevirisini bildir</string>
+    <string name="account_picture">Hesap resmi</string>
+    <string name="encrypt_and_copy_to_clipboard">Şifrele ve panoya kopyala</string>
+    <string name="encrypt_and_show_qr_code">Şifrele ve QR Kodunu göster</string>
+    <string name="relay_authentication">Röle kimlik doğrulaması</string>
+    <string name="relay_auth_request">%1$s rölesinde kimlik doğrulaması yapmak istiyor</string>
+    <string name="for_this_relay_only">Sadece bu röle</string>
+    <string name="for_all_relays">Tüm röleler</string>
+    <string name="relay_auth_scope">Kimlik doğrulama kapsamı</string>
+    <string name="encryption_scope">Şifreleme kapsamı</string>
+    <string name="for_this_method_only">Sadece bu yöntem</string>
+    <string name="for_all_methods">Tüm yöntemler</string>
+    <string name="event_kind_10086">Dizinleyici (Indexer) röleleri</string>
+    <string name="event_kind_10087">Proxy röleleri</string>
+    <string name="event_kind_100">Yayın (Broadcast) röleleri</string>
+    <string name="event_kind_10088">Yayın (Broadcast) röleleri</string>
+    <string name="event_kind_10089">Güvenilir röleler</string>
+    <string name="event_kind_3063">Yazılım Varlığı</string>
+    <string name="event_kind_32267">Yazılım Uygulaması</string>
+    <string name="event_kind_10012">Favori röleler listesi</string>
+    <string name="event_kind_30267">Uygulama kürasyon kümeleri</string>
+    <string name="event_kind_34237">Video Görüntülenmesi</string>
+    <string name="event_kind_15128">Kök nsite bildirimi (manifest)</string>
+    <string name="event_kind_10443">MLS Anahtar Paketi</string>
+    <string name="event_kind_16767">Aktif profil teması</string>
 </resources>

@@ -679,4 +679,8 @@
     <string name="event_kind_15128">Kök nsite bildirimi (manifest)</string>
     <string name="event_kind_10443">MLS Anahtar Paketi</string>
     <string name="event_kind_16767">Aktif profil teması</string>
+    <string name="auth_whitelist">Client auth whitelist</string>
+    <string name="auth_whitelist_description">When the whitelist is non-empty, relay client authentication (NIP-42) will only be allowed for relays in the list. Auth requests from other relays will be rejected automatically.</string>
+    <string name="add_relay_to_whitelist">Add relay to whitelist</string>
+    <string name="relay_not_in_auth_whitelist">Relay is not in the auth whitelist</string>
 </resources>

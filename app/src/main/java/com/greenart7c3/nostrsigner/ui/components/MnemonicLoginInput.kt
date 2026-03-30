@@ -40,6 +40,7 @@ import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.window.PopupProperties
 import com.greenart7c3.nostrsigner.R
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 
@@ -209,6 +210,7 @@ private fun WordField(
             expanded = menuExpanded,
             onDismissRequest = { selectedWord = word },
             modifier = Modifier.heightIn(max = 200.dp),
+            properties = PopupProperties(focusable = false),
         ) {
             suggestions.forEach { suggestion ->
                 DropdownMenuItem(

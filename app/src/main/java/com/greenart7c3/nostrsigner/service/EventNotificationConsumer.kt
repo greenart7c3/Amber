@@ -346,8 +346,74 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
+        if (type == SignerType.GET_PUBLIC_KEY) {
+            val gpkPermission = dao.getPermission(event.pubKey, "GET_PUBLIC_KEY")
+            val signPolicy = dao.getSignPolicy(event.pubKey)
+            val isRemembered = IntentUtils.isRemembered(signPolicy, gpkPermission)
+            if (isRemembered == null) {
+                val message = generateMessage(type, amberEvent, request, event, permission, applicationWithSecret)
+                notificationManager().sendNotification(
+                    bunkerRequest.id,
+                    message,
+                    "Bunker",
+                    "BunkerID",
+                    applicationContext,
+                    request,
+                )
+                return
+            }
+            if (!isRemembered) {
+                Amber.instance.applicationIOScope.launch {
+                    historyDao.addHistory(
+                        HistoryEntity(
+                            0,
+                            event.pubKey,
+                            "GET_PUBLIC_KEY",
+                            null,
+                            TimeUtils.now(),
+                            false,
+                        ),
+                        acc.npub,
+                    )
+                }
+                BunkerRequestUtils.sendBunkerResponse(
+                    context = applicationContext,
+                    account = acc,
+                    bunkerRequest = request,
+                    bunkerResponse = BunkerResponse(bunkerRequest.id, "", "user rejected"),
+                    relays = relays,
+                    onLoading = { },
+                    onDone = { },
+                )
+                return
+            }
+            Amber.instance.applicationIOScope.launch {
+                historyDao.addHistory(
+                    HistoryEntity(
+                        0,
+                        event.pubKey,
+                        "GET_PUBLIC_KEY",
+                        null,
+                        TimeUtils.now(),
+                        true,
+                    ),
+                    acc.npub,
+                )
+            }
+            BunkerRequestUtils.sendBunkerResponse(
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = request,
+                bunkerResponse = BunkerResponse(bunkerRequest.id, acc.hexKey, null),
+                relays = relays,
+                onLoading = { },
+                onDone = { },
+            )
+            return
+        }
+
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
-        val projection = if (type == SignerType.GET_PUBLIC_KEY || type == SignerType.PING) {
+        val projection = if (type == SignerType.PING) {
             arrayOf(acc.npub)
         } else {
             arrayOf(data, pubKey, acc.npub)

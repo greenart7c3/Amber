@@ -25,7 +25,6 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -33,7 +32,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
@@ -65,39 +63,72 @@ class NotificationSubscription(
     }
 
     /**
-     * Call this method every time the relay list or the user list changes
+     * Call this method every time the relay list or the user list changes.
+     *
+     * Each connection with its own localKey gets a dedicated subscription on that connection's
+     * relays, listening for events tagged with the connection's pubkey.
+     * The main account subscription (real pubkey) is only opened when there are legacy
+     * connections that don't yet have a localKey.
      */
     suspend fun updateFilter() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        LocalPreferences.allAccounts(appContext).forEach {
-            if (!subIds.containsKey(it.hexKey)) {
-                subIds[it.hexKey] = UUID.randomUUID().toString()
+        LocalPreferences.allAccounts(appContext).forEach { account ->
+            val since = computeSince()
+
+            val allConnections = Amber.instance.getDatabase(account.npub).dao().getAll(account.hexKey)
+            val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
+            val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() }
+
+            // Per-connection subscription on each connection's own relays
+            for (conn in connectionsWithLocalKey) {
+                val connPubKey = conn.localPubKey
+                val subKey = "${account.hexKey}_$connPubKey"
+                if (!subIds.containsKey(subKey)) {
+                    subIds[subKey] = UUID.randomUUID().toString()
+                }
+                val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
+                client.openReqSubscription(
+                    subIds[subKey]!!,
+                    connRelays.associateWith {
+                        listOf(
+                            Filter(
+                                kinds = listOf(NostrConnectEvent.KIND),
+                                tags = mapOf("p" to listOf(connPubKey)),
+                                limit = 1,
+                                since = since,
+                            ),
+                        )
+                    },
+                )
             }
-            client.openReqSubscription(subIds[it.hexKey]!!, createNotificationsFilter(it))
+
+            // Main account subscription only for legacy connections (no localKey)
+            if (hasLegacyConnections) {
+                if (!subIds.containsKey(account.hexKey)) {
+                    subIds[account.hexKey] = UUID.randomUUID().toString()
+                }
+                val relays = Amber.instance.getSavedRelays(account)
+                client.openReqSubscription(
+                    subIds[account.hexKey]!!,
+                    relays.associateWith {
+                        listOf(
+                            Filter(
+                                kinds = listOf(NostrConnectEvent.KIND),
+                                tags = mapOf("p" to listOf(account.hexKey)),
+                                limit = 1,
+                                since = since,
+                            ),
+                        )
+                    },
+                )
+            }
         }
     }
 
-    private fun createNotificationsFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {
-        val relays = Amber.instance.getSavedRelays(account)
-
+    private fun computeSince(): Long {
         var since = TimeUtils.now()
-
         val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L
-        if (latest > 0) {
-            since = latest
-        }
-
-        val pubKeys = listOf(account.hexKey)
-
-        return relays.associateWith {
-            listOf(
-                Filter(
-                    kinds = listOf(NostrConnectEvent.KIND),
-                    tags = mapOf("p" to pubKeys),
-                    limit = 1,
-                    since = since,
-                ),
-            )
-        }
+        if (latest > 0) since = latest
+        return since
     }
 }

@@ -6,9 +6,17 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 import androidx.room.Relation
 import androidx.room.TypeConverter
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.crypto.Nip01Crypto
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlin.collections.joinToString
+
+fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
+
+fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
 
 @Entity(
     tableName = "application",
@@ -41,7 +49,10 @@ data class ApplicationEntity(
     var closeApplication: Boolean,
     var deleteAfter: Long,
     val lastUsed: Long,
+    val localKey: String = "",
 ) {
+    val localPubKey: String get() = if (localKey.isNotEmpty()) localPubKeyFromPrivKey(localKey) else ""
+
     companion object {
         fun empty() = ApplicationEntity(
             key = "",
@@ -58,6 +69,7 @@ data class ApplicationEntity(
             closeApplication = true,
             deleteAfter = 0L,
             lastUsed = 0L,
+            localKey = "",
         )
     }
 

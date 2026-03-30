@@ -87,6 +87,7 @@ fun EditPermission(
         val relayString = Amber.instance.settings.defaultRelays.joinToString(separator = "&") { "relay=${it.url}" }
         mutableStateOf("bunker://${account.hexKey}?$relayString$secret")
     }
+    var connectionPubKey by remember { mutableStateOf(account.hexKey) }
 
     LaunchedEffect(selectedPackage) {
         val result = withContext(Dispatchers.IO) {
@@ -111,7 +112,8 @@ fun EditPermission(
 
         val relays = app.relays.joinToString("&") { "relay=${it.url}" }
         val localSecret = if (checked) "&secret=${app.secret}" else ""
-        bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
+        connectionPubKey = app.localPubKey.ifEmpty { account.hexKey }
+        bunkerUri = "bunker://$connectionPubKey?$relays$localSecret"
     }
 
     if (wantsToRemovePermissions) {

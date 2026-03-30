@@ -51,6 +51,7 @@ import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
+import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -261,6 +262,7 @@ fun NewNsecBunkerScreen(
 
                     scope.launch(Dispatchers.IO) {
                         val deleteAfter = deleteAfterToSeconds(parseDeleteAfterType(deleteAfterIndex))
+                        val connPrivKey = generateBunkerPrivKey()
 
                         val application =
                             ApplicationEntity(
@@ -278,6 +280,7 @@ fun NewNsecBunkerScreen(
                                 closeApplication = true,
                                 deleteAfter = deleteAfter,
                                 lastUsed = 0L,
+                                localKey = connPrivKey,
                             )
 
                         Amber.instance.getDatabase(account.npub).dao().insertApplication(
@@ -319,7 +322,8 @@ fun NewNsecBunkerCreatedScreen(
     } else {
         val relays = application.relays.joinToString(separator = "&") { "relay=${it.url}" }
         val localSecret = "&secret=${application.secret}"
-        val bunkerUri = "bunker://${account.hexKey}?$relays$localSecret"
+        val signerPubKey = application.localPubKey.ifEmpty { account.hexKey }
+        val bunkerUri = "bunker://$signerPubKey?$relays$localSecret"
 
         LaunchedEffect(Unit) {
             Amber.instance.applicationIOScope.launch(Dispatchers.IO) {

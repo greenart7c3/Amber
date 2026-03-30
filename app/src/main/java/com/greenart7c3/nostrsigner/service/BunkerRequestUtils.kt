@@ -324,7 +324,7 @@ object BunkerRequestUtils {
             application.application.isConnected = true
 
             // Ensure each connection has its own unique signing key
-            if (application.application.localKey.isBlank() && bunkerRequest.request is BunkerRequestConnect) {
+            if (application.application.localKey.isBlank() && bunkerRequest.request is BunkerRequestConnect && savedApplication == null) {
                 val newPrivKey = generateBunkerPrivKey()
                 application = application.copy(
                     application = application.application.copy(localKey = newPrivKey),

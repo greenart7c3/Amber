@@ -33,6 +33,7 @@ import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -67,6 +68,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
@@ -110,6 +112,7 @@ import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
+import com.greenart7c3.nostrsigner.ui.components.MnemonicLoginInput
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
@@ -851,6 +854,10 @@ fun LoginPage(
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
     var keyPair by remember { mutableStateOf(KeyPair()) }
+    var isMnemonicMode by rememberSaveable { mutableStateOf(false) }
+    var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
+    var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
+    val clipboardManager = LocalClipboard.current
 
     Scaffold(
         topBar = {
@@ -911,131 +918,86 @@ fun LoginPage(
                                 .padding(top = verticalPadding * 1.5f)
                                 .imePadding(),
                         ) {
-                            var showPassword by remember {
-                                mutableStateOf(false)
-                            }
-
+                            var showPassword by remember { mutableStateOf(false) }
                             var showCharsPassword by remember { mutableStateOf(false) }
-
-                            Text(
-                                stringResource(R.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
-                            )
 
                             val keyRequiredMessage = stringResource(R.string.key_is_required)
                             val passwordRequiredMessage = stringResource(R.string.password_is_required)
 
-                            OutlinedTextField(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .semantics {
-                                        contentType = ContentType.Password
-                                    }
-                                    .focusRequester(focusRequester)
-                                    .padding(vertical = 20.dp),
-                                shape = RoundedCornerShape(18.dp),
-                                value = key.value,
-                                onValueChange = { value ->
-                                    key.value = value
-                                    if (errorMessage.isNotEmpty()) {
+                            // Input mode selector
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            ) {
+                                FilterChip(
+                                    selected = !isMnemonicMode,
+                                    onClick = {
+                                        isMnemonicMode = false
                                         errorMessage = ""
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    autoCorrectEnabled = false,
-                                    keyboardType = KeyboardType.Password,
-                                    imeAction = ImeAction.Go,
-                                ),
-                                placeholder = {
-                                    Text(
-                                        text = stringResource(R.string.nsec),
-                                    )
-                                },
-                                trailingIcon = {
-                                    Row {
-                                        IconButton(onClick = { showPassword = !showPassword }) {
-                                            Icon(
-                                                imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                                contentDescription = if (showPassword) {
-                                                    stringResource(R.string.show_password)
-                                                } else {
-                                                    stringResource(R.string.hide_password)
-                                                },
-                                            )
-                                        }
-                                    }
-                                },
-                                leadingIcon = {
-                                    if (dialogOpen) {
-                                        SimpleQrCodeScanner { content ->
-                                            dialogOpen = false
-                                            if (!content.isNullOrEmpty()) {
-                                                key.value = TextFieldValue(content.toLowerCase(Locale.current))
-                                            }
-                                        }
-                                    }
-                                    IconButton(onClick = { dialogOpen = true }) {
-                                        Icon(
-                                            painter = painterResource(R.drawable.ic_qrcode),
-                                            null,
-                                            modifier = Modifier.size(24.dp),
-                                            tint = MaterialTheme.colorScheme.primary,
-                                        )
-                                    }
-                                },
-                                visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
-                                keyboardActions = KeyboardActions(
-                                    onGo = {
-                                        if (key.value.text.isBlank()) {
-                                            errorMessage = keyRequiredMessage
-                                        }
+                                    },
+                                    label = { Text(stringResource(R.string.login_mode_private_key)) },
+                                )
+                                FilterChip(
+                                    selected = isMnemonicMode,
+                                    onClick = {
+                                        isMnemonicMode = true
+                                        errorMessage = ""
+                                    },
+                                    label = { Text(stringResource(R.string.login_mode_recovery_phrase)) },
+                                )
+                            }
 
-                                        if (needsPassword.value && password.value.text.isBlank()) {
-                                            errorMessage = passwordRequiredMessage
-                                        }
+                            Spacer(modifier = Modifier.height(12.dp))
 
-                                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
-                                            Amber.instance.applicationIOScope.launch {
-                                                isLoading = true
-                                                try {
-                                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
-                                                    isLoading = false
-                                                    if (isValid.first != null) {
-                                                        keyPair = isValid.first!!
-                                                        scope.launch {
-                                                            delay(200)
-                                                            pageState.animateScrollToPage(1)
-                                                        }
-                                                    } else {
-                                                        errorMessage = isValid.second
-                                                    }
-                                                } catch (e: Exception) {
-                                                    errorMessage = e.message.toString()
-                                                    isLoading = false
+                            if (isMnemonicMode) {
+                                Text(stringResource(R.string.enter_recovery_phrase_description))
+
+                                Spacer(modifier = Modifier.height(12.dp))
+
+                                MnemonicLoginInput(
+                                    wordCount = mnemonicWordCount,
+                                    words = mnemonicWords,
+                                    onWordChange = { index, word ->
+                                        mnemonicWords = mnemonicWords.toMutableList().also { list -> list[index] = word }
+                                    },
+                                    onWordCountChange = { count ->
+                                        mnemonicWordCount = count
+                                        mnemonicWords = List(count) { "" }
+                                        errorMessage = ""
+                                    },
+                                    onPaste = {
+                                        scope.launch {
+                                            val clipEntry = clipboardManager.getClipEntry()
+                                            val text = clipEntry?.clipData?.getItemAt(0)?.text?.toString() ?: ""
+                                            if (text.isNotBlank()) {
+                                                val pastedWords = text.trim().split(Regex("\\s+"))
+                                                val count = if (pastedWords.size > 12) 24 else 12
+                                                mnemonicWordCount = count
+                                                mnemonicWords = List(count) { i ->
+                                                    pastedWords.getOrElse(i) { "" }.toLowerCase(Locale.current)
                                                 }
+                                                errorMessage = ""
                                             }
                                         }
                                     },
-                                ),
-                            )
+                                )
+                            } else {
+                                Text(
+                                    stringResource(R.string.setup_amber_with_your_nostr_private_key_you_can_enter_different_versions_nsec_ncryptsec_or_hex_you_can_also_scan_it_from_a_qr_code),
+                                )
 
-                            LaunchedEffect(Unit) {
-                                withFrameNanos { }
-                                withFrameNanos { }
-                                focusRequester.requestFocus()
-                            }
-
-                            if (needsPassword.value) {
                                 OutlinedTextField(
                                     modifier = Modifier
                                         .fillMaxWidth()
                                         .semantics {
                                             contentType = ContentType.Password
                                         }
-                                        .padding(bottom = 20.dp),
+                                        .focusRequester(focusRequester)
+                                        .padding(vertical = 20.dp),
                                     shape = RoundedCornerShape(18.dp),
-                                    value = password.value,
+                                    value = key.value,
                                     onValueChange = { value ->
-                                        password.value = value
+                                        key.value = value
                                         if (errorMessage.isNotEmpty()) {
                                             errorMessage = ""
                                         }
@@ -1047,26 +1009,42 @@ fun LoginPage(
                                     ),
                                     placeholder = {
                                         Text(
-                                            text = stringResource(R.string.ncryptsec_password),
+                                            text = stringResource(R.string.nsec),
                                         )
                                     },
                                     trailingIcon = {
                                         Row {
-                                            IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                            IconButton(onClick = { showPassword = !showPassword }) {
                                                 Icon(
-                                                    imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                                                    contentDescription = if (showCharsPassword) {
+                                                    imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                                    contentDescription = if (showPassword) {
                                                         stringResource(R.string.show_password)
                                                     } else {
-                                                        stringResource(
-                                                            R.string.hide_password,
-                                                        )
+                                                        stringResource(R.string.hide_password)
                                                     },
                                                 )
                                             }
                                         }
                                     },
-                                    visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                    leadingIcon = {
+                                        if (dialogOpen) {
+                                            SimpleQrCodeScanner { content ->
+                                                dialogOpen = false
+                                                if (!content.isNullOrEmpty()) {
+                                                    key.value = TextFieldValue(content.toLowerCase(Locale.current))
+                                                }
+                                            }
+                                        }
+                                        IconButton(onClick = { dialogOpen = true }) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_qrcode),
+                                                null,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
+                                    },
+                                    visualTransformation = if (showPassword) VisualTransformation.None else PasswordVisualTransformation(),
                                     keyboardActions = KeyboardActions(
                                         onGo = {
                                             if (key.value.text.isBlank()) {
@@ -1101,6 +1079,91 @@ fun LoginPage(
                                         },
                                     ),
                                 )
+
+                                LaunchedEffect(Unit) {
+                                    withFrameNanos { }
+                                    withFrameNanos { }
+                                    focusRequester.requestFocus()
+                                }
+
+                                if (needsPassword.value) {
+                                    OutlinedTextField(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .semantics {
+                                                contentType = ContentType.Password
+                                            }
+                                            .padding(bottom = 20.dp),
+                                        shape = RoundedCornerShape(18.dp),
+                                        value = password.value,
+                                        onValueChange = { value ->
+                                            password.value = value
+                                            if (errorMessage.isNotEmpty()) {
+                                                errorMessage = ""
+                                            }
+                                        },
+                                        keyboardOptions = KeyboardOptions(
+                                            autoCorrectEnabled = false,
+                                            keyboardType = KeyboardType.Password,
+                                            imeAction = ImeAction.Go,
+                                        ),
+                                        placeholder = {
+                                            Text(
+                                                text = stringResource(R.string.ncryptsec_password),
+                                            )
+                                        },
+                                        trailingIcon = {
+                                            Row {
+                                                IconButton(onClick = { showCharsPassword = !showCharsPassword }) {
+                                                    Icon(
+                                                        imageVector = if (showCharsPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
+                                                        contentDescription = if (showCharsPassword) {
+                                                            stringResource(R.string.show_password)
+                                                        } else {
+                                                            stringResource(
+                                                                R.string.hide_password,
+                                                            )
+                                                        },
+                                                    )
+                                                }
+                                            }
+                                        },
+                                        visualTransformation = if (showCharsPassword) VisualTransformation.None else PasswordVisualTransformation(),
+                                        keyboardActions = KeyboardActions(
+                                            onGo = {
+                                                if (key.value.text.isBlank()) {
+                                                    errorMessage = keyRequiredMessage
+                                                }
+
+                                                if (needsPassword.value && password.value.text.isBlank()) {
+                                                    errorMessage = passwordRequiredMessage
+                                                }
+
+                                                if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                                    Amber.instance.applicationIOScope.launch {
+                                                        isLoading = true
+                                                        try {
+                                                            val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                            isLoading = false
+                                                            if (isValid.first != null) {
+                                                                keyPair = isValid.first!!
+                                                                scope.launch {
+                                                                    delay(200)
+                                                                    pageState.animateScrollToPage(1)
+                                                                }
+                                                            } else {
+                                                                errorMessage = isValid.second
+                                                            }
+                                                        } catch (e: Exception) {
+                                                            errorMessage = e.message.toString()
+                                                            isLoading = false
+                                                        }
+                                                    }
+                                                }
+                                            },
+                                        ),
+                                    )
+                                }
                             }
 
                             if (errorMessage.isNotBlank()) {
@@ -1111,21 +1174,18 @@ fun LoginPage(
                             }
 
                             AmberButton(
-                                enabled = key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank()),
+                                enabled = if (isMnemonicMode) {
+                                    mnemonicWords.all { it.isNotBlank() }
+                                } else {
+                                    key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())
+                                },
                                 onClick = {
-                                    if (key.value.text.isBlank()) {
-                                        errorMessage = keyRequiredMessage
-                                    }
-
-                                    if (needsPassword.value && password.value.text.isBlank()) {
-                                        errorMessage = passwordRequiredMessage
-                                    }
-
-                                    if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                    if (isMnemonicMode) {
+                                        val mnemonicStr = mnemonicWords.joinToString(" ")
                                         Amber.instance.applicationIOScope.launch {
                                             isLoading = true
                                             try {
-                                                val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                val isValid = accountViewModel.isValidKey(mnemonicStr, "")
                                                 isLoading = false
                                                 if (isValid.first != null) {
                                                     keyPair = isValid.first!!
@@ -1140,6 +1200,37 @@ fun LoginPage(
                                             } catch (e: Exception) {
                                                 errorMessage = e.message.toString()
                                                 isLoading = false
+                                            }
+                                        }
+                                    } else {
+                                        if (key.value.text.isBlank()) {
+                                            errorMessage = keyRequiredMessage
+                                        }
+
+                                        if (needsPassword.value && password.value.text.isBlank()) {
+                                            errorMessage = passwordRequiredMessage
+                                        }
+
+                                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                            Amber.instance.applicationIOScope.launch {
+                                                isLoading = true
+                                                try {
+                                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                    isLoading = false
+                                                    if (isValid.first != null) {
+                                                        keyPair = isValid.first!!
+                                                        keyboardController?.hide()
+                                                        scope.launch {
+                                                            delay(200)
+                                                            pageState.animateScrollToPage(1)
+                                                        }
+                                                    } else {
+                                                        errorMessage = isValid.second
+                                                    }
+                                                } catch (e: Exception) {
+                                                    errorMessage = e.message.toString()
+                                                    isLoading = false
+                                                }
                                             }
                                         }
                                     }

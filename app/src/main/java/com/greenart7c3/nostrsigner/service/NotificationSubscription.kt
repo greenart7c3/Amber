@@ -77,7 +77,7 @@ class NotificationSubscription(
 
             val allConnections = Amber.instance.getDatabase(account.npub).dao().getAll(account.hexKey)
             val connectionsWithLocalKey = allConnections.filter { it.localKey.isNotEmpty() }
-            val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() }
+            val hasLegacyConnections = allConnections.any { it.localKey.isEmpty() && it.relays.isNotEmpty() }
 
             // Per-connection subscription on each connection's own relays
             for (conn in connectionsWithLocalKey) {

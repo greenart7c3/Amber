@@ -370,6 +370,12 @@
     <string name="seed_words_title">Votre phrase de récupération</string>
     <string name="seed_words_explainer">Ces mots vous permettent de recréer votre compte en cas de perte d\'accès. Notez-les dans un endroit sûr</string>
     <string name="show_seed_words">Afficher les mots de la seed</string>
+    <string name="login_mode_private_key">Private key</string>
+    <string name="login_mode_recovery_phrase">Recovery phrase</string>
+    <string name="enter_recovery_phrase_description">Enter each word of your seed phrase in order. You can also paste the full phrase using the clipboard button.</string>
+    <string name="mnemonic_12_words">12 words</string>
+    <string name="mnemonic_24_words">24 words</string>
+    <string name="mnemonic_words_entered">%1$d of %2$d words entered</string>
     <string name="sign_policy">Politique de signature</string>
     <string name="handle_application_permissions">Comment gérer les permissions de cette application ?</string>
     <string name="sign_policy_manual_new_app">Approuver manuellement chaque permission</string>

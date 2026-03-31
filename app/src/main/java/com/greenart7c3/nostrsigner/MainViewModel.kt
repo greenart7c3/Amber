@@ -32,7 +32,8 @@ class MainViewModel(val context: Context) : ViewModel() {
     var navController: NavHostController? = null
 
     fun addAll(list: List<IntentData>) {
-        val newList = list.filter { !intents.value.contains(it) }
+        val existingIds = intents.value.mapTo(mutableSetOf()) { it.id }
+        val newList = list.filter { existingIds.add(it.id) }
         _intents.value = (_intents.value + newList).toPersistentList()
     }
 

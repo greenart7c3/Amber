@@ -18,14 +18,12 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class SignerProvider : ContentProvider() {
-    val scope = CoroutineScope(Dispatchers.IO + SupervisorJob())
+    private val scope get() = Amber.instance.applicationIOScope
 
     override fun delete(
         uri: Uri,
@@ -51,12 +49,10 @@ class SignerProvider : ContentProvider() {
     ): Cursor? {
         Log.d(Amber.TAG, "Querying $uri has context ${context != null}")
 
-        while (Amber.instance.isStartingAppState.value) {
-            Log.d(Amber.TAG, "Waiting for Amber to start")
-            Thread.sleep(1000)
-        }
+        runBlocking { Amber.instance.isStartingAppState.first { !it } }
 
         val appId = BuildConfig.APPLICATION_ID
+        val uriString = uri.toString()
         val packageName = if (sortOrder.isNullOrBlank()) {
             callingPackage
         } else {
@@ -71,7 +67,7 @@ class SignerProvider : ContentProvider() {
             return null
         }
         return try {
-            when (uri.toString()) {
+            when (uriString) {
                 "content://$appId.SIGN_MESSAGE" -> {
                     val message = projection?.first()
                     if (message == null) {
@@ -81,10 +77,6 @@ class SignerProvider : ContentProvider() {
                     val npub = IntentUtils.parsePubKey(projection[2])
                     if (npub == null) {
                         Log.d(Amber.TAG, "No npub")
-                        return null
-                    }
-                    if (!LocalPreferences.containsAccount(context!!, npub)) {
-                        Log.d(Amber.TAG, "No account")
                         return null
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
@@ -109,7 +101,7 @@ class SignerProvider : ContentProvider() {
                                 HistoryEntity(
                                     0,
                                     packageName,
-                                    uri.toString().replace("content://$appId.", ""),
+                                    uriString.replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
                                     false,
@@ -159,10 +151,6 @@ class SignerProvider : ContentProvider() {
                         Log.d(Amber.TAG, "No npub")
                         return null
                     }
-                    if (!LocalPreferences.containsAccount(context!!, npub)) {
-                        Log.d(Amber.TAG, "No account")
-                        return null
-                    }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
                     if (account == null) {
                         Log.d(Amber.TAG, "No account from storage")
@@ -178,26 +166,31 @@ class SignerProvider : ContentProvider() {
                     val database = Amber.instance.getDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
 
-                    // For kind 22242 (NIP-42 relay auth), check the auth whitelist first
-                    val whitelistAutoAccept = if (event.kind == 22242) {
-                        val relayUrl = AmberEvent.relay(event)?.let { url ->
+                    // For kind 22242 (NIP-42 relay auth), extract relay host once for both whitelist and permission checks
+                    val relayHost = if (event.kind == 22242) {
+                        AmberEvent.relay(event)?.let { url ->
                             try {
                                 java.net.URI(url).host ?: url
                             } catch (e: Exception) {
                                 url
                             }
                         } ?: ""
+                    } else {
+                        ""
+                    }
+
+                    val whitelistAutoAccept = if (event.kind == 22242) {
                         val authWhitelist = Amber.instance.settings.authWhitelist
                         when {
                             authWhitelist.isEmpty() -> false
-                            relayUrl in authWhitelist -> true
+                            relayHost in authWhitelist -> true
                             else -> {
                                 scope.launch {
                                     historyDatabase.dao().addHistory(
                                         HistoryEntity(
                                             0,
                                             packageName,
-                                            uri.toString().replace("content://$appId.", ""),
+                                            uriString.replace("content://$appId.", ""),
                                             event.kind,
                                             TimeUtils.now(),
                                             false,
@@ -215,14 +208,7 @@ class SignerProvider : ContentProvider() {
 
                     var permission = if (event.kind == 22242) {
                         // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
-                        val relayUrl = AmberEvent.relay(event)?.let { url ->
-                            try {
-                                java.net.URI(url).host ?: url
-                            } catch (e: Exception) {
-                                url
-                            }
-                        } ?: ""
-                        database.dao().getPermissionForRelay(packageName, "SIGN_EVENT", 22242, relayUrl)
+                        database.dao().getPermissionForRelay(packageName, "SIGN_EVENT", 22242, relayHost)
                             ?: database.dao().getWildcardRelayPermission(packageName, "SIGN_EVENT", 22242)
                     } else {
                         database
@@ -257,7 +243,7 @@ class SignerProvider : ContentProvider() {
                                 HistoryEntity(
                                     0,
                                     packageName,
-                                    uri.toString().replace("content://$appId.", ""),
+                                    uriString.replace("content://$appId.", ""),
                                     event.kind,
                                     TimeUtils.now(),
                                     false,
@@ -317,8 +303,7 @@ class SignerProvider : ContentProvider() {
                 -> {
                     val content = projection?.first() ?: return null
                     val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
-                    if (!LocalPreferences.containsAccount(context!!, npub)) return null
-                    val stringType = uri.toString().replace("content://$appId.", "")
+                    val stringType = uriString.replace("content://$appId.", "")
                     val pubkey = projection[1]
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
                     val database = Amber.instance.getDatabase(account.npub)
@@ -356,7 +341,7 @@ class SignerProvider : ContentProvider() {
                                         LogEntity(
                                             0,
                                             packageName,
-                                            uri.toString().replace("content://$appId.", ""),
+                                            uriString.replace("content://$appId.", ""),
                                             e.message ?: "Could not decrypt the message",
                                             System.currentTimeMillis(),
                                         ),
@@ -405,7 +390,7 @@ class SignerProvider : ContentProvider() {
                                 HistoryEntity(
                                     0,
                                     packageName,
-                                    uri.toString().replace("content://$appId.", ""),
+                                    uriString.replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
                                     false,
@@ -440,7 +425,7 @@ class SignerProvider : ContentProvider() {
                                     LogEntity(
                                         0,
                                         packageName,
-                                        uri.toString().replace("content://$appId.", ""),
+                                        uriString.replace("content://$appId.", ""),
                                         e.message ?: "Could not decrypt the message",
                                         System.currentTimeMillis(),
                                     ),
@@ -454,7 +439,7 @@ class SignerProvider : ContentProvider() {
                             HistoryEntity(
                                 0,
                                 packageName,
-                                uri.toString().replace("content://$appId.", ""),
+                                uriString.replace("content://$appId.", ""),
                                 null,
                                 TimeUtils.now(),
                                 true,
@@ -505,7 +490,7 @@ class SignerProvider : ContentProvider() {
                                 HistoryEntity(
                                     0,
                                     packageName,
-                                    uri.toString().replace("content://$appId.", ""),
+                                    uriString.replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
                                     false,
@@ -527,7 +512,7 @@ class SignerProvider : ContentProvider() {
                             HistoryEntity(
                                 0,
                                 packageName,
-                                uri.toString().replace("content://$appId.", ""),
+                                uriString.replace("content://$appId.", ""),
                                 null,
                                 TimeUtils.now(),
                                 true,
@@ -550,7 +535,7 @@ class SignerProvider : ContentProvider() {
                         LogEntity(
                             0,
                             packageName,
-                            uri.toString().replace("content://$appId.", ""),
+                            uriString.replace("content://$appId.", ""),
                             e.message ?: "Error from $callingPackage $uri",
                             System.currentTimeMillis(),
                         ),

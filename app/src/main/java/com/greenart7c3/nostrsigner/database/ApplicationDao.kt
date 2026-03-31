@@ -26,6 +26,9 @@ interface ApplicationDao {
     @Query("SELECT DISTINCT relays FROM application")
     fun getAllRelayLists(): List<RelayListWrapper>
 
+    @Query("SELECT name FROM application WHERE `key` = :key LIMIT 1")
+    suspend fun getAppName(key: String): String?
+
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
     suspend fun getByKey(key: String): ApplicationWithPermissions?

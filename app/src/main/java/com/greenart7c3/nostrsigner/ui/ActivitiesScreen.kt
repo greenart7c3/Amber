@@ -43,6 +43,7 @@ import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.HistoryEntity
@@ -57,7 +58,7 @@ import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 import com.greenart7c3.nostrsigner.ui.components.TagsSection
 import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,6 +91,7 @@ fun ActivitiesScreen(
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
+    val searchResults = remember(context) { supportedKindNumbers.map { it.toLocalizedString(context, true) } }
 
     Column(
         modifier = modifier.padding(top = topPadding),
@@ -102,7 +104,7 @@ fun ActivitiesScreen(
             onSearch = {
                 searchQuery = it
             },
-            searchResults = supportedKindNumbers.map { it.toLocalizedString(context, true) },
+            searchResults = searchResults,
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -126,7 +128,10 @@ fun ActivitiesScreen(
                 }
             }
 
-            items(lazyPagingItems.itemCount) { index ->
+            items(
+                count = lazyPagingItems.itemCount,
+                key = lazyPagingItems.itemKey { it.id },
+            ) { index ->
                 val activity = lazyPagingItems[index]
                 if (activity != null) {
                     ActivityRow(activity = activity, account = account)
@@ -240,7 +245,6 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                 modifier = Modifier.padding(start = 10.dp, top = 4.dp, bottom = 16.dp),
             )
         }
-        Spacer(Modifier.weight(1f))
         HorizontalDivider(color = MaterialTheme.colorScheme.primary)
     }
 }
@@ -253,18 +257,18 @@ fun ApplicationName(
 ) {
     var name by remember { mutableStateOf("") }
 
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            if (ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] == null) {
-                val app = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
-                app?.let {
-                    name = it.application.name
-                    ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"] = it.application.name
-                }
-            } else {
-                ApplicationNameCache.names["${account.npub.toShortenHex()}-$key"]?.let {
-                    name = it
-                }
+    LaunchedEffect(key) {
+        val cacheKey = "${account.npub.toShortenHex()}-$key"
+        val cached = ApplicationNameCache.names[cacheKey]
+        if (cached != null) {
+            name = cached
+        } else {
+            val appName = withContext(Dispatchers.IO) {
+                Amber.instance.getDatabase(account.npub).dao().getAppName(key)
+            }
+            if (appName != null) {
+                name = appName
+                ApplicationNameCache.names[cacheKey] = appName
             }
         }
     }

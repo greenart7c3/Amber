@@ -13,6 +13,8 @@ import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Permission
 
+private const val MAX_CONTENT_LENGTH = 500
+
 @Dao
 interface HistoryDao {
     @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
@@ -37,6 +39,13 @@ interface HistoryDao {
 
     @Query("DELETE FROM history where pkKey = :pk")
     suspend fun deleteHistory(pk: String)
+
+    @Query("SELECT COUNT(*) FROM history")
+    suspend fun getCount(): Long
+
+    @Query("DELETE FROM history WHERE id NOT IN (SELECT id FROM history ORDER BY time DESC LIMIT :keepCount)")
+    @Transaction
+    suspend fun deleteExcessHistory(keepCount: Int): Int
 
     @Query("SELECT COUNT(*) FROM history WHERE time < :time")
     @Transaction
@@ -65,6 +74,7 @@ interface HistoryDao {
             val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
             val localEntity = entity.copy(
                 translatedPermission = permission.toLocalizedString(Amber.instance, true),
+                content = if (entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
             )
             innerAddHistory(localEntity)
             npub?.let {

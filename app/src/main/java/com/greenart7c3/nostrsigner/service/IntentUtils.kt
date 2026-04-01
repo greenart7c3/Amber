@@ -10,8 +10,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import androidx.compose.ui.text.intl.Locale
-import androidx.compose.ui.text.toLowerCase
 import androidx.core.net.toUri
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
@@ -58,6 +56,30 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 object IntentUtils {
+    // Compiled once at class load time; avoids recompiling the pattern on every isUrlEncoded() call.
+    private val URL_ENCODED_REGEX = Regex("%[0-9a-fA-F]{2}")
+
+    private fun parseSignerType(type: String?): SignerType = when (type) {
+        "sign_message" ->
+            SignerType.SIGN_MESSAGE
+        "sign_event" ->
+            SignerType.SIGN_EVENT
+        "get_public_key" ->
+            SignerType.GET_PUBLIC_KEY
+        "nip04_encrypt" ->
+            SignerType.NIP04_ENCRYPT
+        "nip04_decrypt" ->
+            SignerType.NIP04_DECRYPT
+        "nip44_encrypt" ->
+            SignerType.NIP44_ENCRYPT
+        "nip44_decrypt" ->
+            SignerType.NIP44_DECRYPT
+        "decrypt_zap_event" ->
+            SignerType.DECRYPT_ZAP_EVENT
+        else ->
+            SignerType.INVALID
+    }
+
     fun decodeData(data: String, replace: Boolean = true, decodeData: Boolean = true): String {
         if (!decodeData) {
             if (!replace) return data.replace("nostrsigner:", "")
@@ -67,11 +89,7 @@ object IntentUtils {
         return URLDecoder.decode(data.replace("nostrsigner:", "").replace("+", "%2b"), "utf-8")
     }
 
-    fun isUrlEncoded(input: String): Boolean {
-        // Regex matches a '%' followed by two hex digits (0-9, a-f, A-F)
-        val regex = Regex("%[0-9a-fA-F]{2}")
-        return regex.containsMatchIn(input)
-    }
+    fun isUrlEncoded(input: String): Boolean = URL_ENCODED_REGEX.containsMatchIn(input)
 
     private suspend fun getIntentDataWithoutExtras(
         context: Context,
@@ -103,41 +121,19 @@ object IntentUtils {
             var callbackUrl: String? = null
             var returnType = ReturnType.SIGNATURE
             var appName = ""
-            parameters.joinToString("?").split("&").forEach {
+            // flatMap avoids building an intermediate joined string before splitting on "&"
+            parameters.flatMap { it.split("&") }.forEach {
                 val params = it.split("=").toMutableList()
                 val parameter = params.removeAt(0)
                 val parameterData = params.joinToString("=")
-                if (parameter == "type") {
-                    type =
-                        when (parameterData) {
-                            "sign_message" -> SignerType.SIGN_MESSAGE
-                            "sign_event" -> SignerType.SIGN_EVENT
-                            "get_public_key" -> SignerType.GET_PUBLIC_KEY
-                            "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-                            "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-                            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-                            "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-                            else -> SignerType.INVALID
-                        }
-                }
-                if (parameter.toLowerCase(Locale.current) == "pubkey") {
-                    pubKey = parameterData
-                }
-                if (parameter == "compressionType") {
-                    if (parameterData == "gzip") {
-                        compressionType = CompressionType.GZIP
-                    }
-                }
-                if (parameter == "callbackUrl") {
-                    callbackUrl = parameterData
-                }
-                if (parameter == "returnType") {
-                    if (parameterData == "event") {
-                        returnType = ReturnType.EVENT
-                    }
-                }
-                if (parameter == "appName") {
-                    appName = parameterData
+                when {
+                    parameter == "type" -> type = parseSignerType(parameterData)
+                    // lowercase() avoids the Compose Locale allocation used by the old toLowerCase(Locale.current)
+                    parameter.lowercase() == "pubkey" -> pubKey = parameterData
+                    parameter == "compressionType" -> if (parameterData == "gzip") compressionType = CompressionType.GZIP
+                    parameter == "callbackUrl" -> callbackUrl = parameterData
+                    parameter == "returnType" -> if (parameterData == "event") returnType = ReturnType.EVENT
+                    parameter == "appName" -> appName = parameterData
                 }
             }
 
@@ -268,18 +264,7 @@ object IntentUtils {
         route: String?,
         account: Account,
     ): IntentData? {
-        val type =
-            when (intent.extras?.getString("type")) {
-                "sign_message" -> SignerType.SIGN_MESSAGE
-                "sign_event" -> SignerType.SIGN_EVENT
-                "nip04_encrypt" -> SignerType.NIP04_ENCRYPT
-                "nip04_decrypt" -> SignerType.NIP04_DECRYPT
-                "nip44_decrypt" -> SignerType.NIP44_DECRYPT
-                "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
-                "get_public_key" -> SignerType.GET_PUBLIC_KEY
-                "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
-                else -> SignerType.INVALID
-            }
+        val type = parseSignerType(intent.extras?.getString("type"))
 
         if (type == SignerType.INVALID) {
             return null

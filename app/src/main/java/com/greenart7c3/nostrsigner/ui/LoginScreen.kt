@@ -855,6 +855,10 @@ fun LoginPage(
     val focusRequester = remember { FocusRequester() }
     var keyPair by remember { mutableStateOf(KeyPair()) }
     var isMnemonicMode by rememberSaveable { mutableStateOf(false) }
+    var isBunkerProxyMode by rememberSaveable { mutableStateOf(false) }
+    var bunkerUri by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(""))
+    }
     var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
     var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
     val clipboardManager = LocalClipboard.current
@@ -930,9 +934,10 @@ fun LoginPage(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 FilterChip(
-                                    selected = !isMnemonicMode,
+                                    selected = !isMnemonicMode && !isBunkerProxyMode,
                                     onClick = {
                                         isMnemonicMode = false
+                                        isBunkerProxyMode = false
                                         errorMessage = ""
                                     },
                                     label = { Text(stringResource(R.string.login_mode_private_key)) },
@@ -941,15 +946,47 @@ fun LoginPage(
                                     selected = isMnemonicMode,
                                     onClick = {
                                         isMnemonicMode = true
+                                        isBunkerProxyMode = false
                                         errorMessage = ""
                                     },
                                     label = { Text(stringResource(R.string.login_mode_recovery_phrase)) },
+                                )
+                                FilterChip(
+                                    selected = isBunkerProxyMode,
+                                    onClick = {
+                                        isBunkerProxyMode = true
+                                        isMnemonicMode = false
+                                        errorMessage = ""
+                                    },
+                                    label = { Text(stringResource(R.string.login_mode_bunker_proxy)) },
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            if (isMnemonicMode) {
+                            if (isBunkerProxyMode) {
+                                Text(stringResource(R.string.bunker_proxy_login_description))
+                                Spacer(modifier = Modifier.height(12.dp))
+                                OutlinedTextField(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    shape = RoundedCornerShape(18.dp),
+                                    value = bunkerUri,
+                                    onValueChange = { value ->
+                                        bunkerUri = value
+                                        if (errorMessage.isNotEmpty()) errorMessage = ""
+                                    },
+                                    placeholder = {
+                                        Text(text = stringResource(R.string.bunker_uri_hint))
+                                    },
+                                    keyboardOptions = KeyboardOptions(
+                                        autoCorrectEnabled = false,
+                                        keyboardType = KeyboardType.Uri,
+                                        imeAction = ImeAction.Go,
+                                    ),
+                                )
+                            } else if (isMnemonicMode) {
                                 Text(stringResource(R.string.enter_recovery_phrase_description))
 
                                 Spacer(modifier = Modifier.height(12.dp))
@@ -1174,48 +1211,38 @@ fun LoginPage(
                             }
 
                             AmberButton(
-                                enabled = if (isMnemonicMode) {
-                                    mnemonicWords.all { it.isNotBlank() }
-                                } else {
-                                    key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())
+                                enabled = when {
+                                    isBunkerProxyMode -> bunkerUri.text.isNotBlank()
+                                    isMnemonicMode -> mnemonicWords.all { it.isNotBlank() }
+                                    else -> key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())
                                 },
                                 onClick = {
-                                    if (isMnemonicMode) {
-                                        val mnemonicStr = mnemonicWords.joinToString(" ")
-                                        Amber.instance.applicationIOScope.launch {
-                                            isLoading = true
-                                            try {
-                                                val isValid = accountViewModel.isValidKey(mnemonicStr, "")
-                                                isLoading = false
-                                                if (isValid.first != null) {
-                                                    keyPair = isValid.first!!
-                                                    keyboardController?.hide()
-                                                    scope.launch {
-                                                        delay(200)
-                                                        pageState.animateScrollToPage(1)
+                                    when {
+                                        isBunkerProxyMode -> {
+                                            if (bunkerUri.text.isBlank()) {
+                                                errorMessage = context.getString(R.string.bunker_uri_required)
+                                            } else {
+                                                Amber.instance.applicationIOScope.launch {
+                                                    isLoading = true
+                                                    val (success, error) = accountViewModel.loginWithBunker(bunkerUri.text.trim())
+                                                    isLoading = false
+                                                    if (success) {
+                                                        keyboardController?.hide()
+                                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                                            onFinish()
+                                                        }
+                                                    } else {
+                                                        errorMessage = error
                                                     }
-                                                } else {
-                                                    errorMessage = isValid.second
                                                 }
-                                            } catch (e: Exception) {
-                                                errorMessage = e.message.toString()
-                                                isLoading = false
                                             }
                                         }
-                                    } else {
-                                        if (key.value.text.isBlank()) {
-                                            errorMessage = keyRequiredMessage
-                                        }
-
-                                        if (needsPassword.value && password.value.text.isBlank()) {
-                                            errorMessage = passwordRequiredMessage
-                                        }
-
-                                        if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                        isMnemonicMode -> {
+                                            val mnemonicStr = mnemonicWords.joinToString(" ")
                                             Amber.instance.applicationIOScope.launch {
                                                 isLoading = true
                                                 try {
-                                                    val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                    val isValid = accountViewModel.isValidKey(mnemonicStr, "")
                                                     isLoading = false
                                                     if (isValid.first != null) {
                                                         keyPair = isValid.first!!
@@ -1233,9 +1260,45 @@ fun LoginPage(
                                                 }
                                             }
                                         }
+                                        else -> {
+                                            if (key.value.text.isBlank()) {
+                                                errorMessage = keyRequiredMessage
+                                            }
+
+                                            if (needsPassword.value && password.value.text.isBlank()) {
+                                                errorMessage = passwordRequiredMessage
+                                            }
+
+                                            if (key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())) {
+                                                Amber.instance.applicationIOScope.launch {
+                                                    isLoading = true
+                                                    try {
+                                                        val isValid = accountViewModel.isValidKey(key.value.text.filter { value -> value.code in 33..126 || value.code == 32 }.toLowerCase(Locale.current).trim(), password.value.text)
+                                                        isLoading = false
+                                                        if (isValid.first != null) {
+                                                            keyPair = isValid.first!!
+                                                            keyboardController?.hide()
+                                                            scope.launch {
+                                                                delay(200)
+                                                                pageState.animateScrollToPage(1)
+                                                            }
+                                                        } else {
+                                                            errorMessage = isValid.second
+                                                        }
+                                                    } catch (e: Exception) {
+                                                        errorMessage = e.message.toString()
+                                                        isLoading = false
+                                                    }
+                                                }
+                                            }
+                                        }
                                     }
                                 },
-                                text = stringResource(R.string.next),
+                                text = if (isBunkerProxyMode) {
+                                    stringResource(R.string.use_bunker_proxy)
+                                } else {
+                                    stringResource(R.string.next)
+                                },
                             )
                         }
                     }

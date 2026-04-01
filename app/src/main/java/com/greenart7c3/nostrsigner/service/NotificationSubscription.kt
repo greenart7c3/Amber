@@ -25,6 +25,7 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -51,7 +52,11 @@ class NotificationSubscription(
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EventMessage) {
             if (subIds.containsValue(msg.subId)) {
-                eventNotificationConsumer.consume(msg.event, relay.url)
+                // Check if this is a response from a remote bunker for a proxy account.
+                // If so, BunkerProxyClient handles it and we skip normal consumer processing.
+                if (!BunkerProxyClient.tryHandleResponse(msg.event)) {
+                    eventNotificationConsumer.consume(msg.event, relay.url)
+                }
             }
         }
         super.onIncomingMessage(relay, msgStr, msg)
@@ -115,6 +120,31 @@ class NotificationSubscription(
                             Filter(
                                 kinds = listOf(NostrConnectEvent.KIND),
                                 tags = mapOf("p" to listOf(account.hexKey)),
+                                limit = 1,
+                                since = since,
+                            ),
+                        )
+                    },
+                )
+            }
+
+            // For bunker proxy accounts, subscribe for responses from the remote bunker
+            // on the proxy's relays, tagged with the local client pubkey.
+            val proxy = account.bunkerProxy
+            if (proxy != null) {
+                val clientPubKey = account.signer.keyPair.pubKey.toHexKey()
+                val proxySubKey = "${account.hexKey}_proxy"
+                if (!subIds.containsKey(proxySubKey)) {
+                    subIds[proxySubKey] = UUID.randomUUID().toString()
+                }
+                val proxyRelays = proxy.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
+                client.openReqSubscription(
+                    subIds[proxySubKey]!!,
+                    proxyRelays.associateWith {
+                        listOf(
+                            Filter(
+                                kinds = listOf(NostrConnectEvent.KIND),
+                                tags = mapOf("p" to listOf(clientPubKey)),
                                 limit = 1,
                                 since = since,
                             ),

@@ -38,6 +38,7 @@ class Account(
     val picture: MutableStateFlow<String>,
     signPolicy: Int,
     didBackup: Boolean,
+    val bunkerProxy: BunkerProxy? = null,
 ) {
     var signPolicy: Int = signPolicy
         set(value) {

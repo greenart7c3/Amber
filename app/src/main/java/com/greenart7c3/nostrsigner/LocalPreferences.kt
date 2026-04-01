@@ -10,6 +10,7 @@ import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.BunkerProxy
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
@@ -34,6 +35,9 @@ private enum class PrefKeys(val key: String) {
     LAST_METADATA_UPDATE("last_metadata_update"),
     LAST_CHECK("last_check"),
     DID_BACKUP("did_backup"),
+    BUNKER_PROXY_REMOTE_PUBKEY("bunker_proxy_remote_pubkey"),
+    BUNKER_PROXY_RELAYS("bunker_proxy_relays"),
+    BUNKER_PROXY_SECRET("bunker_proxy_secret"),
 }
 
 private enum class SettingsKeys(val key: String) {
@@ -68,9 +72,11 @@ object LocalPreferences {
     private var accountCache = LargeCache<String, Account>()
 
     fun allSavedAccounts(context: Context): List<AccountInfo> = savedAccounts(context).map { npub ->
+        val isBunkerProxy = sharedPrefs(context, npub)
+            .getString(PrefKeys.BUNKER_PROXY_REMOTE_PUBKEY.key, null) != null
         AccountInfo(
             npub,
-            true,
+            !isBunkerProxy,
         )
     }.toSet().toList()
 
@@ -389,6 +395,15 @@ object LocalPreferences {
                 putString(PrefKeys.PROFILE_URL.key, account.picture.value)
                 putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
                 putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
+                if (account.bunkerProxy != null) {
+                    putString(PrefKeys.BUNKER_PROXY_REMOTE_PUBKEY.key, account.bunkerProxy.remotePubKey)
+                    putString(PrefKeys.BUNKER_PROXY_RELAYS.key, account.bunkerProxy.relays.joinToString(",") { it.url })
+                    putString(PrefKeys.BUNKER_PROXY_SECRET.key, account.bunkerProxy.secret)
+                } else {
+                    remove(PrefKeys.BUNKER_PROXY_REMOTE_PUBKEY.key)
+                    remove(PrefKeys.BUNKER_PROXY_RELAYS.key)
+                    remove(PrefKeys.BUNKER_PROXY_SECRET.key)
+                }
             }
         }
 
@@ -494,6 +509,18 @@ object LocalPreferences {
             val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
             val didBackup = getBoolean(PrefKeys.DID_BACKUP.key, true)
 
+            val remotePubKey = getString(PrefKeys.BUNKER_PROXY_REMOTE_PUBKEY.key, null)
+            val bunkerProxy = if (remotePubKey != null) {
+                val relaysStr = getString(PrefKeys.BUNKER_PROXY_RELAYS.key, "") ?: ""
+                val secret = getString(PrefKeys.BUNKER_PROXY_SECRET.key, "") ?: ""
+                val relays = relaysStr.split(",").filter { it.isNotBlank() }.mapNotNull {
+                    com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer.normalizeOrNull(it)
+                }
+                BunkerProxy(remotePubKey = remotePubKey, relays = relays, secret = secret)
+            } else {
+                null
+            }
+
             val account =
                 Account(
                     signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
@@ -503,6 +530,7 @@ object LocalPreferences {
                     picture = MutableStateFlow(picture),
                     signPolicy = signPolicy,
                     didBackup = didBackup,
+                    bunkerProxy = bunkerProxy,
                 )
             accountCache.put(npub, account)
             return account

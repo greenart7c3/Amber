@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
+import com.greenart7c3.nostrsigner.service.BunkerProxyClient
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -185,6 +186,114 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
+    private suspend fun notifyProxy(
+        event: Event,
+        acc: Account,
+        request: String,
+        relay: NormalizedRelayUrl,
+        encryptionType: EncryptionType,
+    ) {
+        val logDao = Amber.instance.getLogDatabase(acc.npub).dao()
+        logDao.insertLog(
+            LogEntity(0, "nostrsigner", "bunker proxy forward", request, System.currentTimeMillis()),
+        )
+
+        val bunkerRequest = JacksonMapper.mapper.readValue(request, com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest::class.java)
+        val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
+
+        // get_public_key and ping are handled locally — no need to round-trip the remote bunker
+        if (type == SignerType.GET_PUBLIC_KEY) {
+            BunkerRequestUtils.sendBunkerResponse(
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = AmberBunkerRequest(
+                    request = bunkerRequest,
+                    localKey = event.pubKey,
+                    relays = listOf(relay),
+                    currentAccount = acc.npub,
+                    nostrConnectSecret = "",
+                    closeApplication = false,
+                    name = "",
+                    signedEvent = null,
+                    encryptedData = null,
+                    encryptionType = encryptionType,
+                    isNostrConnectUri = false,
+                ),
+                bunkerResponse = com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse(bunkerRequest.id, acc.hexKey, null),
+                relays = listOf(relay),
+                onLoading = {},
+                onDone = {},
+            )
+            return
+        }
+        if (type == SignerType.PING) {
+            BunkerRequestUtils.sendBunkerResponse(
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = AmberBunkerRequest(
+                    request = bunkerRequest,
+                    localKey = event.pubKey,
+                    relays = listOf(relay),
+                    currentAccount = acc.npub,
+                    nostrConnectSecret = "",
+                    closeApplication = false,
+                    name = "",
+                    signedEvent = null,
+                    encryptedData = null,
+                    encryptionType = encryptionType,
+                    isNostrConnectUri = false,
+                ),
+                bunkerResponse = com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse(bunkerRequest.id, "pong", null),
+                relays = listOf(relay),
+                onLoading = {},
+                onDone = {},
+            )
+            return
+        }
+        if (type == SignerType.INVALID) return
+
+        // Forward all other requests to the remote bunker
+        val method = bunkerRequest.method
+        val params = bunkerRequest.params.toList()
+        val result = BunkerProxyClient.sendRequest(acc, method, params)
+
+        val amberRequest = AmberBunkerRequest(
+            request = bunkerRequest,
+            localKey = event.pubKey,
+            relays = listOf(relay),
+            currentAccount = acc.npub,
+            nostrConnectSecret = "",
+            closeApplication = false,
+            name = "",
+            signedEvent = null,
+            encryptedData = null,
+            encryptionType = encryptionType,
+            isNostrConnectUri = false,
+        )
+
+        if (result != null) {
+            BunkerRequestUtils.sendBunkerResponse(
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = amberRequest,
+                bunkerResponse = com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse(bunkerRequest.id, result, null),
+                relays = listOf(relay),
+                onLoading = {},
+                onDone = {},
+            )
+        } else {
+            BunkerRequestUtils.sendBunkerResponse(
+                context = applicationContext,
+                account = acc,
+                bunkerRequest = amberRequest,
+                bunkerResponse = com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse(bunkerRequest.id, "", "remote bunker unavailable"),
+                relays = listOf(relay),
+                onLoading = {},
+                onDone = {},
+            )
+        }
+    }
+
     private suspend fun notify(
         event: Event,
         acc: Account,
@@ -193,6 +302,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         encryptionType: EncryptionType,
         connectionPrivKey: String = "",
     ) {
+        // Proxy accounts delegate all operations to the remote bunker
+        if (acc.bunkerProxy != null) {
+            notifyProxy(event, acc, request, relay, encryptionType)
+            return
+        }
+
         val responseRelay = listOf(relay)
         val database = Amber.instance.getDatabase(acc.npub)
         val dao = database.dao()

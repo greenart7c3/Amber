@@ -6,8 +6,11 @@ import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.BunkerProxy
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.BunkerProxyClient
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
@@ -92,6 +95,69 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         } catch (e: Exception) {
             return Pair(null, e.message ?: "Unknown error")
         }
+    }
+
+    /**
+     * Logs in using a remote NIP-46 bunker URI (`bunker://...`).
+     *
+     * Amber generates a local ephemeral key pair to use as the NIP-46 client,
+     * performs the `connect` + `get_public_key` handshake with the remote bunker,
+     * and creates a proxy [Account] whose public key is the one reported by the
+     * remote bunker.  All subsequent signing/encryption requests for this account
+     * will be transparently forwarded to the remote bunker.
+     *
+     * @return A pair of (success, errorMessage). On success the second element is empty.
+     */
+    suspend fun loginWithBunker(bunkerUri: String): Pair<Boolean, String> {
+        val proxy = BunkerProxy.parse(bunkerUri)
+            ?: return Pair(false, "Invalid bunker URI — expected bunker://...")
+
+        if (proxy.relays.isEmpty()) {
+            return Pair(false, "Bunker URI contains no relay URLs")
+        }
+
+        // Generate a fresh ephemeral key pair to use as the NIP-46 client identity
+        val clientKeyPair = KeyPair()
+        val clientSigner = NostrSignerInternal(clientKeyPair)
+
+        val userPubKey = BunkerProxyClient.connect(clientSigner, proxy)
+            ?: return Pair(false, "Failed to connect to remote bunker — check the URI and that the bunker is online")
+
+        val userPubKeyBytes = try {
+            userPubKey.hexToByteArray()
+        } catch (_: Exception) {
+            return Pair(false, "Remote bunker returned an invalid public key: $userPubKey")
+        }
+
+        val account = Account(
+            signer = clientSigner,
+            hexKey = userPubKey,
+            npub = userPubKeyBytes.toNpub(),
+            name = MutableStateFlow(""),
+            picture = MutableStateFlow(""),
+            signPolicy = 1,
+            didBackup = true,
+            bunkerProxy = proxy,
+        )
+
+        if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
+            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+        }
+        LocalPreferences.updatePrefsForLogin(
+            context = Amber.instance,
+            account = account,
+            pubKey = userPubKey,
+            privKey = clientKeyPair.privKey!!.toHexKey(),
+            seedWords = null,
+        )
+
+        startUI(account, null)
+
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.notificationSubscription.updateFilter()
+        }
+
+        return Pair(true, "")
     }
 
     suspend fun startUI(

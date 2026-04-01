@@ -381,6 +381,12 @@
     <string name="show_seed_words">Show seed words</string>
     <string name="login_mode_private_key">Private key</string>
     <string name="login_mode_recovery_phrase">Recovery phrase</string>
+    <string name="login_mode_bunker_proxy">Bunker proxy</string>
+    <string name="bunker_proxy_login_description">Connect to a remote NIP-46 bunker. All signing requests will be forwarded to that bunker. Paste the bunker URI provided by your remote signer.</string>
+    <string name="bunker_uri_hint">bunker://&lt;pubkey&gt;?relay=wss://…</string>
+    <string name="bunker_uri_required">Bunker URI is required</string>
+    <string name="connecting_to_bunker">Connecting to bunker…</string>
+    <string name="use_bunker_proxy">Use remote bunker</string>
     <string name="enter_recovery_phrase_description">Enter each word of your seed phrase in order. You can also paste the full phrase using the clipboard button.</string>
     <string name="mnemonic_12_words">12 words</string>
     <string name="mnemonic_24_words">24 words</string>

@@ -859,6 +859,7 @@ fun LoginPage(
     var bunkerUri by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(""))
     }
+    var bunkerDialogOpen by rememberSaveable { mutableStateOf(false) }
     var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
     var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
     val clipboardManager = LocalClipboard.current
@@ -985,6 +986,25 @@ fun LoginPage(
                                         keyboardType = KeyboardType.Uri,
                                         imeAction = ImeAction.Go,
                                     ),
+                                    leadingIcon = {
+                                        if (bunkerDialogOpen) {
+                                            SimpleQrCodeScanner { content ->
+                                                bunkerDialogOpen = false
+                                                if (!content.isNullOrEmpty()) {
+                                                    bunkerUri = TextFieldValue(content)
+                                                    if (errorMessage.isNotEmpty()) errorMessage = ""
+                                                }
+                                            }
+                                        }
+                                        IconButton(onClick = { bunkerDialogOpen = true }) {
+                                            Icon(
+                                                painter = painterResource(R.drawable.ic_qrcode),
+                                                contentDescription = null,
+                                                modifier = Modifier.size(24.dp),
+                                                tint = MaterialTheme.colorScheme.primary,
+                                            )
+                                        }
+                                    },
                                 )
                             } else if (isMnemonicMode) {
                                 Text(stringResource(R.string.enter_recovery_phrase_description))

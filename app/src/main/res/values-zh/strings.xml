@@ -150,7 +150,7 @@
     <string name="event_kind_10">群组聊天线程回复</string>
     <string name="event_kind_11">群组消息</string>
     <string name="event_kind_12">群组消息回复</string>
-    <string name="event_kind_13">Seal 封装</string>
+    <string name="event_kind_13">封章</string>
     <string name="event_kind_16">通用转发</string>
     <string name="event_kind_40">创建频道</string>
     <string name="event_kind_41">频道元数据</string>
@@ -370,12 +370,12 @@
     <string name="seed_words_title">恢复口令</string>
     <string name="seed_words_explainer">这些单词能够在账户丢失时找回密钥。请在安全的位置记下它们。</string>
     <string name="show_seed_words">显示种子助记词</string>
-    <string name="login_mode_private_key">Private key</string>
-    <string name="login_mode_recovery_phrase">Recovery phrase</string>
-    <string name="enter_recovery_phrase_description">Enter each word of your seed phrase in order. You can also paste the full phrase using the clipboard button.</string>
-    <string name="mnemonic_12_words">12 words</string>
-    <string name="mnemonic_24_words">24 words</string>
-    <string name="mnemonic_words_entered">%1$d of %2$d words entered</string>
+    <string name="login_mode_private_key">私钥</string>
+    <string name="login_mode_recovery_phrase">恢复口令</string>
+    <string name="enter_recovery_phrase_description">按顺序输入您的助记词。您也可以使用剪贴板按钮粘贴完整的助记词。</string>
+    <string name="mnemonic_12_words">12 个单词</string>
+    <string name="mnemonic_24_words">24 个单词</string>
+    <string name="mnemonic_words_entered">已输入 %2$d 个单词中的 %1$d 个</string>
     <string name="sign_policy">签署策略</string>
     <string name="handle_application_permissions">如何处理该应用的权限？</string>
     <string name="sign_policy_manual_new_app">手动批复每项权限</string>
@@ -505,7 +505,7 @@
     <string name="nostr_app">nostrapps.com</string>
     <string name="service">服务</string>
     <string name="service_description">服务后台通知</string>
-    <string name="close_application">接受或拒绝权限时关闭应用</string>
+    <string name="close_application">接受或拒绝权限后关闭应用</string>
     <string name="clear_logs_and_activity">清除日志和活动</string>
     <string name="deleting_old_log_entries_from">从 %1$s 删除旧日志记录</string>
     <string name="deleting_old_history_entries">正在删除 %1$d 旧历史记录</string>
@@ -664,8 +664,8 @@
     <string name="for_all_relays">所有中继</string>
     <string name="relay_auth_scope">验证范围</string>
     <string name="encryption_scope">加密范围</string>
-    <string name="for_this_method_only">仅限该方法</string>
-    <string name="for_all_methods">所有方法</string>
+    <string name="for_this_method_only">仅此方式</string>
+    <string name="for_all_methods">所有方式</string>
     <string name="event_kind_10086">索引器中继</string>
     <string name="event_kind_10087">代理中继</string>
     <string name="event_kind_100">广播中继</string>
@@ -679,8 +679,8 @@
     <string name="event_kind_15128">nsite 根清单</string>
     <string name="event_kind_10443">MLS 密钥包</string>
     <string name="event_kind_16767">活动用户资料主题</string>
-    <string name="auth_whitelist">Client auth whitelist</string>
-    <string name="auth_whitelist_description">When the whitelist is non-empty, relay client authentication (NIP-42) will only be allowed for relays in the list. Auth requests from other relays will be rejected automatically.</string>
-    <string name="add_relay_to_whitelist">Add relay to whitelist</string>
-    <string name="relay_not_in_auth_whitelist">Relay is not in the auth whitelist</string>
+    <string name="auth_whitelist">客户端验证白名单</string>
+    <string name="auth_whitelist_description">当白名单不为空时，只允许列表中的中继上进行中继客户端身份验证(NIP-42)。其他中继的验证请求将被自动拒绝。</string>
+    <string name="add_relay_to_whitelist">添加中继到白名单</string>
+    <string name="relay_not_in_auth_whitelist">中继不在验证白名单中</string>
 </resources>

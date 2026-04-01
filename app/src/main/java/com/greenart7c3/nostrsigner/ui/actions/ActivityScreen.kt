@@ -24,6 +24,7 @@ import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
@@ -62,6 +63,7 @@ fun ActivityScreen(
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
 
     val textFieldState by remember { mutableStateOf(TextFieldState(initialText = searchQuery)) }
+    val searchResults = remember(context) { supportedKindNumbers.map { it.toLocalizedString(context, true) } }
 
     Column(
         modifier = modifier.padding(top = topPadding),
@@ -74,7 +76,7 @@ fun ActivityScreen(
             onSearch = {
                 searchQuery = it
             },
-            searchResults = supportedKindNumbers.map { it.toLocalizedString(context, true) },
+            searchResults = searchResults,
         )
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -84,7 +86,10 @@ fun ActivityScreen(
                 bottom = paddingValues.calculateBottomPadding(),
             ),
         ) {
-            items(lazyPagingItems.itemCount) { index ->
+            items(
+                count = lazyPagingItems.itemCount,
+                key = lazyPagingItems.itemKey { it.id },
+            ) { index ->
                 val activity = lazyPagingItems[index]
                 activity?.let {
                     ActivityRow(activity = activity, account = account)

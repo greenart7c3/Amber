@@ -29,6 +29,13 @@ interface LogDao {
     @Query("SELECT * FROM amber_log where url = :url ORDER BY time DESC")
     fun getLogsByUrlPaging(url: String): PagingSource<Int, LogEntity>
 
+    @Query("SELECT COUNT(*) FROM amber_log")
+    suspend fun getCount(): Long
+
+    @Query("DELETE FROM amber_log WHERE id NOT IN (SELECT id FROM amber_log ORDER BY time DESC LIMIT :keepCount)")
+    @Transaction
+    suspend fun deleteExcessLogs(keepCount: Int): Int
+
     @Query("DELETE FROM amber_log")
     @Transaction
     suspend fun clearLogs()

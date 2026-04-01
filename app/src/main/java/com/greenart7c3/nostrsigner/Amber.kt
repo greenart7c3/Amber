@@ -14,6 +14,8 @@ import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
 import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.ExistingWorkPolicy
+import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import coil3.EventListener
@@ -207,18 +209,31 @@ class Amber :
     }
 
     private fun startCleanLogsAlarm() {
-        val workRequest = PeriodicWorkRequestBuilder<ClearLogsWorker>(
+        val workManager = WorkManager.getInstance(this)
+
+        // Run an immediate one-time cleanup on every startup to handle accumulated data.
+        // KEEP policy ensures only one instance runs at a time if the app is restarted quickly.
+        val immediateRequest = OneTimeWorkRequestBuilder<ClearLogsWorker>()
+            .addTag("clearLogsWorkOneTime")
+            .build()
+        workManager.enqueueUniqueWork(
+            "ClearLogsWorkerOneTime",
+            ExistingWorkPolicy.KEEP,
+            immediateRequest,
+        )
+
+        // Also schedule a daily periodic run.
+        // KEEP policy preserves the existing schedule so app restarts don't reset the timer.
+        val periodicRequest = PeriodicWorkRequestBuilder<ClearLogsWorker>(
             24,
             TimeUnit.HOURS,
         )
-            .setInitialDelay(5, TimeUnit.MINUTES) // Delay first run by 5 minutes
             .addTag("clearLogsWork")
             .build()
-
-        WorkManager.getInstance(this).enqueueUniquePeriodicWork(
+        workManager.enqueueUniquePeriodicWork(
             "ClearLogsWorker",
-            ExistingPeriodicWorkPolicy.REPLACE,
-            workRequest,
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodicRequest,
         )
     }
 

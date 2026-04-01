@@ -46,11 +46,15 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
+import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
@@ -111,18 +115,43 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("No tagged users found in event")
             return
         }
-        val acc = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())
+
+        // First try to match the tagged key to a logged-in account (real pubkey)
+        var acc = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, taggedKey.toNPub())
+        var connectionPrivKey = ""
+
+        // If not a direct account match, search for a connection with this local pubkey
+        if (acc == null) {
+            val accounts = LocalPreferences.allSavedAccounts(applicationContext)
+            outer@ for (accountInfo in accounts) {
+                val account = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, accountInfo.npub)
+                    ?: continue
+                val connections = kotlinx.coroutines.runBlocking {
+                    Amber.instance.getDatabase(account.npub).dao().getAllWithLocalKey(account.hexKey)
+                }
+                val taggedNpub = taggedKey.toNPub()
+                for (conn in connections) {
+                    if (conn.localKey.isNotEmpty() && conn.localPubKey.hexToByteArray().toNpub() == taggedNpub) {
+                        acc = account
+                        connectionPrivKey = conn.localKey
+                        break@outer
+                    }
+                }
+            }
+        }
+
         if (acc == null) {
             saveLog("Tagged account not logged in")
             return
         }
-        notify(event, acc, relay)
+        notify(event, acc, relay, connectionPrivKey)
     }
 
     private fun notify(
         event: Event,
         acc: Account,
         relay: NormalizedRelayUrl,
+        connectionPrivKey: String = "",
     ) {
         if (event.content.isEmpty()) return
 
@@ -146,8 +175,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         Amber.instance.applicationIOScope.launch {
-            val decrypted = acc.decrypt(event.content, event.pubKey)
-            notify(event, acc, decrypted, relay, encryptionType)
+            val decrypted = if (connectionPrivKey.isNotEmpty()) {
+                val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
+                connSigner.decrypt(event.content, event.pubKey)
+            } else {
+                acc.decrypt(event.content, event.pubKey)
+            }
+            notify(event, acc, decrypted, relay, encryptionType, connectionPrivKey)
         }
     }
 
@@ -157,6 +191,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         request: String,
         relay: NormalizedRelayUrl,
         encryptionType: EncryptionType,
+        connectionPrivKey: String = "",
     ) {
         val responseRelay = listOf(relay)
         val database = Amber.instance.getDatabase(acc.npub)
@@ -215,6 +250,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
+            signerPrivKey = connectionPrivKey,
         )
 
         var amberEvent: AmberEvent? = null
@@ -314,6 +350,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
+            signerPrivKey = connectionPrivKey,
         )
 
         if (type == SignerType.SWITCH_RELAYS) {

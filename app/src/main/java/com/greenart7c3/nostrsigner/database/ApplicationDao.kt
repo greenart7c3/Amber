@@ -42,6 +42,9 @@ interface ApplicationDao {
     @Transaction
     suspend fun getBySecret(secret: String): ApplicationWithPermissions?
 
+    @Query("SELECT * FROM application WHERE pubKey = :pubKey AND localKey != ''")
+    suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity>
+
     @Query("UPDATE applicationPermission set acceptUntil = 0, rejectUntil = 0, rememberType = 0 where (acceptUntil < :time OR rejectUntil < :time) AND rememberType <> 4")
     fun updateExpiredPermissions(time: Long)
 

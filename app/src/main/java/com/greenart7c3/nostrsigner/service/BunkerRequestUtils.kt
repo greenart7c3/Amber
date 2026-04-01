@@ -9,6 +9,7 @@ import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptionType
@@ -20,9 +21,12 @@ import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -123,20 +127,27 @@ object BunkerRequestUtils {
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
-        val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
-        var encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-            account.nip44Encrypt(
-                plainText,
-                bunkerRequest.localKey,
-            )
+        val connSigner = if (bunkerRequest.signerPrivKey.isNotEmpty()) {
+            NostrSignerInternal(KeyPair(privKey = bunkerRequest.signerPrivKey.hexToByteArray()))
         } else {
-            account.nip04Encrypt(
-                plainText,
-                bunkerRequest.localKey,
-            )
+            null
         }
 
-        var signedEvent = account.signSync<Event>(
+        val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
+        var encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+            connSigner?.nip44Encrypt(plainText, bunkerRequest.localKey)
+                ?: account.nip44Encrypt(plainText, bunkerRequest.localKey)
+        } else {
+            connSigner?.nip04Encrypt(plainText, bunkerRequest.localKey)
+                ?: account.nip04Encrypt(plainText, bunkerRequest.localKey)
+        }
+
+        var signedEvent = connSigner?.signerSync?.sign<Event>(
+            TimeUtils.now(),
+            NostrConnectEvent.KIND,
+            arrayOf(arrayOf("p", localKey)),
+            encryptedContent,
+        ) ?: account.signSync<Event>(
             TimeUtils.now(),
             NostrConnectEvent.KIND,
             arrayOf(arrayOf("p", localKey)),
@@ -152,14 +163,20 @@ object BunkerRequestUtils {
                 timeoutInSeconds = 5,
             )
             if (!result) {
-                encryptedContent =
-                    if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-                        account.nip44Encrypt(plainText, bunkerRequest.localKey)
-                    } else {
-                        account.nip04Encrypt(plainText, bunkerRequest.localKey)
-                    }
+                encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+                    connSigner?.nip44Encrypt(plainText, bunkerRequest.localKey)
+                        ?: account.nip44Encrypt(plainText, bunkerRequest.localKey)
+                } else {
+                    connSigner?.nip04Encrypt(plainText, bunkerRequest.localKey)
+                        ?: account.nip04Encrypt(plainText, bunkerRequest.localKey)
+                }
 
-                signedEvent = account.signSync(
+                signedEvent = connSigner?.signerSync?.sign(
+                    createdAt = TimeUtils.now(),
+                    kind = NostrConnectEvent.KIND,
+                    tags = arrayOf(arrayOf("p", localKey)),
+                    content = encryptedContent,
+                ) ?: account.signSync(
                     createdAt = TimeUtils.now(),
                     kind = NostrConnectEvent.KIND,
                     tags = arrayOf(arrayOf("p", localKey)),
@@ -284,7 +301,7 @@ object BunkerRequestUtils {
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
-            val application =
+            var application =
                 savedApplication ?: ApplicationWithPermissions(
                     application = ApplicationEntity(
                         key,
@@ -305,6 +322,14 @@ object BunkerRequestUtils {
                     permissions = mutableListOf(),
                 )
             application.application.isConnected = true
+
+            // Ensure each connection has its own unique signing key
+            if (application.application.localKey.isBlank() && bunkerRequest.request is BunkerRequestConnect && savedApplication == null) {
+                val newPrivKey = generateBunkerPrivKey()
+                application = application.copy(
+                    application = application.application.copy(localKey = newPrivKey),
+                )
+            }
 
             val activity = Amber.instance.getMainActivity()
             activity?.intent = null
@@ -391,10 +416,16 @@ object BunkerRequestUtils {
                 Amber.instance.client.connect()
             }
 
+            val signerPrivKey = application.application.localKey
+            val bunkerRequestWithKey = if (signerPrivKey.isNotEmpty() && bunkerRequest.signerPrivKey.isEmpty()) {
+                bunkerRequest.copy(signerPrivKey = signerPrivKey)
+            } else {
+                bunkerRequest
+            }
             sendBunkerResponse(
                 context,
                 account,
-                bunkerRequest,
+                bunkerRequestWithKey,
                 BunkerResponse(bunkerRequest.request.id, response, null),
                 application.application.relays.ifEmpty { relays },
                 onLoading,
@@ -474,6 +505,14 @@ object BunkerRequestUtils {
                     permissions = mutableListOf(),
                 )
 
+            // Use connection-specific key if available; fall back to what's in the request
+            val effectiveSignerPrivKey = application.application.localKey.ifEmpty { bunkerRequest.signerPrivKey }
+            val effectiveBunkerRequest = if (effectiveSignerPrivKey.isNotEmpty() && bunkerRequest.signerPrivKey != effectiveSignerPrivKey) {
+                bunkerRequest.copy(signerPrivKey = effectiveSignerPrivKey)
+            } else {
+                bunkerRequest
+            }
+
             clearRequests()
             EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
             val activity = Amber.instance.getMainActivity()
@@ -515,7 +554,7 @@ object BunkerRequestUtils {
 
             AmberUtils.sendBunkerError(
                 account,
-                bunkerRequest,
+                effectiveBunkerRequest,
                 relays,
                 Amber.instance,
                 closeApplication = application.application.closeApplication,

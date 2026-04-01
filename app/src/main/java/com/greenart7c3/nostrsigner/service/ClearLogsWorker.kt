@@ -47,10 +47,6 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                     Log.d(Amber.TAG, "Trimmed $excessLogs excess log entries (cap: $MAX_LOG_ENTRIES)")
                 }
 
-                // Reclaim freed space from SQLite pages
-                logDatabase.openHelper.writableDatabase.execSQL("VACUUM")
-                historyDatabase.openHelper.writableDatabase.execSQL("VACUUM")
-
                 val database = Amber.instance.getDatabase(it.npub)
                 database.dao().updateExpiredPermissions(TimeUtils.now())
                 val deleted = database.dao().deleteOldApplications(now / 1000)

@@ -1,21 +1,29 @@
 package com.greenart7c3.nostrsigner
 
 import android.annotation.SuppressLint
+import android.app.Activity.RESULT_OK
 import android.content.Context
 import android.content.Intent
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
+import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.IntentData
+import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.service.BunkerProxyClient
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
+import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
+import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -138,6 +146,102 @@ class MainViewModel(val context: Context) : ViewModel() {
         }
     }
 
+    private suspend fun handleProxyIntent(
+        account: com.greenart7c3.nostrsigner.models.Account,
+        intentData: IntentData,
+        packageName: String?,
+    ) {
+        val result = when (intentData.type) {
+            SignerType.GET_PUBLIC_KEY -> account.hexKey
+            SignerType.PING -> "pong"
+            SignerType.SIGN_EVENT -> BunkerProxyClient.sendRequest(
+                account,
+                "sign_event",
+                listOf(intentData.data),
+            )
+            SignerType.SIGN_MESSAGE -> BunkerProxyClient.sendRequest(
+                account,
+                "sign_message",
+                listOf(intentData.data),
+            )
+            SignerType.NIP04_ENCRYPT -> BunkerProxyClient.sendRequest(
+                account,
+                "nip04_encrypt",
+                listOf(intentData.pubKey, intentData.data),
+            )
+            SignerType.NIP04_DECRYPT -> BunkerProxyClient.sendRequest(
+                account,
+                "nip04_decrypt",
+                listOf(intentData.pubKey, intentData.data),
+            )
+            SignerType.NIP44_ENCRYPT -> BunkerProxyClient.sendRequest(
+                account,
+                "nip44_encrypt",
+                listOf(intentData.pubKey, intentData.data),
+            )
+            SignerType.NIP44_DECRYPT -> BunkerProxyClient.sendRequest(
+                account,
+                "nip44_decrypt",
+                listOf(intentData.pubKey, intentData.data),
+            )
+            else -> null
+        }
+
+        val activity = Amber.instance.getMainActivity()
+        if (result == null) {
+            activity?.setResult(RESULT_OK, Intent().also { it.putExtra("rejected", true) })
+            activity?.finishAndRemoveTask()
+            return
+        }
+
+        val (eventJson, sigValue) = if (intentData.type == SignerType.SIGN_EVENT) {
+            try {
+                val signedEvent = JacksonMapper.mapper.readValue(result, Event::class.java)
+                val sig = if (signedEvent.kind == LnZapRequestEvent.KIND &&
+                    signedEvent.tags.any { tag -> tag.any { t -> t == "anon" } }
+                ) {
+                    result
+                } else {
+                    signedEvent.sig
+                }
+                Pair(result, sig)
+            } catch (e: Exception) {
+                Log.e(Amber.TAG, "Failed to parse signed event from bunker proxy", e)
+                activity?.setResult(RESULT_OK, Intent().also { it.putExtra("rejected", true) })
+                activity?.finishAndRemoveTask()
+                return
+            }
+        } else {
+            Pair(result, result)
+        }
+
+        Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
+            HistoryEntity(
+                0,
+                packageName ?: intentData.pubKey,
+                intentData.type.toString(),
+                intentData.event?.kind,
+                TimeUtils.now(),
+                true,
+                content = if (intentData.type == SignerType.SIGN_EVENT) eventJson else intentData.data,
+            ),
+            account.npub,
+        )
+
+        if (packageName != null) {
+            val resultIntent = Intent()
+            resultIntent.putExtra("signature", sigValue)
+            resultIntent.putExtra("result", sigValue)
+            resultIntent.putExtra("id", intentData.id)
+            resultIntent.putExtra("event", eventJson)
+            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                resultIntent.putExtra("package", BuildConfig.APPLICATION_ID)
+            }
+            activity?.setResult(RESULT_OK, resultIntent)
+        }
+        activity?.finishAndRemoveTask()
+    }
+
     fun onNewIntent(
         intent: Intent,
         callingPackage: String?,
@@ -147,6 +251,18 @@ class MainViewModel(val context: Context) : ViewModel() {
             account?.let { acc ->
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
                 if (intentData != null) {
+                    val targetNpub = intent.getStringExtra("current_user")?.let {
+                        IntentUtils.parsePubKey(it)
+                    }
+                    val targetAccount = if (targetNpub != null) {
+                        LocalPreferences.loadFromEncryptedStorageSync(context, targetNpub) ?: acc
+                    } else {
+                        acc
+                    }
+                    if (targetAccount.bunkerProxy != null) {
+                        handleProxyIntent(targetAccount, intentData, callingPackage)
+                        return@launch
+                    }
                     addAll(listOf(intentData))
 
                     intent.getStringExtra("route")?.let {

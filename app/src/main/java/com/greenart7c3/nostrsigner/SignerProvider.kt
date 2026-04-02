@@ -12,9 +12,11 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
+import com.greenart7c3.nostrsigner.service.BunkerProxyClient
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -83,6 +85,14 @@ class SignerProvider : ContentProvider() {
                     if (account == null) {
                         Log.d(Amber.TAG, "No account from storage")
                         return null
+                    }
+                    if (account.bunkerProxy != null) {
+                        val proxyResult = runBlocking {
+                            BunkerProxyClient.sendRequest(account, "sign_message", listOf(message))
+                        } ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                        return MatrixCursor(arrayOf("signature", "event", "result")).also {
+                            it.addRow(arrayOf(proxyResult, proxyResult, proxyResult))
+                        }
                     }
                     val database = Amber.instance.getDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
@@ -155,6 +165,27 @@ class SignerProvider : ContentProvider() {
                     if (account == null) {
                         Log.d(Amber.TAG, "No account from storage")
                         return null
+                    }
+                    if (account.bunkerProxy != null) {
+                        val signedEventJson = runBlocking {
+                            BunkerProxyClient.sendRequest(account, "sign_event", listOf(json))
+                        } ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                        val signedEvent = try {
+                            JacksonMapper.mapper.readValue(signedEventJson, Event::class.java)
+                        } catch (e: Exception) {
+                            Log.e(Amber.TAG, "Failed to parse signed event from bunker proxy", e)
+                            return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                        }
+                        val signature = if (signedEvent.kind == LnZapRequestEvent.KIND &&
+                            signedEvent.tags.any { tag -> tag.any { t -> t == "anon" } }
+                        ) {
+                            signedEventJson
+                        } else {
+                            signedEvent.sig
+                        }
+                        return MatrixCursor(arrayOf("signature", "event", "result")).also {
+                            it.addRow(arrayOf(signature, signedEventJson, signature))
+                        }
                     }
                     val event = try {
                         IntentUtils.getUnsignedEvent(json, account)
@@ -319,6 +350,22 @@ class SignerProvider : ContentProvider() {
                             else -> null
                         } ?: return null
 
+                    if (account.bunkerProxy != null) {
+                        val method = when (type) {
+                            SignerType.NIP04_ENCRYPT -> "nip04_encrypt"
+                            SignerType.NIP04_DECRYPT -> "nip04_decrypt"
+                            SignerType.NIP44_ENCRYPT -> "nip44_encrypt"
+                            SignerType.NIP44_DECRYPT -> "nip44_decrypt"
+                            else -> null
+                        } ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                        val proxyResult = runBlocking {
+                            BunkerProxyClient.sendRequest(account, method, listOf(pubkey, content))
+                        } ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                        return MatrixCursor(arrayOf("signature", "event", "result")).also {
+                            it.addRow(arrayOf<Any>(proxyResult, proxyResult, proxyResult))
+                        }
+                    }
+
                     val isEncrypt = type == SignerType.NIP04_ENCRYPT || type == SignerType.NIP44_ENCRYPT
 
                     // For ENCRYPT: classify plaintext input; for DECRYPT: perform operation first then classify result
@@ -471,6 +518,11 @@ class SignerProvider : ContentProvider() {
                     }
                     if (account == null) {
                         return null
+                    }
+                    if (account.bunkerProxy != null) {
+                        val cursor = MatrixCursor(arrayOf("signature", "result"))
+                        cursor.addRow(arrayOf<Any>("pong", "pong"))
+                        return cursor
                     }
                     val database = Amber.instance.getDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)

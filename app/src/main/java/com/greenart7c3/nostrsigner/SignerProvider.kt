@@ -74,17 +74,17 @@ class SignerProvider : ContentProvider() {
                     val message = projection?.first()
                     if (message == null) {
                         Log.d(Amber.TAG, "No message")
-                        return null
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
                     val npub = IntentUtils.parsePubKey(projection[2])
                     if (npub == null) {
                         Log.d(Amber.TAG, "No npub")
-                        return null
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
                     if (account == null) {
                         Log.d(Amber.TAG, "No account from storage")
-                        return null
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
                     if (account.bunkerProxy != null) {
                         val proxyResult = runBlocking {
@@ -154,17 +154,17 @@ class SignerProvider : ContentProvider() {
                     val json = projection?.first()
                     if (json == null) {
                         Log.d(Amber.TAG, "No json")
-                        return null
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
                     val npub = IntentUtils.parsePubKey(projection[2])
                     if (npub == null) {
                         Log.d(Amber.TAG, "No npub")
-                        return null
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
                     if (account == null) {
                         Log.d(Amber.TAG, "No account from storage")
-                        return null
+                        return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     }
                     if (account.bunkerProxy != null) {
                         val signedEventJson = runBlocking {
@@ -332,11 +332,14 @@ class SignerProvider : ContentProvider() {
                 "content://$appId.NIP44_ENCRYPT",
                 "content://$appId.DECRYPT_ZAP_EVENT",
                 -> {
-                    val content = projection?.first() ?: return null
-                    val npub = IntentUtils.parsePubKey(projection[2]) ?: return null
+                    val content = projection?.first()
+                        ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                    val npub = IntentUtils.parsePubKey(projection[2])
+                        ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     val stringType = uriString.replace("content://$appId.", "")
                     val pubkey = projection[1]
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
+                        ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
                     val database = Amber.instance.getDatabase(account.npub)
                     val logDatabase = Amber.instance.getLogDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
@@ -348,7 +351,7 @@ class SignerProvider : ContentProvider() {
                             "NIP44_ENCRYPT" -> SignerType.NIP44_ENCRYPT
                             "DECRYPT_ZAP_EVENT" -> SignerType.DECRYPT_ZAP_EVENT
                             else -> null
-                        } ?: return null
+                        } ?: return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
 
                     if (account.bunkerProxy != null) {
                         val method = when (type) {

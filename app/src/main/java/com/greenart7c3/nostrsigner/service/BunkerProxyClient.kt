@@ -10,6 +10,11 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
+import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
+import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
@@ -25,10 +30,14 @@ import kotlinx.coroutines.withTimeoutOrNull
  *
  * When a signing/encryption request comes in for a proxy account, instead of
  * processing it locally, Amber forwards it to the real remote bunker and relays
- * the response back to the original client application.
+ * the response back to the original caller.
  *
  * Incoming responses from the remote bunker are routed here from
  * [NotificationSubscription] via [tryHandleResponse].
+ *
+ * During the initial login handshake ([connect]), a temporary relay listener and
+ * subscription are opened so that the remote bunker's responses can be received
+ * before the account has been persisted and [NotificationSubscription] updated.
  */
 object BunkerProxyClient {
     private const val TAG = "BunkerProxyClient"
@@ -87,6 +96,9 @@ object BunkerProxyClient {
      * Initiates the NIP-46 connection handshake with a remote bunker:
      * sends `connect` followed by `get_public_key` and returns the user's hex pubkey,
      * or null on failure.
+     *
+     * Opens a temporary relay listener for the duration of the handshake so that
+     * responses can be received before the account exists in [NotificationSubscription].
      */
     suspend fun connect(
         clientSigner: NostrSignerInternal,
@@ -94,31 +106,94 @@ object BunkerProxyClient {
     ): String? {
         val clientPubKey = clientSigner.keyPair.pubKey.toHexKey()
 
-        Log.d(TAG, "Connecting to remote bunker ${proxy.remotePubKey} via ${proxy.relays.map { it.url }}")
-        val connectResult = sendRequestDirect(
-            signer = clientSigner,
-            proxy = proxy,
-            method = "connect",
-            params = listOf(clientPubKey, proxy.secret, ""),
-        ) ?: run {
-            Log.w(TAG, "connect request failed or timed out")
-            return null
+        // Subscribe for relay responses BEFORE sending any request.  During login the
+        // account isn't saved yet, so NotificationSubscription hasn't opened a filter for
+        // this client pubkey.  We open our own temporary listener here.
+        val (tempSubId, tempListener) = openTempSubscription(clientSigner, proxy)
+
+        return try {
+            Log.d(TAG, "Connecting to remote bunker ${proxy.remotePubKey} via ${proxy.relays.map { it.url }}")
+            val connectResult = sendRequestDirect(
+                signer = clientSigner,
+                proxy = proxy,
+                method = "connect",
+                params = listOf(clientPubKey, proxy.secret, ""),
+            ) ?: run {
+                Log.w(TAG, "connect request failed or timed out")
+                return null
+            }
+
+            Log.d(TAG, "connect result: $connectResult")
+
+            val userPubKey = sendRequestDirect(
+                signer = clientSigner,
+                proxy = proxy,
+                method = "get_public_key",
+                params = emptyList(),
+            ) ?: run {
+                Log.w(TAG, "get_public_key failed or timed out")
+                return null
+            }
+
+            Log.d(TAG, "remote user pubkey: $userPubKey")
+            userPubKey.trim()
+        } finally {
+            Amber.instance.client.close(tempSubId)
+            Amber.instance.client.unsubscribe(tempListener)
+        }
+    }
+
+    /**
+     * Opens a temporary relay listener and kind-24133 subscription so the remote
+     * bunker's responses can be received and routed to [pendingRequests].
+     * The caller is responsible for cleaning up via [NostrClient.close] and
+     * [NostrClient.unsubscribe] in a finally block.
+     */
+    private suspend fun openTempSubscription(
+        signer: NostrSignerInternal,
+        proxy: BunkerProxy,
+    ): Pair<String, IRelayClientListener> {
+        val clientPubKey = signer.keyPair.pubKey.toHexKey()
+        val subId = UUID.randomUUID().toString()
+
+        val listener = object : IRelayClientListener {
+            override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                if (msg !is EventMessage || msg.subId != subId) return
+                val event = msg.event
+                if (event.pubKey != proxy.remotePubKey) return
+                if (event.tags.none { it.size >= 2 && it[0] == "p" && it[1] == clientPubKey }) return
+
+                Amber.instance.applicationIOScope.launch {
+                    try {
+                        val decrypted = signer.decrypt(event.content, event.pubKey)
+                        val response = JacksonMapper.mapper.readValue(decrypted, BunkerResponse::class.java)
+                        Log.d(TAG, "Temp listener: response id=${response.id}")
+                        pendingRequests[response.id]?.complete(response)
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Temp listener: failed to handle response", e)
+                    }
+                }
+            }
         }
 
-        Log.d(TAG, "connect result: $connectResult")
-
-        val userPubKey = sendRequestDirect(
-            signer = clientSigner,
-            proxy = proxy,
-            method = "get_public_key",
-            params = emptyList(),
-        ) ?: run {
-            Log.w(TAG, "get_public_key failed or timed out")
-            return null
+        Amber.instance.client.subscribe(listener)
+        if (!Amber.instance.client.isActive()) {
+            Amber.instance.client.connect()
         }
+        Amber.instance.client.openReqSubscription(
+            subId,
+            proxy.relays.associateWith {
+                listOf(
+                    Filter(
+                        kinds = listOf(NostrConnectEvent.KIND),
+                        tags = mapOf("p" to listOf(clientPubKey)),
+                        since = TimeUtils.now() - 5,
+                    ),
+                )
+            },
+        )
 
-        Log.d(TAG, "remote user pubkey: $userPubKey")
-        return userPubKey.trim()
+        return Pair(subId, listener)
     }
 
     private suspend fun sendRequestDirect(

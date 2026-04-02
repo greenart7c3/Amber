@@ -197,7 +197,7 @@ class AmberRelayStats(
 
         val notificationBuilder =
             NotificationCompat.Builder(appContext, statusChannel.id)
-                .setGroup(statusGroup.id)
+                .setGroup(group.id)
                 .setContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
                 .setStyle(
                     NotificationCompat.BigTextStyle()

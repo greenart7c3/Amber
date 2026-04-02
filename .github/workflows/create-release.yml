@@ -29,6 +29,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
+      - name: Remove self-update permission for F-Droid build
+        run: |
+          sed -i '/android.permission.REQUEST_INSTALL_PACKAGES/d' app/src/main/AndroidManifest.xml
+
       - name: Build APK
         run: ./gradlew assembleRelease --stacktrace
 

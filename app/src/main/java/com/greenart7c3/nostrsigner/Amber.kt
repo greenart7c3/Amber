@@ -45,6 +45,7 @@ import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
@@ -130,6 +131,12 @@ class Amber :
 
     // This runs on the foreground only
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
+
+    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor()) {
+        ZapstoreUpdater(client, applicationIOScope)
+    } else {
+        null
+    }
 
     private var databases = ConcurrentHashMap<String, AppDatabase>()
     private var logDatabases = ConcurrentHashMap<String, LogDatabase>()

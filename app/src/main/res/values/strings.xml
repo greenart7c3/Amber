@@ -561,6 +561,11 @@
     <string name="connected_app_warning">Some applications may not work if you try to reuse your bunker URI. Delete this application and create a new one in case the login is not working.</string>
     <string name="zapstore">Zapstore</string>
     <string name="zapstore_website">https://zapstore.dev</string>
+    <string name="check_for_updates">Check for updates</string>
+    <string name="checking_for_updates">Checking for updates…</string>
+    <string name="update_available">Update available: v%1$s</string>
+    <string name="installing_update">Installing update…</string>
+    <string name="update_download_failed">Download failed. Tap to retry.</string>
     <string name="discover_more">Discover more Nostr apps for android at</string>
     <string name="backup">Backup</string>
     <string name="qrCode">QR Code</string>

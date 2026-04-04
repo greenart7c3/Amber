@@ -97,6 +97,9 @@ val MIGRATION_9_10 = object : Migration(9, 10) {
 
 val MIGRATION_10_11 = object : Migration(10, 11) {
     override fun migrate(db: SupportSQLiteDatabase) {
+        // history2 may not exist for users who did a fresh install at version 8, 9, or 10
+        // (it's created via MIGRATION_7_8, so fresh installs at those versions skip it)
+        db.execSQL("CREATE TABLE IF NOT EXISTS `history2` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `pkKey` TEXT NOT NULL, `type` TEXT NOT NULL, `kind` INTEGER, `time` INTEGER NOT NULL, `accepted` INTEGER NOT NULL)")
         db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_time` ON `history2` (`time`)")
         db.execSQL("CREATE INDEX IF NOT EXISTS `history_by_key_and_time` ON `history2` (`pkKey`, `time`)")
     }

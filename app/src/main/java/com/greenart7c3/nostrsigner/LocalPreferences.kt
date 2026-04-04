@@ -482,11 +482,19 @@ object LocalPreferences {
         if (!containsAccount(context, npub)) {
             return null
         }
-        val privKey = DataStoreAccess.getEncryptedKey(
-            context,
-            npub,
-            DataStoreAccess.NOSTR_PRIVKEY,
-        )
+        val privKey = try {
+            DataStoreAccess.getEncryptedKey(
+                context,
+                npub,
+                DataStoreAccess.NOSTR_PRIVKEY,
+            )
+        } catch (e: java.security.InvalidKeyException) {
+            Log.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
+            return null
+        } catch (e: android.security.KeyStoreException) {
+            Log.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
+            return null
+        }
         sharedPrefs(context, npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""

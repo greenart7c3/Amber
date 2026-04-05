@@ -132,7 +132,7 @@ class Amber :
     // This runs on the foreground only
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
 
-    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor()) {
+    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
         ZapstoreUpdater(client, applicationIOScope)
     } else {
         null

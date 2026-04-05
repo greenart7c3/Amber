@@ -24,6 +24,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +34,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.MainViewModel
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -55,6 +58,8 @@ fun AccountScreen(
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
     val context = LocalContext.current
+
+    KeystoreFailureWarning()
 
     Column {
         Crossfade(
@@ -115,6 +120,22 @@ fun AccountScreen(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun KeystoreFailureWarning() {
+    val failedAccounts by Amber.instance.keystoreFailedAccounts.collectAsState()
+    var dismissed by remember { mutableStateOf(false) }
+
+    if (failedAccounts.isNotEmpty() && !dismissed) {
+        val accountList = failedAccounts.joinToString("\n") { "• ${it.take(12)}…" }
+        InformationDialog(
+            title = stringResource(R.string.keystore_error_title),
+            textContent = stringResource(R.string.keystore_error_message, accountList),
+        ) {
+            dismissed = true
         }
     }
 }

@@ -490,9 +490,11 @@ object LocalPreferences {
             )
         } catch (e: java.security.InvalidKeyException) {
             Log.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
+            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
             return null
         } catch (e: android.security.KeyStoreException) {
             Log.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
+            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
             return null
         }
         sharedPrefs(context, npub).apply {

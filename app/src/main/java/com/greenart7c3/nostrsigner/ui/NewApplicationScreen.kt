@@ -88,7 +88,8 @@ fun NewApplicationScreen(
             onClick = {
                 scope.launch {
                     val clipboardText = clipboardManager.getClipEntry()?.clipData?.getItemAt(0)
-                    if (clipboardText == null) {
+                    val clipboardItemText = clipboardText?.text?.toString()
+                    if (clipboardItemText.isNullOrBlank()) {
                         ToastManager.toast(
                             title,
                             message,
@@ -96,14 +97,7 @@ fun NewApplicationScreen(
                         return@launch
                     }
 
-                    if (clipboardText.text.isBlank()) {
-                        ToastManager.toast(
-                            title,
-                            message,
-                        )
-                        return@launch
-                    }
-                    if (!clipboardText.text.startsWith("nostrconnect://")) {
+                    if (!clipboardItemText.startsWith("nostrconnect://")) {
                         ToastManager.toast(
                             title,
                             message,
@@ -112,7 +106,7 @@ fun NewApplicationScreen(
                     }
 
                     val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = clipboardText.text.toString().toUri()
+                    intent.data = clipboardItemText.toUri()
                     intent.`package` = context.packageName
                     IntentUtils.getIntentData(
                         context = Amber.instance,

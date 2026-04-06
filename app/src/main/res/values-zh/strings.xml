@@ -683,4 +683,6 @@
     <string name="auth_whitelist_description">当白名单不为空时，只允许列表中的中继上进行中继客户端身份验证(NIP-42)。其他中继的验证请求将被自动拒绝。</string>
     <string name="add_relay_to_whitelist">添加中继到白名单</string>
     <string name="relay_not_in_auth_whitelist">中继不在验证白名单中</string>
+    <string name="keystore_error_title">Account Inaccessible</string>
+    <string name="keystore_error_message">One or more accounts could not be loaded because your device\'s secure storage (KeyStore) returned an error:\n\n%1$s\n\nThis is a known firmware bug on some devices where the system cannot upgrade stored encryption keys.\n\nWhat you can do:\n• If you have your nsec (private key) backed up, log out of the affected account and log back in — this will create a new working key.\n• Check for a system firmware update from your device manufacturer, which may fix this.\n• Do not uninstall Amber; keeping the app installed preserves the possibility of recovery if a firmware update is released.</string>
 </resources>

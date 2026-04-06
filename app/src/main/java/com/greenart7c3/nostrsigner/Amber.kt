@@ -140,6 +140,9 @@ class Amber :
     val isOnOfflineState = mutableStateOf(false)
     private val isStartingApp = MutableStateFlow(false)
 
+    /** npubs whose AndroidKeyStore key failed to decrypt (device KeyMint bug). */
+    val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
+
     @Volatile var intentionalDisconnectTime = 0L
     val isStartingAppState = isStartingApp
     val notificationCache = LruCache<String, Long>(10)

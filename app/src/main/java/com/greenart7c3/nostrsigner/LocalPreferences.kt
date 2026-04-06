@@ -23,6 +23,8 @@ import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
+import java.security.InvalidKeyException
+import java.security.KeyStoreException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 
@@ -201,7 +203,7 @@ object LocalPreferences {
             val torMode = if (contains(SettingsKeys.TOR_MODE.key)) {
                 try {
                     TorMode.valueOf(getString(SettingsKeys.TOR_MODE.key, TorMode.DISABLED.name)!!)
-                } catch (e: IllegalArgumentException) {
+                } catch (_: IllegalArgumentException) {
                     TorMode.DISABLED
                 }
             } else if (getBoolean(SettingsKeys.USE_PROXY.key, false)) {
@@ -482,11 +484,21 @@ object LocalPreferences {
         if (!containsAccount(context, npub)) {
             return null
         }
-        val privKey = DataStoreAccess.getEncryptedKey(
-            context,
-            npub,
-            DataStoreAccess.NOSTR_PRIVKEY,
-        )
+        val privKey = try {
+            DataStoreAccess.getEncryptedKey(
+                context,
+                npub,
+                DataStoreAccess.NOSTR_PRIVKEY,
+            )
+        } catch (e: InvalidKeyException) {
+            Log.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
+            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
+            return null
+        } catch (e: KeyStoreException) {
+            Log.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
+            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
+            return null
+        }
         sharedPrefs(context, npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""

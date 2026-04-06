@@ -31,7 +31,6 @@ import okhttp3.Request
 
 private const val EOSE_TIMEOUT_MS = 15_000L
 private const val RELEASE_KIND = 30063
-private const val FILE_METADATA_KIND = 1063
 private const val ZAPSTORE_RELAY = "wss://relay.zapstore.dev"
 private const val APP_IDENTIFIER = "com.greenart7c3.nostrsigner"
 
@@ -63,11 +62,11 @@ class ZapstoreUpdater(
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-        when {
-            msg is EventMessage && msg.subId == releaseSubId -> processReleaseEvent(msg.event)
-            msg is EventMessage && msg.subId == fileSubId -> processFileEvent(msg.event)
-            msg is EoseMessage && msg.subId == releaseSubId -> onReleaseEose()
-            msg is EoseMessage && msg.subId == fileSubId -> finishCheck()
+        when (msg) {
+            is EventMessage if msg.subId == releaseSubId -> processReleaseEvent(msg.event)
+            is EventMessage if msg.subId == fileSubId -> processFileEvent(msg.event)
+            is EoseMessage if msg.subId == releaseSubId -> onReleaseEose()
+            is EoseMessage if msg.subId == fileSubId -> finishCheck()
         }
         super.onIncomingMessage(relay, msgStr, msg)
     }
@@ -94,7 +93,7 @@ class ZapstoreUpdater(
         timeoutJob = scope.launch {
             delay(EOSE_TIMEOUT_MS)
             Log.w(Amber.TAG, "ZapstoreUpdater: timeout waiting for EOSE")
-            finishCheck()
+            onReleaseEose()
         }
     }
 
@@ -142,7 +141,6 @@ class ZapstoreUpdater(
             return
         }
         val fileFilter = Filter(
-            kinds = listOf(FILE_METADATA_KIND),
             ids = pendingFileEventIds.toList(),
         )
         client.openReqSubscription(fileSubId, mapOf(relay to listOf(fileFilter)))

@@ -202,6 +202,12 @@ sealed class Route(
         route = "AuthWhitelist",
         icon = R.drawable.settings,
     )
+
+    data object UpdateSettings : Route(
+        title = Amber.instance.getString(R.string.update_settings),
+        route = "UpdateSettings",
+        icon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -234,4 +240,5 @@ val routes = listOf(
     Route.Feedback,
     Route.Activities,
     Route.CrashReport,
+    Route.UpdateSettings,
 )

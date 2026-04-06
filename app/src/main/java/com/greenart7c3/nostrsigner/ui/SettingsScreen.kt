@@ -20,7 +20,6 @@ import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -50,7 +49,6 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
@@ -59,7 +57,6 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
-import com.greenart7c3.nostrsigner.service.DownloadState
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
@@ -278,78 +275,18 @@ fun SettingsScreen(
                 val updater = Amber.instance.zapstoreUpdater
                 if (updater != null) {
                     val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
-                    val isChecking by updater.isChecking.collectAsStateWithLifecycle()
-                    val dlState by updater.downloadState.collectAsStateWithLifecycle()
-                    val dlProgress by updater.downloadProgress.collectAsStateWithLifecycle()
-                    var autoCheckUpdates by remember { mutableStateOf(Amber.instance.settings.autoCheckUpdates) }
 
                     Box(Modifier.padding(vertical = 8.dp)) {
-                        Column {
-                            IconRow(
-                                title = when {
-                                    latestRelease != null -> stringResource(R.string.update_available, latestRelease!!.version)
-                                    isChecking -> stringResource(R.string.checking_for_updates)
-                                    else -> stringResource(R.string.check_for_updates)
-                                },
-                                icon = Icons.Default.SystemUpdate,
-                                tint = if (latestRelease != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                                onClick = {
-                                    if (latestRelease != null && dlState == DownloadState.IDLE) {
-                                        updater.downloadAndInstall(context, latestRelease!!)
-                                    } else if (!isChecking) {
-                                        updater.checkForUpdates()
-                                    }
-                                },
-                            )
-                            if (dlState == DownloadState.DOWNLOADING) {
-                                LinearProgressIndicator(
-                                    progress = { dlProgress },
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 16.dp),
-                                )
-                            }
-                            if (dlState == DownloadState.INSTALLING) {
-                                Text(
-                                    text = stringResource(R.string.installing_update),
-                                    modifier = Modifier.padding(start = 54.dp),
-                                    color = Color.Gray,
-                                )
-                            }
-                            if (dlState == DownloadState.ERROR) {
-                                Text(
-                                    text = stringResource(R.string.update_download_failed),
-                                    modifier = Modifier.padding(start = 54.dp),
-                                    color = MaterialTheme.colorScheme.error,
-                                )
-                            }
-
-                            Row(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 4.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Text(
-                                    text = stringResource(R.string.auto_check_updates),
-                                    modifier = Modifier
-                                        .padding(start = 54.dp)
-                                        .weight(1f),
-                                    color = Color.Gray,
-                                )
-                                androidx.compose.material3.Switch(
-                                    checked = autoCheckUpdates,
-                                    onCheckedChange = { enabled ->
-                                        autoCheckUpdates = enabled
-                                        scope.launch(Dispatchers.IO) {
-                                            LocalPreferences.updateAutoCheckUpdates(context, enabled)
-                                        }
-                                    },
-                                    modifier = Modifier.padding(end = 16.dp),
-                                )
-                            }
-                        }
+                        IconRow(
+                            title = if (latestRelease != null) {
+                                stringResource(R.string.update_available, latestRelease!!.version)
+                            } else {
+                                stringResource(R.string.update_settings)
+                            },
+                            icon = Icons.Default.SystemUpdate,
+                            tint = if (latestRelease != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                            onClick = { navController.navigate(Route.UpdateSettings.route) },
+                        )
                     }
                 }
             }

@@ -36,6 +36,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.FeedbackType
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
@@ -307,7 +308,7 @@ class Amber :
                                 applicationIOScope.launch {
                                     profileSubscription.updateFilter()
                                     if (settings.autoCheckUpdates) {
-                                        zapstoreUpdater?.checkForUpdates()
+                                        maybeCheckForUpdates()
                                     }
                                 }
                             }
@@ -534,6 +535,21 @@ class Amber :
     override fun onTerminate() {
         super.onTerminate()
         applicationIOScope.cancel()
+    }
+
+    fun maybeCheckForUpdates() {
+        if (zapstoreUpdater == null) return
+        val lastCheck = LocalPreferences.getLastUpdateCheckTime(this)
+        val now = System.currentTimeMillis()
+        val shouldCheck = when (settings.updateCheckFrequency) {
+            UpdateCheckFrequency.ON_STARTUP -> true
+            UpdateCheckFrequency.DAILY -> now - lastCheck > 24 * 60 * 60 * 1000L
+            UpdateCheckFrequency.WEEKLY -> now - lastCheck > 7 * 24 * 60 * 60 * 1000L
+        }
+        if (shouldCheck) {
+            LocalPreferences.setLastUpdateCheckTime(this, now)
+            zapstoreUpdater.checkForUpdates()
+        }
     }
 
     suspend fun sendFeedBack(

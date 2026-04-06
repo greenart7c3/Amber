@@ -11,6 +11,7 @@ import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -57,6 +58,8 @@ private enum class SettingsKeys(val key: String) {
     LANGUAGE_PREFS("languagePreferences"),
     AUTH_WHITELIST("auth_whitelist"),
     AUTO_CHECK_UPDATES("auto_check_updates"),
+    UPDATE_CHECK_FREQUENCY("update_check_frequency"),
+    LAST_UPDATE_CHECK_TIME("last_update_check_time"),
 }
 
 @Immutable
@@ -239,6 +242,13 @@ object LocalPreferences {
                 language = getString(SettingsKeys.LANGUAGE_PREFS.key, null),
                 authWhitelist = getStringSet(SettingsKeys.AUTH_WHITELIST.key, null)?.toList() ?: emptyList(),
                 autoCheckUpdates = getBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, true),
+                updateCheckFrequency = try {
+                    UpdateCheckFrequency.valueOf(
+                        getString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, UpdateCheckFrequency.DAILY.name)!!,
+                    )
+                } catch (_: IllegalArgumentException) {
+                    UpdateCheckFrequency.DAILY
+                },
             )
         }
     }
@@ -486,6 +496,25 @@ object LocalPreferences {
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, frequency.name)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    fun getLastUpdateCheckTime(context: Context): Long = sharedPrefs(context).getLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, 0L)
+
+    fun setLastUpdateCheckTime(context: Context, time: Long) {
+        sharedPrefs(context).edit {
+            apply {
+                putLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, time)
+            }
+        }
     }
 
     suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {

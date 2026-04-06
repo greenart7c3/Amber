@@ -31,6 +31,7 @@ data class AmberSettings(
     var language: String? = null,
     val authWhitelist: List<String> = emptyList(),
     val autoCheckUpdates: Boolean = true,
+    val updateCheckFrequency: UpdateCheckFrequency = UpdateCheckFrequency.DAILY,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

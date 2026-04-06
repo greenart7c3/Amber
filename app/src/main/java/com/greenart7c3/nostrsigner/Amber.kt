@@ -306,6 +306,9 @@ class Amber :
                             if (!settings.killSwitch.value) {
                                 applicationIOScope.launch {
                                     profileSubscription.updateFilter()
+                                    if (settings.autoCheckUpdates) {
+                                        zapstoreUpdater?.checkForUpdates()
+                                    }
                                 }
                             }
                         }

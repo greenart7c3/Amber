@@ -274,13 +274,14 @@ fun SettingsScreen(
                 )
             }
 
-            if (!BuildFlavorChecker.isOfflineFlavor()) {
+            if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
                 val updater = Amber.instance.zapstoreUpdater
                 if (updater != null) {
                     val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
                     val isChecking by updater.isChecking.collectAsStateWithLifecycle()
                     val dlState by updater.downloadState.collectAsStateWithLifecycle()
                     val dlProgress by updater.downloadProgress.collectAsStateWithLifecycle()
+                    var autoCheckUpdates by remember { mutableStateOf(Amber.instance.settings.autoCheckUpdates) }
 
                     Box(Modifier.padding(vertical = 8.dp)) {
                         Column {
@@ -320,6 +321,32 @@ fun SettingsScreen(
                                     text = stringResource(R.string.update_download_failed),
                                     modifier = Modifier.padding(start = 54.dp),
                                     color = MaterialTheme.colorScheme.error,
+                                )
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 4.dp),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = stringResource(R.string.auto_check_updates),
+                                    modifier = Modifier
+                                        .padding(start = 54.dp)
+                                        .weight(1f),
+                                    color = Color.Gray,
+                                )
+                                androidx.compose.material3.Switch(
+                                    checked = autoCheckUpdates,
+                                    onCheckedChange = { enabled ->
+                                        autoCheckUpdates = enabled
+                                        scope.launch(Dispatchers.IO) {
+                                            LocalPreferences.updateAutoCheckUpdates(context, enabled)
+                                        }
+                                    },
+                                    modifier = Modifier.padding(end = 16.dp),
                                 )
                             }
                         }

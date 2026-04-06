@@ -566,6 +566,7 @@
     <string name="update_available">Update available: v%1$s</string>
     <string name="installing_update">Installing update…</string>
     <string name="update_download_failed">Download failed. Tap to retry.</string>
+    <string name="auto_check_updates">Automatically check for updates</string>
     <string name="discover_more">Discover more Nostr apps for android at</string>
     <string name="backup">Backup</string>
     <string name="qrCode">QR Code</string>

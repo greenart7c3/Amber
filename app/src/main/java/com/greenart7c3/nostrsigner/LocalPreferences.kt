@@ -56,6 +56,7 @@ private enum class SettingsKeys(val key: String) {
     KILL_SWITCH("kill_switch"),
     LANGUAGE_PREFS("languagePreferences"),
     AUTH_WHITELIST("auth_whitelist"),
+    AUTO_CHECK_UPDATES("auto_check_updates"),
 }
 
 @Immutable
@@ -237,6 +238,7 @@ object LocalPreferences {
                 killSwitch = MutableStateFlow(getBoolean(SettingsKeys.KILL_SWITCH.key, false)),
                 language = getString(SettingsKeys.LANGUAGE_PREFS.key, null),
                 authWhitelist = getStringSet(SettingsKeys.AUTH_WHITELIST.key, null)?.toList() ?: emptyList(),
+                autoCheckUpdates = getBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, true),
             )
         }
     }
@@ -475,6 +477,15 @@ object LocalPreferences {
             // Fail-closed placeholder; TorManager will update to the real port once running.
             TorMode.BUILTIN -> HttpClientManager.setDefaultProxyOnPort(TorManager.socksPort.value)
         }
+    }
+
+    fun updateAutoCheckUpdates(context: Context, enabled: Boolean) {
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
     }
 
     suspend fun loadFromEncryptedStorage(context: Context, npub: String): Account? {

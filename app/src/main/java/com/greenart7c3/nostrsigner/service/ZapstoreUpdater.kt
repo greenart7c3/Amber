@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.service
 
+import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
 import android.util.Log
@@ -188,6 +189,11 @@ class ZapstoreUpdater(
         client.close(fileSubId)
         isChecking.value = false
         pendingFileEventIds.clear()
+        latestRelease.value?.let { release ->
+            val ctx = Amber.instance
+            val nm = ctx.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            with(NotificationUtils) { nm.sendUpdateAvailableNotification(release.version, ctx) }
+        }
     }
 
     fun downloadAndInstall(context: Context, release: ZapstoreRelease) {

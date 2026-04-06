@@ -22,9 +22,9 @@ package com.greenart7c3.nostrsigner.service.crashreports
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -32,7 +32,7 @@ import kotlinx.coroutines.withContext
 @Composable
 fun DisplayCrashMessages(
     account: Account,
-    navController: NavHostController,
+    navController: NavHostControllerWrapper,
 ) {
     LaunchedEffect(account) {
         withContext(Dispatchers.IO) {
@@ -40,7 +40,7 @@ fun DisplayCrashMessages(
             if (stack != null) {
                 Amber.instance.pendingCrashReport = stack
                 withContext(Dispatchers.Main) {
-                    navController.navigate(Route.CrashReport.route)
+                    navController.navController.navigate(Route.CrashReport.route)
                 }
             }
         }

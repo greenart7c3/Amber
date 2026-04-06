@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
-import android.content.Intent
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Column
@@ -32,7 +31,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.MainViewModel
@@ -48,12 +46,12 @@ import kotlinx.collections.immutable.persistentListOf
 @Composable
 fun AccountScreen(
     accountStateViewModel: AccountStateViewModel,
-    intent: Intent?,
+    intent: IntentWrapper,
     packageName: String?,
     appName: String?,
     mainViewModel: MainViewModel,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
-    navController: NavHostController,
+    navController: NavHostControllerWrapper,
     isExternalRequest: Boolean = false,
 ) {
     val accountState by accountStateViewModel.accountContent.collectAsState()
@@ -75,12 +73,12 @@ fun AccountScreen(
                 is AccountState.LoggedIn -> {
                     val intents by mainViewModel.intents.collectAsState(initial = persistentListOf())
                     LaunchedEffect(intent) {
-                        intent?.let {
+                        intent.intent?.let {
                             IntentUtils.getIntentData(
                                 context,
-                                intent,
+                                it,
                                 packageName,
-                                intent.getStringExtra("route"),
+                                it.getStringExtra("route"),
                                 state.account,
                             )?.let { intentData ->
                                 mainViewModel.addAll(listOf(intentData))
@@ -105,7 +103,7 @@ fun AccountScreen(
                         appName = appName,
                         route = localRoute,
                         navController = navController,
-                        isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent?.getStringExtra("route") == Route.IncomingRequest.route)),
+                        isExternalRequest = isExternalRequest || (intents.isEmpty() && bunkerRequests.isNotEmpty() && (packageName != null || intent.intent?.getStringExtra("route") == Route.IncomingRequest.route)),
                         onRemoveIntentData = { results, type ->
                             when (type) {
                                 IntentResultType.ADD -> {

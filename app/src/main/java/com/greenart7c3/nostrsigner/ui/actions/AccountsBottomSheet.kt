@@ -34,12 +34,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
+import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
@@ -51,7 +51,7 @@ fun AccountsBottomSheet(
     sheetState: SheetState,
     account: Account,
     accountStateViewModel: AccountStateViewModel,
-    navController: NavController,
+    navController: NavHostControllerWrapper,
     onClose: () -> Unit,
 ) {
     val clipboardManager = LocalClipboard.current
@@ -142,7 +142,7 @@ fun AccountsBottomSheet(
                         IconButton(
                             onClick = {
                                 onClose()
-                                navController.navigate("EditProfile/${acc.npub}")
+                                navController.navController.navigate("EditProfile/${acc.npub}")
                             },
                         ) {
                             Icon(
@@ -164,7 +164,7 @@ fun AccountsBottomSheet(
                     TextButton(
                         onClick = {
                             onClose()
-                            navController.navigate(Route.Login.route)
+                            navController.navController.navigate(Route.Login.route)
                         },
                         content = {
                             Text(stringResource(R.string.add_new_account))

@@ -15,24 +15,24 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavHostController
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
+import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 
 @Composable
 fun AmberFloatingButton(
-    navController: NavHostController,
-    navBackStackEntry: NavBackStackEntry?,
+    navController: NavHostControllerWrapper,
+    navBackStackEntry: NavBackStackEntryWrapper,
 ) {
-    if (navBackStackEntry?.destination?.route == Route.Applications.route && !BuildFlavorChecker.isOfflineFlavor()) {
+    if (navBackStackEntry.navBackStackEntry?.destination?.route == Route.Applications.route && !BuildFlavorChecker.isOfflineFlavor()) {
         NewBunkerFloatingButton(
             onClick = {
-                navController.navigate(Route.NewApplication.route)
+                navController.navController.navigate(Route.NewApplication.route)
             },
         )
-    } else if (navBackStackEntry?.destination?.route == Route.ActiveRelays.route) {
+    } else if (navBackStackEntry.navBackStackEntry?.destination?.route == Route.ActiveRelays.route) {
         Column(
             horizontalAlignment = Alignment.End,
         ) {
@@ -56,7 +56,7 @@ fun AmberFloatingButton(
                     pressedElevation = 0.dp,
                 ),
                 onClick = {
-                    navController.navigate(Route.DefaultRelays.route)
+                    navController.navController.navigate(Route.DefaultRelays.route)
                 },
                 shape = RoundedCornerShape(24),
             )

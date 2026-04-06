@@ -48,7 +48,6 @@ import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -66,7 +65,8 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
-import com.greenart7c3.nostrsigner.ui.UpdateSettingsScreen
+import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
+import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -137,12 +137,12 @@ fun MainScreen(
     packageName: String?,
     appName: String?,
     route: MutableState<String?>,
-    navController: NavHostController,
+    navController: NavHostControllerWrapper,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     isExternalRequest: Boolean = false,
 ) {
     val lifecycleOwner = LocalLifecycleOwner.current
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val navBackStackEntry by navController.navController.currentBackStackEntryAsState()
     val destinationRoute = navBackStackEntry?.destination?.route ?: ""
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
@@ -164,7 +164,7 @@ fun MainScreen(
             }
         }
 
-    var showDialog by remember { mutableStateOf(false) }
+    val showDialog = remember { mutableStateOf(false) }
 
     if (!BuildFlavorChecker.isOfflineFlavor()) {
         LaunchedEffect(Unit) {
@@ -173,17 +173,17 @@ fun MainScreen(
                     context = context,
                     requestPermissionLauncher = requestPermissionLauncher,
                     onShouldShowRequestPermissionRationale = {
-                        showDialog = true
+                        showDialog.value = true
                     },
                 )
             }
         }
     }
 
-    if (showDialog) {
+    if (showDialog.value) {
         AlertDialog(
             onDismissRequest = {
-                showDialog = false
+                showDialog.value = false
             },
             title = {
                 Text(text = stringResource(R.string.permission_needed))
@@ -194,7 +194,7 @@ fun MainScreen(
             confirmButton = {
                 Button(
                     onClick = {
-                        showDialog = false
+                        showDialog.value = false
                         requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
                     },
                 ) {
@@ -204,7 +204,7 @@ fun MainScreen(
             dismissButton = {
                 Button(
                     onClick = {
-                        showDialog = false
+                        showDialog.value = false
                         LocalPreferences.updateShouldShowRationale(context, false)
                     },
                 ) {
@@ -238,14 +238,14 @@ fun MainScreen(
 
     val items = listOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
 
-    var shouldShowBottomSheet by remember { mutableStateOf(false) }
+    val shouldShowBottomSheet = remember { mutableStateOf(false) }
     val sheetState =
         rememberModalBottomSheetState(
             confirmValueChange = { it != SheetValue.PartiallyExpanded },
             skipPartiallyExpanded = true,
         )
 
-    if (shouldShowBottomSheet) {
+    if (shouldShowBottomSheet.value) {
         AccountsBottomSheet(
             sheetState = sheetState,
             account = account,
@@ -253,7 +253,7 @@ fun MainScreen(
             navController = navController,
             onClose = {
                 scope.launch {
-                    shouldShowBottomSheet = false
+                    shouldShowBottomSheet.value = false
                     sheetState.hide()
                 }
             },
@@ -268,7 +268,7 @@ fun MainScreen(
                     lifecycleOwner = lifecycleOwner,
                     scope = scope,
                     context = context,
-                    navBackStackEntry = navBackStackEntry,
+                    navBackStackEntry = NavBackStackEntryWrapper(navBackStackEntry),
                     account = account,
                     intents = intents,
                     bunkerRequests = bunkerRequests,
@@ -286,7 +286,7 @@ fun MainScreen(
                     scope = scope,
                     sheetState = sheetState,
                     onShouldShowBottomSheet = {
-                        shouldShowBottomSheet = it
+                        shouldShowBottomSheet.value = it
                     },
                     profileUrl = profileUrl.value,
                     account = account,
@@ -297,7 +297,7 @@ fun MainScreen(
             if (!isExternalRequest) {
                 AmberFloatingButton(
                     navController = navController,
-                    navBackStackEntry = navBackStackEntry,
+                    navBackStackEntry = NavBackStackEntryWrapper(navBackStackEntry),
                 )
             }
         },
@@ -307,7 +307,7 @@ fun MainScreen(
             CenterCircularProgressIndicator(Modifier.padding(padding))
         } else {
             NavHost(
-                navController,
+                navController.navController,
                 startDestination = localRoute,
                 enterTransition = { fadeIn(animationSpec = tween(200)) },
                 exitTransition = { fadeOut(animationSpec = tween(200)) },
@@ -317,7 +317,7 @@ fun MainScreen(
                     content = {
                         MainPage(
                             scope = scope,
-                            navController = navController,
+                            navController = navController.navController,
                             accountViewModel = accountStateViewModel,
                         )
                     },
@@ -329,13 +329,13 @@ fun MainScreen(
                         SignUpPage(
                             accountViewModel = accountStateViewModel,
                             scope = scope,
-                            navController = navController,
+                            navController = navController.navController,
                             onFinish = {
                                 Amber.instance.applicationIOScope.launch {
                                     Amber.instance.profileSubscription.updateFilter()
                                     Amber.instance.notificationSubscription.updateFilter()
                                 }
-                                navController.navigate(Route.Applications.route) {
+                                navController.navController.navigate(Route.Applications.route) {
                                     popUpTo(0)
                                 }
                             },
@@ -348,9 +348,9 @@ fun MainScreen(
                     content = {
                         LoginPage(
                             accountViewModel = accountStateViewModel,
-                            navController = navController,
+                            navController = navController.navController,
                             onFinish = {
-                                navController.navigate(Route.Applications.route) {
+                                navController.navController.navigate(Route.Applications.route) {
                                     popUpTo(0)
                                 }
                             },
@@ -423,7 +423,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             account = account,
-                            navController = navController,
+                            navController = navController.navController,
                         )
                     },
                 )
@@ -442,7 +442,7 @@ fun MainScreen(
                                 .padding(top = verticalPadding * 1.5f),
                             accountStateViewModel,
                             account,
-                            navController,
+                            navController.navController,
                         )
                     },
                 )
@@ -463,7 +463,7 @@ fun MainScreen(
                                 .imePadding(),
                             onShowQrCode = {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                    navController.navigate(Route.QrCode.route.replace("{content}", it))
+                                    navController.navController.navigate(Route.QrCode.route.replace("{content}", it))
                                 }
                             },
                         )
@@ -507,7 +507,7 @@ fun MainScreen(
                                     .imePadding(),
                                 account = account,
                                 selectedPackage = packageName,
-                                navController = navController,
+                                navController = navController.navController,
                             )
                         }
                     },
@@ -533,7 +533,7 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
                         ActiveRelaysScreen(
-                            navController = navController,
+                            navController = navController.navController,
                             account = account,
                             modifier =
                             Modifier
@@ -590,7 +590,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             account = account,
-                            navController = navController,
+                            navController = navController.navController,
                         )
                     },
                 )
@@ -605,7 +605,7 @@ fun MainScreen(
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            navController = navController,
+                            navController = navController.navController,
                         )
                     },
                 )
@@ -616,7 +616,7 @@ fun MainScreen(
                         val scrollState = rememberScrollState()
                         NewApplicationScreen(
                             account = account,
-                            navController = navController,
+                            navController = navController.navController,
                             modifier =
                             Modifier
                                 .fillMaxSize()
@@ -635,7 +635,7 @@ fun MainScreen(
                         val scrollState = rememberScrollState()
                         NewNsecBunkerScreen(
                             account = account,
-                            navController = navController,
+                            navController = navController.navController,
                             modifier =
                             Modifier
                                 .fillMaxSize()
@@ -753,7 +753,7 @@ fun MainScreen(
                                     .imePadding(),
                                 key = key,
                                 account = account,
-                                navController = navController,
+                                navController = navController.navController,
                             )
                         }
                     },
@@ -768,7 +768,7 @@ fun MainScreen(
                                 .padding(padding)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            navController = navController,
+                            navController = navController.navController,
                         )
                     },
                 )
@@ -785,7 +785,7 @@ fun MainScreen(
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
                                 pin = pin,
-                                navController = navController,
+                                navController = navController.navController,
                             )
                         }
                     },
@@ -801,7 +801,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
                             onBack = {
-                                navController.popBackStack()
+                                navController.navController.popBackStack()
                             },
                         )
                     },
@@ -819,7 +819,7 @@ fun MainScreen(
                                 .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            navController = navController,
+                            navController = navController.navController,
                         )
                     },
                 )
@@ -861,7 +861,7 @@ fun MainScreen(
                                     LocalPreferences.updateProxy(context, true, it)
                                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                     scope.launch {
-                                        navController.navigate(Route.Settings.route) {
+                                        navController.navController.navigate(Route.Settings.route) {
                                             popUpTo(0)
                                         }
                                     }
@@ -876,7 +876,7 @@ fun MainScreen(
                                     TorManager.start(context, Amber.instance.applicationIOScope)
                                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
                                     scope.launch {
-                                        navController.navigate(Route.Settings.route) {
+                                        navController.navController.navigate(Route.Settings.route) {
                                             popUpTo(0)
                                         }
                                     }
@@ -931,7 +931,7 @@ fun MainScreen(
                             account = account,
                             onDismiss = {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                    navController.navigateUp()
+                                    navController.navController.navigateUp()
                                 }
                             },
                             onLoading = {
@@ -954,7 +954,7 @@ fun MainScreen(
                             account = account,
                             onDismiss = {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                    navController.navigateUp()
+                                    navController.navController.navigateUp()
                                 }
                             },
                         )

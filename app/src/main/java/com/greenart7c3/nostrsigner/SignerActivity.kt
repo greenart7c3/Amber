@@ -38,6 +38,8 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
+import com.greenart7c3.nostrsigner.ui.IntentWrapper
+import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.NostrSignerTheme
@@ -158,12 +160,12 @@ class SignerActivity : AppCompatActivity() {
 
                                     AccountScreen(
                                         accountStateViewModel = accountStateViewModel,
-                                        intent = intent,
+                                        intent = IntentWrapper(intent),
                                         packageName = packageName,
                                         appName = appName,
                                         mainViewModel = mainViewModel,
                                         bunkerRequests = bunkerRequests.value,
-                                        navController = navController,
+                                        navController = NavHostControllerWrapper(navController),
                                         isExternalRequest = true,
                                     )
                                 }

@@ -37,7 +37,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavBackStackEntry
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -46,6 +45,7 @@ import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
@@ -62,7 +62,7 @@ fun AmberTopAppBar(
     lifecycleOwner: LifecycleOwner,
     scope: CoroutineScope,
     context: Context,
-    navBackStackEntry: NavBackStackEntry?,
+    navBackStackEntry: NavBackStackEntryWrapper,
     account: Account,
     intents: ImmutableList<IntentData>,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
@@ -173,10 +173,10 @@ fun AmberTopAppBar(
                     LaunchedEffect(destinationRoute) {
                         if (destinationRoute.startsWith("Permission/") || destinationRoute.startsWith("Activity/") || destinationRoute.startsWith("RelayLogScreen/") || destinationRoute.startsWith("qrcode/")) {
                             launch(Dispatchers.IO) {
-                                navBackStackEntry?.arguments?.getString("content")?.let {
+                                navBackStackEntry.navBackStackEntry?.arguments?.getString("content")?.let {
                                     title = Route.QrCode.title
                                 }
-                                navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
+                                navBackStackEntry.navBackStackEntry?.arguments?.getString("packageName")?.let { packageName ->
                                     val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
                                         "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
@@ -184,7 +184,7 @@ fun AmberTopAppBar(
                                         application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
-                                navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
+                                navBackStackEntry.navBackStackEntry?.arguments?.getString("key")?.let { packageName ->
                                     val application = Amber.instance.getDatabase(account.npub).dao().getByKey(packageName)?.application
                                     title = if (destinationRoute.startsWith("Activity/")) {
                                         "${application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName} - ${routes.find { it.route.startsWith(destinationRoute) }?.title}"
@@ -192,7 +192,7 @@ fun AmberTopAppBar(
                                         application?.name?.ifBlank { application.key.toShortenHex() } ?: packageName
                                     }
                                 }
-                                navBackStackEntry?.arguments?.getString("url")?.let { url ->
+                                navBackStackEntry.navBackStackEntry?.arguments?.getString("url")?.let { url ->
                                     val localUrl = Base64.getDecoder().decode(url).toString(Charsets.UTF_8)
                                     title = localUrl
                                 }

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.annotation.SuppressLint
+import android.content.ClipData
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -68,6 +69,7 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -856,10 +858,16 @@ fun LoginPage(
     var keyPair by remember { mutableStateOf(KeyPair()) }
     var isMnemonicMode by rememberSaveable { mutableStateOf(false) }
     var isBunkerProxyMode by rememberSaveable { mutableStateOf(false) }
+    var isNostrConnectMode by rememberSaveable { mutableStateOf(false) }
     var bunkerUri by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(""))
     }
     var bunkerDialogOpen by rememberSaveable { mutableStateOf(false) }
+    var nostrConnectRelay by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue("wss://relay.nsec.app"))
+    }
+    var nostrConnectUri by rememberSaveable { mutableStateOf("") }
+    var isWaitingForConnect by rememberSaveable { mutableStateOf(false) }
     var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
     var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
     val clipboardManager = LocalClipboard.current
@@ -935,10 +943,13 @@ fun LoginPage(
                                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                             ) {
                                 FilterChip(
-                                    selected = !isMnemonicMode && !isBunkerProxyMode,
+                                    selected = !isMnemonicMode && !isBunkerProxyMode && !isNostrConnectMode,
                                     onClick = {
                                         isMnemonicMode = false
                                         isBunkerProxyMode = false
+                                        isNostrConnectMode = false
+                                        nostrConnectUri = ""
+                                        isWaitingForConnect = false
                                         errorMessage = ""
                                     },
                                     label = { Text(stringResource(R.string.login_mode_private_key)) },
@@ -948,6 +959,9 @@ fun LoginPage(
                                     onClick = {
                                         isMnemonicMode = true
                                         isBunkerProxyMode = false
+                                        isNostrConnectMode = false
+                                        nostrConnectUri = ""
+                                        isWaitingForConnect = false
                                         errorMessage = ""
                                     },
                                     label = { Text(stringResource(R.string.login_mode_recovery_phrase)) },
@@ -957,15 +971,84 @@ fun LoginPage(
                                     onClick = {
                                         isBunkerProxyMode = true
                                         isMnemonicMode = false
+                                        isNostrConnectMode = false
+                                        nostrConnectUri = ""
+                                        isWaitingForConnect = false
                                         errorMessage = ""
                                     },
                                     label = { Text(stringResource(R.string.login_mode_bunker_proxy)) },
+                                )
+                                FilterChip(
+                                    selected = isNostrConnectMode,
+                                    onClick = {
+                                        isNostrConnectMode = true
+                                        isBunkerProxyMode = false
+                                        isMnemonicMode = false
+                                        nostrConnectUri = ""
+                                        isWaitingForConnect = false
+                                        errorMessage = ""
+                                    },
+                                    label = { Text(stringResource(R.string.login_mode_nostrconnect)) },
                                 )
                             }
 
                             Spacer(modifier = Modifier.height(12.dp))
 
-                            if (isBunkerProxyMode) {
+                            if (isNostrConnectMode) {
+                                Text(stringResource(R.string.nostrconnect_login_description))
+                                Spacer(modifier = Modifier.height(12.dp))
+                                OutlinedTextField(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 8.dp),
+                                    shape = RoundedCornerShape(18.dp),
+                                    value = nostrConnectRelay,
+                                    onValueChange = { value ->
+                                        nostrConnectRelay = value
+                                        nostrConnectUri = ""
+                                        isWaitingForConnect = false
+                                        if (errorMessage.isNotEmpty()) errorMessage = ""
+                                    },
+                                    placeholder = {
+                                        Text(text = stringResource(R.string.nostrconnect_relay_hint))
+                                    },
+                                    keyboardOptions = KeyboardOptions(
+                                        autoCorrectEnabled = false,
+                                        keyboardType = KeyboardType.Uri,
+                                        imeAction = ImeAction.Go,
+                                    ),
+                                    enabled = !isWaitingForConnect,
+                                )
+                                if (nostrConnectUri.isNotEmpty()) {
+                                    Spacer(modifier = Modifier.height(12.dp))
+                                    QrCodeDrawer(
+                                        contents = nostrConnectUri,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 40.dp),
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    AmberButton(
+                                        onClick = {
+                                            scope.launch {
+                                                clipboardManager.setClipEntry(
+                                                    ClipEntry(ClipData.newPlainText("nostrconnect", nostrConnectUri)),
+                                                )
+                                                Toast.makeText(context, context.getString(R.string.nostrconnect_copy_uri), Toast.LENGTH_SHORT).show()
+                                            }
+                                        },
+                                        text = stringResource(R.string.nostrconnect_copy_uri),
+                                    )
+                                    Spacer(modifier = Modifier.height(8.dp))
+                                    if (isWaitingForConnect) {
+                                        Text(
+                                            text = stringResource(R.string.nostrconnect_waiting),
+                                            style = MaterialTheme.typography.bodyMedium,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    }
+                                }
+                            } else if (isBunkerProxyMode) {
                                 Text(stringResource(R.string.bunker_proxy_login_description))
                                 Spacer(modifier = Modifier.height(12.dp))
                                 OutlinedTextField(
@@ -1232,12 +1315,39 @@ fun LoginPage(
 
                             AmberButton(
                                 enabled = when {
+                                    isNostrConnectMode -> nostrConnectRelay.text.isNotBlank() && !isWaitingForConnect
                                     isBunkerProxyMode -> bunkerUri.text.isNotBlank()
                                     isMnemonicMode -> mnemonicWords.all { it.isNotBlank() }
                                     else -> key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())
                                 },
                                 onClick = {
                                     when {
+                                        isNostrConnectMode -> {
+                                            if (nostrConnectRelay.text.isBlank()) {
+                                                errorMessage = context.getString(R.string.nostrconnect_relay_required)
+                                            } else {
+                                                isWaitingForConnect = true
+                                                isLoading = false
+                                                Amber.instance.applicationIOScope.launch {
+                                                    val (success, error) = accountViewModel.loginWithNostrConnect(
+                                                        relayUrl = nostrConnectRelay.text.trim(),
+                                                        onUri = { uri ->
+                                                            nostrConnectUri = uri
+                                                        },
+                                                    )
+                                                    isWaitingForConnect = false
+                                                    if (success) {
+                                                        keyboardController?.hide()
+                                                        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                                            onFinish()
+                                                        }
+                                                    } else {
+                                                        errorMessage = error
+                                                        nostrConnectUri = ""
+                                                    }
+                                                }
+                                            }
+                                        }
                                         isBunkerProxyMode -> {
                                             if (bunkerUri.text.isBlank()) {
                                                 errorMessage = context.getString(R.string.bunker_uri_required)
@@ -1314,10 +1424,14 @@ fun LoginPage(
                                         }
                                     }
                                 },
-                                text = if (isBunkerProxyMode) {
-                                    stringResource(R.string.use_bunker_proxy)
-                                } else {
-                                    stringResource(R.string.next)
+                                text = when {
+                                    isNostrConnectMode -> if (nostrConnectUri.isEmpty()) {
+                                        stringResource(R.string.nostrconnect_generate)
+                                    } else {
+                                        stringResource(R.string.nostrconnect_generate)
+                                    }
+                                    isBunkerProxyMode -> stringResource(R.string.use_bunker_proxy)
+                                    else -> stringResource(R.string.next)
                                 },
                             )
                         }

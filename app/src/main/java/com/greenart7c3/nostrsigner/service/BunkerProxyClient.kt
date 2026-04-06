@@ -15,7 +15,10 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -194,6 +197,142 @@ object BunkerProxyClient {
         )
 
         return Pair(subId, listener)
+    }
+
+    /**
+     * Generates a `nostrconnect://` URI for the given [clientSigner] and [relay], then waits
+     * for a remote bunker to scan it and send a `connect` request.  On success returns the
+     * [BunkerProxy] (containing the bunker's pubkey) and the user's hex pubkey.
+     *
+     * Unlike [connect], here Amber acts as the *client* that generates the URI.  The remote
+     * bunker initiates the handshake by sending the `connect` request.
+     */
+    suspend fun listenForConnect(
+        clientSigner: NostrSignerInternal,
+        relay: NormalizedRelayUrl,
+        secret: String,
+        timeoutMs: Long = 120_000L,
+    ): Pair<BunkerProxy, String>? {
+        val clientPubKey = clientSigner.keyPair.pubKey.toHexKey()
+        val subId = UUID.randomUUID().toString()
+
+        data class ConnectInfo(val bunkerPubKey: String, val requestId: String)
+        val connectDeferred = CompletableDeferred<ConnectInfo>()
+
+        val listener = object : IRelayClientListener {
+            override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
+                if (msg !is EventMessage || msg.subId != subId) return
+                val event = msg.event
+                if (event.tags.none { it.size >= 2 && it[0] == "p" && it[1] == clientPubKey }) return
+
+                Amber.instance.applicationIOScope.launch {
+                    try {
+                        val decrypted = clientSigner.decrypt(event.content, event.pubKey)
+                        val tree = JacksonMapper.mapper.readTree(decrypted)
+                        if (tree.has("method")) {
+                            // Incoming request from bunker
+                            val bunkerRequest = JacksonMapper.mapper.treeToValue(tree, BunkerRequest::class.java)
+                            if (bunkerRequest !is BunkerRequestConnect) return@launch
+                            if (secret.isNotBlank()) {
+                                val incomingSecret = bunkerRequest.secret ?: ""
+                                if (incomingSecret != secret) {
+                                    Log.w(TAG, "nostrconnect: secret mismatch (expected $secret, got $incomingSecret)")
+                                    return@launch
+                                }
+                            }
+                            if (!connectDeferred.isCompleted) {
+                                connectDeferred.complete(ConnectInfo(event.pubKey, bunkerRequest.id))
+                            }
+                        } else {
+                            // Response from bunker (e.g. get_public_key)
+                            val response = JacksonMapper.mapper.treeToValue(tree, BunkerResponse::class.java)
+                            Log.d(TAG, "nostrconnect temp listener: response id=${response.id}")
+                            pendingRequests[response.id]?.complete(response)
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "nostrconnect: failed to handle incoming message", e)
+                    }
+                }
+            }
+        }
+
+        Amber.instance.client.subscribe(listener)
+        if (!Amber.instance.client.isActive()) {
+            Amber.instance.client.connect()
+        }
+        Amber.instance.client.openReqSubscription(
+            subId,
+            mapOf(
+                relay to listOf(
+                    Filter(
+                        kinds = listOf(NostrConnectEvent.KIND),
+                        tags = mapOf("p" to listOf(clientPubKey)),
+                        since = TimeUtils.now() - 5,
+                    ),
+                ),
+            ),
+        )
+
+        return try {
+            val connectInfo = withTimeoutOrNull(timeoutMs) { connectDeferred.await() }
+                ?: run {
+                    Log.w(TAG, "nostrconnect: timed out waiting for bunker connect")
+                    return null
+                }
+
+            val proxy = BunkerProxy(
+                remotePubKey = connectInfo.bunkerPubKey,
+                relays = listOf(relay),
+                secret = secret,
+            )
+
+            sendAckResponse(clientSigner, proxy, connectInfo.requestId)
+
+            val userPubKey = sendRequestDirect(
+                signer = clientSigner,
+                proxy = proxy,
+                method = "get_public_key",
+                params = emptyList(),
+            ) ?: run {
+                Log.w(TAG, "nostrconnect: get_public_key failed")
+                return null
+            }
+
+            Log.d(TAG, "nostrconnect: user pubkey = $userPubKey")
+            Pair(proxy, userPubKey.trim())
+        } finally {
+            Amber.instance.client.close(subId)
+            Amber.instance.client.unsubscribe(listener)
+        }
+    }
+
+    private suspend fun sendAckResponse(
+        clientSigner: NostrSignerInternal,
+        proxy: BunkerProxy,
+        requestId: String,
+    ) {
+        val ackJson = buildAckJson(requestId)
+        val encryptedContent = clientSigner.nip44Encrypt(ackJson, proxy.remotePubKey)
+        val event = clientSigner.signerSync.sign<Event>(
+            TimeUtils.now(),
+            NostrConnectEvent.KIND,
+            arrayOf(arrayOf("p", proxy.remotePubKey)),
+            encryptedContent,
+        )
+        Amber.instance.client.sendAndWaitForResponse(
+            event = event,
+            relayList = proxy.relays.toSet(),
+            timeoutInSeconds = 5,
+        )
+        Log.d(TAG, "nostrconnect: sent ack for request $requestId")
+    }
+
+    private fun buildAckJson(requestId: String): String {
+        val node = JacksonMapper.mapper.createObjectNode() as ObjectNode
+        node.put("id", requestId)
+        node.put("result", "ack")
+        node.putNull("error")
+        return JacksonMapper.mapper.writeValueAsString(node)
     }
 
     private suspend fun sendRequestDirect(

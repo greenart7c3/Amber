@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.service.TorManager
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -122,6 +123,77 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
         val userPubKey = BunkerProxyClient.connect(clientSigner, proxy)
             ?: return Pair(false, "Failed to connect to remote bunker — check the URI and that the bunker is online")
+
+        val userPubKeyBytes = try {
+            userPubKey.hexToByteArray()
+        } catch (_: Exception) {
+            return Pair(false, "Remote bunker returned an invalid public key: $userPubKey")
+        }
+
+        val account = Account(
+            signer = clientSigner,
+            hexKey = userPubKey,
+            npub = userPubKeyBytes.toNpub(),
+            name = MutableStateFlow(""),
+            picture = MutableStateFlow(""),
+            signPolicy = 1,
+            didBackup = true,
+            bunkerProxy = proxy,
+        )
+
+        if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
+            LocalPreferences.saveSettingsToEncryptedStorage(Amber.instance.settings)
+        }
+        LocalPreferences.updatePrefsForLogin(
+            context = Amber.instance,
+            account = account,
+            pubKey = userPubKey,
+            privKey = clientKeyPair.privKey!!.toHexKey(),
+            seedWords = null,
+        )
+
+        startUI(account, null)
+
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.notificationSubscription.updateFilter()
+        }
+
+        return Pair(true, "")
+    }
+
+    /**
+     * Logs in by generating a `nostrconnect://` URI and waiting for a remote bunker to
+     * initiate the NIP-46 handshake.
+     *
+     * The [onUri] callback is invoked immediately with the generated URI so the UI can
+     * display it as a QR code while the function blocks waiting for the bunker to connect.
+     *
+     * @return A pair of (success, errorMessage). On success the second element is empty.
+     */
+    suspend fun loginWithNostrConnect(
+        relayUrl: String,
+        onUri: (String) -> Unit,
+    ): Pair<Boolean, String> {
+        val normalizedRelay = RelayUrlNormalizer.normalizeOrNull(relayUrl)
+            ?: return Pair(false, "Invalid relay URL")
+
+        val clientKeyPair = KeyPair()
+        val clientSigner = NostrSignerInternal(clientKeyPair)
+        val clientPubKey = clientKeyPair.pubKey.toHexKey()
+
+        val secret = java.util.UUID.randomUUID().toString().replace("-", "").take(20)
+        val encodedRelay = java.net.URLEncoder.encode(normalizedRelay.url, "UTF-8")
+        val uri = "nostrconnect://$clientPubKey?relay=$encodedRelay&secret=$secret"
+
+        onUri(uri)
+
+        val result = BunkerProxyClient.listenForConnect(
+            clientSigner = clientSigner,
+            relay = normalizedRelay,
+            secret = secret,
+        ) ?: return Pair(false, "Timed out waiting for bunker to connect — try generating a new QR code")
+
+        val (proxy, userPubKey) = result
 
         val userPubKeyBytes = try {
             userPubKey.hexToByteArray()

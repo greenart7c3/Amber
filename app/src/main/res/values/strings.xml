@@ -387,6 +387,14 @@
     <string name="bunker_uri_required">Bunker URI is required</string>
     <string name="connecting_to_bunker">Connecting to bunker…</string>
     <string name="use_bunker_proxy">Use remote bunker</string>
+    <string name="login_mode_nostrconnect">Nostrconnect</string>
+    <string name="nostrconnect_login_description">Generate a QR code for a remote NIP-46 bunker to scan. The bunker will initiate the connection and Amber will forward all signing requests to it.</string>
+    <string name="nostrconnect_relay_hint">wss://relay.example.com</string>
+    <string name="nostrconnect_relay_required">Relay URL is required</string>
+    <string name="nostrconnect_generate">Generate QR</string>
+    <string name="nostrconnect_waiting">Waiting for bunker to connect…</string>
+    <string name="nostrconnect_copy_uri">Copy URI</string>
+    <string name="nostrconnect_use">Connect via nostrconnect</string>
     <string name="enter_recovery_phrase_description">Enter each word of your seed phrase in order. You can also paste the full phrase using the clipboard button.</string>
     <string name="mnemonic_12_words">12 words</string>
     <string name="mnemonic_24_words">24 words</string>

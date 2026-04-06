@@ -81,7 +81,7 @@ class AmberRelayStats(
             .setName(appContext.getString(R.string.status))
             .setDescription(appContext.getString(R.string.status_service_description))
             .build()
-        statusChannel = NotificationChannelCompat.Builder(statusId, NotificationManager.IMPORTANCE_LOW)
+        statusChannel = NotificationChannelCompat.Builder(statusId, NotificationManager.IMPORTANCE_MIN)
             .setName(appContext.getString(R.string.status))
             .setDescription(appContext.getString(R.string.status_service_description))
             .setSound(null, null)
@@ -205,7 +205,7 @@ class AmberRelayStats(
                         .setBigContentTitle(appContext.getString(R.string.of_connected_relays, connected.size, available.size))
                         .setSummaryText(appContext.getString(R.string.status_detail)),
                 )
-                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setPriority(NotificationCompat.PRIORITY_MIN)
                 .setSmallIcon(R.drawable.ic_notification)
                 .setContentIntent(contentPendingIntent)
                 .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)

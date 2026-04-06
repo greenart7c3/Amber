@@ -30,6 +30,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
+import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -38,8 +39,11 @@ import com.greenart7c3.nostrsigner.ui.navigation.Route
 object NotificationUtils {
     private var bunkerChannel: NotificationChannel? = null
     private var errorsChannel: NotificationChannel? = null
+    private var updatesChannel: NotificationChannel? = null
     private var bunkerGroup: NotificationChannelGroup? = null
     private var errorsGroup: NotificationChannelGroup? = null
+
+    const val UPDATE_NOTIFICATION_ID = 99901
 
     fun getOrCreateBunkerGroup(applicationContext: Context): NotificationChannelGroup {
         if (bunkerGroup != null) return bunkerGroup!!
@@ -208,6 +212,55 @@ object NotificationUtils {
                 )
 
         notify(notId, builder.build())
+    }
+
+    fun getOrCreateUpdatesChannel(applicationContext: Context): NotificationChannel {
+        if (updatesChannel != null) return updatesChannel!!
+
+        updatesChannel =
+            NotificationChannel(
+                "UpdatesID",
+                applicationContext.getString(R.string.update_notifications),
+                NotificationManager.IMPORTANCE_DEFAULT,
+            ).apply {
+                description = applicationContext.getString(R.string.update_notifications)
+            }
+
+        val notificationManager: NotificationManager =
+            applicationContext.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(updatesChannel!!)
+
+        return updatesChannel!!
+    }
+
+    fun NotificationManager.sendUpdateAvailableNotification(
+        version: String,
+        applicationContext: Context,
+    ) {
+        val channel = getOrCreateUpdatesChannel(applicationContext)
+
+        val contentIntent = Intent(applicationContext, MainActivity::class.java).apply {
+            putExtra("route", Route.UpdateSettings.route)
+            addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
+        }
+        val pendingIntent =
+            PendingIntent.getActivity(
+                applicationContext,
+                UPDATE_NOTIFICATION_ID,
+                contentIntent,
+                PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
+            )
+
+        val builder =
+            NotificationCompat.Builder(applicationContext, channel.id)
+                .setSmallIcon(R.drawable.ic_notification)
+                .setContentTitle(applicationContext.getString(R.string.update_available, version))
+                .setContentText(applicationContext.getString(R.string.update_available_notification_body))
+                .setContentIntent(pendingIntent)
+                .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+                .setAutoCancel(true)
+
+        notify(UPDATE_NOTIFICATION_ID, builder.build())
     }
 
     fun NotificationManager.sendErrorNotification(

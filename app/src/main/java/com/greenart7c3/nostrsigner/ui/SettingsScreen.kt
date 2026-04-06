@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.filled.Security
+import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -48,6 +49,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
@@ -268,6 +270,26 @@ fun SettingsScreen(
                         navController.navigate(Route.Feedback.route)
                     },
                 )
+            }
+
+            if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
+                val updater = Amber.instance.zapstoreUpdater
+                if (updater != null) {
+                    val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
+
+                    Box(Modifier.padding(vertical = 8.dp)) {
+                        IconRow(
+                            title = if (latestRelease != null) {
+                                stringResource(R.string.update_available, latestRelease!!.version)
+                            } else {
+                                stringResource(R.string.update_settings)
+                            },
+                            icon = Icons.Default.SystemUpdate,
+                            tint = if (latestRelease != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                            onClick = { navController.navigate(Route.UpdateSettings.route) },
+                        )
+                    }
+                }
             }
 
             Spacer(modifier = Modifier.weight(1f))

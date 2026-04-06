@@ -66,6 +66,7 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
+import com.greenart7c3.nostrsigner.ui.UpdateSettingsScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -965,6 +966,22 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
                         AuthWhitelistScreen(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f),
+                        )
+                    },
+                )
+
+                composable(
+                    Route.UpdateSettings.route,
+                    content = {
+                        val scrollState = rememberScrollState()
+                        UpdateSettingsScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)

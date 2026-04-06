@@ -148,22 +148,29 @@ class MainViewModel(val context: Context) : ViewModel() {
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
                 if (intentData != null) {
                     addAll(listOf(intentData))
+                }
 
-                    intent.getStringExtra("route")?.let {
-                        viewModelScope.launch(Dispatchers.Main) {
-                            var error = true
-                            var count = 0
-                            while (error && count < 10) {
-                                delay(100)
-                                count++
-                                try {
-                                    navController?.navigate(Route.IncomingRequest.route) {
+                intent.getStringExtra("route")?.let { route ->
+                    viewModelScope.launch(Dispatchers.Main) {
+                        var error = true
+                        var count = 0
+                        while (error && count < 10) {
+                            delay(100)
+                            count++
+                            try {
+                                if (route == Route.UpdateSettings.route) {
+                                    navController?.navigate(Route.Settings.route) {
                                         popUpTo(0)
                                     }
-                                    error = false
-                                } catch (e: Exception) {
-                                    Log.e(Amber.TAG, "Error showing bunker requests", e)
+                                    navController?.navigate(Route.UpdateSettings.route)
+                                } else {
+                                    navController?.navigate(route) {
+                                        popUpTo(0)
+                                    }
                                 }
+                                error = false
+                            } catch (e: Exception) {
+                                Log.e(Amber.TAG, "Error navigating to $route", e)
                             }
                         }
                     }

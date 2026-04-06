@@ -30,6 +30,7 @@ import android.graphics.drawable.BitmapDrawable
 import android.os.Bundle
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
+import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -238,8 +239,8 @@ object NotificationUtils {
     ) {
         val channel = getOrCreateUpdatesChannel(applicationContext)
 
-        val contentIntent = Intent(applicationContext, SignerActivity::class.java).apply {
-            putExtra("route", "UpdateSettings")
+        val contentIntent = Intent(applicationContext, MainActivity::class.java).apply {
+            putExtra("route", Route.UpdateSettings.route)
             addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP or Intent.FLAG_ACTIVITY_CLEAR_TOP)
         }
         val pendingIntent =

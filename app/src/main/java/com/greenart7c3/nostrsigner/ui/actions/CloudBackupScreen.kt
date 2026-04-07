@@ -5,7 +5,6 @@ import android.net.Uri
 import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.ActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -65,17 +64,18 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
+private const val DEFAULT_WEBDAV_FILENAME = "amber_backup.txt"
+
 @OptIn(ExperimentalComposeUiApi::class)
 @Composable
 fun CloudBackupScreen(modifier: Modifier) {
     val context = LocalContext.current
     val keyboardController = LocalSoftwareKeyboardController.current
 
-    // Shared state
     var isLoading by remember { mutableStateOf(false) }
     var statusText by remember { mutableStateOf("") }
 
-    // Password for encryption/decryption (shared across both providers)
+    // Encryption password shared across both providers
     var password by remember { mutableStateOf(TextFieldValue("")) }
     var showPassword by remember { mutableStateOf(false) }
     var passwordError by remember { mutableStateOf("") }
@@ -85,7 +85,7 @@ fun CloudBackupScreen(modifier: Modifier) {
     var webDavUsername by remember { mutableStateOf(TextFieldValue("")) }
     var webDavPassword by remember { mutableStateOf(TextFieldValue("")) }
     var showWebDavPassword by remember { mutableStateOf(false) }
-    var webDavFilename by remember { mutableStateOf(TextFieldValue("amber_backup.jsonl")) }
+    var webDavFilename by remember { mutableStateOf(TextFieldValue(DEFAULT_WEBDAV_FILENAME)) }
     var webDavError by remember { mutableStateOf("") }
 
     // Google Drive state
@@ -108,9 +108,8 @@ fun CloudBackupScreen(modifier: Modifier) {
         }
     }
 
-    // Biometric launcher (shared)
     val keyguardLauncher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { _: ActivityResult -> }
+        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
 
     // Google Drive: pick folder
     val folderPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
@@ -127,9 +126,9 @@ fun CloudBackupScreen(modifier: Modifier) {
         }
     }
 
-    // Google Drive: pick a backup file for restore
+    // Google Drive: pick a backup file for restore (reads ncryptsec lines)
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
-        uri?.let {
+        uri?.let { fileUri ->
             if (password.text.isBlank()) {
                 passwordError = context.getString(R.string.cloud_backup_password_required)
                 return@let
@@ -137,8 +136,11 @@ fun CloudBackupScreen(modifier: Modifier) {
             Amber.instance.applicationIOScope.launch {
                 isLoading = true
                 statusText = context.getString(R.string.cloud_backup_restoring)
-                AccountExportService.importAccounts(
-                    uri = it,
+                val content = withContext(Dispatchers.IO) {
+                    context.contentResolver.openInputStream(fileUri)?.bufferedReader()?.readText() ?: ""
+                }
+                AccountExportService.importFromNcryptsec(
+                    content = content,
                     password = password.text,
                     onLoading = { loading -> isLoading = loading },
                     onText = { t -> statusText = t },
@@ -196,7 +198,11 @@ fun CloudBackupScreen(modifier: Modifier) {
                     IconButton(onClick = { showPassword = !showPassword }) {
                         Icon(
                             imageVector = if (showPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = if (showPassword) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
+                            contentDescription = if (showPassword) {
+                                stringResource(R.string.hide_password)
+                            } else {
+                                stringResource(R.string.show_password)
+                            },
                         )
                     }
                 },
@@ -233,7 +239,11 @@ fun CloudBackupScreen(modifier: Modifier) {
             AmberButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(
-                    if (gdriveFolderUri == null) R.string.cloud_backup_gdrive_pick_folder else R.string.cloud_backup_gdrive_change_folder,
+                    if (gdriveFolderUri == null) {
+                        R.string.cloud_backup_gdrive_pick_folder
+                    } else {
+                        R.string.cloud_backup_gdrive_change_folder
+                    },
                 ),
                 onClick = { folderPickerLauncher.launch(null) },
             )
@@ -259,7 +269,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                             Amber.instance.applicationIOScope.launch {
                                                 isLoading = true
                                                 statusText = context.getString(R.string.preparing_export)
-                                                val result = AccountExportService.exportAllAccountsEncrypted(
+                                                val result = AccountExportService.exportAllAsNcryptsec(
                                                     context = context,
                                                     password = password.text,
                                                     onProgress = { cur, tot ->
@@ -269,7 +279,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                                 result.onSuccess { data ->
                                                     try {
                                                         val timestamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US).format(Date())
-                                                        val fileName = "amber_backup_$timestamp.jsonl"
+                                                        val fileName = "amber_backup_$timestamp.txt"
                                                         val folderUri = gdriveFolderUri!!
                                                         val docUri = DocumentsContract.createDocument(
                                                             context.contentResolver,
@@ -277,7 +287,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                                                 folderUri,
                                                                 DocumentsContract.getTreeDocumentId(folderUri),
                                                             ),
-                                                            "application/octet-stream",
+                                                            "text/plain",
                                                             fileName,
                                                         )
                                                         docUri?.let { fileUri ->
@@ -384,7 +394,11 @@ fun CloudBackupScreen(modifier: Modifier) {
                     IconButton(onClick = { showWebDavPassword = !showWebDavPassword }) {
                         Icon(
                             imageVector = if (showWebDavPassword) Icons.Outlined.VisibilityOff else Icons.Outlined.Visibility,
-                            contentDescription = if (showWebDavPassword) stringResource(R.string.hide_password) else stringResource(R.string.show_password),
+                            contentDescription = if (showWebDavPassword) {
+                                stringResource(R.string.hide_password)
+                            } else {
+                                stringResource(R.string.show_password)
+                            },
                         )
                     }
                 },
@@ -410,7 +424,6 @@ fun CloudBackupScreen(modifier: Modifier) {
                 Text(text = webDavError, color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodySmall)
             }
 
-            // Save WebDAV settings button
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.End,
@@ -426,7 +439,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                 url = webDavUrl.text,
                                 username = webDavUsername.text,
                                 password = webDavPassword.text,
-                                fileName = webDavFilename.text.ifBlank { "amber_backup.jsonl" },
+                                fileName = webDavFilename.text.ifBlank { DEFAULT_WEBDAV_FILENAME },
                             )
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(context, context.getString(R.string.cloud_backup_webdav_saved), Toast.LENGTH_SHORT).show()
@@ -458,16 +471,15 @@ fun CloudBackupScreen(modifier: Modifier) {
                                             isLoading = true
                                             statusText = context.getString(R.string.preparing_export)
 
-                                            // Save settings first
                                             LocalPreferences.saveWebDavSettings(
                                                 context = context,
                                                 url = webDavUrl.text,
                                                 username = webDavUsername.text,
                                                 password = webDavPassword.text,
-                                                fileName = webDavFilename.text.ifBlank { "amber_backup.jsonl" },
+                                                fileName = webDavFilename.text.ifBlank { DEFAULT_WEBDAV_FILENAME },
                                             )
 
-                                            val exportResult = AccountExportService.exportAllAccountsEncrypted(
+                                            val exportResult = AccountExportService.exportAllAsNcryptsec(
                                                 context = context,
                                                 password = password.text,
                                                 onProgress = { cur, tot ->
@@ -482,7 +494,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                                         serverUrl = webDavUrl.text,
                                                         username = webDavUsername.text,
                                                         password = webDavPassword.text,
-                                                        fileName = webDavFilename.text.ifBlank { "amber_backup.jsonl" },
+                                                        fileName = webDavFilename.text.ifBlank { DEFAULT_WEBDAV_FILENAME },
                                                         content = data,
                                                     )
                                                 }
@@ -532,12 +544,12 @@ fun CloudBackupScreen(modifier: Modifier) {
                                             serverUrl = webDavUrl.text,
                                             username = webDavUsername.text,
                                             password = webDavPassword.text,
-                                            fileName = webDavFilename.text.ifBlank { "amber_backup.jsonl" },
+                                            fileName = webDavFilename.text.ifBlank { DEFAULT_WEBDAV_FILENAME },
                                         )
                                     }
 
                                     downloadResult.onSuccess { data ->
-                                        AccountExportService.importAccountsFromString(
+                                        AccountExportService.importFromNcryptsec(
                                             content = data,
                                             password = password.text,
                                             onLoading = { loading -> isLoading = loading },
@@ -564,7 +576,6 @@ fun CloudBackupScreen(modifier: Modifier) {
                 )
             }
 
-            // Test connection button
             AmberButton(
                 modifier = Modifier.fillMaxWidth(),
                 text = stringResource(R.string.cloud_backup_webdav_test),

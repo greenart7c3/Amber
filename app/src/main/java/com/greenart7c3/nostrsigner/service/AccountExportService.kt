@@ -82,9 +82,35 @@ object AccountExportService {
     }
 
     /**
-     * Import accounts from a backup string (used for cloud restore)
+     * Export all accounts as ncryptsec lines (NIP-49 encrypted private keys).
+     * One ncryptsec per line — no JSON metadata, compatible with any Nostr client.
      */
-    suspend fun importAccountsFromString(
+    suspend fun exportAllAsNcryptsec(
+        context: Context,
+        password: String,
+        onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
+    ): Result<String> = withContext(Dispatchers.IO) {
+        try {
+            val accountInfos = LocalPreferences.allSavedAccounts(context)
+            val total = accountInfos.size
+            if (total == 0) return@withContext Result.failure(Exception("No accounts to export"))
+
+            val lines = StringBuilder()
+            accountInfos.forEachIndexed { index, info ->
+                onProgress(index + 1, total)
+                val account = LocalPreferences.loadFromEncryptedStorage(context, info.npub)
+                account?.let { lines.appendLine(it.nip49Encrypt(password)) }
+            }
+            Result.success(lines.toString().trimEnd())
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Import accounts from ncryptsec lines (one ncryptsec per line).
+     */
+    suspend fun importFromNcryptsec(
         content: String,
         password: String,
         onLoading: (isLoading: Boolean) -> Unit,
@@ -93,27 +119,25 @@ object AccountExportService {
     ) {
         onLoading(true)
         try {
-            content.lines().filter { it.isNotBlank() }.forEachIndexed { index, line ->
+            content.lines().filter { it.isNotBlank() }.forEachIndexed { index, ncryptsec ->
                 try {
                     onText(Amber.instance.getString(R.string.importing_account, index + 1))
-
-                    val accountData = AccountExportData.fromJson(line)
-                    val privKey = Nip49().decrypt(accountData.nsec, password)
+                    val privKey = Nip49().decrypt(ncryptsec, password)
                     val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
                     val account = Account(
                         hexKey = hexKey.toHexKey(),
                         npub = hexKey.toNpub(),
-                        name = MutableStateFlow(accountData.name),
-                        picture = MutableStateFlow(accountData.picture ?: ""),
-                        signPolicy = accountData.signPolicy,
-                        didBackup = accountData.didBackup,
+                        name = MutableStateFlow(""),
+                        picture = MutableStateFlow(""),
+                        signPolicy = 1,
+                        didBackup = true,
                         signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                     )
-                    LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
-                    LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, accountData.seedWords)
+                    LocalPreferences.switchToAccount(Amber.instance, hexKey.toNpub())
+                    LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, null)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    Log.e("Amber", "Error importing account from string", e)
+                    Log.e("Amber", "Error importing ncryptsec at index $index", e)
                 }
             }
             onFinish()

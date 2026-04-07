@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.FilterList
@@ -159,6 +160,22 @@ fun SettingsScreen(
                         navController.navigate(Route.ExportAllAccounts.route)
                     },
                 )
+            }
+
+            if (!BuildFlavorChecker.isOfflineFlavor()) {
+                Box(
+                    Modifier
+                        .padding(vertical = 8.dp),
+                ) {
+                    IconRow(
+                        title = stringResource(R.string.cloud_backup_title),
+                        icon = Icons.Default.CloudUpload,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        onClick = {
+                            navController.navigate(Route.CloudBackup.route)
+                        },
+                    )
+                }
             }
 
             Box(

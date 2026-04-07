@@ -82,6 +82,48 @@ object AccountExportService {
     }
 
     /**
+     * Import accounts from a backup string (used for cloud restore)
+     */
+    suspend fun importAccountsFromString(
+        content: String,
+        password: String,
+        onLoading: (isLoading: Boolean) -> Unit,
+        onText: (text: String) -> Unit,
+        onFinish: () -> Unit,
+    ) {
+        onLoading(true)
+        try {
+            content.lines().filter { it.isNotBlank() }.forEachIndexed { index, line ->
+                try {
+                    onText(Amber.instance.getString(R.string.importing_account, index + 1))
+
+                    val accountData = AccountExportData.fromJson(line)
+                    val privKey = Nip49().decrypt(accountData.nsec, password)
+                    val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
+                    val account = Account(
+                        hexKey = hexKey.toHexKey(),
+                        npub = hexKey.toNpub(),
+                        name = MutableStateFlow(accountData.name),
+                        picture = MutableStateFlow(accountData.picture ?: ""),
+                        signPolicy = accountData.signPolicy,
+                        didBackup = accountData.didBackup,
+                        signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
+                    )
+                    LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
+                    LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, accountData.seedWords)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.e("Amber", "Error importing account from string", e)
+                }
+            }
+            onFinish()
+        } finally {
+            onText("")
+            onLoading(false)
+        }
+    }
+
+    /**
      * Export all accounts as an encrypted JSON file
      *
      * @param context Application context

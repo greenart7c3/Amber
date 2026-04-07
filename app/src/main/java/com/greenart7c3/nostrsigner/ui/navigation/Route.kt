@@ -208,6 +208,12 @@ sealed class Route(
         route = "UpdateSettings",
         icon = R.drawable.settings,
     )
+
+    data object CloudBackup : Route(
+        title = Amber.instance.getString(R.string.cloud_backup_title),
+        route = "CloudBackup",
+        icon = R.drawable.settings,
+    )
 }
 
 val routes = listOf(
@@ -241,4 +247,5 @@ val routes = listOf(
     Route.Activities,
     Route.CrashReport,
     Route.UpdateSettings,
+    Route.CloudBackup,
 )

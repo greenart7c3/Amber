@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
+import android.content.Intent
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -27,7 +28,6 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +46,7 @@ import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.core.content.FileProvider
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -54,6 +55,7 @@ import com.greenart7c3.nostrsigner.service.Biometrics.authenticate
 import com.greenart7c3.nostrsigner.service.WebDavService
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -83,11 +85,6 @@ fun CloudBackupScreen(modifier: Modifier) {
     // Google Drive sheet state
     var showGdriveSheet by remember { mutableStateOf(false) }
 
-    // Queue for sequential CreateDocument launches (one per account).
-    // pendingIndex == -1 means idle; >= 0 means a launch is in progress.
-    var pendingExports by remember { mutableStateOf(emptyList<Pair<String, String>>()) }
-    var pendingIndex by remember { mutableIntStateOf(-1) }
-
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             webDavUrl = TextFieldValue(LocalPreferences.getWebDavUrl(context))
@@ -99,45 +96,30 @@ fun CloudBackupScreen(modifier: Modifier) {
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
 
-    // CreateDocument launcher: writes the current pendingExports[pendingIndex] ncryptsec
-    // directly to the URI chosen by the user (no local file created).
-    val createDocLauncher = rememberLauncherForActivityResult(
-        ActivityResultContracts.CreateDocument("text/plain"),
-    ) { uri ->
-        val exports = pendingExports
-        val idx = pendingIndex
-        if (uri != null && idx >= 0 && idx < exports.size) {
-            val (_, ncryptsec) = exports[idx]
-            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                context.contentResolver.openOutputStream(uri)?.use { stream ->
-                    stream.write(ncryptsec.toByteArray(Charsets.UTF_8))
-                }
+    // Share all ncryptsec pairs via the Android share sheet.
+    // Writes each to a temp file in cacheDir, gets a FileProvider URI, then fires
+    // ACTION_SEND / ACTION_SEND_MULTIPLE so the user can pick Google Drive (or any app).
+    // No file is persisted on-device beyond the cache.
+    fun shareNcryptsecFiles(pairs: List<Pair<String, String>>) {
+        val uris = pairs.map { (npub, ncryptsec) ->
+            val file = File(context.cacheDir, "$npub.ncryptsec")
+            file.writeText(ncryptsec)
+            FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", file)
+        }
+        val shareIntent = if (uris.size == 1) {
+            Intent(Intent.ACTION_SEND).apply {
+                type = "text/plain"
+                putExtra(Intent.EXTRA_STREAM, uris[0])
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            }
+        } else {
+            Intent(Intent.ACTION_SEND_MULTIPLE).apply {
+                type = "text/plain"
+                putParcelableArrayListExtra(Intent.EXTRA_STREAM, ArrayList(uris))
+                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
             }
         }
-        val next = idx + 1
-        if (next < exports.size) {
-            // Advance the index; LaunchedEffect below will trigger the next picker launch
-            pendingIndex = next
-        } else {
-            // All done — reset and notify
-            val count = exports.size
-            pendingExports = emptyList()
-            pendingIndex = -1
-            Toast.makeText(
-                context,
-                context.getString(R.string.cloud_backup_success, "$count accounts"),
-                Toast.LENGTH_LONG,
-            ).show()
-        }
-    }
-
-    // When pendingIndex advances to a valid index, open the next file-save picker.
-    // This avoids the forward-reference that would arise from calling createDocLauncher
-    // inside its own initializer lambda.
-    LaunchedEffect(pendingIndex) {
-        if (pendingIndex >= 0 && pendingIndex < pendingExports.size) {
-            createDocLauncher.launch("${pendingExports[pendingIndex].first}.ncryptsec")
-        }
+        context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.cloud_backup_share_title)))
     }
 
     // Restore: pick any .ncryptsec file and import it
@@ -585,10 +567,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                             isLoading = false
                                             statusText = ""
                                             if (pairs.isNotEmpty()) {
-                                                pendingExports = pairs
-                                                // Setting pendingIndex to 0 triggers LaunchedEffect,
-                                                // which opens the first file-save picker.
-                                                pendingIndex = 0
+                                                shareNcryptsecFiles(pairs)
                                             }
                                         }
                                     }.onFailure { e ->

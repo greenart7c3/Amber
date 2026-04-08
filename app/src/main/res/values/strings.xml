@@ -459,6 +459,7 @@
     <string name="cloud_backup_gdrive_open">Open Google Drive</string>
     <string name="cloud_backup_gdrive_backup">Backup All Accounts</string>
     <string name="cloud_backup_gdrive_restore">Restore from File</string>
+    <string name="cloud_backup_share_title">Save encrypted key backup</string>
     <string name="cloud_backup_folder_selected">Folder selected</string>
     <string name="cloud_backup_no_folder">No folder selected</string>
     <string name="cloud_backup_folder_label">Folder: %s</string>

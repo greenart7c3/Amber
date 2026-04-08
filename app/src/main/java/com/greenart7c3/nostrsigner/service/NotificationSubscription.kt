@@ -26,7 +26,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
@@ -39,13 +39,13 @@ import java.util.UUID
 class NotificationSubscription(
     val client: NostrClient,
     val appContext: Context,
-) : IRelayClientListener {
+) : RelayConnectionListener {
     private val eventNotificationConsumer = EventNotificationConsumer(appContext)
     private val subIds = mutableMapOf<String, String>()
 
     init {
         // listens until the app crashes.
-        client.subscribe(this)
+        client.addConnectionListener(this)
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
@@ -87,7 +87,7 @@ class NotificationSubscription(
                     subIds[subKey] = UUID.randomUUID().toString()
                 }
                 val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
-                client.openReqSubscription(
+                client.subscribe(
                     subIds[subKey]!!,
                     connRelays.associateWith {
                         listOf(
@@ -108,7 +108,7 @@ class NotificationSubscription(
                     subIds[account.hexKey] = UUID.randomUUID().toString()
                 }
                 val relays = Amber.instance.getSavedRelays(account)
-                client.openReqSubscription(
+                client.subscribe(
                     subIds[account.hexKey]!!,
                     relays.associateWith {
                         listOf(

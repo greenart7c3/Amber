@@ -52,7 +52,7 @@ import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
+import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -116,7 +116,7 @@ class Amber :
 
     // logs and stat counts.
     val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {
-        client.subscribe(it)
+        client.addConnectionListener(it)
     }
 
     // Authenticates with relays.
@@ -587,7 +587,7 @@ class Amber :
         // This will automatically connect to these relays even if they are not in the list
         // once the events have been saved, it will disconnect from them unless there are other
         // filters with them
-        return client.sendAndWaitForResponse(event, relays)
+        return client.publishAndConfirm(event, relays)
     }
 
     companion object {

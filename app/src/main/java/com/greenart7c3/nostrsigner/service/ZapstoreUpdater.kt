@@ -12,7 +12,7 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EoseMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
@@ -47,7 +47,7 @@ enum class DownloadState {
 class ZapstoreUpdater(
     private val client: NostrClient,
     private val scope: CoroutineScope,
-) : IRelayClientListener {
+) : RelayConnectionListener {
     val latestRelease = MutableStateFlow<ZapstoreRelease?>(null)
     val isChecking = MutableStateFlow(false)
     val downloadState = MutableStateFlow(DownloadState.IDLE)
@@ -61,7 +61,7 @@ class ZapstoreUpdater(
     private var timeoutJob: Job? = null
 
     init {
-        client.subscribe(this)
+        client.addConnectionListener(this)
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
@@ -91,7 +91,7 @@ class ZapstoreUpdater(
             limit = 10,
         )
 
-        client.openReqSubscription(releaseSubId, mapOf(relay to listOf(releaseFilter)))
+        client.subscribe(releaseSubId, mapOf(relay to listOf(releaseFilter)))
 
         timeoutJob = scope.launch {
             delay(EOSE_TIMEOUT_MS)
@@ -151,7 +151,7 @@ class ZapstoreUpdater(
         val fileFilter = Filter(
             ids = pendingFileEventIds.toList(),
         )
-        client.openReqSubscription(fileSubId, mapOf(relay to listOf(fileFilter)))
+        client.subscribe(fileSubId, mapOf(relay to listOf(fileFilter)))
     }
 
     private fun processFileEvent(event: Event) {
@@ -197,8 +197,8 @@ class ZapstoreUpdater(
         timeoutJob?.cancel()
         timeoutJob = null
         Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-        client.close(releaseSubId)
-        client.close(fileSubId)
+        client.unsubscribe(releaseSubId)
+        client.unsubscribe(fileSubId)
         isChecking.value = false
         pendingFileEventIds.clear()
         latestRelease.value?.let { release ->

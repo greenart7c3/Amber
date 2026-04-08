@@ -272,7 +272,7 @@ fun ReportMissingEventKindButton(account: Account, kind: Int) {
                     }
                     val signedEvents = account.createMessageNIP17(template)
                     signedEvents.wraps.forEach { wrap ->
-                        client.send(
+                        client.publish(
                             event = wrap,
                             relayList = setOf(
                                 NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),

@@ -73,8 +73,8 @@ import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.sendAndWaitForResponse
-import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
@@ -380,7 +380,7 @@ fun onAddRelay(
 
                 var canSendRequest = false
 
-                val listener = object : IRelayClientListener {
+                val listener = object : RelayConnectionListener {
                     override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
                         if (!success) {
                             AmberListenerSingleton.latestErrorMessages.add("Failed to send event. Try again.")
@@ -426,13 +426,13 @@ fun onAddRelay(
                     }
                 }
 
-                client.subscribe(listener)
+                client.addConnectionListener(listener)
 
                 if (!client.isActive()) {
                     client.connect()
                 }
 
-                client.openReqSubscription(
+                client.subscribe(
                     ncSub,
                     mapOf(addedWSS to filters),
                 )
@@ -454,8 +454,8 @@ fun onAddRelay(
                         },
                         onReject = {},
                     )
-                    client.close(ncSub)
-                    client.unsubscribe(listener)
+                    client.unsubscribe(ncSub)
+                    client.removeConnectionListener(listener)
                     client.disconnect()
                     textFieldRelay.value = TextFieldValue("")
                     isLoading.value = false
@@ -465,7 +465,7 @@ fun onAddRelay(
                 var success = false
                 var errorCount = 0
                 while (!success && errorCount < 3) {
-                    success = client.sendAndWaitForResponse(signedEvent, setOf(addedWSS))
+                    success = client.publishAndConfirm(signedEvent, setOf(addedWSS))
                     if (!success) {
                         errorCount++
                         delay(1000)
@@ -490,9 +490,9 @@ fun onAddRelay(
                     filterResult = true
                 }
 
-                client.close(ncSub)
+                client.unsubscribe(ncSub)
                 client.disconnect()
-                client.unsubscribe(listener)
+                client.removeConnectionListener(listener)
 
                 if (success && filterResult) {
                     relays2.add(addedWSS)

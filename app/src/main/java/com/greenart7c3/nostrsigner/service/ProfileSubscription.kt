@@ -29,7 +29,7 @@ import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EoseMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
@@ -51,14 +51,14 @@ class ProfileSubscription(
     val client: NostrClient,
     val appContext: Context,
     val scope: CoroutineScope,
-) : IRelayClientListener {
+) : RelayConnectionListener {
     private val subIds = mutableMapOf<String, String>()
     private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
     private val timeoutJobs = mutableMapOf<String, Job>()
 
     init {
         // listens until the app crashes.
-        client.subscribe(this)
+        client.addConnectionListener(this)
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
@@ -70,7 +70,7 @@ class ProfileSubscription(
                 if (relays.isEmpty()) {
                     timeoutJobs.remove(subId)?.cancel()
                     Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-                    client.close(subId)
+                    client.unsubscribe(subId)
                     relaysPerSubId.remove(subId)
                 }
             }
@@ -135,12 +135,12 @@ class ProfileSubscription(
                 val subId = subIds[it.hexKey]!!
                 val profileFilter = createProfileFilter(it)
                 relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
-                client.openReqSubscription(subId, profileFilter)
+                client.subscribe(subId, profileFilter)
                 timeoutJobs[subId] = scope.launch {
                     delay(EOSE_TIMEOUT_MS)
                     if (relaysPerSubId.containsKey(subId)) {
                         Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-                        client.close(subId)
+                        client.unsubscribe(subId)
                         relaysPerSubId.remove(subId)
                         timeoutJobs.remove(subId)
                     }
@@ -156,7 +156,7 @@ class ProfileSubscription(
         Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
         subIds.values.forEach {
             timeoutJobs.remove(it)?.cancel()
-            client.close(it)
+            client.unsubscribe(it)
         }
         relaysPerSubId.clear()
     }

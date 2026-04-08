@@ -10,7 +10,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendErrorNotification
 import com.greenart7c3.nostrsigner.ui.ToastManager
-import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
+import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
@@ -50,7 +50,7 @@ class NostrClientLoggerListener(
     val context: Context,
     val stats: AmberRelayStats,
     val scope: CoroutineScope,
-) : IRelayClientListener {
+) : RelayConnectionListener {
     private var reconnectJob: Job? = null
     private var reconnectDelay = 5_000L
     private var lastDisconnectTime = 0L

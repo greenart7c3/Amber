@@ -52,6 +52,26 @@ class NostrClientLoggerListener(
     val scope: CoroutineScope,
 ) : IRelayClientListener {
     private var reconnectJob: Job? = null
+    private var reconnectDelay = 5_000L
+    private var lastDisconnectTime = 0L
+
+    private fun reconnectWithBackoff() {
+        val now = System.currentTimeMillis()
+        if (now - lastDisconnectTime > 60_000) {
+            reconnectDelay = 5_000L
+        }
+        lastDisconnectTime = now
+
+        reconnectJob?.cancel()
+        reconnectJob = scope.launch {
+            if (BuildConfig.DEBUG) Log.d(Amber.TAG, "Reconnecting in ${reconnectDelay / 1000}s...")
+            delay(reconnectDelay)
+            reconnectDelay = (reconnectDelay * 2).coerceAtMost(60_000L)
+            if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
+                Amber.instance.reconnect()
+            }
+        }
+    }
 
     private fun saveLog(
         url: String,
@@ -89,6 +109,13 @@ class NostrClientLoggerListener(
     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
         if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onCannotConnect: ${relay.url.url} error: $errorMessage")
         saveLog(relay.url.url, "onCannotConnect", errorMessage)
+
+        if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
+            super.onCannotConnect(relay, errorMessage)
+            return
+        }
+
+        reconnectWithBackoff()
         super.onCannotConnect(relay, errorMessage)
     }
 
@@ -138,13 +165,8 @@ class NostrClientLoggerListener(
             super.onDisconnected(relay)
             return
         }
-        reconnectJob?.cancel()
-        reconnectJob = scope.launch {
-            delay(5_000)
-            if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
-                Amber.instance.reconnect()
-            }
-        }
+
+        reconnectWithBackoff()
         super.onDisconnected(relay)
     }
 

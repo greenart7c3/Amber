@@ -120,10 +120,6 @@ class ConnectivityService : Service() {
                         if (Amber.instance.settings.killSwitch.value) return
 
                         scope.launch {
-                            if (!Amber.instance.client.isActive()) {
-                                Amber.instance.client.connect()
-                            }
-                            Amber.instance.client.reconnect(true)
                             Amber.instance.notificationSubscription.updateFilter()
                         }
                     }

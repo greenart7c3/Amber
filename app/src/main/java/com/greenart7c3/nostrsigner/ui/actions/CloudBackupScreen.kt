@@ -83,9 +83,10 @@ fun CloudBackupScreen(modifier: Modifier) {
     // Google Drive sheet state
     var showGdriveSheet by remember { mutableStateOf(false) }
 
-    // Queue for sequential CreateDocument launches (one per account)
+    // Queue for sequential CreateDocument launches (one per account).
+    // pendingIndex == -1 means idle; >= 0 means a launch is in progress.
     var pendingExports by remember { mutableStateOf(emptyList<Pair<String, String>>()) }
-    var pendingIndex by remember { mutableIntStateOf(0) }
+    var pendingIndex by remember { mutableIntStateOf(-1) }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
@@ -105,7 +106,7 @@ fun CloudBackupScreen(modifier: Modifier) {
     ) { uri ->
         val exports = pendingExports
         val idx = pendingIndex
-        if (uri != null && idx < exports.size) {
+        if (uri != null && idx >= 0 && idx < exports.size) {
             val (_, ncryptsec) = exports[idx]
             Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                 context.contentResolver.openOutputStream(uri)?.use { stream ->
@@ -115,17 +116,27 @@ fun CloudBackupScreen(modifier: Modifier) {
         }
         val next = idx + 1
         if (next < exports.size) {
+            // Advance the index; LaunchedEffect below will trigger the next picker launch
             pendingIndex = next
-            createDocLauncher.launch("${exports[next].first}.ncryptsec")
         } else {
-            // All done
+            // All done — reset and notify
+            val count = exports.size
             pendingExports = emptyList()
-            pendingIndex = 0
+            pendingIndex = -1
             Toast.makeText(
                 context,
-                context.getString(R.string.cloud_backup_success, "${exports.size} accounts"),
+                context.getString(R.string.cloud_backup_success, "$count accounts"),
                 Toast.LENGTH_LONG,
             ).show()
+        }
+    }
+
+    // When pendingIndex advances to a valid index, open the next file-save picker.
+    // This avoids the forward-reference that would arise from calling createDocLauncher
+    // inside its own initializer lambda.
+    LaunchedEffect(pendingIndex) {
+        if (pendingIndex >= 0 && pendingIndex < pendingExports.size) {
+            createDocLauncher.launch("${pendingExports[pendingIndex].first}.ncryptsec")
         }
     }
 
@@ -575,10 +586,9 @@ fun CloudBackupScreen(modifier: Modifier) {
                                             statusText = ""
                                             if (pairs.isNotEmpty()) {
                                                 pendingExports = pairs
+                                                // Setting pendingIndex to 0 triggers LaunchedEffect,
+                                                // which opens the first file-save picker.
                                                 pendingIndex = 0
-                                                // Launch the file-save picker for the first account;
-                                                // the launcher callback chains the rest automatically.
-                                                createDocLauncher.launch("${pairs[0].first}.ncryptsec")
                                             }
                                         }
                                     }.onFailure { e ->

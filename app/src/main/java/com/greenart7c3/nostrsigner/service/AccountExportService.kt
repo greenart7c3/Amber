@@ -82,26 +82,26 @@ object AccountExportService {
     }
 
     /**
-     * Export all accounts as ncryptsec lines (NIP-49 encrypted private keys).
-     * One ncryptsec per line — no JSON metadata, compatible with any Nostr client.
+     * Export each account as a separate (npub, ncryptsec) pair.
+     * Callers write each pair to its own file named "{npub}.ncryptsec".
      */
-    suspend fun exportAllAsNcryptsec(
+    suspend fun exportPerAccountNcryptsec(
         context: Context,
         password: String,
         onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
-    ): Result<String> = withContext(Dispatchers.IO) {
+    ): Result<List<Pair<String, String>>> = withContext(Dispatchers.IO) {
         try {
             val accountInfos = LocalPreferences.allSavedAccounts(context)
             val total = accountInfos.size
             if (total == 0) return@withContext Result.failure(Exception("No accounts to export"))
 
-            val lines = StringBuilder()
+            val result = mutableListOf<Pair<String, String>>()
             accountInfos.forEachIndexed { index, info ->
                 onProgress(index + 1, total)
                 val account = LocalPreferences.loadFromEncryptedStorage(context, info.npub)
-                account?.let { lines.appendLine(it.nip49Encrypt(password)) }
+                account?.let { result.add(info.npub to it.nip49Encrypt(password)) }
             }
-            Result.success(lines.toString().trimEnd())
+            Result.success(result)
         } catch (e: Exception) {
             Result.failure(e)
         }

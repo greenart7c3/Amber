@@ -462,6 +462,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f)
                                 .imePadding(),
+                            navController = navController.navController,
                             onShowQrCode = {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                     navController.navController.navigate(Route.QrCode.route.replace("{content}", it))

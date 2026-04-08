@@ -26,6 +26,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
+import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
@@ -84,7 +85,7 @@ class ProfileSubscription(
         }
         if (msg is EventMessage) {
             if (this.subIds.containsValue(msg.subId)) {
-                if (msg.event.kind == MetadataEvent.KIND) {
+                if (msg.event.kind == MetadataEvent.KIND && msg.event.verify()) {
                     (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
                         val npub = msg.event.pubKey.hexToByteArray().toNpub()
                         val account = LocalPreferences.loadFromEncryptedStorageSync(appContext, npub) ?: return

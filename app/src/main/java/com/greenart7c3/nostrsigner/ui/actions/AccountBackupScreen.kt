@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ExpandLess
@@ -88,6 +90,7 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.navigation.NavController
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
@@ -100,7 +103,9 @@ import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
+import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
@@ -117,6 +122,7 @@ import kotlinx.coroutines.launch
 @Composable
 fun AccountBackupScreen(
     modifier: Modifier,
+    navController: NavController,
     onShowQrCode: (String) -> Unit,
 ) {
     var isLoading by remember { mutableStateOf(false) }
@@ -186,6 +192,27 @@ fun AccountBackupScreen(
                         Spacer(modifier = Modifier.height(12.dp))
                     }
                 }
+
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
+                IconRow(
+                    title = stringResource(R.string.export_all_accounts_title),
+                    icon = Icons.Filled.SaveAlt,
+                    tint = MaterialTheme.colorScheme.onBackground,
+                    onClick = { navController.navigate(Route.ExportAllAccounts.route) },
+                )
+
+                if (!BuildFlavorChecker.isOfflineFlavor()) {
+                    Spacer(modifier = Modifier.height(4.dp))
+                    IconRow(
+                        title = stringResource(R.string.cloud_backup_title),
+                        icon = Icons.Filled.CloudUpload,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        onClick = { navController.navigate(Route.CloudBackup.route) },
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
             }
         }
     }

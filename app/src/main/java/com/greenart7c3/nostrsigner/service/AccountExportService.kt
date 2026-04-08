@@ -82,6 +82,72 @@ object AccountExportService {
     }
 
     /**
+     * Export each account as a separate (npub, ncryptsec) pair.
+     * Callers write each pair to its own file named "{npub}.ncryptsec".
+     */
+    suspend fun exportPerAccountNcryptsec(
+        context: Context,
+        password: String,
+        onProgress: (current: Int, total: Int) -> Unit = { _, _ -> },
+    ): Result<List<Pair<String, String>>> = withContext(Dispatchers.IO) {
+        try {
+            val accountInfos = LocalPreferences.allSavedAccounts(context)
+            val total = accountInfos.size
+            if (total == 0) return@withContext Result.failure(Exception("No accounts to export"))
+
+            val result = mutableListOf<Pair<String, String>>()
+            accountInfos.forEachIndexed { index, info ->
+                onProgress(index + 1, total)
+                val account = LocalPreferences.loadFromEncryptedStorage(context, info.npub)
+                account?.let { result.add(info.npub to it.nip49Encrypt(password)) }
+            }
+            Result.success(result)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    /**
+     * Import accounts from ncryptsec lines (one ncryptsec per line).
+     */
+    suspend fun importFromNcryptsec(
+        content: String,
+        password: String,
+        onLoading: (isLoading: Boolean) -> Unit,
+        onText: (text: String) -> Unit,
+        onFinish: () -> Unit,
+    ) {
+        onLoading(true)
+        try {
+            content.lines().filter { it.isNotBlank() }.forEachIndexed { index, ncryptsec ->
+                try {
+                    onText(Amber.instance.getString(R.string.importing_account, index + 1))
+                    val privKey = Nip49().decrypt(ncryptsec, password)
+                    val hexKey = Nip01Crypto.pubKeyCreate(Hex.decode(privKey))
+                    val account = Account(
+                        hexKey = hexKey.toHexKey(),
+                        npub = hexKey.toNpub(),
+                        name = MutableStateFlow(""),
+                        picture = MutableStateFlow(""),
+                        signPolicy = 1,
+                        didBackup = true,
+                        signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
+                    )
+                    LocalPreferences.switchToAccount(Amber.instance, hexKey.toNpub())
+                    LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, null)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.e("Amber", "Error importing ncryptsec at index $index", e)
+                }
+            }
+            onFinish()
+        } finally {
+            onText("")
+            onLoading(false)
+        }
+    }
+
+    /**
      * Export all accounts as an encrypted JSON file
      *
      * @param context Application context

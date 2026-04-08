@@ -71,6 +71,7 @@ import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ActivityScreen
+import com.greenart7c3.nostrsigner.ui.actions.CloudBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.ConnectOrbotScreen
 import com.greenart7c3.nostrsigner.ui.actions.DefaultRelaysScreen
 import com.greenart7c3.nostrsigner.ui.actions.ExportAllAccountsScreen
@@ -461,6 +462,7 @@ fun MainScreen(
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f)
                                 .imePadding(),
+                            navController = navController.navController,
                             onShowQrCode = {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                     navController.navController.navigate(Route.QrCode.route.replace("{content}", it))
@@ -475,6 +477,24 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
                         ExportAllAccountsScreen(
+                            Modifier
+                                .fillMaxSize()
+                                .padding(padding)
+                                .consumeWindowInsets(padding)
+                                .verticalScrollbar(scrollState)
+                                .verticalScroll(scrollState)
+                                .padding(horizontal = verticalPadding)
+                                .padding(top = verticalPadding * 1.5f)
+                                .imePadding(),
+                        )
+                    },
+                )
+
+                composable(
+                    Route.CloudBackup.route,
+                    content = {
+                        val scrollState = rememberScrollState()
+                        CloudBackupScreen(
                             Modifier
                                 .fillMaxSize()
                                 .padding(padding)

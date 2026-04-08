@@ -60,6 +60,11 @@ private enum class SettingsKeys(val key: String) {
     AUTO_CHECK_UPDATES("auto_check_updates"),
     UPDATE_CHECK_FREQUENCY("update_check_frequency"),
     LAST_UPDATE_CHECK_TIME("last_update_check_time"),
+    WEBDAV_URL("webdav_url"),
+    WEBDAV_USERNAME("webdav_username"),
+    WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
+    WEBDAV_FILENAME("webdav_filename"),
+    GDRIVE_FOLDER_URI("gdrive_folder_uri"),
 }
 
 @Immutable
@@ -514,6 +519,53 @@ object LocalPreferences {
             apply {
                 putLong(SettingsKeys.LAST_UPDATE_CHECK_TIME.key, time)
             }
+        }
+    }
+
+    // WebDAV settings
+    fun getWebDavUrl(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_URL.key, "") ?: ""
+
+    fun getWebDavUsername(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_USERNAME.key, "") ?: ""
+
+    fun getWebDavFilename(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_FILENAME.key, "amber_backup.txt") ?: "amber_backup.txt"
+
+    suspend fun getWebDavPassword(context: Context): String {
+        val encrypted = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
+        return if (encrypted.isBlank()) {
+            ""
+        } else {
+            try {
+                SecureCryptoHelper.decrypt(encrypted)
+            } catch (e: Exception) {
+                ""
+            }
+        }
+    }
+
+    suspend fun saveWebDavSettings(
+        context: Context,
+        url: String,
+        username: String,
+        password: String,
+        fileName: String,
+    ) {
+        val encryptedPassword = if (password.isBlank()) "" else SecureCryptoHelper.encrypt(password)
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.WEBDAV_URL.key, url)
+                putString(SettingsKeys.WEBDAV_USERNAME.key, username)
+                putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
+                putString(SettingsKeys.WEBDAV_FILENAME.key, fileName)
+            }
+        }
+    }
+
+    // Google Drive folder URI (persisted SAF permission)
+    fun getGdriveFolderUri(context: Context): String = sharedPrefs(context).getString(SettingsKeys.GDRIVE_FOLDER_URI.key, "") ?: ""
+
+    fun saveGdriveFolderUri(context: Context, uri: String) {
+        sharedPrefs(context).edit {
+            apply { putString(SettingsKeys.GDRIVE_FOLDER_URI.key, uri) }
         }
     }
 

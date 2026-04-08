@@ -9,6 +9,8 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.IRelayClientListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -98,7 +100,12 @@ class ZapstoreUpdater(
         }
     }
 
-    private fun processReleaseEvent(event: com.vitorpamplona.quartz.nip01Core.core.Event) {
+    private fun processReleaseEvent(event: Event) {
+        if (!event.verify()) {
+            Log.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
+            return
+        }
+
         val tags = event.tags
 
         // Only process events for this app
@@ -147,7 +154,12 @@ class ZapstoreUpdater(
         client.openReqSubscription(fileSubId, mapOf(relay to listOf(fileFilter)))
     }
 
-    private fun processFileEvent(event: com.vitorpamplona.quartz.nip01Core.core.Event) {
+    private fun processFileEvent(event: Event) {
+        if (!event.verify()) {
+            Log.w(Amber.TAG, "ZapstoreUpdater: invalid file event: ${event.toJson()}")
+            return
+        }
+
         val tags = event.tags
         val url = tags.firstOrNull { it.size > 1 && it[0] == "url" }?.getOrNull(1) ?: return
         val mimeType = tags.firstOrNull { it.size > 1 && it[0] == "m" }?.getOrNull(1)

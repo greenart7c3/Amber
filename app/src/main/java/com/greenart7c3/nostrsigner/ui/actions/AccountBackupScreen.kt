@@ -27,6 +27,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.CloudUpload
+import androidx.compose.material.icons.filled.SaveAlt
 import androidx.compose.material.icons.outlined.CheckCircle
 import androidx.compose.material.icons.outlined.ContentCopy
 import androidx.compose.material.icons.outlined.ExpandLess
@@ -195,7 +197,7 @@ fun AccountBackupScreen(
 
                 IconRow(
                     title = stringResource(R.string.export_all_accounts_title),
-                    icon = androidx.compose.material.icons.Icons.Default.SaveAlt,
+                    icon = Icons.Filled.SaveAlt,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = { navController.navigate(Route.ExportAllAccounts.route) },
                 )
@@ -204,7 +206,7 @@ fun AccountBackupScreen(
                     Spacer(modifier = Modifier.height(4.dp))
                     IconRow(
                         title = stringResource(R.string.cloud_backup_title),
-                        icon = androidx.compose.material.icons.Icons.Default.CloudUpload,
+                        icon = Icons.Filled.CloudUpload,
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = { navController.navigate(Route.CloudBackup.route) },
                     )

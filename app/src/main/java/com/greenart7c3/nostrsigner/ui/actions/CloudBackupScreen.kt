@@ -1,8 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
-import android.content.Intent
-import android.net.Uri
-import android.provider.DocumentsContract
 import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -26,16 +23,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
-import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.graphics.Color
@@ -63,7 +58,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
-@OptIn(ExperimentalComposeUiApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CloudBackupScreen(modifier: Modifier) {
     val context = LocalContext.current
@@ -85,44 +80,56 @@ fun CloudBackupScreen(modifier: Modifier) {
     var webDavError by remember { mutableStateOf("") }
     var webDavRestoreNpub by remember { mutableStateOf(TextFieldValue("")) }
 
-    // Google Drive state
+    // Google Drive sheet state
     var showGdriveSheet by remember { mutableStateOf(false) }
-    var gdriveFolderUri by remember { mutableStateOf<Uri?>(null) }
-    var gdriveFolderName by remember { mutableStateOf("") }
+
+    // Queue for sequential CreateDocument launches (one per account)
+    var pendingExports by remember { mutableStateOf(emptyList<Pair<String, String>>()) }
+    var pendingIndex by remember { mutableIntStateOf(0) }
 
     LaunchedEffect(Unit) {
         launch(Dispatchers.IO) {
             webDavUrl = TextFieldValue(LocalPreferences.getWebDavUrl(context))
             webDavUsername = TextFieldValue(LocalPreferences.getWebDavUsername(context))
             webDavPassword = TextFieldValue(LocalPreferences.getWebDavPassword(context))
-
-            val savedUri = LocalPreferences.getGdriveFolderUri(context)
-            if (savedUri.isNotBlank()) {
-                val uri = Uri.parse(savedUri)
-                gdriveFolderUri = uri
-                gdriveFolderName = uri.lastPathSegment ?: context.getString(R.string.cloud_backup_folder_selected)
-            }
         }
     }
 
     val keyguardLauncher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) { }
 
-    val folderPickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocumentTree()) { uri ->
-        uri?.let {
-            try {
-                context.contentResolver.takePersistableUriPermission(
-                    it,
-                    Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
-                )
-            } catch (_: SecurityException) { }
-            gdriveFolderUri = it
-            gdriveFolderName = it.lastPathSegment ?: context.getString(R.string.cloud_backup_folder_selected)
-            LocalPreferences.saveGdriveFolderUri(context, it.toString())
+    // CreateDocument launcher: writes the current pendingExports[pendingIndex] ncryptsec
+    // directly to the URI chosen by the user (no local file created).
+    val createDocLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("text/plain"),
+    ) { uri ->
+        val exports = pendingExports
+        val idx = pendingIndex
+        if (uri != null && idx < exports.size) {
+            val (_, ncryptsec) = exports[idx]
+            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                context.contentResolver.openOutputStream(uri)?.use { stream ->
+                    stream.write(ncryptsec.toByteArray(Charsets.UTF_8))
+                }
+            }
+        }
+        val next = idx + 1
+        if (next < exports.size) {
+            pendingIndex = next
+            createDocLauncher.launch("${exports[next].first}.ncryptsec")
+        } else {
+            // All done
+            pendingExports = emptyList()
+            pendingIndex = 0
+            Toast.makeText(
+                context,
+                context.getString(R.string.cloud_backup_success, "${exports.size} accounts"),
+                Toast.LENGTH_LONG,
+            ).show()
         }
     }
 
-    // Pick a single .ncryptsec file from Google Drive for restore
+    // Restore: pick any .ncryptsec file and import it
     val filePickerLauncher = rememberLauncherForActivityResult(ActivityResultContracts.GetContent()) { uri ->
         uri?.let { fileUri ->
             if (password.text.isBlank()) {
@@ -408,7 +415,7 @@ fun CloudBackupScreen(modifier: Modifier) {
                                     exportResult.onSuccess { pairs ->
                                         var allOk = true
                                         pairs.forEachIndexed { index, (npub, ncryptsec) ->
-                                            statusText = context.getString(R.string.cloud_backup_uploading) + " (${ index + 1}/${pairs.size})"
+                                            statusText = context.getString(R.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
                                             val uploadResult = withContext(Dispatchers.IO) {
                                                 WebDavService.uploadFile(
                                                     serverUrl = webDavUrl.text,
@@ -451,7 +458,6 @@ fun CloudBackupScreen(modifier: Modifier) {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Restore: user specifies the npub to download
         OutlinedTextField(
             modifier = Modifier.fillMaxWidth(),
             value = webDavRestoreNpub,
@@ -515,7 +521,8 @@ fun CloudBackupScreen(modifier: Modifier) {
         )
     }
 
-    // Google Drive bottom sheet
+    // Google Drive bottom sheet: sends each {npub}.ncryptsec directly via CreateDocument
+    // (Android system picker — user can choose Google Drive, no local save needed)
     if (showGdriveSheet) {
         ModalBottomSheet(
             onDismissRequest = { showGdriveSheet = false },
@@ -534,123 +541,65 @@ fun CloudBackupScreen(modifier: Modifier) {
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    text = stringResource(R.string.cloud_backup_gdrive_description),
+                    text = stringResource(R.string.cloud_backup_gdrive_sheet_description),
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.Gray,
                 )
 
                 HorizontalDivider()
 
-                // Folder row
-                Row(
+                // Backup: export all accounts and launch CreateDocument for each, one at a time
+                AmberButton(
                     modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                ) {
-                    Text(
-                        text = if (gdriveFolderName.isNotBlank()) {
-                            stringResource(R.string.cloud_backup_folder_label, gdriveFolderName)
-                        } else {
-                            stringResource(R.string.cloud_backup_no_folder)
-                        },
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (gdriveFolderName.isNotBlank()) MaterialTheme.colorScheme.primary else Color.Gray,
-                        modifier = Modifier.weight(1f),
-                    )
-                    TextButton(onClick = { folderPickerLauncher.launch(null) }) {
-                        Text(
-                            text = stringResource(
-                                if (gdriveFolderUri == null) {
-                                    R.string.cloud_backup_gdrive_pick_folder
-                                } else {
-                                    R.string.cloud_backup_gdrive_change_folder
-                                },
-                            ),
-                        )
-                    }
-                }
-
-                HorizontalDivider()
-
-                if (gdriveFolderUri != null) {
-                    AmberButton(
-                        modifier = Modifier.fillMaxWidth(),
-                        text = stringResource(R.string.cloud_backup_gdrive_backup),
-                        onClick = {
-                            authenticate(
-                                title = context.getString(R.string.cloud_backup_gdrive_backup),
-                                context = context,
-                                keyguardLauncher = keyguardLauncher,
-                                onApproved = {
-                                    showGdriveSheet = false
-                                    Amber.instance.applicationIOScope.launch {
-                                        isLoading = true
-                                        statusText = context.getString(R.string.preparing_export)
-                                        val result = AccountExportService.exportPerAccountNcryptsec(
-                                            context = context,
-                                            password = password.text,
-                                            onProgress = { cur, tot ->
-                                                statusText = context.getString(R.string.exporting_accounts_progress, cur, tot)
-                                            },
-                                        )
-                                        result.onSuccess { pairs ->
-                                            try {
-                                                var allOk = true
-                                                val folderUri = gdriveFolderUri!!
-                                                pairs.forEachIndexed { index, (npub, ncryptsec) ->
-                                                    statusText = context.getString(R.string.cloud_backup_uploading) + " (${index + 1}/${pairs.size})"
-                                                    val docUri = DocumentsContract.createDocument(
-                                                        context.contentResolver,
-                                                        DocumentsContract.buildDocumentUriUsingTree(
-                                                            folderUri,
-                                                            DocumentsContract.getTreeDocumentId(folderUri),
-                                                        ),
-                                                        "text/plain",
-                                                        "$npub.ncryptsec",
-                                                    )
-                                                    if (docUri != null) {
-                                                        context.contentResolver.openOutputStream(docUri)?.use { stream ->
-                                                            stream.write(ncryptsec.toByteArray(Charsets.UTF_8))
-                                                        }
-                                                    } else {
-                                                        allOk = false
-                                                    }
-                                                }
-                                                withContext(Dispatchers.Main) {
-                                                    if (allOk) {
-                                                        Toast.makeText(context, context.getString(R.string.cloud_backup_success, "${pairs.size} accounts"), Toast.LENGTH_LONG).show()
-                                                    } else {
-                                                        Toast.makeText(context, context.getString(R.string.cloud_backup_partial_failure), Toast.LENGTH_LONG).show()
-                                                    }
-                                                    isLoading = false
-                                                    statusText = ""
-                                                }
-                                            } catch (e: Exception) {
-                                                withContext(Dispatchers.Main) {
-                                                    Toast.makeText(context, context.getString(R.string.cloud_backup_failed, e.message), Toast.LENGTH_LONG).show()
-                                                    isLoading = false
-                                                    statusText = ""
-                                                }
-                                            }
-                                        }.onFailure { e ->
-                                            withContext(Dispatchers.Main) {
-                                                Toast.makeText(context, context.getString(R.string.cloud_backup_failed, e.message), Toast.LENGTH_LONG).show()
-                                                isLoading = false
-                                                statusText = ""
+                    text = stringResource(R.string.cloud_backup_gdrive_backup),
+                    onClick = {
+                        authenticate(
+                            title = context.getString(R.string.cloud_backup_gdrive_backup),
+                            context = context,
+                            keyguardLauncher = keyguardLauncher,
+                            onApproved = {
+                                showGdriveSheet = false
+                                Amber.instance.applicationIOScope.launch {
+                                    isLoading = true
+                                    statusText = context.getString(R.string.preparing_export)
+                                    val result = AccountExportService.exportPerAccountNcryptsec(
+                                        context = context,
+                                        password = password.text,
+                                        onProgress = { cur, tot ->
+                                            statusText = context.getString(R.string.exporting_accounts_progress, cur, tot)
+                                        },
+                                    )
+                                    result.onSuccess { pairs ->
+                                        withContext(Dispatchers.Main) {
+                                            isLoading = false
+                                            statusText = ""
+                                            if (pairs.isNotEmpty()) {
+                                                pendingExports = pairs
+                                                pendingIndex = 0
+                                                // Launch the file-save picker for the first account;
+                                                // the launcher callback chains the rest automatically.
+                                                createDocLauncher.launch("${pairs[0].first}.ncryptsec")
                                             }
                                         }
+                                    }.onFailure { e ->
+                                        withContext(Dispatchers.Main) {
+                                            Toast.makeText(context, context.getString(R.string.cloud_backup_failed, e.message), Toast.LENGTH_LONG).show()
+                                            isLoading = false
+                                            statusText = ""
+                                        }
                                     }
-                                },
-                                onError = { _, msg ->
-                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                        Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
-                                    }
-                                },
-                            )
-                        },
-                    )
-                }
+                                }
+                            },
+                            onError = { _, msg ->
+                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    Toast.makeText(context, msg, Toast.LENGTH_SHORT).show()
+                                }
+                            },
+                        )
+                    },
+                )
 
+                // Restore: user picks a .ncryptsec file from any provider (Google Drive, etc.)
                 AmberButton(
                     modifier = Modifier.fillMaxWidth(),
                     text = stringResource(R.string.cloud_backup_gdrive_restore),

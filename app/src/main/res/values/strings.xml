@@ -452,7 +452,8 @@
     <string name="cloud_backup_encryption_description">This password encrypts your keys before uploading. You will need it to restore.</string>
     <string name="cloud_backup_password_required">Password is required to backup or restore</string>
     <string name="cloud_backup_gdrive_section">Google Drive</string>
-    <string name="cloud_backup_gdrive_description">Pick a Google Drive folder using the system file picker. No API key required — Android handles the access.</string>
+    <string name="cloud_backup_gdrive_description">Save each account\'s encrypted key directly to Google Drive. No API key required.</string>
+    <string name="cloud_backup_gdrive_sheet_description">Each account is saved as its own {npub}.ncryptsec file. Android will ask where to save each one — choose Google Drive to send directly without storing anything on this device.</string>
     <string name="cloud_backup_gdrive_pick_folder">Pick Folder</string>
     <string name="cloud_backup_gdrive_change_folder">Change</string>
     <string name="cloud_backup_gdrive_open">Open Google Drive</string>

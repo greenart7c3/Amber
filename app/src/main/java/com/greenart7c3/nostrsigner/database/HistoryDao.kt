@@ -72,13 +72,23 @@ interface HistoryDao {
     suspend fun addHistory(entity: HistoryEntity, npub: String?) {
         try {
             val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
+            val translatedPermission = permission.toLocalizedString(Amber.instance, true)
             val localEntity = entity.copy(
-                translatedPermission = permission.toLocalizedString(Amber.instance, true),
+                translatedPermission = translatedPermission,
                 content = if (entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
             )
             innerAddHistory(localEntity)
             npub?.let {
                 Amber.instance.getDatabase(npub).dao().updateLastUsed(entity.pkKey, entity.time)
+                Amber.instance.getLogDatabase(npub).dao().insertLog(
+                    LogEntity(
+                        id = 0,
+                        url = entity.pkKey,
+                        type = if (entity.accepted) "Accepted" else "Rejected",
+                        message = translatedPermission,
+                        time = System.currentTimeMillis(),
+                    ),
+                )
             }
         } catch (e: Exception) {
             Log.e(Amber.TAG, "Error adding history", e)

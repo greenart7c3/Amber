@@ -17,7 +17,7 @@ import java.util.TimerTask
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
@@ -90,9 +90,8 @@ class ConnectivityService : Service() {
         Log.d(Amber.TAG, "onCreate ConnectivityService")
 
         Amber.instance.applicationIOScope.launch {
-            while (Amber.instance.isStartingAppState.value) {
-                delay(1000)
-            }
+            Amber.instance.isStartingAppState.first { !it }
+
             // Wait for Tor to be ready before connecting (if using built-in Tor)
             Amber.instance.waitForTorIfNeeded()
             if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {

@@ -65,8 +65,6 @@ import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.crashreports.DisplayCrashMessages
-import com.greenart7c3.nostrsigner.ui.NavBackStackEntryWrapper
-import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.actions.AccountBackupScreen
 import com.greenart7c3.nostrsigner.ui.actions.AccountsBottomSheet
 import com.greenart7c3.nostrsigner.ui.actions.ActiveRelaysScreen
@@ -434,16 +432,18 @@ fun MainScreen(
                     content = {
                         val scrollState = rememberScrollState()
                         SettingsScreen(
-                            Modifier
+                            modifier = Modifier
                                 .fillMaxSize()
                                 .padding(padding)
                                 .verticalScrollbar(scrollState)
                                 .verticalScroll(scrollState)
                                 .padding(horizontal = verticalPadding)
                                 .padding(top = verticalPadding * 1.5f),
-                            accountStateViewModel,
-                            account,
-                            navController.navController,
+                            accountStateViewModel = accountStateViewModel,
+                            account = account,
+                            onNav = {
+                                navController.navController.navigate(it)
+                            },
                         )
                     },
                 )
@@ -773,7 +773,11 @@ fun MainScreen(
                                     .imePadding(),
                                 key = key,
                                 account = account,
-                                navController = navController.navController,
+                                onNav = { route ->
+                                    navController.navController.navigate(route) {
+                                        popUpTo(0)
+                                    }
+                                },
                             )
                         }
                     },

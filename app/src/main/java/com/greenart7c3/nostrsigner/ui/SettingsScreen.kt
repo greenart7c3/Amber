@@ -49,7 +49,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
@@ -76,13 +75,12 @@ fun SettingsScreen(
     modifier: Modifier,
     accountStateViewModel: AccountStateViewModel,
     account: Account,
-    navController: NavController,
+    onNav: (String) -> Unit,
 ) {
     var logoutDialog by remember { mutableStateOf(false) }
     val context = LocalContext.current
     var torMode by remember { mutableStateOf(Amber.instance.settings.torMode) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
-    val proxyPort = remember { mutableStateOf(Amber.instance.settings.proxyPort.toString()) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var sizeInMBFormatted by remember { mutableStateOf("") }
@@ -127,7 +125,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Security,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.Security.route)
+                        onNav(Route.Security.route)
                     },
                 )
             }
@@ -141,7 +139,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Key,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.AccountBackup.route)
+                        onNav(Route.AccountBackup.route)
                     },
                 )
             }
@@ -155,7 +153,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Language,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.Language.route)
+                        onNav(Route.Language.route)
                     },
                 )
             }
@@ -174,13 +172,13 @@ fun SettingsScreen(
                         icon = R.drawable.ic_tor,
                         tint = MaterialTheme.colorScheme.onBackground,
                         onLongClick = {
-                            navController.navigate(Route.TorSettings.route)
+                            onNav(Route.TorSettings.route)
                         },
                         onClick = {
                             if (torMode != TorMode.DISABLED) {
                                 disconnectTorDialog = true
                             } else {
-                                navController.navigate(Route.TorSettings.route)
+                                onNav(Route.TorSettings.route)
                             }
                         },
                     )
@@ -195,7 +193,7 @@ fun SettingsScreen(
                         icon = ImageVector.vectorResource(R.drawable.relays),
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = {
-                            navController.navigate(Route.RelaysScreen.route)
+                            onNav(Route.RelaysScreen.route)
                         },
                     )
                 }
@@ -210,7 +208,7 @@ fun SettingsScreen(
                     icon = Icons.Default.FilterList,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.Logs.route)
+                        onNav(Route.Logs.route)
                     },
                 )
             }
@@ -224,7 +222,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Draw,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.SignPolicy.route)
+                        onNav(Route.SignPolicy.route)
                     },
                 )
             }
@@ -238,7 +236,7 @@ fun SettingsScreen(
                     icon = Icons.Default.FilterList,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.AuthWhitelist.route)
+                        onNav(Route.AuthWhitelist.route)
                     },
                 )
             }
@@ -252,7 +250,7 @@ fun SettingsScreen(
                     icon = Icons.Default.Feedback,
                     tint = MaterialTheme.colorScheme.onBackground,
                     onClick = {
-                        navController.navigate(Route.Feedback.route)
+                        onNav(Route.Feedback.route)
                     },
                 )
             }
@@ -271,7 +269,7 @@ fun SettingsScreen(
                             },
                             icon = Icons.Default.SystemUpdate,
                             tint = if (latestRelease != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
-                            onClick = { navController.navigate(Route.UpdateSettings.route) },
+                            onClick = { onNav(Route.UpdateSettings.route) },
                         )
                     }
                 }

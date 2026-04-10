@@ -46,7 +46,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
@@ -69,7 +68,7 @@ fun EditConfigurationScreen(
     modifier: Modifier = Modifier,
     key: String,
     account: Account,
-    navController: NavController,
+    onNav: (String) -> Unit,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -324,9 +323,7 @@ fun EditConfigurationScreen(
                             Amber.instance.checkForNewRelaysAndUpdateAllFilters()
 
                             scope.launch(Dispatchers.Main) {
-                                navController.navigate(Route.Applications.route) {
-                                    popUpTo(0)
-                                }
+                                onNav(Route.Applications.route)
                             }
                         }
                     }
@@ -347,9 +344,7 @@ fun EditConfigurationScreen(
                             Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
 
                             scope.launch(Dispatchers.Main) {
-                                navController.navigate(Route.Applications.route) {
-                                    popUpTo(0)
-                                }
+                                onNav(Route.Applications.route)
                             }
 
                             Amber.instance.checkForNewRelaysAndUpdateAllFilters()

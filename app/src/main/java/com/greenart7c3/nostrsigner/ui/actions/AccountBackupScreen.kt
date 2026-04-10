@@ -104,16 +104,11 @@ import com.greenart7c3.nostrsigner.ui.InnerQrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
+import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
-import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
-import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
-import com.halilibo.richtext.markdown.BasicMarkdown
-import com.halilibo.richtext.ui.RichTextStyle
-import com.halilibo.richtext.ui.material3.RichText
-import com.halilibo.richtext.ui.resolveDefaults
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -257,15 +252,10 @@ private fun TipsCard(expanded: Boolean, onToggle: () -> Unit) {
                     HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
 
                     val content = stringResource(R.string.account_backup_tips_md)
-                    val astNode = remember {
-                        CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content)
-                    }
-                    RichText(
-                        style = RichTextStyle().resolveDefaults(),
+                    MarkdownText(
+                        markdown = content,
                         modifier = Modifier.padding(bottom = 4.dp),
-                    ) {
-                        BasicMarkdown(astNode)
-                    }
+                    )
                 }
             }
         }
@@ -300,15 +290,10 @@ private fun PasswordCard(
             }
             Spacer(modifier = Modifier.height(4.dp))
             val tipsContent = stringResource(R.string.account_backup_tips3_md)
-            val tipsAstNode = remember {
-                CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(tipsContent)
-            }
-            RichText(
-                style = RichTextStyle().resolveDefaults(),
+            MarkdownText(
+                markdown = tipsContent,
                 modifier = Modifier.fillMaxWidth(),
-            ) {
-                BasicMarkdown(tipsAstNode)
-            }
+            )
             Spacer(modifier = Modifier.height(12.dp))
             OutlinedTextField(
                 modifier = Modifier

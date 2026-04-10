@@ -13,7 +13,6 @@ material3 = "1.4.0"
 nav_version = "2.9.7"
 quartz = "1.08.0"
 compose_ui = "1.10.6"
-richtextUi = "a02a03a3e9"
 roomKtx = "2.8.4"
 securityCryptoKtx = "1.1.0"
 zxingAndroidEmbedded = "4.3.0"
@@ -54,9 +53,6 @@ material3 = { module = "androidx.compose.material3:material3", version.ref = "ma
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "nav_version" }
 quartz = { module = "com.vitorpamplona.quartz:quartz-android", version.ref = "quartz" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "collections" }
-richtext-commonmark = { module = "com.github.vitorpamplona.compose-richtext:richtext-commonmark", version.ref = "richtextUi" }
-richtext-ui = { module = "com.github.vitorpamplona.compose-richtext:richtext-ui", version.ref = "richtextUi" }
-richtext-ui-material3 = { module = "com.github.vitorpamplona.compose-richtext:richtext-ui-material3", version.ref = "richtextUi" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomKtx" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomKtx" }

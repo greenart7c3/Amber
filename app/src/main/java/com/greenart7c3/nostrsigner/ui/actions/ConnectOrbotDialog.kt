@@ -23,7 +23,6 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -38,22 +37,15 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
-import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
-import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
-import com.halilibo.richtext.markdown.BasicMarkdown
-import com.halilibo.richtext.ui.material3.RichText
+import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import kotlinx.coroutines.CancellationException
 
 @Composable
@@ -108,33 +100,8 @@ fun ConnectOrbotScreen(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        val myMarkDownStyle =
-            RichTextDefaults.copy(
-                stringStyle = RichTextDefaults.stringStyle?.copy(
-                    linkStyle = TextLinkStyles(
-                        SpanStyle(
-                            textDecoration = TextDecoration.Underline,
-                            color = MaterialTheme.colorScheme.primary,
-                        ),
-                    ),
-                ),
-            )
-
-        Row {
-            val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown)
-
-            val astNode1 =
-                remember {
-                    CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                }
-
-            RichText(
-                style = myMarkDownStyle,
-                renderer = null,
-            ) {
-                BasicMarkdown(astNode1)
-            }
-        }
+        val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown)
+        MarkdownText(content1)
 
         Spacer(modifier = Modifier.height(16.dp))
 

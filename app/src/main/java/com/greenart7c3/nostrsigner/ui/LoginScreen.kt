@@ -112,14 +112,10 @@ import com.greenart7c3.nostrsigner.service.AccountExportService
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberElevatedButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
+import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.components.MnemonicLoginInput
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.greenart7c3.nostrsigner.ui.theme.RichTextDefaults
-import com.halilibo.richtext.commonmark.CommonMarkdownParseOptions
-import com.halilibo.richtext.commonmark.CommonmarkAstNodeParser
-import com.halilibo.richtext.markdown.BasicMarkdown
-import com.halilibo.richtext.ui.material3.RichText
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
@@ -717,31 +713,11 @@ fun SignUpPage(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
 
-                                    val myMarkDownStyle =
-                                        RichTextDefaults.copy(
-                                            stringStyle = RichTextDefaults.stringStyle?.copy(
-                                                linkStyle = TextLinkStyles(
-                                                    SpanStyle(
-                                                        textDecoration = TextDecoration.Underline,
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                    ),
-                                                ),
-                                            ),
-                                        )
                                     val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
-
-                                    val astNode1 =
-                                        remember {
-                                            CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                                        }
-
-                                    RichText(
+                                    MarkdownText(
+                                        markdown = content1,
                                         modifier = Modifier.padding(vertical = 8.dp),
-                                        style = myMarkDownStyle,
-                                        renderer = null,
-                                    ) {
-                                        BasicMarkdown(astNode1)
-                                    }
+                                    )
 
                                     OutlinedTextField(
                                         value = proxyPort,
@@ -1376,31 +1352,11 @@ fun LoginPage(
                                     )
                                     Spacer(modifier = Modifier.height(8.dp))
 
-                                    val myMarkDownStyle =
-                                        RichTextDefaults.copy(
-                                            stringStyle = RichTextDefaults.stringStyle?.copy(
-                                                linkStyle = TextLinkStyles(
-                                                    SpanStyle(
-                                                        textDecoration = TextDecoration.Underline,
-                                                        color = MaterialTheme.colorScheme.primary,
-                                                    ),
-                                                ),
-                                            ),
-                                        )
                                     val content1 = stringResource(R.string.connect_through_your_orbot_setup_markdown2)
-
-                                    val astNode1 =
-                                        remember {
-                                            CommonmarkAstNodeParser(CommonMarkdownParseOptions.MarkdownWithLinks).parse(content1)
-                                        }
-
-                                    RichText(
+                                    MarkdownText(
+                                        markdown = content1,
                                         modifier = Modifier.padding(vertical = 8.dp),
-                                        style = myMarkDownStyle,
-                                        renderer = null,
-                                    ) {
-                                        BasicMarkdown(astNode1)
-                                    }
+                                    )
 
                                     OutlinedTextField(
                                         value = proxyPort,

@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
@@ -206,7 +207,7 @@ class SignerActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        mainViewModel.clear()
+        IntentUtils.clear()
 
         super.onDestroy()
     }

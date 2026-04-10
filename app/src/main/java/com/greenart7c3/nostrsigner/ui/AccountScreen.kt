@@ -71,7 +71,7 @@ fun AccountScreen(
                     MainLoginPage(accountStateViewModel, newNavController)
                 }
                 is AccountState.LoggedIn -> {
-                    val intents by mainViewModel.intents.collectAsState(initial = persistentListOf())
+                    val intents by IntentUtils.intents.collectAsState(initial = persistentListOf())
                     LaunchedEffect(intent) {
                         intent.intent?.let {
                             IntentUtils.getIntentData(
@@ -81,7 +81,7 @@ fun AccountScreen(
                                 it.getStringExtra("route"),
                                 state.account,
                             )?.let { intentData ->
-                                mainViewModel.addAll(listOf(intentData))
+                                IntentUtils.addAll(listOf(intentData))
                             }
                         }
                     }
@@ -107,11 +107,11 @@ fun AccountScreen(
                         onRemoveIntentData = { results, type ->
                             when (type) {
                                 IntentResultType.ADD -> {
-                                    mainViewModel.addAll(results)
+                                    IntentUtils.addAll(results)
                                 }
 
                                 IntentResultType.REMOVE -> {
-                                    mainViewModel.removeAll(results)
+                                    IntentUtils.removeAll(results)
                                 }
                             }
                         },

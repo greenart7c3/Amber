@@ -16,9 +16,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
-import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -52,10 +50,32 @@ import java.net.URLDecoder
 import java.util.Base64
 import java.util.UUID
 import java.util.zip.GZIPOutputStream
+import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
+import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 object IntentUtils {
+    private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
+    val intents = _intents.asStateFlow()
+
+    fun addAll(list: List<IntentData>) {
+        val existingIds = _intents.value.mapTo(mutableSetOf()) { it.id }
+        val newList = list.filter { existingIds.add(it.id) }
+        _intents.value = (_intents.value + newList).toPersistentList()
+    }
+
+    fun removeAll(list: List<IntentData>) {
+        _intents.value = (_intents.value - list.toSet()).toPersistentList()
+    }
+
+    fun clear() {
+        _intents.value = persistentListOf()
+    }
+
     // Compiled once at class load time; avoids recompiling the pattern on every isUrlEncoded() call.
     private val URL_ENCODED_REGEX = Regex("%[0-9a-fA-F]{2}")
 
@@ -561,16 +581,8 @@ object IntentUtils {
             }
 
             val id = intent.extras?.getString("id") ?: ""
-            val mainViewModel = when (val mainActivity = Amber.instance.getMainActivity()) {
-                is MainActivity -> mainActivity.mainViewModel
-                is SignerActivity -> mainActivity.mainViewModel
-                else -> null
-            }
-
-            mainViewModel?.let {
-                if (it.intents.value.any { intent -> intent.id == id }) {
-                    return null
-                }
+            if (intents.value.any { it.id == id }) {
+                return null
             }
 
             var localAccount = currentLoggedInAccount

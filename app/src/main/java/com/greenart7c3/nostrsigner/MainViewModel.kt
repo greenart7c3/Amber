@@ -8,7 +8,6 @@ import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.NavHostController
-import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -17,35 +16,14 @@ import com.vitorpamplona.quartz.nip19Bech32.Nip19Parser
 import com.vitorpamplona.quartz.nip19Bech32.entities.NPub
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.Hex
-import kotlinx.collections.immutable.ImmutableList
-import kotlinx.collections.immutable.persistentListOf
-import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 @Stable
 @SuppressLint("StaticFieldLeak")
 class MainViewModel(val context: Context) : ViewModel() {
-    private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
-    val intents = _intents.asStateFlow()
     var navController: NavHostController? = null
-
-    fun addAll(list: List<IntentData>) {
-        val existingIds = intents.value.mapTo(mutableSetOf()) { it.id }
-        val newList = list.filter { existingIds.add(it.id) }
-        _intents.value = (_intents.value + newList).toPersistentList()
-    }
-
-    fun removeAll(intents: List<IntentData>) {
-        _intents.value = (_intents.value - intents.toSet()).toPersistentList()
-    }
-
-    fun clear() {
-        _intents.value = persistentListOf()
-    }
 
     fun getAccount(userFromIntent: String?): String? {
         val currentAccount = LocalPreferences.currentAccount(context)
@@ -66,7 +44,7 @@ class MainViewModel(val context: Context) : ViewModel() {
             }
 
             val pubKeys =
-                intents.value.mapNotNull {
+                IntentUtils.intents.value.mapNotNull {
                     it.event?.pubKey
                 }.filter { it.isNotBlank() } + BunkerRequestUtils.getBunkerRequests().mapNotNull {
                     when (val parsed = Nip19Parser.uriToRoute(it.currentAccount)?.entity) {
@@ -149,7 +127,7 @@ class MainViewModel(val context: Context) : ViewModel() {
             account?.let { acc ->
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
                 if (intentData != null) {
-                    addAll(listOf(intentData))
+                    IntentUtils.addAll(listOf(intentData))
                 }
 
                 intent.getStringExtra("route")?.let { route ->

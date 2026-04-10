@@ -20,8 +20,6 @@ import androidx.compose.ui.unit.dp
 import androidx.core.graphics.toColorInt
 import androidx.core.view.WindowCompat
 import com.greenart7c3.nostrsigner.Amber
-import com.halilibo.richtext.ui.RichTextStyle
-import com.halilibo.richtext.ui.resolveDefaults
 
 val Shapes =
     Shapes(
@@ -39,7 +37,6 @@ val primaryColor = Color(0xFFFFCA62)
 val primaryVariant = Color(0xFFC8541A)
 val secondaryColor = Color(0xFFFFCA62)
 val orange = Color(0xFFFF6B00)
-val RichTextDefaults = RichTextStyle().resolveDefaults()
 
 private val DarkColorPalette =
     darkColorScheme(

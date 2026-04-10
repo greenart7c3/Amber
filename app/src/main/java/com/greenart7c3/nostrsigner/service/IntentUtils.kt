@@ -56,6 +56,7 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 object IntentUtils {
@@ -63,13 +64,15 @@ object IntentUtils {
     val intents = _intents.asStateFlow()
 
     fun addAll(list: List<IntentData>) {
-        val existingIds = _intents.value.mapTo(mutableSetOf()) { it.id }
-        val newList = list.filter { existingIds.add(it.id) }
-        _intents.value = (_intents.value + newList).toPersistentList()
+        _intents.update { current ->
+            val existingIds = current.mapTo(mutableSetOf()) { it.id }
+            val newList = list.filter { existingIds.add(it.id) }
+            (current + newList).toPersistentList()
+        }
     }
 
     fun removeAll(list: List<IntentData>) {
-        _intents.value = (_intents.value - list.toSet()).toPersistentList()
+        _intents.update { current -> (current - list.toSet()).toPersistentList() }
     }
 
     fun clear() {

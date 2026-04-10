@@ -13,8 +13,10 @@ import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ProcessLifecycleOwner
+import androidx.work.Constraints
 import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
+import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
@@ -46,6 +48,7 @@ import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
@@ -248,6 +251,27 @@ class Amber :
         )
     }
 
+    private fun startUpdateCheckAlarm() {
+        if (BuildFlavorChecker.isOfflineFlavor() || BuildConfig.IS_FDROID_BUILD) return
+
+        val workManager = WorkManager.getInstance(this)
+
+        val periodicRequest = PeriodicWorkRequestBuilder<UpdateCheckWorker>(1, TimeUnit.DAYS)
+            .addTag("updateCheckWork")
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build(),
+            )
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "UpdateCheckWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodicRequest,
+        )
+    }
+
     override fun onCreate() {
         super.onCreate()
 
@@ -265,6 +289,7 @@ class Amber :
         Log.d(TAG, "onCreate Amber")
 
         startCleanLogsAlarm()
+        startUpdateCheckAlarm()
 
         HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 

@@ -72,6 +72,8 @@ class NotificationSubscription(
      */
     suspend fun updateFilter() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
+        val activeSubKeys = mutableSetOf<String>()
+
         LocalPreferences.allAccounts(appContext).forEach { account ->
             val since = computeSince()
 
@@ -83,6 +85,7 @@ class NotificationSubscription(
             for (conn in connectionsWithLocalKey) {
                 val connPubKey = conn.localPubKey
                 val subKey = "${account.hexKey}_$connPubKey"
+                activeSubKeys.add(subKey)
                 if (!subIds.containsKey(subKey)) {
                     subIds[subKey] = UUID.randomUUID().toString()
                 }
@@ -104,6 +107,7 @@ class NotificationSubscription(
 
             // Main account subscription only for legacy connections (no localKey)
             if (hasLegacyConnections) {
+                activeSubKeys.add(account.hexKey)
                 if (!subIds.containsKey(account.hexKey)) {
                     subIds[account.hexKey] = UUID.randomUUID().toString()
                 }
@@ -121,6 +125,14 @@ class NotificationSubscription(
                         )
                     },
                 )
+            }
+        }
+
+        // Unsubscribe from any subscriptions belonging to deleted applications
+        val staleSubKeys = subIds.keys.filter { it !in activeSubKeys }
+        for (subKey in staleSubKeys) {
+            subIds.remove(subKey)?.let { subId ->
+                client.unsubscribe(subId)
             }
         }
     }

@@ -535,7 +535,7 @@ private fun IntentRequestCard(
         Permission(type.toString().toLowerCase(Locale.current), null)
     }
 
-    val label = if (type == SignerType.CONNECT) {
+    var label = if (type == SignerType.CONNECT) {
         stringResource(R.string.connect)
     } else {
         val encryptedData = intent.encryptedData
@@ -567,6 +567,11 @@ private fun IntentRequestCard(
         } else {
             permission.toLocalizedString(context)
         }
+    }
+    val unknownKindString = stringResource(R.string.event_kind, permission.kind?.toString() ?: "")
+    if (label == unknownKindString && type == SignerType.SIGN_EVENT) {
+        val altTag = intent.event?.tags?.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
+        label = altTag ?: label
     }
 
     val preview = if (type == SignerType.SIGN_EVENT) {

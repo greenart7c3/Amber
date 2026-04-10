@@ -61,6 +61,7 @@ class SignerActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
+        intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
         setContent {
             val isStartingApp = Amber.instance.isStartingAppState.collectAsStateWithLifecycle()
             NostrSignerTheme {

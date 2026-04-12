@@ -398,9 +398,10 @@ class Amber :
         }
         Log.d(TAG, "reconnecting relays")
         val wasActive = client.isActive()
-        if (!wasActive) {
-            client.connect()
-        }
+        // Always call connect() so that failed relays (socket == null) are retried
+        // directly, bypassing BasicRelayClient's internal backoff delay. For relays
+        // that are already connected (socket != null), connect() is a safe no-op.
+        client.connect()
         client.reconnect(wasActive)
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             stats.updateNotification()

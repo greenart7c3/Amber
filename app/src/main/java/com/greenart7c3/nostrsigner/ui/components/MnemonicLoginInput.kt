@@ -22,6 +22,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -153,6 +154,16 @@ private fun WordField(
     // the menu after selection (selecting changes `word`, which would otherwise
     // re-open the menu immediately).
     var selectedWord by remember { mutableStateOf("") }
+
+    // When the word is set externally (e.g. paste), `onValueChange` is never
+    // called so `selectedWord` stays "" and the dropdown would open.  Sync it
+    // here: if `word` is already a complete BIP-39 word there is no need to
+    // show suggestions.
+    LaunchedEffect(word) {
+        if (word in wordList) {
+            selectedWord = word
+        }
+    }
 
     val suggestions = remember(word) {
         if (word.length >= 2) {

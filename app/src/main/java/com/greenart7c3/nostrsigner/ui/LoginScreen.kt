@@ -833,6 +833,7 @@ fun LoginPage(
     var isMnemonicMode by rememberSaveable { mutableStateOf(false) }
     var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
     var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
+    var mnemonicAccountIndex by rememberSaveable { mutableIntStateOf(0) }
     val clipboardManager = LocalClipboard.current
 
     Scaffold(
@@ -956,6 +957,28 @@ fun LoginPage(
                                             }
                                         }
                                     },
+                                )
+
+                                Spacer(modifier = Modifier.height(16.dp))
+
+                                OutlinedTextField(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    shape = RoundedCornerShape(18.dp),
+                                    value = if (mnemonicAccountIndex == 0) "" else mnemonicAccountIndex.toString(),
+                                    onValueChange = { value ->
+                                        mnemonicAccountIndex = value.filter { it.isDigit() }.toIntOrNull() ?: 0
+                                        if (errorMessage.isNotEmpty()) errorMessage = ""
+                                    },
+                                    label = { Text(stringResource(R.string.mnemonic_account_index)) },
+                                    placeholder = { Text("0") },
+                                    supportingText = {
+                                        Text(stringResource(R.string.mnemonic_account_index_description, mnemonicAccountIndex))
+                                    },
+                                    keyboardOptions = KeyboardOptions(
+                                        keyboardType = KeyboardType.Number,
+                                        imeAction = ImeAction.Done,
+                                    ),
+                                    singleLine = true,
                                 )
                             } else {
                                 Text(
@@ -1161,7 +1184,7 @@ fun LoginPage(
                                         Amber.instance.applicationIOScope.launch {
                                             isLoading = true
                                             try {
-                                                val isValid = accountViewModel.isValidKey(mnemonicStr, "")
+                                                val isValid = accountViewModel.isValidKey(mnemonicStr, "", mnemonicAccountIndex.toLong())
                                                 isLoading = false
                                                 if (isValid.first != null) {
                                                     keyPair = isValid.first!!

@@ -315,8 +315,7 @@ fun MainScreen(
                     "login",
                     content = {
                         MainPage(
-                            scope = scope,
-                            navController = navController.navController,
+                            navHostControllerWrapper = navController,
                             accountViewModel = accountStateViewModel,
                         )
                     },
@@ -327,8 +326,7 @@ fun MainScreen(
                     content = {
                         SignUpPage(
                             accountViewModel = accountStateViewModel,
-                            scope = scope,
-                            navController = navController.navController,
+                            navHostControllerWrapper = navController,
                             onFinish = {
                                 Amber.instance.applicationIOScope.launch {
                                     Amber.instance.profileSubscription.updateFilter()
@@ -347,7 +345,7 @@ fun MainScreen(
                     content = {
                         LoginPage(
                             accountViewModel = accountStateViewModel,
-                            navController = navController.navController,
+                            navHostControllerWrapper = navController,
                             onFinish = {
                                 navController.navController.navigate(Route.Applications.route) {
                                     popUpTo(0)

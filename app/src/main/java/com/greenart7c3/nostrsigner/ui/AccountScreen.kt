@@ -33,7 +33,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.MainViewModel
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentResultType
@@ -49,7 +48,6 @@ fun AccountScreen(
     intent: IntentWrapper,
     packageName: String?,
     appName: String?,
-    mainViewModel: MainViewModel,
     bunkerRequests: ImmutableList<AmberBunkerRequest>,
     navController: NavHostControllerWrapper,
     isExternalRequest: Boolean = false,
@@ -68,7 +66,7 @@ fun AccountScreen(
             when (state) {
                 is AccountState.LoggedOff -> {
                     val newNavController = rememberNavController()
-                    MainLoginPage(accountStateViewModel, newNavController)
+                    MainLoginPage(accountStateViewModel, NavHostControllerWrapper(newNavController))
                 }
                 is AccountState.LoggedIn -> {
                     val intents by IntentUtils.intents.collectAsState(initial = persistentListOf())

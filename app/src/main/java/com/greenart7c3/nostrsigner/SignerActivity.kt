@@ -165,7 +165,6 @@ class SignerActivity : AppCompatActivity() {
                                         intent = IntentWrapper(intent),
                                         packageName = packageName,
                                         appName = appName,
-                                        mainViewModel = mainViewModel,
                                         bunkerRequests = bunkerRequests.value,
                                         navController = NavHostControllerWrapper(navController),
                                         isExternalRequest = true,

@@ -100,8 +100,6 @@ import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavController
-import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.Amber
@@ -121,7 +119,6 @@ import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.RandomInstance
-import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -130,8 +127,7 @@ import kotlinx.coroutines.launch
 @SuppressLint("ConfigurationScreenWidthHeight")
 @Composable
 fun MainPage(
-    scope: CoroutineScope,
-    navController: NavController,
+    navHostControllerWrapper: NavHostControllerWrapper,
     accountViewModel: AccountStateViewModel,
 ) {
     var isLoading by remember { mutableStateOf(false) }
@@ -160,7 +156,7 @@ fun MainPage(
                         Amber.instance.applicationIOScope.launch {
                             if (hasAccounts) {
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                                    navController.navigate(Route.Applications.route) {
+                                    navHostControllerWrapper.navController.navigate(Route.Applications.route) {
                                         popUpTo(0)
                                     }
                                 }
@@ -294,8 +290,8 @@ fun MainPage(
                             contentColor = Color(0xFF4C4C4C),
                             textColor = MaterialTheme.colorScheme.primary,
                             onClick = {
-                                scope.launch {
-                                    navController.navigate("loginPage")
+                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    navHostControllerWrapper.navController.navigate("loginPage")
                                 }
                             },
                             text = stringResource(R.string.add_a_key),
@@ -303,8 +299,8 @@ fun MainPage(
 
                         AmberButton(
                             onClick = {
-                                scope.launch {
-                                    navController.navigate("create")
+                                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                    navHostControllerWrapper.navController.navigate("create")
                                 }
                             },
                             text = stringResource(R.string.generate_a_new_key),
@@ -358,20 +354,17 @@ fun MainPage(
 @Composable
 fun MainLoginPage(
     accountViewModel: AccountStateViewModel,
-    navController: NavHostController,
+    navHostControllerWrapper: NavHostControllerWrapper,
 ) {
-    val scope = rememberCoroutineScope()
-
     NavHost(
-        navController,
+        navHostControllerWrapper.navController,
         startDestination = "login",
     ) {
         composable(
             "login",
             content = {
                 MainPage(
-                    scope = scope,
-                    navController = navController,
+                    navHostControllerWrapper = navHostControllerWrapper,
                     accountViewModel = accountViewModel,
                 )
             },
@@ -382,8 +375,7 @@ fun MainLoginPage(
             content = {
                 SignUpPage(
                     accountViewModel = accountViewModel,
-                    scope = scope,
-                    navController = navController,
+                    navHostControllerWrapper = navHostControllerWrapper,
                     onFinish = {
                         Amber.instance.applicationIOScope.launch {
                             Amber.instance.profileSubscription.updateFilter()
@@ -399,7 +391,7 @@ fun MainLoginPage(
             content = {
                 LoginPage(
                     accountViewModel = accountViewModel,
-                    navController = navController,
+                    navHostControllerWrapper = navHostControllerWrapper,
                     onFinish = {},
                 )
             },
@@ -412,10 +404,10 @@ fun MainLoginPage(
 @Composable
 fun SignUpPage(
     accountViewModel: AccountStateViewModel,
-    scope: CoroutineScope,
-    navController: NavController,
+    navHostControllerWrapper: NavHostControllerWrapper,
     onFinish: () -> Unit,
 ) {
+    val scope = rememberCoroutineScope()
     var loading by remember { mutableStateOf(false) }
     val configuration = LocalConfiguration.current
     val screenWidthDp = configuration.screenWidthDp.dp
@@ -468,8 +460,8 @@ fun SignUpPage(
                                 state.animateScrollToPage(state.currentPage - 1)
                             }
                         } else {
-                            scope.launch {
-                                navController.navigateUp()
+                            Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                navHostControllerWrapper.navController.navigateUp()
                             }
                         }
                     },
@@ -490,6 +482,7 @@ fun SignUpPage(
                 state = state,
                 userScrollEnabled = false,
             ) { page ->
+                val scope = rememberCoroutineScope()
                 when (page) {
                     0 -> {
                         val scrollState = rememberScrollState()
@@ -801,7 +794,7 @@ fun SignUpPage(
 @Composable
 fun LoginPage(
     accountViewModel: AccountStateViewModel,
-    navController: NavController,
+    navHostControllerWrapper: NavHostControllerWrapper,
     onFinish: () -> Unit,
 ) {
     var isLoading by remember { mutableStateOf(false) }
@@ -861,7 +854,7 @@ fun LoginPage(
                             }
                         } else {
                             scope.launch {
-                                navController.navigateUp()
+                                navHostControllerWrapper.navController.navigateUp()
                             }
                         }
                     },
@@ -1174,7 +1167,7 @@ fun LoginPage(
 
                             AmberButton(
                                 enabled = if (isMnemonicMode) {
-                                    mnemonicWords.all { it.isNotBlank() }
+                                    mnemonicWords.all { word -> word.isNotBlank() }
                                 } else {
                                     key.value.text.isNotBlank() && !(needsPassword.value && password.value.text.isBlank())
                                 },

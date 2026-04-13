@@ -376,6 +376,8 @@
     <string name="mnemonic_12_words">12 个单词</string>
     <string name="mnemonic_24_words">24 个单词</string>
     <string name="mnemonic_words_entered">已输入 %2$d 个单词中的 %1$d 个</string>
+    <string name="mnemonic_account_index">Account index</string>
+    <string name="mnemonic_account_index_description">Use a different index if this mnemonic was used to create multiple accounts (m/44\'/1237\'/%1$d\'/0/0)</string>
     <string name="sign_policy">签署策略</string>
     <string name="handle_application_permissions">如何处理该应用的权限？</string>
     <string name="sign_policy_manual_new_app">手动批复每项权限</string>

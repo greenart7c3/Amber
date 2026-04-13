@@ -373,6 +373,8 @@
     <string name="mnemonic_12_words">12 words</string>
     <string name="mnemonic_24_words">24 words</string>
     <string name="mnemonic_words_entered">%1$d of %2$d words entered</string>
+    <string name="mnemonic_account_index">Account index</string>
+    <string name="mnemonic_account_index_description">Use a different index if this mnemonic was used to create multiple accounts (m/44\'/1237\'/%1$d\'/0/0)</string>
     <string name="sign_policy">Sign policy</string>
     <string name="handle_application_permissions">How to handle this application permissions?</string>
     <string name="sign_policy_manual_new_app">Manually approve each permission</string>

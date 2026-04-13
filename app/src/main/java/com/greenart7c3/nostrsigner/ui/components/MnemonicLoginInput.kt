@@ -149,10 +149,12 @@ private fun WordField(
     nextFocusRequester: FocusRequester?,
     imeAction: ImeAction,
 ) {
-    // Tracks the last word that was chosen from the dropdown so we can suppress
-    // the menu after selection (selecting changes `word`, which would otherwise
-    // re-open the menu immediately).
-    var selectedWord by remember { mutableStateOf("") }
+    // `remember(word)` resets this state synchronously whenever `word` changes.
+    // Initialising to `word` when it is already a complete BIP-39 entry
+    // suppresses the dropdown immediately — no async gap — covering both the
+    // paste case (word set externally, onValueChange never called) and the
+    // case where the user finishes typing a valid word.
+    var selectedWord by remember(word) { mutableStateOf(if (word in wordList) word else "") }
 
     val suggestions = remember(word) {
         if (word.length >= 2) {

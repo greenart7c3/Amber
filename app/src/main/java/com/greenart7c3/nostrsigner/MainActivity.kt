@@ -146,7 +146,7 @@ class MainActivity : AppCompatActivity() {
 
                                 AccountScreen(
                                     accountStateViewModel = accountStateViewModel,
-                                    intent = IntentWrapper(intent),
+                                    intent = remember(intent) { IntentWrapper(intent) },
                                     packageName = packageName,
                                     appName = appName,
                                     bunkerRequests = bunkerRequests.value,
@@ -189,8 +189,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onDestroy() {
-        IntentUtils.clear()
-
+        val ownedIds = mainViewModel.addedIntentIds
+        val toRemove = IntentUtils.intents.value.filter { it.id in ownedIds }
+        if (toRemove.isNotEmpty()) {
+            IntentUtils.removeAll(toRemove)
+        }
         super.onDestroy()
     }
 }

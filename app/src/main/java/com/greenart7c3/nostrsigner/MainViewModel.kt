@@ -25,6 +25,11 @@ import kotlinx.coroutines.launch
 class MainViewModel(val context: Context) : ViewModel() {
     var navController: NavHostController? = null
 
+    // Intent IDs added by this ViewModel instance — used by onDestroy to remove only
+    // the intents owned by this activity, avoiding races with a new SignerActivity
+    // instance that may have already added its own intents.
+    val addedIntentIds = mutableSetOf<String>()
+
     fun getAccount(userFromIntent: String?): String? {
         val currentAccount = LocalPreferences.currentAccount(context)
         try {
@@ -128,6 +133,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                 val intentData = IntentUtils.getIntentData(context, intent, callingPackage, intent.getStringExtra("route"), acc)
                 if (intentData != null) {
                     IntentUtils.addAll(listOf(intentData))
+                    addedIntentIds.add(intentData.id)
                 }
 
                 intent.getStringExtra("route")?.let { route ->

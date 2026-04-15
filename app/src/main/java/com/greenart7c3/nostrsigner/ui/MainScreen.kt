@@ -14,6 +14,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
@@ -302,9 +303,7 @@ fun MainScreen(
         },
     ) { padding ->
         var isLoading by remember { mutableStateOf(false) }
-        if (isLoading) {
-            CenterCircularProgressIndicator(Modifier.padding(padding))
-        } else {
+        Box(Modifier.fillMaxSize()) {
             NavHost(
                 navController.navController,
                 startDestination = localRoute,
@@ -1014,6 +1013,9 @@ fun MainScreen(
                         )
                     },
                 )
+            }
+            if (isLoading) {
+                CenterCircularProgressIndicator(Modifier.fillMaxSize().padding(padding))
             }
         }
 

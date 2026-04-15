@@ -579,8 +579,8 @@ object IntentUtils {
                 return null
             }
 
-            if (intent.extras?.getString("id") == null) {
-                intent.putExtra("id", UUID.randomUUID().toString().substring(0, 6))
+            if (intent.extras?.getString("id") == null || intent.extras?.getString("id") == "") {
+                intent.putExtra("id", UUID.randomUUID().toString())
             }
 
             val id = intent.extras?.getString("id") ?: ""

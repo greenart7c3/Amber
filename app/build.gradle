@@ -126,6 +126,8 @@ android {
             applicationIdSuffix '.debug'
             versionNameSuffix '-DEBUG'
             resValue "string", "app_name", "@string/app_name_debug"
+            // PNG crunching is a slow step with negligible benefit for local dev.
+            crunchPngs = false
         }
     }
 
@@ -141,9 +143,15 @@ android {
         }
     }
 
+    // ABI splits produce 5 APKs (universal + 4 per-ABI). Only needed for release
+    // distribution, so skip them for debug builds where a single APK is much faster.
+    def isReleaseBuild = gradle.startParameter.taskNames.any {
+        def lower = it.toLowerCase()
+        lower.contains("release") || lower.contains("bundle")
+    }
     splits {
         abi {
-            enable = true
+            enable = isReleaseBuild
             reset()
             include "x86", "x86_64", "arm64-v8a", "armeabi-v7a"
             universalApk = true

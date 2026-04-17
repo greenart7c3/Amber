@@ -25,7 +25,6 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -36,7 +35,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -76,20 +74,20 @@ class ProfileSubscription(
             }
 
             scope.launch {
-                LocalPreferences.allAccounts(appContext).forEach {
-                    if (msg.subId == subIds[it.hexKey]) {
-                        LocalPreferences.setLastCheck(Amber.instance, it.npub, TimeUtils.now())
-                    }
+                val account = LocalPreferences.loadFromEncryptedStorage(appContext) ?: return@launch
+                if (msg.subId == subIds[account.hexKey]) {
+                    LocalPreferences.setLastCheck(Amber.instance, account.npub, TimeUtils.now())
                 }
             }
         }
         if (msg is EventMessage) {
             if (this.subIds.containsValue(msg.subId)) {
                 if (msg.event.kind == MetadataEvent.KIND && msg.event.verify()) {
-                    (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
-                        val npub = msg.event.pubKey.hexToByteArray().toNpub()
-                        val account = LocalPreferences.loadFromEncryptedStorageSync(appContext, npub) ?: return
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(appContext) ?: return
+                    if (account.hexKey != msg.event.pubKey) return
 
+                    (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
+                        val npub = account.npub
                         var atLeastOne = false
 
                         metadata.name?.let { name ->
@@ -123,27 +121,36 @@ class ProfileSubscription(
      */
     suspend fun updateFilter() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        LocalPreferences.allAccounts(appContext).forEach {
-            if (!subIds.containsKey(it.hexKey)) {
-                subIds[it.hexKey] = UUID.randomUUID().toString()
+        val account = LocalPreferences.loadFromEncryptedStorage(appContext) ?: return
+
+        subIds.keys.filter { it != account.hexKey }.forEach {
+            val subId = subIds.remove(it)
+            if (subId != null) {
+                timeoutJobs.remove(subId)?.cancel()
+                client.unsubscribe(subId)
+                relaysPerSubId.remove(subId)
             }
-            val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, it.npub)
-            val lastCheck = LocalPreferences.getLastCheck(appContext, it.npub)
-            val oneDayAgo = TimeUtils.oneDayAgo()
-            val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
-            if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
-                val subId = subIds[it.hexKey]!!
-                val profileFilter = createProfileFilter(it)
-                relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
-                client.subscribe(subId, profileFilter)
-                timeoutJobs[subId] = scope.launch {
-                    delay(EOSE_TIMEOUT_MS)
-                    if (relaysPerSubId.containsKey(subId)) {
-                        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-                        client.unsubscribe(subId)
-                        relaysPerSubId.remove(subId)
-                        timeoutJobs.remove(subId)
-                    }
+        }
+
+        if (!subIds.containsKey(account.hexKey)) {
+            subIds[account.hexKey] = UUID.randomUUID().toString()
+        }
+        val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, account.npub)
+        val lastCheck = LocalPreferences.getLastCheck(appContext, account.npub)
+        val oneDayAgo = TimeUtils.oneDayAgo()
+        val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
+        if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
+            val subId = subIds[account.hexKey]!!
+            val profileFilter = createProfileFilter(account)
+            relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
+            client.subscribe(subId, profileFilter)
+            timeoutJobs[subId] = scope.launch {
+                delay(EOSE_TIMEOUT_MS)
+                if (relaysPerSubId.containsKey(subId)) {
+                    Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+                    client.unsubscribe(subId)
+                    relaysPerSubId.remove(subId)
+                    timeoutJobs.remove(subId)
                 }
             }
         }
@@ -159,6 +166,7 @@ class ProfileSubscription(
             client.unsubscribe(it)
         }
         relaysPerSubId.clear()
+        subIds.clear()
     }
 
     private fun createProfileFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {

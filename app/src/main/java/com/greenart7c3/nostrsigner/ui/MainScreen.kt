@@ -241,6 +241,8 @@ fun MainScreen(
 
     val items = listOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
 
+    var isLoading by remember { mutableStateOf(false) }
+
     val shouldShowBottomSheet = remember { mutableStateOf(false) }
     val sheetState =
         rememberModalBottomSheetState(
@@ -280,7 +282,7 @@ fun MainScreen(
             }
         },
         bottomBar = {
-            if (!isExternalRequest) {
+            if (!isExternalRequest && !isLoading) {
                 val profileUrl = account.picture.collectAsStateWithLifecycle()
                 AmberBottomBar(
                     items = items,
@@ -297,7 +299,7 @@ fun MainScreen(
             }
         },
         floatingActionButton = {
-            if (!isExternalRequest) {
+            if (!isExternalRequest && !isLoading) {
                 AmberFloatingButton(
                     navController = navController,
                     navBackStackEntry = NavBackStackEntryWrapper(navBackStackEntry),
@@ -305,7 +307,6 @@ fun MainScreen(
             }
         },
     ) { padding ->
-        var isLoading by remember { mutableStateOf(false) }
         Box(Modifier.fillMaxSize()) {
             NavHost(
                 navController.navController,

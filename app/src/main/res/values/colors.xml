@@ -5,4 +5,5 @@
     <color name="white">#FFFBF7F0</color>
     <color name="amber">#FFD97706</color>
     <color name="gray">#FF7A7269</color>
+    <color name="night_bg">#FF141110</color>
 </resources>

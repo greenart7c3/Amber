@@ -19,12 +19,15 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 
-enum class TrustLevel(val color: Color) {
-    EXCELLENT(Color(0xFF4CAF50)), // Green - 80-100
-    GOOD(Color(0xFF8BC34A)), // Light green - 60-79
-    FAIR(Color(0xFFFF9800)), // Orange - 40-59
-    POOR(Color(0xFFF44336)), // Red - <40
-    UNKNOWN(Color.Gray), // Gray - null score
+// Trust-level palette in the warm-amber design language:
+// each level uses a soft wash background with the accent color as text,
+// matching chip-ok / chip-amber / chip-danger from the Amber canvas.
+enum class TrustLevel(val color: Color, val background: Color) {
+    EXCELLENT(Color(0xFF15803D), Color(0xFFD1FAE5)), // ok 80-100
+    GOOD(Color(0xFF166534), Color(0xFFE6F4EA)), // ok-2 60-79
+    FAIR(Color(0xFFB45309), Color(0xFFFEF3C7)), // amber 40-59
+    POOR(Color(0xFFB91C1C), Color(0xFFFEE2E2)), // danger <40
+    UNKNOWN(Color(0xFF7A7269), Color(0xFFF5EFE3)), // ink-3 / surface-2
 }
 
 fun getTrustLevel(score: Int?): TrustLevel = when {
@@ -73,26 +76,27 @@ fun TrustScoreBadge(
         Box(
             modifier = Modifier
                 .background(
-                    color = trustLevel.color,
-                    shape = RoundedCornerShape(4.dp),
+                    color = trustLevel.background,
+                    shape = RoundedCornerShape(999.dp),
                 )
-                .padding(horizontal = 6.dp, vertical = 2.dp),
+                .padding(horizontal = 10.dp, vertical = 3.dp),
             contentAlignment = Alignment.Center,
         ) {
             Text(
                 text = score?.toString() ?: "?",
-                color = Color.White,
-                fontSize = 12.sp,
-                fontWeight = FontWeight.Bold,
+                color = trustLevel.color,
+                fontSize = 11.sp,
+                fontWeight = FontWeight.SemiBold,
             )
         }
 
         if (showLabel) {
             Text(
                 text = getTrustLevelLabel(trustLevel),
-                modifier = Modifier.padding(start = 4.dp),
+                modifier = Modifier.padding(start = 6.dp),
                 fontSize = 12.sp,
                 color = trustLevel.color,
+                fontWeight = FontWeight.Medium,
             )
         }
     }

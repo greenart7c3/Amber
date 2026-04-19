@@ -26,9 +26,7 @@ fun AmberButton(
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
     enabled: Boolean = true,
-    colors: ButtonColors = ButtonDefaults.buttonColors().copy(
-        contentColor = Color.Black,
-    ),
+    colors: ButtonColors = ButtonDefaults.buttonColors(),
     textColor: Color = Color.Unspecified,
     text: String,
     textAlign: TextAlign? = null,

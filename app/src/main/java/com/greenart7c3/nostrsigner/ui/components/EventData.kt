@@ -82,6 +82,11 @@ fun EventData(
         val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
         val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
         val text = stringResource(R.string.wants_you_to_sign_a, displayTranslation)
+
+        Spacer(Modifier.size(8.dp))
+        EventKindChip(event.kind)
+        Spacer(Modifier.size(10.dp))
+
         Text(
             text.capitalize(Locale.current),
             fontSize = 18.sp,
@@ -165,6 +170,10 @@ fun BunkerEventData(
         val altTag = event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
         val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
         val text = stringResource(R.string.wants_you_to_sign_a, displayTranslation)
+
+        EventKindChip(event.kind)
+        Spacer(Modifier.size(10.dp))
+
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

@@ -1018,6 +1018,22 @@ fun MainScreen(
                             )
                         },
                     )
+
+                    composable(
+                        Route.ServiceSettings.route,
+                        content = {
+                            val scrollState = rememberScrollState()
+                            ServiceSettingsScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                            )
+                        },
+                    )
                 }
             }
 

@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
@@ -13,8 +12,10 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,6 +53,11 @@ fun AmberNavigationBar(
                     onClick = {
                         onClick(it)
                     },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = MaterialTheme.colorScheme.primary,
+                        unselectedIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        indicatorColor = MaterialTheme.colorScheme.primaryContainer,
+                    ),
                     icon = {
                         if (it.route == Route.Accounts.route) {
                             if (!profileUrl.isNullOrBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
@@ -94,13 +100,6 @@ fun AmberNavigationBar(
                             Icon(
                                 painterResource(it.icon),
                                 it.route,
-                                tint = if (selected) {
-                                    Color.Black
-                                } else if (isSystemInDarkTheme()) {
-                                    Color.White
-                                } else {
-                                    Color.Black
-                                },
                             )
                         }
                     },

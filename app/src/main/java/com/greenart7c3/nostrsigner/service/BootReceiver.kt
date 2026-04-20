@@ -21,6 +21,12 @@ class BootReceiver : BroadcastReceiver() {
                 Log.d(Amber.TAG, "Received ${intent.action}")
                 Amber.instance.applicationIOScope.launch {
                     Amber.instance.isStartingAppState.first { !it }
+                    if (intent.action == Intent.ACTION_BOOT_COMPLETED &&
+                        !Amber.instance.settings.startServiceOnBoot
+                    ) {
+                        Log.d(Amber.TAG, "Skipping service start on boot (disabled in settings)")
+                        return@launch
+                    }
                     Amber.instance.startService()
                 }
             }

@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.util.Log
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -20,6 +21,7 @@ import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -81,6 +83,7 @@ fun SettingsScreen(
     val context = LocalContext.current
     var torMode by remember { mutableStateOf(Amber.instance.settings.torMode) }
     var disconnectTorDialog by remember { mutableStateOf(false) }
+    var startServiceOnBoot by remember { mutableStateOf(Amber.instance.settings.startServiceOnBoot) }
     val scope = rememberCoroutineScope()
     var isLoading by remember { mutableStateOf(false) }
     var sizeInMBFormatted by remember { mutableStateOf("") }
@@ -194,6 +197,39 @@ fun SettingsScreen(
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = {
                             onNav(Route.RelaysScreen.route)
+                        },
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp)
+                        .clickable {
+                            val newValue = !startServiceOnBoot
+                            startServiceOnBoot = newValue
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.updateStartServiceOnBoot(context, newValue)
+                            }
+                        },
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = stringResource(R.string.start_service_on_boot))
+                        Text(
+                            text = stringResource(R.string.start_service_on_boot_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                        )
+                    }
+                    Switch(
+                        checked = startServiceOnBoot,
+                        onCheckedChange = { enabled ->
+                            startServiceOnBoot = enabled
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.updateStartServiceOnBoot(context, enabled)
+                            }
                         },
                     )
                 }

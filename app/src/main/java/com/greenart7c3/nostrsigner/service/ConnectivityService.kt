@@ -153,12 +153,20 @@ class ConnectivityService : Service() {
             } else {
                 0
             }
-        ServiceCompat.startForeground(
-            this,
-            1,
-            Amber.instance.stats.createForegroundNotification(),
-            foregroundServiceType,
-        )
+        try {
+            ServiceCompat.startForeground(
+                this,
+                1,
+                Amber.instance.stats.createForegroundNotification(),
+                foregroundServiceType,
+            )
+        } catch (e: Exception) {
+            // Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;
+            // swallow it and let the next foreground start (startServiceFromUi) retry.
+            Log.e(Amber.TAG, "Failed to start ConnectivityService in foreground", e)
+            stopSelf(startId)
+            return START_NOT_STICKY
+        }
         return START_STICKY
     }
 }

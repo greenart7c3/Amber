@@ -747,4 +747,20 @@
     <string name="relay_not_in_auth_whitelist">Relay is not in the auth whitelist</string>
     <string name="keystore_error_title">Account Inaccessible</string>
     <string name="keystore_error_message">One or more accounts could not be loaded because your device\'s secure storage (KeyStore) returned an error:\n\n%1$s\n\nThis is a known firmware bug on some devices where the system cannot upgrade stored encryption keys.\n\nWhat you can do:\n• If you have your nsec (private key) backed up, log out of the affected account and log back in — this will create a new working key.\n• Check for a system firmware update from your device manufacturer, which may fix this.\n• Do not uninstall Amber; keeping the app installed preserves the possibility of recovery if a firmware update is released.</string>
+    <string name="event_kind_31124">Current pet state</string>
+    <string name="event_kind_31125">Owner Profile</string>
+    <string name="event_kind_14921">Pet records</string>
+    <string name="event_kind_14920">Pet breeding</string>
+    <string name="event_kind_14919">Pet interactions</string>
+    <string name="event_kind_11125">Blobbonaut Profile</string>
+    <string name="event_kind_36767">Theme Definition</string>
+    <string name="event_kind_16769">Profile Tabs</string>
+    <string name="event_kind_3367">Color Moment</string>
+    <string name="event_kind_4223">Weather station readings</string>
+    <string name="event_kind_7516">Found geocache log</string>
+    <string name="event_kind_8211">Personal Letter</string>
+    <string name="event_kind_16158">Weather station metadata</string>
+    <string name="event_kind_37516">Geocache Listing</string>
+    <string name="event_kind_36787">Music Track</string>
+    <string name="event_kind_34139">Music Playlist</string>
 </resources>

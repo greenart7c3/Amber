@@ -16,6 +16,7 @@ import androidx.compose.material.icons.filled.Feedback
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
+import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
 import androidx.compose.material3.AlertDialog
@@ -194,6 +195,20 @@ fun SettingsScreen(
                         tint = MaterialTheme.colorScheme.onBackground,
                         onClick = {
                             onNav(Route.RelaysScreen.route)
+                        },
+                    )
+                }
+
+                Box(
+                    Modifier
+                        .padding(vertical = 8.dp),
+                ) {
+                    IconRow(
+                        title = stringResource(R.string.service_settings),
+                        icon = Icons.Default.PowerSettingsNew,
+                        tint = MaterialTheme.colorScheme.onBackground,
+                        onClick = {
+                            onNav(Route.ServiceSettings.route)
                         },
                     )
                 }

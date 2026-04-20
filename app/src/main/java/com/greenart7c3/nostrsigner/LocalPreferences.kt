@@ -60,6 +60,7 @@ private enum class SettingsKeys(val key: String) {
     AUTO_CHECK_UPDATES("auto_check_updates"),
     UPDATE_CHECK_FREQUENCY("update_check_frequency"),
     LAST_UPDATE_CHECK_TIME("last_update_check_time"),
+    START_SERVICE_ON_BOOT("start_service_on_boot"),
     WEBDAV_URL("webdav_url"),
     WEBDAV_USERNAME("webdav_username"),
     WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
@@ -139,6 +140,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.KILL_SWITCH.key, settings.killSwitch.value)
                 putString(SettingsKeys.LANGUAGE_PREFS.key, settings.language)
                 putStringSet(SettingsKeys.AUTH_WHITELIST.key, settings.authWhitelist.toSet())
+                putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, settings.startServiceOnBoot)
             }
         }
     }
@@ -254,6 +256,7 @@ object LocalPreferences {
                 } catch (_: IllegalArgumentException) {
                     UpdateCheckFrequency.DAILY
                 },
+                startServiceOnBoot = getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true),
             )
         }
     }
@@ -498,6 +501,15 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 putBoolean(SettingsKeys.AUTO_CHECK_UPDATES.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    fun updateStartServiceOnBoot(context: Context, enabled: Boolean) {
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, enabled)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()

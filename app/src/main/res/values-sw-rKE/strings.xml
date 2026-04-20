@@ -603,6 +603,10 @@
     <string name="update_download_failed">Download failed. Tap to retry.</string>
     <string name="download_and_install_update">Download and install update</string>
     <string name="auto_check_updates">Automatically check for updates</string>
+    <string name="service_settings">Service settings</string>
+    <string name="stop_service">Stop service</string>
+    <string name="start_service_on_boot">Start service on boot</string>
+    <string name="start_service_on_boot_description">When enabled, Amber will start its background service automatically after the device boots so remote login and NIP-46 requests keep working.</string>
     <string name="update_check_frequency">Check frequency</string>
     <string name="update_frequency_on_startup">Every app start</string>
     <string name="update_frequency_daily">Daily</string>

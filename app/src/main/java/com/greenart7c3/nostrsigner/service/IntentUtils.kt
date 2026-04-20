@@ -58,6 +58,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 object IntentUtils {
     private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
@@ -670,176 +671,178 @@ object IntentUtils {
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
-            val database = Amber.instance.getDatabase(account.npub)
-            val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
-            val savedApplication = database.dao().getByKey(key)
-            val localAppName =
-                if (packageName != null) {
-                    try {
-                        val info = context.packageManager.getApplicationInfo(packageName, 0)
-                        context.packageManager.getApplicationLabel(info).toString()
-                    } catch (_: Exception) {
-                        null
+            try {
+                val database = Amber.instance.getDatabase(account.npub)
+                val savedApplication = database.dao().getByKey(key)
+
+                val application =
+                    savedApplication ?: run {
+                        val localAppName =
+                            if (packageName != null && appName == null) {
+                                try {
+                                    val info = context.packageManager.getApplicationInfo(packageName, 0)
+                                    context.packageManager.getApplicationLabel(info).toString()
+                                } catch (_: Exception) {
+                                    null
+                                }
+                            } else {
+                                appName
+                            }
+                        ApplicationWithPermissions(
+                            application = ApplicationEntity(
+                                key = key,
+                                name = appName ?: localAppName ?: "",
+                                relays = emptyList(),
+                                url = "",
+                                icon = "",
+                                description = "",
+                                pubKey = account.hexKey,
+                                isConnected = true,
+                                secret = "",
+                                useSecret = false,
+                                signPolicy = account.signPolicy,
+                                closeApplication = shouldCloseApplication != false,
+                                deleteAfter = deleteAfter,
+                                lastUsed = TimeUtils.now(),
+                            ),
+                            permissions = mutableListOf(),
+                        )
                     }
-                } else {
-                    appName
-                }
-
-            val application =
-                savedApplication ?: ApplicationWithPermissions(
-                    application = ApplicationEntity(
-                        key = key,
-                        name = appName ?: localAppName ?: "",
-                        relays = emptyList(),
-                        url = "",
-                        icon = "",
-                        description = "",
-                        pubKey = account.hexKey,
-                        isConnected = true,
-                        secret = "",
-                        useSecret = false,
-                        signPolicy = account.signPolicy,
-                        closeApplication = shouldCloseApplication != false,
-                        deleteAfter = deleteAfter,
-                        lastUsed = TimeUtils.now(),
-                    ),
-                    permissions = mutableListOf(),
-                )
-            application.application.isConnected = true
-
-            if (signPolicy != null) {
-                AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)
-            }
-
-            if (rememberType != RememberType.NEVER) {
-                AmberUtils.acceptPermission(
-                    application = application,
-                    key = key,
-                    type = intentData.type,
-                    kind = kind,
-                    rememberType = rememberType,
-                    relay = relay,
-                    encryptedData = intentData.encryptedData,
-                    decryptTypeScope = decryptTypeScope,
-                )
-            }
-
-            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
                 application.application.isConnected = true
-                shouldCloseApplication?.let {
-                    application.application.closeApplication = it
-                }
-                if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
-                    application.permissions.add(
-                        ApplicationPermissionsEntity(
-                            null,
-                            key,
-                            SignerType.GET_PUBLIC_KEY.toString(),
-                            null,
-                            true,
-                            RememberType.ALWAYS.screenCode,
-                            Long.MAX_VALUE / 1000,
-                            0,
-                        ),
-                    )
-                }
-            }
 
-            if (packageName != null) {
-                database.dao().insertApplicationWithPermissions(application)
-                historyDatabase.dao().addHistory(
-                    HistoryEntity(
-                        0,
-                        key,
-                        intentData.type.toString(),
-                        kind,
-                        TimeUtils.now(),
-                        true,
-                        content = when (intentData.type) {
-                            SignerType.SIGN_EVENT -> event
-                            SignerType.NIP04_DECRYPT,
-                            SignerType.NIP44_DECRYPT,
-                            SignerType.DECRYPT_ZAP_EVENT,
-                            -> value
-                            else -> intentData.data
-                        },
-                    ),
-                    account.npub,
-                )
+                if (signPolicy != null) {
+                    AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)
+                }
 
-                val intent = Intent()
-                intent.putExtra("signature", value)
-                intent.putExtra("result", value)
-                intent.putExtra("id", intentData.id)
-                intent.putExtra("event", event)
+                if (rememberType != RememberType.NEVER) {
+                    Amber.instance.applicationIOScope.launch {
+                        AmberUtils.acceptPermission(
+                            application = application,
+                            key = key,
+                            type = intentData.type,
+                            kind = kind,
+                            rememberType = rememberType,
+                            relay = relay,
+                            encryptedData = intentData.encryptedData,
+                            decryptTypeScope = decryptTypeScope,
+                        )
+                    }
+                }
+
                 if (intentData.type == SignerType.GET_PUBLIC_KEY) {
-                    intent.putExtra("package", BuildConfig.APPLICATION_ID)
+                    shouldCloseApplication?.let {
+                        application.application.closeApplication = it
+                    }
+                    if (!application.permissions.any { it.type == SignerType.GET_PUBLIC_KEY.toString() }) {
+                        application.permissions.add(
+                            ApplicationPermissionsEntity(
+                                null,
+                                key,
+                                SignerType.GET_PUBLIC_KEY.toString(),
+                                null,
+                                true,
+                                RememberType.ALWAYS.screenCode,
+                                Long.MAX_VALUE / 1000,
+                                0,
+                            ),
+                        )
+                    }
                 }
-                val activity = Amber.instance.getMainActivity()
-                activity?.setResult(RESULT_OK, intent)
-                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                activity?.intent = null
-                activity?.finishAndRemoveTask()
-            } else if (!intentData.callBackUrl.isNullOrBlank()) {
-                if (intentData.returnType == ReturnType.SIGNATURE) {
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    intent.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
-                    context.startActivity(intent)
+
+                if (packageName != null) {
+                    database.dao().insertApplicationWithPermissions(application)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
+                    Amber.instance.applicationIOScope.launch {
+                        historyDatabase.dao().addHistory(
+                            HistoryEntity(
+                                0,
+                                key,
+                                intentData.type.toString(),
+                                kind,
+                                TimeUtils.now(),
+                                true,
+                                content = when (intentData.type) {
+                                    SignerType.SIGN_EVENT -> event
+                                    SignerType.NIP04_DECRYPT,
+                                    SignerType.NIP44_DECRYPT,
+                                    SignerType.DECRYPT_ZAP_EVENT,
+                                    -> value
+
+                                    else -> intentData.data
+                                },
+                            ),
+                            account.npub,
+                        )
+                    }
+
+                    val intent = Intent()
+                    intent.putExtra("signature", value)
+                    intent.putExtra("result", value)
+                    intent.putExtra("id", intentData.id)
+                    intent.putExtra("event", event)
+                    if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                        intent.putExtra("package", BuildConfig.APPLICATION_ID)
+                    }
+                    Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
+                } else if (!intentData.callBackUrl.isNullOrBlank()) {
+                    if (intentData.returnType == ReturnType.SIGNATURE) {
+                        val intent = Intent(Intent.ACTION_VIEW)
+                        intent.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
+                        context.startActivity(intent)
+                    } else {
+                        if (intentData.compression == CompressionType.GZIP) {
+                            // Compress the string using GZIP
+                            val encodedString = ByteArrayOutputStream().use { bos ->
+                                GZIPOutputStream(bos).use { gzos ->
+                                    gzos.write(event.toByteArray())
+                                }
+                                Base64.getEncoder().encodeToString(bos.toByteArray())
+                            }
+
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = (intentData.callBackUrl + Uri.encode("Signer1$encodedString")).toUri()
+                            context.startActivity(intent)
+                        } else {
+                            val intent = Intent(Intent.ACTION_VIEW)
+                            intent.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
+                            context.startActivity(intent)
+                        }
+                    }
                 } else {
-                    if (intentData.compression == CompressionType.GZIP) {
-                        // Compress the string using GZIP
-                        val byteArrayOutputStream = ByteArrayOutputStream()
-                        val gzipOutputStream = GZIPOutputStream(byteArrayOutputStream)
-                        gzipOutputStream.write(event.toByteArray())
-                        gzipOutputStream.close()
+                    val result =
+                        if (intentData.returnType == ReturnType.SIGNATURE) {
+                            value
+                        } else {
+                            event
+                        }
+                    val message =
+                        if (intentData.returnType == ReturnType.SIGNATURE) {
+                            context.getString(R.string.signature_copied_to_the_clipboard)
+                        } else {
+                            context.getString(R.string.event_copied_to_the_clipboard)
+                        }
 
-                        // Convert the compressed data to Base64
-                        val compressedData = byteArrayOutputStream.toByteArray()
-                        val encodedString = Base64.getEncoder().encodeToString(compressedData)
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = (intentData.callBackUrl + Uri.encode("Signer1$encodedString")).toUri()
-                        context.startActivity(intent)
-                    } else {
-                        val intent = Intent(Intent.ACTION_VIEW)
-                        intent.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
-                        context.startActivity(intent)
+                    withContext(Dispatchers.Main) {
+                        clipboardManager.setClipEntry(
+                            ClipEntry(
+                                ClipData.newPlainText("", result),
+                            ),
+                        )
+
+                        Toast.makeText(
+                            context,
+                            message,
+                            Toast.LENGTH_SHORT,
+                        ).show()
                     }
                 }
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                val activity = Amber.instance.getMainActivity()
-                activity?.intent = null
-                activity?.finishAndRemoveTask()
-            } else {
-                val result =
-                    if (intentData.returnType == ReturnType.SIGNATURE) {
-                        value
-                    } else {
-                        event
-                    }
-                val message =
-                    if (intentData.returnType == ReturnType.SIGNATURE) {
-                        context.getString(R.string.signature_copied_to_the_clipboard)
-                    } else {
-                        context.getString(R.string.event_copied_to_the_clipboard)
-                    }
-
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    clipboardManager.setClipEntry(
-                        ClipEntry(
-                            ClipData.newPlainText("", result),
-                        ),
-                    )
-
-                    Toast.makeText(
-                        context,
-                        message,
-                        Toast.LENGTH_SHORT,
-                    ).show()
+                Amber.instance.getMainActivity()?.let {
+                    it.intent = null
+                    it.finishAndRemoveTask()
                 }
-                onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
-                val activity = Amber.instance.getMainActivity()
-                activity?.intent = null
-                activity?.finishAndRemoveTask()
+            } finally {
+                onLoading(false)
             }
         }
     }

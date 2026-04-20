@@ -2,16 +2,21 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.ClipData
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -55,6 +60,7 @@ import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberToggles
 import com.greenart7c3.nostrsigner.ui.components.ToggleOption
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
+import com.greenart7c3.nostrsigner.ui.components.eventKindStyle
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.coroutines.Dispatchers
@@ -326,25 +332,42 @@ fun PermissionRow(
         mutableIntStateOf(rememberTypeToIndex(parseRememberType(permission.rememberType)))
     }
 
+    val kindColor = permission.kind?.let { eventKindStyle(it).color }
+
     Column(
         modifier = Modifier
-            .padding(4.dp)
+            .padding(vertical = 6.dp, horizontal = 4.dp)
             .fillMaxWidth()
+            .clip(RoundedCornerShape(14.dp))
+            .background(MaterialTheme.colorScheme.surfaceContainerHigh)
             .border(
-                BorderStroke(1.dp, MaterialTheme.colorScheme.primary),
-                RoundedCornerShape(6.dp),
+                BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+                RoundedCornerShape(14.dp),
             )
             .padding(4.dp),
     ) {
-        Text(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp, vertical = 12.dp),
-            text = message,
-            style = MaterialTheme.typography.bodyLarge,
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-        )
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (kindColor != null) {
+                Box(
+                    modifier = Modifier
+                        .padding(end = 10.dp)
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(kindColor),
+                )
+            }
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyLarge,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+        }
 
         if (permission.kind == 22242 && permission.relay.isNotEmpty()) {
             Text(

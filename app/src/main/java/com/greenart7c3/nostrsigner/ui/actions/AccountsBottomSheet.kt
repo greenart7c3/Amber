@@ -112,9 +112,7 @@ fun AccountsBottomSheet(
                                     }
                                     Text(acc.npub.toShortenHex())
                                 }
-                                Column(modifier = Modifier.width(32.dp)) {
-                                    ActiveMarker(acc, account)
-                                }
+                                ActiveMarker(acc, account)
                             }
                         }
 

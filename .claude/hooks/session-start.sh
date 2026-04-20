@@ -1,5 +1,5 @@
 #!/bin/bash
-# Session start hook: Configure proxy auth, SSL trust, and Android SDK for Claude Code on the web
+# Session start hook: Configure proxy auth, SSL trust, JetBrains JDK, and Android SDK for Claude Code on the web
 set -euo pipefail
 
 # Only run in remote (web) environments
@@ -7,8 +7,11 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
   exit 0
 fi
 
-# --- Proxy credentials: configure Maven/Gradle if authenticated proxy is set ---
+# --- Proxy credentials: configure Maven/Gradle if an authenticated proxy is set ---
+# Newer Claude Code web containers use transparent TLS-inspecting egress (no $https_proxy),
+# so this block is a no-op there. It still handles legacy authenticated-proxy environments.
 proxy="${https_proxy:-${HTTPS_PROXY:-}}"
+GRADLE_PROXY_PROPS=""
 if [ -n "$proxy" ] && echo "$proxy" | grep -q '@'; then
   rest="${proxy#*://}"
   userpass="${rest%@*}"
@@ -38,8 +41,7 @@ EOF
 MAVEN_OPTS="$MAVEN_OPTS -Dmaven.resolver.transport=wagon"
 MAVENRC
 
-  mkdir -p ~/.gradle
-  cat > ~/.gradle/gradle.properties << EOF
+  GRADLE_PROXY_PROPS=$(cat <<EOF
 systemProp.https.proxyHost=$host
 systemProp.https.proxyPort=$port
 systemProp.https.proxyUser=$user
@@ -48,21 +50,56 @@ systemProp.http.proxyHost=$host
 systemProp.http.proxyPort=$port
 systemProp.http.proxyUser=$user
 systemProp.http.proxyPassword=$pass
-# Override nonProxyHosts: route all external traffic (incl. *.google.com) through proxy
 systemProp.http.nonProxyHosts=localhost|127.0.0.1
 systemProp.https.nonProxyHosts=localhost|127.0.0.1
-# Use Ubuntu's Java trust store (includes Anthropic TLS inspection CA) for all Gradle JVMs.
-# This is needed because Gradle may download a custom JDK (e.g. JetBrains) whose bundled
-# trust store doesn't include the Anthropic CA, causing TLS inspection failures.
-systemProp.javax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts
-systemProp.javax.net.ssl.trustStoreType=JKS
-systemProp.javax.net.ssl.trustStorePassword=changeit
 systemProp.jdk.http.auth.tunneling.disabledSchemes=
 systemProp.jdk.http.auth.proxying.disabledSchemes=
 EOF
-
+)
   echo "Configured Maven/Gradle proxy from HTTPS_PROXY" >&2
 fi
+
+# --- Pre-install JetBrains JDK 21 for the Gradle daemon ---
+# gradle/gradle-daemon-jvm.properties requires vendor=JETBRAINS, version=21. Gradle's
+# auto-provisioning probes the download URL with HEAD, which the egress proxy returns
+# 503 for, so auto-download fails. We pre-fetch with GET (which succeeds) and point
+# Gradle at the installed JDK via org.gradle.java.installations.paths.
+JBR_HOME="/root/.jdks/jbrsdk-21"
+if [ ! -x "$JBR_HOME/bin/java" ]; then
+  # foojay.io ID 02900abb5c54c47ce623758dd941d5c0 → jbrsdk_jcef-21-linux-x64-b212.1
+  JBR_URL="https://d2xrhe97vsfxuc.cloudfront.net/jbrsdk_jcef-21-linux-x64-b212.1.tar.gz"
+  echo "Downloading JetBrains JDK 21..." >&2
+  TMP_JBR=$(mktemp /tmp/jbrsdk.XXXXXX.tar.gz)
+  if curl -fsSL "$JBR_URL" -o "$TMP_JBR"; then
+    TMP_EXTRACT=$(mktemp -d)
+    tar -xzf "$TMP_JBR" -C "$TMP_EXTRACT"
+    mkdir -p "$(dirname "$JBR_HOME")"
+    mv "$TMP_EXTRACT"/* "$JBR_HOME"
+    rm -rf "$TMP_EXTRACT" "$TMP_JBR"
+    echo "Installed JetBrains JDK 21 at $JBR_HOME" >&2
+  else
+    rm -f "$TMP_JBR"
+    echo "WARNING: failed to download JetBrains JDK; Gradle daemon provisioning will be attempted by Gradle" >&2
+  fi
+fi
+
+# --- Write ~/.gradle/gradle.properties ---
+mkdir -p ~/.gradle
+{
+  # Use Ubuntu's Java trust store (includes Anthropic TLS inspection CA) for all Gradle JVMs.
+  # Gradle may use a JDK whose bundled trust store doesn't include the Anthropic CA,
+  # causing TLS inspection failures.
+  echo "systemProp.javax.net.ssl.trustStore=/etc/ssl/certs/java/cacerts"
+  echo "systemProp.javax.net.ssl.trustStoreType=JKS"
+  echo "systemProp.javax.net.ssl.trustStorePassword=changeit"
+  if [ -x "$JBR_HOME/bin/java" ]; then
+    echo "org.gradle.java.installations.paths=$JBR_HOME"
+    echo "org.gradle.java.installations.auto-download=false"
+  fi
+  if [ -n "$GRADLE_PROXY_PROPS" ]; then
+    echo "$GRADLE_PROXY_PROPS"
+  fi
+} > ~/.gradle/gradle.properties
 
 # --- SSL trust: import Anthropic TLS inspection CA into JVM trust stores ---
 ANTHROPIC_CA_PEM=$(python3 -c "
@@ -84,6 +121,7 @@ if [ -n "$ANTHROPIC_CA_PEM" ]; then
   echo "$ANTHROPIC_CA_PEM" > "$TMPCA"
   for cacerts in \
     /usr/lib/jvm/java-21-openjdk-amd64/lib/security/cacerts \
+    /root/.jdks/jbrsdk-21/lib/security/cacerts \
     /root/.gradle/jdks/*/lib/security/cacerts; do
     [ -f "$cacerts" ] || continue
     keytool -list -keystore "$cacerts" -storepass changeit \

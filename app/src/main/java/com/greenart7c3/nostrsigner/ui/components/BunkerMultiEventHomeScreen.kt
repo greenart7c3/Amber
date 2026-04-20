@@ -398,14 +398,16 @@ fun BunkerMultiEventHomeScreen(
                                     database.dao().insertApplicationWithPermissions(application)
 
                                     historyDatabase.dao().addHistory(
-                                        entity = HistoryEntity(
-                                            id = 0,
-                                            pkKey = localKey,
-                                            type = SignerType.SIGN_EVENT.toString(),
-                                            kind = localEvent.kind,
-                                            time = TimeUtils.now(),
-                                            accepted = isChecked,
-                                            content = localEvent.toJson(),
+                                        listOf(
+                                            HistoryEntity(
+                                                id = 0,
+                                                pkKey = localKey,
+                                                type = SignerType.SIGN_EVENT.toString(),
+                                                kind = localEvent.kind,
+                                                time = TimeUtils.now(),
+                                                accepted = isChecked,
+                                                content = localEvent.toJson(),
+                                            ),
                                         ),
                                         thisAccount.npub,
                                     )
@@ -448,14 +450,16 @@ fun BunkerMultiEventHomeScreen(
 
                                     database.dao().insertApplicationWithPermissions(application)
                                     historyDatabase.dao().addHistory(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            SignerType.SIGN_MESSAGE.toString(),
-                                            null,
-                                            TimeUtils.now(),
-                                            isChecked,
-                                            content = request.request.params.first(),
+                                        listOf(
+                                            HistoryEntity(
+                                                0,
+                                                localKey,
+                                                SignerType.SIGN_MESSAGE.toString(),
+                                                null,
+                                                TimeUtils.now(),
+                                                isChecked,
+                                                content = request.request.params.first(),
+                                            ),
                                         ),
                                         thisAccount.npub,
                                     )
@@ -488,14 +492,16 @@ fun BunkerMultiEventHomeScreen(
                                         database.dao().insertApplicationWithPermissions(application)
 
                                         historyDatabase.dao().addHistory(
-                                            HistoryEntity(
-                                                0,
-                                                localKey,
-                                                SignerType.CONNECT.toString(),
-                                                null,
-                                                TimeUtils.now(),
-                                                isChecked,
-                                                content = "",
+                                            listOf(
+                                                HistoryEntity(
+                                                    0,
+                                                    localKey,
+                                                    SignerType.CONNECT.toString(),
+                                                    null,
+                                                    TimeUtils.now(),
+                                                    isChecked,
+                                                    content = "",
+                                                ),
                                             ),
                                             thisAccount.npub,
                                         )
@@ -540,18 +546,20 @@ fun BunkerMultiEventHomeScreen(
                                     database.dao().insertApplicationWithPermissions(application)
 
                                     historyDatabase.dao().addHistory(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            type.toString(),
-                                            null,
-                                            TimeUtils.now(),
-                                            isChecked,
-                                            content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
-                                                request.encryptedData?.result ?: ""
-                                            } else {
-                                                request.request.params.getOrElse(1) { "" }
-                                            },
+                                        listOf(
+                                            HistoryEntity(
+                                                0,
+                                                localKey,
+                                                type.toString(),
+                                                null,
+                                                TimeUtils.now(),
+                                                isChecked,
+                                                content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
+                                                    request.encryptedData?.result ?: ""
+                                                } else {
+                                                    request.request.params.getOrElse(1) { "" }
+                                                },
+                                            ),
                                         ),
                                         thisAccount.npub,
                                     )

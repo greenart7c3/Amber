@@ -98,14 +98,16 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
-                                HistoryEntity(
-                                    0,
-                                    packageName,
-                                    uriString.replace("content://$appId.", ""),
-                                    null,
-                                    TimeUtils.now(),
-                                    false,
-                                    content = message,
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        packageName,
+                                        uriString.replace("content://$appId.", ""),
+                                        null,
+                                        TimeUtils.now(),
+                                        false,
+                                        content = message,
+                                    ),
                                 ),
                                 account.npub,
                             )
@@ -121,14 +123,16 @@ class SignerProvider : ContentProvider() {
                     val result = runBlocking { account.signString(message) }
                     scope.launch {
                         historyDatabase.dao().addHistory(
-                            HistoryEntity(
-                                0,
-                                packageName,
-                                "SIGN_MESSAGE",
-                                null,
-                                TimeUtils.now(),
-                                true,
-                                content = message,
+                            listOf(
+                                HistoryEntity(
+                                    0,
+                                    packageName,
+                                    "SIGN_MESSAGE",
+                                    null,
+                                    TimeUtils.now(),
+                                    true,
+                                    content = message,
+                                ),
                             ),
                             account.npub,
                         )
@@ -187,14 +191,16 @@ class SignerProvider : ContentProvider() {
                             else -> {
                                 scope.launch {
                                     historyDatabase.dao().addHistory(
-                                        HistoryEntity(
-                                            0,
-                                            packageName,
-                                            uriString.replace("content://$appId.", ""),
-                                            event.kind,
-                                            TimeUtils.now(),
-                                            false,
-                                            content = event.toJson(),
+                                        listOf(
+                                            HistoryEntity(
+                                                0,
+                                                packageName,
+                                                uriString.replace("content://$appId.", ""),
+                                                event.kind,
+                                                TimeUtils.now(),
+                                                false,
+                                                content = event.toJson(),
+                                            ),
                                         ),
                                         account.npub,
                                     )
@@ -240,14 +246,16 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
-                                HistoryEntity(
-                                    0,
-                                    packageName,
-                                    uriString.replace("content://$appId.", ""),
-                                    event.kind,
-                                    TimeUtils.now(),
-                                    false,
-                                    content = event.toJson(),
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        packageName,
+                                        uriString.replace("content://$appId.", ""),
+                                        event.kind,
+                                        TimeUtils.now(),
+                                        false,
+                                        content = event.toJson(),
+                                    ),
                                 ),
                                 account.npub,
                             )
@@ -265,14 +273,16 @@ class SignerProvider : ContentProvider() {
 
                     scope.launch {
                         historyDatabase.dao().addHistory(
-                            HistoryEntity(
-                                0,
-                                packageName,
-                                "SIGN_EVENT",
-                                event.kind,
-                                TimeUtils.now(),
-                                true,
-                                content = signedEvent.toJson(),
+                            listOf(
+                                HistoryEntity(
+                                    0,
+                                    packageName,
+                                    "SIGN_EVENT",
+                                    event.kind,
+                                    TimeUtils.now(),
+                                    true,
+                                    content = signedEvent.toJson(),
+                                ),
                             ),
                             account.npub,
                         )
@@ -387,14 +397,16 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
-                                HistoryEntity(
-                                    0,
-                                    packageName,
-                                    uriString.replace("content://$appId.", ""),
-                                    null,
-                                    TimeUtils.now(),
-                                    false,
-                                    content = content,
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        packageName,
+                                        uriString.replace("content://$appId.", ""),
+                                        null,
+                                        TimeUtils.now(),
+                                        false,
+                                        content = content,
+                                    ),
                                 ),
                                 account.npub,
                             )
@@ -436,14 +448,16 @@ class SignerProvider : ContentProvider() {
 
                     scope.launch {
                         historyDatabase.dao().addHistory(
-                            HistoryEntity(
-                                0,
-                                packageName,
-                                uriString.replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                true,
-                                content = if (!isEncrypt) finalResult else content,
+                            listOf(
+                                HistoryEntity(
+                                    0,
+                                    packageName,
+                                    uriString.replace("content://$appId.", ""),
+                                    null,
+                                    TimeUtils.now(),
+                                    true,
+                                    content = if (!isEncrypt) finalResult else content,
+                                ),
                             ),
                             account.npub,
                         )
@@ -487,13 +501,15 @@ class SignerProvider : ContentProvider() {
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
-                                HistoryEntity(
-                                    0,
-                                    packageName,
-                                    uriString.replace("content://$appId.", ""),
-                                    null,
-                                    TimeUtils.now(),
-                                    false,
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        packageName,
+                                        uriString.replace("content://$appId.", ""),
+                                        null,
+                                        TimeUtils.now(),
+                                        false,
+                                    ),
                                 ),
                                 account.npub,
                             )
@@ -509,13 +525,15 @@ class SignerProvider : ContentProvider() {
 
                     scope.launch {
                         historyDatabase.dao().addHistory(
-                            HistoryEntity(
-                                0,
-                                packageName,
-                                uriString.replace("content://$appId.", ""),
-                                null,
-                                TimeUtils.now(),
-                                true,
+                            listOf(
+                                HistoryEntity(
+                                    0,
+                                    packageName,
+                                    uriString.replace("content://$appId.", ""),
+                                    null,
+                                    TimeUtils.now(),
+                                    true,
+                                ),
                             ),
                             account.npub,
                         )

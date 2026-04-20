@@ -277,14 +277,16 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             Amber.instance.applicationIOScope.launch {
                 historyDao
                     .addHistory(
-                        HistoryEntity(
-                            0,
-                            permission.application.key,
-                            type.toString().toLowerCase(Locale.current),
-                            amberEvent?.kind,
-                            TimeUtils.now(),
-                            true,
-                            content = amberEvent?.content ?: "",
+                        listOf(
+                            HistoryEntity(
+                                0,
+                                permission.application.key,
+                                type.toString().toLowerCase(Locale.current),
+                                amberEvent?.kind,
+                                TimeUtils.now(),
+                                true,
+                                content = amberEvent?.content ?: "",
+                            ),
                         ),
                         acc.npub,
                     )
@@ -409,13 +411,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             if (!isRemembered) {
                 Amber.instance.applicationIOScope.launch {
                     historyDao.addHistory(
-                        HistoryEntity(
-                            0,
-                            event.pubKey,
-                            "GET_PUBLIC_KEY",
-                            null,
-                            TimeUtils.now(),
-                            false,
+                        listOf(
+                            HistoryEntity(
+                                0,
+                                event.pubKey,
+                                "GET_PUBLIC_KEY",
+                                null,
+                                TimeUtils.now(),
+                                false,
+                            ),
                         ),
                         acc.npub,
                     )
@@ -433,13 +437,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             }
             Amber.instance.applicationIOScope.launch {
                 historyDao.addHistory(
-                    HistoryEntity(
-                        0,
-                        event.pubKey,
-                        "GET_PUBLIC_KEY",
-                        null,
-                        TimeUtils.now(),
-                        true,
+                    listOf(
+                        HistoryEntity(
+                            0,
+                            event.pubKey,
+                            "GET_PUBLIC_KEY",
+                            null,
+                            TimeUtils.now(),
+                            true,
+                        ),
                     ),
                     acc.npub,
                 )

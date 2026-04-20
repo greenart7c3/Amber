@@ -40,6 +40,10 @@
             android:enabled="true"
             android:exported="false" />
         <receiver
+            android:name=".service.StopServiceReceiver"
+            android:enabled="true"
+            android:exported="false" />
+        <receiver
             android:name=".service.BootReceiver"
             android:enabled="true"
             android:exported="false"

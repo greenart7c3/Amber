@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.ReconnectReceiver
+import com.greenart7c3.nostrsigner.service.StopServiceReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
@@ -121,6 +122,14 @@ class AmberRelayStats(
                 PendingIntent.FLAG_MUTABLE,
             )
 
+        val stopServiceIntent = Intent(appContext, StopServiceReceiver::class.java)
+        val stopServicePendingIntent = PendingIntent.getBroadcast(
+            appContext,
+            0,
+            stopServiceIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_MUTABLE,
+        )
+
         return NotificationCompat.Builder(appContext, channel.id)
             .setContentTitle(appContext.getString(R.string.service))
             .setContentText(appContext.getString(R.string.amber_is_running_in_background))
@@ -130,6 +139,11 @@ class AmberRelayStats(
             .setGroup(group.id)
             .setGroupSummary(true)
             .setContentIntent(contentPendingIntent)
+            .addAction(
+                R.drawable.ic_notification,
+                appContext.getString(R.string.stop_service),
+                stopServicePendingIntent,
+            )
             .build()
     }
 

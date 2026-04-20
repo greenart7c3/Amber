@@ -20,7 +20,6 @@
  */
 package com.greenart7c3.nostrsigner.ui.components
 
-import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -34,12 +33,12 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -50,10 +49,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
+import androidx.compose.ui.window.DialogProperties
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -112,13 +114,11 @@ fun TextSpinner(
         )
     }
 
-    if (optionsShowing) {
-        options.isNotEmpty().also {
-            SpinnerSelectionDialog(options = options, onDismiss = { optionsShowing = false }) {
-                currentText = options[it].title
-                optionsShowing = false
-                onSelect(it)
-            }
+    if (optionsShowing && options.isNotEmpty()) {
+        SpinnerSelectionDialog(options = options, onDismiss = { optionsShowing = false }) {
+            currentText = options[it].title
+            optionsShowing = false
+            onSelect(it)
         }
     }
 }
@@ -136,20 +136,10 @@ fun SpinnerSelectionDialog(
         onSelect = onSelect,
         onDismiss = onDismiss,
     ) { item ->
-        Row(
-            horizontalArrangement = Arrangement.Center,
-            modifier = Modifier.fillMaxWidth(),
-        ) {
-            Text(text = item.title, color = MaterialTheme.colorScheme.onSurface)
-        }
+        Text(text = item.title, color = MaterialTheme.colorScheme.onSurface)
         item.explainer?.let {
             Spacer(modifier = Modifier.height(5.dp))
-            Row(
-                horizontalArrangement = Arrangement.Start,
-                modifier = Modifier.fillMaxWidth(),
-            ) {
-                Text(text = it, color = Color.Gray, fontSize = 14.sp)
-            }
+            Text(text = it, color = Color.Gray, fontSize = 14.sp)
         }
     }
 }
@@ -162,36 +152,58 @@ fun <T> SpinnerSelectionDialog(
     onDismiss: () -> Unit,
     onRenderItem: @Composable (T) -> Unit,
 ) {
-    Dialog(onDismissRequest = onDismiss) {
+    Dialog(
+        onDismissRequest = onDismiss,
+        properties = DialogProperties(usePlatformDefaultWidth = false),
+    ) {
         Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp),
             color = MaterialTheme.colorScheme.background,
-            border = BorderStroke(0.25.dp, Color.LightGray),
-            shape = RoundedCornerShape(5.dp),
+            shape = RoundedCornerShape(24.dp),
         ) {
-            LazyColumn {
-                title?.let {
-                    item {
-                        Row(
-                            modifier = Modifier.fillMaxWidth().padding(16.dp, 16.dp),
-                            horizontalArrangement = Arrangement.Center,
-                        ) {
-                            Text(
-                                text = title,
-                                color = MaterialTheme.colorScheme.onSurface,
-                                fontWeight = FontWeight.Bold,
-                            )
+            CompositionLocalProvider(
+                LocalDensity provides Density(
+                    LocalDensity.current.density,
+                    1f,
+                ),
+            ) {
+                LazyColumn(
+                    modifier = Modifier.padding(vertical = 10.dp),
+                ) {
+                    title?.let {
+                        item {
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                horizontalArrangement = Arrangement.Center,
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Text(
+                                    text = title,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontWeight = FontWeight.Bold,
+                                )
+                            }
                         }
-                        HorizontalDivider(color = Color.LightGray, thickness = 0.25.dp)
                     }
-                }
-                itemsIndexed(options) { index, item ->
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clickable { onSelect(index) }.padding(16.dp, 16.dp),
-                    ) {
-                        Column { onRenderItem(item) }
-                    }
-                    if (index < options.lastIndex) {
-                        HorizontalDivider(color = Color.LightGray, thickness = 0.25.dp)
+                    itemsIndexed(options) { index, item ->
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onSelect(index) }
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Column(
+                                modifier = Modifier.weight(1f),
+                                horizontalAlignment = Alignment.CenterHorizontally,
+                            ) {
+                                onRenderItem(item)
+                            }
+                        }
                     }
                 }
             }

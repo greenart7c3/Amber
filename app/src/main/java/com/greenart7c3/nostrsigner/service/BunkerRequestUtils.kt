@@ -391,21 +391,23 @@ object BunkerRequestUtils {
             EventNotificationConsumer(context).notificationManager().cancelAll()
             database.dao().insertApplicationWithPermissions(application)
             historyDatabase.dao().addHistory(
-                HistoryEntity(
-                    0,
-                    key,
-                    type.toString(),
-                    kind,
-                    TimeUtils.now(),
-                    true,
-                    content = when (type) {
-                        SignerType.SIGN_EVENT,
-                        SignerType.NIP04_DECRYPT,
-                        SignerType.NIP44_DECRYPT,
-                        SignerType.DECRYPT_ZAP_EVENT,
-                        -> response
-                        else -> getDataFromBunker(bunkerRequest.request)
-                    },
+                listOf(
+                    HistoryEntity(
+                        0,
+                        key,
+                        type.toString(),
+                        kind,
+                        TimeUtils.now(),
+                        true,
+                        content = when (type) {
+                            SignerType.SIGN_EVENT,
+                            SignerType.NIP04_DECRYPT,
+                            SignerType.NIP44_DECRYPT,
+                            SignerType.DECRYPT_ZAP_EVENT,
+                            -> response
+                            else -> getDataFromBunker(bunkerRequest.request)
+                        },
+                    ),
                 ),
                 account.npub,
             )
@@ -539,14 +541,16 @@ object BunkerRequestUtils {
             if (bunkerRequest.request !is BunkerRequestConnect) {
                 Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(application)
                 Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
-                    HistoryEntity(
-                        0,
-                        key,
-                        signerType.toString(),
-                        null,
-                        TimeUtils.now(),
-                        false,
-                        content = getDataFromBunker(bunkerRequest.request),
+                    listOf(
+                        HistoryEntity(
+                            0,
+                            key,
+                            signerType.toString(),
+                            null,
+                            TimeUtils.now(),
+                            false,
+                            content = getDataFromBunker(bunkerRequest.request),
+                        ),
                     ),
                     account.npub,
                 )

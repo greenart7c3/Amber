@@ -754,22 +754,24 @@ object IntentUtils {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     Amber.instance.applicationIOScope.launch {
                         historyDatabase.dao().addHistory(
-                            HistoryEntity(
-                                0,
-                                key,
-                                intentData.type.toString(),
-                                kind,
-                                TimeUtils.now(),
-                                true,
-                                content = when (intentData.type) {
-                                    SignerType.SIGN_EVENT -> event
-                                    SignerType.NIP04_DECRYPT,
-                                    SignerType.NIP44_DECRYPT,
-                                    SignerType.DECRYPT_ZAP_EVENT,
-                                    -> value
+                            listOf(
+                                HistoryEntity(
+                                    0,
+                                    key,
+                                    intentData.type.toString(),
+                                    kind,
+                                    TimeUtils.now(),
+                                    true,
+                                    content = when (intentData.type) {
+                                        SignerType.SIGN_EVENT -> event
+                                        SignerType.NIP04_DECRYPT,
+                                        SignerType.NIP44_DECRYPT,
+                                        SignerType.DECRYPT_ZAP_EVENT,
+                                        -> value
 
-                                    else -> intentData.data
-                                },
+                                        else -> intentData.data
+                                    },
+                                ),
                             ),
                             account.npub,
                         )
@@ -903,14 +905,16 @@ object IntentUtils {
 
             Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(application)
             Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
-                HistoryEntity(
-                    0,
-                    key,
-                    intentData.type.toString(),
-                    kind,
-                    TimeUtils.now(),
-                    false,
-                    content = intentData.data,
+                listOf(
+                    HistoryEntity(
+                        0,
+                        key,
+                        intentData.type.toString(),
+                        kind,
+                        TimeUtils.now(),
+                        false,
+                        content = intentData.data,
+                    ),
                 ),
                 account.npub,
             )

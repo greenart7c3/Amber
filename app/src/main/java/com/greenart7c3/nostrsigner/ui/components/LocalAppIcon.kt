@@ -14,11 +14,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
+import com.greenart7c3.nostrsigner.ui.theme.MonoFontFamily
 
 @Composable
 fun LocalAppIcon(packageName: String?) {
@@ -27,13 +26,13 @@ fun LocalAppIcon(packageName: String?) {
         Column(
             modifier = Modifier.padding(vertical = 16.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             if (appDisplayInfo.icon != null) {
                 Image(
                     modifier = Modifier
-                        .size(48.dp)
-                        .clip(MaterialTheme.shapes.small),
+                        .size(56.dp)
+                        .clip(MaterialTheme.shapes.medium),
                     bitmap = appDisplayInfo.icon.toBitmap().asImageBitmap(),
                     contentDescription = appDisplayInfo.name,
                     contentScale = ContentScale.Crop,
@@ -42,19 +41,16 @@ fun LocalAppIcon(packageName: String?) {
 
             Text(
                 text = appDisplayInfo.name,
-                style = MaterialTheme.typography.titleLarge.copy(
-                    fontSize = 18.sp,
-                    lineHeight = 24.sp,
-                ),
-                fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.headlineSmall,
+                color = MaterialTheme.colorScheme.onBackground,
+                textAlign = TextAlign.Center,
             )
 
             Text(
-                modifier = Modifier
-                    .fillMaxWidth(),
+                modifier = Modifier.fillMaxWidth(),
                 text = packageName,
-                fontWeight = FontWeight.Bold,
-                fontSize = 18.sp,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = MonoFontFamily),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 textAlign = TextAlign.Center,
             )
         }

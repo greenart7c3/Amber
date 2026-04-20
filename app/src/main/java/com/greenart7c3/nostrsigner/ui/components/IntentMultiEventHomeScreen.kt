@@ -190,82 +190,85 @@ fun IntentMultiEventHomeScreen(
                     containerColor = orange,
                 ),
                 onClick = {
-                    Amber.instance.applicationIOScope.launch {
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                         var closeApp = true
                         onRemoveIntentData(intents, IntentResultType.REMOVE)
-                        for (intentData in intents) {
-                            val thisAccount =
-                                if (intentData.currentAccount.isNotBlank()) {
-                                    LocalPreferences.loadFromEncryptedStorage(
-                                        context,
-                                        intentData.currentAccount,
-                                    )
-                                } else {
-                                    accountParam
-                                } ?: continue
+                        val localKey = packageName ?: return@launch
+                        val intentsByAccount = intents.groupBy { it.currentAccount.ifBlank { accountParam.npub } }
 
-                            val localKey = packageName ?: continue
+                        for ((accountNpub, accountIntents) in intentsByAccount) {
+                            val thisAccount = if (accountNpub == accountParam.npub) {
+                                accountParam
+                            } else {
+                                LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
+                            } ?: continue
+
                             val database = Amber.instance.getDatabase(thisAccount.npub)
-                            val application =
-                                database
-                                    .dao()
-                                    .getByKey(localKey) ?: ApplicationWithPermissions(
-                                    application = ApplicationEntity(
-                                        localKey,
-                                        "",
-                                        listOf(),
-                                        "",
-                                        "",
-                                        "",
-                                        thisAccount.hexKey,
-                                        true,
-                                        "",
-                                        false,
-                                        thisAccount.signPolicy,
-                                        true,
-                                        0L,
-                                        lastUsed = TimeUtils.now(),
-                                    ),
-                                    permissions = mutableListOf(),
-                                )
-
-                            val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
-                            if (rememberType != RememberType.NEVER && isChecked) {
-                                val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
-                                val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
-                                    if (relayAuthScope == RelayAuthScope.ALL) {
-                                        "*"
-                                    } else {
-                                        (
-                                            AmberEvent.relay(intentData.event)?.let { url ->
-                                                try {
-                                                    java.net.URI(url).host ?: url
-                                                } catch (e: Exception) {
-                                                    url
-                                                }
-                                            } ?: ""
-                                            )
-                                    }
-                                } else {
-                                    ""
-                                }
-                                AmberUtils.acceptOrRejectPermission(
-                                    application,
+                            val application = database.dao().getByKey(localKey) ?: ApplicationWithPermissions(
+                                application = ApplicationEntity(
                                     localKey,
-                                    intentData.type,
-                                    rejectKind,
+                                    "",
+                                    listOf(),
+                                    "",
+                                    "",
+                                    "",
+                                    thisAccount.hexKey,
+                                    true,
+                                    "",
                                     false,
-                                    rememberType,
-                                    thisAccount,
-                                    relay = rejectRelay,
-                                    encryptedData = intentData.encryptedData,
-                                )
-                            }
+                                    thisAccount.signPolicy,
+                                    true,
+                                    0L,
+                                    lastUsed = TimeUtils.now(),
+                                ),
+                                permissions = mutableListOf(),
+                            )
 
                             if (!application.application.closeApplication) {
                                 closeApp = false
                             }
+
+                            var permissionsChanged = false
+                            for (intentData in accountIntents) {
+                                val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                if (rememberType != RememberType.NEVER && isChecked) {
+                                    val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
+                                    val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
+                                        if (relayAuthScope == RelayAuthScope.ALL) {
+                                            "*"
+                                        } else {
+                                            (
+                                                AmberEvent.relay(intentData.event)?.let { url ->
+                                                    try {
+                                                        java.net.URI(url).host ?: url
+                                                    } catch (e: Exception) {
+                                                        url
+                                                    }
+                                                } ?: ""
+                                                )
+                                        }
+                                    } else {
+                                        ""
+                                    }
+                                    AmberUtils.updatePermission(
+                                        application,
+                                        localKey,
+                                        intentData.type,
+                                        rejectKind,
+                                        false,
+                                        rememberType,
+                                        relay = rejectRelay,
+                                        encryptedData = intentData.encryptedData,
+                                    )
+                                    permissionsChanged = true
+                                }
+                            }
+
+                            if (permissionsChanged || application.application.key.isBlank()) {
+                                database.dao().insertApplicationWithPermissions(application)
+                            }
                         }
+
                         sendRejectIntent(
                             results = intents.map {
                                 Result(
@@ -292,215 +295,203 @@ fun IntentMultiEventHomeScreen(
                         try {
                             val results = mutableListOf<Result>()
                             var closeApp = true
-
                             onRemoveIntentData(intents, IntentResultType.REMOVE)
+                            val localKey = packageName ?: return@launch
+                            val intentsByAccount = intents.groupBy { it.currentAccount.ifBlank { accountParam.npub } }
 
-                            for (intentData in intents) {
-                                val thisAccount =
-                                    if (intentData.currentAccount.isNotBlank()) {
-                                        LocalPreferences.loadFromEncryptedStorage(
-                                            context,
-                                            intentData.currentAccount,
-                                        )
-                                    } else {
-                                        accountParam
-                                    } ?: continue
-
-                                val localKey = packageName ?: continue
+                            for ((accountNpub, accountIntents) in intentsByAccount) {
+                                val thisAccount = if (accountNpub == accountParam.npub) {
+                                    accountParam
+                                } else {
+                                    LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
+                                } ?: continue
 
                                 val database = Amber.instance.getDatabase(thisAccount.npub)
                                 val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
-                                val savedApplication = database.dao().getByKey(localKey)
-
-                                val application =
-                                    savedApplication ?: ApplicationWithPermissions(
-                                        application = ApplicationEntity(
-                                            localKey,
-                                            "",
-                                            listOf(),
-                                            "",
-                                            "",
-                                            "",
-                                            thisAccount.hexKey,
-                                            true,
-                                            "",
-                                            false,
-                                            thisAccount.signPolicy,
-                                            true,
-                                            0L,
-                                            lastUsed = TimeUtils.now(),
-                                        ),
-                                        permissions = mutableListOf(),
-                                    )
+                                val application = database.dao().getByKey(localKey) ?: ApplicationWithPermissions(
+                                    application = ApplicationEntity(
+                                        localKey,
+                                        "",
+                                        listOf(),
+                                        "",
+                                        "",
+                                        "",
+                                        thisAccount.hexKey,
+                                        true,
+                                        "",
+                                        false,
+                                        thisAccount.signPolicy,
+                                        true,
+                                        0L,
+                                        lastUsed = TimeUtils.now(),
+                                    ),
+                                    permissions = mutableListOf(),
+                                )
 
                                 if (!application.application.closeApplication) {
                                     closeApp = false
                                 }
 
-                                val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                var permissionsChanged = false
+                                val historyList = mutableListOf<HistoryEntity>()
 
-                                if (intentData.type == SignerType.SIGN_EVENT) {
-                                    val localEvent = intentData.event!!
+                                for (intentData in accountIntents) {
+                                    val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                    val type = intentData.type
 
-                                    if (rememberType != RememberType.NEVER && isChecked) {
-                                        val signRelay = if (localEvent.kind == 22242) {
-                                            if (relayAuthScope == RelayAuthScope.ALL) {
-                                                "*"
+                                    if (type == SignerType.SIGN_EVENT) {
+                                        val localEvent = intentData.event!!
+
+                                        if (rememberType != RememberType.NEVER && isChecked) {
+                                            val signRelay = if (localEvent.kind == 22242) {
+                                                if (relayAuthScope == RelayAuthScope.ALL) {
+                                                    "*"
+                                                } else {
+                                                    (
+                                                        AmberEvent.relay(localEvent)?.let { url ->
+                                                            try {
+                                                                java.net.URI(url).host ?: url
+                                                            } catch (e: Exception) {
+                                                                url
+                                                            }
+                                                        } ?: ""
+                                                        )
+                                                }
                                             } else {
-                                                (
-                                                    AmberEvent.relay(localEvent)?.let { url ->
-                                                        try {
-                                                            java.net.URI(url).host ?: url
-                                                        } catch (e: Exception) {
-                                                            url
-                                                        }
-                                                    } ?: ""
-                                                    )
+                                                ""
                                             }
-                                        } else {
-                                            ""
+                                            AmberUtils.updatePermission(
+                                                application,
+                                                localKey,
+                                                type,
+                                                localEvent.kind,
+                                                true,
+                                                rememberType,
+                                                relay = signRelay,
+                                                encryptedData = intentData.encryptedData,
+                                            )
+                                            permissionsChanged = true
                                         }
-                                        AmberUtils.acceptOrRejectPermission(
-                                            application,
-                                            localKey,
-                                            intentData.type,
-                                            localEvent.kind,
-                                            true,
-                                            rememberType,
-                                            thisAccount,
-                                            relay = signRelay,
-                                            encryptedData = intentData.encryptedData,
-                                        )
-                                    }
 
-                                    database.dao().insertApplicationWithPermissions(application)
-
-                                    historyDatabase.dao().addHistory(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            intentData.type.toString(),
-                                            localEvent.kind,
-                                            TimeUtils.now(),
-                                            isChecked,
-                                            content = localEvent.toJson(),
-                                        ),
-                                        thisAccount.npub,
-                                    )
-
-                                    if (isChecked) {
-                                        results.add(
-                                            Result(
-                                                null,
-                                                signature = if (localEvent is LnZapRequestEvent &&
-                                                    localEvent.tags.any { tag ->
-                                                        tag.any { t -> t == "anon" }
-                                                    }
-                                                ) {
-                                                    localEvent.toJson()
-                                                } else {
-                                                    localEvent.sig
-                                                },
-                                                result = if (localEvent is LnZapRequestEvent &&
-                                                    localEvent.tags.any { tag ->
-                                                        tag.any { t -> t == "anon" }
-                                                    }
-                                                ) {
-                                                    localEvent.toJson()
-                                                } else {
-                                                    localEvent.sig
-                                                },
-                                                id = intentData.id,
-                                                rejected = null,
+                                        historyList.add(
+                                            HistoryEntity(
+                                                0,
+                                                localKey,
+                                                type.toString(),
+                                                localEvent.kind,
+                                                TimeUtils.now(),
+                                                isChecked,
+                                                content = localEvent.toJson(),
                                             ),
                                         )
-                                    }
-                                } else if (intentData.type == SignerType.SIGN_MESSAGE) {
-                                    if (rememberType != RememberType.NEVER && isChecked) {
-                                        AmberUtils.acceptOrRejectPermission(
-                                            application,
-                                            localKey,
-                                            intentData.type,
-                                            null,
-                                            true,
-                                            rememberType,
-                                            thisAccount,
-                                            encryptedData = intentData.encryptedData,
-                                        )
-                                    }
 
-                                    database.dao().insertApplicationWithPermissions(application)
-                                    historyDatabase.dao().addHistory(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            intentData.type.toString(),
-                                            null,
-                                            TimeUtils.now(),
-                                            isChecked,
-                                            content = intentData.data,
-                                        ),
-                                        thisAccount.npub,
-                                    )
-
-                                    val signedMessage = thisAccount.signString(intentData.data)
-                                    if (isChecked) {
-                                        results.add(
-                                            Result(
-                                                null,
-                                                signature = signedMessage,
-                                                result = signedMessage,
-                                                id = intentData.id,
-                                                rejected = null,
-                                            ),
-                                        )
-                                    }
-                                } else {
-                                    if (rememberType != RememberType.NEVER && isChecked) {
-                                        AmberUtils.acceptOrRejectPermission(
-                                            application,
-                                            localKey,
-                                            intentData.type,
-                                            null,
-                                            true,
-                                            rememberType,
-                                            thisAccount,
-                                            encryptedData = intentData.encryptedData,
-                                        )
-                                    }
-
-                                    database.dao().insertApplicationWithPermissions(application)
-
-                                    historyDatabase.dao().addHistory(
-                                        HistoryEntity(
-                                            0,
-                                            localKey,
-                                            intentData.type.toString(),
-                                            null,
-                                            TimeUtils.now(),
-                                            isChecked,
-                                            content = if (intentData.type == SignerType.NIP04_DECRYPT || intentData.type == SignerType.NIP44_DECRYPT || intentData.type == SignerType.DECRYPT_ZAP_EVENT) {
-                                                intentData.encryptedData?.result ?: ""
+                                        if (isChecked) {
+                                            val signature = if (localEvent is LnZapRequestEvent &&
+                                                localEvent.tags.any { tag ->
+                                                    tag.any { t -> t == "anon" }
+                                                }
+                                            ) {
+                                                localEvent.toJson()
                                             } else {
-                                                intentData.data
-                                            },
-                                        ),
-                                        thisAccount.npub,
-                                    )
-
-                                    val signature = intentData.encryptedData?.result ?: continue
-                                    if (isChecked) {
-                                        results.add(
-                                            Result(
+                                                localEvent.sig
+                                            }
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = signature,
+                                                    result = signature,
+                                                    id = intentData.id,
+                                                    rejected = null,
+                                                ),
+                                            )
+                                        }
+                                    } else if (type == SignerType.SIGN_MESSAGE) {
+                                        if (rememberType != RememberType.NEVER && isChecked) {
+                                            AmberUtils.updatePermission(
+                                                application,
+                                                localKey,
+                                                type,
                                                 null,
-                                                signature = signature,
-                                                result = signature,
-                                                id = intentData.id,
-                                                rejected = null,
+                                                true,
+                                                rememberType,
+                                                encryptedData = intentData.encryptedData,
+                                            )
+                                            permissionsChanged = true
+                                        }
+
+                                        historyList.add(
+                                            HistoryEntity(
+                                                0,
+                                                localKey,
+                                                type.toString(),
+                                                null,
+                                                TimeUtils.now(),
+                                                isChecked,
+                                                content = intentData.data,
                                             ),
                                         )
+
+                                        val signedMessage = thisAccount.signString(intentData.data)
+                                        if (isChecked) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = signedMessage,
+                                                    result = signedMessage,
+                                                    id = intentData.id,
+                                                    rejected = null,
+                                                ),
+                                            )
+                                        }
+                                    } else {
+                                        if (rememberType != RememberType.NEVER && isChecked) {
+                                            AmberUtils.updatePermission(
+                                                application,
+                                                localKey,
+                                                type,
+                                                null,
+                                                true,
+                                                rememberType,
+                                                encryptedData = intentData.encryptedData,
+                                            )
+                                            permissionsChanged = true
+                                        }
+
+                                        historyList.add(
+                                            HistoryEntity(
+                                                0,
+                                                localKey,
+                                                type.toString(),
+                                                null,
+                                                TimeUtils.now(),
+                                                isChecked,
+                                                content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
+                                                    intentData.encryptedData?.result ?: ""
+                                                } else {
+                                                    intentData.data
+                                                },
+                                            ),
+                                        )
+
+                                        val signature = intentData.encryptedData?.result
+                                        if (isChecked && signature != null) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = signature,
+                                                    result = signature,
+                                                    id = intentData.id,
+                                                    rejected = null,
+                                                ),
+                                            )
+                                        }
                                     }
                                 }
+
+                                if (permissionsChanged || application.application.key.isBlank()) {
+                                    database.dao().insertApplicationWithPermissions(application)
+                                }
+                                historyDatabase.dao().addHistory(historyList, thisAccount.npub)
                             }
 
                             if (results.isNotEmpty()) {

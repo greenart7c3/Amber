@@ -77,14 +77,13 @@ object AmberUtils {
         )
     }
 
-    suspend fun acceptOrRejectPermission(
+    fun updatePermission(
         application: ApplicationWithPermissions,
         key: String,
         signerType: SignerType,
         kind: Int?,
         value: Boolean,
         rememberType: RememberType,
-        account: Account,
         relay: String = "",
         encryptedData: EncryptedDataKind?,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
@@ -140,6 +139,31 @@ object AmberUtils {
                 if (!value) until else 0L,
                 relay,
             ),
+        )
+    }
+
+    suspend fun acceptOrRejectPermission(
+        application: ApplicationWithPermissions,
+        key: String,
+        signerType: SignerType,
+        kind: Int?,
+        value: Boolean,
+        rememberType: RememberType,
+        account: Account,
+        relay: String = "",
+        encryptedData: EncryptedDataKind?,
+        decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
+    ) {
+        updatePermission(
+            application,
+            key,
+            signerType,
+            kind,
+            value,
+            rememberType,
+            relay,
+            encryptedData,
+            decryptTypeScope,
         )
 
         Amber.instance.getDatabase(account.npub)

@@ -12,6 +12,7 @@ import androidx.room.Query
 import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Permission
+import com.vitorpamplona.quartz.utils.TimeUtils
 
 private const val MAX_CONTENT_LENGTH = 500
 
@@ -65,20 +66,26 @@ interface HistoryDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
-    suspend fun innerAddHistory(entity: HistoryEntity)
+    suspend fun innerAddHistory(entities: List<HistoryEntity>)
 
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    suspend fun addHistory(entity: HistoryEntity, npub: String?) {
+    suspend fun addHistory(entities: List<HistoryEntity>, npub: String?) {
         try {
-            val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
-            val localEntity = entity.copy(
-                translatedPermission = permission.toLocalizedString(Amber.instance, true),
-                content = if (entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
-            )
-            innerAddHistory(localEntity)
+            val localEntities = entities.map { entity ->
+                val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
+                entity.copy(
+                    translatedPermission = permission.toLocalizedString(Amber.instance, true),
+                    content = if (entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
+                )
+            }
+            innerAddHistory(localEntities)
             npub?.let {
-                Amber.instance.getDatabase(npub).dao().updateLastUsed(entity.pkKey, entity.time)
+                val lastUsed = entities.maxByOrNull { it.time }?.time ?: TimeUtils.now()
+                val pkKey = entities.firstOrNull()?.pkKey
+                if (pkKey != null) {
+                    Amber.instance.getDatabase(npub).dao().updateLastUsed(pkKey, lastUsed)
+                }
             }
         } catch (e: Exception) {
             Log.e(Amber.TAG, "Error adding history", e)

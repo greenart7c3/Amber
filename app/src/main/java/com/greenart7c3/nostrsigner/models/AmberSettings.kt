@@ -33,6 +33,9 @@ data class AmberSettings(
     val autoCheckUpdates: Boolean = true,
     val updateCheckFrequency: UpdateCheckFrequency = UpdateCheckFrequency.DAILY,
     val startServiceOnBoot: Boolean = true,
+    val rateLimitEnabled: Boolean = true,
+    val rateLimitMaxPerWindow: Int = 30,
+    val rateLimitWindowSeconds: Int = 10,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

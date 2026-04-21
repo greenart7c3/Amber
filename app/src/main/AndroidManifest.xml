@@ -86,6 +86,7 @@
         <activity
             android:name=".SignerActivity"
             android:exported="true"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/Theme.NostrSigner.Modal">
             <intent-filter>

@@ -4,6 +4,7 @@ import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
 import android.util.Log
+import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
@@ -35,6 +36,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
+import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
@@ -59,6 +62,11 @@ class SignerActivity : AppCompatActivity() {
         Amber.isAppInForeground = true
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
+
+        // Rate-limited per (caller, type, kind). onNewIntent is intentionally exempt —
+        // it is the batch merge into an already-open approval screen.
+        if (rejectIfRateLimited(intent)) return
+
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
         intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
@@ -189,7 +197,9 @@ class SignerActivity : AppCompatActivity() {
         Amber.isAppInForeground = true
         Amber.instance.setMainActivity(this)
         Amber.instance.startServiceFromUi()
-        mainViewModel.showBunkerRequests()
+        if (::mainViewModel.isInitialized) {
+            mainViewModel.showBunkerRequests()
+        }
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             val connectivityManager =
                 (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
@@ -203,15 +213,46 @@ class SignerActivity : AppCompatActivity() {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        mainViewModel.onNewIntent(intent, callingPackage)
+        if (::mainViewModel.isInitialized) {
+            mainViewModel.onNewIntent(intent, callingPackage)
+        }
     }
 
     override fun onDestroy() {
-        val ownedIds = mainViewModel.addedIntentIds
-        val toRemove = IntentUtils.intents.value.filter { it.id in ownedIds }
-        if (toRemove.isNotEmpty()) {
-            IntentUtils.removeAll(toRemove)
+        val ownedIds = if (::mainViewModel.isInitialized) mainViewModel.addedIntentIds else emptySet()
+        if (ownedIds.isNotEmpty()) {
+            val toRemove = IntentUtils.intents.value.filter { it.id in ownedIds }
+            if (toRemove.isNotEmpty()) {
+                IntentUtils.removeAll(toRemove)
+            }
         }
         super.onDestroy()
+    }
+
+    private fun rejectIfRateLimited(intent: Intent?): Boolean {
+        if (intent == null) return false
+        val key = IntentRateLimitInspector.inspect(intent, callingPackage) ?: return false
+        if (IntentRateLimiter.checkAndRecord(key)) return false
+
+        if (IntentRateLimiter.shouldShowToast(key)) {
+            Toast.makeText(
+                applicationContext,
+                getString(R.string.rate_limit_too_many_requests, resolveCallerLabel(callingPackage)),
+                Toast.LENGTH_SHORT,
+            ).show()
+        }
+        Log.w(Amber.TAG, "Rate-limited intent from ${key.pkg} type=${key.type} kind=${key.kind}")
+        finishAndRemoveTask()
+        return true
+    }
+
+    private fun resolveCallerLabel(pkg: String?): String {
+        if (pkg.isNullOrBlank()) return getString(R.string.rate_limit_unknown_app)
+        return try {
+            val info = applicationContext.packageManager.getApplicationInfo(pkg, 0)
+            applicationContext.packageManager.getApplicationLabel(info).toString()
+        } catch (_: Exception) {
+            pkg
+        }
     }
 }

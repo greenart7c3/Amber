@@ -28,8 +28,8 @@ object IntentRateLimiter {
 
     internal data class Config(
         val enabled: Boolean = true,
-        val maxPerWindow: Int = 30,
-        val windowSeconds: Int = 10,
+        val maxPerWindow: Int = 5,
+        val windowSeconds: Int = 30,
     )
 
     private val buckets = ConcurrentHashMap<BucketKey, ArrayDeque<Long>>()

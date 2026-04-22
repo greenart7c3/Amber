@@ -16,7 +16,7 @@ import java.util.concurrent.ConcurrentHashMap
  */
 object IntentRateLimiter {
     const val UNKNOWN_PACKAGE = "<unknown>"
-    private const val UNKNOWN_PACKAGE_LIMIT = 5
+    private const val UNKNOWN_PACKAGE_LIMIT = 3
     private const val CLEANUP_WHEN_SIZE_EXCEEDS = 256
     private const val CLEANUP_STALE_MS = 60L * 60L * 1000L
 

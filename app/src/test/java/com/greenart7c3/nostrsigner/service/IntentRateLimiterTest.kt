@@ -81,7 +81,7 @@ class IntentRateLimiterTest {
     @Test
     fun `unknown package bucket has a tighter limit`() {
         val unknown = key(pkg = IntentRateLimiter.UNKNOWN_PACKAGE)
-        repeat(5) { assertTrue(IntentRateLimiter.checkAndRecord(unknown)) }
+        repeat(3) { assertTrue(IntentRateLimiter.checkAndRecord(unknown)) }
         assertFalse(IntentRateLimiter.checkAndRecord(unknown))
     }
 

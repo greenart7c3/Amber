@@ -775,6 +775,13 @@
     <string name="event_kind_37516">Geocache Listing</string>
     <string name="event_kind_36787">Music Track</string>
     <string name="event_kind_34139">Music Playlist</string>
+    <string name="statistics">Statistics</string>
+    <string name="last_24_hours">Last 24 hours</string>
+    <string name="last_7_days">Last 7 days</string>
+    <string name="last_30_days">Last 30 days</string>
+    <string name="filter_all">All</string>
+    <string name="filter_accepted">Accepted</string>
+    <string name="filter_rejected">Rejected</string>
     <string name="rate_limit_too_many_requests">Too many requests from %1$s — ignoring for now</string>
     <string name="rate_limit_unknown_app">an unknown app</string>
 </resources>

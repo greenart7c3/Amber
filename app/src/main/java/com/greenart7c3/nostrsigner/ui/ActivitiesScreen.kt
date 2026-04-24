@@ -11,11 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -25,6 +27,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,12 +56,19 @@ import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.EventSection
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 import com.greenart7c3.nostrsigner.ui.components.TagsSection
 import com.greenart7c3.nostrsigner.ui.components.copyToClipboard
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+
+enum class ActivityFilter(val accepted: Boolean?) {
+    ALL(null),
+    ACCEPTED(true),
+    REJECTED(false),
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -72,8 +82,9 @@ fun ActivitiesScreen(
 
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
+    var filter by rememberSaveable(account.npub) { mutableStateOf(ActivityFilter.ALL) }
 
-    val pager = remember(searchQuery) {
+    val pager = remember(searchQuery, filter) {
         Pager(
             PagingConfig(
                 pageSize = 20,
@@ -81,9 +92,9 @@ fun ActivitiesScreen(
             ),
         ) {
             if (searchQuery.isEmpty()) {
-                database.dao().getAllHistoryPaging()
+                database.dao().getAllHistoryPaging(filter.accepted)
             } else {
-                database.dao().searchAllHistoryPaging(searchQuery.lowercase())
+                database.dao().searchAllHistoryPaging(searchQuery.lowercase(), filter.accepted)
             }
         }
     }
@@ -96,6 +107,28 @@ fun ActivitiesScreen(
     Column(
         modifier = modifier.padding(top = topPadding),
     ) {
+        ActivityStatsCard(
+            account = account,
+            modifier = Modifier
+                .padding(
+                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
+                    top = 8.dp,
+                    bottom = 4.dp,
+                )
+                .fillMaxWidth(),
+        )
+        ActivityFilterRow(
+            selected = filter,
+            onSelect = { filter = it },
+            modifier = Modifier
+                .padding(
+                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
+                    bottom = 4.dp,
+                )
+                .fillMaxWidth(),
+        )
         SimpleSearchBar(
             modifier = Modifier
                 .padding(start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr), end = paddingValues.calculateRightPadding(LayoutDirection.Ltr))
@@ -246,6 +279,41 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
             )
         }
         HorizontalDivider(color = MaterialTheme.colorScheme.primary)
+    }
+}
+
+@Composable
+fun ActivityFilterRow(
+    selected: ActivityFilter,
+    onSelect: (ActivityFilter) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyRow(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        contentPadding = PaddingValues(horizontal = 4.dp),
+    ) {
+        item {
+            FilterChip(
+                selected = selected == ActivityFilter.ALL,
+                onClick = { onSelect(ActivityFilter.ALL) },
+                label = { Text(stringResource(R.string.filter_all)) },
+            )
+        }
+        item {
+            FilterChip(
+                selected = selected == ActivityFilter.ACCEPTED,
+                onClick = { onSelect(ActivityFilter.ACCEPTED) },
+                label = { Text(stringResource(R.string.filter_accepted)) },
+            )
+        }
+        item {
+            FilterChip(
+                selected = selected == ActivityFilter.REJECTED,
+                onClick = { onSelect(ActivityFilter.REJECTED) },
+                label = { Text(stringResource(R.string.filter_rejected)) },
+            )
+        }
     }
 }
 

@@ -18,14 +18,37 @@ private const val MAX_CONTENT_LENGTH = 500
 
 @Dao
 interface HistoryDao {
-    @Query("SELECT * FROM history where pkKey = :pk ORDER BY time DESC")
-    fun getAllHistoryPaging(pk: String): PagingSource<Int, HistoryEntity>
+    @Query(
+        """
+    SELECT * FROM history
+    WHERE pkKey = :pk
+    AND (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
+    ORDER BY time DESC
+    """,
+    )
+    fun getAllHistoryPaging(pk: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
-    @Query("SELECT * FROM history where (kind = :query OR LOWER(type) LIKE '%' || :query || '%' OR LOWER(translatedPermission) LIKE '%' || :query || '%' OR LOWER(content) LIKE '%' || :query || '%') AND pkKey = :pk ORDER BY time DESC")
-    fun searchAllHistoryPaging(pk: String, query: String): PagingSource<Int, HistoryEntity>
+    @Query(
+        """
+    SELECT * FROM history
+    WHERE pkKey = :pk
+    AND (kind = :query OR LOWER(type) LIKE '%' || :query || '%'
+    OR LOWER(translatedPermission) LIKE '%' || :query || '%'
+    OR LOWER(content) LIKE '%' || :query || '%')
+    AND (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
+    ORDER BY time DESC
+    """,
+    )
+    fun searchAllHistoryPaging(pk: String, query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
-    @Query("SELECT * FROM history ORDER BY time DESC")
-    fun getAllHistoryPaging(): PagingSource<Int, HistoryEntity>
+    @Query(
+        """
+    SELECT * FROM history
+    WHERE (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
+    ORDER BY time DESC
+    """,
+    )
+    fun getAllHistoryPaging(acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
     @Query(
         """
@@ -33,13 +56,26 @@ interface HistoryDao {
     WHERE (kind = :query OR LOWER(type) LIKE '%' || :query || '%'
     OR LOWER(translatedPermission) LIKE '%' || :query || '%'
     OR LOWER(content) LIKE '%' || :query || '%')
+    AND (:acceptedFilter IS NULL OR accepted = :acceptedFilter)
     ORDER BY time DESC
     """,
     )
-    fun searchAllHistoryPaging(query: String): PagingSource<Int, HistoryEntity>
+    fun searchAllHistoryPaging(query: String, acceptedFilter: Boolean?): PagingSource<Int, HistoryEntity>
 
     @Query("DELETE FROM history where pkKey = :pk")
     suspend fun deleteHistory(pk: String)
+
+    @Query("SELECT COUNT(*) FROM history WHERE time >= :sinceSeconds AND accepted = 1")
+    suspend fun countAcceptedSince(sinceSeconds: Long): Long
+
+    @Query("SELECT COUNT(*) FROM history WHERE time >= :sinceSeconds AND accepted = 0")
+    suspend fun countRejectedSince(sinceSeconds: Long): Long
+
+    @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 1")
+    suspend fun countAcceptedSince(pk: String, sinceSeconds: Long): Long
+
+    @Query("SELECT COUNT(*) FROM history WHERE pkKey = :pk AND time >= :sinceSeconds AND accepted = 0")
+    suspend fun countRejectedSince(pk: String, sinceSeconds: Long): Long
 
     @Query("SELECT COUNT(*) FROM history")
     suspend fun getCount(): Long

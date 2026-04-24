@@ -14,6 +14,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -28,7 +29,10 @@ import androidx.paging.compose.itemKey
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
+import com.greenart7c3.nostrsigner.ui.ActivityFilter
+import com.greenart7c3.nostrsigner.ui.ActivityFilterRow
 import com.greenart7c3.nostrsigner.ui.ActivityRow
+import com.greenart7c3.nostrsigner.ui.components.ActivityStatsCard
 import com.greenart7c3.nostrsigner.ui.components.SimpleSearchBar
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -44,8 +48,9 @@ fun ActivityScreen(
 
     val context = LocalContext.current
     var searchQuery by remember { mutableStateOf("") }
+    var filter by rememberSaveable(account.npub, key) { mutableStateOf(ActivityFilter.ALL) }
 
-    val pager = remember(searchQuery) {
+    val pager = remember(searchQuery, filter) {
         Pager(
             PagingConfig(
                 pageSize = 20,
@@ -53,9 +58,9 @@ fun ActivityScreen(
             ),
         ) {
             if (searchQuery.isEmpty()) {
-                database.dao().getAllHistoryPaging(key)
+                database.dao().getAllHistoryPaging(key, filter.accepted)
             } else {
-                database.dao().searchAllHistoryPaging(key, searchQuery.lowercase())
+                database.dao().searchAllHistoryPaging(key, searchQuery.lowercase(), filter.accepted)
             }
         }
     }
@@ -68,6 +73,29 @@ fun ActivityScreen(
     Column(
         modifier = modifier.padding(top = topPadding),
     ) {
+        ActivityStatsCard(
+            account = account,
+            pkKey = key,
+            modifier = Modifier
+                .padding(
+                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
+                    top = 8.dp,
+                    bottom = 4.dp,
+                )
+                .fillMaxWidth(),
+        )
+        ActivityFilterRow(
+            selected = filter,
+            onSelect = { filter = it },
+            modifier = Modifier
+                .padding(
+                    start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr),
+                    end = paddingValues.calculateRightPadding(LayoutDirection.Ltr),
+                    bottom = 4.dp,
+                )
+                .fillMaxWidth(),
+        )
         SimpleSearchBar(
             modifier = Modifier
                 .padding(start = paddingValues.calculateLeftPadding(LayoutDirection.Ltr), end = paddingValues.calculateRightPadding(LayoutDirection.Ltr))

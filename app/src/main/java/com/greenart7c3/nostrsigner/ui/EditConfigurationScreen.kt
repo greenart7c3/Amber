@@ -62,6 +62,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun EditConfigurationScreen(
@@ -82,33 +83,37 @@ fun EditConfigurationScreen(
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            application = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
-            name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
-            closeApp = application?.application?.closeApplication != false
+        val applicationWithPermissions = withContext(Dispatchers.IO) {
+            Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+        }
 
-            application?.application?.relays?.forEach {
-                relays.add(
-                    it.copy(),
-                )
-            }
+        application = applicationWithPermissions
+        name = TextFieldValue(AnnotatedString(application?.application?.name?.ifBlank { application?.application?.key?.toShortenHex() } ?: ""))
+        closeApp = application?.application?.closeApplication != false
 
-            if (!BuildFlavorChecker.isOfflineFlavor()) {
-                relays.forEach { relay ->
-                    val url = relay.url
-                    if (!trustScores.containsKey(url)) {
-                        loadingScores[url] = true
-                        scope.launch(Dispatchers.IO) {
-                            val score = TrustScoreService.getScore(url)
+        application?.application?.relays?.forEach {
+            relays.add(
+                it.copy(),
+            )
+        }
+
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            relays.forEach { relay ->
+                val url = relay.url
+                if (!trustScores.containsKey(url)) {
+                    loadingScores[url] = true
+                    scope.launch(Dispatchers.IO) {
+                        val score = TrustScoreService.getScore(url)
+                        withContext(Dispatchers.Main) {
                             trustScores[url] = score
                             loadingScores[url] = false
                         }
                     }
                 }
             }
-
-            isLoading.value = false
         }
+
+        isLoading.value = false
     }
 
     if (isLoading.value) {

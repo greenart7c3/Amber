@@ -89,7 +89,8 @@ fun EventData(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
         if (kindTranslation == unknownKindString && altTag == null) {
-            ReportMissingEventKindButton(account, event.kind)
+            val appInfo = packageName?.let { rememberAppDisplayInfo(it) }
+            ReportMissingEventKindButton(account, event.kind, appInfo?.name)
         }
         Spacer(Modifier.size(4.dp))
 
@@ -177,7 +178,7 @@ fun BunkerEventData(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
         if (kindTranslation == unknownKindString && altTag == null) {
-            ReportMissingEventKindButton(account, event.kind)
+            ReportMissingEventKindButton(account, event.kind, appName)
         }
         Spacer(Modifier.size(4.dp))
 
@@ -240,11 +241,15 @@ fun ContactListDetail(title: String, text: String) {
 }
 
 @Composable
-fun ReportMissingEventKindButton(account: Account, kind: Int) {
+fun ReportMissingEventKindButton(account: Account, kind: Int, appName: String? = null) {
     val clipboardManager = LocalClipboard.current
     AmberButton(
         onClick = {
-            val text = "Missing event kind translation: $kind"
+            val text = if (!appName.isNullOrBlank()) {
+                "Missing event kind translation: $kind (app: $appName)"
+            } else {
+                "Missing event kind translation: $kind"
+            }
             if (BuildFlavorChecker.isOfflineFlavor()) {
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     clipboardManager.setClipEntry(

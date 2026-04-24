@@ -61,16 +61,17 @@ private data class WindowStats(
 fun ActivityStatsCard(
     account: Account,
     modifier: Modifier = Modifier,
+    pkKey: String? = null,
 ) {
     val dao = remember(account.npub) {
         Amber.instance.getHistoryDatabase(account.npub).dao()
     }
-    var expanded by rememberSaveable(account.npub) { mutableStateOf(false) }
-    var stats by remember(account.npub) { mutableStateOf<List<WindowStats>?>(null) }
+    var expanded by rememberSaveable(account.npub, pkKey) { mutableStateOf(false) }
+    var stats by remember(account.npub, pkKey) { mutableStateOf<List<WindowStats>?>(null) }
 
-    LaunchedEffect(account.npub, expanded) {
+    LaunchedEffect(account.npub, pkKey, expanded) {
         if (expanded && stats == null) {
-            stats = withContext(Dispatchers.IO) { loadStats(dao) }
+            stats = withContext(Dispatchers.IO) { loadStats(dao, pkKey) }
         }
     }
 
@@ -228,7 +229,7 @@ private fun ActivityStatsBar(stats: WindowStats, maxTotal: Long) {
     }
 }
 
-private suspend fun loadStats(dao: HistoryDao): List<WindowStats> {
+private suspend fun loadStats(dao: HistoryDao, pkKey: String?): List<WindowStats> {
     val now = TimeUtils.now()
     val day = 24L * 60 * 60
     val windows = listOf(
@@ -240,8 +241,8 @@ private suspend fun loadStats(dao: HistoryDao): List<WindowStats> {
         val since = now - windowSeconds
         WindowStats(
             labelRes = labelRes,
-            accepted = dao.countAcceptedSince(since),
-            rejected = dao.countRejectedSince(since),
+            accepted = if (pkKey == null) dao.countAcceptedSince(since) else dao.countAcceptedSince(pkKey, since),
+            rejected = if (pkKey == null) dao.countRejectedSince(since) else dao.countRejectedSince(pkKey, since),
         )
     }
 }

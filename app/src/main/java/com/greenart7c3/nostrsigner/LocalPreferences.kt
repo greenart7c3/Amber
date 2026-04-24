@@ -66,6 +66,9 @@ private enum class SettingsKeys(val key: String) {
     WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
     WEBDAV_FILENAME("webdav_filename"),
     GDRIVE_FOLDER_URI("gdrive_folder_uri"),
+    RATE_LIMIT_ENABLED("rate_limit_enabled"),
+    RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
+    RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
 }
 
 @Immutable
@@ -141,6 +144,9 @@ object LocalPreferences {
                 putString(SettingsKeys.LANGUAGE_PREFS.key, settings.language)
                 putStringSet(SettingsKeys.AUTH_WHITELIST.key, settings.authWhitelist.toSet())
                 putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, settings.startServiceOnBoot)
+                putBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, settings.rateLimitEnabled)
+                putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
+                putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
             }
         }
     }
@@ -257,6 +263,9 @@ object LocalPreferences {
                     UpdateCheckFrequency.DAILY
                 },
                 startServiceOnBoot = getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true),
+                rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
+                rateLimitMaxPerWindow = getInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, 5),
+                rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
             )
         }
     }

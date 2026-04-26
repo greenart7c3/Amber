@@ -100,12 +100,19 @@ fun BunkerConnectRequestScreen(
             LocalPreferences.allCachedAccounts().forEach {
                 snapshot.add(it)
             }
+            if (snapshot.none { it.hexKey == account.hexKey }) {
+                snapshot.add(0, account)
+            }
         } else {
             snapshot.add(account)
         }
         snapshot
     }
-    var selectedAccountIndex by remember { mutableIntStateOf(accounts.indexOf(account)) }
+    var selectedAccountIndex by remember {
+        mutableIntStateOf(
+            accounts.indexOfFirst { it.hexKey == account.hexKey }.coerceAtLeast(0),
+        )
+    }
 
     // Trust scores for connection request relays
     val connectionRelays = remember { bunkerRequest.relays }

@@ -197,6 +197,12 @@ sealed class Route(
         icon = R.drawable.settings,
     )
 
+    data object TranslationReport : Route(
+        title = Amber.instance.getString(R.string.translation_report_title),
+        route = "TranslationReport",
+        icon = R.drawable.settings,
+    )
+
     data object AuthWhitelist : Route(
         title = Amber.instance.getString(R.string.auth_whitelist),
         route = "AuthWhitelist",
@@ -252,6 +258,7 @@ val routes = listOf(
     Route.Feedback,
     Route.Activities,
     Route.CrashReport,
+    Route.TranslationReport,
     Route.UpdateSettings,
     Route.CloudBackup,
     Route.ServiceSettings,

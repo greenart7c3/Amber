@@ -89,6 +89,7 @@ class Amber :
     private var mainActivityRef: WeakReference<AppCompatActivity?>? = null
     val crashReportCache: CrashReportCache by lazy { CrashReportCache(this.applicationContext) }
     var pendingCrashReport: String? = null
+    val pendingTranslationReport = MutableStateFlow<String?>(null)
 
     fun setMainActivity(activity: AppCompatActivity?) {
         Log.d(TAG, "Setting main activity ref to $activity")

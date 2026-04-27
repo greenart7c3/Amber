@@ -247,6 +247,12 @@ fun BunkerConnectRequestScreen(
                             fontSize = 16.sp,
                         )
                     },
+                    supportingContent = {
+                        val name by acc.name.collectAsStateWithLifecycle()
+                        if (name.isNotBlank()) {
+                            Text(acc.npub.toShortenHex())
+                        }
+                    },
                 )
             }
 

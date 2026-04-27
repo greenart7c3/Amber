@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
+import com.greenart7c3.nostrsigner.ui.InvalidIntentScreen
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.components.BiometricAuthScreen
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -107,6 +108,9 @@ class SignerActivity : AppCompatActivity() {
                         val context = LocalContext.current
                         var isAuthenticated by remember { mutableStateOf(false) }
 
+                        val invalidIntent by IntentUtils.invalidIntents
+                            .collectAsStateWithLifecycle(initialValue = null)
+
                         ModalBottomSheet(
                             sheetGesturesEnabled = false,
                             onDismissRequest = {
@@ -125,58 +129,70 @@ class SignerActivity : AppCompatActivity() {
                                 modifier = Modifier.fillMaxWidth(),
                                 color = MaterialTheme.colorScheme.background,
                             ) {
-                                BiometricAuthScreen(
-                                    onAuth = {
-                                        isAuthenticated = it
-                                    },
-                                )
-
-                                if (!isAuthenticated) {
-                                    Box(
+                                val err = invalidIntent
+                                if (err != null) {
+                                    InvalidIntentScreen(
                                         modifier = Modifier.fillMaxSize(),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator()
-                                    }
+                                        info = err,
+                                        onClose = {
+                                            IntentUtils.clearInvalidIntents()
+                                            finishAndRemoveTask()
+                                        },
+                                    )
                                 } else {
-                                    val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
-                                    val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
+                                    BiometricAuthScreen(
+                                        onAuth = {
+                                            isAuthenticated = it
+                                        },
+                                    )
 
-                                    val accountStateViewModel: AccountStateViewModel =
-                                        viewModel {
-                                            AccountStateViewModel(npub)
+                                    if (!isAuthenticated) {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            CircularProgressIndicator()
                                         }
+                                    } else {
+                                        val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
+                                        val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
-                                    LaunchedEffect(Unit, bunkerRequests.value) {
-                                        launch(Dispatchers.IO) {
-                                            val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
-                                            val currentAccount = LocalPreferences.currentAccount(context)
-                                            if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
-                                                if (localNpub.startsWith("npub")) {
-                                                    Log.d(Amber.TAG, "Switching account to $localNpub")
-                                                    if (LocalPreferences.containsAccount(context, localNpub)) {
-                                                        accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
-                                                    }
-                                                } else {
-                                                    val localNpub2 = Hex.decode(localNpub).toNpub()
-                                                    Log.d(Amber.TAG, "Switching account to $localNpub2")
-                                                    if (LocalPreferences.containsAccount(context, localNpub2)) {
-                                                        accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
+                                        val accountStateViewModel: AccountStateViewModel =
+                                            viewModel {
+                                                AccountStateViewModel(npub)
+                                            }
+
+                                        LaunchedEffect(Unit, bunkerRequests.value) {
+                                            launch(Dispatchers.IO) {
+                                                val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
+                                                val currentAccount = LocalPreferences.currentAccount(context)
+                                                if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
+                                                    if (localNpub.startsWith("npub")) {
+                                                        Log.d(Amber.TAG, "Switching account to $localNpub")
+                                                        if (LocalPreferences.containsAccount(context, localNpub)) {
+                                                            accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                                        }
+                                                    } else {
+                                                        val localNpub2 = Hex.decode(localNpub).toNpub()
+                                                        Log.d(Amber.TAG, "Switching account to $localNpub2")
+                                                        if (LocalPreferences.containsAccount(context, localNpub2)) {
+                                                            accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
+                                                        }
                                                     }
                                                 }
                                             }
                                         }
-                                    }
 
-                                    AccountScreen(
-                                        accountStateViewModel = accountStateViewModel,
-                                        intent = remember(intent) { IntentWrapper(intent) },
-                                        packageName = packageName,
-                                        appName = appName,
-                                        bunkerRequests = bunkerRequests.value,
-                                        navController = NavHostControllerWrapper(navController),
-                                        isExternalRequest = true,
-                                    )
+                                        AccountScreen(
+                                            accountStateViewModel = accountStateViewModel,
+                                            intent = remember(intent) { IntentWrapper(intent) },
+                                            packageName = packageName,
+                                            appName = appName,
+                                            bunkerRequests = bunkerRequests.value,
+                                            navController = NavHostControllerWrapper(navController),
+                                            isExternalRequest = true,
+                                        )
+                                    }
                                 }
                             }
                         }
@@ -225,6 +241,9 @@ class SignerActivity : AppCompatActivity() {
             if (toRemove.isNotEmpty()) {
                 IntentUtils.removeAll(toRemove)
             }
+        }
+        if (isFinishing) {
+            IntentUtils.clearInvalidIntents()
         }
         super.onDestroy()
     }

@@ -4,6 +4,7 @@ import android.content.Context
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -333,7 +334,7 @@ object BunkerRequestUtils {
 
             val activity = Amber.instance.getMainActivity()
             activity?.intent = null
-            if (application.application.closeApplication) {
+            if (application.application.closeApplication || activity is SignerActivity) {
                 activity?.finishAndRemoveTask()
             }
 
@@ -519,7 +520,7 @@ object BunkerRequestUtils {
             EventNotificationConsumer(Amber.instance).notificationManager().cancelAll()
             val activity = Amber.instance.getMainActivity()
             activity?.intent = null
-            if (application.application.closeApplication) {
+            if (application.application.closeApplication || activity is SignerActivity) {
                 activity?.finishAndRemoveTask()
             }
 

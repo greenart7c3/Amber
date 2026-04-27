@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.content.ClipData
-import android.content.Intent
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -18,8 +16,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
-import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.SpanStyle
@@ -31,25 +27,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
-import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
-import com.vitorpamplona.quartz.nip40Expiration.expiration
-import com.vitorpamplona.quartz.utils.Hex
-import com.vitorpamplona.quartz.utils.TimeUtils
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -90,7 +73,7 @@ fun EventData(
         )
         if (kindTranslation == unknownKindString && altTag == null) {
             val appInfo = packageName?.let { rememberAppDisplayInfo(it) }
-            ReportMissingEventKindButton(account, event.kind, appInfo?.name)
+            ReportMissingEventKindButton(event.kind, appInfo?.name)
         }
         Spacer(Modifier.size(4.dp))
 
@@ -178,7 +161,7 @@ fun BunkerEventData(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp),
         )
         if (kindTranslation == unknownKindString && altTag == null) {
-            ReportMissingEventKindButton(account, event.kind, appName)
+            ReportMissingEventKindButton(event.kind, appName)
         }
         Spacer(Modifier.size(4.dp))
 
@@ -241,8 +224,7 @@ fun ContactListDetail(title: String, text: String) {
 }
 
 @Composable
-fun ReportMissingEventKindButton(account: Account, kind: Int, appName: String? = null) {
-    val clipboardManager = LocalClipboard.current
+fun ReportMissingEventKindButton(kind: Int, appName: String? = null) {
     AmberButton(
         onClick = {
             val text = if (!appName.isNullOrBlank()) {
@@ -250,45 +232,7 @@ fun ReportMissingEventKindButton(account: Account, kind: Int, appName: String? =
             } else {
                 "Missing event kind translation: $kind"
             }
-            if (BuildFlavorChecker.isOfflineFlavor()) {
-                Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    clipboardManager.setClipEntry(
-                        ClipEntry(
-                            ClipData.newPlainText("", text),
-                        ),
-                    )
-                    val intent = Intent(Intent.ACTION_VIEW)
-                    val npub = Hex.decode(Amber.DEVELOPER_HEX_KEY).toNpub()
-                    intent.data = "nostr:$npub".toUri()
-                    intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    Amber.instance.startActivity(intent)
-                }
-            } else {
-                Amber.instance.applicationIOScope.launch {
-                    val client = NostrClient(Amber.instance.factory, Amber.instance.applicationIOScope)
-                    client.connect()
-                    val template = ChatMessageEvent.build(
-                        msg = text,
-                        to = listOf(PTag(Amber.DEVELOPER_HEX_KEY)),
-                        createdAt = System.currentTimeMillis() / 1000,
-                    ) {
-                        val tenDaysInSeconds = 10L * 86_400
-                        expiration(TimeUtils.now() + tenDaysInSeconds)
-                    }
-                    val signedEvents = account.createMessageNIP17(template)
-                    signedEvents.wraps.forEach { wrap ->
-                        client.publish(
-                            event = wrap,
-                            relayList = setOf(
-                                NormalizedRelayUrl(url = "wss://inbox.nostr.wine"),
-                                NormalizedRelayUrl(url = "wss://nostr.land"),
-                            ),
-                        )
-                    }
-                    delay(10000)
-                    client.disconnect()
-                }
-            }
+            Amber.instance.pendingTranslationReport.value = text
         },
         text = stringResource(R.string.report_missing_event_kind_translation),
     )

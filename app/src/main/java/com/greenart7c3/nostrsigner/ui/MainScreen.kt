@@ -988,6 +988,26 @@ fun MainScreen(
                     )
 
                     composable(
+                        Route.TranslationReport.route,
+                        content = {
+                            TranslationReportScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .consumeWindowInsets(padding)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                account = account,
+                                onDismiss = {
+                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                        navController.navController.navigateUp()
+                                    }
+                                },
+                            )
+                        },
+                    )
+
+                    composable(
                         Route.AuthWhitelist.route,
                         content = {
                             val scrollState = rememberScrollState()
@@ -1038,6 +1058,14 @@ fun MainScreen(
             }
 
             DisplayCrashMessages(account, navController)
+
+            LaunchedEffect(account) {
+                Amber.instance.pendingTranslationReport.collect { message ->
+                    if (message != null && navController.navController.currentDestination?.route != Route.TranslationReport.route) {
+                        navController.navController.navigate(Route.TranslationReport.route)
+                    }
+                }
+            }
         }
         if (isLoading) {
             CenterCircularProgressIndicator(

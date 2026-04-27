@@ -80,11 +80,7 @@ fun IntentSingleEventHomeScreen(
                 account = account,
                 permissions = intentData.permissions?.toImmutableList(),
                 onAccept = { permissions, signPolicy, closeApplication, rememberType, acc ->
-                    val result = if (packageName == null) {
-                        acc.hexKey
-                    } else {
-                        acc.npub
-                    }
+                    val result = acc.hexKey
 
                     IntentUtils.sendResult(
                         context,

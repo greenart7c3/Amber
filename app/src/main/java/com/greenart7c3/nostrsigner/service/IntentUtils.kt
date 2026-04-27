@@ -54,7 +54,10 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -63,6 +66,45 @@ import kotlinx.coroutines.withContext
 object IntentUtils {
     private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
     val intents = _intents.asStateFlow()
+
+    data class InvalidIntentInfo(
+        val id: String,
+        val dataString: String?,
+        val callingPackage: String?,
+        val typeExtra: String?,
+        val message: String,
+        val stackTrace: String?,
+        val timestampMs: Long = System.currentTimeMillis(),
+    )
+
+    private val _invalidIntents = MutableSharedFlow<InvalidIntentInfo>(
+        replay = 1,
+        extraBufferCapacity = 4,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
+    val invalidIntents = _invalidIntents.asSharedFlow()
+
+    fun clearInvalidIntents() {
+        _invalidIntents.resetReplayCache()
+    }
+
+    private fun emitInvalid(
+        intent: Intent,
+        packageName: String?,
+        message: String,
+        t: Throwable? = null,
+    ) {
+        _invalidIntents.tryEmit(
+            InvalidIntentInfo(
+                id = UUID.randomUUID().toString(),
+                dataString = intent.dataString,
+                callingPackage = packageName,
+                typeExtra = intent.extras?.getString("type"),
+                message = message,
+                stackTrace = t?.stackTraceToString(),
+            ),
+        )
+    }
 
     fun addAll(list: List<IntentData>) {
         _intents.update { current ->
@@ -162,6 +204,7 @@ object IntentUtils {
             }
 
             if (type == SignerType.INVALID) {
+                emitInvalid(intent, packageName, "Unknown signer type in URL: ${intent.dataString}")
                 return null
             }
 
@@ -291,6 +334,7 @@ object IntentUtils {
         val type = parseSignerType(intent.extras?.getString("type"))
 
         if (type == SignerType.INVALID) {
+            emitInvalid(intent, packageName, "Unknown signer type: ${intent.extras?.getString("type")}")
             return null
         }
 
@@ -609,6 +653,7 @@ object IntentUtils {
             }
         } catch (e: Exception) {
             Log.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
+            emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
             Amber.instance.applicationIOScope.launch {
                 LocalPreferences.allSavedAccounts(Amber.instance).forEach {
                     Amber.instance.getLogDatabase(it.npub).dao().insertLog(

@@ -45,24 +45,42 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.ReportSender
+import kotlinx.coroutines.launch
 
 @Composable
-fun CrashReportScreen(
+fun InvalidIntentScreen(
     modifier: Modifier = Modifier,
-    account: Account,
-    onDismiss: () -> Unit,
+    info: IntentUtils.InvalidIntentInfo,
+    onClose: () -> Unit,
 ) {
-    val initialStack = remember { Amber.instance.pendingCrashReport ?: "" }
-    var editedStack by remember { mutableStateOf(initialStack) }
+    val context = LocalContext.current
     val clipboardManager = LocalClipboard.current
+
+    val initialReport = remember(info.id) {
+        buildString {
+            appendLine("Reason: ${info.message}")
+            appendLine("Caller: ${info.callingPackage ?: "unknown"}")
+            appendLine("Type extra: ${info.typeExtra ?: "(none)"}")
+            appendLine("Data: ${info.dataString ?: "(none)"}")
+            appendLine("Amber: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
+            appendLine("Time: ${info.timestampMs}")
+            info.stackTrace?.let {
+                appendLine()
+                append(it)
+            }
+        }
+    }
+    var editedReport by remember { mutableStateOf(initialReport) }
 
     Column(
         modifier = modifier
@@ -77,18 +95,19 @@ fun CrashReportScreen(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             Text(
-                text = if (BuildFlavorChecker.isOfflineFlavor()) {
-                    stringResource(R.string.copy_crash_report_to_clipboard)
-                } else {
-                    stringResource(R.string.would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared)
-                },
+                text = stringResource(R.string.invalid_intent_title),
+                style = MaterialTheme.typography.headlineSmall,
+            )
+
+            Text(
+                text = stringResource(R.string.invalid_intent_body),
                 style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
 
             OutlinedTextField(
-                value = editedStack,
-                onValueChange = { editedStack = it },
+                value = editedReport,
+                onValueChange = { editedReport = it },
                 modifier = Modifier
                     .weight(1f)
                     .fillMaxWidth(),
@@ -104,26 +123,24 @@ fun CrashReportScreen(
         ) {
             OutlinedButton(
                 modifier = Modifier.weight(1f),
-                onClick = {
-                    Amber.instance.pendingCrashReport = null
-                    onDismiss()
-                },
+                onClick = onClose,
             ) {
-                Text(stringResource(R.string.cancel))
+                Text(stringResource(R.string.invalid_intent_close_app))
             }
 
             Button(
                 modifier = Modifier.weight(1f),
                 onClick = {
-                    ReportSender.send(
-                        account = account,
-                        report = editedStack,
-                        clipboard = clipboardManager,
-                        onDone = {
-                            Amber.instance.pendingCrashReport = null
-                            onDismiss()
-                        },
-                    )
+                    val report = editedReport
+                    Amber.instance.applicationIOScope.launch {
+                        val account = LocalPreferences.loadFromEncryptedStorage(context)
+                        ReportSender.send(
+                            account = account,
+                            report = report,
+                            clipboard = clipboardManager,
+                            onDone = onClose,
+                        )
+                    }
                 },
             ) {
                 Row(
@@ -132,10 +149,10 @@ fun CrashReportScreen(
                     Icon(
                         imageVector = Icons.Outlined.Done,
                         tint = Color.Black,
-                        contentDescription = stringResource(R.string.crashreport_found_send),
+                        contentDescription = stringResource(R.string.invalid_intent_send_report),
                     )
                     Spacer(Modifier.size(4.dp))
-                    Text(stringResource(R.string.crashreport_found_send), color = Color.Black)
+                    Text(stringResource(R.string.invalid_intent_send_report), color = Color.Black)
                 }
             }
         }

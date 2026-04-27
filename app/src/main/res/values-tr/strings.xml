@@ -669,6 +669,10 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">Son çökme raporunu bir DM ile Amber\'a göndermek ister misiniz? Hiçbir kişisel bilgi paylaşılmayacaktır</string>
     <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber\'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
+    <string name="invalid_intent_title">Invalid request</string>
+    <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. You can close the app or send the details to the developer to help fix the issue.</string>
+    <string name="invalid_intent_close_app">Close app</string>
+    <string name="invalid_intent_send_report">Send report to developer</string>
     <string name="event_content">Olay içeriği</string>
     <string name="event_kind_14">Doğrudan Mesaj</string>
     <string name="wants_to_encrypt_with">" %1$s ögesini %2$s ile şifrelemek istiyor"</string>
@@ -719,6 +723,10 @@
     <string name="status_detail">Durum Detayı</string>
     <string name="amber_is_a_free_and_open_source_project">Amber, ücretsiz ve açık kaynaklı bir projedir\n</string>
     <string name="report_missing_event_kind_translation">Eksik olay türü çevirisini bildir</string>
+    <string name="translation_report_title">Missing translation report</string>
+    <string name="translation_report_send">Send it</string>
+    <string name="would_you_like_to_send_the_translation_report_to_amber_in_a_dm">Would you like to send this missing translation report to Amber in a DM? You can edit the message before sending.</string>
+    <string name="copy_translation_report_to_clipboard">Would you like to copy this missing translation report to your clipboard and open a Client to send it to Amber? You can edit the message before sending.</string>
     <string name="account_picture">Hesap resmi</string>
     <string name="encrypt_and_copy_to_clipboard">Şifrele ve panoya kopyala</string>
     <string name="encrypt_and_show_qr_code">Şifrele ve QR Kodunu göster</string>

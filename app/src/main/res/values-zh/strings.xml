@@ -669,6 +669,10 @@
     <string name="would_you_like_to_send_the_recent_crash_report_to_amber_in_a_dm_no_personal_information_will_be_shared">想要将最近的一个崩溃报告通过私信发送给 Amber 吗？报告不会共享个人信息。</string>
     <string name="copy_crash_report_to_clipboard">想要复制崩溃报告到剪贴板并打开客户端发送给 Amber 吗？</string>
     <string name="crashreport_found_send">发送</string>
+    <string name="invalid_intent_title">Invalid request</string>
+    <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. You can close the app or send the details to the developer to help fix the issue.</string>
+    <string name="invalid_intent_close_app">Close app</string>
+    <string name="invalid_intent_send_report">Send report to developer</string>
     <string name="event_content">事件内容</string>
     <string name="event_kind_14">私信</string>
     <string name="wants_to_encrypt_with">" 将要使用 %2$s 加密 %1$s"</string>
@@ -719,6 +723,10 @@
     <string name="status_detail">状态详情</string>
     <string name="amber_is_a_free_and_open_source_project">Amber 是一个自由且开放源代码的项目</string>
     <string name="report_missing_event_kind_translation">报告缺失的事件类型翻译</string>
+    <string name="translation_report_title">Missing translation report</string>
+    <string name="translation_report_send">Send it</string>
+    <string name="would_you_like_to_send_the_translation_report_to_amber_in_a_dm">Would you like to send this missing translation report to Amber in a DM? You can edit the message before sending.</string>
+    <string name="copy_translation_report_to_clipboard">Would you like to copy this missing translation report to your clipboard and open a Client to send it to Amber? You can edit the message before sending.</string>
     <string name="account_picture">账户资料图片</string>
     <string name="encrypt_and_copy_to_clipboard">加密并复制到剪贴板</string>
     <string name="encrypt_and_show_qr_code">加密并显示二维码</string>

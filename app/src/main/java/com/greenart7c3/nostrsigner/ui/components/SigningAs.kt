@@ -88,12 +88,27 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
             }
 
             val name by account.name.collectAsStateWithLifecycle()
-            Text(
+            Column(
                 modifier = Modifier.padding(start = 8.dp),
-                text = name.ifBlank { account.npub.toShortenHex() },
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.bodyMedium,
-            )
+            ) {
+                if (name.isNotBlank()) {
+                    Text(
+                        text = name,
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                }
+                Text(
+                    text = account.npub.toShortenHex(),
+                    fontWeight = if (name.isBlank()) FontWeight.Bold else FontWeight.Normal,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = if (name.isBlank()) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+            }
         }
     }
 }

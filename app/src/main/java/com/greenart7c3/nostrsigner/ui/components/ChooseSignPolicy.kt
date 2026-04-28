@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -43,28 +44,38 @@ fun ChooseSignPolicy(
         ),
     )
     radioOptions.forEachIndexed { index, option ->
+        val selected = selectedOption == index
         Row(
             Modifier
                 .fillMaxWidth()
+                .padding(vertical = 2.dp)
                 .selectable(
-                    selected = selectedOption == index,
+                    selected = selected,
                     onClick = {
                         onSelected(index)
                     },
                 )
-                .border(
-                    width = 1.dp,
-                    color = if (selectedOption == index) {
-                        MaterialTheme.colorScheme.primary
+                .background(
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.18f)
                     } else {
                         Color.Transparent
                     },
-                    shape = RoundedCornerShape(8.dp),
+                    shape = RoundedCornerShape(10.dp),
                 )
-                .padding(16.dp),
+                .border(
+                    width = 1.dp,
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.primary.copy(alpha = 0.45f)
+                    } else {
+                        Color.Transparent
+                    },
+                    shape = RoundedCornerShape(10.dp),
+                )
+                .padding(14.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            if (selectedOption == index) {
+            if (selected) {
                 Icon(
                     Icons.Default.Check,
                     contentDescription = null,
@@ -84,7 +95,7 @@ fun ChooseSignPolicy(
                 Text(
                     text = option.title,
                     modifier = Modifier.padding(start = 16.dp),
-                    fontWeight = FontWeight.Bold,
+                    fontWeight = FontWeight.Medium,
                 )
                 option.explainer?.let {
                     Text(

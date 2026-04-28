@@ -556,6 +556,9 @@
     <string name="service">Service</string>
     <string name="service_description">Service background notification</string>
     <string name="close_application">Close application when accepting or rejecting a permission</string>
+    <string name="account">Account</string>
+    <string name="advanced">Advanced</string>
+    <string name="switch_account">Switch</string>
     <string name="clear_logs_and_activity">Clear logs and activity</string>
     <string name="deleting_old_log_entries_from">Deleting old log entries from %1$s</string>
     <string name="deleting_old_history_entries">Deleting %1$d old history entries</string>

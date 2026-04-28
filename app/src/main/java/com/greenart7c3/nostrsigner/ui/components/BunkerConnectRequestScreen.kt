@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,16 +14,16 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.selectable
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.BottomAppBar
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
@@ -45,13 +46,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -155,6 +156,7 @@ fun BunkerConnectRequestScreen(
     var deleteAfterIndex by remember { mutableIntStateOf(DeleteAfterType.NEVER.screenCode) }
     var closeApp by remember { mutableStateOf(shouldCloseApp) }
     var showModal by remember { mutableStateOf(false) }
+    var advancedOpen by remember { mutableStateOf(false) }
     val sheetState = rememberModalBottomSheetState(
         skipPartiallyExpanded = true,
     )
@@ -205,66 +207,24 @@ fun BunkerConnectRequestScreen(
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp),
+                    .padding(top = 8.dp, bottom = 4.dp),
                 text = appName.value,
                 fontWeight = FontWeight.Bold,
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,
             )
 
-            // Account selection
-            accounts.forEachIndexed { index, acc ->
-                ListItem(
-                    modifier = Modifier
-                        .border(
-                            width = 1.dp,
-                            color = if (selectedAccountIndex == index) {
-                                MaterialTheme.colorScheme.primary
-                            } else {
-                                Color.Transparent
-                            },
-                            shape = RoundedCornerShape(8.dp),
-                        )
-                        .selectable(
-                            selected = selectedAccountIndex == index,
-                            onClick = {
-                                selectedAccountIndex = index
-                            },
-                        ),
-                    colors = ListItemDefaults.colors(
-                        containerColor = MaterialTheme.colorScheme.background,
-                    ),
-                    leadingContent = {
-                        ProfilePictureIcon(
-                            account = acc,
-                        )
-                    },
-                    headlineContent = {
-                        val name by acc.name.collectAsStateWithLifecycle()
-                        Text(
-                            name.ifBlank { acc.npub.toShortenHex() },
-                            fontWeight = FontWeight.Bold,
-                            fontSize = 16.sp,
-                        )
-                    },
-                    supportingContent = {
-                        val name by acc.name.collectAsStateWithLifecycle()
-                        if (name.isNotBlank()) {
-                            Text(acc.npub.toShortenHex())
-                        }
-                    },
-                )
-            }
+            // Account section
+            SectionLabel(stringResource(R.string.account))
+            AccountPickerRow(
+                accounts = accounts,
+                selectedAccountIndex = selectedAccountIndex,
+                onSelect = { selectedAccountIndex = it },
+            )
 
             // Relays with trust scores
             if (connectionRelays.isNotEmpty()) {
-                Spacer(modifier = Modifier.height(4.dp))
-                Text(
-                    text = stringResource(R.string.relays_used),
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 14.sp,
-                    modifier = Modifier.padding(vertical = 4.dp),
-                )
+                SectionLabel(stringResource(R.string.relays_used))
                 connectionRelays.forEach { relay ->
                     Row(
                         modifier = Modifier
@@ -273,9 +233,9 @@ fun BunkerConnectRequestScreen(
                             .border(
                                 width = 1.dp,
                                 color = MaterialTheme.colorScheme.outline,
-                                shape = RoundedCornerShape(8.dp),
+                                shape = RoundedCornerShape(6.dp),
                             )
-                            .padding(8.dp),
+                            .padding(horizontal = 12.dp, vertical = 10.dp),
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -285,6 +245,7 @@ fun BunkerConnectRequestScreen(
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             fontSize = 13.sp,
+                            fontFamily = FontFamily.Monospace,
                         )
                         TrustScoreBadge(
                             score = trustScores[relay.url],
@@ -294,48 +255,8 @@ fun BunkerConnectRequestScreen(
                 }
             }
 
-            HorizontalDivider(
-                modifier = Modifier.padding(vertical = 8.dp),
-                thickness = 0.5.dp,
-                color = MaterialTheme.colorScheme.outline,
-            )
-
-            // Close app toggle
-            Row(
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clickable {
-                        closeApp = !closeApp
-                    },
-            ) {
-                Text(
-                    modifier = Modifier.weight(1f),
-                    text = stringResource(R.string.close_application),
-                    fontSize = 14.sp,
-                )
-                Switch(
-                    checked = closeApp,
-                    onCheckedChange = {
-                        closeApp = it
-                    },
-                )
-            }
-
-            Box(
-                Modifier.padding(vertical = 2.dp),
-            ) {
-                SettingsRow(
-                    R.string.delete_after,
-                    null,
-                    deleteAfterItems,
-                    deleteAfterIndex,
-                ) {
-                    deleteAfterIndex = it
-                }
-            }
-
+            // Permissions section
+            SectionLabel(stringResource(R.string.permissions))
             ChooseSignPolicy(
                 selectedOption = selectedOption,
                 onSelected = {
@@ -345,7 +266,9 @@ fun BunkerConnectRequestScreen(
 
             if (selectedOption == 1 && localPermissions.isNotEmpty()) {
                 Box(
-                    Modifier.fillMaxWidth(),
+                    Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                     contentAlignment = Alignment.Center,
                 ) {
                     ElevatedButton(
@@ -392,7 +315,71 @@ fun BunkerConnectRequestScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            // Advanced — collapsible
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { advancedOpen = !advancedOpen }
+                    .padding(top = 22.dp, bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(
+                    text = stringResource(R.string.advanced).uppercase(),
+                    fontSize = 11.sp,
+                    fontWeight = FontWeight.Medium,
+                    letterSpacing = 1.5.sp,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Spacer(Modifier.weight(1f))
+                Icon(
+                    imageVector = if (advancedOpen) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+
+            AnimatedVisibility(visible = advancedOpen) {
+                Column {
+                    // Close app toggle
+                    Row(
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                closeApp = !closeApp
+                            }
+                            .padding(vertical = 4.dp),
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1f),
+                            text = stringResource(R.string.close_application),
+                            fontSize = 14.sp,
+                        )
+                        Switch(
+                            checked = closeApp,
+                            onCheckedChange = {
+                                closeApp = it
+                            },
+                        )
+                    }
+
+                    Box(
+                        Modifier.padding(vertical = 6.dp),
+                    ) {
+                        SettingsRow(
+                            R.string.delete_after,
+                            null,
+                            deleteAfterItems,
+                            deleteAfterIndex,
+                        ) {
+                            deleteAfterIndex = it
+                        }
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(16.dp))
         }
     }
 }

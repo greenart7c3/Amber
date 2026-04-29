@@ -11,9 +11,13 @@ import android.os.IBinder
 import android.util.Log
 import androidx.core.app.ServiceCompat
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import java.util.Timer
 import java.util.TimerTask
+import kotlin.collections.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -89,6 +93,41 @@ class ConnectivityService : Service() {
     override fun onCreate() {
         Log.d(Amber.TAG, "onCreate ConnectivityService")
 
+        if (!BuildFlavorChecker.isOfflineFlavor()) {
+            Amber.instance.stats.createNotificationChannel()
+            TorManager.init(this)
+        }
+
+        Amber.instance.isStartingAppState.value = true
+        Amber.instance.isStartingApp.value = true
+
+        Amber.instance.startCleanLogsAlarm()
+        Amber.instance.startUpdateCheckAlarm()
+
+        HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
+
+        LocalPreferences.allSavedAccounts(this).forEach {
+            Amber.instance.databases[it.npub] = Amber.instance.getDatabase(it.npub)
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.databases[it.npub]?.dao()?.getAllNotConnected()?.forEach { app ->
+                    if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
+                        app.application.isConnected = true
+                        Amber.instance.databases[it.npub]?.dao()?.insertApplicationWithPermissions(app)
+                    }
+                }
+            }
+        }
+
+        Amber.instance.runMigrations(
+            onDone = {
+                startFunctions()
+            },
+        )
+
+        super.onCreate()
+    }
+
+    fun startFunctions() {
         Amber.instance.applicationIOScope.launch {
             Amber.instance.isStartingAppState.first { !it }
 
@@ -127,7 +166,6 @@ class ConnectivityService : Service() {
                 30000,
             )
         }
-        super.onCreate()
     }
 
     override fun onDestroy() {

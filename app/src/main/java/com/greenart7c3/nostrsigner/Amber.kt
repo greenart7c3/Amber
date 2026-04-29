@@ -143,14 +143,14 @@ class Amber :
         null
     }
 
-    private var databases = ConcurrentHashMap<String, AppDatabase>()
+    var databases = ConcurrentHashMap<String, AppDatabase>()
     private var logDatabases = ConcurrentHashMap<String, LogDatabase>()
     private var historyDatabases = ConcurrentHashMap<String, HistoryDatabase>()
 
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
-    private val isStartingApp = MutableStateFlow(false)
+    val isStartingApp = MutableStateFlow(false)
 
     /** npubs whose AndroidKeyStore key failed to decrypt (device KeyMint bug). */
     val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
@@ -223,7 +223,7 @@ class Amber :
         return changedNetwork
     }
 
-    private fun startCleanLogsAlarm() {
+    fun startCleanLogsAlarm() {
         val workManager = WorkManager.getInstance(this)
 
         // Run an immediate one-time cleanup on every startup to handle accumulated data.
@@ -252,7 +252,7 @@ class Amber :
         )
     }
 
-    private fun startUpdateCheckAlarm() {
+    fun startUpdateCheckAlarm() {
         if (BuildFlavorChecker.isOfflineFlavor() || BuildConfig.IS_FDROID_BUILD) return
 
         val workManager = WorkManager.getInstance(this)
@@ -278,38 +278,10 @@ class Amber :
 
         instance = this
 
-        if (!BuildFlavorChecker.isOfflineFlavor()) {
-            stats.createNotificationChannel()
-            TorManager.init(this)
-        }
-
-        isStartingAppState.value = true
-        isStartingApp.value = true
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
-
-        Log.d(TAG, "onCreate Amber")
-
-        startCleanLogsAlarm()
-        startUpdateCheckAlarm()
-
-        HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
-
-        LocalPreferences.allSavedAccounts(this).forEach {
-            databases[it.npub] = getDatabase(it.npub)
-            applicationIOScope.launch {
-                databases[it.npub]?.dao()?.getAllNotConnected()?.forEach { app ->
-                    if (app.application.secret.isNotEmpty() && app.application.secret != app.application.key) {
-                        app.application.isConnected = true
-                        databases[it.npub]?.dao()?.insertApplicationWithPermissions(app)
-                    }
-                }
-            }
-        }
-
-        runMigrations()
     }
 
-    fun runMigrations() {
+    fun runMigrations(onDone: () -> Unit) {
         applicationIOScope.launch {
             try {
                 val currentAccount = LocalPreferences.currentAccount(this@Amber)
@@ -376,6 +348,7 @@ class Amber :
                 if (settings.killSwitch.value) {
                     disconnectIntentionally()
                 }
+                onDone()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
                 isStartingApp.value = false

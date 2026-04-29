@@ -213,6 +213,8 @@ object LocalPreferences {
         }
     }
 
+    fun getStartServiceOnBoot(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true)
+
     fun loadSettingsFromEncryptedStorage(context: Context = Amber.instance): AmberSettings {
         checkNotInMainThread()
         sharedPrefs(context).apply {

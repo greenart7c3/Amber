@@ -547,6 +547,9 @@
     <string name="service">Servis</string>
     <string name="service_description">Servis arka plan bildirimi</string>
     <string name="close_application">Bir izni kabul ederken veya reddederken uygulamayı kapat</string>
+    <string name="account">Account</string>
+    <string name="advanced">Advanced</string>
+    <string name="switch_account">Switch</string>
     <string name="clear_logs_and_activity">Kayıtları ve aktiviteyi temizle</string>
     <string name="deleting_old_log_entries_from">%1$s içindeki eski günlük kayıtları siliniyor</string>
     <string name="deleting_old_history_entries">%1$d eski geçmiş girdisi siliniyor</string>

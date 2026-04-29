@@ -21,7 +21,6 @@ import kotlin.collections.set
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class ConnectivityService : Service() {
@@ -97,9 +96,6 @@ class ConnectivityService : Service() {
             TorManager.init(this)
         }
 
-        Amber.instance.isStartingAppState.value = true
-        Amber.instance.isStartingApp.value = true
-
         Amber.instance.startCleanLogsAlarm()
         Amber.instance.startUpdateCheckAlarm()
 
@@ -128,8 +124,6 @@ class ConnectivityService : Service() {
 
     fun startFunctions() {
         Amber.instance.applicationIOScope.launch {
-            Amber.instance.isStartingAppState.first { !it }
-
             // Wait for Tor to be ready before connecting (if using built-in Tor)
             Amber.instance.waitForTorIfNeeded()
             if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {

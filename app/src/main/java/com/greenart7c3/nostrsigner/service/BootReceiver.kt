@@ -10,7 +10,6 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 
 class BootReceiver : BroadcastReceiver() {
@@ -32,7 +31,6 @@ class BootReceiver : BroadcastReceiver() {
                         Log.d(Amber.TAG, "Skipping service start on boot (disabled in settings)")
                         return@launch
                     }
-                    Amber.instance.isStartingAppState.first { !it }
                     Amber.instance.startService()
                 }
             }

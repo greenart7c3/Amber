@@ -41,7 +41,6 @@ import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
-import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
 import com.greenart7c3.nostrsigner.ui.InvalidIntentScreen
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
@@ -72,127 +71,122 @@ class SignerActivity : AppCompatActivity() {
         mainViewModel = MainViewModel(applicationContext)
         intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
         setContent {
-            val isStartingApp = Amber.instance.isStartingAppState.collectAsStateWithLifecycle()
             NostrSignerTheme {
-                if (isStartingApp.value) {
-                    CenterCircularProgressIndicator(Modifier, "Starting application...")
-                } else {
-                    HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
+                HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
-                    if (intent?.isLaunchFromHistory() == true) {
-                        Log.d(Amber.TAG, "Cleared intent history")
-                        intent = Intent()
-                    }
+                if (intent?.isLaunchFromHistory() == true) {
+                    Log.d(Amber.TAG, "Cleared intent history")
+                    intent = Intent()
+                }
 
-                    val packageName = callingPackage
-                    val appName =
-                        if (packageName != null) {
-                            try {
-                                val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
-                                applicationContext.packageManager.getApplicationLabel(info).toString()
-                            } catch (_: Exception) {
-                                null
-                            }
-                        } else {
+                val packageName = callingPackage
+                val appName =
+                    if (packageName != null) {
+                        try {
+                            val info = applicationContext.packageManager.getApplicationInfo(packageName, 0)
+                            applicationContext.packageManager.getApplicationLabel(info).toString()
+                        } catch (_: Exception) {
                             null
                         }
+                    } else {
+                        null
+                    }
 
-                    CompositionLocalProvider(
-                        LocalDensity provides Density(
-                            LocalDensity.current.density,
-                            1f,
+                CompositionLocalProvider(
+                    LocalDensity provides Density(
+                        LocalDensity.current.density,
+                        1f,
+                    ),
+                ) {
+                    val navController = rememberNavController()
+                    mainViewModel.navController = navController
+                    val context = LocalContext.current
+                    var isAuthenticated by remember { mutableStateOf(false) }
+
+                    val invalidIntent by IntentUtils.invalidIntents
+                        .collectAsStateWithLifecycle(initialValue = null)
+
+                    ModalBottomSheet(
+                        sheetGesturesEnabled = false,
+                        onDismissRequest = {
+                            finishAndRemoveTask()
+                        },
+                        sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
+                        containerColor = MaterialTheme.colorScheme.background,
+                        scrimColor = Color.Transparent,
+                        dragHandle = { BottomSheetDefaults.DragHandle() },
+                        properties = ModalBottomSheetProperties(
+                            shouldDismissOnBackPress = false,
+                            shouldDismissOnClickOutside = false,
                         ),
                     ) {
-                        val navController = rememberNavController()
-                        mainViewModel.navController = navController
-                        val context = LocalContext.current
-                        var isAuthenticated by remember { mutableStateOf(false) }
-
-                        val invalidIntent by IntentUtils.invalidIntents
-                            .collectAsStateWithLifecycle(initialValue = null)
-
-                        ModalBottomSheet(
-                            sheetGesturesEnabled = false,
-                            onDismissRequest = {
-                                finishAndRemoveTask()
-                            },
-                            sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
-                            containerColor = MaterialTheme.colorScheme.background,
-                            scrimColor = Color.Transparent,
-                            dragHandle = { BottomSheetDefaults.DragHandle() },
-                            properties = ModalBottomSheetProperties(
-                                shouldDismissOnBackPress = false,
-                                shouldDismissOnClickOutside = false,
-                            ),
+                        Surface(
+                            modifier = Modifier.fillMaxWidth(),
+                            color = MaterialTheme.colorScheme.background,
                         ) {
-                            Surface(
-                                modifier = Modifier.fillMaxWidth(),
-                                color = MaterialTheme.colorScheme.background,
-                            ) {
-                                val err = invalidIntent
-                                if (err != null) {
-                                    InvalidIntentScreen(
+                            val err = invalidIntent
+                            if (err != null) {
+                                InvalidIntentScreen(
+                                    modifier = Modifier.fillMaxSize(),
+                                    info = err,
+                                    onClose = {
+                                        IntentUtils.clearInvalidIntents()
+                                        finishAndRemoveTask()
+                                    },
+                                )
+                            } else {
+                                BiometricAuthScreen(
+                                    onAuth = {
+                                        isAuthenticated = it
+                                    },
+                                )
+
+                                if (!isAuthenticated) {
+                                    Box(
                                         modifier = Modifier.fillMaxSize(),
-                                        info = err,
-                                        onClose = {
-                                            IntentUtils.clearInvalidIntents()
-                                            finishAndRemoveTask()
-                                        },
-                                    )
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        CircularProgressIndicator()
+                                    }
                                 } else {
-                                    BiometricAuthScreen(
-                                        onAuth = {
-                                            isAuthenticated = it
-                                        },
-                                    )
+                                    val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
+                                    val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
-                                    if (!isAuthenticated) {
-                                        Box(
-                                            modifier = Modifier.fillMaxSize(),
-                                            contentAlignment = Alignment.Center,
-                                        ) {
-                                            CircularProgressIndicator()
+                                    val accountStateViewModel: AccountStateViewModel =
+                                        viewModel {
+                                            AccountStateViewModel(npub)
                                         }
-                                    } else {
-                                        val bunkerRequests = BunkerRequestUtils.state.collectAsStateWithLifecycle(persistentListOf())
-                                        val npub = remember { mainViewModel.getAccount(intent?.getStringExtra("current_user")) }
 
-                                        val accountStateViewModel: AccountStateViewModel =
-                                            viewModel {
-                                                AccountStateViewModel(npub)
-                                            }
-
-                                        LaunchedEffect(Unit, bunkerRequests.value) {
-                                            launch(Dispatchers.IO) {
-                                                val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
-                                                val currentAccount = LocalPreferences.currentAccount(context)
-                                                if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
-                                                    if (localNpub.startsWith("npub")) {
-                                                        Log.d(Amber.TAG, "Switching account to $localNpub")
-                                                        if (LocalPreferences.containsAccount(context, localNpub)) {
-                                                            accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
-                                                        }
-                                                    } else {
-                                                        val localNpub2 = Hex.decode(localNpub).toNpub()
-                                                        Log.d(Amber.TAG, "Switching account to $localNpub2")
-                                                        if (LocalPreferences.containsAccount(context, localNpub2)) {
-                                                            accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
-                                                        }
+                                    LaunchedEffect(Unit, bunkerRequests.value) {
+                                        launch(Dispatchers.IO) {
+                                            val localNpub = mainViewModel.getAccount(intent?.getStringExtra("current_user"))
+                                            val currentAccount = LocalPreferences.currentAccount(context)
+                                            if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
+                                                if (localNpub.startsWith("npub")) {
+                                                    Log.d(Amber.TAG, "Switching account to $localNpub")
+                                                    if (LocalPreferences.containsAccount(context, localNpub)) {
+                                                        accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
+                                                    }
+                                                } else {
+                                                    val localNpub2 = Hex.decode(localNpub).toNpub()
+                                                    Log.d(Amber.TAG, "Switching account to $localNpub2")
+                                                    if (LocalPreferences.containsAccount(context, localNpub2)) {
+                                                        accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
                                                     }
                                                 }
                                             }
                                         }
-
-                                        AccountScreen(
-                                            accountStateViewModel = accountStateViewModel,
-                                            intent = remember(intent) { IntentWrapper(intent) },
-                                            packageName = packageName,
-                                            appName = appName,
-                                            bunkerRequests = bunkerRequests.value,
-                                            navController = NavHostControllerWrapper(navController),
-                                            isExternalRequest = true,
-                                        )
                                     }
+
+                                    AccountScreen(
+                                        accountStateViewModel = accountStateViewModel,
+                                        intent = remember(intent) { IntentWrapper(intent) },
+                                        packageName = packageName,
+                                        appName = appName,
+                                        bunkerRequests = bunkerRequests.value,
+                                        navController = NavHostControllerWrapper(navController),
+                                        isExternalRequest = true,
+                                    )
                                 }
                             }
                         }

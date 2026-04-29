@@ -150,13 +150,11 @@ class Amber :
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
-    val isStartingApp = MutableStateFlow(false)
 
     /** npubs whose AndroidKeyStore key failed to decrypt (device KeyMint bug). */
     val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
     @Volatile var intentionalDisconnectTime = 0L
-    val isStartingAppState = isStartingApp
     val notificationCache = LruCache<String, Long>(10)
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
@@ -277,9 +275,7 @@ class Amber :
         super.onCreate()
 
         instance = this
-
         stats.createNotificationChannel()
-
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
     }
 
@@ -326,9 +322,6 @@ class Amber :
                     })
                 }
 
-                // Signal app startup complete so UI shows immediately
-                isStartingApp.value = false
-
                 // Wait for Tor to be ready before establishing relay connections
                 if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
                     var attempt = 0
@@ -353,7 +346,6 @@ class Amber :
                 onDone()
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to run migrations", e)
-                isStartingApp.value = false
                 if (e is CancellationException) throw e
                 if (e is FailedMigrationException) throw e
             }

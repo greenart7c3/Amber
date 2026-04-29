@@ -49,8 +49,6 @@ class SignerProvider : ContentProvider() {
     ): Cursor? {
         Log.d(Amber.TAG, "Querying $uri has context ${context != null}")
 
-        runBlocking { Amber.instance.isStartingAppState.first { !it } }
-
         val appId = BuildConfig.APPLICATION_ID
         val uriString = uri.toString()
         val packageName = if (sortOrder.isNullOrBlank()) {

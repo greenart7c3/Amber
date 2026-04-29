@@ -23,9 +23,6 @@ class UpdateCheckWorker(appContext: Context, workerParams: WorkerParameters) : C
 
         val updater = amber.zapstoreUpdater ?: return Result.success()
 
-        // Wait for app initialization to complete before checking
-        amber.isStartingAppState.first { !it }
-
         try {
             amber.maybeCheckForUpdates()
 

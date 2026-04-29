@@ -63,6 +63,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.primaryVariant
 import kotlinx.collections.immutable.ImmutableList
 
 @Composable
@@ -167,7 +168,7 @@ fun AccountPickerRow(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f),
+                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.25f),
                         shape = RoundedCornerShape(999.dp),
                     )
                     .padding(horizontal = 10.dp, vertical = 6.dp),
@@ -175,7 +176,7 @@ fun AccountPickerRow(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.CompareArrows,
                     contentDescription = null,
-                    tint = MaterialTheme.colorScheme.primary,
+                    tint = primaryVariant,
                     modifier = Modifier.size(14.dp),
                 )
                 Spacer(Modifier.width(6.dp))
@@ -183,7 +184,7 @@ fun AccountPickerRow(
                     text = stringResource(R.string.switch_account),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.primary,
+                    color = primaryVariant,
                 )
             }
         }

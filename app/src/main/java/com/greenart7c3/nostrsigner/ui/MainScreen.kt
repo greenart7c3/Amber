@@ -88,6 +88,14 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
+private fun ManagedActivityResultLauncher<String, Boolean>.tryLaunchPostNotifications() {
+    try {
+        launch("android.permission.POST_NOTIFICATIONS")
+    } catch (_: IllegalStateException) {
+        // Launcher unregistered (composable left composition); skip silently.
+    }
+}
+
 private fun askNotificationPermission(
     context: Context,
     requestPermissionLauncher: ManagedActivityResultLauncher<String, Boolean>,
@@ -101,7 +109,7 @@ private fun askNotificationPermission(
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
         val shouldShowRationale = LocalPreferences.shouldShowRationale(context)
         if (shouldShowRationale == null) {
-            requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+            requestPermissionLauncher.tryLaunchPostNotifications()
             return
         }
 
@@ -111,7 +119,7 @@ private fun askNotificationPermission(
 
         onShouldShowRequestPermissionRationale()
     } else {
-        requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+        requestPermissionLauncher.tryLaunchPostNotifications()
     }
 }
 
@@ -171,15 +179,13 @@ fun MainScreen(
 
     if (!BuildFlavorChecker.isOfflineFlavor()) {
         LaunchedEffect(Unit) {
-            launch(Dispatchers.IO) {
-                askNotificationPermission(
-                    context = context,
-                    requestPermissionLauncher = requestPermissionLauncher,
-                    onShouldShowRequestPermissionRationale = {
-                        showDialog.value = true
-                    },
-                )
-            }
+            askNotificationPermission(
+                context = context,
+                requestPermissionLauncher = requestPermissionLauncher,
+                onShouldShowRequestPermissionRationale = {
+                    showDialog.value = true
+                },
+            )
         }
     }
 
@@ -198,7 +204,7 @@ fun MainScreen(
                 Button(
                     onClick = {
                         showDialog.value = false
-                        requestPermissionLauncher.launch("android.permission.POST_NOTIFICATIONS")
+                        requestPermissionLauncher.tryLaunchPostNotifications()
                     },
                 ) {
                     Text(text = stringResource(R.string.allow))

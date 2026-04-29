@@ -4,6 +4,7 @@ import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -164,6 +165,11 @@ fun AccountPickerRow(
         }
         if (canSwitch) {
             Spacer(Modifier.width(8.dp))
+            val pillContent = if (isSystemInDarkTheme()) {
+                MaterialTheme.colorScheme.primary
+            } else {
+                primaryVariant
+            }
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
@@ -176,7 +182,7 @@ fun AccountPickerRow(
                 Icon(
                     imageVector = Icons.AutoMirrored.Filled.CompareArrows,
                     contentDescription = null,
-                    tint = primaryVariant,
+                    tint = pillContent,
                     modifier = Modifier.size(14.dp),
                 )
                 Spacer(Modifier.width(6.dp))
@@ -184,7 +190,7 @@ fun AccountPickerRow(
                     text = stringResource(R.string.switch_account),
                     fontSize = 12.sp,
                     fontWeight = FontWeight.Medium,
-                    color = primaryVariant,
+                    color = pillContent,
                 )
             }
         }

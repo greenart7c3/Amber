@@ -94,7 +94,6 @@ class ConnectivityService : Service() {
         Log.d(Amber.TAG, "onCreate ConnectivityService")
 
         if (!BuildFlavorChecker.isOfflineFlavor()) {
-            Amber.instance.stats.createNotificationChannel()
             TorManager.init(this)
         }
 

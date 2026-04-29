@@ -278,6 +278,8 @@ class Amber :
 
         instance = this
 
+        stats.createNotificationChannel()
+
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
     }
 

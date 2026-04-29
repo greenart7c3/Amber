@@ -795,4 +795,7 @@
     <string name="filter_rejected">Rejected</string>
     <string name="rate_limit_too_many_requests">Too many requests from %1$s — ignoring for now</string>
     <string name="rate_limit_unknown_app">an unknown app</string>
+    <string name="event_kind_10044">Encryption key annoucement</string>
+    <string name="event_kind_4455">Key transfer</string>
+    <string name="event_kind_4454">Client key announcement</string>
 </resources>

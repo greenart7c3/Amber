@@ -142,13 +142,25 @@ fun AccountPickerRow(
         ProfilePictureIcon(account = selected)
         Spacer(Modifier.width(12.dp))
         val name by selected.name.collectAsStateWithLifecycle()
-        Text(
-            text = name.ifBlank { selected.npub.toShortenHex() },
+        Column(
             modifier = Modifier.weight(1f),
-            fontWeight = FontWeight.Medium,
-            fontSize = 16.sp,
-            maxLines = 1,
-        )
+        ) {
+            Text(
+                text = name.ifBlank { selected.npub.toShortenHex() },
+                fontWeight = FontWeight.Medium,
+                fontSize = 16.sp,
+                maxLines = 1,
+            )
+            if (name.isNotBlank()) {
+                Text(
+                    text = selected.npub.toShortenHex(),
+                    fontSize = 12.sp,
+                    fontFamily = FontFamily.Monospace,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
+            }
+        }
         if (canSwitch) {
             Spacer(Modifier.width(8.dp))
             Row(

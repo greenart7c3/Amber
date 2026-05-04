@@ -350,13 +350,17 @@ fun EditConfigurationScreen(
                             val newSecret = UUID.randomUUID().toString()
                             val newLocalKey = generateBunkerPrivKey()
                             val resetApp = it.application.copy(
+                                key = newSecret,
                                 isConnected = false,
                                 secret = newSecret,
                                 useSecret = true,
                                 localKey = newLocalKey,
                             )
-                            Amber.instance.getDatabase(account.npub).dao().delete(it.application)
-                            Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(
+                            val dao = Amber.instance.getDatabase(account.npub).dao()
+                            dao.deletePermissions(it.application.key)
+                            dao.delete(it.application)
+                            Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
+                            dao.insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     resetApp,
                                     it.permissions,

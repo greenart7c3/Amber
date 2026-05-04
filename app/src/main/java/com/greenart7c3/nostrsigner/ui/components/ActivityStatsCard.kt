@@ -164,7 +164,7 @@ private fun ActivityStatsBar(stats: WindowStats, maxTotal: Long) {
         )
         Box(
             modifier = Modifier
-                .weight(0.55f)
+                .weight(1f)
                 .height(12.dp)
                 .clip(RoundedCornerShape(6.dp))
                 .background(MaterialTheme.colorScheme.surface),
@@ -197,11 +197,10 @@ private fun ActivityStatsBar(stats: WindowStats, maxTotal: Long) {
         }
         Text(
             text = stats.total.toString(),
-            modifier = Modifier
-                .weight(0.13f)
-                .padding(start = 8.dp),
+            modifier = Modifier.padding(start = 8.dp),
             textAlign = androidx.compose.ui.text.style.TextAlign.End,
             fontWeight = FontWeight.Medium,
+            maxLines = 1,
         )
     }
     if (stats.total > 0) {

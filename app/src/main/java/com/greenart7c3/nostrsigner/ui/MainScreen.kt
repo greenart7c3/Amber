@@ -366,6 +366,16 @@ fun MainScreen(
                     )
 
                     composable(
+                        "bunkerProxyLogin",
+                        content = {
+                            BunkerProxyLoginScreen(
+                                accountViewModel = accountStateViewModel,
+                                navHostControllerWrapper = navController,
+                            )
+                        },
+                    )
+
+                    composable(
                         Route.IncomingRequest.route,
                         content = {
                             val scrollState = rememberScrollState()

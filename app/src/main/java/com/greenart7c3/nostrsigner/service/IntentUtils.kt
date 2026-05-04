@@ -131,6 +131,14 @@ object IntentUtils {
     ): Boolean {
         if (!account.isProxy) return false
 
+        // GET_PUBLIC_KEY with more than one account: fall through to the existing
+        // approval UI so the user can pick which account to expose.
+        if (intentData.type == SignerType.GET_PUBLIC_KEY &&
+            LocalPreferences.allSavedAccounts(context).size > 1
+        ) {
+            return false
+        }
+
         try {
             val (event, value) = when (intentData.type) {
                 SignerType.GET_PUBLIC_KEY -> Pair("", account.hexKey)

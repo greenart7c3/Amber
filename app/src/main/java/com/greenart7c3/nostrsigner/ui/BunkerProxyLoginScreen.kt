@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui
 import android.content.ClipData
 import android.widget.Toast
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,7 +14,6 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SecondaryTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
@@ -39,6 +39,7 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.RemoteBunkerClient
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
@@ -54,64 +55,63 @@ import kotlinx.coroutines.launch
 fun BunkerProxyLoginScreen(
     accountViewModel: AccountStateViewModel,
     navHostControllerWrapper: NavHostControllerWrapper,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
 ) {
     val tabs = listOf(R.string.bunker_proxy_tab_paste_uri, R.string.bunker_proxy_tab_generate)
     var tabIndex by remember { mutableStateOf(0) }
     val isLoading = remember { mutableStateOf(false) }
 
-    Scaffold { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .padding(horizontal = 16.dp)
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(contentPadding)
+            .padding(horizontal = 16.dp)
+            .verticalScroll(rememberScrollState()),
+        horizontalAlignment = Alignment.CenterHorizontally,
+    ) {
+        Text(
+            text = stringResource(R.string.bunker_proxy_title),
+            fontWeight = FontWeight.Bold,
+            style = MaterialTheme.typography.headlineSmall,
+            modifier = Modifier.padding(top = 16.dp),
+        )
+        Spacer(Modifier.height(8.dp))
+        Text(
+            text = stringResource(R.string.bunker_proxy_description),
+            style = MaterialTheme.typography.bodyMedium,
+        )
+        Spacer(Modifier.height(16.dp))
+
+        if (BuildFlavorChecker.isOfflineFlavor()) {
             Text(
-                text = stringResource(R.string.bunker_proxy_title),
-                fontWeight = FontWeight.Bold,
-                style = MaterialTheme.typography.headlineSmall,
-                modifier = Modifier.padding(top = 16.dp),
+                text = stringResource(R.string.bunker_proxy_offline_unsupported),
+                color = MaterialTheme.colorScheme.error,
             )
-            Spacer(Modifier.height(8.dp))
-            Text(
-                text = stringResource(R.string.bunker_proxy_description),
-                style = MaterialTheme.typography.bodyMedium,
-            )
-            Spacer(Modifier.height(16.dp))
+            return
+        }
 
-            if (BuildFlavorChecker.isOfflineFlavor()) {
-                Text(
-                    text = stringResource(R.string.bunker_proxy_offline_unsupported),
-                    color = MaterialTheme.colorScheme.error,
-                )
-                return@Scaffold
-            }
-
-            SecondaryTabRow(selectedTabIndex = tabIndex) {
-                tabs.forEachIndexed { i, res ->
-                    Tab(
-                        selected = tabIndex == i,
-                        onClick = { tabIndex = i },
-                        text = { Text(stringResource(res)) },
-                    )
-                }
-            }
-            Spacer(Modifier.height(16.dp))
-
-            when (tabIndex) {
-                0 -> PasteBunkerUriTab(accountViewModel, isLoading)
-                1 -> GenerateNostrConnectUriTab(accountViewModel, isLoading)
-            }
-
-            if (isLoading.value) {
-                Spacer(Modifier.height(16.dp))
-                CenterCircularProgressIndicator(
-                    modifier = Modifier.fillMaxWidth(),
-                    text = stringResource(R.string.bunker_proxy_connecting),
+        SecondaryTabRow(selectedTabIndex = tabIndex) {
+            tabs.forEachIndexed { i, res ->
+                Tab(
+                    selected = tabIndex == i,
+                    onClick = { tabIndex = i },
+                    text = { Text(stringResource(res)) },
                 )
             }
+        }
+        Spacer(Modifier.height(16.dp))
+
+        when (tabIndex) {
+            0 -> PasteBunkerUriTab(accountViewModel, navHostControllerWrapper, isLoading)
+            1 -> GenerateNostrConnectUriTab(accountViewModel, navHostControllerWrapper, isLoading)
+        }
+
+        if (isLoading.value) {
+            Spacer(Modifier.height(16.dp))
+            CenterCircularProgressIndicator(
+                modifier = Modifier.fillMaxWidth(),
+                text = stringResource(R.string.bunker_proxy_connecting),
+            )
         }
     }
 }
@@ -119,6 +119,7 @@ fun BunkerProxyLoginScreen(
 @Composable
 private fun PasteBunkerUriTab(
     accountViewModel: AccountStateViewModel,
+    navHostControllerWrapper: NavHostControllerWrapper,
     isLoading: MutableState<Boolean>,
 ) {
     val context = LocalContext.current
@@ -196,6 +197,11 @@ private fun PasteBunkerUriTab(
                         Amber.instance.profileSubscription.updateFilter()
                         Amber.instance.proxyResponseSubscription.updateFilter()
                     }
+                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        navHostControllerWrapper.navController.navigate(Route.Applications.route) {
+                            popUpTo(0)
+                        }
+                    }
                 } catch (e: Exception) {
                     errorMessage = e.message ?: context.getString(R.string.bunker_proxy_connect_failed)
                 } finally {
@@ -209,6 +215,7 @@ private fun PasteBunkerUriTab(
 @Composable
 private fun GenerateNostrConnectUriTab(
     accountViewModel: AccountStateViewModel,
+    navHostControllerWrapper: NavHostControllerWrapper,
     isLoading: MutableState<Boolean>,
 ) {
     val context = LocalContext.current
@@ -285,6 +292,11 @@ private fun GenerateNostrConnectUriTab(
                         Amber.instance.notificationSubscription.updateFilter()
                         Amber.instance.profileSubscription.updateFilter()
                         Amber.instance.proxyResponseSubscription.updateFilter()
+                    }
+                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                        navHostControllerWrapper.navController.navigate(Route.Applications.route) {
+                            popUpTo(0)
+                        }
                     }
                 } catch (e: Exception) {
                     errorMessage = e.message ?: context.getString(R.string.bunker_proxy_connect_failed)

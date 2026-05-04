@@ -229,11 +229,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
 
-        // Bunker proxy accounts forward every request to the remote bunker
-        // without showing UI or consulting per-app permissions.
+        // Bunker proxy accounts forward most requests silently. The exception is
+        // CONNECT and GET_PUBLIC_KEY: when more than one account is logged in we
+        // surface the connect screen so the user can pick which account to expose
+        // to the requesting app.
         if (acc.isProxy) {
-            forwardProxyRequest(event, acc, bunkerRequest, responseRelay, encryptionType, connectionPrivKey)
-            return
+            val isPairing = bunkerRequest.method == "connect" || bunkerRequest.method == "get_public_key"
+            val multipleAccounts = LocalPreferences.allSavedAccounts(applicationContext).size > 1
+            if (!(isPairing && multipleAccounts)) {
+                forwardProxyRequest(event, acc, bunkerRequest, responseRelay, encryptionType, connectionPrivKey)
+                return
+            }
         }
 
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {

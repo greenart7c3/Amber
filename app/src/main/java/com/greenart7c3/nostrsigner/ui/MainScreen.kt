@@ -371,6 +371,7 @@ fun MainScreen(
                             BunkerProxyLoginScreen(
                                 accountViewModel = accountStateViewModel,
                                 navHostControllerWrapper = navController,
+                                contentPadding = padding,
                             )
                         },
                     )

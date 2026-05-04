@@ -92,7 +92,7 @@ class SignerProvider : ContentProvider() {
                                 "SIGN_MESSAGE",
                             )
                     val signPolicy = database.dao().getSignPolicy(packageName)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy) true else IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
@@ -240,7 +240,7 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.dao().getSignPolicy(packageName)
-                    val isRemembered = whitelistAutoAccept || IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy) true else whitelistAutoAccept || IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
@@ -391,7 +391,7 @@ class SignerProvider : ContentProvider() {
                         }
                     }
                     val signPolicy = database.dao().getSignPolicy(packageName)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy) true else IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(
@@ -495,7 +495,7 @@ class SignerProvider : ContentProvider() {
                             )
 
                     val signPolicy = database.dao().getSignPolicy(packageName)
-                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = if (account.isProxy) true else IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(

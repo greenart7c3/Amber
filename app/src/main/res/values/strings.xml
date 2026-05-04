@@ -798,4 +798,19 @@
     <string name="event_kind_10044">Encryption key annoucement</string>
     <string name="event_kind_4455">Key transfer</string>
     <string name="event_kind_4454">Client key announcement</string>
+    <string name="copied">Copied</string>
+    <string name="bunker_proxy_login_button">Login as bunker proxy</string>
+    <string name="bunker_proxy_title">Bunker proxy</string>
+    <string name="bunker_proxy_description">Amber will forward every signing request to a remote NIP-46 bunker. No approval prompts will be shown — the remote bunker is the sole authority.</string>
+    <string name="bunker_proxy_offline_unsupported">Bunker proxy login requires network access and is not available in the offline build.</string>
+    <string name="bunker_proxy_tab_paste_uri">Paste bunker URI</string>
+    <string name="bunker_proxy_tab_generate">Generate URI</string>
+    <string name="bunker_proxy_uri_label">bunker:// URI</string>
+    <string name="bunker_proxy_connect">Connect</string>
+    <string name="bunker_proxy_invalid_uri">Invalid bunker URI</string>
+    <string name="bunker_proxy_connect_failed">Failed to connect to bunker</string>
+    <string name="bunker_proxy_no_pubkey">Bunker did not return a public key</string>
+    <string name="bunker_proxy_connecting">Connecting to bunker…</string>
+    <string name="bunker_proxy_generate_explanation">Open this URI in your bunker to authorise Amber to act as a proxy for it. Once you approve on the bunker, return here and tap “Wait for connect”.</string>
+    <string name="bunker_proxy_wait_for_connect">Wait for connect</string>
 </resources>

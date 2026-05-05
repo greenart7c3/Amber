@@ -412,12 +412,24 @@ object BunkerRequestUtils {
                 ),
                 account.npub,
             )
-            if (didChangeRelays) {
-                Amber.instance.checkForNewRelaysAndUpdateAllFilters(true)
+            // A new `nostrconnect://` approval always mints a fresh `localKey`
+            // for the connection (see `generateBunkerPrivKey()` above). The
+            // corresponding listening REQ (kind 24133, #p=localPubKey) must be
+            // registered on the relay *before* we publish the connect response
+            // — otherwise the client's follow-up `get_public_key` RPC can
+            // arrive at the relay while we have no subscriber for it (the
+            // event is ephemeral, so the relay drops it), and the client
+            // times out waiting for a response.
+            //
+            // Previously this only ran when `didChangeRelays`, so CONNECTs
+            // against an already-configured relay left the listening sub to
+            // be picked up by the 30-second `ConnectivityService` timer — a
+            // window in which the pool could idle-disconnect the relay and
+            // lose any RPC published by the client in the meantime.
+            if (type == SignerType.CONNECT || didChangeRelays) {
+                Amber.instance.checkForNewRelaysAndUpdateAllFilters(didChangeRelays)
             }
-            if (!Amber.instance.client.isActive()) {
-                Amber.instance.client.connect()
-            }
+            Amber.instance.client.connect()
 
             val signerPrivKey = application.application.localKey
             val bunkerRequestWithKey = if (signerPrivKey.isNotEmpty() && bunkerRequest.signerPrivKey.isEmpty()) {

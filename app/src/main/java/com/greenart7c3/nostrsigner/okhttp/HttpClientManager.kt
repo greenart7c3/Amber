@@ -38,6 +38,9 @@ object HttpClientManager {
     val DEFAULT_TIMEOUT_ON_WIFI: Duration = Duration.ofSeconds(10L)
     val DEFAULT_TIMEOUT_ON_MOBILE: Duration = Duration.ofSeconds(30L)
 
+    /** How often OkHttp should send WebSocket pings to detect half-closed connections. */
+    private val PING_INTERVAL: Duration = Duration.ofSeconds(30L)
+
     private var defaultTimeout = DEFAULT_TIMEOUT_ON_WIFI
     private var defaultHttpClient: OkHttpClient? = null
     private var defaultHttpClientWithoutProxy: OkHttpClient? = null
@@ -89,6 +92,17 @@ object HttpClientManager {
             .readTimeout(duration)
             .connectTimeout(duration)
             .writeTimeout(duration)
+            // Send a WebSocket ping every 30s. Without this, OkHttp accepts
+            // writes to half-closed WebSockets (returning `true` from
+            // `send()`) without ever surfacing a failure, because the only
+            // detection is a TCP write timeout on the next queued frame —
+            // which can take ~40-60s and leaves REQ/EVENT messages stranded
+            // in the outbound buffer. The periodic ping turns silent
+            // half-closes into explicit `onFailure` callbacks, so Amber's
+            // reconnect-with-backoff path can rebuild the socket and
+            // `NostrClient.onConnected → syncFilters` can re-issue the
+            // stranded subscriptions.
+            .pingInterval(PING_INTERVAL)
             .addInterceptor(DefaultContentTypeInterceptor(userAgent))
             .addNetworkInterceptor(LoggingInterceptor())
             .addNetworkInterceptor(EncryptedBlobInterceptor(cache))

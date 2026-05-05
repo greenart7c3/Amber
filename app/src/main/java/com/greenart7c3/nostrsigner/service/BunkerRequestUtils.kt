@@ -429,9 +429,7 @@ object BunkerRequestUtils {
             if (type == SignerType.CONNECT || didChangeRelays) {
                 Amber.instance.checkForNewRelaysAndUpdateAllFilters(didChangeRelays)
             }
-            if (!Amber.instance.client.isActive()) {
-                Amber.instance.client.connect()
-            }
+            Amber.instance.client.connect()
 
             val signerPrivKey = application.application.localKey
             val bunkerRequestWithKey = if (signerPrivKey.isNotEmpty() && bunkerRequest.signerPrivKey.isEmpty()) {

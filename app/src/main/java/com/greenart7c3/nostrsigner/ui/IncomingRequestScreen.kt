@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -16,13 +15,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -52,7 +51,6 @@ fun IncomingRequestScreen(
         CenterCircularProgressIndicator(modifier)
     } else {
         if (intents.isEmpty() && bunkerRequests.isEmpty()) {
-            val context = LocalContext.current
             Column(
                 modifier.fillMaxSize(),
                 Arrangement.Center,
@@ -71,7 +69,7 @@ fun IncomingRequestScreen(
                 Spacer(Modifier.size(16.dp))
                 OutlinedButton(
                     onClick = {
-                        (context as? Activity)?.finish()
+                        Amber.instance.getMainActivity()?.finishAndRemoveTask()
                     },
                 ) {
                     Text(stringResource(R.string.invalid_intent_close_app))

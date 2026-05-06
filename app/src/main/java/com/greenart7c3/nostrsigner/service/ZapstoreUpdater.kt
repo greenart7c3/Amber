@@ -8,6 +8,7 @@ import androidx.core.content.FileProvider
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
@@ -34,7 +35,11 @@ import okhttp3.Request
 
 private const val EOSE_TIMEOUT_MS = 15_000L
 private const val RELEASE_KIND = 30063
-private const val ZAPSTORE_RELAY = "wss://relay.zapstore.dev"
+private val UPDATE_RELAY_URLS = listOf(
+    "wss://relay.zapstore.dev",
+    "wss://relay.damus.io",
+    "wss://nos.lol",
+)
 private const val APP_IDENTIFIER = "com.greenart7c3.nostrsigner"
 
 enum class DownloadState {
@@ -57,7 +62,8 @@ class ZapstoreUpdater(
     private val fileSubId = UUID.randomUUID().toString()
     private val pendingFileEventIds = mutableListOf<String>()
     private val versionByEventId = mutableMapOf<String, Pair<String, Long>>()
-    private val zapstoreRelay: NormalizedRelayUrl? = RelayUrlNormalizer.normalizeOrNull(ZAPSTORE_RELAY)
+    private val updateRelays: List<NormalizedRelayUrl> =
+        UPDATE_RELAY_URLS.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
     private var timeoutJob: Job? = null
 
     init {
@@ -76,7 +82,7 @@ class ZapstoreUpdater(
 
     fun checkForUpdates() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        val relay = zapstoreRelay ?: return
+        if (updateRelays.isEmpty()) return
         if (isChecking.value) return
 
         isChecking.value = true
@@ -91,7 +97,7 @@ class ZapstoreUpdater(
             limit = 10,
         )
 
-        client.subscribe(releaseSubId, mapOf(relay to listOf(releaseFilter)))
+        client.subscribe(releaseSubId, updateRelays.associateWith { listOf(releaseFilter) })
 
         timeoutJob = scope.launch {
             delay(EOSE_TIMEOUT_MS)
@@ -113,6 +119,12 @@ class ZapstoreUpdater(
         val appId = tags.firstOrNull { it.size > 1 && it[0] == "i" }?.getOrNull(1) ?: ""
         val isForThisApp = identifier.startsWith(APP_IDENTIFIER) || appId == APP_IDENTIFIER
         if (!isForThisApp) return
+
+        // Channel filter: stable users skip events tagged c=beta. Events with no `c`
+        // tag (legacy releases) are treated as stable and shown on both channels.
+        val channelTag = tags.firstOrNull { it.size > 1 && it[0] == "c" }?.getOrNull(1)
+        val isBeta = channelTag.equals("beta", ignoreCase = true)
+        if (isBeta && Amber.instance.settings.updateChannel == UpdateChannel.STABLE) return
 
         val version = tags.firstOrNull { it.size > 1 && it[0] == "version" }?.getOrNull(1) ?: return
         if (!isNewerVersion(version)) return
@@ -144,14 +156,14 @@ class ZapstoreUpdater(
     }
 
     private fun fetchFileEvents() {
-        val relay = zapstoreRelay ?: run {
+        if (updateRelays.isEmpty()) {
             finishCheck()
             return
         }
         val fileFilter = Filter(
             ids = pendingFileEventIds.toList(),
         )
-        client.subscribe(fileSubId, mapOf(relay to listOf(fileFilter)))
+        client.subscribe(fileSubId, updateRelays.associateWith { listOf(fileFilter) })
     }
 
     private fun processFileEvent(event: Event) {

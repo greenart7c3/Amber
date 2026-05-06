@@ -619,6 +619,10 @@
     <string name="update_frequency_on_startup">每次应用启动时</string>
     <string name="update_frequency_daily">每天</string>
     <string name="update_frequency_weekly">每周</string>
+    <string name="update_channel">Update channel</string>
+    <string name="update_channel_description">Choose between stable and beta (pre-release) builds</string>
+    <string name="update_channel_stable">Stable</string>
+    <string name="update_channel_beta">Beta (pre-release)</string>
     <string name="current_version">当前版本：%1$s</string>
     <string name="updates_not_available">该版本暂无更新。</string>
     <string name="discover_more">发现更多的 Nostr 应用</string>

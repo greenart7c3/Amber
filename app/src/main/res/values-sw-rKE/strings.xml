@@ -616,6 +616,10 @@
     <string name="update_frequency_on_startup">Every app start</string>
     <string name="update_frequency_daily">Daily</string>
     <string name="update_frequency_weekly">Weekly</string>
+    <string name="update_channel">Update channel</string>
+    <string name="update_channel_description">Choose between stable and beta (pre-release) builds</string>
+    <string name="update_channel_stable">Stable</string>
+    <string name="update_channel_beta">Beta (pre-release)</string>
     <string name="current_version">Current version: %1$s</string>
     <string name="updates_not_available">Updates are not available for this build.</string>
     <string name="discover_more">Discover more Nostr apps for android at</string>

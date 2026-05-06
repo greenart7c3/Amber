@@ -989,6 +989,9 @@ fun MainScreen(
                                         navController.navController.navigateUp()
                                     }
                                 },
+                                onLoading = {
+                                    isLoading = it
+                                },
                             )
                         },
                     )
@@ -1008,6 +1011,9 @@ fun MainScreen(
                                     Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                         navController.navController.navigateUp()
                                     }
+                                },
+                                onLoading = {
+                                    isLoading = it
                                 },
                             )
                         },

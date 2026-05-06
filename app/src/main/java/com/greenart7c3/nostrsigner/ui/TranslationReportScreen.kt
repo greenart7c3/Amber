@@ -72,6 +72,7 @@ fun TranslationReportScreen(
     modifier: Modifier = Modifier,
     account: Account,
     onDismiss: () -> Unit,
+    onLoading: (Boolean) -> Unit = {},
 ) {
     val initialMessage = remember { Amber.instance.pendingTranslationReport.value ?: "" }
     var editedMessage by remember { mutableStateOf(initialMessage) }
@@ -129,6 +130,7 @@ fun TranslationReportScreen(
                 modifier = Modifier.weight(1f),
                 onClick = {
                     val report = editedMessage.ifBlank { return@Button }
+                    onLoading(true)
                     if (BuildFlavorChecker.isOfflineFlavor()) {
                         Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                             try {
@@ -141,9 +143,11 @@ fun TranslationReportScreen(
                                 intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK
                                 Amber.instance.startActivity(intent)
                                 Amber.instance.pendingTranslationReport.value = null
+                                onLoading(false)
                                 onDismiss()
                             } catch (_: Exception) {
                                 Amber.instance.pendingTranslationReport.value = null
+                                onLoading(false)
                                 onDismiss()
                             }
                         }
@@ -171,6 +175,7 @@ fun TranslationReportScreen(
                                 )
                             }
                             Amber.instance.pendingTranslationReport.value = null
+                            onLoading(false)
                             onDismiss()
                             delay(10000)
                             client.disconnect()

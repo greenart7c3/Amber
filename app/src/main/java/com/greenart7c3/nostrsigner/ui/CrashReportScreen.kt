@@ -59,6 +59,7 @@ fun CrashReportScreen(
     modifier: Modifier = Modifier,
     account: Account,
     onDismiss: () -> Unit,
+    onLoading: (Boolean) -> Unit = {},
 ) {
     val initialStack = remember { Amber.instance.pendingCrashReport ?: "" }
     var editedStack by remember { mutableStateOf(initialStack) }
@@ -115,12 +116,15 @@ fun CrashReportScreen(
             Button(
                 modifier = Modifier.weight(1f),
                 onClick = {
+                    if (editedStack.isBlank()) return@Button
+                    onLoading(true)
                     ReportSender.send(
                         account = account,
                         report = editedStack,
                         clipboard = clipboardManager,
                         onDone = {
                             Amber.instance.pendingCrashReport = null
+                            onLoading(false)
                             onDismiss()
                         },
                     )

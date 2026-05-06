@@ -1,11 +1,13 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.app.Activity
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -14,6 +16,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -49,6 +52,7 @@ fun IncomingRequestScreen(
         CenterCircularProgressIndicator(modifier)
     } else {
         if (intents.isEmpty() && bunkerRequests.isEmpty()) {
+            val context = LocalContext.current
             Column(
                 modifier.fillMaxSize(),
                 Arrangement.Center,
@@ -64,6 +68,14 @@ fun IncomingRequestScreen(
                     stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
                     textAlign = TextAlign.Center,
                 )
+                Spacer(Modifier.size(16.dp))
+                OutlinedButton(
+                    onClick = {
+                        (context as? Activity)?.finish()
+                    },
+                ) {
+                    Text(stringResource(R.string.invalid_intent_close_app))
+                }
             }
         } else if (intents.size == 1) {
             IntentSingleEventHomeScreen(

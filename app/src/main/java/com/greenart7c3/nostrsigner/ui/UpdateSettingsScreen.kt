@@ -30,6 +30,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.service.DownloadState
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
@@ -68,6 +69,7 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         val dlProgress by updater.downloadProgress.collectAsStateWithLifecycle()
         var autoCheck by remember { mutableStateOf(Amber.instance.settings.autoCheckUpdates) }
         var frequency by remember { mutableStateOf(Amber.instance.settings.updateCheckFrequency) }
+        var channel by remember { mutableStateOf(Amber.instance.settings.updateChannel) }
 
         // Status row
         val statusText = when {
@@ -168,5 +170,30 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
                 },
             )
         }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        val channelOptions = UpdateChannel.entries.map {
+            TitleExplainer(stringResource(it.resourceId))
+        }.toImmutableList()
+
+        SettingsRow(
+            name = R.string.update_channel,
+            description = R.string.update_channel_description,
+            selectedItems = channelOptions,
+            selectedIndex = UpdateChannel.entries.indexOf(channel),
+            onSelect = { index ->
+                val selected = UpdateChannel.entries[index]
+                if (selected != channel) {
+                    channel = selected
+                    scope.launch(Dispatchers.IO) {
+                        LocalPreferences.updateUpdateChannel(context, selected)
+                        // Reset last-check timestamp so the next check actually runs
+                        // and surfaces a release on the newly selected channel.
+                        LocalPreferences.setLastUpdateCheckTime(context, 0L)
+                    }
+                }
+            },
+        )
     }
 }

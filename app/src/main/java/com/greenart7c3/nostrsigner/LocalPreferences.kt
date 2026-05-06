@@ -11,6 +11,7 @@ import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
 import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
@@ -59,6 +60,7 @@ private enum class SettingsKeys(val key: String) {
     AUTH_WHITELIST("auth_whitelist"),
     AUTO_CHECK_UPDATES("auto_check_updates"),
     UPDATE_CHECK_FREQUENCY("update_check_frequency"),
+    UPDATE_CHANNEL("update_channel"),
     LAST_UPDATE_CHECK_TIME("last_update_check_time"),
     START_SERVICE_ON_BOOT("start_service_on_boot"),
     WEBDAV_URL("webdav_url"),
@@ -263,6 +265,13 @@ object LocalPreferences {
                     )
                 } catch (_: IllegalArgumentException) {
                     UpdateCheckFrequency.DAILY
+                },
+                updateChannel = try {
+                    UpdateChannel.valueOf(
+                        getString(SettingsKeys.UPDATE_CHANNEL.key, UpdateChannel.STABLE.name)!!,
+                    )
+                } catch (_: IllegalArgumentException) {
+                    UpdateChannel.STABLE
                 },
                 startServiceOnBoot = getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true),
                 rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
@@ -530,6 +539,15 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 putString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, frequency.name)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    fun updateUpdateChannel(context: Context, channel: UpdateChannel) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.UPDATE_CHANNEL.key, channel.name)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()

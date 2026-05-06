@@ -32,6 +32,7 @@ data class AmberSettings(
     val authWhitelist: List<String> = emptyList(),
     val autoCheckUpdates: Boolean = true,
     val updateCheckFrequency: UpdateCheckFrequency = UpdateCheckFrequency.DAILY,
+    val updateChannel: UpdateChannel = UpdateChannel.STABLE,
     val startServiceOnBoot: Boolean = true,
     val rateLimitEnabled: Boolean = true,
     val rateLimitMaxPerWindow: Int = 5,

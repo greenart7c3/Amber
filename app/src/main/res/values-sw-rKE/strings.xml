@@ -71,6 +71,8 @@
     <string name="delete">Futa</string>
     <string name="permissions">Ruhusa</string>
     <string name="delete_application">Futa Programu</string>
+    <string name="reset_bunker">Reset Bunker</string>
+    <string name="reset_bunker_description">Disconnect this app and generate a new secret and signing key. The bunker URI will change.</string>
     <string name="copy_to_clipboard">Nakili kwenye ubao wa kunakili</string>
     <string name="nothing_to_approve_yet">Hakuna cha kuidhinisha bado</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Kwa nini usichunguze programu yako ya nostr uipendayo kidogo?</string>

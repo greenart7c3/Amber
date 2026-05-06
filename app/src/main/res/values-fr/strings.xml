@@ -73,6 +73,8 @@
     <string name="delete">Supprimer</string>
     <string name="permissions">Autorisations</string>
     <string name="delete_application">Supprimer l\'application</string>
+    <string name="reset_bunker">Reset Bunker</string>
+    <string name="reset_bunker_description">Disconnect this app and generate a new secret and signing key. The bunker URI will change.</string>
     <string name="copy_to_clipboard">Copier dans le presse-papiers</string>
     <string name="nothing_to_approve_yet">Rien à approuver pour l\'instant</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Pourquoi ne pas explorer un peu votre application Nostr préférée ?</string>

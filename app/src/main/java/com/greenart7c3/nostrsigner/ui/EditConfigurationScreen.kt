@@ -50,6 +50,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -59,6 +60,7 @@ import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import java.util.UUID
 import kotlin.collections.set
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -338,7 +340,47 @@ fun EditConfigurationScreen(
 
             AmberButton(
                 modifier = Modifier
-                    .padding(top = 60.dp),
+                    .padding(top = 20.dp),
+                colors = ButtonDefaults.buttonColors().copy(
+                    containerColor = orange,
+                ),
+                onClick = {
+                    application?.let {
+                        scope.launch(Dispatchers.IO) {
+                            val newSecret = UUID.randomUUID().toString()
+                            val newLocalKey = generateBunkerPrivKey()
+                            val resetApp = it.application.copy(
+                                key = newSecret,
+                                isConnected = false,
+                                secret = newSecret,
+                                useSecret = true,
+                                localKey = newLocalKey,
+                            )
+                            val dao = Amber.instance.getDatabase(account.npub).dao()
+                            dao.deletePermissions(it.application.key)
+                            dao.delete(it.application)
+                            Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
+                            dao.insertApplicationWithPermissions(
+                                ApplicationWithPermissions(
+                                    resetApp,
+                                    it.permissions,
+                                ),
+                            )
+                            Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+
+                            scope.launch(Dispatchers.Main) {
+                                onNav(Route.Applications.route)
+                            }
+                        }
+                    }
+                },
+                text = stringResource(R.string.reset_bunker),
+                textColor = Color.White,
+            )
+
+            AmberButton(
+                modifier = Modifier
+                    .padding(top = 20.dp),
                 colors = ButtonDefaults.buttonColors().copy(
                     containerColor = orange,
                 ),

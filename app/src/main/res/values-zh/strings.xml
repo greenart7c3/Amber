@@ -73,6 +73,8 @@
     <string name="delete">删除</string>
     <string name="permissions">权限</string>
     <string name="delete_application">删除应用</string>
+    <string name="reset_bunker">Reset Bunker</string>
+    <string name="reset_bunker_description">Disconnect this app and generate a new secret and signing key. The bunker URI will change.</string>
     <string name="copy_to_clipboard">复制到剪贴板</string>
     <string name="nothing_to_approve_yet">暂无批复请求</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">为什么不去探索一下你喜欢的 Nostr 应用呢？</string>

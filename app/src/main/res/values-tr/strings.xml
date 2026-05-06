@@ -73,6 +73,8 @@
     <string name="delete">Sil</string>
     <string name="permissions">İzinler</string>
     <string name="delete_application">Uygulamayı Sil</string>
+    <string name="reset_bunker">Reset Bunker</string>
+    <string name="reset_bunker_description">Disconnect this app and generate a new secret and signing key. The bunker URI will change.</string>
     <string name="copy_to_clipboard">Panoya kopyala</string>
     <string name="nothing_to_approve_yet">Henüz onaylanacak bir şey yok</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Neden favori Nostr uygulamanızı biraz keşfetmiyorsunuz?</string>

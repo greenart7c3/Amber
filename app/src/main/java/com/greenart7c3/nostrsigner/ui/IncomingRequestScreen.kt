@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.size
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -20,6 +21,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -64,6 +66,14 @@ fun IncomingRequestScreen(
                     stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
                     textAlign = TextAlign.Center,
                 )
+                Spacer(Modifier.size(16.dp))
+                OutlinedButton(
+                    onClick = {
+                        Amber.instance.getMainActivity()?.finishAndRemoveTask()
+                    },
+                ) {
+                    Text(stringResource(R.string.invalid_intent_close_app))
+                }
             }
         } else if (intents.size == 1) {
             IntentSingleEventHomeScreen(

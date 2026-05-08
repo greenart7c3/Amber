@@ -73,8 +73,8 @@
     <string name="delete">删除</string>
     <string name="permissions">权限</string>
     <string name="delete_application">删除应用</string>
-    <string name="reset_bunker">Reset Bunker</string>
-    <string name="reset_bunker_description">Disconnect this app and generate a new secret and signing key. The bunker URI will change.</string>
+    <string name="reset_bunker">重置 Bunker</string>
+    <string name="reset_bunker_description">断开此应用并生成新的 secret 和签名密钥。Bunker URI将会改变。</string>
     <string name="copy_to_clipboard">复制到剪贴板</string>
     <string name="nothing_to_approve_yet">暂无批复请求</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">为什么不去探索一下你喜欢的 Nostr 应用呢？</string>
@@ -619,10 +619,10 @@
     <string name="update_frequency_on_startup">每次应用启动时</string>
     <string name="update_frequency_daily">每天</string>
     <string name="update_frequency_weekly">每周</string>
-    <string name="update_channel">Update channel</string>
-    <string name="update_channel_description">Choose between stable and beta (pre-release) builds</string>
-    <string name="update_channel_stable">Stable</string>
-    <string name="update_channel_beta">Beta (pre-release)</string>
+    <string name="update_channel">更新频道</string>
+    <string name="update_channel_description">选择稳定版或 beta(预发布)版本</string>
+    <string name="update_channel_stable">稳定</string>
+    <string name="update_channel_beta">Beta (预发布)</string>
     <string name="current_version">当前版本：%1$s</string>
     <string name="updates_not_available">该版本暂无更新。</string>
     <string name="discover_more">发现更多的 Nostr 应用</string>

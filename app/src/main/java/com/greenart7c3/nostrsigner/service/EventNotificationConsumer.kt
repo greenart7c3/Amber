@@ -54,7 +54,6 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
-import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
@@ -108,7 +107,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    fun consume(
+    suspend fun consume(
         event: Event,
         relay: NormalizedRelayUrl,
     ) {
@@ -144,24 +143,18 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Direct account match for ${acc.npub}", relay.url)
         }
 
-        // If not a direct account match, search for a connection with this local pubkey
+        // Connection-based match via the in-memory index populated by
+        // NotificationSubscription.updateFilter. This replaces an O(accounts × connections)
+        // synchronous scan that previously ran inside runBlocking on the relay event thread.
         if (acc == null) {
-            val accounts = LocalPreferences.allSavedAccounts(applicationContext)
-            outer@ for (accountInfo in accounts) {
-                val account = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, accountInfo.npub)
-                    ?: continue
-                val connections =
-                    kotlinx.coroutines.runBlocking {
-                        Amber.instance.getDatabase(account.npub).dao().getAllWithLocalKey(account.hexKey)
-                    }
-                val taggedNpub = taggedKey.toNPub()
-                for (conn in connections) {
-                    if (conn.localKey.isNotEmpty() && conn.localPubKey.hexToByteArray().toNpub() == taggedNpub) {
-                        acc = account
-                        connectionPrivKey = conn.localKey
-                        saveLog("Found connection for ${acc.npub} with local pubkey ${conn.localPubKey}", relay.url)
-                        break@outer
-                    }
+            val taggedHex = taggedKey.pubKey
+            val match = LocalKeyAccountIndex.lookup(taggedHex)
+            if (match != null) {
+                val resolved = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, match.npub)
+                if (resolved != null) {
+                    acc = resolved
+                    connectionPrivKey = match.localPrivKey
+                    saveLog("Found connection for ${acc.npub} with local pubkey $taggedHex", relay.url)
                 }
             }
         }

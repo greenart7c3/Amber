@@ -54,9 +54,21 @@ class ProfileSubscription(
     private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
     private val timeoutJobs = mutableMapOf<String, Job>()
 
+    @Volatile
+    private var registered = false
+
     init {
-        // listens until the app crashes.
-        client.addConnectionListener(this)
+        if (!registered) {
+            client.addConnectionListener(this)
+            registered = true
+        }
+    }
+
+    fun dispose() {
+        if (registered) {
+            client.removeConnectionListener(this)
+            registered = false
+        }
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {

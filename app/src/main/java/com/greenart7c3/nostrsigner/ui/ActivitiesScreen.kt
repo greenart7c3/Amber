@@ -327,7 +327,7 @@ fun ApplicationName(
 
     LaunchedEffect(key) {
         val cacheKey = "${account.npub.toShortenHex()}-$key"
-        val cached = ApplicationNameCache.names[cacheKey]
+        val cached = ApplicationNameCache[cacheKey]
         if (cached != null) {
             name = cached
         } else {
@@ -336,7 +336,7 @@ fun ApplicationName(
             }
             if (appName != null) {
                 name = appName
-                ApplicationNameCache.names[cacheKey] = appName
+                ApplicationNameCache[cacheKey] = appName
             }
         }
     }

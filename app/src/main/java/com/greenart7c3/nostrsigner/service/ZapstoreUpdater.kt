@@ -66,8 +66,21 @@ class ZapstoreUpdater(
         UPDATE_RELAY_URLS.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
     private var timeoutJob: Job? = null
 
+    @Volatile
+    private var registered = false
+
     init {
-        client.addConnectionListener(this)
+        if (!registered) {
+            client.addConnectionListener(this)
+            registered = true
+        }
+    }
+
+    fun dispose() {
+        if (registered) {
+            client.removeConnectionListener(this)
+            registered = false
+        }
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {

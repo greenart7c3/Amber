@@ -9,45 +9,29 @@
         \n- **Do** keep a secure backup of your secret key for account recovery. We recommend using a password manager.
     </string>
     <string name="secret_key_copied_to_clipboard">Secret key (nsec) copied to clipboard</string>
-    <string name="copy_my_secret_key">Copy my secret key</string>
     <string name="biometric_authentication_failed">Authentication failed</string>
-    <string name="copies_the_nsec_id_your_password_to_the_clipboard_for_backup">Copies the Nsec ID (your password) to the clipboard for backup</string>
     <string name="event_pubkey_is_not_equal_to_current_logged_in_user">Event pubkey is not equal to current logged in user</string>
     <string name="signature_copied_to_the_clipboard">Signature copied to the clipboard</string>
-    <string name="reset_permissions">Reset permissions</string>
     <string name="logout">Logout</string>
     <string name="logging_out_deletes_all_your_local_information_make_sure_to_have_your_private_keys_backed_up_to_avoid_losing_your_account_do_you_want_to_continue">Logging out deletes all your local information. Make sure to have your private keys backed up to avoid losing your account. Do you want to continue?</string>
     <string name="cancel">Cancel</string>
-    <string name="do_you_want_to_reset_all_permissions">Do you want to reset all permissions?</string>
-    <string name="confirm">Confirm</string>
     <string name="nsec">Nsec / private key</string>
     <string name="show_password">Show password</string>
     <string name="hide_password">Hide password</string>
-    <string name="invalid_key">Invalid key</string>
     <string name="key_is_required">Key is required</string>
-    <string name="login">Login</string>
     <string name="generate_a_new_key">Generate a new key</string>
     <string name="backup_keys">Backup Keys</string>
     <string name="read_your_public_key">Read your public key</string>
-    <string name="no_permissions_granted">No permissions granted</string>
-    <string name="remember_my_choice_and_don_t_ask_again">Remember my choice and don\'t ask again</string>
     <string name="reject">Reject</string>
     <string name="accept">Accept</string>
-    <string name="encrypt_nip44">encrypt nip44</string>
-    <string name="encrypt_nip04">encrypt nip04</string>
-    <string name="decrypt_nip44">decrypt nip44</string>
-    <string name="decrypt_nip04">decrypt nip04</string>
     <string name="decrypt_zap_event">decrypt zap event</string>
-    <string name="encrypt_decrypt">encrypt/decrypt</string>
     <string name="show_details">Show Details</string>
-    <string name="hide_details">Hide Details</string>
     <string name="copy_raw_json">Raw json</string>
     <string name="add_new_account">Add New Account</string>
     <string name="select_account">Select Account</string>
     <string name="active_account">Active Account</string>
     <string name="edit_name">Edit name</string>
     <string name="copy">"Copy "</string>
-    <string name="encrypted_decrypted_data">Encrypted/Decrypted data</string>
     <string name="data_copied_to_the_clipboard">Data copied to the clipboard</string>
     <string name="connect_app">Connect app</string>
     <string name="event_copied_to_the_clipboard">Event copied to the clipboard</string>
@@ -58,7 +42,6 @@
     <string name="source_code">Source code</string>
     <string name="amber_github_uri">https://github.com/greenart7c3/amber</string>
     <string name="show_qr_code">Show QR Code</string>
-    <string name="shows_qr_code_with_you_private_key">Shows QR Code with you private key</string>
     <string name="account_backup_tips3_md" tools:ignore="Typos">
         For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
         \n\nIf you lose your password, you will not be able to recover your key.
@@ -68,19 +51,14 @@
     <string name="failed_to_encrypt_key">Failed to encrypt your private key</string>
     <string name="biometric_authentication_failed_explainer">Biometrics failed to authenticate the owner of this phone</string>
     <string name="biometric_authentication_failed_explainer_with_error">Biometrics failed to authenticate the owner of this phone. Error: %1$s</string>
-    <string name="encrypt_and_copy_my_secret_key">Encrypt and copy my secret key</string>
     <string name="delete">Delete</string>
     <string name="permissions">Permissions</string>
     <string name="delete_application">Delete Application</string>
     <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="nothing_to_approve_yet">Nothing to approve yet</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Why not explore your favorite nostr app a bit?</string>
-    <string name="grant_permissions">Grant Permissions</string>
-    <string name="adjust">Adjust</string>
     <string name="more">%1$s more...</string>
-    <string name="and_more">...and more</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
-    <string name="new_app">New App</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Connect through Tor with Orbot
         \n\n1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -101,16 +79,9 @@
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">Could not connect to Tor</string>
     <string name="relays">Relays</string>
-    <string name="push_notifications">Push notifications</string>
-    <string name="direct_connection">Direct Connection</string>
-    <string name="notification_type">Notification Type</string>
-    <string name="select_the_type_of_notification_you_want_to_receive">Select the type of notification you want to receive</string>
     <string name="activity">Activity</string>
-    <string name="accepted">Accepted</string>
-    <string name="rejected">Rejected</string>
     <string name="language">Language</string>
     <string name="language_description">For the App\'s Interface</string>
     <string name="no_activities_found">No activities found</string>
-    <string name="home">Home</string>
     <string name="settings">Settings</string>
 </resources>

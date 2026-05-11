@@ -19,8 +19,4 @@ object LocalKeyAccountIndex {
         byLocalPubKey.keys.retainAll(entries.keys)
         byLocalPubKey.putAll(entries)
     }
-
-    fun clearForAccount(npub: String) {
-        byLocalPubKey.entries.removeAll { it.value.npub == npub }
-    }
 }

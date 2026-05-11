@@ -44,23 +44,9 @@ class NotificationSubscription(
     private val eventNotificationConsumer = EventNotificationConsumer(appContext)
     private val subIds = mutableMapOf<String, String>()
 
-    @Volatile
-    private var registered = false
-
     init {
-        // listens until the app crashes — guard so re-init in tests
-        // doesn't double-register the listener.
-        if (!registered) {
-            client.addConnectionListener(this)
-            registered = true
-        }
-    }
-
-    fun dispose() {
-        if (registered) {
-            client.removeConnectionListener(this)
-            registered = false
-        }
+        // listens until the app crashes.
+        client.addConnectionListener(this)
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {

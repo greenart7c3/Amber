@@ -35,6 +35,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
+import kotlinx.coroutines.launch
 
 class NotificationSubscription(
     val client: NostrClient,
@@ -51,7 +52,9 @@ class NotificationSubscription(
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         if (msg is EventMessage) {
             if (subIds.containsValue(msg.subId)) {
-                eventNotificationConsumer.consume(msg.event, relay.url)
+                Amber.instance.applicationIOScope.launch {
+                    eventNotificationConsumer.consume(msg.event, relay.url)
+                }
             }
         }
         super.onIncomingMessage(relay, msgStr, msg)
@@ -73,6 +76,7 @@ class NotificationSubscription(
     suspend fun updateFilter() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         val activeSubKeys = mutableSetOf<String>()
+        val indexEntries = mutableMapOf<String, LocalKeyAccountIndex.Match>()
 
         LocalPreferences.allAccounts(appContext).forEach { account ->
             val since = computeSince()
@@ -84,6 +88,7 @@ class NotificationSubscription(
             // Per-connection subscription on each connection's own relays
             for (conn in connectionsWithLocalKey) {
                 val connPubKey = conn.localPubKey
+                indexEntries[connPubKey] = LocalKeyAccountIndex.Match(account.npub, conn.localKey)
                 val subKey = "${account.hexKey}_$connPubKey"
                 activeSubKeys.add(subKey)
                 if (!subIds.containsKey(subKey)) {
@@ -135,6 +140,9 @@ class NotificationSubscription(
                 client.unsubscribe(subId)
             }
         }
+
+        // Refresh the localPubKey -> account index used by EventNotificationConsumer.
+        LocalKeyAccountIndex.replaceAll(indexEntries)
     }
 
     private fun computeSince(): Long {

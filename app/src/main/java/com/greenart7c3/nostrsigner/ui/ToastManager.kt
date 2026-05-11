@@ -1,10 +1,8 @@
 package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.Amber
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.launch
 
 @Immutable
 open class ToastMsg
@@ -31,17 +29,19 @@ class ResourceToastMsg(
 ) : ToastMsg()
 
 object ToastManager {
+    // DROP_OLDEST means tryEmit always succeeds, so callers no longer need to
+    // spawn a coroutine on the application scope just to push a message.
     val toasts = MutableSharedFlow<ToastMsg?>(0, 3, onBufferOverflow = BufferOverflow.DROP_OLDEST)
 
     fun clearToasts() {
-        Amber.instance.applicationIOScope.launch { toasts.emit(null) }
+        toasts.tryEmit(null)
     }
 
     fun toast(
         title: String,
         message: String,
     ) {
-        Amber.instance.applicationIOScope.launch { toasts.emit(StringToastMsg(title, message)) }
+        toasts.tryEmit(StringToastMsg(title, message))
     }
 
     fun toast(
@@ -49,7 +49,7 @@ object ToastManager {
         message: String,
         onOk: () -> Unit,
     ) {
-        Amber.instance.applicationIOScope.launch { toasts.emit(ConfirmationToastMsg(title, message, onOk)) }
+        toasts.tryEmit(ConfirmationToastMsg(title, message, onOk))
     }
 
     fun toast(
@@ -58,6 +58,6 @@ object ToastManager {
         onAccept: () -> Unit,
         onReject: () -> Unit,
     ) {
-        Amber.instance.applicationIOScope.launch { toasts.emit(AcceptRejectToastMsg(title, message, onAccept, onReject)) }
+        toasts.tryEmit(AcceptRejectToastMsg(title, message, onAccept, onReject))
     }
 }

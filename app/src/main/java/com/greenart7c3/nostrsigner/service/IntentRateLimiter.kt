@@ -17,8 +17,11 @@ import java.util.concurrent.ConcurrentHashMap
 object IntentRateLimiter {
     const val UNKNOWN_PACKAGE = "<unknown>"
     private const val UNKNOWN_PACKAGE_LIMIT = 3
-    private const val CLEANUP_WHEN_SIZE_EXCEEDS = 256
-    private const val CLEANUP_STALE_MS = 60L * 60L * 1000L
+
+    // Cleanup runs at every checkAndRecord; tighter bounds make it harder for a
+    // misbehaving caller to balloon the bucket map before reclamation kicks in.
+    private const val CLEANUP_WHEN_SIZE_EXCEEDS = 64
+    private const val CLEANUP_STALE_MS = 5L * 60L * 1000L
 
     data class BucketKey(
         val pkg: String,

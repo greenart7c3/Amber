@@ -43,6 +43,7 @@ import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
+import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
@@ -147,6 +148,36 @@ class Amber :
     private var logDatabases = ConcurrentHashMap<String, LogDatabase>()
     private var historyDatabases = ConcurrentHashMap<String, HistoryDatabase>()
 
+    // Hoisted out of runMigrations() so re-entry (e.g. test re-init) can't
+    // double-register and double-fire foreground/background callbacks.
+    private var processLifecycleObserverRegistered = false
+    private val processLifecycleObserver = object : DefaultLifecycleObserver {
+        override fun onStart(owner: LifecycleOwner) {
+            Log.d("ProcessLifecycleOwner", "App in foreground")
+            isAppInForeground = true
+
+            // activates the profile filter only when the app is in the foreground
+            if (!settings.killSwitch.value) {
+                applicationIOScope.launch {
+                    profileSubscription.updateFilter()
+                    if (settings.autoCheckUpdates) {
+                        maybeCheckForUpdates()
+                    }
+                }
+            }
+        }
+
+        override fun onStop(owner: LifecycleOwner) {
+            Log.d("ProcessLifecycleOwner", "App in background")
+            isAppInForeground = false
+
+            // closes the filter when in the background
+            applicationIOScope.launch {
+                profileSubscription.closeSub()
+            }
+        }
+    }
+
     val isOnMobileDataState = mutableStateOf(false)
     val isOnWifiDataState = mutableStateOf(false)
     val isOnOfflineState = mutableStateOf(false)
@@ -155,7 +186,11 @@ class Amber :
     val keystoreFailedAccounts = MutableStateFlow<List<String>>(emptyList())
 
     @Volatile var intentionalDisconnectTime = 0L
-    val notificationCache = LruCache<String, Long>(10)
+
+    // Capacity 10 was too small under bursty NIP-46 traffic — duplicate-detection
+    // started missing recent events. 512 covers high-volume relays without being
+    // a meaningful memory cost (event-id hex strings + Long).
+    val notificationCache = LruCache<String, Long>(512)
 
     fun isSocksProxyAlive(proxyHost: String, proxyPort: Int): Boolean {
         if (settings.torMode == TorMode.BUILTIN) {
@@ -294,32 +329,10 @@ class Amber :
                 }
 
                 launch(Dispatchers.Main) {
-                    ProcessLifecycleOwner.get().lifecycle.addObserver(object : DefaultLifecycleObserver {
-                        override fun onStart(owner: LifecycleOwner) {
-                            Log.d("ProcessLifecycleOwner", "App in foreground")
-                            isAppInForeground = true
-
-                            // activates the profile filter only when the app is in the foreground
-                            if (!settings.killSwitch.value) {
-                                applicationIOScope.launch {
-                                    profileSubscription.updateFilter()
-                                    if (settings.autoCheckUpdates) {
-                                        maybeCheckForUpdates()
-                                    }
-                                }
-                            }
-                        }
-
-                        override fun onStop(owner: LifecycleOwner) {
-                            Log.d("ProcessLifecycleOwner", "App in background")
-                            isAppInForeground = false
-
-                            // closes the filter when in the background
-                            applicationIOScope.launch {
-                                profileSubscription.closeSub()
-                            }
-                        }
-                    })
+                    if (!processLifecycleObserverRegistered) {
+                        ProcessLifecycleOwner.get().lifecycle.addObserver(processLifecycleObserver)
+                        processLifecycleObserverRegistered = true
+                    }
                 }
 
                 // Wait for Tor to be ready before establishing relay connections
@@ -420,6 +433,18 @@ class Amber :
             historyDatabases[npub] = HistoryDatabase.getDatabase(applicationContext, npub)
         }
         return historyDatabases[npub]!!
+    }
+
+    /**
+     * Closes and evicts every cached Room handle for [npub] so file locks and
+     * worker threads are released. Called from the logout path; without it each
+     * removed account leaks 3 open Room connections forever.
+     */
+    fun closeDatabasesFor(npub: String) {
+        databases.remove(npub)?.runCatching { close() }
+        logDatabases.remove(npub)?.runCatching { close() }
+        historyDatabases.remove(npub)?.runCatching { close() }
+        ApplicationNameCache.clearForAccount(npub)
     }
 
     fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {

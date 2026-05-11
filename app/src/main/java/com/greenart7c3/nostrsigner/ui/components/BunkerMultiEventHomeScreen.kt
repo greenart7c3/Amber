@@ -82,7 +82,7 @@ fun BunkerMultiEventHomeScreen(
     val key = bunkerRequests.first().localKey
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
-    var appName by remember { mutableStateOf(ApplicationNameCache.names["$localAccount-$key"] ?: key.toShortenHex()) }
+    var appName by remember { mutableStateOf(ApplicationNameCache["$localAccount-$key"] ?: key.toShortenHex()) }
 
     LaunchedEffect(Unit) {
         MultiEventScreenIntents.checkedStates.clear()
@@ -97,14 +97,14 @@ fun BunkerMultiEventHomeScreen(
                 bunkerRequests.first().currentAccount,
             )?.npub?.toShortenHex() ?: ""
 
-            if (ApplicationNameCache.names["$localAccount-$key"] == null) {
+            if (ApplicationNameCache["$localAccount-$key"] == null) {
                 val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
                 app?.let {
                     appName = it.application.name
-                    ApplicationNameCache.names["$localAccount-$key"] = it.application.name
+                    ApplicationNameCache["$localAccount-$key"] = it.application.name
                 }
             } else {
-                ApplicationNameCache.names["$localAccount-$key"]?.let {
+                ApplicationNameCache["$localAccount-$key"]?.let {
                     appName = it
                 }
             }

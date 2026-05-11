@@ -374,6 +374,10 @@ object LocalPreferences {
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         accountCache.remove(npub)
+        // Close Room handles BEFORE deleting on-disk preference/data files so
+        // we release file locks and worker-pool threads instead of leaking
+        // them for the lifetime of the process.
+        Amber.instance.closeDatabasesFor(npub)
         val userPrefs = sharedPrefs(context, npub)
         userPrefs.edit(commit = true) { clear() }
         removeAccount(context, npub)

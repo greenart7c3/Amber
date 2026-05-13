@@ -427,6 +427,7 @@
     <string name="notifications_are_needed_to_use_amber_as_a_nsec_bunker">Notifications are needed to use Amber as a nsec bunker.</string>
     <string name="allow">Allow</string>
     <string name="deny">Deny</string>
+    <string name="ask">Ask</string>
     <string name="never">Never</string>
     <string name="warning">Warning</string>
     <string name="of_events">%1$s of %2$s events</string>

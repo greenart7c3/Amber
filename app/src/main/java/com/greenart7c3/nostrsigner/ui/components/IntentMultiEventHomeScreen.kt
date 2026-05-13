@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.ButtonDefaults
@@ -145,24 +144,19 @@ fun IntentMultiEventHomeScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp, vertical = 8.dp),
             ) {
-                AmberToggles(
-                    selectedIndex = if (relayAuthScope == RelayAuthScope.SPECIFIC) 0 else 1,
-                    count = 2,
-                    segmentWidth = 120.dp,
-                ) {
-                    ToggleOption(
-                        modifier = Modifier.width(120.dp),
-                        text = stringResource(R.string.for_this_relay_only),
-                        isSelected = relayAuthScope == RelayAuthScope.SPECIFIC,
-                        onClick = { relayAuthScope = RelayAuthScope.SPECIFIC },
-                    )
-                    ToggleOption(
-                        modifier = Modifier.width(120.dp),
-                        text = stringResource(R.string.for_all_relays),
-                        isSelected = relayAuthScope == RelayAuthScope.ALL,
-                        onClick = { relayAuthScope = RelayAuthScope.ALL },
-                    )
-                }
+                OptionBottomSheetPicker(
+                    selected = relayAuthScope,
+                    options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
+                    onSelected = { relayAuthScope = it },
+                    label = {
+                        stringResource(
+                            when (it) {
+                                RelayAuthScope.SPECIFIC -> R.string.for_this_relay_only
+                                RelayAuthScope.ALL -> R.string.for_all_relays
+                            },
+                        )
+                    },
+                )
             }
         }
 

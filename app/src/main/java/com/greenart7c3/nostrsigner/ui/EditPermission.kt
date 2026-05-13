@@ -10,7 +10,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -52,9 +51,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.greenart7c3.nostrsigner.ui.components.AmberToggles
-import com.greenart7c3.nostrsigner.ui.components.RememberTypePicker
-import com.greenart7c3.nostrsigner.ui.components.ToggleOption
+import com.greenart7c3.nostrsigner.ui.components.OptionBottomSheetPicker
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -298,8 +295,6 @@ fun PermissionRow(
             localPermission.toLocalizedString(context)
         }
     }
-    val fixedSegmentWidth = 55.dp
-
     var optionIndex by remember {
         if (permission.acceptUntil > 0) {
             mutableIntStateOf(0)
@@ -353,59 +348,31 @@ fun PermissionRow(
             )
         }
 
-        AmberToggles(
-            count = 3,
-            selectedIndex = optionIndex,
-        ) {
-            ToggleOption(
-                text = "Allow",
-                isSelected = optionIndex == 0,
-                modifier = Modifier.width(fixedSegmentWidth),
-                onClick = {
-                    optionIndex = 0
-
-                    onSetPermission(
-                        optionIndex,
-                        rememberType,
-                        permission,
-                        onToggle,
-                    )
-                },
-            )
-            ToggleOption(
-                text = "Deny",
-                isSelected = optionIndex == 1,
-                modifier = Modifier.width(fixedSegmentWidth),
-                onClick = {
-                    optionIndex = 1
-
-                    onSetPermission(
-                        optionIndex,
-                        rememberType,
-                        permission,
-                        onToggle,
-                    )
-                },
-            )
-            ToggleOption(
-                text = "Ask",
-                isSelected = optionIndex == 2,
-                modifier = Modifier.width(fixedSegmentWidth),
-                onClick = {
-                    optionIndex = 2
-
-                    onSetPermission(
-                        optionIndex,
-                        rememberType,
-                        permission,
-                        onToggle,
-                    )
-                },
-            )
-        }
+        OptionBottomSheetPicker(
+            selected = optionIndex,
+            options = listOf(0, 1, 2),
+            onSelected = { newIndex ->
+                optionIndex = newIndex
+                onSetPermission(
+                    optionIndex,
+                    rememberType,
+                    permission,
+                    onToggle,
+                )
+            },
+            label = {
+                stringResource(
+                    when (it) {
+                        0 -> R.string.allow
+                        1 -> R.string.deny
+                        else -> R.string.ask
+                    },
+                )
+            },
+        )
 
         if (optionIndex != 2) {
-            RememberTypePicker(
+            OptionBottomSheetPicker(
                 selected = rememberType,
                 options = listOf(
                     RememberType.ONE_MINUTE,
@@ -425,6 +392,7 @@ fun PermissionRow(
                         onToggle,
                     )
                 },
+                label = { stringResource(it.resourceId) },
             )
         }
     }

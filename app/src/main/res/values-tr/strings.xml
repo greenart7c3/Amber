@@ -219,9 +219,6 @@
     <string name="one_minute">Bir dakika</string>
     <string name="five_minutes">Beş dakika</string>
     <string name="ten_minutes">On Dakika</string>
-    <string name="one_minute_short">1d</string>
-    <string name="five_minutes_short">5d</string>
-    <string name="ten_minutes_short">10d</string>
     <string name="event_kind_9000">Gruba kullanıcı ekle</string>
     <string name="event_kind_9001">Gruptan kullanıcı çıkar</string>
     <string name="event_kind_9002">Grup metadatasını düzenle</string>
@@ -423,6 +420,7 @@
     <string name="notifications_are_needed_to_use_amber_as_a_nsec_bunker">Amber\'ı bir nsec bunker olarak kullanmak için bildirimler gereklidir.</string>
     <string name="allow">İzin ver</string>
     <string name="deny">Reddet</string>
+    <string name="ask">Ask</string>
     <string name="never">Asla</string>
     <string name="warning">Uyarı</string>
     <string name="of_events">%2$s etkinliğin %1$s tanesi</string>
@@ -522,6 +520,7 @@
     <string name="event_kind_39092">Medya başlangıç paketleri</string>
     <string name="event_kind_10020">Medya takipleri</string>
     <string name="automatically_sign_this_for">Bunu şunun için otomatik olarak imzala</string>
+    <string name="action">Action</string>
     <string name="always">Her zaman</string>
     <string name="proxy_is_connected">Proxy bağlı</string>
     <string name="proxy_is_not_working">Proxy çalışmıyor. Proxy ayarlarınızı/uygulamanızı kontrol edin.</string>

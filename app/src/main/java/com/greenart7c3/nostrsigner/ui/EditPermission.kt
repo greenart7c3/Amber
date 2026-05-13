@@ -53,6 +53,7 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberToggles
+import com.greenart7c3.nostrsigner.ui.components.RememberTypePicker
 import com.greenart7c3.nostrsigner.ui.components.ToggleOption
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.theme.orange
@@ -240,29 +241,15 @@ fun EditPermission(
     }
 }
 
-fun rememberTypeIndexToRememberType(rememberTypeIndex: Int): RememberType = when (rememberTypeIndex) {
-    0 -> RememberType.ALWAYS
-    1 -> RememberType.ONE_MINUTE
-    2 -> RememberType.FIVE_MINUTES
-    3 -> RememberType.TEN_MINUTES
-    else -> RememberType.NEVER
-}
-
-fun rememberTypeToIndex(rememberType: RememberType): Int = when (rememberType) {
-    RememberType.ALWAYS -> 0
-    RememberType.ONE_MINUTE -> 1
-    RememberType.FIVE_MINUTES -> 2
-    RememberType.TEN_MINUTES -> 3
-    else -> 0
-}
-
-fun onSetPermission(optionIndex: Int, rememberTypeIndex: Int, permission: ApplicationPermissionsEntity, onToggle: (ApplicationPermissionsEntity) -> Unit) {
-    val rememberType = rememberTypeIndexToRememberType(rememberTypeIndex)
+fun onSetPermission(optionIndex: Int, rememberType: RememberType, permission: ApplicationPermissionsEntity, onToggle: (ApplicationPermissionsEntity) -> Unit) {
     val time = when (rememberType) {
         RememberType.ALWAYS -> Long.MAX_VALUE / 1000
         RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
         RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
         RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+        RememberType.ONE_HOUR -> TimeUtils.now() + 3600
+        RememberType.ONE_DAY -> TimeUtils.now() + 86400
+        RememberType.ONE_WEEK -> TimeUtils.now() + 604800
         RememberType.NEVER -> 0L
     }
     val isAcceptable = optionIndex == 0 || optionIndex == 2
@@ -284,7 +271,7 @@ fun onSetPermission(optionIndex: Int, rememberTypeIndex: Int, permission: Applic
             } else {
                 0L
             },
-            rememberType = rememberTypeIndexToRememberType(rememberTypeIndex).screenCode,
+            rememberType = rememberType.screenCode,
         ),
     )
 }
@@ -322,8 +309,12 @@ fun PermissionRow(
             mutableIntStateOf(2)
         }
     }
-    var rememberTypeIndex by remember {
-        mutableIntStateOf(rememberTypeToIndex(parseRememberType(permission.rememberType)))
+    var rememberType by remember {
+        mutableStateOf(
+            parseRememberType(permission.rememberType).let {
+                if (it == RememberType.NEVER) RememberType.ALWAYS else it
+            },
+        )
     }
 
     Column(
@@ -375,7 +366,7 @@ fun PermissionRow(
 
                     onSetPermission(
                         optionIndex,
-                        rememberTypeIndex,
+                        rememberType,
                         permission,
                         onToggle,
                     )
@@ -390,7 +381,7 @@ fun PermissionRow(
 
                     onSetPermission(
                         optionIndex,
-                        rememberTypeIndex,
+                        rememberType,
                         permission,
                         onToggle,
                     )
@@ -405,7 +396,7 @@ fun PermissionRow(
 
                     onSetPermission(
                         optionIndex,
-                        rememberTypeIndex,
+                        rememberType,
                         permission,
                         onToggle,
                     )
@@ -414,66 +405,24 @@ fun PermissionRow(
         }
 
         if (optionIndex != 2) {
-            AmberToggles(
-                selectedIndex = rememberTypeIndex,
-                count = 4,
-                content = {
-                    ToggleOption(
-                        text = "Always",
-                        isSelected = rememberTypeIndex == 0,
-                        modifier = Modifier.width(fixedSegmentWidth),
-                        onClick = {
-                            rememberTypeIndex = 0
-
-                            onSetPermission(
-                                optionIndex,
-                                rememberTypeIndex,
-                                permission,
-                                onToggle,
-                            )
-                        },
-                    )
-                    ToggleOption(
-                        text = "1m",
-                        isSelected = rememberTypeIndex == 1,
-                        modifier = Modifier.width(fixedSegmentWidth),
-                        onClick = {
-                            rememberTypeIndex = 1
-                            onSetPermission(
-                                optionIndex,
-                                rememberTypeIndex,
-                                permission,
-                                onToggle,
-                            )
-                        },
-                    )
-                    ToggleOption(
-                        text = "5m",
-                        isSelected = rememberTypeIndex == 2,
-                        modifier = Modifier.width(fixedSegmentWidth),
-                        onClick = {
-                            rememberTypeIndex = 2
-                            onSetPermission(
-                                optionIndex,
-                                rememberTypeIndex,
-                                permission,
-                                onToggle,
-                            )
-                        },
-                    )
-                    ToggleOption(
-                        text = "10m",
-                        isSelected = rememberTypeIndex == 3,
-                        modifier = Modifier.width(fixedSegmentWidth),
-                        onClick = {
-                            rememberTypeIndex = 3
-                            onSetPermission(
-                                optionIndex,
-                                rememberTypeIndex,
-                                permission,
-                                onToggle,
-                            )
-                        },
+            RememberTypePicker(
+                selected = rememberType,
+                options = listOf(
+                    RememberType.ONE_MINUTE,
+                    RememberType.FIVE_MINUTES,
+                    RememberType.TEN_MINUTES,
+                    RememberType.ONE_HOUR,
+                    RememberType.ONE_DAY,
+                    RememberType.ONE_WEEK,
+                    RememberType.ALWAYS,
+                ),
+                onSelected = { newType ->
+                    rememberType = newType
+                    onSetPermission(
+                        optionIndex,
+                        rememberType,
+                        permission,
+                        onToggle,
                     )
                 },
             )

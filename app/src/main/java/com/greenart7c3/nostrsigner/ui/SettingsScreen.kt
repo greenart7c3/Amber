@@ -480,13 +480,30 @@ enum class RememberType(val screenCode: Int, val resourceId: Int) {
     FIVE_MINUTES(2, R.string.five_minutes),
     TEN_MINUTES(3, R.string.ten_minutes),
     ALWAYS(4, R.string.always),
+    ONE_HOUR(5, R.string.one_hour),
+    ONE_DAY(6, R.string.one_day),
+    ONE_WEEK(7, R.string.one_week),
 }
 
+val rememberTypeDisplayOrder: List<RememberType> = listOf(
+    RememberType.NEVER,
+    RememberType.ONE_MINUTE,
+    RememberType.FIVE_MINUTES,
+    RememberType.TEN_MINUTES,
+    RememberType.ONE_HOUR,
+    RememberType.ONE_DAY,
+    RememberType.ONE_WEEK,
+    RememberType.ALWAYS,
+)
+
 fun parseRememberType(screenCode: Int): RememberType = when (screenCode) {
-    0 -> RememberType.NEVER
-    1 -> RememberType.ONE_MINUTE
-    2 -> RememberType.FIVE_MINUTES
-    3 -> RememberType.TEN_MINUTES
+    RememberType.NEVER.screenCode -> RememberType.NEVER
+    RememberType.ONE_MINUTE.screenCode -> RememberType.ONE_MINUTE
+    RememberType.FIVE_MINUTES.screenCode -> RememberType.FIVE_MINUTES
+    RememberType.TEN_MINUTES.screenCode -> RememberType.TEN_MINUTES
+    RememberType.ONE_HOUR.screenCode -> RememberType.ONE_HOUR
+    RememberType.ONE_DAY.screenCode -> RememberType.ONE_DAY
+    RememberType.ONE_WEEK.screenCode -> RememberType.ONE_WEEK
     else -> RememberType.ALWAYS
 }
 

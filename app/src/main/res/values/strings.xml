@@ -527,6 +527,7 @@
     <string name="event_kind_39092">Media starter packs</string>
     <string name="event_kind_10020">Media follows</string>
     <string name="automatically_sign_this_for">Automatically sign this for</string>
+    <string name="action">Action</string>
     <string name="always">Always</string>
     <string name="proxy_is_connected">Proxy is connected</string>
     <string name="proxy_is_not_working">Proxy is not working. Check your proxy settings/application.</string>

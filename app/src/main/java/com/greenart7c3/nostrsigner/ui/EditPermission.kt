@@ -51,6 +51,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.LabeledBorderBox
 import com.greenart7c3.nostrsigner.ui.components.OptionBottomSheetPicker
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.theme.orange
@@ -348,43 +349,15 @@ fun PermissionRow(
             )
         }
 
-        OptionBottomSheetPicker(
-            selected = optionIndex,
-            options = listOf(0, 1, 2),
-            onSelected = { newIndex ->
-                optionIndex = newIndex
-                onSetPermission(
-                    optionIndex,
-                    rememberType,
-                    permission,
-                    onToggle,
-                )
-            },
-            label = {
-                stringResource(
-                    when (it) {
-                        0 -> R.string.allow
-                        1 -> R.string.deny
-                        else -> R.string.ask
-                    },
-                )
-            },
-        )
-
-        if (optionIndex != 2) {
+        LabeledBorderBox(
+            label = stringResource(R.string.action),
+            modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+        ) {
             OptionBottomSheetPicker(
-                selected = rememberType,
-                options = listOf(
-                    RememberType.ONE_MINUTE,
-                    RememberType.FIVE_MINUTES,
-                    RememberType.TEN_MINUTES,
-                    RememberType.ONE_HOUR,
-                    RememberType.ONE_DAY,
-                    RememberType.ONE_WEEK,
-                    RememberType.ALWAYS,
-                ),
-                onSelected = { newType ->
-                    rememberType = newType
+                selected = optionIndex,
+                options = listOf(0, 1, 2),
+                onSelected = { newIndex ->
+                    optionIndex = newIndex
                     onSetPermission(
                         optionIndex,
                         rememberType,
@@ -392,8 +365,46 @@ fun PermissionRow(
                         onToggle,
                     )
                 },
-                label = { stringResource(it.resourceId) },
+                label = {
+                    stringResource(
+                        when (it) {
+                            0 -> R.string.allow
+                            1 -> R.string.deny
+                            else -> R.string.ask
+                        },
+                    )
+                },
             )
+        }
+
+        if (optionIndex != 2) {
+            LabeledBorderBox(
+                label = stringResource(R.string.automatically_sign_this_for),
+                modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+            ) {
+                OptionBottomSheetPicker(
+                    selected = rememberType,
+                    options = listOf(
+                        RememberType.ONE_MINUTE,
+                        RememberType.FIVE_MINUTES,
+                        RememberType.TEN_MINUTES,
+                        RememberType.ONE_HOUR,
+                        RememberType.ONE_DAY,
+                        RememberType.ONE_WEEK,
+                        RememberType.ALWAYS,
+                    ),
+                    onSelected = { newType ->
+                        rememberType = newType
+                        onSetPermission(
+                            optionIndex,
+                            rememberType,
+                            permission,
+                            onToggle,
+                        )
+                    },
+                    label = { stringResource(it.resourceId) },
+                )
+            }
         }
     }
 }

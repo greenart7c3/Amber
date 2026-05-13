@@ -5,14 +5,12 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -55,7 +53,6 @@ fun EncryptDecryptData(
         mutableStateOf(RememberType.NEVER)
     }
     var scope by remember { mutableStateOf(defaultScope) }
-    val scopeIndex by remember(scope) { mutableIntStateOf(if (scope == DecryptTypeScope.SPECIFIC) 0 else 1) }
     val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
 
     Column(
@@ -199,22 +196,16 @@ fun EncryptDecryptData(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
             ) {
-                AmberToggles(
-                    selectedIndex = scopeIndex,
-                    count = 2,
-                    segmentWidth = 120.dp,
-                    content = {
-                        ToggleOption(
-                            modifier = Modifier.width(120.dp),
-                            text = stringResource(R.string.for_this_method_only),
-                            isSelected = scope == DecryptTypeScope.SPECIFIC,
-                            onClick = { scope = DecryptTypeScope.SPECIFIC },
-                        )
-                        ToggleOption(
-                            modifier = Modifier.width(120.dp),
-                            text = stringResource(R.string.for_all_methods),
-                            isSelected = scope == DecryptTypeScope.ALL,
-                            onClick = { scope = DecryptTypeScope.ALL },
+                OptionBottomSheetPicker(
+                    selected = scope,
+                    options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
+                    onSelected = { scope = it },
+                    label = {
+                        stringResource(
+                            when (it) {
+                                DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
+                                DecryptTypeScope.ALL -> R.string.for_all_methods
+                            },
                         )
                     },
                 )
@@ -274,7 +265,6 @@ fun BunkerEncryptDecryptData(
         mutableStateOf(RememberType.NEVER)
     }
     var scope by remember { mutableStateOf(defaultScope) }
-    val scopeIndex by remember(scope) { mutableIntStateOf(if (scope == DecryptTypeScope.SPECIFIC) 0 else 1) }
     val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
 
     Column(
@@ -409,22 +399,16 @@ fun BunkerEncryptDecryptData(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
             ) {
-                AmberToggles(
-                    selectedIndex = scopeIndex,
-                    count = 2,
-                    segmentWidth = 120.dp,
-                    content = {
-                        ToggleOption(
-                            modifier = Modifier.width(120.dp),
-                            text = stringResource(R.string.for_this_method_only),
-                            isSelected = scope == DecryptTypeScope.SPECIFIC,
-                            onClick = { scope = DecryptTypeScope.SPECIFIC },
-                        )
-                        ToggleOption(
-                            modifier = Modifier.width(120.dp),
-                            text = stringResource(R.string.for_all_methods),
-                            isSelected = scope == DecryptTypeScope.ALL,
-                            onClick = { scope = DecryptTypeScope.ALL },
+                OptionBottomSheetPicker(
+                    selected = scope,
+                    options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
+                    onSelected = { scope = it },
+                    label = {
+                        stringResource(
+                            when (it) {
+                                DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
+                                DecryptTypeScope.ALL -> R.string.for_all_methods
+                            },
                         )
                     },
                 )

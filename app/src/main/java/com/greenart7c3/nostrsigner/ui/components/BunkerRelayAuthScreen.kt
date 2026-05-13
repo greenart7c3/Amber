@@ -6,12 +6,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -52,7 +50,6 @@ fun BunkerRelayAuthScreen(
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var scope by remember { mutableStateOf(defaultScope) }
-    val scopeIndex by remember(scope) { mutableIntStateOf(if (scope == RelayAuthScope.SPECIFIC) 0 else 1) }
 
     if (shouldAcceptOrReject != null) {
         LaunchedEffect(Unit) {
@@ -109,22 +106,16 @@ fun BunkerRelayAuthScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         ) {
-            AmberToggles(
-                selectedIndex = scopeIndex,
-                count = 2,
-                segmentWidth = 120.dp,
-                content = {
-                    ToggleOption(
-                        modifier = Modifier.width(120.dp),
-                        text = stringResource(R.string.for_this_relay_only),
-                        isSelected = scope == RelayAuthScope.SPECIFIC,
-                        onClick = { scope = RelayAuthScope.SPECIFIC },
-                    )
-                    ToggleOption(
-                        modifier = Modifier.width(120.dp),
-                        text = stringResource(R.string.for_all_relays),
-                        isSelected = scope == RelayAuthScope.ALL,
-                        onClick = { scope = RelayAuthScope.ALL },
+            OptionBottomSheetPicker(
+                selected = scope,
+                options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
+                onSelected = { scope = it },
+                label = {
+                    stringResource(
+                        when (it) {
+                            RelayAuthScope.SPECIFIC -> R.string.for_this_relay_only
+                            RelayAuthScope.ALL -> R.string.for_all_relays
+                        },
                     )
                 },
             )

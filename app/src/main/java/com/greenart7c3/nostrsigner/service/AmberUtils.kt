@@ -94,6 +94,9 @@ object AmberUtils {
             RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
             RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
             RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+            RememberType.ONE_HOUR -> TimeUtils.now() + 3600
+            RememberType.ONE_DAY -> TimeUtils.now() + 86400
+            RememberType.ONE_WEEK -> TimeUtils.now() + 604800
             RememberType.NEVER -> 0L
         }
 
@@ -240,6 +243,9 @@ object AmberUtils {
             RememberType.ONE_MINUTE -> TimeUtils.oneMinuteFromNow()
             RememberType.FIVE_MINUTES -> TimeUtils.now() + TimeUtils.FIVE_MINUTES
             RememberType.TEN_MINUTES -> TimeUtils.now() + TimeUtils.FIFTEEN_MINUTES
+            RememberType.ONE_HOUR -> TimeUtils.now() + 3600
+            RememberType.ONE_DAY -> TimeUtils.now() + 86400
+            RememberType.ONE_WEEK -> TimeUtils.now() + 604800
             else -> 0L
         }
 

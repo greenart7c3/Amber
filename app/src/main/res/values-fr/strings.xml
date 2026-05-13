@@ -219,9 +219,6 @@
     <string name="one_minute">Une minute</string>
     <string name="five_minutes">Cinq minutes</string>
     <string name="ten_minutes">Dix minutes</string>
-    <string name="one_minute_short">1m</string>
-    <string name="five_minutes_short">5m</string>
-    <string name="ten_minutes_short">10m</string>
     <string name="event_kind_9000">Ajouter l\'utilisateur au groupe</string>
     <string name="event_kind_9001">Supprimer l\'utilisateur du groupe</string>
     <string name="event_kind_9002">Modifier les métadonnées du groupe</string>
@@ -423,6 +420,7 @@
     <string name="notifications_are_needed_to_use_amber_as_a_nsec_bunker">Notifications are needed to use Amber as a nsec bunker.</string>
     <string name="allow">Allow</string>
     <string name="deny">Deny</string>
+    <string name="ask">Ask</string>
     <string name="never">Never</string>
     <string name="warning">Warning</string>
     <string name="of_events">%1$s of %2$s events</string>
@@ -522,6 +520,7 @@
     <string name="event_kind_39092">Media starter packs</string>
     <string name="event_kind_10020">Media follows</string>
     <string name="automatically_sign_this_for">Automatically sign this for</string>
+    <string name="action">Action</string>
     <string name="always">Always</string>
     <string name="proxy_is_connected">Proxy is connected</string>
     <string name="proxy_is_not_working">Proxy is not working. Check your proxy settings/application.</string>

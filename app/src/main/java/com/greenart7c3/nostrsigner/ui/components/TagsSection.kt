@@ -13,6 +13,10 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -29,9 +33,11 @@ fun TagsSection(
     onCopy: () -> Unit,
     horizontalPadding: Int = 16,
     verticalPadding: Int = 12,
+    showFullContent: Boolean = false,
 ) {
-    val tagsToShow = tags.take(10)
-    val moreCount = tags.size - 10
+    var expanded by remember { mutableStateOf(showFullContent) }
+    val tagsToShow = if (expanded) tags.toList() else tags.take(10)
+    val moreCount = if (expanded) 0 else tags.size - 10
 
     Row(
         modifier = Modifier
@@ -49,7 +55,9 @@ fun TagsSection(
             )
             if (tags.isNotEmpty()) {
                 Column(
-                    modifier = Modifier.padding(top = 12.dp),
+                    modifier = Modifier
+                        .padding(top = 12.dp)
+                        .clickable { expanded = !expanded },
                     verticalArrangement = Arrangement.spacedBy(6.dp),
                 ) {
                     tagsToShow.forEach { tag ->
@@ -61,8 +69,8 @@ fun TagsSection(
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 lineHeight = 24.sp,
                             ),
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
+                            maxLines = if (expanded) Int.MAX_VALUE else 1,
+                            overflow = if (expanded) TextOverflow.Clip else TextOverflow.Ellipsis,
                             fontWeight = FontWeight.Bold,
                         )
                     }

@@ -36,6 +36,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.Dispatchers
@@ -72,11 +73,7 @@ fun AuthWhitelistScreen(
 
     fun addEntry() {
         val input = textFieldRelay.value.text.trim()
-        val url = try {
-            java.net.URI(input).host ?: input
-        } catch (e: Exception) {
-            input
-        }
+        val url = RelayUrlUtils.extractHostAndPort(input)
         if (url.isNotBlank() && url !in whitelist) {
             whitelist.add(url)
             Amber.instance.settings = Amber.instance.settings.copy(authWhitelist = whitelist.toList())

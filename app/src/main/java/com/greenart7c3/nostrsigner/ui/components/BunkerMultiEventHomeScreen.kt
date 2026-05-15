@@ -53,6 +53,7 @@ import com.greenart7c3.nostrsigner.service.ApplicationNameCache
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
+import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -260,15 +261,7 @@ fun BunkerMultiEventHomeScreen(
                                     if (relayAuthScope == RelayAuthScope.ALL) {
                                         "*"
                                     } else {
-                                        (
-                                            AmberEvent.relay(request.request.event)?.let { url ->
-                                                try {
-                                                    java.net.URI(url).host ?: url
-                                                } catch (e: Exception) {
-                                                    url
-                                                }
-                                            } ?: ""
-                                            )
+                                        RelayUrlUtils.extractHostAndPort(AmberEvent.relay(request.request.event))
                                     }
                                 } else {
                                     ""
@@ -363,15 +356,7 @@ fun BunkerMultiEventHomeScreen(
                                             if (relayAuthScope == RelayAuthScope.ALL) {
                                                 "*"
                                             } else {
-                                                (
-                                                    AmberEvent.relay(localEvent)?.let { url ->
-                                                        try {
-                                                            java.net.URI(url).host ?: url
-                                                        } catch (e: Exception) {
-                                                            url
-                                                        }
-                                                    } ?: ""
-                                                    )
+                                                RelayUrlUtils.extractHostAndPort(AmberEvent.relay(localEvent))
                                             }
                                         } else {
                                             ""

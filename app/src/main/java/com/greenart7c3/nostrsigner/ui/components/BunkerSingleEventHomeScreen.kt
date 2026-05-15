@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -662,13 +663,7 @@ fun BunkerSingleEventHomeScreen(
             } else if (event.kind == 22242) {
                 // Kind 22242 = relay client authentication (NIP-42)
                 // Permission is per-relay hostname extracted from the event's "relay" tag
-                val relayUrl = AmberEvent.relay(event)?.let { url ->
-                    try {
-                        java.net.URI(url).host ?: url
-                    } catch (e: Exception) {
-                        url
-                    }
-                } ?: ""
+                val relayUrl = RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
 
                 // Check for a relay-specific permission first, then wildcard "*" (all relays)
                 val permission = applicationEntity?.permissions?.firstOrNull {

@@ -45,6 +45,22 @@ You can also send patches through Nostr using [GitStr](https://github.com/fiatja
 
 By contributing to this repository, you agree to license your work under the MIT license. Any work contributed where you are not the original author must contain its license header with the original author(s) and source.
 
+# Development with Codex Web
+
+This repository includes reusable Codex Web environment scripts so cloud tasks can bootstrap the Android build without manual setup. In the Codex Web environment settings, use:
+
+```bash
+bash .codex/setup.sh
+```
+
+as the setup script, and optionally use:
+
+```bash
+bash .codex/maintenance.sh
+```
+
+as the maintenance script for cached containers. The setup script installs or verifies Java 21, bootstraps the Android command-line SDK, installs Android API 36/build-tools 36.0.0, accepts SDK licenses, and warms Gradle dependencies for the default free debug unit-test sources.
+
 # Security and Verification
 
 🔐 **All releases are cryptographically signed with GPG for your security.**

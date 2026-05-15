@@ -222,6 +222,19 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
 
+        // Bunker proxy accounts forward most requests silently. The exception is
+        // CONNECT and GET_PUBLIC_KEY: when more than one account is logged in we
+        // surface the connect screen so the user can pick which account to expose
+        // to the requesting app.
+        if (acc.isProxy) {
+            val isPairing = bunkerRequest.method == "connect" || bunkerRequest.method == "get_public_key"
+            val multipleAccounts = LocalPreferences.allSavedAccounts(applicationContext).size > 1
+            if (!(isPairing && multipleAccounts)) {
+                forwardProxyRequest(event, acc, bunkerRequest, responseRelay, encryptionType, connectionPrivKey)
+                return
+            }
+        }
+
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {
             acc.sign(bunkerRequest.event)
         } else {
@@ -526,6 +539,62 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 }
             }
         }
+    }
+
+    /**
+     * Bunker-proxy short-circuit: forward the inbound NIP-46 request straight to the
+     * remote bunker, then relay the bunker's response back to the requester. No UI
+     * is shown and per-app permissions are bypassed.
+     */
+    private suspend fun forwardProxyRequest(
+        event: Event,
+        acc: Account,
+        bunkerRequest: BunkerRequest,
+        responseRelay: List<NormalizedRelayUrl>,
+        encryptionType: EncryptionType,
+        connectionPrivKey: String,
+    ) {
+        saveLog("Proxy forwarding bunker request method=${bunkerRequest.method}", responseRelay.firstOrNull()?.url ?: "", acc.npub)
+
+        val remoteResponse = try {
+            RemoteBunkerClient.request(
+                account = acc,
+                method = bunkerRequest.method,
+                params = bunkerRequest.params.toList(),
+            )
+        } catch (e: Exception) {
+            saveLog("Proxy forward failed: ${e.message}", responseRelay.firstOrNull()?.url ?: "", acc.npub)
+            null
+        }
+
+        val (result, error) = if (remoteResponse == null) {
+            Pair("", "bunker timeout")
+        } else {
+            Pair(remoteResponse.result ?: "", remoteResponse.error)
+        }
+
+        BunkerRequestUtils.sendBunkerResponse(
+            context = applicationContext,
+            account = acc,
+            bunkerRequest = AmberBunkerRequest(
+                request = bunkerRequest,
+                localKey = event.pubKey,
+                relays = responseRelay,
+                currentAccount = acc.npub,
+                nostrConnectSecret = "",
+                closeApplication = true,
+                name = "",
+                signedEvent = null,
+                encryptedData = null,
+                encryptionType = encryptionType,
+                isNostrConnectUri = false,
+                signerPrivKey = connectionPrivKey,
+            ),
+            bunkerResponse = BunkerResponse(bunkerRequest.id, result, error),
+            relays = responseRelay,
+            onLoading = { },
+            onDone = { },
+        )
     }
 
     private fun generateMessage(

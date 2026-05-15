@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
@@ -170,13 +171,7 @@ class SignerProvider : ContentProvider() {
 
                     // For kind 22242 (NIP-42 relay auth), extract relay host once for both whitelist and permission checks
                     val relayHost = if (event.kind == 22242) {
-                        AmberEvent.relay(event)?.let { url ->
-                            try {
-                                java.net.URI(url).host ?: url
-                            } catch (e: Exception) {
-                                url
-                            }
-                        } ?: ""
+                        RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
                     } else {
                         ""
                     }

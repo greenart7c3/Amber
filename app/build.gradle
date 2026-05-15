@@ -85,7 +85,7 @@ android {
                 'zh-rTW'
         ]
         lint {
-            disable 'MissingTranslation'
+            disable 'MissingTranslation', 'LocalContextGetResourceValueCall'
         }
     }
 

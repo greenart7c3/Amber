@@ -198,6 +198,13 @@
     <string name="wants_you_to">请求进行 %1$s</string>
     <string name="sign">签署 %1$s</string>
     <string name="sign_message">签署消息</string>
+    <string name="sign_psbt">sign PSBT</string>
+    <string name="psbt_sending">Sending</string>
+    <string name="psbt_change">Change</string>
+    <string name="psbt_fee">Fee</string>
+    <string name="psbt_amount_sats">%1$s sats</string>
+    <string name="psbt_raw">Raw PSBT (hex)</string>
+    <string name="psbt_decode_error">Could not decode PSBT: %1$s</string>
     <string name="signing_as">签署为</string>
     <string name="content">内容</string>
     <string name="amber_is_running_in_background">Amber 正在后台运行</string>
@@ -420,7 +427,7 @@
     <string name="notifications_are_needed_to_use_amber_as_a_nsec_bunker">使用 Amber 作为 nsecBunker 时需要启用通知</string>
     <string name="allow">允许</string>
     <string name="deny">拒绝</string>
-    <string name="ask">Ask</string>
+    <string name="ask">询问</string>
     <string name="never">从不</string>
     <string name="warning">警告</string>
     <string name="of_events">第 %1$s/%2$s 个事件</string>
@@ -520,7 +527,7 @@
     <string name="event_kind_39092">媒体入门包</string>
     <string name="event_kind_10020">媒体关注</string>
     <string name="automatically_sign_this_for">自动签署</string>
-    <string name="action">Action</string>
+    <string name="action">动作</string>
     <string name="always">总是</string>
     <string name="proxy_is_connected">代理已连接</string>
     <string name="proxy_is_not_working">代理无法连接。请检查你的代理应用或设置。</string>

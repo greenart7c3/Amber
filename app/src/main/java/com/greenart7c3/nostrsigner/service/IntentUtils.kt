@@ -142,6 +142,8 @@ object IntentUtils {
             SignerType.NIP44_DECRYPT
         "decrypt_zap_event" ->
             SignerType.DECRYPT_ZAP_EVENT
+        "sign_psbt" ->
+            SignerType.SIGN_PSBT
         else ->
             SignerType.INVALID
     }
@@ -303,6 +305,23 @@ object IntentUtils {
                     )
                 }
                 SignerType.SIGN_MESSAGE -> {
+                    IntentData(
+                        data = localData,
+                        name = appName,
+                        type = type,
+                        pubKey = pubKey,
+                        id = intent.getStringExtra("id") ?: "",
+                        callBackUrl = callbackUrl,
+                        compression = compressionType,
+                        returnType = returnType,
+                        permissions = listOf(),
+                        currentAccount = "",
+                        route = route,
+                        event = null,
+                        encryptedData = null,
+                    )
+                }
+                SignerType.SIGN_PSBT -> {
                     IntentData(
                         data = localData,
                         name = appName,
@@ -498,6 +517,28 @@ object IntentUtils {
                     returnType = returnType,
                     permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
                     currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
+                    route = route,
+                    event = null,
+                    encryptedData = null,
+                )
+            }
+            SignerType.SIGN_PSBT -> {
+                var npub = intent.getStringExtra("current_user")
+                if (npub != null) {
+                    npub = parsePubKey(npub)
+                }
+
+                IntentData(
+                    data = data,
+                    name = name,
+                    type = type,
+                    pubKey = pubKey,
+                    id = id,
+                    callBackUrl = intent.extras?.getString("callbackUrl"),
+                    compression = compressionType,
+                    returnType = returnType,
+                    permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
+                    currentAccount = npub ?: account.npub,
                     route = route,
                     event = null,
                     encryptedData = null,

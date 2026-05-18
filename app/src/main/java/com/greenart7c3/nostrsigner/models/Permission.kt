@@ -86,6 +86,9 @@ data class Permission(
         "decrypt_zap_event" -> {
             context.getString(R.string.decrypt_private_zaps)
         }
+        "sign_psbt" -> {
+            context.getString(R.string.sign_psbt)
+        }
         "encrypt_clear_text" -> {
             context.getString(R.string.encrypt_clear_text)
         }

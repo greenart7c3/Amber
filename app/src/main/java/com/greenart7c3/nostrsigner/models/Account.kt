@@ -89,6 +89,8 @@ class Account(
 
     suspend fun decrypt(encryptedContent: String, fromPublicKey: String): String = signer.decrypt(encryptedContent, fromPublicKey)
 
+    suspend fun signPsbt(psbtHex: String): String = signer.signPsbt(psbtHex)
+
     suspend fun seedWords() = runCatching { DataStoreAccess.getEncryptedKey(Amber.instance, npub, DataStoreAccess.SEED_WORDS) }.getOrNull() ?: ""
 
     fun decryptZapEvent(

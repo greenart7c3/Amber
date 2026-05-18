@@ -461,6 +461,100 @@ class SignerProvider : ContentProvider() {
                     return cursor
                 }
 
+                "content://$appId.SIGN_PSBT" -> {
+                    val psbtHex = projection?.first()
+                    if (psbtHex == null) {
+                        Log.d(Amber.TAG, "No psbt")
+                        return null
+                    }
+                    val npub = IntentUtils.parsePubKey(projection[2])
+                    if (npub == null) {
+                        Log.d(Amber.TAG, "No npub")
+                        return null
+                    }
+                    val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub)
+                    if (account == null) {
+                        Log.d(Amber.TAG, "No account from storage")
+                        return null
+                    }
+                    val database = Amber.instance.getDatabase(account.npub)
+                    val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
+                    val permission =
+                        database
+                            .dao()
+                            .getPermission(
+                                packageName,
+                                "SIGN_PSBT",
+                            )
+                    val signPolicy = database.dao().getSignPolicy(packageName)
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    if (!isRemembered) {
+                        scope.launch {
+                            historyDatabase.dao().addHistory(
+                                listOf(
+                                    HistoryEntity(
+                                        0,
+                                        packageName,
+                                        uriString.replace("content://$appId.", ""),
+                                        null,
+                                        TimeUtils.now(),
+                                        false,
+                                        content = psbtHex,
+                                    ),
+                                ),
+                                account.npub,
+                            )
+                        }
+                        val cursor =
+                            MatrixCursor(arrayOf("rejected")).also {
+                                it.addRow(arrayOf("true"))
+                            }
+
+                        return cursor
+                    }
+
+                    val result = try {
+                        runBlocking { account.signPsbt(psbtHex) }
+                    } catch (e: Exception) {
+                        Log.d(Amber.TAG, "Failed to sign psbt", e)
+                        scope.launch {
+                            val logDb = Amber.instance.getLogDatabase(account.npub)
+                            logDb.dao().insertLog(
+                                LogEntity(
+                                    0,
+                                    packageName,
+                                    "SIGN_PSBT",
+                                    e.message ?: "Could not sign the psbt",
+                                    System.currentTimeMillis(),
+                                ),
+                            )
+                        }
+                        return null
+                    }
+
+                    scope.launch {
+                        historyDatabase.dao().addHistory(
+                            listOf(
+                                HistoryEntity(
+                                    0,
+                                    packageName,
+                                    "SIGN_PSBT",
+                                    null,
+                                    TimeUtils.now(),
+                                    true,
+                                    content = psbtHex,
+                                ),
+                            ),
+                            account.npub,
+                        )
+                    }
+
+                    val localCursor = MatrixCursor(arrayOf("signature", "event", "result")).also {
+                        it.addRow(arrayOf(result, result, result))
+                    }
+
+                    return localCursor
+                }
                 "content://$appId.PING" -> {
                     val npub = if (projection != null && projection.isNotEmpty()) IntentUtils.parsePubKey(projection[0]) else null
                     val account = if (npub != null) {

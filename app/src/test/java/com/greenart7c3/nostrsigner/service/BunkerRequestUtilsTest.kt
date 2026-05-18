@@ -111,6 +111,11 @@ class BunkerRequestUtilsTest {
     }
 
     @Test
+    fun `getTypeFromBunker returns SIGN_PSBT for sign_psbt`() {
+        assertEquals(SignerType.SIGN_PSBT, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("sign_psbt")))
+    }
+
+    @Test
     fun `getTypeFromBunker returns INVALID for unknown method`() {
         assertEquals(SignerType.INVALID, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("unknown_method")))
     }
@@ -166,6 +171,12 @@ class BunkerRequestUtilsTest {
     fun `getDataFromBunker returns second param for decrypt_zap_event`() {
         val request = mockBunkerRequest("decrypt_zap_event", arrayOf("pubkey123", "event_json_string"))
         assertEquals("event_json_string", BunkerRequestUtils.getDataFromBunker(request))
+    }
+
+    @Test
+    fun `getDataFromBunker returns first param for sign_psbt`() {
+        val request = mockBunkerRequest("sign_psbt", arrayOf("70736274ff01abcd"))
+        assertEquals("70736274ff01abcd", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test

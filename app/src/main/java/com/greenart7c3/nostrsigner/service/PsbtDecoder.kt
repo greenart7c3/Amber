@@ -3,100 +3,74 @@ package com.greenart7c3.nostrsigner.service
 import androidx.compose.runtime.Immutable
 import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.Psbt
-import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.inputTapInternalKey
 import com.vitorpamplona.quartz.nipBCOnchainZaps.psbt.inputWitnessUtxo
 import com.vitorpamplona.quartz.utils.Hex
-
-@Immutable
-data class DecodedPsbtInput(
-    val prevTxid: String,
-    val prevVout: Long,
-    val valueSats: Long?,
-    val scriptPubKeyHex: String?,
-    val address: String?,
-    val controlled: Boolean,
-)
 
 @Immutable
 data class DecodedPsbtOutput(
     val valueSats: Long,
     val scriptPubKeyHex: String,
     val address: String?,
+    val isChange: Boolean,
 )
 
 @Immutable
 data class DecodedPsbt(
-    val version: Long,
-    val lockTime: Long,
-    val inputs: List<DecodedPsbtInput>,
     val outputs: List<DecodedPsbtOutput>,
+    val totalSent: Long,
+    val totalChange: Long,
     val feeSats: Long?,
-    val controlledInputCount: Int,
     val parseError: String?,
 )
 
 object PsbtDecoder {
+    // BIP-174 PSBT output key type for PSBT_OUT_TAP_INTERNAL_KEY (x-only pubkey of a taproot change output).
+    private const val PSBT_OUT_TAP_INTERNAL_KEY = 0x05
+
     fun decode(psbtHex: String, account: Account): DecodedPsbt = try {
         val psbt = Psbt.parse(psbtHex)
         val tx = psbt.unsignedTx
         val xOnlyPubKey = account.signer.keyPair.pubKey
 
         var anyInputMissingValue = false
-        var outputTotal = 0L
         var inputTotal = 0L
-        var controlledCount = 0
-
-        val inputs = tx.inputs.mapIndexed { index, txIn ->
-            val witnessUtxo = psbt.inputWitnessUtxo(index)
-            val valueSats = witnessUtxo?.valueSats
-            val scriptPubKey = witnessUtxo?.scriptPubKey
-            if (valueSats == null) {
-                anyInputMissingValue = true
-            } else {
-                inputTotal += valueSats
-            }
-            val internalKey = psbt.inputTapInternalKey(index)
-            val controlled = internalKey != null && internalKey.contentEquals(xOnlyPubKey)
-            if (controlled) controlledCount++
-
-            DecodedPsbtInput(
-                prevTxid = txIn.outPoint.txid,
-                prevVout = txIn.outPoint.vout,
-                valueSats = valueSats,
-                scriptPubKeyHex = scriptPubKey?.let { Hex.encode(it) },
-                address = scriptPubKey?.let { scriptPubKeyToAddress(it) },
-                controlled = controlled,
-            )
+        for (i in tx.inputs.indices) {
+            val value = psbt.inputWitnessUtxo(i)?.valueSats
+            if (value == null) anyInputMissingValue = true else inputTotal += value
         }
 
-        val outputs = tx.outputs.map { txOut ->
-            outputTotal += txOut.valueSats
+        var totalOut = 0L
+        var totalSent = 0L
+        var totalChange = 0L
+        val outputs = tx.outputs.mapIndexed { index, txOut ->
+            totalOut += txOut.valueSats
+            val taprootInternalKey = psbt.outputs[index].get(PSBT_OUT_TAP_INTERNAL_KEY)
+            val isChange = taprootInternalKey != null && taprootInternalKey.contentEquals(xOnlyPubKey)
+            if (isChange) totalChange += txOut.valueSats else totalSent += txOut.valueSats
+
             DecodedPsbtOutput(
                 valueSats = txOut.valueSats,
                 scriptPubKeyHex = Hex.encode(txOut.scriptPubKey),
                 address = scriptPubKeyToAddress(txOut.scriptPubKey),
+                isChange = isChange,
             )
         }
 
-        val fee = if (anyInputMissingValue) null else inputTotal - outputTotal
+        val fee = if (anyInputMissingValue) null else inputTotal - totalOut
 
         DecodedPsbt(
-            version = tx.version,
-            lockTime = tx.lockTime,
-            inputs = inputs,
             outputs = outputs,
+            totalSent = totalSent,
+            totalChange = totalChange,
             feeSats = fee,
-            controlledInputCount = controlledCount,
             parseError = null,
         )
     } catch (e: Exception) {
         DecodedPsbt(
-            version = 0,
-            lockTime = 0,
-            inputs = emptyList(),
             outputs = emptyList(),
+            totalSent = 0,
+            totalChange = 0,
             feeSats = null,
-            controlledInputCount = 0,
             parseError = e.message ?: e::class.simpleName ?: "parse error",
         )
     }

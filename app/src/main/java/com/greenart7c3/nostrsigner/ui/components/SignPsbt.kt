@@ -12,7 +12,6 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +29,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.DecodedPsbt
+import com.greenart7c3.nostrsigner.service.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.ui.RememberType
 
 @Composable
@@ -42,9 +42,7 @@ fun SignPsbt(
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
-    var rememberType by remember {
-        mutableStateOf(RememberType.NEVER)
-    }
+    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     Column(modifier) {
         LocalAppIcon(packageName)
@@ -90,9 +88,7 @@ fun BunkerSignPsbt(
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
-    var rememberType by remember {
-        mutableStateOf(RememberType.NEVER)
-    }
+    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     Column(modifier) {
         val message = stringResource(R.string.sign_psbt)
@@ -145,130 +141,68 @@ private fun PsbtBody(psbtHex: String, decoded: DecodedPsbt) {
         return
     }
 
-    SummaryCard(decoded)
-    Spacer(Modifier.size(8.dp))
-    InputsCard(decoded)
-    Spacer(Modifier.size(8.dp))
-    OutputsCard(decoded)
-    Spacer(Modifier.size(8.dp))
+    val sending = decoded.outputs.filterNot { it.isChange }
+    val change = decoded.outputs.filter { it.isChange }
+
+    if (sending.isNotEmpty()) {
+        SectionCard(
+            title = stringResource(R.string.psbt_sending),
+            totalSats = decoded.totalSent,
+            entries = sending,
+        )
+        Spacer(Modifier.size(8.dp))
+    }
+
+    if (change.isNotEmpty()) {
+        SectionCard(
+            title = stringResource(R.string.psbt_change),
+            totalSats = decoded.totalChange,
+            entries = change,
+        )
+        Spacer(Modifier.size(8.dp))
+    }
+
+    decoded.feeSats?.let {
+        Card(modifier = Modifier.fillMaxWidth()) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(8.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(stringResource(R.string.psbt_fee), fontWeight = FontWeight.Bold)
+                Text(formatSats(it))
+            }
+        }
+        Spacer(Modifier.size(8.dp))
+    }
+
     RawPsbtCard(psbtHex)
 }
 
 @Composable
-private fun SummaryCard(decoded: DecodedPsbt) {
-    val totalOut = decoded.outputs.sumOf { it.valueSats }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(8.dp)) {
-            Text(
-                stringResource(
-                    R.string.psbt_summary,
-                    decoded.controlledInputCount,
-                    decoded.inputs.size,
-                ),
-                fontWeight = FontWeight.Bold,
-            )
-            Spacer(Modifier.size(4.dp))
-            LabeledRow(stringResource(R.string.psbt_total_out), formatSats(totalOut))
-            decoded.feeSats?.let {
-                LabeledRow(stringResource(R.string.psbt_fee), formatSats(it))
-            }
-            LabeledRow("Version", decoded.version.toString())
-            if (decoded.lockTime != 0L) {
-                LabeledRow("Locktime", decoded.lockTime.toString())
-            }
-        }
-    }
-}
-
-@Composable
-private fun InputsCard(decoded: DecodedPsbt) {
-    var expanded by remember { mutableStateOf(false) }
+private fun SectionCard(title: String, totalSats: Long, entries: List<DecodedPsbtOutput>) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(Modifier.padding(8.dp)) {
             Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
+                modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Text(
-                    "${stringResource(R.string.psbt_inputs)} (${decoded.inputs.size})",
-                    fontWeight = FontWeight.Bold,
-                )
-                ToggleText(expanded) { expanded = !expanded }
+                Text(title, fontWeight = FontWeight.Bold)
+                Text(formatSats(totalSats), fontWeight = FontWeight.Bold)
             }
-            if (expanded) {
-                decoded.inputs.forEachIndexed { i, input ->
-                    if (i > 0) Spacer(Modifier.size(8.dp))
-                    Column {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                        ) {
-                            Text("#$i", fontWeight = FontWeight.SemiBold)
-                            if (input.controlled) {
-                                Surface(
-                                    color = MaterialTheme.colorScheme.primaryContainer,
-                                ) {
-                                    Text(
-                                        stringResource(R.string.psbt_input_signs_label),
-                                        modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp),
-                                        fontSize = 12.sp,
-                                        fontWeight = FontWeight.Bold,
-                                    )
-                                }
-                            }
-                        }
-                        LabeledRow(
-                            stringResource(R.string.psbt_outpoint),
-                            "${input.prevTxid}:${input.prevVout}",
-                        )
-                        LabeledRow(
-                            "Value",
-                            input.valueSats?.let { formatSats(it) }
-                                ?: stringResource(R.string.psbt_unknown_value),
-                        )
-                        input.address?.let {
-                            LabeledRow(stringResource(R.string.psbt_address), it)
-                        } ?: input.scriptPubKeyHex?.let {
-                            LabeledRow(stringResource(R.string.psbt_script), it)
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun OutputsCard(decoded: DecodedPsbt) {
-    var expanded by remember { mutableStateOf(true) }
-    Card(modifier = Modifier.fillMaxWidth()) {
-        Column(Modifier.padding(8.dp)) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Text(
-                    "${stringResource(R.string.psbt_outputs)} (${decoded.outputs.size})",
-                    fontWeight = FontWeight.Bold,
-                )
-                ToggleText(expanded) { expanded = !expanded }
-            }
-            if (expanded) {
-                decoded.outputs.forEachIndexed { i, output ->
-                    if (i > 0) Spacer(Modifier.size(8.dp))
-                    Column {
-                        Text("#$i", fontWeight = FontWeight.SemiBold)
-                        LabeledRow("Value", formatSats(output.valueSats))
-                        output.address?.let {
-                            LabeledRow(stringResource(R.string.psbt_address), it)
-                        } ?: LabeledRow(stringResource(R.string.psbt_script), output.scriptPubKeyHex)
-                    }
+            entries.forEach { output ->
+                Spacer(Modifier.size(6.dp))
+                Column {
+                    Text(
+                        output.address ?: output.scriptPubKeyHex,
+                        fontSize = 13.sp,
+                    )
+                    Text(
+                        formatSats(output.valueSats),
+                        fontSize = 12.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
                 }
             }
         }
@@ -283,12 +217,17 @@ private fun RawPsbtCard(psbtHex: String) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
+                    .clickable { expanded = !expanded }
                     .padding(vertical = 4.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(stringResource(R.string.psbt_raw), fontWeight = FontWeight.Bold)
-                ToggleText(expanded) { expanded = !expanded }
+                Text(
+                    text = if (expanded) "Hide" else "Show",
+                    fontSize = 13.sp,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
             if (expanded) {
                 Text(
@@ -301,26 +240,6 @@ private fun RawPsbtCard(psbtHex: String) {
             }
         }
     }
-}
-
-@Composable
-private fun LabeledRow(label: String, value: String) {
-    Column(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-        Text(label, fontSize = 12.sp, fontWeight = FontWeight.Bold)
-        Text(value, fontSize = 14.sp)
-    }
-}
-
-@Composable
-private fun ToggleText(expanded: Boolean, onClick: () -> Unit) {
-    Text(
-        text = if (expanded) "Hide" else "Show",
-        modifier = Modifier
-            .clickable(onClick = onClick)
-            .padding(horizontal = 4.dp),
-        fontSize = 13.sp,
-        color = MaterialTheme.colorScheme.primary,
-    )
 }
 
 private fun formatSats(sats: Long): String = "$sats sats"

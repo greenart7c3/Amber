@@ -44,6 +44,7 @@ fun IncomingRequestScreen(
     account: Account,
     onRemoveIntentData: (List<IntentData>, IntentResultType) -> Unit,
     onLoading: (Boolean) -> Unit,
+    isExternalRequest: Boolean = false,
 ) {
     var loading by remember { mutableStateOf(false) }
 
@@ -66,13 +67,15 @@ fun IncomingRequestScreen(
                     stringResource(R.string.why_not_explore_your_favorite_nostr_app_a_bit),
                     textAlign = TextAlign.Center,
                 )
-                Spacer(Modifier.size(16.dp))
-                OutlinedButton(
-                    onClick = {
-                        Amber.instance.getMainActivity()?.finishAndRemoveTask()
-                    },
-                ) {
-                    Text(stringResource(R.string.invalid_intent_close_app))
+                if (isExternalRequest) {
+                    Spacer(Modifier.size(16.dp))
+                    OutlinedButton(
+                        onClick = {
+                            Amber.instance.getMainActivity()?.finishAndRemoveTask()
+                        },
+                    ) {
+                        Text(stringResource(R.string.invalid_intent_close_app))
+                    }
                 }
             }
         } else if (intents.size == 1) {

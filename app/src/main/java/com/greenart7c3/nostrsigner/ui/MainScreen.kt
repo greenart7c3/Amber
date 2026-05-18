@@ -399,6 +399,7 @@ fun MainScreen(
                                 onLoading = {
                                     isLoading = it
                                 },
+                                isExternalRequest = isExternalRequest,
                             )
                         },
                     )

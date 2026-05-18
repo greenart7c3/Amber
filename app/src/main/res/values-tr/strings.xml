@@ -198,6 +198,13 @@
     <string name="wants_you_to">%1$s yapmanızı istiyor</string>
     <string name="sign">%1$s İmzala</string>
     <string name="sign_message">mesajı imzala</string>
+    <string name="sign_psbt">sign PSBT</string>
+    <string name="psbt_sending">Sending</string>
+    <string name="psbt_change">Change</string>
+    <string name="psbt_fee">Fee</string>
+    <string name="psbt_amount_sats">%1$s sats</string>
+    <string name="psbt_raw">Raw PSBT (hex)</string>
+    <string name="psbt_decode_error">Could not decode PSBT: %1$s</string>
     <string name="signing_as">Olarak imzalanıyor:</string>
     <string name="content">içerik</string>
     <string name="amber_is_running_in_background">Amber arka planda çalışıyor</string>

@@ -196,6 +196,13 @@
     <string name="wants_you_to">quer você para %1$s</string>
     <string name="sign">Assinar %1$s</string>
     <string name="sign_message">Assinar a mensagem</string>
+    <string name="sign_psbt">sign PSBT</string>
+    <string name="psbt_sending">Sending</string>
+    <string name="psbt_change">Change</string>
+    <string name="psbt_fee">Fee</string>
+    <string name="psbt_amount_sats">%1$s sats</string>
+    <string name="psbt_raw">Raw PSBT (hex)</string>
+    <string name="psbt_decode_error">Could not decode PSBT: %1$s</string>
     <string name="signing_as">Signing as</string>
     <string name="content">conteúdo</string>
     <string name="amber_is_running_in_background">Amber está rodando em segundo plano</string>

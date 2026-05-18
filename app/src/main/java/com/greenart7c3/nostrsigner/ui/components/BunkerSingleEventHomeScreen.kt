@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -918,6 +919,77 @@ fun BunkerSingleEventHomeScreen(
                                 shouldCloseApplication = bunkerRequest.closeApplication,
                                 rememberType = it,
                             )
+                        }
+                    },
+                    onReject = {
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = it,
+                            signerType = type,
+                            kind = null,
+                            onLoading = onLoading,
+                        )
+                    },
+                )
+            } else if (type == SignerType.SIGN_PSBT) {
+                val psbtHex = bunkerRequest.request.params.first()
+                val permission =
+                    applicationEntity?.permissions?.firstOrNull {
+                        it.pkKey == key && it.type == type.toString()
+                    }
+
+                val acceptUntil = permission?.acceptUntil ?: 0
+                val rejectUntil = permission?.rejectUntil ?: 0
+
+                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
+                    null
+                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
+                    false
+                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
+                    true
+                } else {
+                    null
+                }
+
+                val decoded = remember(psbtHex) { PsbtDecoder.decode(psbtHex, account) }
+
+                BunkerSignPsbt(
+                    modifier = modifier,
+                    psbtHex = psbtHex,
+                    decoded = decoded,
+                    shouldRunOnAccept = acceptOrReject,
+                    appName = appName,
+                    onAccept = {
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            try {
+                                val result = account.signPsbt(psbtHex)
+                                BunkerRequestUtils.sendResult(
+                                    context = context,
+                                    account = account,
+                                    key = key,
+                                    response = result,
+                                    bunkerRequest = bunkerRequest,
+                                    kind = null,
+                                    onLoading = onLoading,
+                                    permissions = null,
+                                    appName = appName,
+                                    signPolicy = null,
+                                    shouldCloseApplication = bunkerRequest.closeApplication,
+                                    rememberType = it,
+                                )
+                            } catch (e: Exception) {
+                                coroutineScope.launch {
+                                    Toast.makeText(
+                                        context,
+                                        e.message ?: "Could not sign the PSBT",
+                                        Toast.LENGTH_SHORT,
+                                    ).show()
+                                }
+                                onLoading(false)
+                            }
                         }
                     },
                     onReject = {

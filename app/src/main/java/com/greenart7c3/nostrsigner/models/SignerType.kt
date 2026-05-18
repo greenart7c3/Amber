@@ -13,4 +13,5 @@ enum class SignerType {
     PING,
     INVALID,
     SWITCH_RELAYS,
+    SIGN_PSBT,
 }

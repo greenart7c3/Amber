@@ -232,6 +232,7 @@ object BunkerRequestUtils {
         "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
         "ping" -> SignerType.PING
         "switch_relays" -> SignerType.SWITCH_RELAYS
+        "sign_psbt" -> SignerType.SIGN_PSBT
         else -> SignerType.INVALID
     }
 
@@ -244,6 +245,7 @@ object BunkerRequestUtils {
         }
         "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
         "ping" -> "pong"
+        "sign_psbt" -> bunkerRequest.params.first()
         else -> ""
     }
 

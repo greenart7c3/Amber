@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
@@ -151,6 +152,63 @@ fun IntentSingleEventHomeScreen(
                         intentData = intentData,
                         appName = appName,
                         rememberType = it,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                        kind = null,
+                    )
+                },
+            )
+        }
+
+        SignerType.SIGN_PSBT -> {
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == intentData.type.toString()
+                }
+
+            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+            val decoded = remember(intentData.data) { PsbtDecoder.decode(intentData.data, account) }
+
+            SignPsbt(
+                modifier = modifier,
+                psbtHex = intentData.data,
+                decoded = decoded,
+                shouldRunOnAccept = acceptOrReject,
+                packageName = packageName,
+                onAccept = { rememberType ->
+                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                        try {
+                            val result = account.signPsbt(intentData.data)
+                            IntentUtils.sendResult(
+                                context,
+                                packageName,
+                                account,
+                                key,
+                                clipboardManager,
+                                result,
+                                result,
+                                intentData,
+                                null,
+                                onLoading,
+                                onRemoveIntentData = onRemoveIntentData,
+                                rememberType = rememberType,
+                            )
+                        } catch (e: Exception) {
+                            ToastManager.toast(
+                                title = context.getString(R.string.warning),
+                                message = e.message ?: "Could not sign the PSBT",
+                            )
+                            onLoading(false)
+                        }
+                    }
+                },
+                onReject = { rememberType ->
+                    IntentUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        intentData = intentData,
+                        appName = appName,
+                        rememberType = rememberType,
                         onLoading = onLoading,
                         onRemoveIntentData = onRemoveIntentData,
                         kind = null,

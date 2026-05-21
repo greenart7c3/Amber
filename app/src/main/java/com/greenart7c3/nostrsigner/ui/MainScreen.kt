@@ -1067,8 +1067,27 @@ fun MainScreen(
                             )
                         },
                     )
+
+                    composable(
+                        Route.ApplicationsBackup.route,
+                        content = {
+                            val scrollState = rememberScrollState()
+                            ApplicationsBackupScreen(
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
+                                    .padding(horizontal = verticalPadding)
+                                    .padding(top = verticalPadding * 1.5f),
+                                account = account,
+                            )
+                        },
+                    )
                 }
             }
+
+            RestoreBackupDialog(accountStateViewModel)
 
             DisplayCrashMessages(account, navController)
 

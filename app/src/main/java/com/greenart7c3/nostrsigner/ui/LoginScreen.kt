@@ -166,6 +166,7 @@ fun MainPage(
                                     val account = LocalPreferences.loadFromEncryptedStorage(Amber.instance, accounts.first().npub)
                                     account?.let {
                                         accountViewModel.startUI(account, null)
+                                        accountViewModel.maybeOfferRestore(account)
                                     }
                                 }
                             }

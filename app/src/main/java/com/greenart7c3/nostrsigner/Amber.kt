@@ -46,6 +46,7 @@ import com.greenart7c3.nostrsigner.okhttp.OkHttpWebSocket
 import com.greenart7c3.nostrsigner.relays.AmberRelayStats
 import com.greenart7c3.nostrsigner.relays.NostrClientLoggerListener
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
+import com.greenart7c3.nostrsigner.service.BackupApplicationsWorker
 import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
@@ -307,6 +308,31 @@ class Amber :
             ExistingPeriodicWorkPolicy.KEEP,
             periodicRequest,
         )
+    }
+
+    fun startBackupApplicationsAlarm() {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
+
+        val workManager = WorkManager.getInstance(this)
+
+        val periodicRequest = PeriodicWorkRequestBuilder<BackupApplicationsWorker>(1, TimeUnit.DAYS)
+            .addTag("backupApplicationsWork")
+            .setConstraints(
+                Constraints.Builder()
+                    .setRequiredNetworkType(NetworkType.CONNECTED)
+                    .build(),
+            )
+            .build()
+
+        workManager.enqueueUniquePeriodicWork(
+            "BackupApplicationsWorker",
+            ExistingPeriodicWorkPolicy.KEEP,
+            periodicRequest,
+        )
+    }
+
+    fun cancelBackupApplicationsAlarm() {
+        WorkManager.getInstance(this).cancelUniqueWork("BackupApplicationsWorker")
     }
 
     override fun onCreate() {

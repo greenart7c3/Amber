@@ -210,8 +210,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         connectionPrivKey: String = "",
     ) {
         val responseRelay = listOf(relay)
-        val database = Amber.instance.getDatabase(acc.npub)
-        val dao = database.dao()
+        val dao = Amber.instance.dao(acc.npub)
         val historyDao = Amber.instance.getHistoryDatabase(acc.npub).dao()
 
         val notification = Amber.instance.notificationCache[event.id]

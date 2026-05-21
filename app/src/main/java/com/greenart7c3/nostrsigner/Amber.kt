@@ -32,6 +32,8 @@ import coil3.request.ImageRequest
 import coil3.request.SuccessResult
 import coil3.request.crossfade
 import com.greenart7c3.nostrsigner.database.AppDatabase
+import com.greenart7c3.nostrsigner.database.ApplicationDao
+import com.greenart7c3.nostrsigner.database.CachingApplicationDao
 import com.greenart7c3.nostrsigner.database.HistoryDatabase
 import com.greenart7c3.nostrsigner.database.LogDatabase
 import com.greenart7c3.nostrsigner.models.Account
@@ -147,6 +149,7 @@ class Amber :
     var databases = ConcurrentHashMap<String, AppDatabase>()
     private var logDatabases = ConcurrentHashMap<String, LogDatabase>()
     private var historyDatabases = ConcurrentHashMap<String, HistoryDatabase>()
+    private val cachingDaos = ConcurrentHashMap<String, CachingApplicationDao>()
 
     // Hoisted out of runMigrations() so re-entry (e.g. test re-init) can't
     // double-register and double-fire foreground/background callbacks.
@@ -421,6 +424,18 @@ class Amber :
         return databases[npub]!!
     }
 
+    /**
+     * Returns the per-account permission DAO with read-through caching. All hot-path
+     * permission lookups should go through this; writes routed through it also
+     * invalidate the cache.
+     */
+    fun dao(npub: String): ApplicationDao {
+        cachingDaos[npub]?.let { return it }
+        return cachingDaos.computeIfAbsent(npub) {
+            CachingApplicationDao(getDatabase(npub).dao())
+        }
+    }
+
     fun getLogDatabase(npub: String): LogDatabase {
         if (!logDatabases.containsKey(npub)) {
             logDatabases[npub] = LogDatabase.getDatabase(applicationContext, npub)
@@ -444,6 +459,7 @@ class Amber :
         databases.remove(npub)?.runCatching { close() }
         logDatabases.remove(npub)?.runCatching { close() }
         historyDatabases.remove(npub)?.runCatching { close() }
+        cachingDaos.remove(npub)
         ApplicationNameCache.clearForAccount(npub)
     }
 

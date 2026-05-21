@@ -198,8 +198,8 @@ fun IntentMultiEventHomeScreen(
                                 LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
                             } ?: continue
 
-                            val database = Amber.instance.getDatabase(thisAccount.npub)
-                            val application = database.dao().getByKey(localKey) ?: ApplicationWithPermissions(
+                            val dao = Amber.instance.dao(thisAccount.npub)
+                            val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
                                     localKey,
                                     "",
@@ -252,7 +252,7 @@ fun IntentMultiEventHomeScreen(
                             }
 
                             if (permissionsChanged || application.application.key.isBlank()) {
-                                database.dao().insertApplicationWithPermissions(application)
+                                dao.insertApplicationWithPermissions(application)
                             }
                         }
 
@@ -293,9 +293,9 @@ fun IntentMultiEventHomeScreen(
                                     LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
                                 } ?: continue
 
-                                val database = Amber.instance.getDatabase(thisAccount.npub)
+                                val dao = Amber.instance.dao(thisAccount.npub)
                                 val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
-                                val application = database.dao().getByKey(localKey) ?: ApplicationWithPermissions(
+                                val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(
                                         localKey,
                                         "",
@@ -468,7 +468,7 @@ fun IntentMultiEventHomeScreen(
                                 }
 
                                 if (permissionsChanged || application.application.key.isBlank()) {
-                                    database.dao().insertApplicationWithPermissions(application)
+                                    dao.insertApplicationWithPermissions(application)
                                 }
                                 historyDatabase.dao().addHistory(historyList, thisAccount.npub)
                             }

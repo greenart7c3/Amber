@@ -270,18 +270,18 @@ object BunkerRequestUtils {
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
-            val database = Amber.instance.getDatabase(account.npub)
+            val dao = Amber.instance.dao(account.npub)
             val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
             val defaultRelays = Amber.instance.settings.defaultRelays
 
             if (oldKey.isNotBlank()) {
-                database.dao().delete(oldKey)
+                dao.delete(oldKey)
                 historyDatabase.dao().deleteHistory(oldKey)
             }
 
-            var savedApplication = database.dao().getByKey(key)
+            var savedApplication = dao.getByKey(key)
             if (savedApplication == null && bunkerRequest.request is BunkerRequestConnect && bunkerRequest.request.secret?.isNotBlank() == true) {
-                savedApplication = database.dao().getByKey(bunkerRequest.request.secret!!)
+                savedApplication = dao.getByKey(bunkerRequest.request.secret!!)
                 if (savedApplication != null) {
                     val tempApplication = savedApplication.application.copy(
                         key = key,
@@ -293,11 +293,11 @@ object BunkerRequestUtils {
                         }.toMutableList(),
                     )
 
-                    database.dao().delete(bunkerRequest.request.secret!!)
-                    database.dao().insertApplicationWithPermissions(tempApp2)
+                    dao.delete(bunkerRequest.request.secret!!)
+                    dao.insertApplicationWithPermissions(tempApp2)
                 }
             }
-            savedApplication = database.dao().getByKey(key)
+            savedApplication = dao.getByKey(key)
             if (bunkerRequest.request is BunkerRequestConnect) {
                 savedApplication?.application?.deleteAfter = deleteAfter
             }
@@ -362,7 +362,7 @@ object BunkerRequestUtils {
 
             var didChangeRelays = false
             if (type == SignerType.CONNECT) {
-                database.dao().deletePermissions(key)
+                dao.deletePermissions(key)
                 application.application.isConnected = true
                 shouldCloseApplication?.let {
                     application.application.closeApplication = it
@@ -392,7 +392,7 @@ object BunkerRequestUtils {
 
             // assume that everything worked and try to revert it if it fails
             EventNotificationConsumer(context).notificationManager().cancelAll()
-            database.dao().insertApplicationWithPermissions(application)
+            dao.insertApplicationWithPermissions(application)
             historyDatabase.dao().addHistory(
                 listOf(
                     HistoryEntity(
@@ -452,13 +452,13 @@ object BunkerRequestUtils {
                             if (rememberType != RememberType.NEVER) {
                                 if (type == SignerType.SIGN_EVENT) {
                                     kind?.let {
-                                        database.dao().deletePermissions(key, type.toString(), kind)
+                                        dao.deletePermissions(key, type.toString(), kind)
                                     }
                                 } else {
                                     if (type == SignerType.CONNECT) {
-                                        database.dao().delete(application.application)
+                                        dao.delete(application.application)
                                         if (!bunkerRequest.isNostrConnectUri) {
-                                            database.dao().insertApplicationWithPermissions(
+                                            dao.insertApplicationWithPermissions(
                                                 application.copy(
                                                     application = application.application.copy(
                                                         isConnected = false,
@@ -468,7 +468,7 @@ object BunkerRequestUtils {
                                             )
                                         }
                                     } else {
-                                        database.dao().deletePermissions(key, type.toString())
+                                        dao.deletePermissions(key, type.toString())
                                     }
                                 }
                             }
@@ -495,7 +495,7 @@ object BunkerRequestUtils {
     ) {
         onLoading(true)
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-            val savedApplication = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
+            val savedApplication = Amber.instance.dao(account.npub).getByKey(key)
             val defaultRelays = Amber.instance.settings.defaultRelays
             val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
 
@@ -554,7 +554,7 @@ object BunkerRequestUtils {
             }
 
             if (bunkerRequest.request !is BunkerRequestConnect) {
-                Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(application)
+                Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
                 Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
                     listOf(
                         HistoryEntity(

@@ -47,9 +47,9 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                     Log.d(Amber.TAG, "Trimmed $excessLogs excess log entries (cap: $MAX_LOG_ENTRIES)")
                 }
 
-                val database = Amber.instance.getDatabase(it.npub)
-                database.dao().updateExpiredPermissions(TimeUtils.now())
-                val deleted = database.dao().deleteOldApplications(now / 1000)
+                val dao = Amber.instance.dao(it.npub)
+                dao.updateExpiredPermissions(TimeUtils.now())
+                val deleted = dao.deleteOldApplications(now / 1000)
                 if (deleted > 0) {
                     logDao.insertLog(
                         LogEntity(

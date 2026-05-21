@@ -228,6 +228,8 @@ object BunkerRequestUtils {
         "nip04_decrypt" -> SignerType.NIP04_DECRYPT
         "nip44_encrypt" -> SignerType.NIP44_ENCRYPT
         "nip44_decrypt" -> SignerType.NIP44_DECRYPT
+        "nip44v3_encrypt" -> SignerType.NIP44_V3_ENCRYPT
+        "nip44v3_decrypt" -> SignerType.NIP44_V3_DECRYPT
         "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT
         "ping" -> SignerType.PING
         "switch_relays" -> SignerType.SWITCH_RELAYS
@@ -242,10 +244,20 @@ object BunkerRequestUtils {
             amberEvent.toEvent().toJson()
         }
         "nip04_encrypt", "nip04_decrypt", "nip44_encrypt", "nip44_decrypt", "decrypt_zap_event" -> bunkerRequest.params.getOrElse(1) { "" }
+        // NIP-44 v3 NIP-46 layout: [pubkey, kind, scope, payload]. For
+        // `nip44v3_encrypt` the payload is base64-encoded plaintext; for
+        // `nip44v3_decrypt` it is the v3 ciphertext.
+        "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.params.getOrElse(3) { "" }
         "ping" -> "pong"
         "sign_psbt" -> bunkerRequest.params.first()
         else -> ""
     }
+
+    /** Extract `kind` from a NIP-44 v3 bunker request; null if missing/invalid. */
+    fun getNip44v3Kind(bunkerRequest: BunkerRequest): Int? = bunkerRequest.params.getOrNull(1)?.toIntOrNull()
+
+    /** Extract `scope` from a NIP-44 v3 bunker request; defaults to empty per spec. */
+    fun getNip44v3Scope(bunkerRequest: BunkerRequest): String = bunkerRequest.params.getOrElse(2) { "" }
 
     fun sendResult(
         context: Context,

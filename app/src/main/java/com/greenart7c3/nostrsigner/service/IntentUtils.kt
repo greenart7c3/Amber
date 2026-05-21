@@ -138,6 +138,10 @@ object IntentUtils {
             SignerType.NIP44_ENCRYPT
         "nip44_decrypt" ->
             SignerType.NIP44_DECRYPT
+        "nip44v3_encrypt" ->
+            SignerType.NIP44_V3_ENCRYPT
+        "nip44v3_decrypt" ->
+            SignerType.NIP44_V3_DECRYPT
         "decrypt_zap_event" ->
             SignerType.DECRYPT_ZAP_EVENT
         "sign_psbt" ->
@@ -187,6 +191,8 @@ object IntentUtils {
             var callbackUrl: String? = null
             var returnType = ReturnType.SIGNATURE
             var appName = ""
+            var nip44v3Kind: Int? = null
+            var nip44v3Scope = ""
             // flatMap avoids building an intermediate joined string before splitting on "&"
             parameters.flatMap { it.split("&") }.forEach {
                 val params = it.split("=").toMutableList()
@@ -200,6 +206,8 @@ object IntentUtils {
                     parameter == "callbackUrl" -> callbackUrl = parameterData
                     parameter == "returnType" -> if (parameterData == "event") returnType = ReturnType.EVENT
                     parameter == "appName" -> appName = parameterData
+                    parameter == "kind" -> nip44v3Kind = parameterData.toIntOrNull()
+                    parameter == "scope" -> nip44v3Scope = parameterData
                 }
             }
 
@@ -242,7 +250,9 @@ object IntentUtils {
                         unsignedEventKey = unsignedEventKey,
                     )
                 }
-                SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
+                SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
+                SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT,
+                -> {
                     val result =
                         try {
                             AmberUtils.encryptOrDecryptData(
@@ -250,6 +260,8 @@ object IntentUtils {
                                 type,
                                 account,
                                 pubKey,
+                                nip44v3Kind,
+                                nip44v3Scope,
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
                             Amber.instance.applicationIOScope.launch {
@@ -283,6 +295,8 @@ object IntentUtils {
                         route = route,
                         event = null,
                         encryptedData = encryptedDataKind,
+                        nip44v3Kind = nip44v3Kind,
+                        nip44v3Scope = nip44v3Scope,
                     )
                 }
                 SignerType.GET_PUBLIC_KEY -> {
@@ -410,7 +424,11 @@ object IntentUtils {
                     unsignedEventKey = unsignedEventKey,
                 )
             }
-            SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
+            SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
+            SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT, SignerType.DECRYPT_ZAP_EVENT,
+            -> {
+                val nip44v3Kind = intent.extras?.getString("kind")?.toIntOrNull()
+                val nip44v3Scope = intent.extras?.getString("scope") ?: ""
                 val result =
                     try {
                         AmberUtils.encryptOrDecryptData(
@@ -418,6 +436,8 @@ object IntentUtils {
                             type,
                             account,
                             pubKey,
+                            nip44v3Kind,
+                            nip44v3Scope,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
                         if (e is FailedMigrationException) throw e
@@ -457,6 +477,8 @@ object IntentUtils {
                     route = route,
                     event = null,
                     encryptedData = encryptedDataKind,
+                    nip44v3Kind = nip44v3Kind,
+                    nip44v3Scope = nip44v3Scope,
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {

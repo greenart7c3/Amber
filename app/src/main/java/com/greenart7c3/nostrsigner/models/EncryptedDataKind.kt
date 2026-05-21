@@ -26,6 +26,7 @@ fun EncryptedDataKind?.toPermissionType(isEncrypt: Boolean): String = when (this
 fun SignerType.toPermissionTypeString(encryptedData: EncryptedDataKind?): String = when (this) {
     SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT -> encryptedData.toPermissionType(isEncrypt = true)
     SignerType.NIP04_DECRYPT, SignerType.NIP44_DECRYPT -> encryptedData.toPermissionType(isEncrypt = false)
+    SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> this.toString()
     SignerType.DECRYPT_ZAP_EVENT -> "DECRYPT_ZAP_EVENT"
     else -> this.toString()
 }
@@ -35,6 +36,8 @@ val encryptDecryptSignerTypes = setOf(
     SignerType.NIP44_ENCRYPT,
     SignerType.NIP04_DECRYPT,
     SignerType.NIP44_DECRYPT,
+    SignerType.NIP44_V3_ENCRYPT,
+    SignerType.NIP44_V3_DECRYPT,
     SignerType.DECRYPT_ZAP_EVENT,
 )
 

@@ -224,6 +224,8 @@ class SignerProvider : ContentProvider() {
                 "content://$appId.NIP44_DECRYPT",
                 "content://$appId.NIP04_ENCRYPT",
                 "content://$appId.NIP44_ENCRYPT",
+                "content://$appId.NIP44_V3_DECRYPT",
+                "content://$appId.NIP44_V3_ENCRYPT",
                 "content://$appId.DECRYPT_ZAP_EVENT",
                 -> {
                     val content = projection?.first() ?: return null
@@ -240,11 +242,30 @@ class SignerProvider : ContentProvider() {
                             "NIP44_DECRYPT" -> SignerType.NIP44_DECRYPT
                             "NIP04_ENCRYPT" -> SignerType.NIP04_ENCRYPT
                             "NIP44_ENCRYPT" -> SignerType.NIP44_ENCRYPT
+                            "NIP44_V3_DECRYPT" -> SignerType.NIP44_V3_DECRYPT
+                            "NIP44_V3_ENCRYPT" -> SignerType.NIP44_V3_ENCRYPT
                             "DECRYPT_ZAP_EVENT" -> SignerType.DECRYPT_ZAP_EVENT
                             else -> null
                         } ?: return null
 
-                    val isEncrypt = type == SignerType.NIP04_ENCRYPT || type == SignerType.NIP44_ENCRYPT
+                    val isEncrypt = type == SignerType.NIP04_ENCRYPT ||
+                        type == SignerType.NIP44_ENCRYPT ||
+                        type == SignerType.NIP44_V3_ENCRYPT
+                    val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
+
+                    // V3 carries kind and scope as projection[3] and projection[4].
+                    val (v3Kind, v3Scope) = if (isV3) {
+                        val kindStr = projection.getOrNull(3)
+                        val scopeStr = projection.getOrNull(4) ?: ""
+                        val parsedKind = kindStr?.toIntOrNull()
+                        if (parsedKind == null) {
+                            Log.d(Amber.TAG, "NIP-44 v3 request missing/invalid kind")
+                            return null
+                        }
+                        parsedKind to scopeStr
+                    } else {
+                        null to ""
+                    }
 
                     // For ENCRYPT: classify plaintext input; for DECRYPT: perform operation first then classify result
                     val result =
@@ -258,6 +279,8 @@ class SignerProvider : ContentProvider() {
                                         type,
                                         account,
                                         pubkey,
+                                        v3Kind,
+                                        v3Scope,
                                     ) ?: "Could not decrypt the message"
                                 }
                             } catch (e: Exception) {
@@ -276,18 +299,20 @@ class SignerProvider : ContentProvider() {
                             }
                         }
 
-                    // Classify the content to determine EncryptedDataKind-based permission type
-                    val classifyContent = if (isEncrypt) content else (result ?: content)
-                    val permType = permissionTypeFromContent(classifyContent, isEncrypt, type)
-
-                    var permission = permDao.getPermission(packageName, permType)
-                    if (permission == null) {
-                        permission = permDao.getPermission(
-                            packageName,
-                            type.toString(),
-                        )
+                    // Permission lookup. V3 grants are scoped by (packageName,
+                    // SignerType, kind); fall back to a kind=null "all kinds"
+                    // grant. V3 grants do NOT satisfy V2 requests and vice versa.
+                    var permission = if (isV3) {
+                        permDao.getPermission(packageName, type.toString(), v3Kind!!)
+                            ?: permDao.getPermission(packageName, type.toString())
+                    } else {
+                        // Classify the content to determine EncryptedDataKind-based permission type
+                        val classifyContent = if (isEncrypt) content else (result ?: content)
+                        val permType = permissionTypeFromContent(classifyContent, isEncrypt, type)
+                        permDao.getPermission(packageName, permType)
+                            ?: permDao.getPermission(packageName, type.toString())
                     }
-                    if (permission == null) {
+                    if (permission == null && !isV3) {
                         val nip = when (stringType) {
                             "NIP04_DECRYPT" -> 4
                             "NIP44_DECRYPT" -> 44
@@ -316,7 +341,7 @@ class SignerProvider : ContentProvider() {
                                         0,
                                         packageName,
                                         uriString.replace("content://$appId.", ""),
-                                        null,
+                                        v3Kind,
                                         TimeUtils.now(),
                                         false,
                                         content = content,
@@ -343,6 +368,8 @@ class SignerProvider : ContentProvider() {
                                     type,
                                     account,
                                     pubkey,
+                                    v3Kind,
+                                    v3Scope,
                                 ) ?: "Could not decrypt the message"
                             }
                         } catch (e: Exception) {
@@ -367,7 +394,7 @@ class SignerProvider : ContentProvider() {
                                     0,
                                     packageName,
                                     uriString.replace("content://$appId.", ""),
-                                    null,
+                                    v3Kind,
                                     TimeUtils.now(),
                                     true,
                                     content = if (!isEncrypt) finalResult else content,

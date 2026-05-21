@@ -36,7 +36,9 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
+import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
@@ -813,7 +815,77 @@ fun BunkerSingleEventHomeScreen(
         }
 
         else -> {
-            if (type == SignerType.DECRYPT_ZAP_EVENT) {
+            if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                // NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz
+                // doesn't know the method name); kind/scope are at params[1..2].
+                val v3Kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest.request)
+                val v3Scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest.request)
+                val permission = applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString() && it.kind == v3Kind
+                } ?: applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString() && it.kind == null
+                }
+
+                val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+
+                BunkerEncryptDecryptData(
+                    modifier = modifier,
+                    encryptedData = bunkerRequest.encryptedData,
+                    shouldRunOnAccept = acceptOrReject,
+                    appName = "$appName (kind $v3Kind${if (v3Scope.isNotEmpty()) " · scope \"$v3Scope\"" else ""})",
+                    type = type,
+                    account = account,
+                    defaultScope = DecryptTypeScope.SPECIFIC,
+                    onAccept = { rememberType, scope ->
+                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                            val result = try {
+                                AmberUtils.encryptOrDecryptData(
+                                    BunkerRequestUtils.getDataFromBunker(bunkerRequest.request),
+                                    type,
+                                    account,
+                                    bunkerRequest.request.params.first(),
+                                    v3Kind,
+                                    v3Scope,
+                                ) ?: ""
+                            } catch (e: Exception) {
+                                ""
+                            }
+
+                            // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
+                            val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                            BunkerRequestUtils.sendResult(
+                                context = context,
+                                account = account,
+                                key = key,
+                                response = result,
+                                bunkerRequest = bunkerRequest,
+                                kind = grantedKind,
+                                onLoading = onLoading,
+                                permissions = null,
+                                appName = appName,
+                                signPolicy = null,
+                                shouldCloseApplication = bunkerRequest.closeApplication,
+                                rememberType = rememberType,
+                                decryptTypeScope = scope,
+                            )
+                        }
+                    },
+                    onReject = { rememberType, scope ->
+                        val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = rememberType,
+                            signerType = type,
+                            kind = grantedKind,
+                            onLoading = onLoading,
+                            decryptTypeScope = scope,
+                        )
+                    },
+                )
+            } else if (type == SignerType.DECRYPT_ZAP_EVENT) {
                 val permission =
                     applicationEntity?.permissions?.firstOrNull {
                         it.pkKey == key && it.type == type.toString()

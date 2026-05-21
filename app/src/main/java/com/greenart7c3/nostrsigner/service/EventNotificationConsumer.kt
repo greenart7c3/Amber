@@ -455,10 +455,27 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
-        val projection = if (type == SignerType.PING) {
-            arrayOf(acc.npub)
-        } else {
-            arrayOf(data, pubKey, acc.npub)
+        val projection = when {
+            type == SignerType.PING -> arrayOf(acc.npub)
+            type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT -> {
+                val kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest)
+                val scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest)
+                if (kind == null) {
+                    saveLog("NIP-44 v3 request missing/invalid kind", relay.url, acc.npub)
+                    BunkerRequestUtils.sendBunkerResponse(
+                        context = applicationContext,
+                        account = acc,
+                        bunkerRequest = request,
+                        bunkerResponse = BunkerResponse(bunkerRequest.id, "", "kind is required for nip44v3"),
+                        relays = relays,
+                        onLoading = { },
+                        onDone = { },
+                    )
+                    return
+                }
+                arrayOf(data, pubKey, acc.npub, kind.toString(), scope)
+            }
+            else -> arrayOf(data, pubKey, acc.npub)
         }
         val cursor =
             applicationContext.contentResolver.query(

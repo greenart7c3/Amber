@@ -318,6 +318,10 @@ object ApplicationBackup {
             apps++
             permissions += perms.size
         }
+        Amber.instance.profileSubscription.closeSub()
+        Amber.instance.notificationSubscription.closeAllSubs()
+        Amber.instance.disconnectIntentionally()
+        Amber.instance.checkForNewRelaysAndUpdateAllFilters(shouldReconnect = true)
         RestoreResult.Success(apps, permissions)
     } catch (e: Exception) {
         if (e is CancellationException) throw e

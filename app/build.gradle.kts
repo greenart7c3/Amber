@@ -30,7 +30,6 @@ android {
     }
 
     androidResources {
-        @Suppress("UnstableApiUsage")
         localeFilters += listOf(
             "bn-BD",
             "cs",
@@ -123,6 +122,7 @@ android {
             }
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             isMinifyEnabled = true
+            isShrinkResources = true
             resValue("string", "app_name", "@string/app_name_release")
         }
         debug {

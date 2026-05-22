@@ -279,7 +279,7 @@ object LocalPreferences {
                 rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
                 rateLimitMaxPerWindow = getInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, 5),
                 rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
-                backupApplications = getBoolean(SettingsKeys.BACKUP_APPLICATIONS.key, true),
+                backupApplications = getBoolean(SettingsKeys.BACKUP_APPLICATIONS.key, false),
             )
         }
     }

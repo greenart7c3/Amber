@@ -312,6 +312,7 @@ class Amber :
 
     fun startBackupApplicationsAlarm() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
+        if (!settings.backupApplications) return
 
         val workManager = WorkManager.getInstance(this)
 

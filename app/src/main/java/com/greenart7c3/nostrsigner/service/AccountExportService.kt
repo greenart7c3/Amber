@@ -61,6 +61,7 @@ object AccountExportService {
                                     picture = MutableStateFlow(accountData.picture ?: ""),
                                     signPolicy = accountData.signPolicy,
                                     didBackup = accountData.didBackup,
+                                    backupApplications = false,
                                     signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                                 )
                                 LocalPreferences.switchToAccount(Amber.instance, accountData.npub)
@@ -131,6 +132,7 @@ object AccountExportService {
                         picture = MutableStateFlow(""),
                         signPolicy = 1,
                         didBackup = true,
+                        backupApplications = false,
                         signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                     )
                     LocalPreferences.switchToAccount(Amber.instance, hexKey.toNpub())

@@ -38,6 +38,7 @@ class Account(
     val picture: MutableStateFlow<String>,
     signPolicy: Int,
     didBackup: Boolean,
+    backupApplications: Boolean,
 ) {
     var signPolicy: Int = signPolicy
         set(value) {
@@ -48,6 +49,14 @@ class Account(
         }
 
     var didBackup: Boolean = didBackup
+        set(value) {
+            if (field != value) {
+                field = value
+                _saveable.value = AccountState(this)
+            }
+        }
+
+    var backupApplications: Boolean = backupApplications
         set(value) {
             if (field != value) {
                 field = value

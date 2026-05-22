@@ -14,12 +14,10 @@ class BackupApplicationsWorker(appContext: Context, workerParams: WorkerParamete
     override suspend fun doWork(): Result {
         if (BuildFlavorChecker.isOfflineFlavor()) return Result.success()
 
-        val amber = Amber.instance
-        if (!amber.settings.backupApplications) return Result.success()
-
         LocalPreferences.allSavedAccounts(applicationContext).forEach { info ->
             try {
                 val account = LocalPreferences.loadFromEncryptedStorage(applicationContext, info.npub) ?: return@forEach
+                if (!account.backupApplications) return@forEach
                 ApplicationBackup.publishBackup(info.npub, account)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e

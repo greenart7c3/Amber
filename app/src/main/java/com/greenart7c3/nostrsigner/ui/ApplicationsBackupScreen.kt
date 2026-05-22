@@ -28,7 +28,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
@@ -45,7 +44,7 @@ fun ApplicationsBackupScreen(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
-    var backupApplications by remember { mutableStateOf(Amber.instance.settings.backupApplications) }
+    var backupApplications by remember { mutableStateOf(account.backupApplications) }
     var isBusy by remember { mutableStateOf(false) }
     var showRestoreConfirm by remember { mutableStateOf(false) }
 
@@ -59,12 +58,10 @@ fun ApplicationsBackupScreen(
                 .clickable {
                     val newValue = !backupApplications
                     backupApplications = newValue
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateBackupApplications(context, newValue)
-                        if (newValue) {
+                    account.backupApplications = newValue
+                    if (newValue) {
+                        scope.launch(Dispatchers.IO) {
                             Amber.instance.startBackupApplicationsAlarm()
-                        } else {
-                            Amber.instance.cancelBackupApplicationsAlarm()
                         }
                     }
                 },
@@ -81,12 +78,10 @@ fun ApplicationsBackupScreen(
                 checked = backupApplications,
                 onCheckedChange = { enabled ->
                     backupApplications = enabled
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateBackupApplications(context, enabled)
-                        if (enabled) {
+                    account.backupApplications = enabled
+                    if (enabled) {
+                        scope.launch(Dispatchers.IO) {
                             Amber.instance.startBackupApplicationsAlarm()
-                        } else {
-                            Amber.instance.cancelBackupApplicationsAlarm()
                         }
                     }
                 },
@@ -138,7 +133,7 @@ fun ApplicationsBackupScreen(
                     showRestoreConfirm = false
                     isBusy = true
                     scope.launch(Dispatchers.IO) {
-                        val result = ApplicationBackup.restoreFromRelays(account.npub, account)
+                        val result = ApplicationBackup.restoreFromRelays(account)
                         withContext(Dispatchers.Main) {
                             val msg = when (result) {
                                 is RestoreResult.Success -> context.getString(R.string.restore_success, result.apps, result.permissions)
@@ -146,6 +141,7 @@ fun ApplicationsBackupScreen(
                                 is RestoreResult.Failed -> context.getString(R.string.restore_failed, result.message)
                             }
                             Toast.makeText(context, msg, Toast.LENGTH_LONG).show()
+                            backupApplications = account.backupApplications
                             isBusy = false
                         }
                     }

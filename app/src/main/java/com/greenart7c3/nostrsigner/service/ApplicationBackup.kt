@@ -295,8 +295,8 @@ object ApplicationBackup {
         null
     }
 
-    suspend fun restoreFromPayload(npub: String, payload: BackupPayload): RestoreResult = try {
-        val dao = Amber.instance.dao(npub)
+    suspend fun restoreFromPayload(account: Account, payload: BackupPayload): RestoreResult = try {
+        val dao = Amber.instance.dao(account.npub)
         var apps = 0
         var permissions = 0
         payload.applications.forEach { backupApp ->
@@ -339,6 +339,8 @@ object ApplicationBackup {
             apps++
             permissions += perms.size
         }
+        account.backupApplications = true
+        Amber.instance.startBackupApplicationsAlarm()
         Amber.instance.profileSubscription.closeSub()
         Amber.instance.notificationSubscription.closeAllSubs()
         Amber.instance.disconnectIntentionally()
@@ -346,14 +348,14 @@ object ApplicationBackup {
         RestoreResult.Success(apps, permissions)
     } catch (e: Exception) {
         if (e is CancellationException) throw e
-        Log.e(Amber.TAG, "ApplicationBackup: failed to restore payload for $npub", e)
+        Log.e(Amber.TAG, "ApplicationBackup: failed to restore payload for ${account.npub}", e)
         RestoreResult.Failed(e.message ?: "Unknown error")
     }
 
-    suspend fun restoreFromRelays(npub: String, account: Account): RestoreResult {
+    suspend fun restoreFromRelays(account: Account): RestoreResult {
         val relays = resolveReadRelays(account)
         val event = fetchLatestBackupEvent(account, relays) ?: return RestoreResult.NoBackupFound
         val payload = decryptPayload(event, account) ?: return RestoreResult.Failed("Failed to decrypt backup")
-        return restoreFromPayload(npub, payload)
+        return restoreFromPayload(account, payload)
     }
 }

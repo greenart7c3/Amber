@@ -689,7 +689,7 @@
     <string name="event_kind_4455">Key transfer</string>
     <string name="event_kind_4454">Client key announcement</string>
     <string name="applications_backup">Applications backup</string>
-    <string name="applications_backup_explainer">When enabled, Amber publishes an encrypted copy of your connected applications and their permissions to relays once a day so you can restore them on a new device. Only you can decrypt the backup.</string>
+    <string name="applications_backup_explainer">When enabled, Amber publishes an encrypted copy of this account\'s connected applications and their permissions to relays once a day so you can restore them on a new device. Only you can decrypt the backup. Each account is toggled separately.</string>
     <string name="enable_applications_backup">Enable encrypted applications backup</string>
     <string name="backup_now">Backup now</string>
     <string name="restore_from_relays">Restore from relays</string>

@@ -123,6 +123,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,
             didBackup = true,
+            backupApplications = false,
             signer = NostrSignerInternal(keyPair),
         )
 
@@ -162,6 +163,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,
             didBackup = false,
+            backupApplications = false,
             signer = NostrSignerInternal(keyPair),
         )
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
@@ -200,7 +202,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun maybeOfferRestore(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        if (!Amber.instance.settings.backupApplications) return
 
         Amber.instance.applicationIOScope.launch {
             try {
@@ -232,7 +233,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
     fun acceptRestore(onResult: (RestoreResult) -> Unit) {
         val current = restorePrompt.value as? RestorePromptState.Found ?: return
         Amber.instance.applicationIOScope.launch {
-            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload)
+            val result = ApplicationBackup.restoreFromPayload(current.account, current.payload)
             restorePrompt.value = null
             launch(Dispatchers.Main) { onResult(result) }
         }

@@ -37,7 +37,6 @@ data class AmberSettings(
     val rateLimitEnabled: Boolean = true,
     val rateLimitMaxPerWindow: Int = 5,
     val rateLimitWindowSeconds: Int = 30,
-    val backupApplications: Boolean = false,
 ) {
     val useProxy: Boolean get() = torMode != TorMode.DISABLED
 }

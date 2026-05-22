@@ -678,4 +678,20 @@
     <string name="event_kind_10044">Encryption key annoucement</string>
     <string name="event_kind_4455">Key transfer</string>
     <string name="event_kind_4454">Client key announcement</string>
+    <string name="applications_backup">Applications backup</string>
+    <string name="applications_backup_explainer">When enabled, Amber publishes an encrypted copy of your connected applications and their permissions to relays once a day so you can restore them on a new device. Only you can decrypt the backup.</string>
+    <string name="enable_applications_backup">Enable encrypted applications backup</string>
+    <string name="backup_now">Backup now</string>
+    <string name="restore_from_relays">Restore from relays</string>
+    <string name="restore_confirm_title">Restore applications?</string>
+    <string name="restore_confirm_text">Permissions for applications that already exist on this device will be replaced with the backed-up permissions. New applications from the backup will be added. Continue?</string>
+    <string name="backup_success">Backup published</string>
+    <string name="backup_failed">Failed to publish backup</string>
+    <string name="restore_success">Restored %1$d applications and %2$d permissions</string>
+    <string name="restore_failed">Restore failed: %1$s</string>
+    <string name="restore_no_backup_found">No backup found on relays</string>
+    <string name="signin_restore_title">Restore backup?</string>
+    <string name="signin_restore_message">Found an encrypted applications backup with %1$d applications and %2$d permissions. Restore now?</string>
+    <string name="signin_restore_accept">Restore</string>
+    <string name="signin_restore_skip">Skip</string>
 </resources>

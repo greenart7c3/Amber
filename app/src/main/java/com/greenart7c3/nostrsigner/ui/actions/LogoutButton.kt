@@ -38,10 +38,10 @@ fun LogoutButton(
                 scope.launch(Dispatchers.IO) {
                     val account = LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                     account?.let {
-                        val database = Amber.instance.getDatabase(it.npub)
-                        val permissions = database.dao().getAll(it.hexKey)
+                        val dao = Amber.instance.dao(it.npub)
+                        val permissions = dao.getAll(it.hexKey)
                         permissions.forEach { app ->
-                            database.dao().delete(app)
+                            dao.delete(app)
                         }
                     }
 

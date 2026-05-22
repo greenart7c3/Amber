@@ -758,8 +758,8 @@ object IntentUtils {
         onLoading(true)
         Amber.instance.applicationIOScope.launch {
             try {
-                val database = Amber.instance.getDatabase(account.npub)
-                val savedApplication = database.dao().getByKey(key)
+                val dao = Amber.instance.dao(account.npub)
+                val savedApplication = dao.getByKey(key)
 
                 val application =
                     savedApplication ?: run {
@@ -836,7 +836,7 @@ object IntentUtils {
                 }
 
                 if (packageName != null) {
-                    database.dao().insertApplicationWithPermissions(application)
+                    dao.insertApplicationWithPermissions(application)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     Amber.instance.applicationIOScope.launch {
                         historyDatabase.dao().addHistory(
@@ -989,7 +989,7 @@ object IntentUtils {
                 )
             }
 
-            Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(application)
+            Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
             Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
                 listOf(
                     HistoryEntity(

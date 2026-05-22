@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!--
+        The debug buildType emits `resValue("string", "app_name", "@string/app_name_debug")`
+        into the androidTest APK as well as the main APK. The test APK does not include
+        the main app's res/, so the reference fails to link unless we supply the target
+        strings here. These values never surface to users — they only exist to satisfy
+        the test APK's resource linker.
+    -->
+    <string name="app_name_debug" translatable="false">Amber Debug</string>
+    <string name="app_name_release" translatable="false">Amber</string>
+</resources>

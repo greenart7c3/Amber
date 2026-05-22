@@ -320,8 +320,8 @@ fun EditConfigurationScreen(
                                     relays = relays,
                                     closeApplication = closeApp,
                                 )
-                            Amber.instance.getDatabase(account.npub).dao().delete(it.application)
-                            Amber.instance.getDatabase(account.npub).dao().insertApplicationWithPermissions(
+                            Amber.instance.dao(account.npub).delete(it.application)
+                            Amber.instance.dao(account.npub).insertApplicationWithPermissions(
                                 ApplicationWithPermissions(
                                     localApplicationData,
                                     it.permissions,
@@ -387,7 +387,7 @@ fun EditConfigurationScreen(
                 onClick = {
                     application?.let {
                         scope.launch(Dispatchers.IO) {
-                            Amber.instance.getDatabase(account.npub).dao().delete(it.application)
+                            Amber.instance.dao(account.npub).delete(it.application)
                             Amber.instance.getHistoryDatabase(account.npub).dao().deleteHistory(it.application.key)
 
                             scope.launch(Dispatchers.Main) {

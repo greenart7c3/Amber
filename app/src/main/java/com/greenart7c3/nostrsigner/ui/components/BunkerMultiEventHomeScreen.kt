@@ -225,15 +225,14 @@ fun BunkerMultiEventHomeScreen(
                                 } ?: continue
 
                             val localKey = request.localKey
-                            val database = Amber.instance.getDatabase(thisAccount.npub)
+                            val dao = Amber.instance.dao(thisAccount.npub)
                             val secret = if (request.request is BunkerRequestConnect) {
                                 request.request.secret ?: ""
                             } else {
                                 ""
                             }
                             val application =
-                                database
-                                    .dao()
+                                dao
                                     .getByKey(localKey) ?: ApplicationWithPermissions(
                                     application = ApplicationEntity(
                                         localKey,
@@ -315,9 +314,9 @@ fun BunkerMultiEventHomeScreen(
                                     } ?: continue
 
                                 val localKey = request.localKey
-                                val database = Amber.instance.getDatabase(thisAccount.npub)
+                                val dao = Amber.instance.dao(thisAccount.npub)
                                 val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
-                                val savedApplication = database.dao().getByKey(localKey)
+                                val savedApplication = dao.getByKey(localKey)
 
                                 val secret = if (request.request is BunkerRequestConnect) {
                                     request.request.secret ?: ""
@@ -374,7 +373,7 @@ fun BunkerMultiEventHomeScreen(
                                         )
                                     }
 
-                                    database.dao().insertApplicationWithPermissions(application)
+                                    dao.insertApplicationWithPermissions(application)
 
                                     historyDatabase.dao().addHistory(
                                         listOf(
@@ -427,7 +426,7 @@ fun BunkerMultiEventHomeScreen(
                                         )
                                     }
 
-                                    database.dao().insertApplicationWithPermissions(application)
+                                    dao.insertApplicationWithPermissions(application)
                                     historyDatabase.dao().addHistory(
                                         listOf(
                                             HistoryEntity(
@@ -468,7 +467,7 @@ fun BunkerMultiEventHomeScreen(
                                     }
                                 } else if (request.request is BunkerRequestConnect) {
                                     if (savedApplication == null) {
-                                        database.dao().insertApplicationWithPermissions(application)
+                                        dao.insertApplicationWithPermissions(application)
 
                                         historyDatabase.dao().addHistory(
                                             listOf(
@@ -522,7 +521,7 @@ fun BunkerMultiEventHomeScreen(
                                         )
                                     }
 
-                                    database.dao().insertApplicationWithPermissions(application)
+                                    dao.insertApplicationWithPermissions(application)
 
                                     historyDatabase.dao().addHistory(
                                         listOf(

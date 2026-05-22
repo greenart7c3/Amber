@@ -90,7 +90,7 @@ fun EditPermission(
 
     LaunchedEffect(selectedPackage) {
         val result = withContext(Dispatchers.IO) {
-            val dao = Amber.instance.getDatabase(account.npub).dao()
+            val dao = Amber.instance.dao(account.npub)
             dao.updateExpiredPermissions(TimeUtils.now())
             val perms = dao.getAllByKey(selectedPackage)
                 .sortedBy { "${it.type}-${it.kind}" }
@@ -122,8 +122,7 @@ fun EditPermission(
             },
         ) {
             scope.launch(Dispatchers.IO) {
-                Amber.instance.getDatabase(account.npub)
-                    .dao()
+                Amber.instance.dao(account.npub)
                     .deletePermissions(applicationData.key)
 
                 withContext(Dispatchers.Main) {
@@ -205,8 +204,7 @@ fun EditPermission(
 
                     scope.launch(Dispatchers.IO) {
                         Amber.instance
-                            .getDatabase(account.npub)
-                            .dao()
+                            .dao(account.npub)
                             .insertPermissions(listOf(updated))
                     }
                 },
@@ -215,8 +213,7 @@ fun EditPermission(
 
                     scope.launch(Dispatchers.IO) {
                         Amber.instance
-                            .getDatabase(account.npub)
-                            .dao()
+                            .dao(account.npub)
                             .deletePermission(deleted)
                     }
                 },

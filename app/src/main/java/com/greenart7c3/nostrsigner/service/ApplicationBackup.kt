@@ -126,28 +126,39 @@ object ApplicationBackup {
     fun fromJson(json: String): BackupPayload = mapper.readValue(json)
 
     /**
-     * Returns inbox relays (NIP-65 read-marker) ∪ default profile relays ∪ aggregator.
-     * When no inbox relays are advertised, falls back to nos.lol + relay.damus.io
-     * so the backup still reaches popular public relays.
+     * Relays to query when fetching an existing backup:
+     * inbox (NIP-65 read-marker) ∪ aggregator ∪ INBOX_FALLBACK_RELAYS.
      */
-    suspend fun resolveBackupRelays(account: Account): Set<NormalizedRelayUrl> {
-        val settings = Amber.instance.settings
+    suspend fun resolveReadRelays(account: Account): Set<NormalizedRelayUrl> {
         val out = mutableSetOf<NormalizedRelayUrl>()
-        out.addAll(settings.defaultProfileRelays)
         AGGREGATOR_RELAY?.let { out.add(it) }
+        out.addAll(INBOX_FALLBACK_RELAYS)
+        out.addAll(fetchInboxRelays(account))
+        return out
+    }
+
+    /**
+     * Relays to publish to: only the user's inbox relays. When the user has not
+     * advertised an inbox list yet, fall back to aggregator + INBOX_FALLBACK_RELAYS
+     * so the backup still lands somewhere a fresh device can find.
+     */
+    suspend fun resolveWriteRelays(account: Account): Set<NormalizedRelayUrl> {
         val inbox = fetchInboxRelays(account)
-        if (inbox.isEmpty()) {
-            out.addAll(INBOX_FALLBACK_RELAYS)
-        } else {
-            out.addAll(inbox)
-        }
+        if (inbox.isNotEmpty()) return inbox
+        val out = mutableSetOf<NormalizedRelayUrl>()
+        AGGREGATOR_RELAY?.let { out.add(it) }
+        out.addAll(INBOX_FALLBACK_RELAYS)
         return out
     }
 
     private suspend fun fetchInboxRelays(account: Account): Set<NormalizedRelayUrl> {
         val client = Amber.instance.client
-        val profileRelays = Amber.instance.settings.defaultProfileRelays
-        if (profileRelays.isEmpty()) return emptySet()
+        val discoveryRelays = mutableSetOf<NormalizedRelayUrl>().apply {
+            addAll(Amber.instance.settings.defaultProfileRelays)
+            AGGREGATOR_RELAY?.let { add(it) }
+            addAll(INBOX_FALLBACK_RELAYS)
+        }
+        if (discoveryRelays.isEmpty()) return emptySet()
 
         val subId = UUID.randomUUID().toString()
         val latest = mutableMapOf<Long, Event>()
@@ -170,7 +181,7 @@ object ApplicationBackup {
                 authors = listOf(account.hexKey),
                 limit = 1,
             )
-            client.subscribe(subId, profileRelays.associateWith { listOf(filter) })
+            client.subscribe(subId, discoveryRelays.associateWith { listOf(filter) })
             delay(INBOX_FETCH_TIMEOUT_MS)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
@@ -215,7 +226,7 @@ object ApplicationBackup {
                 ),
                 encrypted,
             )
-            val relays = resolveBackupRelays(account)
+            val relays = resolveWriteRelays(account)
             if (relays.isEmpty()) {
                 Log.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
                 return false
@@ -340,7 +351,7 @@ object ApplicationBackup {
     }
 
     suspend fun restoreFromRelays(npub: String, account: Account): RestoreResult {
-        val relays = resolveBackupRelays(account)
+        val relays = resolveReadRelays(account)
         val event = fetchLatestBackupEvent(account, relays) ?: return RestoreResult.NoBackupFound
         val payload = decryptPayload(event, account) ?: return RestoreResult.Failed("Failed to decrypt backup")
         return restoreFromPayload(npub, payload)

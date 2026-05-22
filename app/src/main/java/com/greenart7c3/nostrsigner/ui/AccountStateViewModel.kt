@@ -209,7 +209,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
                 restorePrompt.value = RestorePromptState.Loading
 
-                val relays = ApplicationBackup.resolveBackupRelays(account)
+                val relays = ApplicationBackup.resolveReadRelays(account)
                 val event = ApplicationBackup.fetchLatestBackupEvent(account, relays)
                 if (event == null) {
                     restorePrompt.value = null

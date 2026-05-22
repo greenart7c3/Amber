@@ -30,6 +30,7 @@ android {
     }
 
     androidResources {
+        @Suppress("UnstableApiUsage")
         localeFilters += listOf(
             "bn-BD",
             "cs",

@@ -95,10 +95,6 @@ android {
         )
     }
 
-    ksp {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
-
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_21
         targetCompatibility = JavaVersion.VERSION_21
@@ -173,6 +169,10 @@ android {
 
 composeCompiler {
     reportsDestination.set(layout.buildDirectory.dir("compose_compiler"))
+}
+
+ksp {
+    arg("room.schemaLocation", "$projectDir/schemas")
 }
 
 dependencies {

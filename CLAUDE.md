@@ -13,7 +13,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./build.sh                       # builds both offline and free release variants to ~/release/
 ```
 
-Git hooks are auto-installed via the root `build.gradle` preBuild task — no manual setup needed.
+Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — no manual setup needed.
 
 ## Build flavors
 

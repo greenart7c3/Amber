@@ -4,9 +4,13 @@ import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.ApplicationBackup
+import com.greenart7c3.nostrsigner.service.BackupPayload
+import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
@@ -16,6 +20,7 @@ import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.utils.Hex
+import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -23,11 +28,18 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+sealed interface RestorePromptState {
+    data object Loading : RestorePromptState
+    data class Found(val account: Account, val payload: BackupPayload, val createdAt: Long) : RestorePromptState
+}
+
 @Stable
 class AccountStateViewModel(npub: String?) : ViewModel() {
     private val _accountContent = MutableStateFlow<AccountState>(AccountState.LoggedOff)
     val accountContent = _accountContent.asStateFlow()
     private var observerJob: Job? = null
+
+    val restorePrompt: MutableStateFlow<RestorePromptState?> = MutableStateFlow(null)
 
     init {
         tryLoginExistingAccount(null, npub)
@@ -128,6 +140,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         }
         LocalPreferences.updatePrefsForLogin(Amber.instance, account, keyPair.pubKey.toHexKey(), keyPair.privKey!!.toHexKey(), null)
         startUI(account, route)
+        maybeOfferRestore(account)
     }
 
     suspend fun newKey(
@@ -183,5 +196,49 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
             }
         }
+    }
+
+    fun maybeOfferRestore(account: Account) {
+        if (BuildFlavorChecker.isOfflineFlavor()) return
+        if (!Amber.instance.settings.backupApplications) return
+
+        Amber.instance.applicationIOScope.launch {
+            try {
+                val dao = Amber.instance.dao(account.npub)
+                if (dao.getAll(account.hexKey).isNotEmpty()) return@launch
+
+                restorePrompt.value = RestorePromptState.Loading
+
+                val relays = ApplicationBackup.resolveReadRelays(account)
+                val event = ApplicationBackup.fetchLatestBackupEvent(account, relays)
+                if (event == null) {
+                    restorePrompt.value = null
+                    return@launch
+                }
+                val payload = ApplicationBackup.decryptPayload(event, account)
+                if (payload == null || payload.applications.isEmpty()) {
+                    restorePrompt.value = null
+                    return@launch
+                }
+                restorePrompt.value = RestorePromptState.Found(account, payload, event.createdAt)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e(Amber.TAG, "maybeOfferRestore: failed", e)
+                restorePrompt.value = null
+            }
+        }
+    }
+
+    fun acceptRestore(onResult: (RestoreResult) -> Unit) {
+        val current = restorePrompt.value as? RestorePromptState.Found ?: return
+        Amber.instance.applicationIOScope.launch {
+            val result = ApplicationBackup.restoreFromPayload(current.account.npub, current.payload)
+            restorePrompt.value = null
+            launch(Dispatchers.Main) { onResult(result) }
+        }
+    }
+
+    fun dismissRestore() {
+        restorePrompt.value = null
     }
 }

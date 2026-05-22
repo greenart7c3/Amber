@@ -145,6 +145,11 @@ class NotificationSubscription(
         LocalKeyAccountIndex.replaceAll(indexEntries)
     }
 
+    fun closeAllSubs() {
+        subIds.values.forEach { client.unsubscribe(it) }
+        subIds.clear()
+    }
+
     private fun computeSince(): Long {
         var since = TimeUtils.now()
         val latest = if (Amber.instance.notificationCache.size() > 0) Amber.instance.notificationCache.snapshot().maxOf { it.value } else 0L

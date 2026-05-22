@@ -71,6 +71,7 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_ENABLED("rate_limit_enabled"),
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
+    BACKUP_APPLICATIONS("backup_applications"),
 }
 
 @Immutable
@@ -149,6 +150,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, settings.rateLimitEnabled)
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
+                putBoolean(SettingsKeys.BACKUP_APPLICATIONS.key, settings.backupApplications)
             }
         }
     }
@@ -277,6 +279,7 @@ object LocalPreferences {
                 rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
                 rateLimitMaxPerWindow = getInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, 5),
                 rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
+                backupApplications = getBoolean(SettingsKeys.BACKUP_APPLICATIONS.key, false),
             )
         }
     }
@@ -534,6 +537,15 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    fun updateBackupApplications(context: Context, enabled: Boolean) {
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.BACKUP_APPLICATIONS.key, enabled)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()

@@ -34,6 +34,10 @@ private const val BACKUP_FETCH_TIMEOUT_MS = 15_000L
 private const val PAYLOAD_VERSION = 1
 
 private val AGGREGATOR_RELAY = RelayUrlNormalizer.normalizeOrNull("wss://aggr.nostr.land/")
+private val INBOX_FALLBACK_RELAYS = listOfNotNull(
+    RelayUrlNormalizer.normalizeOrNull("wss://nos.lol/"),
+    RelayUrlNormalizer.normalizeOrNull("wss://relay.damus.io/"),
+)
 
 data class BackupPermission(
     @param:JsonProperty("type") val type: String,
@@ -123,14 +127,20 @@ object ApplicationBackup {
 
     /**
      * Returns inbox relays (NIP-65 read-marker) ∪ default profile relays ∪ aggregator.
-     * Falls back to just profile relays + aggregator if the inbox fetch fails.
+     * When no inbox relays are advertised, falls back to nos.lol + relay.damus.io
+     * so the backup still reaches popular public relays.
      */
     suspend fun resolveBackupRelays(account: Account): Set<NormalizedRelayUrl> {
         val settings = Amber.instance.settings
         val out = mutableSetOf<NormalizedRelayUrl>()
         out.addAll(settings.defaultProfileRelays)
         AGGREGATOR_RELAY?.let { out.add(it) }
-        out.addAll(fetchInboxRelays(account))
+        val inbox = fetchInboxRelays(account)
+        if (inbox.isEmpty()) {
+            out.addAll(INBOX_FALLBACK_RELAYS)
+        } else {
+            out.addAll(inbox)
+        }
         return out
     }
 

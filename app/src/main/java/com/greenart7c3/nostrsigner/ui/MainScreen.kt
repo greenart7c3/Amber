@@ -1080,7 +1080,6 @@ fun MainScreen(
                                     .verticalScroll(scrollState)
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
-                                account = account,
                             )
                         },
                     )

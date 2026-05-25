@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.widget.Toast
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -10,6 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
@@ -18,6 +19,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
@@ -33,6 +35,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.RestoreResult
+import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -41,102 +44,58 @@ import kotlinx.coroutines.withContext
 @Composable
 fun ApplicationsBackupScreen(
     modifier: Modifier = Modifier,
-    account: Account,
 ) {
     val context = LocalContext.current
-    val scope = rememberCoroutineScope()
-    var backupApplications by remember { mutableStateOf(Amber.instance.settings.backupApplications) }
+
+    val accounts by produceState<List<Account>?>(initialValue = null) {
+        value = withContext(Dispatchers.IO) { LocalPreferences.allAccounts(context) }
+    }
+
+    val loadedAccounts = accounts
     var isBusy by remember { mutableStateOf(false) }
-    var showRestoreConfirm by remember { mutableStateOf(false) }
+    var pendingRestore by remember { mutableStateOf<Account?>(null) }
 
     Column(modifier = modifier) {
-        Row(
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 4.dp)
-                .clickable {
-                    val newValue = !backupApplications
-                    backupApplications = newValue
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateBackupApplications(context, newValue)
-                        if (newValue) {
-                            Amber.instance.startBackupApplicationsAlarm()
-                        } else {
-                            Amber.instance.cancelBackupApplicationsAlarm()
-                        }
-                    }
-                },
-        ) {
-            Column(modifier = Modifier.weight(1f)) {
-                Text(text = stringResource(R.string.enable_applications_backup))
-                Text(
-                    text = stringResource(R.string.applications_backup_explainer),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = Color.Gray,
-                )
-            }
-            Switch(
-                checked = backupApplications,
-                onCheckedChange = { enabled ->
-                    backupApplications = enabled
-                    scope.launch(Dispatchers.IO) {
-                        LocalPreferences.updateBackupApplications(context, enabled)
-                        if (enabled) {
-                            Amber.instance.startBackupApplicationsAlarm()
-                        } else {
-                            Amber.instance.cancelBackupApplicationsAlarm()
-                        }
-                    }
-                },
-            )
-        }
+        Text(
+            text = stringResource(R.string.applications_backup_explainer),
+            style = MaterialTheme.typography.bodySmall,
+            color = Color.Gray,
+        )
 
         Spacer(modifier = Modifier.height(16.dp))
 
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.backup_now),
-            enabled = !isBusy,
-            onClick = {
-                if (isBusy) return@AmberButton
-                isBusy = true
-                scope.launch(Dispatchers.IO) {
-                    val ok = ApplicationBackup.publishBackup(account.npub, account)
-                    withContext(Dispatchers.Main) {
-                        Toast.makeText(
-                            context,
-                            if (ok) context.getString(R.string.backup_success) else context.getString(R.string.backup_failed),
-                            Toast.LENGTH_LONG,
-                        ).show()
-                        isBusy = false
-                    }
+        if (loadedAccounts == null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.Center,
+            ) {
+                CircularProgressIndicator()
+            }
+        } else {
+            loadedAccounts.forEachIndexed { index, account ->
+                if (index > 0) {
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 16.dp))
                 }
-            },
-        )
-
-        Spacer(modifier = Modifier.height(8.dp))
-
-        AmberButton(
-            modifier = Modifier.fillMaxWidth(),
-            text = stringResource(R.string.restore_from_relays),
-            enabled = !isBusy,
-            onClick = {
-                if (!isBusy) showRestoreConfirm = true
-            },
-        )
+                AccountBackupRow(
+                    account = account,
+                    isBusy = isBusy,
+                    onBusyChange = { isBusy = it },
+                    onRequestRestore = { pendingRestore = account },
+                )
+            }
+        }
     }
 
-    if (showRestoreConfirm) {
+    pendingRestore?.let { account ->
         AlertDialog(
-            onDismissRequest = { showRestoreConfirm = false },
+            onDismissRequest = { pendingRestore = null },
             title = { Text(stringResource(R.string.restore_confirm_title)) },
             text = { Text(stringResource(R.string.restore_confirm_text)) },
             confirmButton = {
                 TextButton(onClick = {
-                    showRestoreConfirm = false
+                    pendingRestore = null
                     isBusy = true
+                    val scope = Amber.instance.applicationIOScope
                     scope.launch(Dispatchers.IO) {
                         val result = ApplicationBackup.restoreFromRelays(account.npub, account)
                         withContext(Dispatchers.Main) {
@@ -152,7 +111,91 @@ fun ApplicationsBackupScreen(
                 }) { Text(stringResource(R.string.yes)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRestoreConfirm = false }) { Text(stringResource(R.string.no)) }
+                TextButton(onClick = { pendingRestore = null }) { Text(stringResource(R.string.no)) }
+            },
+        )
+    }
+}
+
+@Composable
+private fun AccountBackupRow(
+    account: Account,
+    isBusy: Boolean,
+    onBusyChange: (Boolean) -> Unit,
+    onRequestRestore: () -> Unit,
+) {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val name by account.name.collectAsState()
+    var backupEnabled by remember(account.npub) {
+        mutableStateOf(LocalPreferences.getBackupApplications(context, account.npub))
+    }
+
+    Column(modifier = Modifier.fillMaxWidth()) {
+        Row(
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                if (name.isNotBlank()) {
+                    Text(text = name)
+                }
+                Text(
+                    text = account.npub.toShortenHex(),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                )
+            }
+            Switch(
+                checked = backupEnabled,
+                onCheckedChange = { enabled ->
+                    backupEnabled = enabled
+                    scope.launch(Dispatchers.IO) {
+                        LocalPreferences.setBackupApplications(context, account.npub, enabled)
+                        if (LocalPreferences.anyAccountBackupEnabled(context)) {
+                            Amber.instance.startBackupApplicationsAlarm()
+                        } else {
+                            Amber.instance.cancelBackupApplicationsAlarm()
+                        }
+                    }
+                },
+            )
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        AmberButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.backup_now),
+            enabled = !isBusy,
+            onClick = {
+                if (isBusy) return@AmberButton
+                onBusyChange(true)
+                scope.launch(Dispatchers.IO) {
+                    val ok = ApplicationBackup.publishBackup(account.npub, account)
+                    withContext(Dispatchers.Main) {
+                        Toast.makeText(
+                            context,
+                            if (ok) context.getString(R.string.backup_success) else context.getString(R.string.backup_failed),
+                            Toast.LENGTH_LONG,
+                        ).show()
+                        onBusyChange(false)
+                    }
+                }
+            },
+        )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        AmberButton(
+            modifier = Modifier.fillMaxWidth(),
+            text = stringResource(R.string.restore_from_relays),
+            enabled = !isBusy,
+            onClick = {
+                if (!isBusy) onRequestRestore()
             },
         )
     }

@@ -200,7 +200,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
 
     fun maybeOfferRestore(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        if (!Amber.instance.settings.backupApplications) return
+        if (!LocalPreferences.getBackupApplications(Amber.instance, account.npub)) return
 
         Amber.instance.applicationIOScope.launch {
             try {

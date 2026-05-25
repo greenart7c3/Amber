@@ -264,6 +264,14 @@ object IntentUtils {
                                 nip44v3Scope,
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
+                            // A NIP-44 v3 failure (missing/invalid kind, context
+                            // mismatch, bad MAC, corrupt payload) means the request
+                            // can never succeed: reject it without showing the user
+                            // an approval screen.
+                            if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                                emitInvalid(intent, packageName, "Invalid NIP-44 v3 request: ${e.message}", e)
+                                return null
+                            }
                             Amber.instance.applicationIOScope.launch {
                                 val database = Amber.instance.getLogDatabase(account.npub)
                                 database.dao().insertLog(
@@ -441,6 +449,14 @@ object IntentUtils {
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
                         if (e is FailedMigrationException) throw e
+                        // A NIP-44 v3 failure (missing/invalid kind, context
+                        // mismatch, bad MAC, corrupt payload) means the request
+                        // can never succeed: reject it without showing the user
+                        // an approval screen.
+                        if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                            emitInvalid(intent, packageName, "Invalid NIP-44 v3 request: ${e.message}", e)
+                            return null
+                        }
                         Amber.instance.applicationIOScope.launch {
                             val database = Amber.instance.getLogDatabase(account.npub)
                             database.dao().insertLog(

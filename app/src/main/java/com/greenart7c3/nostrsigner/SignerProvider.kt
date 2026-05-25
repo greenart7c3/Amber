@@ -26,6 +26,16 @@ import kotlinx.coroutines.runBlocking
 class SignerProvider : ContentProvider() {
     private val scope get() = Amber.instance.applicationIOScope
 
+    private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    private fun isValidBase64(value: String): Boolean = try {
+        kotlin.io.encoding.Base64.decode(value)
+        true
+    } catch (_: IllegalArgumentException) {
+        false
+    }
+
     override fun delete(
         uri: Uri,
         selection: String?,
@@ -254,17 +264,27 @@ class SignerProvider : ContentProvider() {
                     val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
 
                     // V3 carries kind and scope as projection[3] and projection[4].
+                    // A missing/invalid kind is a malformed request: auto-reject
+                    // instead of prompting the user.
                     val (v3Kind, v3Scope) = if (isV3) {
                         val kindStr = projection.getOrNull(3)
                         val scopeStr = projection.getOrNull(4) ?: ""
                         val parsedKind = kindStr?.toIntOrNull()
                         if (parsedKind == null) {
                             Log.d(Amber.TAG, "NIP-44 v3 request missing/invalid kind")
-                            return null
+                            return rejectedCursor()
                         }
                         parsedKind to scopeStr
                     } else {
                         null to ""
+                    }
+
+                    // For V3 encrypt the wire payload is base64-encoded plaintext.
+                    // Validate it up-front (no secret material involved) so a
+                    // malformed request is rejected without bothering the user.
+                    if (isV3 && isEncrypt && !isValidBase64(content)) {
+                        Log.d(Amber.TAG, "NIP-44 v3 encrypt payload is not valid base64")
+                        return rejectedCursor()
                     }
 
                     // For ENCRYPT: classify plaintext input; for DECRYPT: perform operation first then classify result
@@ -295,6 +315,10 @@ class SignerProvider : ContentProvider() {
                                         ),
                                     )
                                 }
+                                // A V3 decrypt that throws cannot succeed (wrong
+                                // version/context, bad MAC, corrupt padding, ...):
+                                // reject it rather than prompting the user.
+                                if (isV3) return rejectedCursor()
                                 "Could not decrypt the message"
                             }
                         }

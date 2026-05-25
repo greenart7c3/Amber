@@ -1,39 +1,60 @@
-# Changelog
+## Amber 6.1.0
 
-## 6.1.0
+- Better layout when connecting a new app
+- Fix some reported crashes
+- Fix signer dialog not closing after accepting a bunker request
+- Show name and npub when showing your account
+- Add a select/deselect all option in the permissions screen when connecting a new app
+- Show a invalid request screen when receiving a invalid request
+- Preview missing translation report before sending it
+- Add a rate limiting for intents based on app/type/event kind (rate limiting only applies to apps that don't implement sending multiple requests at once)
+- Some optimizations when accepting/rejecting intent requests
+- Added a stop service in the notification, this force closes the app and you have to manually open it again before using bunker applications
+- Added a option to disable the service start on boot
+- Only start the profile subscription for the current account
+- Always return hex key when logging in to an app to comply with nip 55
+- Added a close button in the empty requests screen
+- Added loading state to the report screens
+- Support for beta releases for the auto updater
+- Add a reset button for bunkers
+- Fix a connection issue when connecting to a new bunker by @npub1q3sle0kvfsehgsuexttt3ugjd8xdklxfwwkh559wxckmzddywnws6cd26p
+- Fix app starting on boot when not enabled
+- Support for sign psbt method
+- Fix relay auth whitelist when the relay contains port number
+- Change selectable options to be a bottom sheet
+- Added more options to the automatically sign this for
+- Add an encrypted applications backup that can be restored on a new device
 
-### Added
-- Sign PSBT (`sign_psbt`) support for NIP-55 and NIP-46 bunker requests, with a streamlined approval screen showing amount, change, addresses, and fee.
-- Encrypted applications backup via NIP-78, opt-in and configurable per account, with separate read/write backup relay sets and automatic relay restart after a restore.
-- Stable/beta update channel toggle and a periodic background update check via WorkManager.
-- Reset bunker button to disconnect and regenerate the connection secret.
-- Activity statistics card with accept/reject filtering on both the global Activities screen and per-app Activity screens.
-- Per-caller rate limiting for incoming intents (by caller, type, and kind).
-- Option to disable service start on boot, a dedicated service settings screen, and a Stop service action in the foreground notification.
-- Account path (index) selection for mnemonic login.
-- Select/deselect all toggle on the new-app permissions screen.
-- Option to show full content in the event and tags sections of the approval screen.
-- Support for additional Nostr event kinds (including 4454, 4455, 10044, and 30443).
+Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v6.1.0)
 
-### Changed
-- Approval-screen option pickers converted to bottom sheets, and the remember-choice control moved to a modal bottom sheet.
-- Restyled bunker connect and pubkey-login screens, and now show a shortened npub in the signing widget, account picker, and connect screens.
-- Permission lookups are cached in front of Room for faster repeated checks.
-- Missing-translation reports can be previewed before sending, and crash/translation report submissions now show a loading indicator.
-- Invalid `nostrsigner` intents now display an error screen, and a close-app button is shown on external request approval screens.
-- Migrated Gradle build scripts to the Kotlin DSL and enabled resource shrinking on release builds.
+If you like my work consider making a [donation](https://greenart7c3.com)
 
-### Fixed
-- Crash when expanding the raw PSBT card.
-- Relay matching now preserves the port when checking against the auth whitelist.
-- Statistics graph total no longer cut off for 4+ digit values.
-- Crash when launching the `POST_NOTIFICATIONS` permission request.
-- `IndexOutOfBoundsException` when the active account was not in the cached account list.
-- Compose snapshot crash in the configuration screen.
-- `ForegroundServiceStartNotAllowedException` now caught in the connectivity service.
-- Relays no longer fail to reconnect after an initial connection failure on startup.
-- Suggestion dropdown flash when pasting from the clipboard during login.
-- `SignerActivity` now always closes after handling bunker requests.
-- Enabled OkHttp WebSocket pings to detect half-closed connections, register the NIP-46 listening REQ before publishing the connect response, and always reconnect on a bunker response.
-- Fall back to nos.lol and relay.damus.io when no inbox relays are found.
-- Fixed memory leaks and hot-path inefficiencies.
+## Verifying the release
+
+In order to verify the release, you'll need to have `gpg` or `gpg2` installed on your system. Once you've obtained a copy (and hopefully verified that as well), you'll first need to import the keys that have signed this release if you haven't done so already:
+
+``` bash
+gpg --keyserver hkps://keys.openpgp.org --recv-keys 44F0AAEB77F373747E3D5444885822EED3A26A6D
+```
+
+Once you have his PGP key you can verify the release (assuming `manifest-v6.1.0.txt` and `manifest-v6.1.0.txt.sig` are in the current directory) with:
+
+``` bash
+gpg --verify manifest-v6.1.0.txt.sig manifest-v6.1.0.txt
+```
+
+You should see the following if the verification was successful:
+
+``` bash
+gpg: Signature made Fri 13 Sep 2024 08:06:52 AM -03
+gpg:                using RSA key 44F0AAEB77F373747E3D5444885822EED3A26A6D
+gpg: Good signature from "greenart7c3 <greenart7c3@proton.me>"
+```
+
+That will verify the signature on the main manifest page which ensures integrity and authenticity of the binaries you've downloaded locally. Next, depending on your operating system you should then re-calculate the sha256 sum of the binary, and compare that with the following hashes:
+
+``` bash
+cat manifest-v6.1.0.txt
+```
+
+One can use the `shasum -a 256 <file name here>` tool in order to re-compute the `sha256` hash of the target binary for your operating system. The produced hash should be compared with the hashes listed above and they should match exactly.

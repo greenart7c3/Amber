@@ -460,13 +460,18 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT -> {
                 val kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest)
                 val scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest)
-                if (kind == null) {
-                    saveLog("NIP-44 v3 request missing/invalid kind", relay.url, acc.npub)
+                // A v3 request that can never succeed — missing/invalid kind, a
+                // decrypt whose context (kind/scope) does not match the
+                // ciphertext, a bad MAC/padding, or a non-base64 encrypt payload
+                // — is rejected here, before any approval screen is shown.
+                val validationError = validateNip44v3Request(type, kind, scope, data, pubKey, acc)
+                if (validationError != null) {
+                    saveLog("Rejecting invalid NIP-44 v3 request: $validationError", relay.url, acc.npub)
                     BunkerRequestUtils.sendBunkerResponse(
                         context = applicationContext,
                         account = acc,
                         bunkerRequest = request,
-                        bunkerResponse = BunkerResponse(bunkerRequest.id, "", "kind is required for nip44v3"),
+                        bunkerResponse = BunkerResponse(bunkerRequest.id, "", validationError),
                         relays = relays,
                         onLoading = { },
                         onDone = { },
@@ -770,6 +775,37 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     } else {
         null
+    }
+
+    /**
+     * Validates a NIP-44 v3 bunker request. Returns null when the request can
+     * proceed, or an error message when it is malformed and must be rejected
+     * without prompting the user (missing/invalid kind, context mismatch on
+     * decrypt, bad MAC/padding, or a non-base64 encrypt payload).
+     */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    private fun validateNip44v3Request(
+        type: SignerType,
+        kind: Int?,
+        scope: String,
+        data: String,
+        pubKey: String,
+        acc: Account,
+    ): String? {
+        if (kind == null) return "kind is required for nip44v3"
+        return try {
+            if (type == SignerType.NIP44_V3_DECRYPT) {
+                acc.nip44v3Decrypt(data, pubKey, kind, scope)
+            } else {
+                kotlin.io.encoding.Base64.decode(data)
+            }
+            null
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            // Keep the response generic so we don't leak the ciphertext's
+            // embedded context back to the requester.
+            if (type == SignerType.NIP44_V3_DECRYPT) "could not decrypt the message" else "invalid encrypted payload"
+        }
     }
 
     fun notificationManager(): NotificationManager = ContextCompat.getSystemService(applicationContext, NotificationManager::class.java) as NotificationManager

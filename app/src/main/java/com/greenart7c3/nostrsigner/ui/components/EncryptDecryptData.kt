@@ -46,6 +46,8 @@ fun EncryptDecryptData(
     type: SignerType,
     account: Account,
     defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
+    nip44v3Kind: Int? = null,
+    nip44v3Scope: String = "",
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
 ) {
@@ -54,6 +56,9 @@ fun EncryptDecryptData(
     }
     var scope by remember { mutableStateOf(defaultScope) }
     val showScopeToggle = type != SignerType.DECRYPT_ZAP_EVENT
+    val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
+    // V3 surfaces "NIP-44 v3"; v2/v4 derive the label from the type name ("NIP44"/"NIP04").
+    val algoLabel = if (isV3) "NIP-44 v3" else type.name.split("_").first()
 
     Column(
         modifier,
@@ -68,14 +73,14 @@ fun EncryptDecryptData(
                     val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
                     val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
                     val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                    stringResource(R.string.wants_to_encrypt_with, displayTranslation, type.name.split("_").first())
+                    stringResource(R.string.wants_to_encrypt_with, displayTranslation, algoLabel)
                 }
 
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.wants_to_encrypt_this_list_of_tags_with, type.name.split("_").first())
+                    stringResource(R.string.wants_to_encrypt_this_list_of_tags_with, algoLabel)
                 }
 
-                else -> stringResource(R.string.wants_to_encrypt_this_text_with, type.name.split("_").first())
+                else -> stringResource(R.string.wants_to_encrypt_this_text_with, algoLabel)
             }
         } else {
             when (encryptedData) {
@@ -85,18 +90,18 @@ fun EncryptDecryptData(
                     val unknownKindString = stringResource(R.string.event_kind, encryptedData.event.kind.toString())
                     val altTag = encryptedData.event.tags.firstOrNull { it.size > 1 && it[0] == "alt" }?.getOrNull(1)
                     val displayTranslation = if (kindTranslation == unknownKindString && altTag != null) altTag else kindTranslation
-                    stringResource(R.string.wants_to_read_from_encrypted_content, displayTranslation, type.name.split("_").first())
+                    stringResource(R.string.wants_to_read_from_encrypted_content, displayTranslation, algoLabel)
                 }
 
                 is TagArrayEncryptedDataKind -> {
-                    stringResource(R.string.wants_to_read_this_list_of_tags_from_encrypted_content, type.name.split("_").first())
+                    stringResource(R.string.wants_to_read_this_list_of_tags_from_encrypted_content, algoLabel)
                 }
 
                 is PrivateZapEncryptedDataKind -> {
                     stringResource(R.string.wants_you_to, stringResource(R.string.decrypt_zap_event))
                 }
 
-                else -> stringResource(R.string.wants_to_read_this_text_from_encrypted_content, type.name.split("_").first())
+                else -> stringResource(R.string.wants_to_read_this_text_from_encrypted_content, algoLabel)
             }
         }
 
@@ -104,6 +109,11 @@ fun EncryptDecryptData(
             text.trim().capitalize(Locale.current),
             fontSize = 18.sp,
         )
+
+        if (isV3) {
+            Spacer(Modifier.size(8.dp))
+            Nip44v3ContextBox(kind = nip44v3Kind, scope = nip44v3Scope)
+        }
 
         Card(
             modifier = Modifier
@@ -200,11 +210,12 @@ fun EncryptDecryptData(
                     selected = scope,
                     options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
                     onSelected = { scope = it },
+                    // For V3 the toggle scopes the grant by event kind, not by content type.
                     label = {
                         stringResource(
                             when (it) {
-                                DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
-                                DecryptTypeScope.ALL -> R.string.for_all_methods
+                                DecryptTypeScope.SPECIFIC -> if (isV3) R.string.for_this_kind_only else R.string.for_this_method_only
+                                DecryptTypeScope.ALL -> if (isV3) R.string.for_all_kinds else R.string.for_all_methods
                             },
                         )
                     },
@@ -231,6 +242,33 @@ fun EncryptDecryptData(
                 onReject(rememberType, scope)
             },
         )
+    }
+}
+
+/**
+ * Shows the NIP-44 v3 context (event kind + scope) being authenticated by the
+ * request, so the user can see what they are granting access to.
+ */
+@Composable
+fun Nip44v3ContextBox(
+    kind: Int?,
+    scope: String,
+) {
+    LabeledBorderBox(
+        label = stringResource(R.string.nip44_v3_context),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp),
+    ) {
+        Column {
+            Text(stringResource(R.string.nip44_v3_kind, kind?.toString() ?: "?"))
+            Text(
+                stringResource(
+                    R.string.nip44_v3_scope,
+                    scope.ifEmpty { stringResource(R.string.nip44_v3_no_scope) },
+                ),
+            )
+        }
     }
 }
 

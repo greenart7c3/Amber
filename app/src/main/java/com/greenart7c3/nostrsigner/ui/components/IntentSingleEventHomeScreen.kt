@@ -221,6 +221,8 @@ fun IntentSingleEventHomeScreen(
                 // For V3, scope toggle's "SPECIFIC vs ALL" instead controls
                 // whether the grant is kind-scoped — handled via [kind] below.
                 defaultScope = if (isV3) DecryptTypeScope.SPECIFIC else DecryptTypeScope.ALL,
+                nip44v3Kind = intentData.nip44v3Kind,
+                nip44v3Scope = intentData.nip44v3Scope,
                 onAccept = { rememberType, scope ->
                     val result =
                         if (intentData.encryptedData?.result == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {

@@ -607,7 +607,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         bunkerRequest: BunkerRequest?,
         acc: Account,
         url: String,
-    ): EncryptedDataKind? = if (bunkerRequest is BunkerRequestNip44Decrypt) {
+    ): EncryptedDataKind? = if (bunkerRequest != null && (bunkerRequest.method == "nip44v3_encrypt" || bunkerRequest.method == "nip44v3_decrypt")) {
+        // V3 arrives as a generic BunkerRequest; build a preview the dedicated
+        // approval screen can render (it Base64-decodes the stored payload).
+        nip44v3EncryptedDataKind(bunkerRequest, acc)
+    } else if (bunkerRequest is BunkerRequestNip44Decrypt) {
         val result = acc.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
 
         if (result.startsWith("{")) {
@@ -783,6 +787,35 @@ class EventNotificationConsumer(private val applicationContext: Context) {
      * without prompting the user (missing/invalid kind, context mismatch on
      * decrypt, bad MAC/padding, or a non-base64 encrypt payload).
      */
+    /**
+     * Builds the preview [EncryptedDataKind] for a NIP-44 v3 bunker request.
+     * For encrypt, the wire payload is Base64 plaintext (shown decoded). For
+     * decrypt, the payload is decrypted and the plaintext stored Base64-encoded
+     * — matching what the approval screen expects. Returns null if it can't be
+     * produced (the request is auto-rejected elsewhere in that case).
+     */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    private fun nip44v3EncryptedDataKind(
+        bunkerRequest: BunkerRequest,
+        acc: Account,
+    ): EncryptedDataKind? {
+        val kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest) ?: return null
+        val scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest)
+        val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
+        val pubKey = bunkerRequest.params.firstOrNull() ?: return null
+        return try {
+            if (bunkerRequest.method == "nip44v3_encrypt") {
+                ClearTextEncryptedDataKind(data, "")
+            } else {
+                val plaintext = acc.nip44v3Decrypt(data, pubKey, kind, scope)
+                ClearTextEncryptedDataKind("", kotlin.io.encoding.Base64.encode(plaintext))
+            }
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            null
+        }
+    }
+
     @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private fun validateNip44v3Request(
         type: SignerType,

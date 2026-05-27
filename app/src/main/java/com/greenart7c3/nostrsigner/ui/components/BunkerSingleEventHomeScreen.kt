@@ -828,14 +828,17 @@ fun BunkerSingleEventHomeScreen(
 
                 val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
 
-                BunkerEncryptDecryptData(
+                Nip44v3ApprovalData(
                     modifier = modifier,
-                    encryptedData = bunkerRequest.encryptedData,
-                    shouldRunOnAccept = acceptOrReject,
-                    appName = "$appName (kind $v3Kind${if (v3Scope.isNotEmpty()) " · scope \"$v3Scope\"" else ""})",
+                    isBunker = true,
+                    appName = appName,
+                    packageName = null,
                     type = type,
                     account = account,
-                    defaultScope = DecryptTypeScope.SPECIFIC,
+                    kind = v3Kind,
+                    scope = v3Scope,
+                    encryptedData = bunkerRequest.encryptedData,
+                    shouldRunOnAccept = acceptOrReject,
                     onAccept = { rememberType, scope ->
                         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                             val result = try {

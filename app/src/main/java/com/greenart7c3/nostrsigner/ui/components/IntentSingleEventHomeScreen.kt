@@ -170,36 +170,84 @@ fun IntentSingleEventHomeScreen(
             )
         }
 
-        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
-        SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT, SignerType.DECRYPT_ZAP_EVENT,
-        -> {
-            val isV3 = intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT
+        SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
+            // V3 grants are scoped by (app, type, kind); fall back to a
+            // kind=null "all kinds" grant. They never satisfy v2/v4 requests.
+            val permType = intentData.type.toString()
+            val permission =
+                applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == permType && it.kind == intentData.nip44v3Kind
+                } ?: applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == permType && it.kind == null
+                }
+
+            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+
+            Nip44v3ApprovalData(
+                modifier = modifier,
+                isBunker = false,
+                appName = appName,
+                packageName = packageName,
+                type = intentData.type,
+                account = account,
+                kind = intentData.nip44v3Kind,
+                scope = intentData.nip44v3Scope,
+                encryptedData = intentData.encryptedData,
+                shouldRunOnAccept = acceptOrReject,
+                onAccept = { rememberType, scope ->
+                    val result = intentData.encryptedData?.result ?: ""
+                    // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ all-kinds grant (kind=null).
+                    val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+                    IntentUtils.sendResult(
+                        context,
+                        packageName,
+                        account,
+                        key,
+                        clipboardManager,
+                        result,
+                        result,
+                        intentData,
+                        v3Kind,
+                        onRemoveIntentData = onRemoveIntentData,
+                        onLoading = onLoading,
+                        rememberType = rememberType,
+                        decryptTypeScope = scope,
+                    )
+                },
+                onReject = { rememberType, scope ->
+                    val v3Kind = if (scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+                    IntentUtils.sendRejection(
+                        key = key,
+                        account = account,
+                        intentData = intentData,
+                        appName = appName,
+                        rememberType = rememberType,
+                        onLoading = onLoading,
+                        onRemoveIntentData = onRemoveIntentData,
+                        kind = v3Kind,
+                        decryptTypeScope = scope,
+                    )
+                },
+            )
+        }
+
+        SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
             val nip = when (intentData.type) {
                 SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
                 SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
                 SignerType.DECRYPT_ZAP_EVENT -> null
-                // V3 has its own per-kind permission model; don't fall back to a NIP-level grant.
-                SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> null
                 else -> null
             }
-            val isEncrypt = intentData.type == SignerType.NIP04_ENCRYPT ||
-                intentData.type == SignerType.NIP44_ENCRYPT ||
-                intentData.type == SignerType.NIP44_V3_ENCRYPT
-            val permType = if (isV3) intentData.type.toString() else intentData.encryptedData.toPermissionType(isEncrypt = isEncrypt)
+            val isEncrypt = intentData.type == SignerType.NIP04_ENCRYPT || intentData.type == SignerType.NIP44_ENCRYPT
+            val permType = intentData.encryptedData.toPermissionType(isEncrypt = isEncrypt)
             var permission =
                 applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == permType && (!isV3 || it.kind == intentData.nip44v3Kind)
+                    it.pkKey == key && it.type == permType
                 }
-            if (permission == null && !isV3) {
+            if (permission == null) {
                 permission =
                     applicationEntity?.permissions?.firstOrNull {
                         it.pkKey == key && it.type == intentData.type.toString()
-                    }
-            } else if (permission == null && isV3) {
-                // Fall back to a (V3, kind=null) "all kinds" grant.
-                permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == permType && it.kind == null
                     }
             }
             if (permission == null && nip != null) {
@@ -218,11 +266,6 @@ fun IntentSingleEventHomeScreen(
                 packageName = packageName,
                 type = intentData.type,
                 account = account,
-                // For V3, scope toggle's "SPECIFIC vs ALL" instead controls
-                // whether the grant is kind-scoped — handled via [kind] below.
-                defaultScope = if (isV3) DecryptTypeScope.SPECIFIC else DecryptTypeScope.ALL,
-                nip44v3Kind = intentData.nip44v3Kind,
-                nip44v3Scope = intentData.nip44v3Scope,
                 onAccept = { rememberType, scope ->
                     val result =
                         if (intentData.encryptedData?.result == "Could not decrypt the message" && (intentData.type == SignerType.DECRYPT_ZAP_EVENT)) {
@@ -230,10 +273,6 @@ fun IntentSingleEventHomeScreen(
                         } else {
                             intentData.encryptedData?.result ?: ""
                         }
-
-                    // V3: write the permission with the requested kind when
-                    // the user picked SPECIFIC, or kind=null (all kinds) for ALL.
-                    val v3Kind = if (isV3 && scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
 
                     IntentUtils.sendResult(
                         context,
@@ -244,7 +283,7 @@ fun IntentSingleEventHomeScreen(
                         result,
                         result,
                         intentData,
-                        v3Kind,
+                        null,
                         onRemoveIntentData = onRemoveIntentData,
                         onLoading = onLoading,
                         rememberType = rememberType,
@@ -252,7 +291,6 @@ fun IntentSingleEventHomeScreen(
                     )
                 },
                 onReject = { rememberType, scope ->
-                    val v3Kind = if (isV3 && scope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
                     IntentUtils.sendRejection(
                         key = key,
                         account = account,
@@ -261,7 +299,7 @@ fun IntentSingleEventHomeScreen(
                         rememberType = rememberType,
                         onLoading = onLoading,
                         onRemoveIntentData = onRemoveIntentData,
-                        kind = v3Kind,
+                        kind = null,
                         decryptTypeScope = scope,
                     )
                 },

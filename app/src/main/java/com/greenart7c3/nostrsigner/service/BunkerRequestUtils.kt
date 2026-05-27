@@ -381,6 +381,20 @@ object BunkerRequestUtils {
                         ),
                     )
                 }
+                if (!application.permissions.any { it.type == SignerType.PING.toString() }) {
+                    application.permissions.add(
+                        ApplicationPermissionsEntity(
+                            null,
+                            key,
+                            SignerType.PING.toString(),
+                            null,
+                            true,
+                            RememberType.ALWAYS.screenCode,
+                            Long.MAX_VALUE / 1000,
+                            0,
+                        ),
+                    )
+                }
                 // check if application has any relay not in saved relays
                 val savedRelays = Amber.instance.getSavedRelays(account)
                 if (relays.any { !savedRelays.contains(it) }) {

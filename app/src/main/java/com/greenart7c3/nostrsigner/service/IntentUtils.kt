@@ -35,6 +35,7 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
+import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
@@ -545,6 +546,7 @@ object IntentUtils {
         }
     }
 
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private suspend fun getEncryptedDataKind(
         type: SignerType,
         result: String,
@@ -553,6 +555,25 @@ object IntentUtils {
     ): EncryptedDataKind = when (type) {
         SignerType.DECRYPT_ZAP_EVENT -> {
             PrivateZapEncryptedDataKind(result)
+        }
+
+        // v3 wire values are Base64; decode once so display/history can read the
+        // plaintext from `text`, while `result` keeps the wire value.
+        SignerType.NIP44_V3_ENCRYPT -> {
+            val plaintext = try {
+                kotlin.io.encoding.Base64.decode(data).toString(Charsets.UTF_8)
+            } catch (_: Exception) {
+                data
+            }
+            ClearTextEncryptedDataKind(plaintext, result)
+        }
+        SignerType.NIP44_V3_DECRYPT -> {
+            val plaintext = try {
+                kotlin.io.encoding.Base64.decode(result).toString(Charsets.UTF_8)
+            } catch (_: Exception) {
+                result
+            }
+            ClearTextEncryptedDataKind(plaintext, result)
         }
 
         else -> {
@@ -854,9 +875,14 @@ object IntentUtils {
                                         SignerType.SIGN_EVENT -> event
                                         SignerType.NIP04_DECRYPT,
                                         SignerType.NIP44_DECRYPT,
-                                        SignerType.NIP44_V3_DECRYPT,
                                         SignerType.DECRYPT_ZAP_EVENT,
                                         -> value
+
+                                        // v3 wire values are Base64; log the readable
+                                        // plaintext already decoded into encryptedData.
+                                        SignerType.NIP44_V3_ENCRYPT,
+                                        SignerType.NIP44_V3_DECRYPT,
+                                        -> intentData.encryptedData.nip44v3Plaintext()
 
                                         else -> intentData.data
                                     },

@@ -785,9 +785,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
      * Builds the preview [EncryptedDataKind] for a NIP-44 v3 bunker request,
      * mirroring v2: encrypt stores the plaintext as `text` and the ciphertext
      * as `result`; decrypt stores the ciphertext as `text` and the decrypted
-     * plaintext as `result`. Returns null if it can't be produced (the request
-     * is auto-rejected elsewhere in that case).
+     * plaintext as `result`. The Base64 wire payload is decoded here once so
+     * history/display can use the readable plaintext. Returns null if it can't
+     * be produced (the request is auto-rejected elsewhere in that case).
      */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private fun nip44v3EncryptedDataKind(
         bunkerRequest: BunkerRequest,
         acc: Account,
@@ -797,12 +799,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
         val pubKey = bunkerRequest.params.firstOrNull() ?: return null
         return try {
+            // text = readable plaintext (for display/history); result = wire value.
             if (bunkerRequest.method == "nip44v3_encrypt") {
-                val ciphertext = acc.nip44v3Encrypt(data.toByteArray(Charsets.UTF_8), pubKey, kind, scope)
-                ClearTextEncryptedDataKind(data, ciphertext)
+                val plainBytes = kotlin.io.encoding.Base64.decode(data)
+                val ciphertext = acc.nip44v3Encrypt(plainBytes, pubKey, kind, scope)
+                ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), ciphertext)
             } else {
-                val plaintext = acc.nip44v3Decrypt(data, pubKey, kind, scope).toString(Charsets.UTF_8)
-                ClearTextEncryptedDataKind(data, plaintext)
+                val plainBytes = acc.nip44v3Decrypt(data, pubKey, kind, scope)
+                ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), kotlin.io.encoding.Base64.encode(plainBytes))
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e

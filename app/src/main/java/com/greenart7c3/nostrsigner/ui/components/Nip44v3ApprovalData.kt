@@ -27,10 +27,10 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
-import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.ui.RememberType
 
 /**
@@ -61,7 +61,7 @@ fun Nip44v3ApprovalData(
 
     val isEncrypt = type == SignerType.NIP44_V3_ENCRYPT
     val messageRes = if (isEncrypt) R.string.nip44_v3_wants_to_encrypt else R.string.nip44_v3_wants_to_decrypt
-    val displayContent = nip44v3DisplayContent(encryptedData, isEncrypt)
+    val displayContent = encryptedData.nip44v3Plaintext()
 
     Column(modifier) {
         if (isBunker) {
@@ -180,14 +180,4 @@ fun Nip44v3ContextBox(
             )
         }
     }
-}
-
-/**
- * The plaintext to show: encrypt stores it as `text`, decrypt as `result`
- * (populated when the request was parsed) — same shape as the v2 screen.
- */
-private fun nip44v3DisplayContent(encryptedData: EncryptedDataKind?, isEncrypt: Boolean): String = if (isEncrypt) {
-    (encryptedData as? ClearTextEncryptedDataKind)?.text ?: encryptedData?.result ?: ""
-} else {
-    encryptedData?.result ?: ""
 }

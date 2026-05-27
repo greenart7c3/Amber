@@ -28,6 +28,14 @@ class SignerProvider : ContentProvider() {
 
     private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
 
+    // Decodes the Base64 v3 wire value to readable plaintext for history.
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    private fun nip44v3Plaintext(wireValue: String): String = try {
+        kotlin.io.encoding.Base64.decode(wireValue).toString(Charsets.UTF_8)
+    } catch (_: Exception) {
+        wireValue
+    }
+
     override fun delete(
         uri: Uri,
         selection: String?,
@@ -395,6 +403,13 @@ class SignerProvider : ContentProvider() {
                             "Could not decrypt the message"
                         }
 
+                    // For v3 the wire value is Base64; this auto-accept path has no
+                    // EncryptedDataKind, so decode it once for the readable log.
+                    val historyContent = if (isV3) {
+                        nip44v3Plaintext(if (!isEncrypt) finalResult else content)
+                    } else {
+                        if (!isEncrypt) finalResult else content
+                    }
                     scope.launch {
                         historyDatabase.dao().addHistory(
                             listOf(
@@ -405,7 +420,7 @@ class SignerProvider : ContentProvider() {
                                     v3Kind,
                                     TimeUtils.now(),
                                     true,
-                                    content = if (!isEncrypt) finalResult else content,
+                                    content = historyContent,
                                 ),
                             ),
                             account.npub,

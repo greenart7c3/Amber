@@ -839,9 +839,9 @@ fun BunkerSingleEventHomeScreen(
                     encryptedData = bunkerRequest.encryptedData,
                     shouldRunOnAccept = acceptOrReject,
                     onAccept = { rememberType, scope ->
-                        // encryptedData.result holds the ciphertext (encrypt) or
-                        // decrypted plaintext (decrypt), computed when the request
-                        // arrived — same as the v2 path.
+                        // encryptedData.result holds the Base64 wire value (ciphertext
+                        // for encrypt, base64 plaintext for decrypt), computed when the
+                        // request arrived — same shape as the v2 path.
                         val result = bunkerRequest.encryptedData?.result ?: ""
                         // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
                         val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null

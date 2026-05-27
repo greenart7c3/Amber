@@ -16,6 +16,7 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -430,9 +431,13 @@ object BunkerRequestUtils {
                             SignerType.SIGN_EVENT,
                             SignerType.NIP04_DECRYPT,
                             SignerType.NIP44_DECRYPT,
-                            SignerType.NIP44_V3_DECRYPT,
                             SignerType.DECRYPT_ZAP_EVENT,
                             -> response
+                            // v3 wire values are Base64; log the readable plaintext
+                            // already decoded into encryptedData.
+                            SignerType.NIP44_V3_ENCRYPT,
+                            SignerType.NIP44_V3_DECRYPT,
+                            -> bunkerRequest.encryptedData.nip44v3Plaintext()
                             else -> getDataFromBunker(bunkerRequest.request)
                         },
                     ),

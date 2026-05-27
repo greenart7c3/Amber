@@ -31,6 +31,13 @@ fun SignerType.toPermissionTypeString(encryptedData: EncryptedDataKind?): String
     else -> this.toString()
 }
 
+/**
+ * The readable NIP-44 v3 plaintext. For v3 the data kind stores the real
+ * plaintext in `text` and the Base64 wire value in `result`, so history/display
+ * read `text` and never touch the wire encoding.
+ */
+fun EncryptedDataKind?.nip44v3Plaintext(): String = (this as? ClearTextEncryptedDataKind)?.text ?: this?.result ?: ""
+
 val encryptDecryptSignerTypes = setOf(
     SignerType.NIP04_ENCRYPT,
     SignerType.NIP44_ENCRYPT,

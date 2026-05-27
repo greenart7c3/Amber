@@ -854,12 +854,9 @@ object IntentUtils {
                                         SignerType.SIGN_EVENT -> event
                                         SignerType.NIP04_DECRYPT,
                                         SignerType.NIP44_DECRYPT,
+                                        SignerType.NIP44_V3_DECRYPT,
                                         SignerType.DECRYPT_ZAP_EVENT,
                                         -> value
-
-                                        // v3 payloads are Base64; log the readable plaintext.
-                                        SignerType.NIP44_V3_DECRYPT -> AmberUtils.decodeNip44v3LogContent(value)
-                                        SignerType.NIP44_V3_ENCRYPT -> AmberUtils.decodeNip44v3LogContent(intentData.data)
 
                                         else -> intentData.data
                                     },

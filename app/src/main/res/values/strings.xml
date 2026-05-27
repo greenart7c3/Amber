@@ -655,7 +655,6 @@
     <string name="for_all_kinds">All kinds</string>
     <string name="nip44_v3_wants_to_encrypt">wants to encrypt with NIP-44 v3</string>
     <string name="nip44_v3_wants_to_decrypt">wants to read encrypted content with NIP-44 v3</string>
-    <string name="nip44_v3_binary_data">Binary data (%1$s bytes)</string>
     <string name="event_kind_10086">Indexer relays</string>
     <string name="event_kind_10087">Proxy relays</string>
     <string name="event_kind_10088">Broadcast relays</string>

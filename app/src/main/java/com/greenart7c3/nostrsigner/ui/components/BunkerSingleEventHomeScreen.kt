@@ -36,7 +36,6 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
-import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PsbtDecoder
@@ -840,38 +839,27 @@ fun BunkerSingleEventHomeScreen(
                     encryptedData = bunkerRequest.encryptedData,
                     shouldRunOnAccept = acceptOrReject,
                     onAccept = { rememberType, scope ->
-                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val result = try {
-                                AmberUtils.encryptOrDecryptData(
-                                    BunkerRequestUtils.getDataFromBunker(bunkerRequest.request),
-                                    type,
-                                    account,
-                                    bunkerRequest.request.params.first(),
-                                    v3Kind,
-                                    v3Scope,
-                                ) ?: ""
-                            } catch (e: Exception) {
-                                ""
-                            }
-
-                            // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
-                            val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
-                            BunkerRequestUtils.sendResult(
-                                context = context,
-                                account = account,
-                                key = key,
-                                response = result,
-                                bunkerRequest = bunkerRequest,
-                                kind = grantedKind,
-                                onLoading = onLoading,
-                                permissions = null,
-                                appName = appName,
-                                signPolicy = null,
-                                shouldCloseApplication = bunkerRequest.closeApplication,
-                                rememberType = rememberType,
-                                decryptTypeScope = scope,
-                            )
-                        }
+                        // encryptedData.result holds the ciphertext (encrypt) or
+                        // decrypted plaintext (decrypt), computed when the request
+                        // arrived — same as the v2 path.
+                        val result = bunkerRequest.encryptedData?.result ?: ""
+                        // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
+                        val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            response = result,
+                            bunkerRequest = bunkerRequest,
+                            kind = grantedKind,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = appName,
+                            signPolicy = null,
+                            shouldCloseApplication = bunkerRequest.closeApplication,
+                            rememberType = rememberType,
+                            decryptTypeScope = scope,
+                        )
                     },
                     onReject = { rememberType, scope ->
                         val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null

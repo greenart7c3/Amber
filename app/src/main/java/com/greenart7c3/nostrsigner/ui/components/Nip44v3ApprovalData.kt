@@ -32,17 +32,13 @@ import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.ui.RememberType
-import java.nio.charset.CharacterCodingException
-import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * Dedicated approval screen for NIP-44 v3 encrypt/decrypt requests.
  *
  * Unlike the v2/v4 [EncryptDecryptData] screen, v3 authenticates an event
- * `kind` and a `scope`, and its wire payloads are Base64-encoded bytes — so
- * this screen surfaces that context explicitly and decodes the payload for
- * display. The scope toggle grants either a single kind or all kinds.
+ * `kind` and a `scope`, so this screen surfaces that context explicitly. The
+ * scope toggle grants either a single kind or all kinds.
  */
 @Composable
 fun Nip44v3ApprovalData(
@@ -187,45 +183,11 @@ fun Nip44v3ContextBox(
 }
 
 /**
- * The v3 payload travels Base64-encoded. Decode it for display, falling back to
- * a "binary data" placeholder when the bytes aren't valid UTF-8 text.
+ * The plaintext to show: encrypt stores it as `text`, decrypt as `result`
+ * (populated when the request was parsed) — same shape as the v2 screen.
  */
-@Composable
-private fun nip44v3DisplayContent(encryptedData: EncryptedDataKind?, isEncrypt: Boolean): String {
-    val raw = if (isEncrypt) {
-        (encryptedData as? ClearTextEncryptedDataKind)?.text ?: encryptedData?.result ?: ""
-    } else {
-        encryptedData?.result ?: ""
-    }
-    if (raw.isEmpty()) return ""
-    val binaryLabelSize = decodeBinarySizeOrNull(raw)
-    return binaryLabelSize?.let { stringResource(R.string.nip44_v3_binary_data, it.toString()) }
-        ?: decodeTextOrRaw(raw)
-}
-
-@OptIn(ExperimentalEncodingApi::class)
-private fun decodeBytesOrNull(value: String): ByteArray? = try {
-    Base64.decode(value)
-} catch (_: IllegalArgumentException) {
-    null
-}
-
-/** @return the byte count when [value] is Base64 of non-UTF-8 bytes, else null. */
-private fun decodeBinarySizeOrNull(value: String): Int? {
-    val bytes = decodeBytesOrNull(value) ?: return null
-    return try {
-        bytes.decodeToString(throwOnInvalidSequence = true)
-        null
-    } catch (_: CharacterCodingException) {
-        bytes.size
-    }
-}
-
-private fun decodeTextOrRaw(value: String): String {
-    val bytes = decodeBytesOrNull(value) ?: return value
-    return try {
-        bytes.decodeToString(throwOnInvalidSequence = true)
-    } catch (_: CharacterCodingException) {
-        value
-    }
+private fun nip44v3DisplayContent(encryptedData: EncryptedDataKind?, isEncrypt: Boolean): String = if (isEncrypt) {
+    (encryptedData as? ClearTextEncryptedDataKind)?.text ?: encryptedData?.result ?: ""
+} else {
+    encryptedData?.result ?: ""
 }

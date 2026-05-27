@@ -25,16 +25,11 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 
 object AmberUtils {
     /**
-     * For NIP-44 v3 callers, [data] follows the NIP-46 wire format:
-     *   - V3 encrypt: [data] is base64-encoded plaintext bytes; the result is the
-     *     v3 ciphertext string.
-     *   - V3 decrypt: [data] is the v3 ciphertext string; the result is the
-     *     base64-encoded plaintext bytes.
-     *
-     * [nip44v3Kind] and [nip44v3Scope] are required for the V3 SignerType variants
-     * (kind comes from the request; scope defaults to empty per spec).
+     * Like v2, NIP-44 v3 plaintext is handled as a UTF-8 string here: encrypt
+     * takes the plaintext and returns the ciphertext; decrypt returns the
+     * plaintext. [nip44v3Kind] and [nip44v3Scope] are required for the V3
+     * SignerType variants (kind comes from the request; scope defaults to empty).
      */
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     suspend fun encryptOrDecryptData(
         data: String,
         type: SignerType,
@@ -57,29 +52,15 @@ object AmberUtils {
         }
         SignerType.NIP44_V3_ENCRYPT -> {
             requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_ENCRYPT" }
-            val plaintextBytes = kotlin.io.encoding.Base64.decode(data)
-            account.nip44v3Encrypt(plaintextBytes, pubKey, nip44v3Kind, nip44v3Scope)
+            account.nip44v3Encrypt(data.toByteArray(Charsets.UTF_8), pubKey, nip44v3Kind, nip44v3Scope)
         }
         SignerType.NIP44_V3_DECRYPT -> {
             requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_DECRYPT" }
-            val plaintextBytes = account.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope)
-            kotlin.io.encoding.Base64.encode(plaintextBytes)
+            account.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope).toString(Charsets.UTF_8)
         }
         else -> {
             account.nip44Decrypt(data, pubKey)
         }
-    }
-
-    /**
-     * NIP-44 v3 wire payloads are Base64-encoded plaintext bytes. History logs
-     * should record the readable plaintext, so decode it here; if the bytes
-     * aren't valid base64/UTF-8 (e.g. binary data) keep the original string.
-     */
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
-    fun decodeNip44v3LogContent(content: String): String = try {
-        kotlin.io.encoding.Base64.decode(content).decodeToString(throwOnInvalidSequence = true)
-    } catch (_: Exception) {
-        content
     }
 
     suspend fun sendBunkerError(

@@ -608,8 +608,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         acc: Account,
         url: String,
     ): EncryptedDataKind? = if (bunkerRequest != null && (bunkerRequest.method == "nip44v3_encrypt" || bunkerRequest.method == "nip44v3_decrypt")) {
-        // V3 arrives as a generic BunkerRequest; build a preview the dedicated
-        // approval screen can render (it Base64-decodes the stored payload).
+        // V3 arrives as a generic BunkerRequest; build the preview the dedicated
+        // approval screen renders (plaintext, like the v2 path).
         nip44v3EncryptedDataKind(bunkerRequest, acc)
     } else if (bunkerRequest is BunkerRequestNip44Decrypt) {
         val result = acc.nip44Decrypt(bunkerRequest.ciphertext, bunkerRequest.pubKey)
@@ -782,19 +782,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
     }
 
     /**
-     * Validates a NIP-44 v3 bunker request. Returns null when the request can
-     * proceed, or an error message when it is malformed and must be rejected
-     * without prompting the user (missing/invalid kind, context mismatch on
-     * decrypt, bad MAC/padding, or a non-base64 encrypt payload).
+     * Builds the preview [EncryptedDataKind] for a NIP-44 v3 bunker request,
+     * mirroring v2: encrypt stores the plaintext as `text` and the ciphertext
+     * as `result`; decrypt stores the ciphertext as `text` and the decrypted
+     * plaintext as `result`. Returns null if it can't be produced (the request
+     * is auto-rejected elsewhere in that case).
      */
-    /**
-     * Builds the preview [EncryptedDataKind] for a NIP-44 v3 bunker request.
-     * For encrypt, the wire payload is Base64 plaintext (shown decoded). For
-     * decrypt, the payload is decrypted and the plaintext stored Base64-encoded
-     * — matching what the approval screen expects. Returns null if it can't be
-     * produced (the request is auto-rejected elsewhere in that case).
-     */
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private fun nip44v3EncryptedDataKind(
         bunkerRequest: BunkerRequest,
         acc: Account,
@@ -805,10 +798,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         val pubKey = bunkerRequest.params.firstOrNull() ?: return null
         return try {
             if (bunkerRequest.method == "nip44v3_encrypt") {
-                ClearTextEncryptedDataKind(data, "")
+                val ciphertext = acc.nip44v3Encrypt(data.toByteArray(Charsets.UTF_8), pubKey, kind, scope)
+                ClearTextEncryptedDataKind(data, ciphertext)
             } else {
-                val plaintext = acc.nip44v3Decrypt(data, pubKey, kind, scope)
-                ClearTextEncryptedDataKind("", kotlin.io.encoding.Base64.encode(plaintext))
+                val plaintext = acc.nip44v3Decrypt(data, pubKey, kind, scope).toString(Charsets.UTF_8)
+                ClearTextEncryptedDataKind(data, plaintext)
             }
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
@@ -816,7 +810,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
     }
 
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    /**
+     * Validates a NIP-44 v3 bunker request. Returns null when it can proceed, or
+     * a generic error when it is malformed and must be rejected without
+     * prompting the user (missing kind, or a decrypt whose context/MAC/padding
+     * doesn't check out).
+     */
     private fun validateNip44v3Request(
         type: SignerType,
         kind: Int?,
@@ -826,18 +825,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         acc: Account,
     ): String? {
         if (kind == null) return "kind is required for nip44v3"
+        if (type != SignerType.NIP44_V3_DECRYPT) return null
         return try {
-            if (type == SignerType.NIP44_V3_DECRYPT) {
-                acc.nip44v3Decrypt(data, pubKey, kind, scope)
-            } else {
-                kotlin.io.encoding.Base64.decode(data)
-            }
+            acc.nip44v3Decrypt(data, pubKey, kind, scope)
             null
         } catch (e: Exception) {
             if (e is kotlinx.coroutines.CancellationException) throw e
             // Keep the response generic so we don't leak the ciphertext's
             // embedded context back to the requester.
-            if (type == SignerType.NIP44_V3_DECRYPT) "could not decrypt the message" else "invalid encrypted payload"
+            "could not decrypt the message"
         }
     }
 

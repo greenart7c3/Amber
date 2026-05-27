@@ -28,14 +28,6 @@ class SignerProvider : ContentProvider() {
 
     private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
 
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
-    private fun isValidBase64(value: String): Boolean = try {
-        kotlin.io.encoding.Base64.decode(value)
-        true
-    } catch (_: IllegalArgumentException) {
-        false
-    }
-
     override fun delete(
         uri: Uri,
         selection: String?,
@@ -279,14 +271,6 @@ class SignerProvider : ContentProvider() {
                         null to ""
                     }
 
-                    // For V3 encrypt the wire payload is base64-encoded plaintext.
-                    // Validate it up-front (no secret material involved) so a
-                    // malformed request is rejected without bothering the user.
-                    if (isV3 && isEncrypt && !isValidBase64(content)) {
-                        Log.d(Amber.TAG, "NIP-44 v3 encrypt payload is not valid base64")
-                        return rejectedCursor()
-                    }
-
                     // For ENCRYPT: classify plaintext input; for DECRYPT: perform operation first then classify result
                     val result =
                         if (isEncrypt) {
@@ -411,12 +395,6 @@ class SignerProvider : ContentProvider() {
                             "Could not decrypt the message"
                         }
 
-                    // For v3 the wire payload is Base64; store the readable plaintext.
-                    val historyContent = if (isV3) {
-                        AmberUtils.decodeNip44v3LogContent(if (!isEncrypt) finalResult else content)
-                    } else {
-                        if (!isEncrypt) finalResult else content
-                    }
                     scope.launch {
                         historyDatabase.dao().addHistory(
                             listOf(
@@ -427,7 +405,7 @@ class SignerProvider : ContentProvider() {
                                     v3Kind,
                                     TimeUtils.now(),
                                     true,
-                                    content = historyContent,
+                                    content = if (!isEncrypt) finalResult else content,
                                 ),
                             ),
                             account.npub,

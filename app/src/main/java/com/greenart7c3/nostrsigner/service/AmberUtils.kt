@@ -70,6 +70,18 @@ object AmberUtils {
         }
     }
 
+    /**
+     * NIP-44 v3 wire payloads are Base64-encoded plaintext bytes. History logs
+     * should record the readable plaintext, so decode it here; if the bytes
+     * aren't valid base64/UTF-8 (e.g. binary data) keep the original string.
+     */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
+    fun decodeNip44v3LogContent(content: String): String = try {
+        kotlin.io.encoding.Base64.decode(content).decodeToString(throwOnInvalidSequence = true)
+    } catch (_: Exception) {
+        content
+    }
+
     suspend fun sendBunkerError(
         account: Account,
         bunkerRequest: AmberBunkerRequest,

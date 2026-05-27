@@ -411,6 +411,12 @@ class SignerProvider : ContentProvider() {
                             "Could not decrypt the message"
                         }
 
+                    // For v3 the wire payload is Base64; store the readable plaintext.
+                    val historyContent = if (isV3) {
+                        AmberUtils.decodeNip44v3LogContent(if (!isEncrypt) finalResult else content)
+                    } else {
+                        if (!isEncrypt) finalResult else content
+                    }
                     scope.launch {
                         historyDatabase.dao().addHistory(
                             listOf(
@@ -421,7 +427,7 @@ class SignerProvider : ContentProvider() {
                                     v3Kind,
                                     TimeUtils.now(),
                                     true,
-                                    content = if (!isEncrypt) finalResult else content,
+                                    content = historyContent,
                                 ),
                             ),
                             account.npub,

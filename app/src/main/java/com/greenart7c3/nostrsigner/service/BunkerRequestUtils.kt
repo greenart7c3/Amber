@@ -432,6 +432,9 @@ object BunkerRequestUtils {
                             SignerType.NIP44_DECRYPT,
                             SignerType.DECRYPT_ZAP_EVENT,
                             -> response
+                            // v3 payloads are Base64; log the readable plaintext.
+                            SignerType.NIP44_V3_DECRYPT -> AmberUtils.decodeNip44v3LogContent(response)
+                            SignerType.NIP44_V3_ENCRYPT -> AmberUtils.decodeNip44v3LogContent(getDataFromBunker(bunkerRequest.request))
                             else -> getDataFromBunker(bunkerRequest.request)
                         },
                     ),

@@ -24,10 +24,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
+import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.ui.RememberType
 import java.nio.charset.CharacterCodingException
@@ -161,12 +163,19 @@ fun Nip44v3ContextBox(
 ) {
     LabeledBorderBox(
         label = stringResource(R.string.nip44_v3_context),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+        modifier = Modifier.fillMaxWidth(),
     ) {
         Column {
-            Text(stringResource(R.string.nip44_v3_kind, kind?.toString() ?: "?"))
+            val kindLabel = if (kind != null) {
+                val translation = Permission("sign_event", kind).toLocalizedString(Amber.instance)
+                val unknown = stringResource(R.string.event_kind, kind.toString())
+                // toLocalizedString returns the "Event kind N" fallback when the
+                // kind has no translation; only append the name when one exists.
+                if (translation != unknown) "$kind ($translation)" else kind.toString()
+            } else {
+                "?"
+            }
+            Text(stringResource(R.string.nip44_v3_kind, kindLabel))
             Text(
                 stringResource(
                     R.string.nip44_v3_scope,

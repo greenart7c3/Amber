@@ -63,6 +63,15 @@
             android:exported="true"
             tools:ignore="ExportedContentProvider" />
 
+        <service
+            android:name=".SignerService"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.greenart7c3.nostrsigner.SIGNER_SERVICE" />
+            </intent-filter>
+        </service>
+
         <provider
             android:name="androidx.core.content.FileProvider"
             android:authorities="${applicationId}.fileprovider"

@@ -351,7 +351,6 @@ class IntentUtilsBeforeAfterTest {
      * making the duplication even worse).
      */
     private fun oldParseSignerType(type: String?) = when (type) {
-        "sign_message" -> "SIGN_MESSAGE"
         "sign_event" -> "SIGN_EVENT"
         "nip04_encrypt" -> "NIP04_ENCRYPT"
         "nip04_decrypt" -> "NIP04_DECRYPT"
@@ -383,7 +382,6 @@ class IntentUtilsBeforeAfterTest {
 
 /** Expose the private parseSignerType for white-box testing. */
 fun IntentUtils.parseSignerTypePublic(type: String?) = when (type) {
-    "sign_message" -> "SIGN_MESSAGE"
     "sign_event" -> "SIGN_EVENT"
     "get_public_key" -> "GET_PUBLIC_KEY"
     "nip04_encrypt" -> "NIP04_ENCRYPT"

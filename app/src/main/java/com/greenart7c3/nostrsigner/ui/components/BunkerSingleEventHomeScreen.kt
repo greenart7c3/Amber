@@ -877,63 +877,6 @@ fun BunkerSingleEventHomeScreen(
                         )
                     },
                 )
-            } else if (type == SignerType.SIGN_MESSAGE) {
-                val permission =
-                    applicationEntity?.permissions?.firstOrNull {
-                        it.pkKey == key && it.type == type.toString()
-                    }
-
-                val acceptUntil = permission?.acceptUntil ?: 0
-                val rejectUntil = permission?.rejectUntil ?: 0
-
-                val acceptOrReject = if (rejectUntil == 0L && acceptUntil == 0L) {
-                    null
-                } else if (rejectUntil > TimeUtils.now() && rejectUntil > 0) {
-                    false
-                } else if (acceptUntil > TimeUtils.now() && acceptUntil > 0) {
-                    true
-                } else {
-                    null
-                }
-
-                BunkerSignMessage(
-                    modifier = modifier,
-                    content = bunkerRequest.request.params.first(),
-                    shouldRunOnAccept = acceptOrReject,
-                    appName = appName,
-                    onAccept = {
-                        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                            val result = account.signString(bunkerRequest.request.params.first())
-
-                            BunkerRequestUtils.sendResult(
-                                context = context,
-                                account = account,
-                                key = key,
-                                response = result,
-                                bunkerRequest = bunkerRequest,
-                                kind = null,
-                                onLoading = onLoading,
-                                permissions = null,
-                                appName = appName,
-                                signPolicy = null,
-                                shouldCloseApplication = bunkerRequest.closeApplication,
-                                rememberType = it,
-                            )
-                        }
-                    },
-                    onReject = {
-                        BunkerRequestUtils.sendRejection(
-                            key = key,
-                            account = account,
-                            bunkerRequest = bunkerRequest,
-                            appName = appName,
-                            rememberType = it,
-                            signerType = type,
-                            kind = null,
-                            onLoading = onLoading,
-                        )
-                    },
-                )
             } else if (type == SignerType.SIGN_PSBT) {
                 val psbtHex = bunkerRequest.request.params.first()
                 val permission =

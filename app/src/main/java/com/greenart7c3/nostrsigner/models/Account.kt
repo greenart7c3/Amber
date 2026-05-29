@@ -18,7 +18,6 @@ import com.vitorpamplona.quartz.nip17Dm.NIP17Factory
 import com.vitorpamplona.quartz.nip17Dm.messages.ChatMessageEvent
 import com.vitorpamplona.quartz.nip19Bech32.toNsec
 import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
-import com.vitorpamplona.quartz.nip55AndroidSigner.signString
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
 import kotlinx.coroutines.CancellationException
@@ -74,8 +73,6 @@ class Account(
         tags: Array<Array<String>>,
         content: String,
     ): T = signer.signerSync.sign(createdAt, kind, tags, content)
-
-    fun signString(message: String): String = signString(message, signer.keyPair.privKey!!).toHexKey()
 
     fun nip49Encrypt(password: String): String = Nip49().encrypt(signer.keyPair.privKey!!.toHexKey(), password)
 

@@ -382,7 +382,6 @@ fun PermissionRow(
                 AmberToggles(
                     selected = rememberType,
                     options = listOf(
-                        RememberType.ONE_MINUTE,
                         RememberType.FIVE_MINUTES,
                         RememberType.TEN_MINUTES,
                         RememberType.ONE_HOUR,

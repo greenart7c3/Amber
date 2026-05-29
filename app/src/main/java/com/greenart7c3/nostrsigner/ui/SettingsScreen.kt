@@ -504,7 +504,6 @@ enum class RememberType(val screenCode: Int, val resourceId: Int, val shortResou
 
 val rememberTypeDisplayOrder: List<RememberType> = listOf(
     RememberType.NEVER,
-    RememberType.ONE_MINUTE,
     RememberType.FIVE_MINUTES,
     RememberType.TEN_MINUTES,
     RememberType.ONE_HOUR,

@@ -106,7 +106,7 @@ fun BunkerRelayAuthScreen(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         ) {
-            OptionBottomSheetPicker(
+            AmberToggles(
                 selected = scope,
                 options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
                 onSelected = { scope = it },

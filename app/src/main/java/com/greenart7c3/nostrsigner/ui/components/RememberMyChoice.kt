@@ -5,14 +5,13 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -23,6 +22,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.rememberTypeDisplayOrder
 
 @Composable
 fun LabeledBorderBox(
@@ -66,15 +66,13 @@ fun RememberMyChoice(
     onReject: (RememberType) -> Unit,
     onChanged: (RememberType) -> Unit,
 ) {
-    var index by remember {
-        mutableIntStateOf(0)
-    }
+    var selected by remember { mutableStateOf(RememberType.NEVER) }
     if (shouldRunAcceptOrReject != null) {
         LaunchedEffect(Unit) {
             if (shouldRunAcceptOrReject) {
-                onAccept(RememberType.entries[index])
+                onAccept(selected)
             } else {
-                onReject(RememberType.entries[index])
+                onReject(selected)
             }
         }
     }
@@ -83,55 +81,13 @@ fun RememberMyChoice(
             label = stringResource(R.string.automatically_sign_this_for),
         ) {
             AmberToggles(
-                selectedIndex = index,
-                count = 5,
-                content = {
-                    ToggleOption(
-                        modifier = Modifier.width(55.dp),
-                        text = stringResource(RememberType.NEVER.resourceId),
-                        isSelected = RememberType.NEVER == RememberType.entries[index],
-                        onClick = {
-                            index = RememberType.NEVER.screenCode
-                            onChanged(RememberType.NEVER)
-                        },
-                    )
-                    ToggleOption(
-                        modifier = Modifier.width(55.dp),
-                        text = stringResource(R.string.one_minute_short),
-                        isSelected = RememberType.ONE_MINUTE == RememberType.entries[index],
-                        onClick = {
-                            index = RememberType.ONE_MINUTE.screenCode
-                            onChanged(RememberType.ONE_MINUTE)
-                        },
-                    )
-                    ToggleOption(
-                        modifier = Modifier.width(55.dp),
-                        text = stringResource(R.string.five_minutes_short),
-                        isSelected = RememberType.FIVE_MINUTES == RememberType.entries[index],
-                        onClick = {
-                            index = RememberType.FIVE_MINUTES.screenCode
-                            onChanged(RememberType.FIVE_MINUTES)
-                        },
-                    )
-                    ToggleOption(
-                        modifier = Modifier.width(55.dp),
-                        text = stringResource(R.string.ten_minutes_short),
-                        isSelected = RememberType.TEN_MINUTES == RememberType.entries[index],
-                        onClick = {
-                            index = RememberType.TEN_MINUTES.screenCode
-                            onChanged(RememberType.TEN_MINUTES)
-                        },
-                    )
-                    ToggleOption(
-                        modifier = Modifier.width(55.dp),
-                        text = stringResource(RememberType.ALWAYS.resourceId),
-                        isSelected = RememberType.ALWAYS == RememberType.entries[index],
-                        onClick = {
-                            index = RememberType.ALWAYS.screenCode
-                            onChanged(RememberType.entries[RememberType.ALWAYS.screenCode])
-                        },
-                    )
+                selected = selected,
+                options = rememberTypeDisplayOrder,
+                onSelected = {
+                    selected = it
+                    onChanged(it)
                 },
+                label = { stringResource(it.shortResourceId) },
             )
         }
     }

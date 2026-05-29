@@ -51,8 +51,8 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.actions.RemoveAllPermissionsDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.AmberToggles
 import com.greenart7c3.nostrsigner.ui.components.LabeledBorderBox
-import com.greenart7c3.nostrsigner.ui.components.OptionBottomSheetPicker
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -350,7 +350,7 @@ fun PermissionRow(
             label = stringResource(R.string.action),
             modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
         ) {
-            OptionBottomSheetPicker(
+            AmberToggles(
                 selected = optionIndex,
                 options = listOf(0, 1, 2),
                 onSelected = { newIndex ->
@@ -379,7 +379,7 @@ fun PermissionRow(
                 label = stringResource(R.string.automatically_sign_this_for),
                 modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
             ) {
-                OptionBottomSheetPicker(
+                AmberToggles(
                     selected = rememberType,
                     options = listOf(
                         RememberType.ONE_MINUTE,
@@ -399,7 +399,7 @@ fun PermissionRow(
                             onToggle,
                         )
                     },
-                    label = { stringResource(it.resourceId) },
+                    label = { stringResource(it.shortResourceId) },
                 )
             }
         }

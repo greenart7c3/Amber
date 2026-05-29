@@ -145,7 +145,7 @@ fun IntentMultiEventHomeScreen(
                     .fillMaxWidth()
                     .padding(horizontal = 4.dp, vertical = 8.dp),
             ) {
-                OptionBottomSheetPicker(
+                AmberToggles(
                     selected = relayAuthScope,
                     options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
                     onSelected = { relayAuthScope = it },

@@ -491,15 +491,15 @@ fun SettingsRow(
     }
 }
 
-enum class RememberType(val screenCode: Int, val resourceId: Int) {
-    NEVER(0, R.string.never),
-    ONE_MINUTE(1, R.string.one_minute),
-    FIVE_MINUTES(2, R.string.five_minutes),
-    TEN_MINUTES(3, R.string.ten_minutes),
-    ALWAYS(4, R.string.always),
-    ONE_HOUR(5, R.string.one_hour),
-    ONE_DAY(6, R.string.one_day),
-    ONE_WEEK(7, R.string.one_week),
+enum class RememberType(val screenCode: Int, val resourceId: Int, val shortResourceId: Int) {
+    NEVER(0, R.string.never, R.string.never),
+    ONE_MINUTE(1, R.string.one_minute, R.string.one_minute_short),
+    FIVE_MINUTES(2, R.string.five_minutes, R.string.five_minutes_short),
+    TEN_MINUTES(3, R.string.ten_minutes, R.string.ten_minutes_short),
+    ALWAYS(4, R.string.always, R.string.always),
+    ONE_HOUR(5, R.string.one_hour, R.string.one_hour_short),
+    ONE_DAY(6, R.string.one_day, R.string.one_day_short),
+    ONE_WEEK(7, R.string.one_week, R.string.one_week_short),
 }
 
 val rememberTypeDisplayOrder: List<RememberType> = listOf(

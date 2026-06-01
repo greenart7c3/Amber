@@ -1,3 +1,20 @@
+## Amber 6.2.0
+
+- Add NIP-44 v3 encryption support, including a dedicated approval screen, intent preview, bunker preview, history logging and auto-reject for invalid requests
+- Register NIP-44 v3 ContentProvider authorities
+- Auto-accept NIP-46 ping requests on connect
+- Ignore empty `nostrsigner:` intents so the app can be opened directly
+- Simplify the invalid intent screen to only close the app
+- Use a segmented toggle for option pickers, with a scrollbar and shrinking segments when they get too narrow to fit the screen
+- Remove the `sign_message` signer method
+- Remove the 1 minute option from the sign-automatically pickers
+- Disable resource shrinking in release builds
+- New Crowdin translations
+
+Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v6.2.0)
+
+If you like my work consider making a [donation](https://greenart7c3.com)
+
 ## Amber 6.1.0
 
 - Better layout when connecting a new app

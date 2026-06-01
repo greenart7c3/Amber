@@ -233,6 +233,12 @@
     <string name="one_minute">One minute</string>
     <string name="five_minutes">Five minutes</string>
     <string name="ten_minutes">Ten Minutes</string>
+    <string name="one_minute_short">1m</string>
+    <string name="five_minutes_short">5m</string>
+    <string name="ten_minutes_short">10m</string>
+    <string name="one_hour_short">1h</string>
+    <string name="one_day_short">1d</string>
+    <string name="one_week_short">1w</string>
     <string name="event_kind_9000">Add user to group</string>
     <string name="event_kind_9001">Remove user from group</string>
     <string name="event_kind_9002">Edit group metadata</string>

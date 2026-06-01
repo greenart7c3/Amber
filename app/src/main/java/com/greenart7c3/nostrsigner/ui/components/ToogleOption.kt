@@ -38,8 +38,10 @@ fun ToggleOption(
     ) {
         Text(
             text = text,
-            style = MaterialTheme.typography.bodyMedium,
+            style = MaterialTheme.typography.bodySmall,
             color = textColor,
+            maxLines = 1,
+            softWrap = false,
         )
     }
 }

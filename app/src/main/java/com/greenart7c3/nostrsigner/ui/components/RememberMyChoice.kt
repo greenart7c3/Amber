@@ -80,14 +80,14 @@ fun RememberMyChoice(
         LabeledBorderBox(
             label = stringResource(R.string.automatically_sign_this_for),
         ) {
-            OptionBottomSheetPicker(
+            AmberToggles(
                 selected = selected,
                 options = rememberTypeDisplayOrder,
                 onSelected = {
                     selected = it
                     onChanged(it)
                 },
-                label = { stringResource(it.resourceId) },
+                label = { stringResource(it.shortResourceId) },
             )
         }
     }

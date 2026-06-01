@@ -196,7 +196,7 @@ fun EncryptDecryptData(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
             ) {
-                OptionBottomSheetPicker(
+                AmberToggles(
                     selected = scope,
                     options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
                     onSelected = { scope = it },
@@ -399,7 +399,7 @@ fun BunkerEncryptDecryptData(
                     .fillMaxWidth()
                     .padding(horizontal = 16.dp),
             ) {
-                OptionBottomSheetPicker(
+                AmberToggles(
                     selected = scope,
                     options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
                     onSelected = { scope = it },

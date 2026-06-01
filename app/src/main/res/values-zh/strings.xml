@@ -639,6 +639,14 @@
     <string name="encryption_scope">加密范围</string>
     <string name="for_this_method_only">仅此方式</string>
     <string name="for_all_methods">所有方式</string>
+    <string name="nip44_v3_context">NIP-44 v3 context</string>
+    <string name="nip44_v3_kind">Kind: %1$s</string>
+    <string name="nip44_v3_scope">Scope: %1$s</string>
+    <string name="nip44_v3_no_scope">(none)</string>
+    <string name="for_this_kind_only">This kind only</string>
+    <string name="for_all_kinds">All kinds</string>
+    <string name="nip44_v3_wants_to_encrypt">wants to encrypt with NIP-44 v3</string>
+    <string name="nip44_v3_wants_to_decrypt">wants to read encrypted content with NIP-44 v3</string>
     <string name="event_kind_10086">索引器中继</string>
     <string name="event_kind_10087">代理中继</string>
     <string name="event_kind_10088">广播中继</string>

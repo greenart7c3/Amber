@@ -319,8 +319,12 @@ class SignerProvider : ContentProvider() {
                     // SignerType, kind); fall back to a kind=null "all kinds"
                     // grant. V3 grants do NOT satisfy V2 requests and vice versa.
                     var permission = if (isV3) {
+                        // V3 grants are kind-scoped; fall back to the explicit
+                        // "all kinds" (kind IS NULL) grant only, never to any
+                        // other kind — otherwise e.g. a kind-A reject would
+                        // leak to a kind-B request.
                         permDao.getPermission(packageName, type.toString(), v3Kind!!)
-                            ?: permDao.getPermission(packageName, type.toString())
+                            ?: permDao.getPermissionAllKinds(packageName, type.toString())
                     } else {
                         // Classify the content to determine EncryptedDataKind-based permission type
                         val classifyContent = if (isEncrypt) content else (result ?: content)

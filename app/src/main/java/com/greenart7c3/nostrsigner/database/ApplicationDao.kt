@@ -78,6 +78,18 @@ interface ApplicationDao {
         type: String,
     ): ApplicationPermissionsEntity?
 
+    /**
+     * Match an "all kinds" grant — the row whose `kind` column is `NULL`.
+     * Distinct from [getPermission] (no kind), which matches any row of the
+     * given type regardless of kind: V3's kind-scoped permission model needs
+     * the explicit `IS NULL` to avoid kind-A rejects leaking to kind-B requests.
+     */
+    @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind IS NULL AND relay = '' LIMIT 1")
+    fun getPermissionAllKinds(
+        key: String,
+        type: String,
+    ): ApplicationPermissionsEntity?
+
     @Query("SELECT * FROM applicationPermission WHERE pkKey = :key AND type = :type AND kind = :kind AND relay = :relay LIMIT 1")
     fun getPermissionForRelay(
         key: String,

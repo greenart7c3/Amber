@@ -21,7 +21,7 @@ import androidx.paging.PagingSource
 class CachingApplicationDao(
     private val delegate: ApplicationDao,
 ) : ApplicationDao {
-    private enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_RELAY, PERM_WILDCARD }
+    private enum class Method { SIGN_POLICY, PERM, PERM_KIND, PERM_ALL_KINDS, PERM_RELAY, PERM_WILDCARD }
 
     private data class Key(
         val method: Method,
@@ -77,6 +77,14 @@ class CachingApplicationDao(
         val k = Key(Method.PERM, key, type, null, null)
         lookup(k)?.let { return it.permission }
         val result = delegate.getPermission(key, type)
+        store(k, Value(null, result))
+        return result
+    }
+
+    override fun getPermissionAllKinds(key: String, type: String): ApplicationPermissionsEntity? {
+        val k = Key(Method.PERM_ALL_KINDS, key, type, null, null)
+        lookup(k)?.let { return it.permission }
+        val result = delegate.getPermissionAllKinds(key, type)
         store(k, Value(null, result))
         return result
     }

@@ -19,7 +19,7 @@ release.
 | Older          | ❌        |
 
 This covers all artifacts built from this repository, including both the
-`free` (online) and `offline` build flavors of the Android app.
+`amber` (online) and `offline` build flavors of the Android app.
 
 ## Reporting a Vulnerability
 
@@ -41,7 +41,7 @@ To help us triage quickly, please provide:
   bypassing the permission/approval UI, leaking decrypted DMs).
 - Affected ingestion path: `nostrsigner://` intent, `ContentProvider` (NIP-55),
   or NIP-46 bunker relay.
-- Affected build flavor (`free` or `offline`), version, commit SHA, and
+- Affected build flavor (`amber` or `offline`), version, commit SHA, and
   Android version / device.
 - Steps to reproduce, a proof of concept, or a failing test. A minimal
   caller app or relay event payload is especially helpful.
@@ -63,7 +63,7 @@ To help us triage quickly, please provide:
 In scope:
 
 - Source code in this repository.
-- Released APKs (both `free` and `offline` flavors) built from this
+- Released APKs (both `amber` and `offline` flavors) built from this
   repository and distributed via GitHub Releases, F-Droid, Obtainium, or
   Zap Store.
 - Key storage and the encrypted account database (per-`npub`

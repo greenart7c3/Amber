@@ -110,5 +110,5 @@ chmod +x ./gradlew
 # Warm Gradle, Android Gradle Plugin, Kotlin, and unit-test dependencies while the
 # Codex environment has setup-time internet access. Override with CODEX_PREWARM_TASKS
 # in the Codex environment settings if you need a lighter/heavier cache.
-read -r -a prewarm_tasks <<< "${CODEX_PREWARM_TASKS:-help :app:compileFreeDebugUnitTestSources}"
+read -r -a prewarm_tasks <<< "${CODEX_PREWARM_TASKS:-help :app:compileAmberDebugUnitTestSources}"
 ./gradlew --no-daemon --stacktrace "${prewarm_tasks[@]}"

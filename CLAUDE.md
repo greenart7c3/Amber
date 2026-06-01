@@ -10,7 +10,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ./gradlew ktlintCheck            # lint check (also runs on every git commit via pre-commit hook)
 ./gradlew ktlintFormat           # auto-fix lint issues
 ./gradlew test --no-daemon       # unit tests (also runs on every git push via pre-push hook)
-./build.sh                       # builds both offline and free release variants to ~/release/
+./build.sh                       # builds both offline and amber release variants to ~/release/
 ```
 
 Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — no manual setup needed.
@@ -19,7 +19,7 @@ Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — n
 
 | Flavor | Purpose |
 |--------|---------|
-| `free` (default) | Online variant with full networking (OkHttp, Coil, relay connectivity) |
+| `amber` (default) | Online variant with full networking (OkHttp, Coil, relay connectivity) |
 | `offline` | No network stack; use `BuildFlavorChecker.isOfflineFlavor()` to guard network code |
 
 ## Architecture

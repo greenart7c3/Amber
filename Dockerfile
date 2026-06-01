@@ -3,7 +3,7 @@ FROM eclipse-temurin:21-jdk
 ARG VERSION
 ARG APK_TYPE
 ENV VERSION=${VERSION:-v4.0.2}
-ENV APK_TYPE=${APK_TYPE:-free-arm64-v8a}
+ENV APK_TYPE=${APK_TYPE:-amber-arm64-v8a}
 ENV GRADLE_OPTS="-Xmx2048m -Dorg.gradle.daemon=false"
 
 ENV ANDROID_SDK_ROOT=/sdk
@@ -56,7 +56,7 @@ RUN keytool -genkeypair \
     -dname "CN=Amber, OU=Dev, O=AmberProject, L=Internet, S=None, C=US"
 
 # Copy unsigned APK to known location
-RUN cp app/build/outputs/apk/free/release/app-${APK_TYPE}-release-unsigned.apk /app/built.apk
+RUN cp app/build/outputs/apk/amber/release/app-${APK_TYPE}-release-unsigned.apk /app/built.apk
 
 # Sign the APK
 RUN ${ANDROID_SDK_ROOT}/build-tools/35.0.0/apksigner sign \

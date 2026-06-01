@@ -12,7 +12,7 @@ import org.junit.Test
  * the same JVM process (including a warm-up pass) so the results are directly
  * comparable.  Numbers are printed to stdout; run with:
  *
- *   ./gradlew :app:testFreeDebugUnitTest --rerun-tasks --info \
+ *   ./gradlew :app:testAmberDebugUnitTest --rerun-tasks --info \
  *     2>&1 | grep -E "BEFORE|AFTER|SPEEDUP"
  */
 class IntentUtilsBeforeAfterTest {

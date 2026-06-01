@@ -14,9 +14,9 @@ rm -rf ~/release/amber-*
 rm -rf ~/release/citrine-*
 rm -rf ~/release/manifest-*
 mv app/build/outputs/bundle/offlineRelease/app-offline-release.aab ~/release/
-mv app/build/outputs/bundle/freeRelease/app-free-release.aab ~/release/
+mv app/build/outputs/bundle/amberRelease/app-amber-release.aab ~/release/
 mv app/build/outputs/apk/offline/release/app-offline-* ~/release/
-mv app/build/outputs/apk/free/release/app-free-* ~/release/
+mv app/build/outputs/apk/amber/release/app-amber-* ~/release/
 ./gradlew --stop
 cd ~/release
 ./generate_manifest.sh ${version} ${appName}

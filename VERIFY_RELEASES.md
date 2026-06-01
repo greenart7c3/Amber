@@ -57,7 +57,7 @@ For each release, you need to download:
 Example for version v1.0.0:
 ```bash
 # Download the files you need
-wget https://github.com/yourusername/Amber/releases/download/v1.0.0/amber-free-universal-v1.0.0.apk
+wget https://github.com/yourusername/Amber/releases/download/v1.0.0/amber-universal-v1.0.0.apk
 wget https://github.com/yourusername/Amber/releases/download/v1.0.0/manifest-v1.0.0.txt
 wget https://github.com/yourusername/Amber/releases/download/v1.0.0/manifest-v1.0.0.txt.sig
 ```
@@ -91,7 +91,7 @@ Check that your downloaded files match the checksums in the manifest:
 cat manifest-v1.0.0.txt
 
 # Check the SHA256 hash of your downloaded file
-sha256sum amber-free-universal-v1.0.0.apk
+sha256sum amber-universal-v1.0.0.apk
 ```
 
 Compare the output hash with the corresponding hash in the manifest file. They must match exactly.
@@ -105,7 +105,7 @@ You can use this script to automate the verification process:
 # verify-amber.sh
 
 VERSION=${1:-"v1.0.0"}
-FILE=${2:-"amber-free-universal-${VERSION}.apk"}
+FILE=${2:-"amber-universal-${VERSION}.apk"}
 
 echo "Verifying Amber release ${VERSION}..."
 
@@ -151,7 +151,7 @@ echo "✓ All verification checks passed!"
 Make it executable and use it:
 ```bash
 chmod +x verify-amber.sh
-./verify-amber.sh v1.0.0 amber-free-universal-v1.0.0.apk
+./verify-amber.sh v1.0.0 amber-universal-v1.0.0.apk
 ```
 
 ## Trusting the Key (Optional)

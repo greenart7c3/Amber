@@ -134,7 +134,7 @@ android {
     flavorDimensions += "version"
 
     productFlavors {
-        register("free") {
+        register("amber") {
             isDefault = true
             dimension = "version"
         }
@@ -233,10 +233,10 @@ dependencies {
     implementation(libs.room.runtime)
     implementation(libs.room.paging)
 
-    "freeImplementation"(libs.okhttp)
-    "freeImplementation"(libs.okhttpCoroutines)
-    "freeImplementation"(libs.kmptor.runtime)
-    "freeImplementation"(libs.kmptor.resource.exec)
+    "amberImplementation"(libs.okhttp)
+    "amberImplementation"(libs.okhttpCoroutines)
+    "amberImplementation"(libs.kmptor.runtime)
+    "amberImplementation"(libs.kmptor.resource.exec)
 
     // Load images from the web.
     implementation(libs.coil.compose)

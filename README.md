@@ -59,7 +59,7 @@ as the setup script, and optionally use:
 bash .codex/maintenance.sh
 ```
 
-as the maintenance script for cached containers. The setup script installs or verifies Java 21, bootstraps the Android command-line SDK, installs Android API 36/build-tools 36.0.0, accepts SDK licenses, and warms Gradle dependencies for the default free debug unit-test sources.
+as the maintenance script for cached containers. The setup script installs or verifies Java 21, bootstraps the Android command-line SDK, installs Android API 36/build-tools 36.0.0, accepts SDK licenses, and warms Gradle dependencies for the default amber debug unit-test sources.
 
 # Security and Verification
 
@@ -97,7 +97,7 @@ To confirm that the Amber build is reproducible, follow these steps:
 1. Run the following command to build the image with no cache and specified version:
 
 ``` bash
-docker build -t amber-repro --progress=plain --no-cache --build-arg VERSION=v4.0.2 --build-arg APK_TYPE=free-arm64-v8a .
+docker build -t amber-repro --progress=plain --no-cache --build-arg VERSION=v4.0.2 --build-arg APK_TYPE=amber-arm64-v8a .
 ```
 
 2. After the image is built, run the container:

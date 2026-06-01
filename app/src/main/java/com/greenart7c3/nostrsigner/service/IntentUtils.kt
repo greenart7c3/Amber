@@ -624,6 +624,11 @@ object IntentUtils {
                 return null
             }
 
+            if (intent.dataString == "nostrsigner:" && BunkerRequestUtils.getBunkerRequests().isNotEmpty()) {
+                // ditto send this empty request just to open the app when the user has not approved/rejected the bunker request
+                return null
+            }
+
             if (intent.extras?.getString("id") == null || intent.extras?.getString("id") == "") {
                 intent.putExtra("id", UUID.randomUUID().toString())
             }

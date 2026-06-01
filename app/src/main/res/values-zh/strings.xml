@@ -572,9 +572,8 @@
     <string name="copy_crash_report_to_clipboard">想要复制崩溃报告到剪贴板并打开客户端发送给 Amber 吗？</string>
     <string name="crashreport_found_send">发送</string>
     <string name="invalid_intent_title">无效的请求</string>
-    <string name="invalid_intent_body">Amber 收到了一个无法处理的错误格式 Nostr 签名器请求。你可以关闭这个应用或发送详情给开发者以帮助修复该问题。</string>
+    <string name="invalid_intent_body">Amber 收到了一个无法处理的错误格式 Nostr 签名器请求。请联系客户端开发者报告此问题。</string>
     <string name="invalid_intent_close_app">关闭应用</string>
-    <string name="invalid_intent_send_report">发送报告给开发者</string>
     <string name="event_kind_14">私信</string>
     <string name="wants_to_encrypt_with">" 将要使用 %2$s 加密 %1$s"</string>
     <string name="wants_to_encrypt_event_kind">将要使用 %2$s 解密 %1$s</string>

@@ -572,9 +572,8 @@
     <string name="copy_crash_report_to_clipboard">Çökme raporunu panonuza kopyalamak ve onu Amber\'a göndermek için bir İstemci açmak ister misiniz?</string>
     <string name="crashreport_found_send">Gönder</string>
     <string name="invalid_intent_title">Invalid request</string>
-    <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. You can close the app or send the details to the developer to help fix the issue.</string>
+    <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. Please contact the client developer to report this issue.</string>
     <string name="invalid_intent_close_app">Close app</string>
-    <string name="invalid_intent_send_report">Send report to developer</string>
     <string name="event_kind_14">Doğrudan Mesaj</string>
     <string name="wants_to_encrypt_with">" %1$s ögesini %2$s ile şifrelemek istiyor"</string>
     <string name="wants_to_encrypt_event_kind">%1$s ögesini %2$s ile şifrelemek istiyor</string>

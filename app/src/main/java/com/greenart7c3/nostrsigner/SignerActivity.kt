@@ -124,11 +124,9 @@ class SignerActivity : AppCompatActivity() {
                             modifier = Modifier.fillMaxWidth(),
                             color = MaterialTheme.colorScheme.background,
                         ) {
-                            val err = invalidIntent
-                            if (err != null) {
+                            if (invalidIntent != null) {
                                 InvalidIntentScreen(
                                     modifier = Modifier.fillMaxSize(),
-                                    info = err,
                                     onClose = {
                                         IntentUtils.clearInvalidIntents()
                                         finishAndRemoveTask()

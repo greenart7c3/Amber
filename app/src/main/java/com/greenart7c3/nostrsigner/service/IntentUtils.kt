@@ -126,8 +126,6 @@ object IntentUtils {
     private val URL_ENCODED_REGEX = Regex("%[0-9a-fA-F]{2}")
 
     private fun parseSignerType(type: String?): SignerType = when (type) {
-        "sign_message" ->
-            SignerType.SIGN_MESSAGE
         "sign_event" ->
             SignerType.SIGN_EVENT
         "get_public_key" ->
@@ -304,23 +302,6 @@ object IntentUtils {
                         encryptedData = null,
                     )
                 }
-                SignerType.SIGN_MESSAGE -> {
-                    IntentData(
-                        data = localData,
-                        name = appName,
-                        type = type,
-                        pubKey = pubKey,
-                        id = intent.getStringExtra("id") ?: "",
-                        callBackUrl = callbackUrl,
-                        compression = compressionType,
-                        returnType = returnType,
-                        permissions = listOf(),
-                        currentAccount = "",
-                        route = route,
-                        event = null,
-                        encryptedData = null,
-                    )
-                }
                 SignerType.SIGN_PSBT -> {
                     IntentData(
                         data = localData,
@@ -479,28 +460,6 @@ object IntentUtils {
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
-                var npub = intent.getStringExtra("current_user")
-                if (npub != null) {
-                    npub = parsePubKey(npub)
-                }
-
-                IntentData(
-                    data = data,
-                    name = name,
-                    type = type,
-                    pubKey = pubKey,
-                    id = id,
-                    callBackUrl = intent.extras?.getString("callbackUrl"),
-                    compression = compressionType,
-                    returnType = returnType,
-                    permissions = permissions?.map { Permission(it.type.trim(), it.kind, it.checked) },
-                    currentAccount = npub ?: Hex.decode(pubKey).toNpub(),
-                    route = route,
-                    event = null,
-                    encryptedData = null,
-                )
-            }
-            SignerType.SIGN_MESSAGE -> {
                 var npub = intent.getStringExtra("current_user")
                 if (npub != null) {
                     npub = parsePubKey(npub)

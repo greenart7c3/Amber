@@ -69,7 +69,6 @@ data class Permission(
 
     // LAST_COMMIT_CHECKED = "14ec14dac92d891715239bfb83ed1c9bdf2ac382"
     fun toLocalizedString(context: Context, shouldTranslateConnect: Boolean = false): String = when (type.trim()) {
-        "sign_message" -> context.getString(R.string.sign_message)
         "get_public_key" -> context.getString(R.string.read_your_public_key)
         "nip04_encrypt" -> {
             context.getString(R.string.encrypt_data_using_nip_4)
@@ -626,7 +625,6 @@ val supportedKindNumbers = listOf(
     *(39003..39009).toList().map { Permission("sign_event", it) }.toTypedArray(),
     *(9000..9030).toList().map { Permission("sign_event", it) }.toTypedArray(),
     Permission("connect", null),
-    Permission("sign_message", null),
     Permission("nip04_encrypt", null),
     Permission("nip04_decrypt", null),
     Permission("nip44_decrypt", null),

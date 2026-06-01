@@ -175,7 +175,6 @@
     <string name="wants_you_to_sign_a">请求签署 %1$s</string>
     <string name="wants_you_to">请求进行 %1$s</string>
     <string name="sign">签署 %1$s</string>
-    <string name="sign_message">签署消息</string>
     <string name="content">内容</string>
     <string name="amber_is_running_in_background">Amber 正在后台运行</string>
     <string name="bunker_notifications">Bunker 通知</string>

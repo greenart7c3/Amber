@@ -221,7 +221,6 @@ object BunkerRequestUtils {
     }
 
     fun getTypeFromBunker(bunkerRequest: BunkerRequest): SignerType = when (bunkerRequest.method) {
-        "sign_message" -> SignerType.SIGN_MESSAGE
         "connect" -> SignerType.CONNECT
         "sign_event" -> SignerType.SIGN_EVENT
         "get_public_key" -> SignerType.GET_PUBLIC_KEY
@@ -237,7 +236,6 @@ object BunkerRequestUtils {
     }
 
     fun getDataFromBunker(bunkerRequest: BunkerRequest): String = when (bunkerRequest.method) {
-        "sign_message" -> bunkerRequest.params.first()
         "connect" -> "ack"
         "sign_event" -> {
             val amberEvent = AmberEvent.fromJson(bunkerRequest.params.first())

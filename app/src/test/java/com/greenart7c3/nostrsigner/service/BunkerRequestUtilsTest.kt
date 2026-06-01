@@ -56,8 +56,8 @@ class BunkerRequestUtilsTest {
     // ===== getTypeFromBunker =====
 
     @Test
-    fun `getTypeFromBunker returns SIGN_MESSAGE for sign_message`() {
-        assertEquals(SignerType.SIGN_MESSAGE, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("sign_message")))
+    fun `getTypeFromBunker returns INVALID for sign_message`() {
+        assertEquals(SignerType.INVALID, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("sign_message")))
     }
 
     @Test
@@ -128,9 +128,9 @@ class BunkerRequestUtilsTest {
     // ===== getDataFromBunker =====
 
     @Test
-    fun `getDataFromBunker returns first param for sign_message`() {
+    fun `getDataFromBunker returns empty string for sign_message`() {
         val request = mockBunkerRequest("sign_message", arrayOf("hello world"))
-        assertEquals("hello world", BunkerRequestUtils.getDataFromBunker(request))
+        assertEquals("", BunkerRequestUtils.getDataFromBunker(request))
     }
 
     @Test

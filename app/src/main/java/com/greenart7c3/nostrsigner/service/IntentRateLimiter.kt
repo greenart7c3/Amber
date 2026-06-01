@@ -137,7 +137,6 @@ object IntentRateLimitInspector {
     }
 
     private fun parseSignerType(value: String): SignerType? = when (value) {
-        "sign_message" -> SignerType.SIGN_MESSAGE
         "sign_event" -> SignerType.SIGN_EVENT
         "get_public_key" -> SignerType.GET_PUBLIC_KEY
         "nip04_encrypt" -> SignerType.NIP04_ENCRYPT

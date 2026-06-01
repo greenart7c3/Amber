@@ -412,59 +412,6 @@ fun BunkerMultiEventHomeScreen(
                                             onLoading = {},
                                         )
                                     }
-                                } else if (request.request.method == "sign_message") {
-                                    if (rememberType != RememberType.NEVER && isChecked) {
-                                        AmberUtils.acceptOrRejectPermission(
-                                            application,
-                                            localKey,
-                                            SignerType.SIGN_MESSAGE,
-                                            null,
-                                            true,
-                                            rememberType,
-                                            thisAccount,
-                                            encryptedData = request.encryptedData,
-                                        )
-                                    }
-
-                                    dao.insertApplicationWithPermissions(application)
-                                    historyDatabase.dao().addHistory(
-                                        listOf(
-                                            HistoryEntity(
-                                                0,
-                                                localKey,
-                                                SignerType.SIGN_MESSAGE.toString(),
-                                                null,
-                                                TimeUtils.now(),
-                                                isChecked,
-                                                content = request.request.params.first(),
-                                            ),
-                                        ),
-                                        thisAccount.npub,
-                                    )
-
-                                    val signedMessage = thisAccount.signString(request.request.params.first())
-                                    BunkerRequestUtils.remove(request.request.id)
-
-                                    if (isChecked) {
-                                        BunkerRequestUtils.sendBunkerResponse(
-                                            context,
-                                            thisAccount,
-                                            request,
-                                            BunkerResponse(request.request.id, signedMessage, null),
-                                            application.application.relays,
-                                            onLoading = {},
-                                            onDone = {},
-                                        )
-                                    } else {
-                                        AmberUtils.sendBunkerError(
-                                            account = thisAccount,
-                                            bunkerRequest = request,
-                                            relays = application.application.relays,
-                                            context = context,
-                                            closeApplication = application.application.closeApplication,
-                                            onLoading = {},
-                                        )
-                                    }
                                 } else if (request.request is BunkerRequestConnect) {
                                     if (savedApplication == null) {
                                         dao.insertApplicationWithPermissions(application)

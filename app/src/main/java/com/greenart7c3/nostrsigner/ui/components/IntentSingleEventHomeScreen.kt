@@ -113,53 +113,6 @@ fun IntentSingleEventHomeScreen(
             )
         }
 
-        SignerType.SIGN_MESSAGE -> {
-            val permission =
-                applicationEntity?.permissions?.firstOrNull {
-                    it.pkKey == key && it.type == intentData.type.toString()
-                }
-
-            val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
-
-            SignMessage(
-                modifier = modifier,
-                content = intentData.data,
-                shouldRunOnAccept = acceptOrReject,
-                packageName = packageName,
-                onAccept = {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        val result = account.signString(intentData.data)
-                        IntentUtils.sendResult(
-                            context,
-                            packageName,
-                            account,
-                            key,
-                            clipboardManager,
-                            result,
-                            result,
-                            intentData,
-                            null,
-                            onLoading,
-                            onRemoveIntentData = onRemoveIntentData,
-                            rememberType = it,
-                        )
-                    }
-                },
-                onReject = {
-                    IntentUtils.sendRejection(
-                        key = key,
-                        account = account,
-                        intentData = intentData,
-                        appName = appName,
-                        rememberType = it,
-                        onLoading = onLoading,
-                        onRemoveIntentData = onRemoveIntentData,
-                        kind = null,
-                    )
-                },
-            )
-        }
-
         SignerType.SIGN_PSBT -> {
             val permission =
                 applicationEntity?.permissions?.firstOrNull {

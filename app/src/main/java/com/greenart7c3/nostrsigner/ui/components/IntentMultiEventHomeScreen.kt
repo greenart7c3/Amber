@@ -384,44 +384,6 @@ fun IntentMultiEventHomeScreen(
                                                 ),
                                             )
                                         }
-                                    } else if (type == SignerType.SIGN_MESSAGE) {
-                                        if (rememberType != RememberType.NEVER && isChecked) {
-                                            AmberUtils.updatePermission(
-                                                application,
-                                                localKey,
-                                                type,
-                                                null,
-                                                true,
-                                                rememberType,
-                                                encryptedData = intentData.encryptedData,
-                                            )
-                                            permissionsChanged = true
-                                        }
-
-                                        historyList.add(
-                                            HistoryEntity(
-                                                0,
-                                                localKey,
-                                                type.toString(),
-                                                null,
-                                                TimeUtils.now(),
-                                                isChecked,
-                                                content = intentData.data,
-                                            ),
-                                        )
-
-                                        val signedMessage = thisAccount.signString(intentData.data)
-                                        if (isChecked) {
-                                            results.add(
-                                                Result(
-                                                    null,
-                                                    signature = signedMessage,
-                                                    result = signedMessage,
-                                                    id = intentData.id,
-                                                    rejected = null,
-                                                ),
-                                            )
-                                        }
                                     } else {
                                         if (rememberType != RememberType.NEVER && isChecked) {
                                             AmberUtils.updatePermission(

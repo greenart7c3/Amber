@@ -569,9 +569,8 @@
     <string name="copy_crash_report_to_clipboard">Você gostaria de copiar o relatório de falha para a área de transferência e abrir um Cliente para enviá-lo ao Amber?</string>
     <string name="crashreport_found_send">Enviar</string>
     <string name="invalid_intent_title">Invalid request</string>
-    <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. You can close the app or send the details to the developer to help fix the issue.</string>
+    <string name="invalid_intent_body">Amber received a malformed nostrsigner request and cannot process it. Please contact the client developer to report this issue.</string>
     <string name="invalid_intent_close_app">Close app</string>
-    <string name="invalid_intent_send_report">Send report to developer</string>
     <string name="event_kind_14">Mensagem direta</string>
     <string name="wants_to_encrypt_with">" quer criptografar %1$s com %2$s"</string>
     <string name="wants_to_encrypt_event_kind">quer criptografar %1$s com %2$s</string>

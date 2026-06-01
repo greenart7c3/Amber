@@ -96,6 +96,16 @@ class BunkerRequestUtilsTest {
     }
 
     @Test
+    fun `getTypeFromBunker returns NIP44_V3_ENCRYPT for nip44v3_encrypt`() {
+        assertEquals(SignerType.NIP44_V3_ENCRYPT, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("nip44v3_encrypt")))
+    }
+
+    @Test
+    fun `getTypeFromBunker returns NIP44_V3_DECRYPT for nip44v3_decrypt`() {
+        assertEquals(SignerType.NIP44_V3_DECRYPT, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("nip44v3_decrypt")))
+    }
+
+    @Test
     fun `getTypeFromBunker returns DECRYPT_ZAP_EVENT for decrypt_zap_event`() {
         assertEquals(SignerType.DECRYPT_ZAP_EVENT, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("decrypt_zap_event")))
     }
@@ -165,6 +175,36 @@ class BunkerRequestUtilsTest {
     fun `getDataFromBunker returns second param for nip44_decrypt`() {
         val request = mockBunkerRequest("nip44_decrypt", arrayOf("pubkey123", "ciphertext456"))
         assertEquals("ciphertext456", BunkerRequestUtils.getDataFromBunker(request))
+    }
+
+    @Test
+    fun `getDataFromBunker returns fourth param for nip44v3_encrypt`() {
+        val request = mockBunkerRequest("nip44v3_encrypt", arrayOf("pubkey123", "4", "dm", "cGxhaW50ZXh0Lw=="))
+        assertEquals("cGxhaW50ZXh0Lw==", BunkerRequestUtils.getDataFromBunker(request))
+    }
+
+    @Test
+    fun `getDataFromBunker returns fourth param for nip44v3_decrypt`() {
+        val request = mockBunkerRequest("nip44v3_decrypt", arrayOf("pubkey123", "4", "dm", "A2NpcGhlcnRleHQ="))
+        assertEquals("A2NpcGhlcnRleHQ=", BunkerRequestUtils.getDataFromBunker(request))
+    }
+
+    @Test
+    fun `getNip44v3Kind parses second param`() {
+        val request = mockBunkerRequest("nip44v3_encrypt", arrayOf("pk", "42", "scope", "data"))
+        assertEquals(42, BunkerRequestUtils.getNip44v3Kind(request))
+    }
+
+    @Test
+    fun `getNip44v3Kind returns null when missing or invalid`() {
+        assertEquals(null, BunkerRequestUtils.getNip44v3Kind(mockBunkerRequest("nip44v3_encrypt", arrayOf("pk"))))
+        assertEquals(null, BunkerRequestUtils.getNip44v3Kind(mockBunkerRequest("nip44v3_encrypt", arrayOf("pk", "not-a-number", "s", "d"))))
+    }
+
+    @Test
+    fun `getNip44v3Scope returns third param or empty`() {
+        assertEquals("dm", BunkerRequestUtils.getNip44v3Scope(mockBunkerRequest("nip44v3_encrypt", arrayOf("pk", "4", "dm", "data"))))
+        assertEquals("", BunkerRequestUtils.getNip44v3Scope(mockBunkerRequest("nip44v3_encrypt", arrayOf("pk", "4"))))
     }
 
     @Test

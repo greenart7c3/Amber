@@ -7,6 +7,8 @@ enum class SignerType {
     NIP04_DECRYPT,
     NIP44_ENCRYPT,
     NIP44_DECRYPT,
+    NIP44_V3_ENCRYPT,
+    NIP44_V3_DECRYPT,
     GET_PUBLIC_KEY,
     DECRYPT_ZAP_EVENT,
     PING,

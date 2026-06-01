@@ -35,6 +35,7 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
+import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
@@ -138,6 +139,10 @@ object IntentUtils {
             SignerType.NIP44_ENCRYPT
         "nip44_decrypt" ->
             SignerType.NIP44_DECRYPT
+        "nip44v3_encrypt" ->
+            SignerType.NIP44_V3_ENCRYPT
+        "nip44v3_decrypt" ->
+            SignerType.NIP44_V3_DECRYPT
         "decrypt_zap_event" ->
             SignerType.DECRYPT_ZAP_EVENT
         "sign_psbt" ->
@@ -187,6 +192,8 @@ object IntentUtils {
             var callbackUrl: String? = null
             var returnType = ReturnType.SIGNATURE
             var appName = ""
+            var nip44v3Kind: Int? = null
+            var nip44v3Scope = ""
             // flatMap avoids building an intermediate joined string before splitting on "&"
             parameters.flatMap { it.split("&") }.forEach {
                 val params = it.split("=").toMutableList()
@@ -200,6 +207,8 @@ object IntentUtils {
                     parameter == "callbackUrl" -> callbackUrl = parameterData
                     parameter == "returnType" -> if (parameterData == "event") returnType = ReturnType.EVENT
                     parameter == "appName" -> appName = parameterData
+                    parameter == "kind" -> nip44v3Kind = parameterData.toIntOrNull()
+                    parameter == "scope" -> nip44v3Scope = parameterData
                 }
             }
 
@@ -242,7 +251,9 @@ object IntentUtils {
                         unsignedEventKey = unsignedEventKey,
                     )
                 }
-                SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> {
+                SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
+                SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT,
+                -> {
                     val result =
                         try {
                             AmberUtils.encryptOrDecryptData(
@@ -250,8 +261,18 @@ object IntentUtils {
                                 type,
                                 account,
                                 pubKey,
+                                nip44v3Kind,
+                                nip44v3Scope,
                             ) ?: "Could not decrypt the message"
                         } catch (e: Exception) {
+                            // A NIP-44 v3 failure (missing/invalid kind, context
+                            // mismatch, bad MAC, corrupt payload) means the request
+                            // can never succeed: reject it without showing the user
+                            // an approval screen.
+                            if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                                emitInvalid(intent, packageName, "Invalid NIP-44 v3 request: ${e.message}", e)
+                                return null
+                            }
                             Amber.instance.applicationIOScope.launch {
                                 val database = Amber.instance.getLogDatabase(account.npub)
                                 database.dao().insertLog(
@@ -283,6 +304,8 @@ object IntentUtils {
                         route = route,
                         event = null,
                         encryptedData = encryptedDataKind,
+                        nip44v3Kind = nip44v3Kind,
+                        nip44v3Scope = nip44v3Scope,
                     )
                 }
                 SignerType.GET_PUBLIC_KEY -> {
@@ -410,7 +433,11 @@ object IntentUtils {
                     unsignedEventKey = unsignedEventKey,
                 )
             }
-            SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT, SignerType.DECRYPT_ZAP_EVENT -> {
+            SignerType.NIP04_ENCRYPT, SignerType.NIP04_DECRYPT, SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT,
+            SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT, SignerType.DECRYPT_ZAP_EVENT,
+            -> {
+                val nip44v3Kind = intent.extras?.getString("kind")?.toIntOrNull()
+                val nip44v3Scope = intent.extras?.getString("scope") ?: ""
                 val result =
                     try {
                         AmberUtils.encryptOrDecryptData(
@@ -418,9 +445,19 @@ object IntentUtils {
                             type,
                             account,
                             pubKey,
+                            nip44v3Kind,
+                            nip44v3Scope,
                         ) ?: "Could not decrypt the message"
                     } catch (e: Exception) {
                         if (e is FailedMigrationException) throw e
+                        // A NIP-44 v3 failure (missing/invalid kind, context
+                        // mismatch, bad MAC, corrupt payload) means the request
+                        // can never succeed: reject it without showing the user
+                        // an approval screen.
+                        if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                            emitInvalid(intent, packageName, "Invalid NIP-44 v3 request: ${e.message}", e)
+                            return null
+                        }
                         Amber.instance.applicationIOScope.launch {
                             val database = Amber.instance.getLogDatabase(account.npub)
                             database.dao().insertLog(
@@ -457,6 +494,8 @@ object IntentUtils {
                     route = route,
                     event = null,
                     encryptedData = encryptedDataKind,
+                    nip44v3Kind = nip44v3Kind,
+                    nip44v3Scope = nip44v3Scope,
                 )
             }
             SignerType.GET_PUBLIC_KEY -> {
@@ -507,6 +546,7 @@ object IntentUtils {
         }
     }
 
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private suspend fun getEncryptedDataKind(
         type: SignerType,
         result: String,
@@ -515,6 +555,25 @@ object IntentUtils {
     ): EncryptedDataKind = when (type) {
         SignerType.DECRYPT_ZAP_EVENT -> {
             PrivateZapEncryptedDataKind(result)
+        }
+
+        // v3 wire values are Base64; decode once so display/history can read the
+        // plaintext from `text`, while `result` keeps the wire value.
+        SignerType.NIP44_V3_ENCRYPT -> {
+            val plaintext = try {
+                kotlin.io.encoding.Base64.decode(data).toString(Charsets.UTF_8)
+            } catch (_: Exception) {
+                data
+            }
+            ClearTextEncryptedDataKind(plaintext, result)
+        }
+        SignerType.NIP44_V3_DECRYPT -> {
+            val plaintext = try {
+                kotlin.io.encoding.Base64.decode(result).toString(Charsets.UTF_8)
+            } catch (_: Exception) {
+                result
+            }
+            ClearTextEncryptedDataKind(plaintext, result)
         }
 
         else -> {
@@ -818,6 +877,12 @@ object IntentUtils {
                                         SignerType.NIP44_DECRYPT,
                                         SignerType.DECRYPT_ZAP_EVENT,
                                         -> value
+
+                                        // v3 wire values are Base64; log the readable
+                                        // plaintext already decoded into encryptedData.
+                                        SignerType.NIP44_V3_ENCRYPT,
+                                        SignerType.NIP44_V3_DECRYPT,
+                                        -> intentData.encryptedData.nip44v3Plaintext()
 
                                         else -> intentData.data
                                     },

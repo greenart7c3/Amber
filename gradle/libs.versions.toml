@@ -32,6 +32,7 @@ mockk = "1.14.9"
 coroutinesTest = "1.10.2"
 kmpTor = "2.6.0"
 kmpTorResource = "409.5.0"
+secp256k1Jni = "0.23.0"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -81,6 +82,7 @@ mockk = { module = "io.mockk:mockk", version.ref = "mockk" }
 kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-test", version.ref = "coroutinesTest" }
 kmptor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmpTor" }
 kmptor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor", version.ref = "kmpTorResource" }
+secp256k1-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", version.ref = "secp256k1Jni" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

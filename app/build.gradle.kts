@@ -206,6 +206,8 @@ dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.mockk)
     testImplementation(libs.kotlinx.coroutines.test)
+    // JVM-side native secp256k1 so unit tests can exercise ECDH (NIP-44 v3).
+    testImplementation(libs.secp256k1.jni.jvm)
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ui.test.junit4)

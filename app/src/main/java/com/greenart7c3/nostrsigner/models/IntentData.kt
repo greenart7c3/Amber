@@ -21,4 +21,8 @@ data class IntentData(
     val encryptedData: EncryptedDataKind?,
     val isNostrConnectURI: Boolean = false,
     val unsignedEventKey: HexKey = "",
+    // NIP-44 v3 context fields. Required when [type] is one of the
+    // NIP44_V3_* variants; ignored otherwise.
+    val nip44v3Kind: Int? = null,
+    val nip44v3Scope: String = "",
 )

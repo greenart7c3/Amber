@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
+import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
@@ -813,7 +814,69 @@ fun BunkerSingleEventHomeScreen(
         }
 
         else -> {
-            if (type == SignerType.DECRYPT_ZAP_EVENT) {
+            if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                // NIP-44 v3 requests arrive as a generic BunkerRequest (Quartz
+                // doesn't know the method name); kind/scope are at params[1..2].
+                val v3Kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest.request)
+                val v3Scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest.request)
+                val permission = applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString() && it.kind == v3Kind
+                } ?: applicationEntity?.permissions?.firstOrNull {
+                    it.pkKey == key && it.type == type.toString() && it.kind == null
+                }
+
+                val acceptOrReject = IntentUtils.isRemembered(applicationEntity?.application?.signPolicy, permission)
+
+                Nip44v3ApprovalData(
+                    modifier = modifier,
+                    isBunker = true,
+                    appName = appName,
+                    packageName = null,
+                    type = type,
+                    account = account,
+                    kind = v3Kind,
+                    scope = v3Scope,
+                    encryptedData = bunkerRequest.encryptedData,
+                    shouldRunOnAccept = acceptOrReject,
+                    onAccept = { rememberType, scope ->
+                        // encryptedData.result holds the Base64 wire value (ciphertext
+                        // for encrypt, base64 plaintext for decrypt), computed when the
+                        // request arrived — same shape as the v2 path.
+                        val result = bunkerRequest.encryptedData?.result ?: ""
+                        // SPECIFIC ⇒ kind-scoped grant; ALL ⇒ broad grant (kind=null).
+                        val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                        BunkerRequestUtils.sendResult(
+                            context = context,
+                            account = account,
+                            key = key,
+                            response = result,
+                            bunkerRequest = bunkerRequest,
+                            kind = grantedKind,
+                            onLoading = onLoading,
+                            permissions = null,
+                            appName = appName,
+                            signPolicy = null,
+                            shouldCloseApplication = bunkerRequest.closeApplication,
+                            rememberType = rememberType,
+                            decryptTypeScope = scope,
+                        )
+                    },
+                    onReject = { rememberType, scope ->
+                        val grantedKind = if (scope == DecryptTypeScope.SPECIFIC) v3Kind else null
+                        BunkerRequestUtils.sendRejection(
+                            key = key,
+                            account = account,
+                            bunkerRequest = bunkerRequest,
+                            appName = appName,
+                            rememberType = rememberType,
+                            signerType = type,
+                            kind = grantedKind,
+                            onLoading = onLoading,
+                            decryptTypeScope = scope,
+                        )
+                    },
+                )
+            } else if (type == SignerType.DECRYPT_ZAP_EVENT) {
                 val permission =
                     applicationEntity?.permissions?.firstOrNull {
                         it.pkKey == key && it.type == type.toString()

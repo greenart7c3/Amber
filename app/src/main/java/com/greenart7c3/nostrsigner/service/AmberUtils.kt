@@ -24,11 +24,21 @@ import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 
 object AmberUtils {
+    /**
+     * Produces the wire value for a request. Per the nip44v3 NIP-46 draft, v3
+     * plaintext travels Base64-encoded: encrypt receives base64(plaintext) and
+     * returns the ciphertext; decrypt returns base64(plaintext). The readable
+     * plaintext for logs/display comes from the EncryptedDataKind instead (see
+     * [nip44v3Plaintext]). [nip44v3Kind]/[nip44v3Scope] are required for V3.
+     */
+    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     suspend fun encryptOrDecryptData(
         data: String,
         type: SignerType,
         account: Account,
         pubKey: HexKey,
+        nip44v3Kind: Int? = null,
+        nip44v3Scope: String = "",
     ): String? = when (type) {
         SignerType.DECRYPT_ZAP_EVENT -> {
             account.decryptZapEvent(data)
@@ -41,6 +51,14 @@ object AmberUtils {
         }
         SignerType.NIP44_ENCRYPT -> {
             account.nip44Encrypt(data, pubKey)
+        }
+        SignerType.NIP44_V3_ENCRYPT -> {
+            requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_ENCRYPT" }
+            account.nip44v3Encrypt(kotlin.io.encoding.Base64.decode(data), pubKey, nip44v3Kind, nip44v3Scope)
+        }
+        SignerType.NIP44_V3_DECRYPT -> {
+            requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_DECRYPT" }
+            kotlin.io.encoding.Base64.encode(account.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope))
         }
         else -> {
             account.nip44Decrypt(data, pubKey)

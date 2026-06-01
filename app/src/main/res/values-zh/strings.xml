@@ -225,6 +225,12 @@
     <string name="one_minute">一分钟</string>
     <string name="five_minutes">五分钟</string>
     <string name="ten_minutes">十分钟</string>
+    <string name="one_minute_short">1m</string>
+    <string name="five_minutes_short">5m</string>
+    <string name="ten_minutes_short">10m</string>
+    <string name="one_hour_short">1h</string>
+    <string name="one_day_short">1d</string>
+    <string name="one_week_short">1w</string>
     <string name="event_kind_9000">添加用户到群组</string>
     <string name="event_kind_9001">从群组中移除用户</string>
     <string name="event_kind_9002">编辑群组信息</string>

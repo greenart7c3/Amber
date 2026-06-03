@@ -49,7 +49,7 @@
     <string name="password_is_required">La contraseña es obligatoria</string>
     <string name="failed_to_encrypt_key">No se pudo cifrar su clave privada</string>
     <string name="biometric_authentication_failed_explainer">La biometría no ha podido autenticar al propietario de este teléfono</string>
-    <string name="biometric_authentication_failed_explainer_with_error">La biometría no ha podido autenticar al propietario de este teléfono</string>
+    <string name="biometric_authentication_failed_explainer_with_error">La biometría no ha podido autenticar al propietario de este teléfono. Error: %1$s</string>
     <string name="delete">Borrar</string>
     <string name="permissions">Permisos</string>
     <string name="delete_application">Eliminar aplicación</string>

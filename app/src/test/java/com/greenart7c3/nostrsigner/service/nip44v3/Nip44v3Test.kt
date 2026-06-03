@@ -91,6 +91,33 @@ class Nip44v3Test {
     }
 
     @Test
+    fun `decrypt-only vectors with non-standard padding decrypt correctly`() {
+        // The spec allows ciphertexts whose padding length differs from the one
+        // our encryptor would produce (the standard padding algorithm is a
+        // SHOULD, not a MUST). We must still decrypt them, validating only that
+        // the padding bytes are zero. These are decrypt-only because re-encrypting
+        // would yield the canonical padding length and a different ciphertext.
+        val vectors = loadVectors().get("decrypt_only")
+        assertNotNull("decrypt_only section missing", vectors)
+        for ((idx, v) in vectors.withIndex()) {
+            val priv1 = hex(v.get("secret1").textValue())
+            val priv2 = hex(v.get("secret2").textValue())
+            val pub1 = pubKeyFor(v.get("secret1").textValue())
+            val pub2 = pubKeyFor(v.get("secret2").textValue())
+            val kind = v.get("kind").intValue()
+            val scope = String(hex(v.get("scope_hex").textValue()), Charsets.UTF_8)
+            val plaintext = hex(v.get("plaintext_hex").textValue())
+            val ciphertext = v.get("ciphertext").textValue()
+            val note = v.get("note")?.textValue() ?: ""
+
+            val dec1 = Nip44v3.decrypt(ciphertext, priv1, pub2, kind, scope)
+            assertArrayEquals("vector $idx ($note): decrypt from secret1", plaintext, dec1)
+            val dec2 = Nip44v3.decrypt(ciphertext, priv2, pub1, kind, scope)
+            assertArrayEquals("vector $idx ($note): decrypt from secret2", plaintext, dec2)
+        }
+    }
+
+    @Test
     fun `long encrypt and decrypt vectors match sha256 of ciphertext`() {
         val vectors = loadVectors().get("long_encrypt_decrypt")
         val sha = MessageDigest.getInstance("SHA-256")

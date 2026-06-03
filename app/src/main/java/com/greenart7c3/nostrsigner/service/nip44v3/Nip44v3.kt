@@ -180,12 +180,13 @@ object Nip44v3 {
         if (plaintextLen.toLong() + 4L > padded.size.toLong()) {
             throw Nip44v3Exception("invalid padding: declared $plaintextLen, available ${padded.size - 4}")
         }
-        // The padded buffer length is fully determined by the plaintext length;
-        // reject anything that does not match the canonical size so attackers
-        // can't smuggle data in the padding.
-        if (padded.size.toLong() != targetSizeLong(4L + plaintextLen)) {
-            throw Nip44v3Exception("invalid padding: wrong target size")
-        }
+        // The NIP-44 v3 spec deliberately does NOT mandate a canonical padding
+        // length: "implementations must not do any other checks on the padding
+        // length". The standard padding algorithm is only a SHOULD, so a peer
+        // may legitimately send more (or fewer) padding bytes than we would
+        // produce. Validating against our own target size would reject those
+        // otherwise-valid messages, so we only require that the padding region
+        // is all zeroes.
         // Constant-time zero check over the padding region.
         var diff = 0
         for (i in 4 + plaintextLen until padded.size) {

@@ -40,9 +40,7 @@
     <string name="support_development">支持开发</string>
     <string name="source_code">源代码</string>
     <string name="show_qr_code">显示二维码</string>
-    <string name="account_backup_tips3_md" tools:ignore="Typos">        For additional security, you can encrypt your key with a password. This key starts with **ncryptsec1** and cannot be used without your password.
-        \n\nIf you lose your password, you will not be able to recover your key.
-    </string>
+    <string name="account_backup_tips3_md" tools:ignore="Typos">\n        为了增强安全性，您可以使用密码加密您的密钥。此密钥以 **ncryptsec1** 开头，没有密码将无法使用。\n        \n\n如果您忘记密码，将无法恢复您的密钥。\n    </string>
     <string name="ncryptsec_password">密码</string>
     <string name="password_is_required">需要密码</string>
     <string name="failed_to_encrypt_key">私钥加密失败</string>
@@ -57,21 +55,8 @@
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">为什么不去探索一下你喜欢的 Nostr 应用呢？</string>
     <string name="more">%1$s 项其他权限...</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"想要获取权限读取公钥并签署事件"</string>
-    <string name="connect_through_your_orbot_setup_markdown">        ## Connect through Tor with Orbot
-        \n\n1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
-        \n2. Start Orbot
-        \n3. In Orbot, check the Socks port. The default uses 9050
-        \n4. If necessary change the port in Orbot
-        \n5. Configure the Socks port in this screen
-        \n6. Press the Activate button to use Orbot as a proxy
-    </string>
-    <string name="connect_through_your_orbot_setup_markdown2">        1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
-        \n2. Start Orbot
-        \n3. In Orbot, check the Socks port. The default uses 9050
-        \n4. If necessary change the port in Orbot
-        \n5. Configure the Socks port in this screen
-        \n6. Press the Activate button to use Orbot as a proxy
-    </string>
+    <string name="connect_through_your_orbot_setup_markdown">\n        ## 通过 Tor 使用 Orbot 连接\n        \n\n1. 安装 [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. 启动 Orbot\n        \n3. 在 Orbot 中，检查 Socks 端口。默认使用 9050\n        \n4. 如有必要，在 Orbot 中更改端口\n        \n5. 在此界面中配置 Socks 端口\n        \n6. 按下\"激活\"按钮以将 Orbot 用作代理\n    </string>
+    <string name="connect_through_your_orbot_setup_markdown2">\n        1. 安装 [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. 启动 Orbot\n        \n3. 在 Orbot 中，检查 Socks 端口。默认使用 9050\n        \n4. 如有必要，在 Orbot 中更改端口\n        \n5. 在此界面中配置 Socks 端口\n        \n6. 按下\"激活\"按钮以将 Orbot 用作代理\n    </string>
     <string name="orbot_socks_port">Orbot SOCKS 端口</string>
     <string name="invalid_port_number">端口无效</string>
     <string name="use_orbot">启用 Orbot</string>
@@ -197,13 +182,13 @@
     <string name="wants_you_to_sign_a">请求签署 %1$s</string>
     <string name="wants_you_to">请求进行 %1$s</string>
     <string name="sign">签署 %1$s</string>
-    <string name="sign_psbt">sign PSBT</string>
-    <string name="psbt_sending">Sending</string>
-    <string name="psbt_change">Change</string>
-    <string name="psbt_fee">Fee</string>
+    <string name="sign_psbt">签名 PSBT</string>
+    <string name="psbt_sending">发送</string>
+    <string name="psbt_change">找零</string>
+    <string name="psbt_fee">手续费</string>
     <string name="psbt_amount_sats">%1$s sats</string>
-    <string name="psbt_raw">Raw PSBT (hex)</string>
-    <string name="psbt_decode_error">Could not decode PSBT: %1$s</string>
+    <string name="psbt_raw">原始 PSBT（十六进制）</string>
+    <string name="psbt_decode_error">无法解码 PSBT：%1$s</string>
     <string name="signing_as">签署为</string>
     <string name="content">内容</string>
     <string name="amber_is_running_in_background">Amber 正在后台运行</string>
@@ -225,12 +210,12 @@
     <string name="one_minute">一分钟</string>
     <string name="five_minutes">五分钟</string>
     <string name="ten_minutes">十分钟</string>
-    <string name="one_minute_short">1m</string>
-    <string name="five_minutes_short">5m</string>
-    <string name="ten_minutes_short">10m</string>
-    <string name="one_hour_short">1h</string>
-    <string name="one_day_short">1d</string>
-    <string name="one_week_short">1w</string>
+    <string name="one_minute_short">1分</string>
+    <string name="five_minutes_short">5分</string>
+    <string name="ten_minutes_short">10分</string>
+    <string name="one_hour_short">1时</string>
+    <string name="one_day_short">1天</string>
+    <string name="one_week_short">1周</string>
     <string name="event_kind_9000">添加用户到群组</string>
     <string name="event_kind_9001">从群组中移除用户</string>
     <string name="event_kind_9002">编辑群组信息</string>
@@ -261,7 +246,7 @@
     <string name="nip_17">私信</string>
     <string name="nip_18">转发</string>
     <string name="nip_19">bech32 编码实体</string>
-    <string name="nip_21">nostr: URI scheme</string>
+    <string name="nip_21">nostr: URI 方案</string>
     <string name="nip_23">长篇内容</string>
     <string name="nip_24">其他元数据字段</string>
     <string name="nip_25">回应</string>
@@ -424,7 +409,7 @@
     <string name="update">更新</string>
     <string name="add">添加 </string>
     <string name="setup_pin">设置 PIN</string>
-    <string name="pin">Pin</string>
+    <string name="pin">固定</string>
     <string name="pin_does_not_match">Pin 不匹配</string>
     <string name="confirm_pin">确认 Pin</string>
     <string name="enter_pin">输入 PIN</string>
@@ -446,7 +431,7 @@
     <string name="manage_the_relays_used_to_fetch_your_profile_data">管理用于获取个人资料的中继</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">管理用于外部应用通讯的中继</string>
     <string name="testing_relay">测试中继...</string>
-    <string name="a_nostr_secure_signer">A NOSTR SECURE SIGNER</string>
+    <string name="a_nostr_secure_signer">NOSTR 安全签名器</string>
     <string name="go_back">返回</string>
     <string name="your_nostr_account_is_ready">Nostr 账户已准备就绪！</string>
     <string name="you_will_find_it_in_your_account_section_so_you_don_t_need_to_copy_it_right_now">可以在账户选项卡中找到，所以目前不需要复制它。</string>
@@ -639,14 +624,14 @@
     <string name="encryption_scope">加密范围</string>
     <string name="for_this_method_only">仅此方式</string>
     <string name="for_all_methods">所有方式</string>
-    <string name="nip44_v3_context">NIP-44 v3 context</string>
-    <string name="nip44_v3_kind">Kind: %1$s</string>
-    <string name="nip44_v3_scope">Scope: %1$s</string>
-    <string name="nip44_v3_no_scope">(none)</string>
-    <string name="for_this_kind_only">This kind only</string>
-    <string name="for_all_kinds">All kinds</string>
-    <string name="nip44_v3_wants_to_encrypt">wants to encrypt with NIP-44 v3</string>
-    <string name="nip44_v3_wants_to_decrypt">wants to read encrypted content with NIP-44 v3</string>
+    <string name="nip44_v3_context">NIP-44 v3 上下文</string>
+    <string name="nip44_v3_kind">Kind：%1$s</string>
+    <string name="nip44_v3_scope">范围：%1$s</string>
+    <string name="nip44_v3_no_scope">（无）</string>
+    <string name="for_this_kind_only">仅此 Kind</string>
+    <string name="for_all_kinds">所有 Kind</string>
+    <string name="nip44_v3_wants_to_encrypt">请求使用 NIP-44 v3 加密</string>
+    <string name="nip44_v3_wants_to_decrypt">请求使用 NIP-44 v3 读取加密内容</string>
     <string name="event_kind_10086">索引器中继</string>
     <string name="event_kind_10087">代理中继</string>
     <string name="event_kind_10088">广播中继</string>
@@ -692,21 +677,20 @@
     <string name="event_kind_10044">加密密钥宣告</string>
     <string name="event_kind_4455">密钥转移</string>
     <string name="event_kind_4454">客户端密钥宣告</string>
-    <string name="applications_backup">Applications backup</string>
-    <string name="applications_backup_explainer">When enabled, Amber publishes an encrypted copy of your connected applications and their permissions to relays once a day so you can restore them on a new device. Only you can decrypt the backup.</string>
-    <string name="enable_applications_backup">Enable encrypted applications backup</string>
-    <string name="backup_now">Backup now</string>
-    <string name="restore_from_relays">Restore from relays</string>
-    <string name="restore_confirm_title">Restore applications?</string>
-    <string name="restore_confirm_text">Permissions for applications that already exist on this device will be replaced with the backed-up permissions. New applications from the backup will be added. Continue?</string>
-    <string name="backup_success">Backup published</string>
-    <string name="backup_failed">Failed to publish backup</string>
-    <string name="restore_success">Restored %1$d applications and %2$d permissions</string>
-    <string name="restore_failed">Restore failed: %1$s</string>
-    <string name="restore_no_backup_found">No backup found on relays</string>
-    <string name="signin_restore_title">Restore backup?</string>
-    <string name="signin_restore_message">Found an encrypted applications backup with %1$d applications and %2$d permissions. Restore now?</string>
-    <string name="signin_restore_accept">Restore</string>
-    <string name="signin_restore_skip">Skip</string>
-    <string name="event_kind_39701">Public web bookmark</string>
+    <string name="applications_backup">应用备份</string>
+    <string name="applications_backup_explainer">启用后，Amber 每天将您已连接的应用及其权限的加密副本发布到 relay，以便您在新设备上恢复。只有您才能解密此备份。</string>
+    <string name="enable_applications_backup">启用加密应用备份</string>
+    <string name="backup_now">立即备份</string>
+    <string name="restore_from_relays">从 relay 恢复</string>
+    <string name="restore_confirm_title">恢复应用？</string>
+    <string name="restore_confirm_text">此设备上已有的应用的权限将被备份中的权限替换，备份中的新应用将被添加。是否继续？</string>
+    <string name="backup_success">备份已发布</string>
+    <string name="backup_failed">备份发布失败</string>
+    <string name="restore_success">已恢复 %1$d 个应用和 %2$d 条权限</string>
+    <string name="restore_failed">恢复失败：%1$s</string>
+    <string name="restore_no_backup_found">在 relay 上未找到备份</string>
+    <string name="signin_restore_title">恢复备份？</string>
+    <string name="signin_restore_message">找到一个包含 %1$d 个应用和 %2$d 条权限的加密应用备份。立即恢复？</string>
+    <string name="signin_restore_accept">恢复</string>
+    <string name="signin_restore_skip">跳过</string>
 </resources>

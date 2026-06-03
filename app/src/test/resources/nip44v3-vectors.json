@@ -121,6 +121,73 @@
             "ciphertext": "A6BaEdzVCqHoVbfhGoFhWKGkgn0hoAtgEF7TyOgCdw13O273WC9FSDyMtfOYNFvOlZQcaSrLdo6WBQ7ZI2UWn5MAAAABAAAAA++AgPPJWHFZya+M6arLz4wrWMHfL4Wyv4gYZBkicAvVBX0dMsr5tBcTP5xaM4lJZZnokEvMZRzYbjrfNTjT2gCWBapNdr/QrHxlTDa54nRmVR/2GBLkmQ5QeIiDm6OhfjXyYA=="
         }
     ],
+    "decrypt_only": [
+        {
+            "secret1": "fce6ddb6b9611964b37466e29f89f212f6905a70e5b0ea20b33ac9a4a74e60cb",
+            "secret2": "45d28e26e1072c9495857efc85bb56ba0833271d7cb183c6459b8ca17311ed7e",
+            "nonce": "d55b86093a16aabd228b9ac1724749e492fc3a81491c7374bd7a1d28a7b3b4a3",
+            "kind": 1,
+            "scope_hex": "",
+            "prk": "5f359143a097d9b66ec8e0cff7c111076efa06b5ec2f9185e13a304c4467a4e8",
+            "encryption_key": "cbb7467f7c3a6f04c5ac6e4554de2034b67f2ac32a94d58f44e7a14e80912b0b",
+            "mac_key": "784feeb31cf134baaa13d387f5102cf1f06a0e4d60cc737ba4c0311987401e9e",
+            "plaintext_hex": "efbbbf48656c6c6f20776f726c6421",
+            "ciphertext": "A9Vbhgk6Fqq9IouawXJHSeSS/DqBSRxzdL16HSins7Sji9VE1vdW4PQiqseqUsGZsaAvIe2yGmfWOXiimOZHRUUAAAABAAAAAHm5SMpSTmibFgS1CqDSU5sC6MEPKNyTHS7oxNAb/AAFwta2Xpcc",
+            "note": "non-standard padding (23 bytes instead of 17)"
+        },
+        {
+            "secret1": "099f9dd917f81a515d587164ed21bfcc3897bf705a7c9b3de85abcea809831df",
+            "secret2": "9806d1447c80921a15ff6c737204d985fbee09a6fb123ec8c1ef8749a939ac6d",
+            "nonce": "382baacbba8cba0cc6e8a7b4444fb157186118a18b3dbf652fb6b1e8267bcac1",
+            "kind": 30078,
+            "scope_hex": "737065632e6e6f7374722e6c616e642f6e697034347633",
+            "prk": "57dec8dfe66043f16b839513bffe2855984a725e50d8c63d4f5738d9dc6d0ed9",
+            "encryption_key": "c8ef9801a429de8526739c8d84c62eaf632b0d52023590c7449c8178885dcd57",
+            "mac_key": "7ad04de35b988b240f78285e597fdca8e963988664f4808878afc2ba0aa9a4c1",
+            "plaintext_hex": "6e6f7374722e6c616e64206e697034347633",
+            "ciphertext": "Azgrqsu6jLoMxuintERPsVcYYRihiz2/ZS+2segme8rBD0AqKypuSHff1x0FW+qO4lQlLltEjPWrvoMo7fbKOfwAAHV+AAAAF3NwZWMubm9zdHIubGFuZC9uaXA0NHYznEO1UCJd2Ld0YV51u6kOkY3g22UhvNBAXY3sFnKmPu6fYx9s0rDWwNZcGxsMs+VydrONvM5F",
+            "note": "non-standard padding (36 bytes instead of 14)"
+        },
+        {
+            "secret1": "a62c0eae8281f8997c6391889be1c39df8d06acbde7cbb5e23b8e6ba28c95328",
+            "secret2": "c51b92dfea8551090c2e17d22953f7124fdd6a59e7c67daadcb92819279801d4",
+            "nonce": "f08ea755450d9666cc122f2aa89794b170b8c69c6d7ff5f1d25bfae52164ca3a",
+            "kind": 1,
+            "scope_hex": "e381afe4b896e7958c",
+            "prk": "916e05d26ccb1d5f58698911c85789b89529baa9c4fb5fdcdac80f94afb525f8",
+            "encryption_key": "9110aa1049b70cdd93c38fa4888459d7286a78f5ca584d4dd658905660d4faea",
+            "mac_key": "a597dea28fc706883f9dcc4917209ffc10788c95e86f090a694ea51bc5fe7a11",
+            "plaintext_hex": "f09f9088f09fa694",
+            "ciphertext": "A/COp1VFDZZmzBIvKqiXlLFwuMacbX/18dJb+uUhZMo6uAhk3+WwQOcgQUgH4zhxaRzi80m70t5a9uV5B11EdpcAAAABAAAACeOBr+S4lueVjPeRbg5pf83dLf79+g1wPXb8mjm/rT9e",
+            "note": "non-standard padding (15 bytes instead of 24)"
+        },
+        {
+            "secret1": "740853175b987393b113ac196ccf5152ed4a206b1a365291abacaf106c7a3bca",
+            "secret2": "da1a37af7852a7e5c0a7ce90a39950039bfaeab96297ef83b9d8817f5a2d26f9",
+            "nonce": "f7e0f4b83ebb87657001b8e47d5940a3d062dfebae66da5a2ad0f4e498fedf85",
+            "kind": 1,
+            "scope_hex": "efbbbfefbfbe",
+            "prk": "75c09260e4c8b8240514aee23723531df5f7816a25601e74e0ccbe87a965b309",
+            "encryption_key": "94cf5b47ccfd36dadee996e637ae2a11bd9ac53ff7a29573fe368adf8b1e4f20",
+            "mac_key": "a2e6d59755d7193c5cb9eba5965a42d2696062d455c2c7c535ad88b1c13d415b",
+            "plaintext_hex": "e69a97e58fb7e58c96e381aee3819fe38281e381aee382a2e382afe382bbe382b9e588b6e5bea1e6a99fe883bde3818ce799bbe5a0b4e38197e381bee38197e3819fefbc81",
+            "ciphertext": "A/fg9Lg+u4dlcAG45H1ZQKPQYt/rrmbaWirQ9OSY/t+Fhm1xiEi20bWbMLIDrNw7Gz6XU0bDmmmgYl3g4z68Z+4AAAABAAAABu+7v++/vhLMBXKVPi51crCqEwCQnuB0V13+nE22PpVe7jQiELzDMqdrE6intBrXyHJLrJ4VteEZoiU92jZDoG9ieltDh0NnKRKq7cuW/om3DIhB0DCb0Pq6C5g/VaFaz2+mVPXV0p2BMW2MpuKUJ7/VYAlJPNSlK/JSYpQq",
+            "note": "non-standard padding (50 bytes instead of 27)"
+        },
+        {
+            "secret1": "28531e3c28be034f8bcca7bc25e5b9a6cbbcce8567f2a9016b3f1ad7707a724a",
+            "secret2": "96108e608b4231562b07d21021361e3efab87350021a9247ce410585c0adf757",
+            "nonce": "a82a808ca1a40368336f19e9d3f83bfaaa35e4b8bffc9b5d9426ae518b9f34d1",
+            "kind": 1,
+            "scope_hex": "ef8080",
+            "prk": "38846e1253b841b6960c3be79ec4b6bc1e0ce7c6e40a05f6ea2190ff0c53044b",
+            "encryption_key": "cbecc983553fb82f9f3f615dd959a451d66388d8632d2028a684c9f02c611f3f",
+            "mac_key": "5ed551ef02ba987cfdd4716c4a840a654501ea57aee9da055651669f85ac016e",
+            "plaintext_hex": "9b8de973ddf42a02103de24d9b7a4f0c4f551abaf7cd88f08e7a9c4d41ec5f777b45c890c112968fee50dccd3287583e9a3a33f962d78054f36dcb6f1ea9a8aa3fcb80953e04f6a2b3c3c4e26909ef7c5e84da6df3fd423215015640b249c91b28b38b18499b615bf1e92635e1df15aeeba2063692ce7cc8296582ceed25ceda",
+            "ciphertext": "A6gqgIyhpANoM28Z6dP4O/qqNeS4v/ybXZQmrlGLnzTRH0t5gnTV0ylQcxxkbLRHyKXnIagqYk5XMlG/85NYwuwAAAABAAAAA++AgM9zXmWWTYSixZDotwM+8HmJHW3aBt44KvZkhInVvt+Xmzh1YaPW8cbVr9kOQ38+cc5E285UfL164P71915Pr6mHNGOHtpKcX3P6TXCrch2MLux4m9xHf0BPcuv4+bwC0fLpNKVJLnNAnnGm7VOXdE2HhX4NP8ujzvH6cKTGfiyK0OlVpWX6Le+v/h2wm6m2SAHSJLbi6fIdA6MDilizVMqyaEFZ3n8eRYQ+To6eFKojRQw=",
+            "note": "non-standard padding (50 bytes instead of 64)"
+        }
+    ],
     "long_encrypt_decrypt": [
         {
             "secret1": "e35f016acdf0bec26f9f0e97fd813aa042727cb1e5ac2adf1c7b8d18d393f455",

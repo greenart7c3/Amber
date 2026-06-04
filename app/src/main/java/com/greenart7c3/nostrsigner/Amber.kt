@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
+import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
@@ -339,9 +340,28 @@ class Amber :
     override fun onCreate() {
         super.onCreate()
 
+        if (BuildConfig.DEBUG) {
+            enableStrictMode()
+        }
+
         instance = this
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+    }
+
+    private fun enableStrictMode() {
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build(),
+        )
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build(),
+        )
     }
 
     fun runMigrations(onDone: () -> Unit) {

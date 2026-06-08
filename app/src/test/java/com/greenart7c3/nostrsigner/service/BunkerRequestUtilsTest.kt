@@ -126,6 +126,11 @@ class BunkerRequestUtilsTest {
     }
 
     @Test
+    fun `getTypeFromBunker returns LOGOUT for logout`() {
+        assertEquals(SignerType.LOGOUT, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("logout")))
+    }
+
+    @Test
     fun `getTypeFromBunker returns INVALID for unknown method`() {
         assertEquals(SignerType.INVALID, BunkerRequestUtils.getTypeFromBunker(mockBunkerRequest("unknown_method")))
     }
@@ -233,6 +238,11 @@ class BunkerRequestUtilsTest {
     @Test
     fun `getDataFromBunker returns empty string for switch_relays`() {
         assertEquals("", BunkerRequestUtils.getDataFromBunker(mockBunkerRequest("switch_relays")))
+    }
+
+    @Test
+    fun `getDataFromBunker returns ack for logout`() {
+        assertEquals("ack", BunkerRequestUtils.getDataFromBunker(mockBunkerRequest("logout")))
     }
 
     @Test

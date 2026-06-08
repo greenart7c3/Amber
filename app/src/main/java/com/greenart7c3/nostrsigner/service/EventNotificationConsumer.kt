@@ -384,6 +384,29 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
+        if (type == SignerType.LOGOUT) {
+            permission?.let {
+                BunkerRequestUtils.sendBunkerResponse(
+                    context = applicationContext,
+                    account = acc,
+                    bunkerRequest = request,
+                    bunkerResponse = BunkerResponse(bunkerRequest.id, "ack", null),
+                    relays = relays,
+                    onLoading = { },
+                    onDone = { success ->
+                        if (success) {
+                            Amber.instance.applicationIOScope.launch {
+                                dao.delete(permission.application.key)
+                                historyDao.deleteHistory(permission.application.key)
+                                Amber.instance.notificationSubscription.updateFilter()
+                            }
+                        }
+                    },
+                )
+            }
+            return
+        }
+
         if (type == SignerType.GET_PUBLIC_KEY) {
             val gpkPermission = dao.getPermission(event.pubKey, "GET_PUBLIC_KEY")
             val signPolicy = dao.getSignPolicy(event.pubKey)

@@ -15,4 +15,5 @@ enum class SignerType {
     INVALID,
     SWITCH_RELAYS,
     SIGN_PSBT,
+    LOGOUT,
 }

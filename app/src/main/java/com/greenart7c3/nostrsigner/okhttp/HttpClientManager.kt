@@ -100,19 +100,9 @@ object HttpClientManager {
     ): OkHttpClient {
         val seconds = if (proxy != null) timeout.seconds * 3 else timeout.seconds
         val duration = Duration.ofSeconds(seconds)
-        return rootClient
+        val builder = rootClient
             .newBuilder()
             .proxy(proxy)
-            // SOCKS proxy (Tor) sockets are built via Socket(proxy), bypassing
-            // our SocketFactory, and the relay path is WebSockets, whose
-            // connection call drops our EventListener. fastFallback(false)
-            // routes connection setup through SequentialExchangeFinder, which
-            // connects synchronously on the call thread — the same thread
-            // TaggingInterceptor already tagged — so the socket gets tagged.
-            // Only proxied clients need this; a single localhost SOCKS route
-            // gains nothing from fast fallback anyway. Direct clients keep fast
-            // fallback (Happy Eyeballs) and rely on TaggedSocketFactory.
-            .fastFallback(proxy == null)
             .readTimeout(duration)
             .connectTimeout(duration)
             .writeTimeout(duration)
@@ -130,7 +120,36 @@ object HttpClientManager {
             .addInterceptor(DefaultContentTypeInterceptor(userAgent))
             .addNetworkInterceptor(LoggingInterceptor())
             .addNetworkInterceptor(EncryptedBlobInterceptor(cache))
-            .build()
+
+        // SOCKS proxy (Tor) sockets are built via Socket(proxy), bypassing our
+        // SocketFactory, and the relay path is WebSockets, whose connection
+        // call drops our EventListener. Disabling fast fallback routes
+        // connection setup through SequentialExchangeFinder, which connects
+        // synchronously on the call thread — the same thread TaggingInterceptor
+        // already tagged — so the socket gets tagged. Only proxied clients need
+        // this; a single localhost SOCKS route gains nothing from fast fallback
+        // anyway. Direct clients keep it (Happy Eyeballs) and rely on
+        // TaggedSocketFactory.
+        if (proxy != null) {
+            builder.disableFastFallback()
+        }
+
+        return builder.build()
+    }
+
+    /**
+     * Turns off OkHttp 5's fast fallback (parallel IPv4/IPv6 connect racing on
+     * background threads). Reflective because the offline flavor compiles
+     * against OkHttp 4 (pulled in transitively by Coil), which has no
+     * `fastFallback` and already connects sequentially — so doing nothing there
+     * is correct.
+     */
+    private fun OkHttpClient.Builder.disableFastFallback() {
+        runCatching {
+            OkHttpClient.Builder::class.java
+                .getMethod("fastFallback", Boolean::class.javaPrimitiveType)
+                .invoke(this, false)
+        }
     }
 
     fun getHttpClient(useProxy: Boolean): OkHttpClient = if (useProxy) {

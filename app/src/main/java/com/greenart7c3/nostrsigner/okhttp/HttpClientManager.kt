@@ -25,6 +25,7 @@ import com.greenart7c3.nostrsigner.Amber
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
+import javax.net.SocketFactory
 import okhttp3.OkHttpClient
 
 object HttpClientManager {
@@ -33,7 +34,12 @@ object HttpClientManager {
             .Builder()
             .followRedirects(true)
             .followSslRedirects(true)
-            .eventListener(TrafficStatsEventListener())
+            // Tags the sockets OkHttp opens so StrictMode's untagged-socket
+            // detector stays quiet. TaggedSocketFactory covers DIRECT/HTTP
+            // routes; TaggingInterceptor (+ fastFallback(false) below) covers
+            // SOCKS proxy routes, which bypass the SocketFactory.
+            .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
+            .addInterceptor(TaggingInterceptor())
             .build()
     }
 
@@ -97,6 +103,16 @@ object HttpClientManager {
         return rootClient
             .newBuilder()
             .proxy(proxy)
+            // SOCKS proxy (Tor) sockets are built via Socket(proxy), bypassing
+            // our SocketFactory, and the relay path is WebSockets, whose
+            // connection call drops our EventListener. fastFallback(false)
+            // routes connection setup through SequentialExchangeFinder, which
+            // connects synchronously on the call thread — the same thread
+            // TaggingInterceptor already tagged — so the socket gets tagged.
+            // Only proxied clients need this; a single localhost SOCKS route
+            // gains nothing from fast fallback anyway. Direct clients keep fast
+            // fallback (Happy Eyeballs) and rely on TaggedSocketFactory.
+            .fastFallback(proxy == null)
             .readTimeout(duration)
             .connectTimeout(duration)
             .writeTimeout(duration)

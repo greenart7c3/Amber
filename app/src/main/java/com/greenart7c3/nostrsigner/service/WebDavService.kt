@@ -1,8 +1,9 @@
 package com.greenart7c3.nostrsigner.service
 
-import com.greenart7c3.nostrsigner.okhttp.TrafficStatsEventListener
+import com.greenart7c3.nostrsigner.okhttp.TaggedSocketFactory
 import java.io.IOException
 import java.util.concurrent.TimeUnit
+import javax.net.SocketFactory
 import okhttp3.Credentials
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -16,7 +17,7 @@ object WebDavService {
         .connectTimeout(30, TimeUnit.SECONDS)
         .readTimeout(60, TimeUnit.SECONDS)
         .writeTimeout(60, TimeUnit.SECONDS)
-        .eventListener(TrafficStatsEventListener())
+        .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
         .build()
 
     fun uploadFile(

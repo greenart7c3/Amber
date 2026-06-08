@@ -20,20 +20,42 @@
  */
 package com.greenart7c3.nostrsigner.okhttp
 
+import android.os.StrictMode
 import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
+import javax.net.SocketFactory
+import okhttp3.Dns
 import okhttp3.OkHttpClient
 
 object HttpClientManager {
-    private val rootClient =
-        OkHttpClient
-            .Builder()
-            .followRedirects(true)
-            .followSslRedirects(true)
-            .build()
+    private val rootClient by lazy {
+        buildSafe(
+            OkHttpClient
+                .Builder()
+                .followRedirects(true)
+                .followSslRedirects(true)
+                .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
+                .dns(TaggedDns(Dns.SYSTEM))
+                .addInterceptor(TaggingInterceptor()),
+        )
+    }
+
+    private fun buildSafe(builder: OkHttpClient.Builder): OkHttpClient {
+        val oldPolicy = StrictMode.getThreadPolicy()
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder(oldPolicy)
+                .permitCustomSlowCalls()
+                .build(),
+        )
+        try {
+            return builder.build()
+        } finally {
+            StrictMode.setThreadPolicy(oldPolicy)
+        }
+    }
 
     val DEFAULT_TIMEOUT_ON_WIFI: Duration = Duration.ofSeconds(10L)
     val DEFAULT_TIMEOUT_ON_MOBILE: Duration = Duration.ofSeconds(30L)
@@ -86,27 +108,28 @@ object HttpClientManager {
     ): OkHttpClient {
         val seconds = if (proxy != null) timeout.seconds * 3 else timeout.seconds
         val duration = Duration.ofSeconds(seconds)
-        return rootClient
-            .newBuilder()
-            .proxy(proxy)
-            .readTimeout(duration)
-            .connectTimeout(duration)
-            .writeTimeout(duration)
-            // Send a WebSocket ping every 30s. Without this, OkHttp accepts
-            // writes to half-closed WebSockets (returning `true` from
-            // `send()`) without ever surfacing a failure, because the only
-            // detection is a TCP write timeout on the next queued frame —
-            // which can take ~40-60s and leaves REQ/EVENT messages stranded
-            // in the outbound buffer. The periodic ping turns silent
-            // half-closes into explicit `onFailure` callbacks, so Amber's
-            // reconnect-with-backoff path can rebuild the socket and
-            // `NostrClient.onConnected → syncFilters` can re-issue the
-            // stranded subscriptions.
-            .pingInterval(PING_INTERVAL)
-            .addInterceptor(DefaultContentTypeInterceptor(userAgent))
-            .addNetworkInterceptor(LoggingInterceptor())
-            .addNetworkInterceptor(EncryptedBlobInterceptor(cache))
-            .build()
+        return buildSafe(
+            rootClient
+                .newBuilder()
+                .proxy(proxy)
+                .readTimeout(duration)
+                .connectTimeout(duration)
+                .writeTimeout(duration)
+                // Send a WebSocket ping every 30s. Without this, OkHttp accepts
+                // writes to half-closed WebSockets (returning `true` from
+                // `send()`) without ever surfacing a failure, because the only
+                // detection is a TCP write timeout on the next queued frame —
+                // which can take ~40-60s and leaves REQ/EVENT messages stranded
+                // in the outbound buffer. The periodic ping turns silent
+                // half-closes into explicit `onFailure` callbacks, so Amber's
+                // reconnect-with-backoff path can rebuild the socket and
+                // `NostrClient.onConnected → syncFilters` can re-issue the
+                // stranded subscriptions.
+                .pingInterval(PING_INTERVAL)
+                .addInterceptor(DefaultContentTypeInterceptor(userAgent))
+                .addNetworkInterceptor(LoggingInterceptor())
+                .addNetworkInterceptor(EncryptedBlobInterceptor(cache)),
+        )
     }
 
     fun getHttpClient(useProxy: Boolean): OkHttpClient = if (useProxy) {

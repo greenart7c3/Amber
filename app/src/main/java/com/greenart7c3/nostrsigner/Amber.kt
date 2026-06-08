@@ -5,6 +5,7 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
+import android.net.TrafficStats
 import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
@@ -202,8 +203,12 @@ class Amber :
             val port = TorManager.socksPort.value
             if (port == 0) return false
             return try {
+                if (TrafficStats.getThreadStatsTag() == -1) {
+                    TrafficStats.setThreadStatsTag(0x0001)
+                }
                 val socket = Socket()
                 socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                TrafficStats.tagSocket(socket)
                 socket.close()
                 true
             } catch (_: Exception) {
@@ -211,8 +216,12 @@ class Amber :
             }
         }
         try {
+            if (TrafficStats.getThreadStatsTag() == -1) {
+                TrafficStats.setThreadStatsTag(0x0001)
+            }
             val socket = Socket()
             socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
+            TrafficStats.tagSocket(socket)
             socket.close()
             return true
         } catch (e: Exception) {
@@ -372,6 +381,9 @@ class Amber :
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp()
+
+                HttpClientManager.getHttpClient(false)
+                HttpClientManager.getHttpClient(true)
 
                 // Start Tor immediately in the background without blocking app startup
                 if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {

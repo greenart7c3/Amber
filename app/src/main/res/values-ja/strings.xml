@@ -14,7 +14,7 @@
     <string name="hide">非表示</string>
     <string name="show_tips">ヒント</string>
     <string name="key_is_required">キーは必須です</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">新しいNostrアカウントを作成</string>
     <string name="backup_keys">キーをバックアップ</string>
     <string name="read_your_public_key">公開鍵を読み取る</string>
     <string name="reject">拒否</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">まだ承認するものはありません</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">お気に入りの Nostr アプリを少し探索してみませんか？</string>
     <string name="more">あと %1$s 件...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"あなたの公開鍵を読み取り、あなたに代わってイベントに署名する許可を求めています"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Orbot で Tor 接続する\n        \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) をインストール\n        \n2. Orbot を起動\n        \n3. Orbot で Socks ポートを確認（デフォルトは 9050）\n        \n4. 必要に応じて Orbot でポートを変更\n        \n5. この画面で Socks ポートを設定\n        \n6. 「有効化」ボタンを押して Orbot をプロキシとして使用\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) をインストール\n        \n2. Orbot を起動\n        \n3. Orbot で Socks ポートを確認（デフォルトは 9050）\n        \n4. 必要に応じて Orbot でポートを変更\n        \n5. この画面で Socks ポートを設定\n        \n6. 「有効化」ボタンを押して Orbot をプロキシとして使用\n    </string>
     <string name="orbot_socks_port">Orbot Socks ポート</string>
     <string name="invalid_port_number">無効なポート番号です</string>
     <string name="use_orbot">Orbot を使用</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot を切断</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Torの設定</string>
+    <string name="do_you_really_want_to_disable_tor_title">Torから切断しますか？</string>
     <string name="do_you_really_want_to_disable_tor_text">データは通常のネットワークで直ちに転送されます</string>
     <string name="builtin_tor_title">組み込み Tor</string>
     <string name="builtin_tor_description">アプリ内で直接 Tor を実行します。外部アプリは不要です。</string>
@@ -69,7 +69,7 @@
     <string name="no">いいえ</string>
     <string name="could_not_connect_to_tor">Tor に接続できませんでした</string>
     <string name="relays">Relay</string>
-    <string name="activity">Activity</string>
+    <string name="activity">アクティビティを表示</string>
     <string name="language">言語</string>
     <string name="language_description">アプリのインターフェース用</string>
     <string name="no_activities_found">アクティビティが見つかりません</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">短いテキストノート</string>
     <string name="event_kind_3">フォロー</string>
     <string name="event_kind_4">暗号化ダイレクトメッセージ</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">イベント削除リクエスト</string>
     <string name="event_kind_6">リポスト</string>
     <string name="event_kind_7">リアクション</string>
     <string name="event_kind_8">バッジ付与</string>
@@ -313,7 +313,7 @@
     <string name="sign_policy_manual_new_app_explainer">各リクエストを承認するよう求めます。</string>
     <string name="sign_policy_fully">このアプリケーションを完全に信頼する</string>
     <string name="sign_policy_fully_explainer">すべてのリクエストを自動署名</string>
-    <string name="event_kind_10050">DM relay</string>
+    <string name="event_kind_10050">DMリレー</string>
     <string name="paste_from_clipboard">クリップボードから貼り付け</string>
     <string name="invalid_nostr_connect_uri">無効な Nostr Connect URI です</string>
     <string name="event_kind_1986">Relay レビュー</string>

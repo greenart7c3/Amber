@@ -20,7 +20,7 @@
     <string name="hide">숨기기</string>
     <string name="show_tips">팁</string>
     <string name="key_is_required">키를 입력해야 합니다</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">새 Nostr 계정 만들기</string>
     <string name="backup_keys">키 백업</string>
     <string name="read_your_public_key">공개 키 읽기</string>
     <string name="reject">거부</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">아직 승인할 항목이 없습니다</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">즐겨 사용하는 Nostr 앱을 조금 더 탐색해 보세요.</string>
     <string name="more">%1$s 더 보기...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" 공개 키를 읽고 귀하를 대신하여 이벤트에 서명할 권한을 요청합니다"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot으로 Tor에 연결하기
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) 설치
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">잘못된 포트 번호입니다</string>
     <string name="use_orbot">Orbot 사용</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot 연결 해제</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor 설정</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor 연결을 끊으시겠습니까?</string>
     <string name="do_you_really_want_to_disable_tor_text">데이터가 즉시 일반 네트워크를 통해 전송됩니다</string>
     <string name="builtin_tor_title">내장 Tor</string>
     <string name="builtin_tor_description">앱 내부에서 직접 Tor를 실행합니다. 외부 앱이 필요하지 않습니다.</string>
@@ -93,7 +93,7 @@
     <string name="no">아니오</string>
     <string name="could_not_connect_to_tor">Tor에 연결할 수 없습니다</string>
     <string name="relays">Relay</string>
-    <string name="activity">Activity</string>
+    <string name="activity">활동 보기</string>
     <string name="language">언어</string>
     <string name="language_description">앱 인터페이스용</string>
     <string name="no_activities_found">활동이 없습니다</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">짧은 텍스트 노트</string>
     <string name="event_kind_3">팔로우</string>
     <string name="event_kind_4">암호화된 다이렉트 메시지</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">이벤트 삭제 요청</string>
     <string name="event_kind_6">리포스트</string>
     <string name="event_kind_7">반응</string>
     <string name="event_kind_8">배지 수여</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">각 요청마다 승인을 요청합니다.</string>
     <string name="sign_policy_fully">이 애플리케이션을 완전히 신뢰합니다</string>
     <string name="sign_policy_fully_explainer">모든 요청을 자동으로 서명합니다</string>
-    <string name="event_kind_10050">DM relay</string>
+    <string name="event_kind_10050">DM 릴레이</string>
     <string name="paste_from_clipboard">클립보드에서 붙여넣기</string>
     <string name="invalid_nostr_connect_uri">잘못된 Nostr connect URI입니다</string>
     <string name="event_kind_1986">Relay 리뷰</string>

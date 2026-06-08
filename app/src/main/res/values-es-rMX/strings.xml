@@ -14,7 +14,7 @@
     <string name="hide">Ocultar</string>
     <string name="show_tips">Consejos</string>
     <string name="key_is_required">La clave es obligatoria</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Crear una nueva cuenta de Nostr</string>
     <string name="backup_keys">Respaldar claves</string>
     <string name="read_your_public_key">Leer tu clave pública</string>
     <string name="reject">Rechazar</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">Nada que aprobar por ahora</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">¿Por qué no exploras un poco tu aplicación Nostr favorita?</string>
     <string name="more">%1$s más...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Quiere tu permiso para leer tu clave pública y firmar eventos en tu nombre"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Conectar a través de Tor con Orbot\n        \n\n1. Instala [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Inicia Orbot\n        \n3. En Orbot, verifica el puerto Socks. El valor predeterminado es 9050\n        \n4. Si es necesario, cambia el puerto en Orbot\n        \n5. Configura el puerto Socks en esta pantalla\n        \n6. Presiona el botón Activar para usar Orbot como proxy\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Instala [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Inicia Orbot\n        \n3. En Orbot, verifica el puerto Socks. El valor predeterminado es 9050\n        \n4. Si es necesario, cambia el puerto en Orbot\n        \n5. Configura el puerto Socks en esta pantalla\n        \n6. Presiona el botón Activar para usar Orbot como proxy\n    </string>
     <string name="orbot_socks_port">Puerto Socks de Orbot</string>
     <string name="invalid_port_number">Número de puerto no válido</string>
     <string name="use_orbot">Usar Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Desconectar Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Configuración de Tor</string>
+    <string name="do_you_really_want_to_disable_tor_title">¿Desconectarse de Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Tus datos se transferirán inmediatamente por la red regular</string>
     <string name="builtin_tor_title">Tor integrado</string>
     <string name="builtin_tor_description">Ejecuta Tor directamente dentro de la aplicación. No se requiere ninguna aplicación externa.</string>
@@ -69,7 +69,7 @@
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">No se pudo conectar a Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Mostrar actividad</string>
     <string name="language">Idioma</string>
     <string name="language_description">Para la interfaz de la aplicación</string>
     <string name="no_activities_found">No se encontraron actividades</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">Nota de texto corta</string>
     <string name="event_kind_3">Seguidos</string>
     <string name="event_kind_4">Mensajes directos cifrados</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Solicitud de eliminación de evento</string>
     <string name="event_kind_6">Repost</string>
     <string name="event_kind_7">Reacción</string>
     <string name="event_kind_8">Otorgamiento de insignia</string>

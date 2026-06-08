@@ -20,7 +20,7 @@
     <string name="hide">लुकाउनुहोस्</string>
     <string name="show_tips">सुझावहरू</string>
     <string name="key_is_required">कुञ्जी आवश्यक छ</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">नयाँ Nostr खाता सिर्जना गर्नुहोस्</string>
     <string name="backup_keys">कुञ्जीहरू ब्याकअप गर्नुहोस्</string>
     <string name="read_your_public_key">आफ्नो सार्वजनिक कुञ्जी पढ्नुहोस्</string>
     <string name="reject">अस्वीकार गर्नुहोस्</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">अहिले अनुमोदन गर्न केही छैन</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">आफ्नो मनपर्ने nostr एप थोरै अन्वेषण गर्नुहोस् न?</string>
     <string name="more">%1$s थप...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" तपाईंको सार्वजनिक कुञ्जी पढ्न र तपाईंको तर्फबाट इभेन्टहरूमा हस्ताक्षर गर्न तपाईंको अनुमति चाहन्छ"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot मार्फत Tor मा जडान गर्नुहोस्
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) इन्स्टल गर्नुहोस्
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">अमान्य पोर्ट नम्बर</string>
     <string name="use_orbot">Orbot प्रयोग गर्नुहोस्</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot विच्छेद गर्नुहोस्</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor सेटअप</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor बाट विच्छेद गर्ने?</string>
     <string name="do_you_really_want_to_disable_tor_text">तपाईंको डेटा तुरुन्तै नियमित नेटवर्कमा स्थानान्तरण हुनेछ</string>
     <string name="builtin_tor_title">अन्तर्निहित Tor</string>
     <string name="builtin_tor_description">एपभित्रै Tor चलाउनुहोस्। बाह्य एप आवश्यक छैन।</string>
@@ -93,7 +93,7 @@
     <string name="no">होइन</string>
     <string name="could_not_connect_to_tor">Tor मा जडान गर्न सकिएन</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">गतिविधि देखाउनुहोस्</string>
     <string name="language">भाषा</string>
     <string name="language_description">एपको इन्टरफेसका लागि</string>
     <string name="no_activities_found">कुनै गतिविधि फेला परेन</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">छोटो टेक्स्ट नोट</string>
     <string name="event_kind_3">फलो गरेका</string>
     <string name="event_kind_4">इन्क्रिप्टेड प्रत्यक्ष सन्देशहरू</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">इभेन्ट मेटाउने अनुरोध</string>
     <string name="event_kind_6">रिपोस्ट</string>
     <string name="event_kind_7">प्रतिक्रिया</string>
     <string name="event_kind_8">ब्याज पुरस्कार</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">प्रत्येक अनुरोध अनुमोदन गर्न मलाई सोध्नुहोस्।</string>
     <string name="sign_policy_fully">म यो एप्लिकेसनमा पूर्ण विश्वास गर्छु</string>
     <string name="sign_policy_fully_explainer">प्रत्येक अनुरोध स्वतः हस्ताक्षर गर्नुहोस्</string>
-    <string name="event_kind_10050">DM relays</string>
+    <string name="event_kind_10050">DM relay</string>
     <string name="paste_from_clipboard">क्लिपबोर्डबाट टाँस्नुहोस्</string>
     <string name="invalid_nostr_connect_uri">अमान्य nostr connect URI</string>
     <string name="event_kind_1986">Relay समीक्षाहरू</string>

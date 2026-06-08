@@ -14,7 +14,7 @@
     <string name="hide">Dölj</string>
     <string name="show_tips">Tips</string>
     <string name="key_is_required">Nyckel krävs</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Skapa ett nytt Nostr-konto</string>
     <string name="backup_keys">Säkerhetskopiera nycklar</string>
     <string name="read_your_public_key">Läs din publika nyckel</string>
     <string name="reject">Avvisa</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">Inget att godkänna ännu</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Varför inte utforska din favoritapp för Nostr lite?</string>
     <string name="more">%1$s till...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Vill ha din tillåtelse att läsa din publika nyckel och signera händelser för din räkning"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Anslut via Tor med Orbot\n        \n\n1. Installera [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Starta Orbot\n        \n3. I Orbot, kontrollera Socks-porten. Standardvärdet är 9050\n        \n4. Ändra porten i Orbot vid behov\n        \n5. Konfigurera Socks-porten på den här skärmen\n        \n6. Tryck på Aktivera-knappen för att använda Orbot som proxy\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Installera [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Starta Orbot\n        \n3. I Orbot, kontrollera Socks-porten. Standardvärdet är 9050\n        \n4. Ändra porten i Orbot vid behov\n        \n5. Konfigurera Socks-porten på den här skärmen\n        \n6. Tryck på Aktivera-knappen för att använda Orbot som proxy\n    </string>
     <string name="orbot_socks_port">Orbot Socks-port</string>
     <string name="invalid_port_number">Ogiltigt portnummer</string>
     <string name="use_orbot">Använd Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Koppla från Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor-inställning</string>
+    <string name="do_you_really_want_to_disable_tor_title">Koppla bort från Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Dina data kommer omedelbart att överföras via det vanliga nätverket</string>
     <string name="builtin_tor_title">Inbyggd Tor</string>
     <string name="builtin_tor_description">Kör Tor direkt i appen. Ingen extern app krävs.</string>
@@ -69,7 +69,7 @@
     <string name="no">Nej</string>
     <string name="could_not_connect_to_tor">Det gick inte att ansluta till Tor</string>
     <string name="relays">Reläer</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Visa aktivitet</string>
     <string name="language">Språk</string>
     <string name="language_description">För appens gränssnitt</string>
     <string name="no_activities_found">Inga aktiviteter hittades</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">Kort textnotering</string>
     <string name="event_kind_3">Följer</string>
     <string name="event_kind_4">Krypterade direktmeddelanden</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Begäran om borttagning av händelse</string>
     <string name="event_kind_6">Dela vidare</string>
     <string name="event_kind_7">Reaktion</string>
     <string name="event_kind_8">Märkestilldelning</string>

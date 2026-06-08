@@ -20,7 +20,7 @@
     <string name="hide">پنهان کردن</string>
     <string name="show_tips">نکات</string>
     <string name="key_is_required">کلید الزامی است</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">ایجاد حساب Nostr جدید</string>
     <string name="backup_keys">پشتیبان‌گیری از کلیدها</string>
     <string name="read_your_public_key">خواندن کلید عمومی شما</string>
     <string name="reject">رد کردن</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">هنوز چیزی برای تأیید وجود ندارد</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">چرا کمی با برنامه مورد علاقه Nostr خود کار نمی‌کنید؟</string>
     <string name="more">%1$s مورد دیگر...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" می‌خواهد اجازه دسترسی به کلید عمومی شما و امضای رویدادها از طرف شما را داشته باشد"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## اتصال از طریق Tor با Orbot
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) را نصب کنید
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">شماره پورت نامعتبر است</string>
     <string name="use_orbot">استفاده از Orbot</string>
     <string name="disconnect_from_your_orbot_setup">قطع اتصال Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">تنظیم Tor</string>
+    <string name="do_you_really_want_to_disable_tor_title">آیا می‌خواهید از Tor قطع اتصال کنید؟</string>
     <string name="do_you_really_want_to_disable_tor_text">داده‌های شما بلافاصله از طریق شبکه معمولی منتقل خواهند شد</string>
     <string name="builtin_tor_title">Tor داخلی</string>
     <string name="builtin_tor_description">Tor را مستقیماً درون برنامه اجرا کنید. نیازی به برنامه خارجی نیست.</string>
@@ -93,7 +93,7 @@
     <string name="no">خیر</string>
     <string name="could_not_connect_to_tor">اتصال به Tor ممکن نشد</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">نمایش فعالیت</string>
     <string name="language">زبان</string>
     <string name="language_description">برای رابط کاربری برنامه</string>
     <string name="no_activities_found">هیچ فعالیتی یافت نشد</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">یادداشت متنی کوتاه</string>
     <string name="event_kind_3">دنبال‌شوندگان</string>
     <string name="event_kind_4">پیام‌های مستقیم رمزگذاری‌شده</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">درخواست حذف رویداد</string>
     <string name="event_kind_6">بازنشر</string>
     <string name="event_kind_7">واکنش</string>
     <string name="event_kind_8">اعطای نشان</string>

@@ -20,7 +20,7 @@
     <string name="hide">மறை</string>
     <string name="show_tips">குறிப்புகள்</string>
     <string name="key_is_required">விசை தேவை</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">புதிய Nostr கணக்கை உருவாக்கு</string>
     <string name="backup_keys">விசைகளை காப்புப்பிரதி எடு</string>
     <string name="read_your_public_key">உங்கள் பொது விசையை படிக்கவும்</string>
     <string name="reject">நிராகரி</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">இன்னும் அனுமதிக்க எதுவும் இல்லை</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">உங்கள் விருப்பமான Nostr பயன்பாட்டை சற்று ஆராயலாமே?</string>
     <string name="more">%1$s மேலும்...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" உங்கள் பொது விசையை படிக்கவும் உங்கள் சார்பாக நிகழ்வுகளில் கையெழுத்திடவும் உங்கள் அனுமதி வேண்டும்"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot மூலம் Tor இல் இணைக்கவும்
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) நிறுவவும்
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">தவறான port எண்</string>
     <string name="use_orbot">Orbot பயன்படுத்து</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot ஐ துண்டி</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor அமைப்பு</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor இலிருந்து துண்டிக்கவா?</string>
     <string name="do_you_really_want_to_disable_tor_text">உங்கள் தரவு உடனடியாக வழக்கமான நெட்வொர்க்கில் அனுப்பப்படும்</string>
     <string name="builtin_tor_title">உள்ளமைந்த Tor</string>
     <string name="builtin_tor_description">பயன்பாட்டிற்குள்ளேயே நேரடியாக Tor இயக்கவும். வெளிப்புற பயன்பாடு தேவையில்லை.</string>
@@ -93,7 +93,7 @@
     <string name="no">இல்லை</string>
     <string name="could_not_connect_to_tor">Tor உடன் இணைக்க முடியவில்லை</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">செயல்பாட்டைக் காட்டு</string>
     <string name="language">மொழி</string>
     <string name="language_description">பயன்பாட்டின் இடைமுகத்திற்காக</string>
     <string name="no_activities_found">செயல்பாடுகள் எதுவும் இல்லை</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">சிறிய உரை குறிப்பு</string>
     <string name="event_kind_3">பின்தொடர்பவர்கள்</string>
     <string name="event_kind_4">மறைகுறியாக்கப்பட்ட நேரடி செய்திகள்</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">நிகழ்வு நீக்க கோரிக்கை</string>
     <string name="event_kind_6">மறுபதிவு</string>
     <string name="event_kind_7">எதிர்வினை</string>
     <string name="event_kind_8">பதக்க விருது</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">ஒவ்வொரு கோரிக்கையையும் அனுமதிக்க என்னிடம் கேளுங்கள்.</string>
     <string name="sign_policy_fully">இந்த பயன்பாட்டை முழுமையாக நம்புகிறேன்</string>
     <string name="sign_policy_fully_explainer">ஒவ்வொரு கோரிக்கையையும் தானாக கையொப்பமிடு</string>
-    <string name="event_kind_10050">DM relays</string>
+    <string name="event_kind_10050">DM relay</string>
     <string name="paste_from_clipboard">கிளிப்போர்டிலிருந்து ஒட்டு</string>
     <string name="invalid_nostr_connect_uri">தவறான Nostr connect URI</string>
     <string name="event_kind_1986">Relay மதிப்புரைகள்</string>

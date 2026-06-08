@@ -93,7 +93,7 @@
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">No se pudo conectar a Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Mostrar actividad</string>
     <string name="language">Idioma</string>
     <string name="language_description">Para la interfaz de la aplicación</string>
     <string name="no_activities_found">No se encontraron actividades</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">Nota de texto corta</string>
     <string name="event_kind_3">Seguidos</string>
     <string name="event_kind_4">Mensajes directos cifrados</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Solicitud de eliminación de evento</string>
     <string name="event_kind_6">Repost</string>
     <string name="event_kind_7">Reacción</string>
     <string name="event_kind_8">Concesión de insignia</string>

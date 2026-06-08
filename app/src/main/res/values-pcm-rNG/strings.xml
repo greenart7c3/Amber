@@ -14,7 +14,7 @@
     <string name="hide">Hide</string>
     <string name="show_tips">Tips</string>
     <string name="key_is_required">Key na required</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Make new Nostr account</string>
     <string name="backup_keys">Backup Keys</string>
     <string name="read_your_public_key">Read your public key</string>
     <string name="reject">Reject</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">Nothing to approve yet</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Why you no go explore your favourite nostr app small?</string>
     <string name="more">%1$s more...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Wan make you give am permission to read your public key and sign events for your behalf"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Connect through Tor with Orbot\n        \n\n1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Start Orbot\n        \n3. For Orbot, check di Socks port. Di default na 9050\n        \n4. If necessary, change di port for Orbot\n        \n5. Configure di Socks port for dis screen\n        \n6. Press di Activate button to use Orbot as proxy\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Install [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Start Orbot\n        \n3. For Orbot, check di Socks port. Di default na 9050\n        \n4. If necessary, change di port for Orbot\n        \n5. Configure di Socks port for dis screen\n        \n6. Press di Activate button to use Orbot as proxy\n    </string>
     <string name="orbot_socks_port">Orbot Socks Port</string>
     <string name="invalid_port_number">Port number no valid</string>
     <string name="use_orbot">Use Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Disconnect Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor setup</string>
+    <string name="do_you_really_want_to_disable_tor_title">You wan disconnect from Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Your data go immediately transfer for regular network</string>
     <string name="builtin_tor_title">Built-in Tor</string>
     <string name="builtin_tor_description">Run Tor directly inside di app. No external app required.</string>
@@ -69,7 +69,7 @@
     <string name="no">No</string>
     <string name="could_not_connect_to_tor">E no fit connect to Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Show wetin dey happen</string>
     <string name="language">Language</string>
     <string name="language_description">For di App\'s Interface</string>
     <string name="no_activities_found">No activities found</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">Short text note</string>
     <string name="event_kind_3">Follows</string>
     <string name="event_kind_4">Encrypted direct messages</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Request to delete event</string>
     <string name="event_kind_6">Repost</string>
     <string name="event_kind_7">Reaction</string>
     <string name="event_kind_8">Badge award</string>

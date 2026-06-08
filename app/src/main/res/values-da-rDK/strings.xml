@@ -20,7 +20,7 @@
     <string name="hide">Skjul</string>
     <string name="show_tips">Tips</string>
     <string name="key_is_required">Nøgle er påkrævet</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Opret en ny Nostr-konto</string>
     <string name="backup_keys">Sikkerhedskopier nøgler</string>
     <string name="read_your_public_key">Læs din offentlige nøgle</string>
     <string name="reject">Afvis</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">Intet at godkende endnu</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Hvorfor ikke udforske din foretrukne Nostr-app lidt?</string>
     <string name="more">%1$s mere...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Vil have din tilladelse til at læse din offentlige nøgle og signere begivenheder på dine vegne"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Forbind via Tor med Orbot
         \n\n1. Installer [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">Ugyldigt portnummer</string>
     <string name="use_orbot">Brug Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Afbryd Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor-opsætning</string>
+    <string name="do_you_really_want_to_disable_tor_title">Afbryd forbindelsen til Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Dine data overføres straks via det normale netværk</string>
     <string name="builtin_tor_title">Indbygget Tor</string>
     <string name="builtin_tor_description">Kør Tor direkte i appen. Ingen ekstern app krævet.</string>
@@ -93,7 +93,7 @@
     <string name="no">Nej</string>
     <string name="could_not_connect_to_tor">Kunne ikke oprette forbindelse til Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Vis aktivitet</string>
     <string name="language">Sprog</string>
     <string name="language_description">For appens grænseflade</string>
     <string name="no_activities_found">Ingen aktiviteter fundet</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">Kort tekstnotat</string>
     <string name="event_kind_3">Følger</string>
     <string name="event_kind_4">Krypterede direkte beskeder</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Anmodning om sletning af begivenhed</string>
     <string name="event_kind_6">Gendeling</string>
     <string name="event_kind_7">Reaktion</string>
     <string name="event_kind_8">Badge-tildeling</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">Bed mig om at godkende hver anmodning.</string>
     <string name="sign_policy_fully">Jeg stoler fuldt ud på denne applikation</string>
     <string name="sign_policy_fully_explainer">Underskriv automatisk alle anmodninger</string>
-    <string name="event_kind_10050">DM-relays</string>
+    <string name="event_kind_10050">DM-relæer</string>
     <string name="paste_from_clipboard">Indsæt fra udklipsholder</string>
     <string name="invalid_nostr_connect_uri">Ugyldig Nostr connect URI</string>
     <string name="event_kind_1986">Relay-anmeldelser</string>

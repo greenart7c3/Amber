@@ -20,7 +20,7 @@
     <string name="hide">Skrýt</string>
     <string name="show_tips">Tipy</string>
     <string name="key_is_required">Klíč je povinný</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Vytvořit nový účet Nostr</string>
     <string name="backup_keys">Zálohovat klíče</string>
     <string name="read_your_public_key">Přečíst váš veřejný klíč</string>
     <string name="reject">Odmítnout</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">Zatím nic ke schválení</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Proč si trochu neprozkoumat svou oblíbenou nostr aplikaci?</string>
     <string name="more">%1$s dalších…</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Žádá o oprávnění číst váš veřejný klíč a podepisovat události vaším jménem"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Připojit přes Tor pomocí Orbot
         \n\n1. Nainstalujte [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">Neplatné číslo portu</string>
     <string name="use_orbot">Použít Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Odpojit Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Nastavení Tor</string>
+    <string name="do_you_really_want_to_disable_tor_title">Odpojit od sítě Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Vaše data budou okamžitě přenášena přes běžnou síť</string>
     <string name="builtin_tor_title">Integrovaný Tor</string>
     <string name="builtin_tor_description">Spustit Tor přímo v aplikaci. Není nutná žádná externí aplikace.</string>
@@ -93,7 +93,7 @@
     <string name="no">Ne</string>
     <string name="could_not_connect_to_tor">Nepodařilo se připojit k Tor</string>
     <string name="relays">Relay</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Zobrazit aktivitu</string>
     <string name="language">Jazyk</string>
     <string name="language_description">Pro rozhraní aplikace</string>
     <string name="no_activities_found">Žádné aktivity nenalezeny</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">Krátká textová poznámka</string>
     <string name="event_kind_3">Sledovaní</string>
     <string name="event_kind_4">Šifrované přímé zprávy</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Žádost o smazání události</string>
     <string name="event_kind_6">Sdílení</string>
     <string name="event_kind_7">Reakce</string>
     <string name="event_kind_8">Udělení odznaku</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">Požádat mě o schválení každého požadavku.</string>
     <string name="sign_policy_fully">Plně důvěřuji této aplikaci</string>
     <string name="sign_policy_fully_explainer">Automaticky podepisovat každý požadavek</string>
-    <string name="event_kind_10050">DM relay</string>
+    <string name="event_kind_10050">DM relays</string>
     <string name="paste_from_clipboard">Vložit ze schránky</string>
     <string name="invalid_nostr_connect_uri">Neplatné URI pro Nostr connect</string>
     <string name="event_kind_1986">Hodnocení relay</string>

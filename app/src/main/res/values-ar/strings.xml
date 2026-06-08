@@ -20,7 +20,7 @@
     <string name="hide">إخفاء</string>
     <string name="show_tips">نصائح</string>
     <string name="key_is_required">المفتاح مطلوب</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">إنشاء حساب Nostr جديد</string>
     <string name="backup_keys">نسخ المفاتيح احتياطياً</string>
     <string name="read_your_public_key">اقرأ مفتاحك العام</string>
     <string name="reject">رفض</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">لا يوجد شيء للموافقة عليه بعد</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">لماذا لا تستكشف تطبيق Nostr المفضل لديك قليلاً؟</string>
     <string name="more">%1$s أكثر...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" يطلب إذنك لقراءة مفتاحك العام والتوقيع على الأحداث نيابةً عنك"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## الاتصال عبر Tor باستخدام Orbot
         \n\n1. ثبّت [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">رقم المنفذ غير صالح</string>
     <string name="use_orbot">استخدام Orbot</string>
     <string name="disconnect_from_your_orbot_setup">قطع الاتصال بـ Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">إعداد Tor</string>
+    <string name="do_you_really_want_to_disable_tor_title">هل تريد قطع الاتصال بـ Tor؟</string>
     <string name="do_you_really_want_to_disable_tor_text">سيتم نقل بياناتك فوراً عبر الشبكة العادية</string>
     <string name="builtin_tor_title">Tor المدمج</string>
     <string name="builtin_tor_description">تشغيل Tor مباشرة داخل التطبيق. لا يلزم تطبيق خارجي.</string>
@@ -93,7 +93,7 @@
     <string name="no">لا</string>
     <string name="could_not_connect_to_tor">تعذّر الاتصال بـ Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">عرض النشاط</string>
     <string name="language">اللغة</string>
     <string name="language_description">لواجهة التطبيق</string>
     <string name="no_activities_found">لم يتم العثور على أنشطة</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">ملاحظة نصية قصيرة</string>
     <string name="event_kind_3">المتابَعون</string>
     <string name="event_kind_4">الرسائل المباشرة المشفرة</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">طلب حذف الحدث</string>
     <string name="event_kind_6">إعادة نشر</string>
     <string name="event_kind_7">تفاعل</string>
     <string name="event_kind_8">منح شارة</string>

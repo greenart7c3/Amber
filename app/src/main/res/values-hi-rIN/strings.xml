@@ -20,7 +20,7 @@
     <string name="hide">छुपाएँ</string>
     <string name="show_tips">सुझाव</string>
     <string name="key_is_required">कुंजी आवश्यक है</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">नया Nostr खाता बनाएं</string>
     <string name="backup_keys">कुंजियों का बैकअप</string>
     <string name="read_your_public_key">अपनी सार्वजनिक कुंजी पढ़ें</string>
     <string name="reject">अस्वीकार करें</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">अभी अनुमोदन के लिए कुछ नहीं</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">अपने पसंदीदा Nostr ऐप को थोड़ा एक्सप्लोर क्यों नहीं करते?</string>
     <string name="more">%1$s और...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" आपकी सार्वजनिक कुंजी पढ़ने और आपकी ओर से इवेंट पर हस्ताक्षर करने की अनुमति चाहता है"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot के साथ Tor से कनेक्ट करें
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) इंस्टॉल करें
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">अमान्य पोर्ट नंबर</string>
     <string name="use_orbot">Orbot उपयोग करें</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot डिस्कनेक्ट करें</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor सेटअप</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor से डिस्कनेक्ट करें?</string>
     <string name="do_you_really_want_to_disable_tor_text">आपका डेटा तुरंत सामान्य नेटवर्क में स्थानांतरित हो जाएगा</string>
     <string name="builtin_tor_title">बिल्ट-इन Tor</string>
     <string name="builtin_tor_description">Tor को सीधे ऐप के अंदर चलाएं। किसी बाहरी ऐप की आवश्यकता नहीं।</string>
@@ -93,7 +93,7 @@
     <string name="no">नहीं</string>
     <string name="could_not_connect_to_tor">Tor से कनेक्ट नहीं हो सका</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">गतिविधि दिखाएं</string>
     <string name="language">भाषा</string>
     <string name="language_description">ऐप के इंटरफ़ेस के लिए</string>
     <string name="no_activities_found">कोई गतिविधि नहीं मिली</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">छोटा टेक्स्ट नोट</string>
     <string name="event_kind_3">फ़ॉलो</string>
     <string name="event_kind_4">एन्क्रिप्टेड डायरेक्ट संदेश</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">इवेंट हटाने का अनुरोध</string>
     <string name="event_kind_6">रीपोस्ट</string>
     <string name="event_kind_7">प्रतिक्रिया</string>
     <string name="event_kind_8">बैज पुरस्कार</string>

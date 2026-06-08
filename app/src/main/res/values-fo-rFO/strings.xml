@@ -20,7 +20,7 @@
     <string name="hide">Fela</string>
     <string name="show_tips">Ráðleggingar</string>
     <string name="key_is_required">Lykill er kravdur</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Stovna ein nýggjan Nostr-konto</string>
     <string name="backup_keys">Goymsluafrit av lyklum</string>
     <string name="read_your_public_key">Les almenna lykil tín</string>
     <string name="reject">Avsla</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">Onki at góðtaka enn</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Hví ikki kanna tína uppáhaldna Nostr-app lítið grann?</string>
     <string name="more">%1$s fleiri...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Vil hava loyvi til at lesa offentliga lyklið hjá tær og undirrita hendingar vegna tín"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Tengjast gjøgnum Tor við Orbot
         \n\n1. Installer [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">Ógyldugt portnummar</string>
     <string name="use_orbot">Nýt Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Aftenging Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor-uppseting</string>
+    <string name="do_you_really_want_to_disable_tor_title">Ávíkja frá Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Tínar gøgn verða tøgar flutt yvir vanliga netið</string>
     <string name="builtin_tor_title">Innbyggt Tor</string>
     <string name="builtin_tor_description">Keyr Tor beinleiðis í forritinum. Ongt uttanhýsis forrit er kravt.</string>
@@ -93,7 +93,7 @@
     <string name="no">Nei</string>
     <string name="could_not_connect_to_tor">Kundi ikki tengja til Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Vís virkni</string>
     <string name="language">Mál</string>
     <string name="language_description">Fyri viðmótið hjá appini</string>
     <string name="no_activities_found">Ongar virksemdir fundnar</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">Stuttur tekstnotat</string>
     <string name="event_kind_3">Fylgjarar</string>
     <string name="event_kind_4">Kryptaðar beinskeytir</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Beiðni um strikking av hending</string>
     <string name="event_kind_6">Endurbirgja</string>
     <string name="event_kind_7">Viðurkenning</string>
     <string name="event_kind_8">Merking tildelt</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">Spyr meg um at góðtaka hverja beiðni.</string>
     <string name="sign_policy_fully">Eg treystir hesum forriti fulliga</string>
     <string name="sign_policy_fully_explainer">Undirskirva sjálvvirkið allar beiðnir</string>
-    <string name="event_kind_10050">DM-relays</string>
+    <string name="event_kind_10050">DM-relæ</string>
     <string name="paste_from_clipboard">Líma úr klippiborðið</string>
     <string name="invalid_nostr_connect_uri">Ógyldig Nostr Connect URI</string>
     <string name="event_kind_1986">Relay-endurmetingar</string>

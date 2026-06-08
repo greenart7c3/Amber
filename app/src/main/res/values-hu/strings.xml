@@ -14,7 +14,7 @@
     <string name="hide">Elrejtés</string>
     <string name="show_tips">Tippek</string>
     <string name="key_is_required">Kulcs megadása kötelező</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Új Nostr-fiók létrehozása</string>
     <string name="backup_keys">Kulcsok mentése</string>
     <string name="read_your_public_key">Publikus kulcs olvasása</string>
     <string name="reject">Elutasítás</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">Még nincs jóváhagyandó elem</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Miért nem fedezi fel kicsit a kedvenc Nostr alkalmazását?</string>
     <string name="more">%1$s további...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Engedélyt kér a nyilvános kulcsod olvasásához és az eseményeid nevében történő aláírásához"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Csatlakozás Tor-on keresztül Orbot segítségével\n        \n\n1. Telepítse az [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) alkalmazást\n        \n2. Indítsa el az Orbot-ot\n        \n3. Az Orbot-ban ellenőrizze a Socks portot. Az alapértelmezett port 9050\n        \n4. Szükség esetén módosítsa a portot az Orbot-ban\n        \n5. Konfigurálja a Socks portot ezen a képernyőn\n        \n6. Nyomja meg az Aktiválás gombot az Orbot proxyként való használatához\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Telepítse az [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) alkalmazást\n        \n2. Indítsa el az Orbot-ot\n        \n3. Az Orbot-ban ellenőrizze a Socks portot. Az alapértelmezett port 9050\n        \n4. Szükség esetén módosítsa a portot az Orbot-ban\n        \n5. Konfigurálja a Socks portot ezen a képernyőn\n        \n6. Nyomja meg az Aktiválás gombot az Orbot proxyként való használatához\n    </string>
     <string name="orbot_socks_port">Orbot Socks port</string>
     <string name="invalid_port_number">Érvénytelen portszám</string>
     <string name="use_orbot">Orbot használata</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot leválasztása</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor beállítása</string>
+    <string name="do_you_really_want_to_disable_tor_title">Lecsatlakozás a Torról?</string>
     <string name="do_you_really_want_to_disable_tor_text">Adatai azonnal a normál hálózaton keresztül kerülnek átvitelre</string>
     <string name="builtin_tor_title">Beépített Tor</string>
     <string name="builtin_tor_description">A Tor futtatása közvetlenül az alkalmazáson belül. Nincs szükség külső alkalmazásra.</string>
@@ -69,7 +69,7 @@
     <string name="no">Nem</string>
     <string name="could_not_connect_to_tor">Nem sikerült csatlakozni a Tor-hoz</string>
     <string name="relays">Relay-ek</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Tevékenység megjelenítése</string>
     <string name="language">Nyelv</string>
     <string name="language_description">Az alkalmazás felületéhez</string>
     <string name="no_activities_found">Nem található tevékenység</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">Rövid szöveges bejegyzés</string>
     <string name="event_kind_3">Követések</string>
     <string name="event_kind_4">Titkosított közvetlen üzenetek</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Esemény törlési kérelem</string>
     <string name="event_kind_6">Megosztás</string>
     <string name="event_kind_7">Reakció</string>
     <string name="event_kind_8">Jelvénykiosztás</string>

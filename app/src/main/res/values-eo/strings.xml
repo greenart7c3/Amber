@@ -20,7 +20,7 @@
     <string name="hide">Kaŝi</string>
     <string name="show_tips">Konsiletoj</string>
     <string name="key_is_required">Ŝlosilo estas deviga</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Krei novan Nostr-konton</string>
     <string name="backup_keys">Sekurkopii ŝlosilojn</string>
     <string name="read_your_public_key">Legi vian publikan ŝlosilon</string>
     <string name="reject">Malakcepti</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">Ankoraŭ nenio por aprobi</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Kial ne esplori iomete vian plej ŝatatan Nostr-aplikaĵon?</string>
     <string name="more">%1$s pli…</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Deziras vian permeson legi vian publikan ŝlosilon kaj subskribi eventojn en via nomo"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Konekti per Tor kun Orbot
         \n\n1. Instali [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">Nevalida pordnumero</string>
     <string name="use_orbot">Uzi Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Malkonekti Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor-agordo</string>
+    <string name="do_you_really_want_to_disable_tor_title">Ĉu malkonekti de Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Viaj datumoj tuj estos transdonitaj en la regula reto</string>
     <string name="builtin_tor_title">Enkonstruita Tor</string>
     <string name="builtin_tor_description">Ruli Tor rekte ene de la aplikaĵo. Ne bezoniĝas ekstera aplikaĵo.</string>
@@ -93,7 +93,7 @@
     <string name="no">Ne</string>
     <string name="could_not_connect_to_tor">Ne povis konekti al Tor</string>
     <string name="relays">Relay-oj</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Montri agadon</string>
     <string name="language">Lingvo</string>
     <string name="language_description">Por la interfaco de la aplikaĵo</string>
     <string name="no_activities_found">Neniuj agadoj trovitaj</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">Mallonga teksta noto</string>
     <string name="event_kind_3">Sekvadoj</string>
     <string name="event_kind_4">Ĉifritaj rektaj mesaĝoj</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Peto pri forigo de evento</string>
     <string name="event_kind_6">Resendo</string>
     <string name="event_kind_7">Reago</string>
     <string name="event_kind_8">Insignodonaco</string>

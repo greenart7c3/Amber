@@ -20,7 +20,7 @@
     <string name="hide">गोपयतु</string>
     <string name="show_tips">सूचनाः</string>
     <string name="key_is_required">कुञ्चिका आवश्यकी</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">नूतनं Nostr खातं निर्मातु</string>
     <string name="backup_keys">कुञ्चिका-प्रतिलिप्यः</string>
     <string name="read_your_public_key">भवतः सार्वजनिक-कुञ्चिका पठतु</string>
     <string name="reject">अस्वीकृतिः</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">अभी अनुमोदनार्थं किमपि नास्ति</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">स्वीयं प्रिय-nostr-अनुप्रयोगं किञ्चित् अन्वेष्यतु किमु?</string>
     <string name="more">%1$s अधिकाः...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" भवतः सार्वजनिकं कुञ्चिकां पठितुं तथा भवतः कृते घटनासु हस्ताक्षरं कर्तुं अनुमतिं याचते"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot द्वारा Tor से संयोजयतु
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) संस्थापयतु
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">अमान्य-पोर्ट-संख्या</string>
     <string name="use_orbot">Orbot उपयुज्यतु</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot वियोजयतु</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor सङ्गठनम्</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor तः वियोजयितुम् इच्छति किम्?</string>
     <string name="do_you_really_want_to_disable_tor_text">भवतः दत्तांशः सामान्य-संजाले तत्क्षणं स्थानान्तरितः भविष्यति</string>
     <string name="builtin_tor_title">अन्तर्निहित Tor</string>
     <string name="builtin_tor_description">Tor सीधे अनुप्रयोग-मध्ये चालयतु। कोऽपि बाह्य-अनुप्रयोगः आवश्यकः नास्ति।</string>
@@ -93,7 +93,7 @@
     <string name="no">न</string>
     <string name="could_not_connect_to_tor">Tor से संयोजितुं न शक्यते</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">क्रियाकलापं दर्शयतु</string>
     <string name="language">भाषा</string>
     <string name="language_description">अनुप्रयोगस्य इन्टरफेसार्थम्</string>
     <string name="no_activities_found">कोऽपि क्रियाकलापः न प्राप्यते</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">लघु-पाठ-नोट</string>
     <string name="event_kind_3">अनुसरणानि</string>
     <string name="event_kind_4">कूटित-प्रत्यक्ष-सन्देशाः</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">घटना विलोपन निवेदनम्</string>
     <string name="event_kind_6">पुनर्प्रकाशनम्</string>
     <string name="event_kind_7">प्रतिक्रिया</string>
     <string name="event_kind_8">बैज-पुरस्कारः</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">प्रत्येक-अनुरोधं अनुमोदयितुं मां पृच्छतु।</string>
     <string name="sign_policy_fully">मैं इस अनुप्रयोग पर पूर्णतः विश्वास करोमि</string>
     <string name="sign_policy_fully_explainer">प्रत्येक-अनुरोधं स्वतः हस्ताक्षरयतु</string>
-    <string name="event_kind_10050">DM relays</string>
+    <string name="event_kind_10050">DM relay</string>
     <string name="paste_from_clipboard">क्लिपबोर्डात् पेस्ट करोतु</string>
     <string name="invalid_nostr_connect_uri">अमान्य nostr connect URI</string>
     <string name="event_kind_1986">Relay-समीक्षाः</string>

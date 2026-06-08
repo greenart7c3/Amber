@@ -20,7 +20,7 @@
     <string name="hide">Verbergen</string>
     <string name="show_tips">Tips</string>
     <string name="key_is_required">Sleutel is vereist</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Maak een nieuw Nostr-account aan</string>
     <string name="backup_keys">Sleutels back-uppen</string>
     <string name="read_your_public_key">Lees je publieke sleutel</string>
     <string name="reject">Weigeren</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">Nog niets goed te keuren</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Waarom verken je je favoriete Nostr-app niet even?</string>
     <string name="more">%1$s meer...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Wil uw toestemming om uw publieke sleutel te lezen en namens u gebeurtenissen te ondertekenen"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Verbinden via Tor met Orbot
         \n\n1. Installeer [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">Ongeldig poortnummer</string>
     <string name="use_orbot">Orbot gebruiken</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot verbreken</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor-instelling</string>
+    <string name="do_you_really_want_to_disable_tor_title">Verbinding met Tor verbreken?</string>
     <string name="do_you_really_want_to_disable_tor_text">Je gegevens worden onmiddellijk via het reguliere netwerk overgedragen</string>
     <string name="builtin_tor_title">Ingebouwde Tor</string>
     <string name="builtin_tor_description">Tor rechtstreeks in de app uitvoeren. Geen externe app vereist.</string>
@@ -93,7 +93,7 @@
     <string name="no">Nee</string>
     <string name="could_not_connect_to_tor">Kon geen verbinding maken met Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Activiteit tonen</string>
     <string name="language">Taal</string>
     <string name="language_description">Voor de interface van de app\'s</string>
     <string name="no_activities_found">Geen activiteiten gevonden</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">Korte tekstnotitie</string>
     <string name="event_kind_3">Volgenden</string>
     <string name="event_kind_4">Versleutelde directe berichten</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Verzoek tot verwijdering van gebeurtenis</string>
     <string name="event_kind_6">Repost</string>
     <string name="event_kind_7">Reactie</string>
     <string name="event_kind_8">Badge-toekenning</string>

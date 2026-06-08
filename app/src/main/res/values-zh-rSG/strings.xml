@@ -20,7 +20,7 @@
     <string name="hide">隐藏</string>
     <string name="show_tips">提示</string>
     <string name="key_is_required">密钥为必填项</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">创建新的 Nostr 账户</string>
     <string name="backup_keys">备份密钥</string>
     <string name="read_your_public_key">读取您的公钥</string>
     <string name="reject">拒绝</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">暂无待审批内容</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">何不探索一下您喜爱的 Nostr 应用？</string>
     <string name="more">还有 %1$s 条...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" 希望获得您的授权，以读取您的公钥并代表您签署事件"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## 通过 Orbot 使用 Tor 连接
         \n\n1. 安装 [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">无效的端口号</string>
     <string name="use_orbot">使用 Orbot</string>
     <string name="disconnect_from_your_orbot_setup">断开 Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor 设置</string>
+    <string name="do_you_really_want_to_disable_tor_title">确定要断开 Tor 连接？</string>
     <string name="do_you_really_want_to_disable_tor_text">您的数据将立即通过常规网络传输</string>
     <string name="builtin_tor_title">内置 Tor</string>
     <string name="builtin_tor_description">直接在应用内运行 Tor，无需外部应用。</string>
@@ -93,7 +93,7 @@
     <string name="no">否</string>
     <string name="could_not_connect_to_tor">无法连接到 Tor</string>
     <string name="relays">Relay</string>
-    <string name="activity">Activity</string>
+    <string name="activity">显示活动</string>
     <string name="language">语言</string>
     <string name="language_description">应用界面语言</string>
     <string name="no_activities_found">未找到活动</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">短文本笔记</string>
     <string name="event_kind_3">关注</string>
     <string name="event_kind_4">加密私信</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">事件删除请求</string>
     <string name="event_kind_6">转发</string>
     <string name="event_kind_7">反应</string>
     <string name="event_kind_8">徽章颁发</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">每次请求都询问我。</string>
     <string name="sign_policy_fully">我完全信任此应用</string>
     <string name="sign_policy_fully_explainer">自动签署所有请求</string>
-    <string name="event_kind_10050">DM relay</string>
+    <string name="event_kind_10050">DM 中继</string>
     <string name="paste_from_clipboard">从剪贴板粘贴</string>
     <string name="invalid_nostr_connect_uri">无效的 Nostr Connect URI</string>
     <string name="event_kind_1986">Relay 评论</string>

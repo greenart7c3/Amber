@@ -14,7 +14,7 @@
     <string name="hide">הסתר</string>
     <string name="show_tips">טיפים</string>
     <string name="key_is_required">נדרש מפתח</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">יצירת חשבון Nostr חדש</string>
     <string name="backup_keys">גיבוי מפתחות</string>
     <string name="read_your_public_key">קרא את המפתח הציבורי שלך</string>
     <string name="reject">דחה</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">אין עדיין מה לאשר</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">מדוע לא לחקור קצת את אפליקציית Nostr האהובה עליך?</string>
     <string name="more">%1$s נוספים...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" מבקש את רשותך לקרוא את המפתח הציבורי שלך ולחתום על אירועים בשמך"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## התחבר דרך Tor עם Orbot\n        \n\n1. התקן את [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. הפעל את Orbot\n        \n3. ב-Orbot, בדוק את פורט ה-Socks. ברירת המחדל היא 9050\n        \n4. אם נדרש, שנה את הפורט ב-Orbot\n        \n5. הגדר את פורט ה-Socks במסך זה\n        \n6. לחץ על כפתור ההפעלה כדי להשתמש ב-Orbot כ-proxy\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. התקן את [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. הפעל את Orbot\n        \n3. ב-Orbot, בדוק את פורט ה-Socks. ברירת המחדל היא 9050\n        \n4. אם נדרש, שנה את הפורט ב-Orbot\n        \n5. הגדר את פורט ה-Socks במסך זה\n        \n6. לחץ על כפתור ההפעלה כדי להשתמש ב-Orbot כ-proxy\n    </string>
     <string name="orbot_socks_port">פורט Socks של Orbot</string>
     <string name="invalid_port_number">מספר פורט לא חוקי</string>
     <string name="use_orbot">השתמש ב-Orbot</string>
     <string name="disconnect_from_your_orbot_setup">נתק Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">הגדרת Tor</string>
+    <string name="do_you_really_want_to_disable_tor_title">האם להתנתק מ-Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">הנתונים שלך יועברו מיידית דרך הרשת הרגילה</string>
     <string name="builtin_tor_title">Tor מובנה</string>
     <string name="builtin_tor_description">הפעל Tor ישירות בתוך האפליקציה. אין צורך באפליקציה חיצונית.</string>
@@ -69,7 +69,7 @@
     <string name="no">לא</string>
     <string name="could_not_connect_to_tor">לא ניתן להתחבר ל-Tor</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">הצג פעילות</string>
     <string name="language">שפה</string>
     <string name="language_description">עבור ממשק האפליקציה</string>
     <string name="no_activities_found">לא נמצאו פעילויות</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">הערת טקסט קצרה</string>
     <string name="event_kind_3">עוקבים</string>
     <string name="event_kind_4">הודעות ישירות מוצפנות</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">בקשת מחיקת אירוע</string>
     <string name="event_kind_6">שיתוף מחדש</string>
     <string name="event_kind_7">תגובה</string>
     <string name="event_kind_8">הענקת עיטור</string>

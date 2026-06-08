@@ -14,7 +14,7 @@
     <string name="hide">Peida</string>
     <string name="show_tips">Nõuanded</string>
     <string name="key_is_required">Võti on nõutav</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Loo uus Nostr konto</string>
     <string name="backup_keys">Varunda võtmed</string>
     <string name="read_your_public_key">Loe oma avalikku võtit</string>
     <string name="reject">Lükka tagasi</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">Pole veel midagi kinnitada</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Miks mitte veidi uurida oma lemmiklist Nostr-rakendust?</string>
     <string name="more">%1$s veel...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Soovib luba lugeda teie avalikku võtit ja allkirjastada sündmusi teie nimel"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Ühenda Tor kaudu Orbotiga\n        \n\n1. Installi [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Käivita Orbot\n        \n3. Orbotis kontrolli Socksi porti. Vaikimisi kasutatakse 9050\n        \n4. Vajadusel muuda Orbotis porti\n        \n5. Seadista selles ekraanis Socksi port\n        \n6. Vajuta nuppu Aktiveeri, et kasutada Orbotit puhverserverina\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Installi [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Käivita Orbot\n        \n3. Orbotis kontrolli Socksi porti. Vaikimisi kasutatakse 9050\n        \n4. Vajadusel muuda Orbotis porti\n        \n5. Seadista selles ekraanis Socksi port\n        \n6. Vajuta nuppu Aktiveeri, et kasutada Orbotit puhverserverina\n    </string>
     <string name="orbot_socks_port">Orboti Socksi port</string>
     <string name="invalid_port_number">Kehtetu pordi number</string>
     <string name="use_orbot">Kasuta Orbotit</string>
     <string name="disconnect_from_your_orbot_setup">Katkesta Tor/Orboti ühendus</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor-i seadistus</string>
+    <string name="do_you_really_want_to_disable_tor_title">Katkesta ühendus Tor-iga?</string>
     <string name="do_you_really_want_to_disable_tor_text">Sinu andmed edastatakse kohe tavalise võrgu kaudu</string>
     <string name="builtin_tor_title">Sisseehitatud Tor</string>
     <string name="builtin_tor_description">Käivita Tor otse rakenduse sees. Välist rakendust pole vaja.</string>
@@ -69,7 +69,7 @@
     <string name="no">Ei</string>
     <string name="could_not_connect_to_tor">Torile ühendamine ebaõnnestus</string>
     <string name="relays">Relayd</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Kuva tegevus</string>
     <string name="language">Keel</string>
     <string name="language_description">Rakenduse liidese jaoks</string>
     <string name="no_activities_found">Tegevusi ei leitud</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">Lühike tekstimärkus</string>
     <string name="event_kind_3">Jälgitavad</string>
     <string name="event_kind_4">Krüpteeritud otesõnumid</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Sündmuse kustutamise taotlus</string>
     <string name="event_kind_6">Jagamine</string>
     <string name="event_kind_7">Reaktsioon</string>
     <string name="event_kind_8">Märgise andmine</string>

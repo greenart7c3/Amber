@@ -20,7 +20,7 @@
     <string name="hide">છુપાવો</string>
     <string name="show_tips">ટિપ્સ</string>
     <string name="key_is_required">કી જરૂરી છે</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">નવું Nostr એકાઉન્ટ બનાવો</string>
     <string name="backup_keys">કી બેકઅપ</string>
     <string name="read_your_public_key">તમારી સાર્વજનિક કી વાંચો</string>
     <string name="reject">નકારો</string>
@@ -58,7 +58,7 @@
     <string name="nothing_to_approve_yet">હજી મંજૂર કરવા માટે કંઈ નથી</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">તમારી મનગમતી Nostr એપ થોડી શોધો?</string>
     <string name="more">%1$s વધુ...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" તમારી પબ્લિક કી વાંચવા અને તમારા વતી ઇવેન્ટ્સ પર સહી કરવા તમારી પરવાનગી ઇચ્છે છે"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot સાથે Tor મારફતે કનેક્ટ કરો
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) ઇન્સ્ટૉલ કરો
@@ -80,8 +80,8 @@
     <string name="invalid_port_number">અમાન્ય પૉર્ટ નંબર</string>
     <string name="use_orbot">Orbot ઉપયોગ</string>
     <string name="disconnect_from_your_orbot_setup">Tor/Orbot ડિસ્કનેક્ટ</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Tor સેટઅપ</string>
+    <string name="do_you_really_want_to_disable_tor_title">Tor થી ડિસ્કનેક્ટ કરવું છે?</string>
     <string name="do_you_really_want_to_disable_tor_text">તમારો ડેટા તરત જ સામાન્ય નેટવર્ક પર ટ્રાન્સફર થઈ જશે</string>
     <string name="builtin_tor_title">Built-in Tor</string>
     <string name="builtin_tor_description">Tor સીધો એપ અંદર ચલાવો. કોઈ બાહ્ય એપ જરૂરી નહીં.</string>
@@ -93,7 +93,7 @@
     <string name="no">ના</string>
     <string name="could_not_connect_to_tor">Tor સાથે કનેક્ટ થઈ શકાયું નહીં</string>
     <string name="relays">Relays</string>
-    <string name="activity">Activity</string>
+    <string name="activity">પ્રવૃત્તિ બતાવો</string>
     <string name="language">ભાષા</string>
     <string name="language_description">એપ\'ના ઇન્ટરફેસ માટે</string>
     <string name="no_activities_found">કોઈ પ્રવૃત્તિઓ મળી નહીં</string>
@@ -114,7 +114,7 @@
     <string name="event_kind_1">ટૂંકી ટેક્સ્ટ નોટ</string>
     <string name="event_kind_3">ફૉલો</string>
     <string name="event_kind_4">એન્ક્રિપ્ટેડ ડાયરેક્ટ સંદેશ</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">ઇવેન્ટ કાઢી નાખવાની વિનંતી</string>
     <string name="event_kind_6">રીપોસ્ટ</string>
     <string name="event_kind_7">પ્રતિક્રિયા</string>
     <string name="event_kind_8">બૅજ એવૉર્ડ</string>
@@ -337,7 +337,7 @@
     <string name="sign_policy_manual_new_app_explainer">દરેક વિનંતી મંજૂર કરવા મને પૂછો.</string>
     <string name="sign_policy_fully">મને આ એપ્લિકેશન પર સંપૂર્ણ વિશ્વાસ</string>
     <string name="sign_policy_fully_explainer">દરેક વિનંતી આપો-આપ સાઇન</string>
-    <string name="event_kind_10050">DM relays</string>
+    <string name="event_kind_10050">DM relay</string>
     <string name="paste_from_clipboard">ક્લિપબોર્ડ થી પૅસ્ટ</string>
     <string name="invalid_nostr_connect_uri">અમાન્ય Nostr connect URI</string>
     <string name="event_kind_1986">Relay સ્સસ્સસ</string>

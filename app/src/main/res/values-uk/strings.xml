@@ -14,7 +14,7 @@
     <string name="hide">Приховати</string>
     <string name="show_tips">Поради</string>
     <string name="key_is_required">Ключ обов\'язковий</string>
-    <string name="generate_a_new_key">Generate a new key</string>
+    <string name="generate_a_new_key">Створити новий акаунт Nostr</string>
     <string name="backup_keys">Резервне копіювання ключів</string>
     <string name="read_your_public_key">Зчитати ваш публічний ключ</string>
     <string name="reject">Відхилити</string>
@@ -49,15 +49,15 @@
     <string name="nothing_to_approve_yet">Поки що нічого немає для затвердження</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Чому б не трохи дослідити свій улюблений Nostr-застосунок?</string>
     <string name="more">%1$s ще...</string>
-    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" would like your permission to read your public key and sign events on your behalf"</string>
+    <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Запитує дозвіл на читання вашого публічного ключа та підписання подій від вашого імені"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Підключення через Tor за допомогою Orbot\n        \n\n1. Встановіть [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Запустіть Orbot\n        \n3. У Orbot перевірте порт Socks. За замовчуванням використовується 9050\n        \n4. За необхідності змініть порт у Orbot\n        \n5. Налаштуйте порт Socks на цьому екрані\n        \n6. Натисніть кнопку «Активувати», щоб використовувати Orbot як проксі\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Встановіть [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Запустіть Orbot\n        \n3. У Orbot перевірте порт Socks. За замовчуванням використовується 9050\n        \n4. За необхідності змініть порт у Orbot\n        \n5. Налаштуйте порт Socks на цьому екрані\n        \n6. Натисніть кнопку «Активувати», щоб використовувати Orbot як проксі\n    </string>
     <string name="orbot_socks_port">Порт Orbot Socks</string>
     <string name="invalid_port_number">Недійсний номер порту</string>
     <string name="use_orbot">Використовувати Orbot</string>
     <string name="disconnect_from_your_orbot_setup">Відключити Tor/Orbot</string>
-    <string name="connect_via_tor_short">Tor/Orbot setup</string>
-    <string name="do_you_really_want_to_disable_tor_title">Disconnect from your Orbot/Tor?</string>
+    <string name="connect_via_tor_short">Налаштування Tor</string>
+    <string name="do_you_really_want_to_disable_tor_title">Відключитися від Tor?</string>
     <string name="do_you_really_want_to_disable_tor_text">Ваші дані негайно передаватимуться через звичайну мережу</string>
     <string name="builtin_tor_title">Вбудований Tor</string>
     <string name="builtin_tor_description">Запускає Tor безпосередньо всередині застосунку. Зовнішній застосунок не потрібен.</string>
@@ -69,7 +69,7 @@
     <string name="no">Ні</string>
     <string name="could_not_connect_to_tor">Не вдалося підключитися до Tor</string>
     <string name="relays">Relay-сервери</string>
-    <string name="activity">Activity</string>
+    <string name="activity">Показати активність</string>
     <string name="language">Мова</string>
     <string name="language_description">Для інтерфейсу застосунку</string>
     <string name="no_activities_found">Активностей не знайдено</string>
@@ -90,7 +90,7 @@
     <string name="event_kind_1">Короткий текстовий допис</string>
     <string name="event_kind_3">Підписки</string>
     <string name="event_kind_4">Зашифровані приватні повідомлення</string>
-    <string name="event_kind_5">Event deletion</string>
+    <string name="event_kind_5">Запит на видалення події</string>
     <string name="event_kind_6">Репост</string>
     <string name="event_kind_7">Реакція</string>
     <string name="event_kind_8">Нагородження бейджем</string>

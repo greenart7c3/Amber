@@ -476,11 +476,12 @@ class Amber :
         }
     }
 
-    fun getDatabase(npub: String): AppDatabase {
-        if (!databases.containsKey(npub)) {
-            databases[npub] = AppDatabase.getDatabase(applicationContext, npub)
-        }
-        return databases[npub]!!
+    // computeIfAbsent (not check-then-put): AppDatabase.getDatabase builds a
+    // fresh RoomDatabase every call, so a racing second caller would build a
+    // duplicate that loses the put() and leaks its SQLiteConnection (caught by
+    // StrictMode's CloseGuard on finalize).
+    fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
+        AppDatabase.getDatabase(applicationContext, npub)
     }
 
     /**
@@ -495,18 +496,12 @@ class Amber :
         }
     }
 
-    fun getLogDatabase(npub: String): LogDatabase {
-        if (!logDatabases.containsKey(npub)) {
-            logDatabases[npub] = LogDatabase.getDatabase(applicationContext, npub)
-        }
-        return logDatabases[npub]!!
+    fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
+        LogDatabase.getDatabase(applicationContext, npub)
     }
 
-    fun getHistoryDatabase(npub: String): HistoryDatabase {
-        if (!historyDatabases.containsKey(npub)) {
-            historyDatabases[npub] = HistoryDatabase.getDatabase(applicationContext, npub)
-        }
-        return historyDatabases[npub]!!
+    fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
+        HistoryDatabase.getDatabase(applicationContext, npub)
     }
 
     /**

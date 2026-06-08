@@ -25,8 +25,6 @@ import com.greenart7c3.nostrsigner.Amber
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
-import javax.net.SocketFactory
-import okhttp3.Dns
 import okhttp3.OkHttpClient
 
 object HttpClientManager {
@@ -35,9 +33,7 @@ object HttpClientManager {
             .Builder()
             .followRedirects(true)
             .followSslRedirects(true)
-            .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
-            .dns(TaggedDns(Dns.SYSTEM))
-            .addInterceptor(TaggingInterceptor())
+            .eventListener(TrafficStatsEventListener())
             .build()
     }
 

@@ -235,6 +235,7 @@ object BunkerRequestUtils {
         "ping" -> SignerType.PING
         "switch_relays" -> SignerType.SWITCH_RELAYS
         "sign_psbt" -> SignerType.SIGN_PSBT
+        "logout" -> SignerType.LOGOUT
         else -> SignerType.INVALID
     }
 
@@ -251,6 +252,7 @@ object BunkerRequestUtils {
         "nip44v3_encrypt", "nip44v3_decrypt" -> bunkerRequest.params.getOrElse(3) { "" }
         "ping" -> "pong"
         "sign_psbt" -> bunkerRequest.params.first()
+        "logout" -> "ack"
         else -> ""
     }
 

@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Nalezena zašifrovaná záloha aplikací s %1$d aplikacemi a %2$d oprávněními. Obnovit nyní?</string>
     <string name="signin_restore_accept">Obnovit</string>
     <string name="signin_restore_skip">Přeskočit</string>
+    <string name="event_kind_39701">Veřejná webová záložka</string>
 </resources>

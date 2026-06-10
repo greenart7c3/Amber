@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Fann eitt kryptað forritafrit við %1$d forritum og %2$d loyvi. Endurreisa nú?</string>
     <string name="signin_restore_accept">Endurreisa</string>
     <string name="signin_restore_skip">Sloyp</string>
+    <string name="event_kind_39701">Offentligt netbogmerkni</string>
 </resources>

@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Найдена зашифрованная резервная копия приложений: %1$d приложений и %2$d разрешений. Восстановить сейчас?</string>
     <string name="signin_restore_accept">Восстановить</string>
     <string name="signin_restore_skip">Пропустить</string>
+    <string name="event_kind_39701">Публичная веб-закладка</string>
 </resources>

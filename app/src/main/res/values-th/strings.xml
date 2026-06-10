@@ -688,4 +688,5 @@
     <string name="signin_restore_message">พบข้อมูลสำรองแอปพลิเคชันที่เข้ารหัสซึ่งมี %1$d แอปพลิเคชันและ %2$d สิทธิ์ กู้คืนตอนนี้เลยหรือไม่?</string>
     <string name="signin_restore_accept">กู้คืน</string>
     <string name="signin_restore_skip">ข้ามไป</string>
+    <string name="event_kind_39701">บุ๊กมาร์กเว็บสาธารณะ</string>
 </resources>

@@ -712,4 +712,5 @@
     <string name="signin_restore_message">%1$d қолданба мен %2$d рұқсаты бар шифрланған қолданбалар сақтық көшірмесі табылды. Қазір қалпына келтіру?</string>
     <string name="signin_restore_accept">Қалпына келтіру</string>
     <string name="signin_restore_skip">Өткізіп жіберу</string>
+    <string name="event_kind_39701">Жалпыға ашық веб-бетбелгі</string>
 </resources>

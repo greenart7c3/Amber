@@ -712,4 +712,5 @@
     <string name="signin_restore_message">找到包含 %1$d 個應用和 %2$d 項權限的加密應用備份，是否立即恢復？</string>
     <string name="signin_restore_accept">恢復</string>
     <string name="signin_restore_skip">跳過</string>
+    <string name="event_kind_39701">公開網絡書籤</string>
 </resources>

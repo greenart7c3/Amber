@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Fandt en krypteret applikationssikkerhedskopi med %1$d applikationer og %2$d tilladelser. Gendan nu?</string>
     <string name="signin_restore_accept">Gendan</string>
     <string name="signin_restore_skip">Spring over</string>
+    <string name="event_kind_39701">Offentligt webbogmærke</string>
 </resources>

@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Nakala iliyofichwa ya programu yenye programu %1$d na ruhusa %2$d imepatikana. Rejesha sasa?</string>
     <string name="signin_restore_accept">Rejesha</string>
     <string name="signin_restore_skip">Ruka</string>
+    <string name="event_kind_39701">Alamisho ya wavuti ya umma</string>
 </resources>

@@ -708,4 +708,5 @@
     <string name="signin_restore_message">%1$d uygulama ve %2$d izin içeren şifrelenmiş bir uygulama yedeği bulundu. Şimdi geri yüklensin mi?</string>
     <string name="signin_restore_accept">Geri Yükle</string>
     <string name="signin_restore_skip">Atla</string>
+    <string name="event_kind_39701">Herkese açık web yer imi</string>
 </resources>

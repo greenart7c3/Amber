@@ -712,4 +712,5 @@
     <string name="signin_restore_message">%1$d एप्लिकेसन र %2$d अनुमतिहरूसहित इन्क्रिप्टेड एप्लिकेसन ब्याकअप फेला पर्यो। अहिले पुनःस्थापना गर्ने?</string>
     <string name="signin_restore_accept">पुनःस्थापना गर्नुहोस्</string>
     <string name="signin_restore_skip">छोड्नुहोस्</string>
+    <string name="event_kind_39701">सार्वजनिक वेब बुकमार्क</string>
 </resources>

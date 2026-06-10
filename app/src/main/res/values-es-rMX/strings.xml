@@ -688,4 +688,5 @@
     <string name="signin_restore_message">Se encontró un respaldo cifrado de aplicaciones con %1$d aplicaciones y %2$d permisos. ¿Restaurar ahora?</string>
     <string name="signin_restore_accept">Restaurar</string>
     <string name="signin_restore_skip">Omitir</string>
+    <string name="event_kind_39701">Marcador web público</string>
 </resources>

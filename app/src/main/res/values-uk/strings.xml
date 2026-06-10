@@ -688,4 +688,5 @@
     <string name="signin_restore_message">Знайдено зашифровану резервну копію застосунків із %1$d застосунками та %2$d дозволами. Відновити зараз?</string>
     <string name="signin_restore_accept">Відновити</string>
     <string name="signin_restore_skip">Пропустити</string>
+    <string name="event_kind_39701">Публічна веб-закладка</string>
 </resources>

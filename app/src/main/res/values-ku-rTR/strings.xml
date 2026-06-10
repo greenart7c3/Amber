@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Paşgirtineke şîfrekirî ya sespan bi %1$d sespan û %2$d destûrnameyan hat dîtin. Niha vegerîne?</string>
     <string name="signin_restore_accept">Vegerîne</string>
     <string name="signin_restore_skip">Derbas bike</string>
+    <string name="event_kind_39701">Nîşana malpera giştî</string>
 </resources>

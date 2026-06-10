@@ -712,4 +712,5 @@
     <string name="signin_restore_message">%1$d ilova va %2$d ruxsatli shifrlangan ilovalar zaxirasi topildi. Hozir tiklaysizmi?</string>
     <string name="signin_restore_accept">Tiklash</string>
     <string name="signin_restore_skip">O\'tkazib yuborish</string>
+    <string name="event_kind_39701">Ommaviy veb-xatchо\'p</string>
 </resources>

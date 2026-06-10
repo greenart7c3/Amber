@@ -688,4 +688,5 @@
     <string name="signin_restore_message">%1$d ایپلی کیشناں تے %2$d اجازتاں والی انکرپٹڈ ایپلی کیشن بیک اپ ملی۔ ابھی ریسٹور کریں؟</string>
     <string name="signin_restore_accept">ریسٹور</string>
     <string name="signin_restore_skip">چھڈو</string>
+    <string name="event_kind_39701">عام ویب بُکمارک</string>
 </resources>

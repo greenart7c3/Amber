@@ -712,4 +712,5 @@
     <string name="signin_restore_message">%1$d பயன்பாடுகள் மற்றும் %2$d அனுமதிகளுடன் குறியாக்கப்பட்ட பயன்பாடுகள் காப்புப்பிரதி கண்டறியப்பட்டது. இப்போது மீட்டெடுக்கவா?</string>
     <string name="signin_restore_accept">மீட்டெடு</string>
     <string name="signin_restore_skip">தவிர்</string>
+    <string name="event_kind_39701">பொது வலை புக்மார்க்</string>
 </resources>

@@ -688,4 +688,5 @@
     <string name="signin_restore_message">%1$d 件のアプリケーションと %2$d 件の権限を含む暗号化されたアプリケーションバックアップが見つかりました。今すぐ復元しますか？</string>
     <string name="signin_restore_accept">復元</string>
     <string name="signin_restore_skip">スキップ</string>
+    <string name="event_kind_39701">公開ウェブブックマーク</string>
 </resources>

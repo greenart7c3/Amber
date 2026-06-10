@@ -707,4 +707,5 @@
     <string name="signin_restore_message">Encontrado um backup criptografado de aplicativos com %1$d aplicativos e %2$d permissões. Restaurar agora?</string>
     <string name="signin_restore_accept">Restaurar</string>
     <string name="signin_restore_skip">Pular</string>
+    <string name="event_kind_39701">Favorito web público</string>
 </resources>

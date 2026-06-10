@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Er is een versleutelde back-up van applicaties gevonden met %1$d applicaties en %2$d machtigingen. Nu herstellen?</string>
     <string name="signin_restore_accept">Herstellen</string>
     <string name="signin_restore_skip">Overslaan</string>
+    <string name="event_kind_39701">Openbare webbladwijzer</string>
 </resources>

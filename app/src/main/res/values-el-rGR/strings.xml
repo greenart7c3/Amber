@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Βρέθηκε κρυπτογραφημένο αντίγραφο εφαρμογών με %1$d εφαρμογές και %2$d άδειες. Επαναφορά τώρα;</string>
     <string name="signin_restore_accept">Επαναφορά</string>
     <string name="signin_restore_skip">Παράλειψη</string>
+    <string name="event_kind_39701">Δημόσιο σελιδοδείκτη ιστού</string>
 </resources>

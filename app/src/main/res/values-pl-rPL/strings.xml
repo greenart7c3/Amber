@@ -688,4 +688,5 @@
     <string name="signin_restore_message">Znaleziono zaszyfrowaną kopię zapasową aplikacji zawierającą %1$d aplikacji i %2$d uprawnień. Przywrócić teraz?</string>
     <string name="signin_restore_accept">Przywróć</string>
     <string name="signin_restore_skip">Pomiń</string>
+    <string name="event_kind_39701">Publiczna zakładka internetowa</string>
 </resources>

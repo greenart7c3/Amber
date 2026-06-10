@@ -712,4 +712,5 @@
     <string name="signin_restore_message">%1$d অ্যাপ্লিকেশন এবং %2$d অনুমতিসহ একটি এনক্রিপ্টেড অ্যাপ্লিকেশন ব্যাকআপ পাওয়া গেছে। এখনই পুনরুদ্ধার করবেন?</string>
     <string name="signin_restore_accept">পুনরুদ্ধার করুন</string>
     <string name="signin_restore_skip">এড়িয়ে যান</string>
+    <string name="event_kind_39701">পাবলিক ওয়েব বুকমার্ক</string>
 </resources>

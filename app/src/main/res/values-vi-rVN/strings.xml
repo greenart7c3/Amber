@@ -688,4 +688,5 @@
     <string name="signin_restore_message">Đã tìm thấy bản sao lưu ứng dụng được mã hóa với %1$d ứng dụng và %2$d quyền. Khôi phục ngay?</string>
     <string name="signin_restore_accept">Khôi phục</string>
     <string name="signin_restore_skip">Bỏ qua</string>
+    <string name="event_kind_39701">Dấu trang web công khai</string>
 </resources>

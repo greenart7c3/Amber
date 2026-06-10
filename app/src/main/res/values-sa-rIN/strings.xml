@@ -712,4 +712,5 @@
     <string name="signin_restore_message">%1$d अनुप्रयोगैः च %2$d अनुमतिभिः सह कूटित-अनुप्रयोग-प्रतिलिपि प्राप्ता। इदानीं पुनर्स्थापयामः?</string>
     <string name="signin_restore_accept">पुनर्स्थापयतु</string>
     <string name="signin_restore_skip">अतिक्रामतु</string>
+    <string name="event_kind_39701">सार्वजनिकं वेब-बुकमार्कम्</string>
 </resources>

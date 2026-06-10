@@ -712,4 +712,5 @@
     <string name="signin_restore_message">Trovita ĉifrita aplikaĵa sekurkopado kun %1$d aplikaĵoj kaj %2$d permesoj. Restarigi nun?</string>
     <string name="signin_restore_accept">Restarigi</string>
     <string name="signin_restore_skip">Preteriri</string>
+    <string name="event_kind_39701">Publika retosigno</string>
 </resources>

@@ -38,7 +38,6 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -73,6 +72,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -86,7 +86,6 @@ fun BunkerConnectRequestScreen(
     onAccept: (List<Permission>?, Int, Boolean?, RememberType, Long, Account) -> Unit,
     onReject: (RememberType) -> Unit,
 ) {
-    val scope = rememberCoroutineScope()
     val localPermissions = remember {
         val snapshot = mutableStateListOf<Permission>()
         permissions?.forEach {
@@ -122,10 +121,11 @@ fun BunkerConnectRequestScreen(
     val appName = remember { mutableStateOf(bunkerRequest.name) }
 
     LaunchedEffect(selectedAccountIndex) {
-        scope.launch(Dispatchers.IO) {
-            val account = accounts[selectedAccountIndex]
-            appName.value = bunkerRequest.name.ifBlank { Amber.instance.getDatabase(account.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: bunkerRequest.localKey.toShortenHex() }
+        val selectedAccount = accounts[selectedAccountIndex]
+        val name = withContext(Dispatchers.IO) {
+            bunkerRequest.name.ifBlank { Amber.instance.getDatabase(selectedAccount.npub).dao().getBySecret((bunkerRequest.request as BunkerRequestConnect).secret ?: "")?.application?.name ?: bunkerRequest.localKey.toShortenHex() }
         }
+        appName.value = name
     }
 
     // Fetch trust scores for connection relays
@@ -135,8 +135,8 @@ fun BunkerConnectRequestScreen(
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
-                    scope.launch(Dispatchers.IO) {
-                        val score = TrustScoreService.getScore(url)
+                    launch {
+                        val score = withContext(Dispatchers.IO) { TrustScoreService.getScore(url) }
                         trustScores[url] = score
                         loadingScores[url] = false
                     }

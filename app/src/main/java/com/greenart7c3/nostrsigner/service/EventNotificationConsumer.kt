@@ -229,12 +229,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
 
-        val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
-        if (type == SignerType.INVALID) {
-            saveLog("Invalid request method ${bunkerRequest.method}", relay.url, acc.npub)
-            return
-        }
-
         var request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
@@ -249,6 +243,24 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
         )
+
+        val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
+        if (type == SignerType.INVALID) {
+            saveLog("Invalid request method ${bunkerRequest.method}", relay.url, acc.npub)
+            // Don't fail silently: reply to the client with an error so it
+            // stops waiting for a response it will never otherwise receive.
+            val errorRelays = responseRelay.ifEmpty { Amber.instance.settings.defaultRelays }
+            BunkerRequestUtils.sendBunkerResponse(
+                applicationContext,
+                acc,
+                request,
+                BunkerResponse(bunkerRequest.id, "", "Unrecognized method: ${bunkerRequest.method}"),
+                errorRelays,
+                onLoading = {},
+                onDone = {},
+            )
+            return
+        }
 
         var amberEvent: AmberEvent? = null
 

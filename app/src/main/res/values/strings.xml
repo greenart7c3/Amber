@@ -1,6 +1,25 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name_release" translatable="false">Amber</string>
     <string name="app_name_debug" translatable="false">Amber Debug</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Account &amp; keys</string>
+    <string name="settings_section_network">Network</string>
+    <string name="settings_section_service">Service</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_section_help">Help</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN and biometric unlock</string>
+    <string name="backup_keys_subtitle">Export your private key</string>
+    <string name="sign_policy_subtitle">How signing requests are approved</string>
+    <string name="tor_subtitle">Route connections through Tor</string>
+    <string name="relays_subtitle">Manage your relays</string>
+    <string name="service_settings_subtitle">Background service behavior</string>
+    <string name="applications_backup_subtitle">Back up your authorized apps</string>
+    <string name="language_subtitle">App display language</string>
+    <string name="auth_whitelist_subtitle">Trusted client hostnames</string>
+    <string name="logs_subtitle">View app activity</string>
+    <string name="give_us_feedback_subtitle">Report a bug or request a feature</string>
+    <string name="update_settings_subtitle">Check for new versions</string>
     <string name="account_backup_tips_md" tools:ignore="Typos">
         ## Key Backup and Safety Tips
         \n\nYour account is secured by a secret key. The key is long random string starting with **nsec1**. Anyone who has access to your secret key can publish content using your identity.

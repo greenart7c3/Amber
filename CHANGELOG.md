@@ -9,7 +9,7 @@
 - Remove the `sign_message` signer method
 - Remove the 1 minute option from the sign-automatically pickers
 - Disable resource shrinking in release builds
-- New Crowdin translations
+- Update translations
 
 Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v6.2.0)
 

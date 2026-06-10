@@ -3,10 +3,12 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.platform.LocalContext
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.navigation.routes
+import com.greenart7c3.nostrsigner.ui.navigation.title
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -42,7 +44,7 @@ fun AmberBottomBar(
             account = account,
         )
     } else if (destinationRoute != "create" && destinationRoute != "loginPage") {
-        val localBackButtonTitle = routes.find { it.route == navController.navController.previousBackStackEntry?.destination?.route }?.title ?: ""
+        val localBackButtonTitle = routes.find { it.route == navController.navController.previousBackStackEntry?.destination?.route }?.title(LocalContext.current) ?: ""
         if (localBackButtonTitle.isNotBlank()) {
             BackButtonAppBar(
                 destinationRoute = destinationRoute,

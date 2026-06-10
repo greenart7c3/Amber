@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">استعادة</string>
     <string name="signin_restore_skip">تخطي</string>
     <string name="event_kind_39701">إشارة مرجعية عامة على الويب</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">الحساب والمفاتيح</string>
+    <string name="settings_section_network">الشبكة</string>
+    <string name="settings_section_service">الخدمة</string>
+    <string name="settings_section_general">عام</string>
+    <string name="settings_section_help">المساعدة</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">الفتح بالرمز السري والقياسات الحيوية</string>
+    <string name="backup_keys_subtitle">تصدير مفتاحك الخاص</string>
+    <string name="sign_policy_subtitle">كيفية الموافقة على طلبات التوقيع</string>
+    <string name="tor_subtitle">توجيه الاتصالات عبر Tor</string>
+    <string name="relays_subtitle">إدارة المرحّلات الخاصة بك</string>
+    <string name="service_settings_subtitle">سلوك خدمة الخلفية</string>
+    <string name="applications_backup_subtitle">نسخ التطبيقات المصرّح لها احتياطيًا</string>
+    <string name="language_subtitle">لغة عرض التطبيق</string>
+    <string name="auth_whitelist_subtitle">أسماء مضيفي العملاء الموثوقين</string>
+    <string name="logs_subtitle">عرض نشاط التطبيق</string>
+    <string name="give_us_feedback_subtitle">الإبلاغ عن خطأ أو طلب ميزة</string>
+    <string name="update_settings_subtitle">التحقق من وجود إصدارات جديدة</string>
 </resources>

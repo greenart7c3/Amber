@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Восстановить</string>
     <string name="signin_restore_skip">Пропустить</string>
     <string name="event_kind_39701">Публичная веб-закладка</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Учётная запись и ключи</string>
+    <string name="settings_section_network">Сеть</string>
+    <string name="settings_section_service">Служба</string>
+    <string name="settings_section_general">Общие</string>
+    <string name="settings_section_help">Помощь</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Разблокировка по PIN-коду и биометрии</string>
+    <string name="backup_keys_subtitle">Экспорт вашего приватного ключа</string>
+    <string name="sign_policy_subtitle">Как одобряются запросы на подпись</string>
+    <string name="tor_subtitle">Направлять подключения через Tor</string>
+    <string name="relays_subtitle">Управление реле</string>
+    <string name="service_settings_subtitle">Поведение фоновой службы</string>
+    <string name="applications_backup_subtitle">Резервное копирование авторизованных приложений</string>
+    <string name="language_subtitle">Язык интерфейса приложения</string>
+    <string name="auth_whitelist_subtitle">Доверенные имена хостов клиентов</string>
+    <string name="logs_subtitle">Просмотр активности приложения</string>
+    <string name="give_us_feedback_subtitle">Сообщить об ошибке или запросить функцию</string>
+    <string name="update_settings_subtitle">Проверить наличие новых версий</string>
 </resources>

@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">Відновити</string>
     <string name="signin_restore_skip">Пропустити</string>
     <string name="event_kind_39701">Публічна веб-закладка</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Обліковий запис і ключі</string>
+    <string name="settings_section_network">Мережа</string>
+    <string name="settings_section_service">Служба</string>
+    <string name="settings_section_general">Загальні</string>
+    <string name="settings_section_help">Довідка</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Розблокування за PIN-кодом і біометрією</string>
+    <string name="backup_keys_subtitle">Експорт вашого приватного ключа</string>
+    <string name="sign_policy_subtitle">Як схвалюються запити на підпис</string>
+    <string name="tor_subtitle">Спрямовувати з\'єднання через Tor</string>
+    <string name="relays_subtitle">Керування релеями</string>
+    <string name="service_settings_subtitle">Поведінка фонової служби</string>
+    <string name="applications_backup_subtitle">Резервне копіювання авторизованих застосунків</string>
+    <string name="language_subtitle">Мова інтерфейсу застосунку</string>
+    <string name="auth_whitelist_subtitle">Довірені імена хостів клієнтів</string>
+    <string name="logs_subtitle">Переглянути активність застосунку</string>
+    <string name="give_us_feedback_subtitle">Повідомити про помилку або запропонувати функцію</string>
+    <string name="update_settings_subtitle">Перевірити наявність нових версій</string>
 </resources>

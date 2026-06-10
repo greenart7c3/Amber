@@ -714,4 +714,23 @@
     <string name="signin_restore_accept">Buyisela</string>
     <string name="signin_restore_skip">Dlula</string>
     <string name="event_kind_39701">Ibhukhimakhi yewebhu yomphakathi</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">I-akhawunti netikhiya</string>
+    <string name="settings_section_network">Inethiwekhi</string>
+    <string name="settings_section_service">Insakazo</string>
+    <string name="settings_section_general">Okujwayelekile</string>
+    <string name="settings_section_help">Lusito</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Kuvula nge-PIN nange-biometric</string>
+    <string name="backup_keys_subtitle">Khipha sikhiya sakho lesiyimfihlo</string>
+    <string name="sign_policy_subtitle">Indlela ticelo tekusayina letigunyatwa ngayo</string>
+    <string name="tor_subtitle">Condzisa kuchumana nge-Tor</string>
+    <string name="relays_subtitle">Phatsa ti-relay takho</string>
+    <string name="service_settings_subtitle">Kutiphatsa kwensakazo lengemuva</string>
+    <string name="applications_backup_subtitle">Senta sipele setinhlelo takho letigunyatiwe</string>
+    <string name="language_subtitle">Lulwimi lwekukhombisa kwe-app</string>
+    <string name="auth_whitelist_subtitle">Emagama emancola ema-client latsembekile</string>
+    <string name="logs_subtitle">Buka umsebenti we-app</string>
+    <string name="give_us_feedback_subtitle">Bika liphutsa nobe ucele sici</string>
+    <string name="update_settings_subtitle">Hlola tibuyeketo letinsha</string>
 </resources>

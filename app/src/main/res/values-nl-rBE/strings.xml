@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Herstellen</string>
     <string name="signin_restore_skip">Overslaan</string>
     <string name="event_kind_39701">Openbare webbladwijzer</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Account &amp; sleutels</string>
+    <string name="settings_section_network">Netwerk</string>
+    <string name="settings_section_service">Service</string>
+    <string name="settings_section_general">Algemeen</string>
+    <string name="settings_section_help">Help</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Ontgrendelen met pincode en biometrie</string>
+    <string name="backup_keys_subtitle">Je privésleutel exporteren</string>
+    <string name="sign_policy_subtitle">Hoe ondertekeningsverzoeken worden goedgekeurd</string>
+    <string name="tor_subtitle">Verbindingen via Tor routeren</string>
+    <string name="relays_subtitle">Je relays beheren</string>
+    <string name="service_settings_subtitle">Gedrag van achtergronddienst</string>
+    <string name="applications_backup_subtitle">Een back-up maken van je geautoriseerde apps</string>
+    <string name="language_subtitle">Weergavetaal van de app</string>
+    <string name="auth_whitelist_subtitle">Vertrouwde clienthostnamen</string>
+    <string name="logs_subtitle">App-activiteit bekijken</string>
+    <string name="give_us_feedback_subtitle">Een fout melden of een functie aanvragen</string>
+    <string name="update_settings_subtitle">Controleren op nieuwe versies</string>
 </resources>

@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">மீட்டெடு</string>
     <string name="signin_restore_skip">தவிர்</string>
     <string name="event_kind_39701">பொது வலை புக்மார்க்</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">கணக்கு மற்றும் விசைகள்</string>
+    <string name="settings_section_network">நெட்வொர்க்</string>
+    <string name="settings_section_service">சேவை</string>
+    <string name="settings_section_general">பொது</string>
+    <string name="settings_section_help">உதவி</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">பின் மற்றும் பயோமெட்ரிக் திறப்பு</string>
+    <string name="backup_keys_subtitle">உங்கள் தனிப்பட்ட விசையை ஏற்றுமதி செய்யவும்</string>
+    <string name="sign_policy_subtitle">கையொப்ப கோரிக்கைகள் எவ்வாறு அங்கீகரிக்கப்படுகின்றன</string>
+    <string name="tor_subtitle">இணைப்புகளை Tor வழியாக வழிநடத்தவும்</string>
+    <string name="relays_subtitle">உங்கள் ரிலேக்களை நிர்வகிக்கவும்</string>
+    <string name="service_settings_subtitle">பின்னணி சேவையின் நடத்தை</string>
+    <string name="applications_backup_subtitle">அங்கீகரிக்கப்பட்ட பயன்பாடுகளை காப்புப்பிரதி எடுக்கவும்</string>
+    <string name="language_subtitle">பயன்பாட்டின் காட்சி மொழி</string>
+    <string name="auth_whitelist_subtitle">நம்பகமான கிளையன்ட் ஹோஸ்ட்பெயர்கள்</string>
+    <string name="logs_subtitle">பயன்பாட்டின் செயல்பாட்டைப் பார்க்கவும்</string>
+    <string name="give_us_feedback_subtitle">பிழையைப் புகாரளிக்கவும் அல்லது அம்சத்தைக் கோரவும்</string>
+    <string name="update_settings_subtitle">புதிய பதிப்புகளைச் சரிபார்க்கவும்</string>
 </resources>

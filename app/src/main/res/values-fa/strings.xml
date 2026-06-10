@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">بازیابی</string>
     <string name="signin_restore_skip">رد کردن</string>
     <string name="event_kind_39701">نشانک عمومی وب</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">حساب و کلیدها</string>
+    <string name="settings_section_network">شبکه</string>
+    <string name="settings_section_service">سرویس</string>
+    <string name="settings_section_general">عمومی</string>
+    <string name="settings_section_help">راهنما</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">باز کردن قفل با پین و زیست‌سنجی</string>
+    <string name="backup_keys_subtitle">صادر کردن کلید خصوصی شما</string>
+    <string name="sign_policy_subtitle">نحوه تأیید درخواست‌های امضا</string>
+    <string name="tor_subtitle">هدایت اتصالات از طریق Tor</string>
+    <string name="relays_subtitle">مدیریت رله‌های شما</string>
+    <string name="service_settings_subtitle">رفتار سرویس پس‌زمینه</string>
+    <string name="applications_backup_subtitle">پشتیبان‌گیری از برنامه‌های مجاز شما</string>
+    <string name="language_subtitle">زبان نمایش برنامه</string>
+    <string name="auth_whitelist_subtitle">نام میزبان‌های مطمئن کلاینت</string>
+    <string name="logs_subtitle">مشاهده فعالیت برنامه</string>
+    <string name="give_us_feedback_subtitle">گزارش اشکال یا درخواست قابلیت</string>
+    <string name="update_settings_subtitle">بررسی نسخه‌های جدید</string>
 </resources>

@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Pulihkan</string>
     <string name="signin_restore_skip">Lewati</string>
     <string name="event_kind_39701">Bookmark web publik</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Akun &amp; kunci</string>
+    <string name="settings_section_network">Jaringan</string>
+    <string name="settings_section_service">Layanan</string>
+    <string name="settings_section_general">Umum</string>
+    <string name="settings_section_help">Bantuan</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Buka kunci dengan PIN dan biometrik</string>
+    <string name="backup_keys_subtitle">Ekspor kunci pribadi Anda</string>
+    <string name="sign_policy_subtitle">Cara permintaan penandatanganan disetujui</string>
+    <string name="tor_subtitle">Rutekan koneksi melalui Tor</string>
+    <string name="relays_subtitle">Kelola relay Anda</string>
+    <string name="service_settings_subtitle">Perilaku layanan latar belakang</string>
+    <string name="applications_backup_subtitle">Cadangkan aplikasi resmi Anda</string>
+    <string name="language_subtitle">Bahasa tampilan aplikasi</string>
+    <string name="auth_whitelist_subtitle">Nama host klien tepercaya</string>
+    <string name="logs_subtitle">Lihat aktivitas aplikasi</string>
+    <string name="give_us_feedback_subtitle">Laporkan bug atau minta fitur</string>
+    <string name="update_settings_subtitle">Periksa versi baru</string>
 </resources>

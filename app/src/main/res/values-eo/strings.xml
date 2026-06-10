@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Restarigi</string>
     <string name="signin_restore_skip">Preteriri</string>
     <string name="event_kind_39701">Publika retosigno</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Konto kaj ŝlosiloj</string>
+    <string name="settings_section_network">Reto</string>
+    <string name="settings_section_service">Servo</string>
+    <string name="settings_section_general">Ĝenerala</string>
+    <string name="settings_section_help">Helpo</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Malŝloso per PIN kaj biometrio</string>
+    <string name="backup_keys_subtitle">Eksporti vian privatan ŝlosilon</string>
+    <string name="sign_policy_subtitle">Kiel subskribaj petoj estas aprobitaj</string>
+    <string name="tor_subtitle">Vojigi konektojn tra Tor</string>
+    <string name="relays_subtitle">Administri viajn relajsojn</string>
+    <string name="service_settings_subtitle">Konduto de fona servo</string>
+    <string name="applications_backup_subtitle">Sekurkopii viajn rajtigitajn aplikaĵojn</string>
+    <string name="language_subtitle">Montra lingvo de la aplikaĵo</string>
+    <string name="auth_whitelist_subtitle">Fidindaj klientaj gastnomoj</string>
+    <string name="logs_subtitle">Vidi aplikaĵan agadon</string>
+    <string name="give_us_feedback_subtitle">Raporti cimon aŭ peti funkcion</string>
+    <string name="update_settings_subtitle">Kontroli novajn versiojn</string>
 </resources>

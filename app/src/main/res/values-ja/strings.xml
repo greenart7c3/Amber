@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">復元</string>
     <string name="signin_restore_skip">スキップ</string>
     <string name="event_kind_39701">公開ウェブブックマーク</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">アカウントと鍵</string>
+    <string name="settings_section_network">ネットワーク</string>
+    <string name="settings_section_service">サービス</string>
+    <string name="settings_section_general">一般</string>
+    <string name="settings_section_help">ヘルプ</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PINと生体認証によるロック解除</string>
+    <string name="backup_keys_subtitle">秘密鍵をエクスポート</string>
+    <string name="sign_policy_subtitle">署名リクエストの承認方法</string>
+    <string name="tor_subtitle">接続をTor経由でルーティング</string>
+    <string name="relays_subtitle">リレーを管理</string>
+    <string name="service_settings_subtitle">バックグラウンドサービスの動作</string>
+    <string name="applications_backup_subtitle">承認済みアプリをバックアップ</string>
+    <string name="language_subtitle">アプリの表示言語</string>
+    <string name="auth_whitelist_subtitle">信頼できるクライアントのホスト名</string>
+    <string name="logs_subtitle">アプリのアクティビティを表示</string>
+    <string name="give_us_feedback_subtitle">バグを報告または機能をリクエスト</string>
+    <string name="update_settings_subtitle">新しいバージョンを確認</string>
 </resources>

@@ -18,15 +18,16 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -211,14 +212,14 @@ fun SettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.auth_whitelist),
                     subtitle = stringResource(R.string.auth_whitelist_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.FilterList),
+                    painter = rememberVectorPainter(Icons.Default.VerifiedUser),
                     onClick = { onNav(Route.AuthWhitelist.route) },
                 )
                 SettingsDivider()
                 SettingsItem(
                     title = stringResource(R.string.logs),
                     subtitle = stringResource(R.string.logs_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.FilterList),
+                    painter = rememberVectorPainter(Icons.Default.Article),
                     onClick = { onNav(Route.Logs.route) },
                 )
             }

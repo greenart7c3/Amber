@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">恢复</string>
     <string name="signin_restore_skip">跳过</string>
     <string name="event_kind_39701">公开网络书签</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">账户和密钥</string>
+    <string name="settings_section_network">网络</string>
+    <string name="settings_section_service">服务</string>
+    <string name="settings_section_general">通用</string>
+    <string name="settings_section_help">帮助</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN 码和生物识别解锁</string>
+    <string name="backup_keys_subtitle">导出您的私钥</string>
+    <string name="sign_policy_subtitle">签名请求的批准方式</string>
+    <string name="tor_subtitle">通过 Tor 路由连接</string>
+    <string name="relays_subtitle">管理您的中继</string>
+    <string name="service_settings_subtitle">后台服务行为</string>
+    <string name="applications_backup_subtitle">备份您已授权的应用</string>
+    <string name="language_subtitle">应用显示语言</string>
+    <string name="auth_whitelist_subtitle">受信任的客户端主机名</string>
+    <string name="logs_subtitle">查看应用活动</string>
+    <string name="give_us_feedback_subtitle">报告错误或请求功能</string>
+    <string name="update_settings_subtitle">检查新版本</string>
 </resources>

@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Endurreisa</string>
     <string name="signin_restore_skip">Sloyp</string>
     <string name="event_kind_39701">Offentligt netbogmerkni</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Konta og lyklar</string>
+    <string name="settings_section_network">Net</string>
+    <string name="settings_section_service">Tæneste</string>
+    <string name="settings_section_general">Generelt</string>
+    <string name="settings_section_help">Hjálp</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Lás upp við PIN og lívkenni</string>
+    <string name="backup_keys_subtitle">Útflyt tín privata lykil</string>
+    <string name="sign_policy_subtitle">Hvussu undirskriftarumbønir verða góðkendar</string>
+    <string name="tor_subtitle">Beind sambindingar gjøgnum Tor</string>
+    <string name="relays_subtitle">Stýr tínum relæum</string>
+    <string name="service_settings_subtitle">Atferð hjá bakgrundstænastuni</string>
+    <string name="applications_backup_subtitle">Tak trygdaravrit av góðkendum appum</string>
+    <string name="language_subtitle">Vísingarmál hjá appini</string>
+    <string name="auth_whitelist_subtitle">Álitismikil klientvertsnøvn</string>
+    <string name="logs_subtitle">Vís app-virksemi</string>
+    <string name="give_us_feedback_subtitle">Boða frá feili ella bið um virkni</string>
+    <string name="update_settings_subtitle">Kanna eftir nýggjum útgávum</string>
 </resources>

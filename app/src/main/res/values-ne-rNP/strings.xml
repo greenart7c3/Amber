@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">पुनःस्थापना गर्नुहोस्</string>
     <string name="signin_restore_skip">छोड्नुहोस्</string>
     <string name="event_kind_39701">सार्वजनिक वेब बुकमार्क</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">खाता र कुञ्जीहरू</string>
+    <string name="settings_section_network">नेटवर्क</string>
+    <string name="settings_section_service">सेवा</string>
+    <string name="settings_section_general">सामान्य</string>
+    <string name="settings_section_help">मद्दत</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">पिन र बायोमेट्रिक अनलक</string>
+    <string name="backup_keys_subtitle">आफ्नो निजी कुञ्जी निर्यात गर्नुहोस्</string>
+    <string name="sign_policy_subtitle">हस्ताक्षर अनुरोधहरू कसरी स्वीकृत हुन्छन्</string>
+    <string name="tor_subtitle">जडानहरू Tor मार्फत रुट गर्नुहोस्</string>
+    <string name="relays_subtitle">आफ्ना रिलेहरू व्यवस्थापन गर्नुहोस्</string>
+    <string name="service_settings_subtitle">पृष्ठभूमि सेवाको व्यवहार</string>
+    <string name="applications_backup_subtitle">आफ्ना अधिकृत एपहरूको ब्याकअप लिनुहोस्</string>
+    <string name="language_subtitle">एप प्रदर्शन भाषा</string>
+    <string name="auth_whitelist_subtitle">विश्वसनीय क्लाइन्ट होस्टनामहरू</string>
+    <string name="logs_subtitle">एप गतिविधि हेर्नुहोस्</string>
+    <string name="give_us_feedback_subtitle">बग रिपोर्ट गर्नुहोस् वा सुविधा अनुरोध गर्नुहोस्</string>
+    <string name="update_settings_subtitle">नयाँ संस्करणहरू जाँच गर्नुहोस्</string>
 </resources>

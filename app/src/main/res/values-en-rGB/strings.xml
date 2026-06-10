@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">Restore</string>
     <string name="signin_restore_skip">Skip</string>
     <string name="event_kind_39701">Public web bookmark</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Account &amp; keys</string>
+    <string name="settings_section_network">Network</string>
+    <string name="settings_section_service">Service</string>
+    <string name="settings_section_general">General</string>
+    <string name="settings_section_help">Help</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN and biometric unlock</string>
+    <string name="backup_keys_subtitle">Export your private key</string>
+    <string name="sign_policy_subtitle">How signing requests are approved</string>
+    <string name="tor_subtitle">Route connections through Tor</string>
+    <string name="relays_subtitle">Manage your relays</string>
+    <string name="service_settings_subtitle">Background service behavior</string>
+    <string name="applications_backup_subtitle">Back up your authorized apps</string>
+    <string name="language_subtitle">App display language</string>
+    <string name="auth_whitelist_subtitle">Trusted client hostnames</string>
+    <string name="logs_subtitle">View app activity</string>
+    <string name="give_us_feedback_subtitle">Report a bug or request a feature</string>
+    <string name="update_settings_subtitle">Check for new versions</string>
 </resources>

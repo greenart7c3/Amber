@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">กู้คืน</string>
     <string name="signin_restore_skip">ข้ามไป</string>
     <string name="event_kind_39701">บุ๊กมาร์กเว็บสาธารณะ</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">บัญชีและกุญแจ</string>
+    <string name="settings_section_network">เครือข่าย</string>
+    <string name="settings_section_service">บริการ</string>
+    <string name="settings_section_general">ทั่วไป</string>
+    <string name="settings_section_help">ความช่วยเหลือ</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">ปลดล็อกด้วย PIN และไบโอเมตริก</string>
+    <string name="backup_keys_subtitle">ส่งออกกุญแจส่วนตัวของคุณ</string>
+    <string name="sign_policy_subtitle">วิธีการอนุมัติคำขอลงนาม</string>
+    <string name="tor_subtitle">กำหนดเส้นทางการเชื่อมต่อผ่าน Tor</string>
+    <string name="relays_subtitle">จัดการรีเลย์ของคุณ</string>
+    <string name="service_settings_subtitle">พฤติกรรมของบริการเบื้องหลัง</string>
+    <string name="applications_backup_subtitle">สำรองข้อมูลแอปที่ได้รับอนุญาตของคุณ</string>
+    <string name="language_subtitle">ภาษาที่แสดงในแอป</string>
+    <string name="auth_whitelist_subtitle">ชื่อโฮสต์ไคลเอ็นต์ที่เชื่อถือได้</string>
+    <string name="logs_subtitle">ดูกิจกรรมของแอป</string>
+    <string name="give_us_feedback_subtitle">รายงานข้อบกพร่องหรือขอคุณสมบัติ</string>
+    <string name="update_settings_subtitle">ตรวจหาเวอร์ชันใหม่</string>
 </resources>

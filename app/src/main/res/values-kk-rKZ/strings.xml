@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Қалпына келтіру</string>
     <string name="signin_restore_skip">Өткізіп жіберу</string>
     <string name="event_kind_39701">Жалпыға ашық веб-бетбелгі</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Тіркелгі және кілттер</string>
+    <string name="settings_section_network">Желі</string>
+    <string name="settings_section_service">Қызмет</string>
+    <string name="settings_section_general">Жалпы</string>
+    <string name="settings_section_help">Анықтама</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN және биометриямен құлыпты ашу</string>
+    <string name="backup_keys_subtitle">Жеке кілтіңізді экспорттау</string>
+    <string name="sign_policy_subtitle">Қол қою сұраулары қалай мақұлданады</string>
+    <string name="tor_subtitle">Қосылымдарды Tor арқылы бағыттау</string>
+    <string name="relays_subtitle">Релелеріңізді басқару</string>
+    <string name="service_settings_subtitle">Фондық қызметтің әрекеті</string>
+    <string name="applications_backup_subtitle">Рұқсат етілген қолданбаларды сақтық көшіру</string>
+    <string name="language_subtitle">Қолданбаның көрсету тілі</string>
+    <string name="auth_whitelist_subtitle">Сенімді клиент хост атаулары</string>
+    <string name="logs_subtitle">Қолданба әрекетін көру</string>
+    <string name="give_us_feedback_subtitle">Қате туралы хабарлау немесе мүмкіндік сұрау</string>
+    <string name="update_settings_subtitle">Жаңа нұсқаларды тексеру</string>
 </resources>

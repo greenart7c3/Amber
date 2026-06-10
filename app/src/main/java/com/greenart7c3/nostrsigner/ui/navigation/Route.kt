@@ -1,238 +1,245 @@
 package com.greenart7c3.nostrsigner.ui.navigation
 
+import android.content.Context
 import androidx.annotation.DrawableRes
+import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
-import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 
 @Immutable
 sealed class Route(
-    val title: String,
+    @param:StringRes val titleResId: Int?,
     val route: String,
     @param:DrawableRes val icon: Int,
 ) {
     data object TorSettings : Route(
-        title = Amber.instance.getString(R.string.connect_via_tor_short),
+        titleResId = R.string.connect_via_tor_short,
         route = "TorSettings",
         icon = R.drawable.incoming_request,
     )
 
     data object Login : Route(
-        title = "",
+        titleResId = null,
         route = "login",
         icon = R.drawable.incoming_request,
     )
 
     data object IncomingRequest : Route(
-        title = Amber.instance.getString(R.string.incoming_request),
+        titleResId = R.string.incoming_request,
         route = "IncomingRequest",
         icon = R.drawable.incoming_request,
     )
 
     data object Applications : Route(
         route = "Applications",
-        title = Amber.instance.getString(R.string.applications),
+        titleResId = R.string.applications,
         icon = R.drawable.applications,
     )
 
     data object Settings : Route(
-        title = Amber.instance.getString(R.string.settings),
+        titleResId = R.string.settings,
         route = "Settings",
         icon = R.drawable.settings,
     )
 
     data object Permission : Route(
-        title = Amber.instance.getString(R.string.permissions),
+        titleResId = R.string.permissions,
         route = "Permission/{packageName}",
         icon = R.drawable.settings,
     )
 
     data object AccountBackup : Route(
-        title = Amber.instance.getString(R.string.account_backup),
+        titleResId = R.string.account_backup,
         route = "AccountBackup",
         icon = R.drawable.settings,
     )
 
     data object ExportAllAccounts : Route(
-        title = Amber.instance.getString(R.string.export_all_accounts_title),
+        titleResId = R.string.export_all_accounts_title,
         route = "ExportAllAccounts",
         icon = R.drawable.settings,
     )
 
     data object Logs : Route(
-        title = Amber.instance.getString(R.string.logs),
+        titleResId = R.string.logs,
         route = "Logs",
         icon = R.drawable.settings,
     )
 
     data object QrCode : Route(
-        title = Amber.instance.getString(R.string.qrCode),
+        titleResId = R.string.qrCode,
         route = "qrcode/{content}",
         icon = R.drawable.settings,
     )
 
     data object ActiveRelays : Route(
-        title = Amber.instance.getString(R.string.relays),
+        titleResId = R.string.relays,
         route = "ActiveRelays",
         icon = R.drawable.relays,
     )
 
     data object Language : Route(
-        title = Amber.instance.getString(R.string.language),
+        titleResId = R.string.language,
         route = "Language",
         icon = R.drawable.settings,
     )
 
     data object DefaultRelays : Route(
-        title = Amber.instance.getString(R.string.default_relays),
+        titleResId = R.string.default_relays,
         route = "DefaultRelays",
         icon = R.drawable.settings,
     )
 
     data object SignPolicy : Route(
-        title = Amber.instance.getString(R.string.sign_policy),
+        titleResId = R.string.sign_policy,
         route = "SignPolicy",
         icon = R.drawable.settings,
     )
 
     data object Security : Route(
-        title = Amber.instance.getString(R.string.security),
+        titleResId = R.string.security,
         route = "Security",
         icon = R.drawable.settings,
     )
 
     data object Accounts : Route(
-        title = Amber.instance.getString(R.string.accounts),
+        titleResId = R.string.accounts,
         route = "Accounts",
         icon = R.drawable.settings,
     )
 
     data object NewApplication : Route(
-        title = Amber.instance.getString(R.string.add_a_new_application),
+        titleResId = R.string.add_a_new_application,
         route = "NewApplication",
         icon = R.drawable.settings,
     )
 
     data object NewNsecBunker : Route(
-        title = Amber.instance.getString(R.string.add_a_nsecbunker),
+        titleResId = R.string.add_a_nsecbunker,
         route = "NewNsecBunker",
         icon = R.drawable.settings,
     )
 
     data object NSecBunkerCreated : Route(
-        title = Amber.instance.getString(R.string.add_a_nsecbunker),
+        titleResId = R.string.add_a_nsecbunker,
         route = "NewNsecBunkerCreated/{key}",
         icon = R.drawable.settings,
     )
 
     data object Activity : Route(
-        title = Amber.instance.getString(R.string.activity_title),
+        titleResId = R.string.activity_title,
         route = "Activity/{key}",
         icon = R.drawable.settings,
     )
 
     data object RelayLogScreen : Route(
-        title = Amber.instance.getString(R.string.logs),
+        titleResId = R.string.logs,
         route = "RelayLogScreen/{url}",
         icon = R.drawable.settings,
     )
 
     data object EditConfiguration : Route(
-        title = Amber.instance.getString(R.string.edit_configuration),
+        titleResId = R.string.edit_configuration,
         route = "EditConfiguration/{key}",
         icon = R.drawable.settings,
     )
 
     data object SetupPin : Route(
-        title = Amber.instance.getString(R.string.setup_pin),
+        titleResId = R.string.setup_pin,
         route = "SetupPin",
         icon = R.drawable.settings,
     )
 
     data object ConfirmPin : Route(
-        title = Amber.instance.getString(R.string.confirm_pin),
+        titleResId = R.string.confirm_pin,
         route = "ConfirmPin/{pin}",
         icon = R.drawable.settings,
     )
 
     data object SeeDetails : Route(
-        title = Amber.instance.getString(R.string.incoming_request),
+        titleResId = R.string.incoming_request,
         route = "SeeDetails",
         icon = R.drawable.settings,
     )
 
     data object RelaysScreen : Route(
-        title = Amber.instance.getString(R.string.relays),
+        titleResId = R.string.relays,
         route = "RelaysScreen",
         icon = R.drawable.settings,
     )
 
     data object DefaultProfileRelaysScreen : Route(
-        title = Amber.instance.getString(R.string.default_profile_relays),
+        titleResId = R.string.default_profile_relays,
         route = "DefaultProfileRelaysScreen",
         icon = R.drawable.settings,
     )
 
     data object EditProfile : Route(
-        title = Amber.instance.getString(R.string.edit_profile),
+        titleResId = R.string.edit_profile,
         route = "EditProfile/{key}",
         icon = R.drawable.settings,
     )
 
     data object Feedback : Route(
-        title = Amber.instance.getString(R.string.give_us_feedback),
+        titleResId = R.string.give_us_feedback,
         route = "Feedback",
         icon = R.drawable.settings,
     )
 
     data object Activities : Route(
-        title = Amber.instance.getString(R.string.activities),
+        titleResId = R.string.activities,
         route = "Activities",
         icon = R.drawable.incoming_request,
     )
 
     data object CrashReport : Route(
-        title = Amber.instance.getString(R.string.crashreport_found),
+        titleResId = R.string.crashreport_found,
         route = "CrashReport",
         icon = R.drawable.settings,
     )
 
     data object TranslationReport : Route(
-        title = Amber.instance.getString(R.string.translation_report_title),
+        titleResId = R.string.translation_report_title,
         route = "TranslationReport",
         icon = R.drawable.settings,
     )
 
     data object AuthWhitelist : Route(
-        title = Amber.instance.getString(R.string.auth_whitelist),
+        titleResId = R.string.auth_whitelist,
         route = "AuthWhitelist",
         icon = R.drawable.settings,
     )
 
     data object UpdateSettings : Route(
-        title = Amber.instance.getString(R.string.update_settings),
+        titleResId = R.string.update_settings,
         route = "UpdateSettings",
         icon = R.drawable.settings,
     )
 
     data object CloudBackup : Route(
-        title = Amber.instance.getString(R.string.cloud_backup_title),
+        titleResId = R.string.cloud_backup_title,
         route = "CloudBackup",
         icon = R.drawable.settings,
     )
 
     data object ServiceSettings : Route(
-        title = Amber.instance.getString(R.string.service_settings),
+        titleResId = R.string.service_settings,
         route = "ServiceSettings",
         icon = R.drawable.settings,
     )
 
     data object ApplicationsBackup : Route(
-        title = Amber.instance.getString(R.string.applications_backup),
+        titleResId = R.string.applications_backup,
         route = "ApplicationsBackup",
         icon = R.drawable.settings,
     )
 }
+
+/**
+ * Resolves the route title against the supplied context so it always reflects the
+ * current locale. Returns an empty string when the route has no title.
+ */
+fun Route.title(context: Context): String = titleResId?.let { context.getString(it) } ?: ""
 
 val routes = listOf(
     Route.IncomingRequest,

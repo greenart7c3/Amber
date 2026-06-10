@@ -25,15 +25,23 @@ import com.greenart7c3.nostrsigner.Amber
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
+import javax.net.SocketFactory
 import okhttp3.OkHttpClient
 
 object HttpClientManager {
-    private val rootClient =
+    private val rootClient by lazy {
         OkHttpClient
             .Builder()
             .followRedirects(true)
             .followSslRedirects(true)
+            // Tags the sockets OkHttp opens so StrictMode's untagged-socket
+            // detector stays quiet. TaggedSocketFactory covers DIRECT/HTTP
+            // routes; TaggingInterceptor (+ fastFallback(false) below) covers
+            // SOCKS proxy routes, which bypass the SocketFactory.
+            .socketFactory(TaggedSocketFactory(SocketFactory.getDefault()))
+            .addInterceptor(TaggingInterceptor())
             .build()
+    }
 
     val DEFAULT_TIMEOUT_ON_WIFI: Duration = Duration.ofSeconds(10L)
     val DEFAULT_TIMEOUT_ON_MOBILE: Duration = Duration.ofSeconds(30L)
@@ -55,8 +63,12 @@ object HttpClientManager {
             Log.d(Amber.TAG, "Changing proxy to: ${proxy != null}")
             currentProxy = proxy
 
-            // recreates singleton
-            defaultHttpClient = buildHttpClient(currentProxy, defaultTimeout)
+            // Invalidate so the proxied client is rebuilt lazily on the next
+            // getHttpClient() call. Rebuilding here would force OkHttp to
+            // create the default SSLSocketFactory (a ~55ms StrictMode "slow
+            // call") on whatever thread mutates the proxy — often the main
+            // thread. getHttpClient() only runs on network/background threads.
+            defaultHttpClient = null
         }
     }
 
@@ -65,9 +77,9 @@ object HttpClientManager {
         if (defaultTimeout.seconds != timeout.seconds) {
             defaultTimeout = timeout
 
-            // recreates singleton
-            defaultHttpClient = buildHttpClient(currentProxy, defaultTimeout)
-            defaultHttpClientWithoutProxy = buildHttpClient(null, defaultTimeout)
+            // Invalidate; see setDefaultProxy for why we rebuild lazily.
+            defaultHttpClient = null
+            defaultHttpClientWithoutProxy = null
         }
     }
 
@@ -75,8 +87,10 @@ object HttpClientManager {
         Log.d(Amber.TAG, "Changing userAgent")
         if (userAgent != userAgentHeader) {
             userAgent = userAgentHeader
-            defaultHttpClient = buildHttpClient(currentProxy, defaultTimeout)
-            defaultHttpClientWithoutProxy = buildHttpClient(null, defaultTimeout)
+
+            // Invalidate; see setDefaultProxy for why we rebuild lazily.
+            defaultHttpClient = null
+            defaultHttpClientWithoutProxy = null
         }
     }
 
@@ -86,7 +100,7 @@ object HttpClientManager {
     ): OkHttpClient {
         val seconds = if (proxy != null) timeout.seconds * 3 else timeout.seconds
         val duration = Duration.ofSeconds(seconds)
-        return rootClient
+        val builder = rootClient
             .newBuilder()
             .proxy(proxy)
             .readTimeout(duration)
@@ -106,7 +120,36 @@ object HttpClientManager {
             .addInterceptor(DefaultContentTypeInterceptor(userAgent))
             .addNetworkInterceptor(LoggingInterceptor())
             .addNetworkInterceptor(EncryptedBlobInterceptor(cache))
-            .build()
+
+        // SOCKS proxy (Tor) sockets are built via Socket(proxy), bypassing our
+        // SocketFactory, and the relay path is WebSockets, whose connection
+        // call drops our EventListener. Disabling fast fallback routes
+        // connection setup through SequentialExchangeFinder, which connects
+        // synchronously on the call thread — the same thread TaggingInterceptor
+        // already tagged — so the socket gets tagged. Only proxied clients need
+        // this; a single localhost SOCKS route gains nothing from fast fallback
+        // anyway. Direct clients keep it (Happy Eyeballs) and rely on
+        // TaggedSocketFactory.
+        if (proxy != null) {
+            builder.disableFastFallback()
+        }
+
+        return builder.build()
+    }
+
+    /**
+     * Turns off OkHttp 5's fast fallback (parallel IPv4/IPv6 connect racing on
+     * background threads). Reflective because the offline flavor compiles
+     * against OkHttp 4 (pulled in transitively by Coil), which has no
+     * `fastFallback` and already connects sequentially — so doing nothing there
+     * is correct.
+     */
+    private fun OkHttpClient.Builder.disableFastFallback() {
+        runCatching {
+            OkHttpClient.Builder::class.java
+                .getMethod("fastFallback", Boolean::class.javaPrimitiveType)
+                .invoke(this, false)
+        }
     }
 
     fun getHttpClient(useProxy: Boolean): OkHttpClient = if (useProxy) {

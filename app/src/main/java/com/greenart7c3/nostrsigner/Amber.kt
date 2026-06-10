@@ -5,6 +5,8 @@ import android.app.Application
 import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
+import android.net.TrafficStats
+import android.os.StrictMode
 import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
@@ -201,8 +203,12 @@ class Amber :
             val port = TorManager.socksPort.value
             if (port == 0) return false
             return try {
+                if (TrafficStats.getThreadStatsTag() == -1) {
+                    TrafficStats.setThreadStatsTag(0x0001)
+                }
                 val socket = Socket()
                 socket.connect(InetSocketAddress(proxyHost, port), 5000)
+                TrafficStats.tagSocket(socket)
                 socket.close()
                 true
             } catch (_: Exception) {
@@ -210,8 +216,12 @@ class Amber :
             }
         }
         try {
+            if (TrafficStats.getThreadStatsTag() == -1) {
+                TrafficStats.setThreadStatsTag(0x0001)
+            }
             val socket = Socket()
             socket.connect(InetSocketAddress(proxyHost, proxyPort), 5000) // 3-second timeout
+            TrafficStats.tagSocket(socket)
             socket.close()
             return true
         } catch (e: Exception) {
@@ -339,9 +349,28 @@ class Amber :
     override fun onCreate() {
         super.onCreate()
 
+        if (BuildConfig.DEBUG) {
+            enableStrictMode()
+        }
+
         instance = this
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+    }
+
+    private fun enableStrictMode() {
+        StrictMode.setThreadPolicy(
+            StrictMode.ThreadPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build(),
+        )
+        StrictMode.setVmPolicy(
+            StrictMode.VmPolicy.Builder()
+                .detectAll()
+                .penaltyLog()
+                .build(),
+        )
     }
 
     fun runMigrations(onDone: () -> Unit) {
@@ -352,6 +381,9 @@ class Amber :
                     LocalPreferences.switchToAccount(this@Amber, LocalPreferences.allSavedAccounts(this@Amber).first().npub)
                 }
                 LocalPreferences.reloadApp()
+
+                HttpClientManager.getHttpClient(false)
+                HttpClientManager.getHttpClient(true)
 
                 // Start Tor immediately in the background without blocking app startup
                 if (settings.torMode == TorMode.BUILTIN && !BuildFlavorChecker.isOfflineFlavor()) {
@@ -444,11 +476,12 @@ class Amber :
         }
     }
 
-    fun getDatabase(npub: String): AppDatabase {
-        if (!databases.containsKey(npub)) {
-            databases[npub] = AppDatabase.getDatabase(applicationContext, npub)
-        }
-        return databases[npub]!!
+    // computeIfAbsent (not check-then-put): AppDatabase.getDatabase builds a
+    // fresh RoomDatabase every call, so a racing second caller would build a
+    // duplicate that loses the put() and leaks its SQLiteConnection (caught by
+    // StrictMode's CloseGuard on finalize).
+    fun getDatabase(npub: String): AppDatabase = databases.computeIfAbsent(npub) {
+        AppDatabase.getDatabase(applicationContext, npub)
     }
 
     /**
@@ -463,18 +496,12 @@ class Amber :
         }
     }
 
-    fun getLogDatabase(npub: String): LogDatabase {
-        if (!logDatabases.containsKey(npub)) {
-            logDatabases[npub] = LogDatabase.getDatabase(applicationContext, npub)
-        }
-        return logDatabases[npub]!!
+    fun getLogDatabase(npub: String): LogDatabase = logDatabases.computeIfAbsent(npub) {
+        LogDatabase.getDatabase(applicationContext, npub)
     }
 
-    fun getHistoryDatabase(npub: String): HistoryDatabase {
-        if (!historyDatabases.containsKey(npub)) {
-            historyDatabases[npub] = HistoryDatabase.getDatabase(applicationContext, npub)
-        }
-        return historyDatabases[npub]!!
+    fun getHistoryDatabase(npub: String): HistoryDatabase = historyDatabases.computeIfAbsent(npub) {
+        HistoryDatabase.getDatabase(applicationContext, npub)
     }
 
     /**

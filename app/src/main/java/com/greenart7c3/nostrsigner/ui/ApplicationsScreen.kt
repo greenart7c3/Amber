@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
 import android.content.Intent
+import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -175,7 +176,17 @@ fun ApplicationsScreen(
                             .fillMaxSize()
                             .padding(vertical = 4.dp)
                             .clickable {
-                                navController.navigate("Permission/${applicationWithHistory.key}")
+                                // Only navigate when we are still on the Applications screen. A second
+                                // tap (or a tap landing while the NavHost graph is being recreated) can
+                                // otherwise fire navigate() against a graph that no longer contains the
+                                // Permission destination, crashing with IllegalArgumentException.
+                                if (navController.currentDestination?.route == Route.Applications.route) {
+                                    runCatching {
+                                        navController.navigate("Permission/${applicationWithHistory.key}")
+                                    }.onFailure {
+                                        Log.e("ApplicationsScreen", "Failed to open permissions for ${applicationWithHistory.key}", it)
+                                    }
+                                }
                             },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {

@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.EventCmd
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.ReqCmd
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -54,6 +55,28 @@ class NostrClientLoggerListener(
     private var reconnectJob: Job? = null
     private var reconnectDelay = 5_000L
     private var lastDisconnectTime = 0L
+
+    // Per-relay consecutive connection-failure counts. A relay that fails to
+    // connect MAX_RECONNECT_ATTEMPTS times in a row is treated as permanently
+    // dead and stops scheduling reconnects, so an unreachable relay can't keep
+    // waking the radio every minute forever and draining the battery. The count
+    // is reset whenever the relay connects successfully (onConnected), and a dead
+    // relay still gets a fresh chance on the next OS network change, because the
+    // ConnectivityService network callback calls client.connect(), which retries
+    // every relay regardless of this backoff state.
+    private val failureCounts = ConcurrentHashMap<String, Int>()
+
+    private fun scheduleReconnect(relayUrl: String) {
+        val failures = (failureCounts[relayUrl] ?: 0) + 1
+        failureCounts[relayUrl] = failures
+        if (failures > MAX_RECONNECT_ATTEMPTS) {
+            if (BuildConfig.DEBUG) {
+                Log.d(Amber.TAG, "Relay $relayUrl marked dead after $failures failed attempts; skipping reconnect")
+            }
+            return
+        }
+        reconnectWithBackoff()
+    }
 
     private fun reconnectWithBackoff() {
         val now = System.currentTimeMillis()
@@ -115,7 +138,7 @@ class NostrClientLoggerListener(
             return
         }
 
-        reconnectWithBackoff()
+        scheduleReconnect(relay.url.url)
         super.onCannotConnect(relay, errorMessage)
     }
 
@@ -166,7 +189,7 @@ class NostrClientLoggerListener(
             return
         }
 
-        reconnectWithBackoff()
+        scheduleReconnect(relay.url.url)
         super.onDisconnected(relay)
     }
 
@@ -179,6 +202,17 @@ class NostrClientLoggerListener(
     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
         if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onConnected: ${relay.url.url} ping: ${pingMillis}ms compressed: $compressed")
         saveLog(relay.url.url, "onConnected", "Connected")
+        // Relay recovered: clear its failure streak so it is eligible for the
+        // normal reconnect-with-backoff path again.
+        failureCounts.remove(relay.url.url)
         super.onConnected(relay, pingMillis, compressed)
+    }
+
+    companion object {
+        // After this many consecutive failures a relay is considered permanently
+        // dead and is no longer scheduled for reconnection until it recovers on a
+        // network change. With the 60s backoff cap this is roughly 10 minutes of
+        // retrying before giving up.
+        private const val MAX_RECONNECT_ATTEMPTS = 10
     }
 }

@@ -46,8 +46,13 @@ object HttpClientManager {
     val DEFAULT_TIMEOUT_ON_WIFI: Duration = Duration.ofSeconds(10L)
     val DEFAULT_TIMEOUT_ON_MOBILE: Duration = Duration.ofSeconds(30L)
 
-    /** How often OkHttp should send WebSocket pings to detect half-closed connections. */
-    private val PING_INTERVAL: Duration = Duration.ofSeconds(30L)
+    /**
+     * How often OkHttp should send WebSocket pings to detect half-closed connections.
+     * Kept relatively long to avoid waking the radio every few seconds on the
+     * always-on relay connection; it only needs to be short enough to surface a
+     * silent half-close as an explicit failure within a reasonable window.
+     */
+    private val PING_INTERVAL: Duration = Duration.ofSeconds(90L)
 
     private var defaultTimeout = DEFAULT_TIMEOUT_ON_WIFI
     private var defaultHttpClient: OkHttpClient? = null

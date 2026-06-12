@@ -454,7 +454,7 @@ private fun SettingsSection(
         Text(
             text = title,
             style = MaterialTheme.typography.titleMedium,
-            color = MaterialTheme.colorScheme.onBackground,
+            color = MaterialTheme.colorScheme.primary,
             modifier = Modifier.padding(start = 12.dp, bottom = 6.dp),
         )
         Card(

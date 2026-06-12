@@ -221,6 +221,7 @@ class AmberRelayStats(
                             .setSummaryText(appContext.getString(R.string.status_detail)),
                     )
                     .setPriority(NotificationCompat.PRIORITY_MIN)
+                    .setOnlyAlertOnce(true)
                     .setSmallIcon(R.drawable.ic_notification)
                     .setContentIntent(contentPendingIntent)
                     .addAction(R.drawable.ic_notification, appContext.getString(R.string.reconnect), reconnectPendingIntent)

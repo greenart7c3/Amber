@@ -25,6 +25,7 @@ import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.listeners.RelayConnectionListener
 import com.vitorpamplona.quartz.nip01Core.relay.client.single.IRelayClient
@@ -90,11 +91,19 @@ class NotificationSubscription(
                 val connPubKey = conn.localPubKey
                 indexEntries[connPubKey] = LocalKeyAccountIndex.Match(account.npub, conn.localKey)
                 val subKey = "${account.hexKey}_$connPubKey"
+
+                // Exclude relays that have been declared dead so Quartz stops opening
+                // a socket to them on every 30s refresh. They are re-added once
+                // RelayHealthTracker is reset (network change / manual reconnect) or
+                // they connect successfully again.
+                val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
+                    .filterNot { RelayHealthTracker.isDead(it) }
+                if (connRelays.isEmpty()) continue
+
                 activeSubKeys.add(subKey)
                 if (!subIds.containsKey(subKey)) {
                     subIds[subKey] = UUID.randomUUID().toString()
                 }
-                val connRelays = conn.relays.ifEmpty { Amber.instance.getSavedRelays(account) }
                 client.subscribe(
                     subIds[subKey]!!,
                     connRelays.associateWith {
@@ -112,24 +121,27 @@ class NotificationSubscription(
 
             // Main account subscription only for legacy connections (no localKey)
             if (hasLegacyConnections) {
-                activeSubKeys.add(account.hexKey)
-                if (!subIds.containsKey(account.hexKey)) {
-                    subIds[account.hexKey] = UUID.randomUUID().toString()
-                }
                 val relays = Amber.instance.getSavedRelays(account)
-                client.subscribe(
-                    subIds[account.hexKey]!!,
-                    relays.associateWith {
-                        listOf(
-                            Filter(
-                                kinds = listOf(NostrConnectEvent.KIND),
-                                tags = mapOf("p" to listOf(account.hexKey)),
-                                limit = 1,
-                                since = since,
-                            ),
-                        )
-                    },
-                )
+                    .filterNot { RelayHealthTracker.isDead(it) }
+                if (relays.isNotEmpty()) {
+                    activeSubKeys.add(account.hexKey)
+                    if (!subIds.containsKey(account.hexKey)) {
+                        subIds[account.hexKey] = UUID.randomUUID().toString()
+                    }
+                    client.subscribe(
+                        subIds[account.hexKey]!!,
+                        relays.associateWith {
+                            listOf(
+                                Filter(
+                                    kinds = listOf(NostrConnectEvent.KIND),
+                                    tags = mapOf("p" to listOf(account.hexKey)),
+                                    limit = 1,
+                                    since = since,
+                                ),
+                            )
+                        },
+                    )
+                }
             }
         }
 

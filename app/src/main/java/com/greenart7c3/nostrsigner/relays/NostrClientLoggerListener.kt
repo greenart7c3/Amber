@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.OkMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.Command
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.EventCmd
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toRelay.ReqCmd
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -54,6 +55,21 @@ class NostrClientLoggerListener(
     private var reconnectJob: Job? = null
     private var reconnectDelay = 5_000L
     private var lastDisconnectTime = 0L
+
+    // Counts the failure against the relay and only schedules a reconnect while it
+    // is still worth retrying. Once a relay is dead, RelayHealthTracker also makes
+    // NotificationSubscription.updateFilter drop it from the subscription relay
+    // set, so Quartz stops opening sockets to it every 30s. The streak resets on a
+    // successful connection (onConnected) or a network change / manual reconnect.
+    private fun scheduleReconnect(relay: NormalizedRelayUrl) {
+        if (!RelayHealthTracker.recordFailure(relay)) {
+            if (BuildConfig.DEBUG) {
+                Log.d(Amber.TAG, "Relay ${relay.url} marked dead; skipping reconnect")
+            }
+            return
+        }
+        reconnectWithBackoff()
+    }
 
     private fun reconnectWithBackoff() {
         val now = System.currentTimeMillis()
@@ -115,7 +131,7 @@ class NostrClientLoggerListener(
             return
         }
 
-        reconnectWithBackoff()
+        scheduleReconnect(relay.url)
         super.onCannotConnect(relay, errorMessage)
     }
 
@@ -166,7 +182,7 @@ class NostrClientLoggerListener(
             return
         }
 
-        reconnectWithBackoff()
+        scheduleReconnect(relay.url)
         super.onDisconnected(relay)
     }
 
@@ -179,6 +195,9 @@ class NostrClientLoggerListener(
     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
         if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onConnected: ${relay.url.url} ping: ${pingMillis}ms compressed: $compressed")
         saveLog(relay.url.url, "onConnected", "Connected")
+        // Relay recovered: clear its failure streak so it is eligible for the
+        // normal reconnect-with-backoff path (and the subscription) again.
+        RelayHealthTracker.recordSuccess(relay.url)
         super.onConnected(relay, pingMillis, compressed)
     }
 }

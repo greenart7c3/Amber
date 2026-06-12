@@ -626,7 +626,7 @@ class Amber :
         applicationIOScope.cancel()
     }
 
-    fun maybeCheckForUpdates() {
+    suspend fun maybeCheckForUpdates() {
         if (zapstoreUpdater == null) return
         val lastCheck = LocalPreferences.getLastUpdateCheckTime(this)
         val now = System.currentTimeMillis()

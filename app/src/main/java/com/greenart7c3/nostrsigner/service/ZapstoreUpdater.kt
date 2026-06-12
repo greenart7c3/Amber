@@ -8,6 +8,7 @@ import androidx.core.content.FileProvider
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -28,9 +29,11 @@ import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import okhttp3.Request
 
 private const val EOSE_TIMEOUT_MS = 15_000L
@@ -66,21 +69,36 @@ class ZapstoreUpdater(
         UPDATE_RELAY_URLS.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
     private var timeoutJob: Job? = null
 
+    // Messages are processed sequentially in arrival order through this channel.
+    // Launching a coroutine per message let the release EOSE run before the release
+    // EVENT had populated pendingFileEventIds, so the file subscription never opened.
+    private val messages = Channel<Message>(Channel.UNLIMITED)
+
     init {
         client.addConnectionListener(this)
+        scope.launch {
+            for (msg in messages) {
+                when (msg) {
+                    is EventMessage if msg.subId == releaseSubId -> processReleaseEvent(msg.event)
+                    is EventMessage if msg.subId == fileSubId -> processFileEvent(msg.event)
+                    is EoseMessage if msg.subId == releaseSubId -> onReleaseEose()
+                    is EoseMessage if msg.subId == fileSubId -> finishCheck()
+                    else -> {}
+                }
+            }
+        }
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
         when (msg) {
-            is EventMessage if msg.subId == releaseSubId -> processReleaseEvent(msg.event)
-            is EventMessage if msg.subId == fileSubId -> processFileEvent(msg.event)
-            is EoseMessage if msg.subId == releaseSubId -> onReleaseEose()
-            is EoseMessage if msg.subId == fileSubId -> finishCheck()
+            is EventMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messages.trySend(msg)
+            is EoseMessage if (msg.subId == releaseSubId || msg.subId == fileSubId) -> messages.trySend(msg)
+            else -> {}
         }
         super.onIncomingMessage(relay, msgStr, msg)
     }
 
-    fun checkForUpdates() {
+    suspend fun checkForUpdates() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         if (updateRelays.isEmpty()) return
         if (isChecking.value) return
@@ -94,10 +112,20 @@ class ZapstoreUpdater(
         val releaseFilter = Filter(
             kinds = listOf(RELEASE_KIND),
             authors = listOf(Amber.DEVELOPER_HEX_KEY),
-            limit = 10,
+            tags = mapOf("i" to listOf("com.greenart7c3.nostrsigner")),
+            limit = 1,
         )
 
-        client.subscribe(releaseSubId, updateRelays.associateWith { listOf(releaseFilter) })
+        val settings = withContext(Dispatchers.IO) {
+            LocalPreferences.loadSettingsFromEncryptedStorage()
+        }
+        if (settings.updateChannel == UpdateChannel.STABLE) {
+            Log.d("zapstore", "zapstore relay")
+            client.subscribe(releaseSubId, listOf(updateRelays.first()).associateWith { listOf(releaseFilter) })
+        } else {
+            Log.d("zapstore", "other relays")
+            client.subscribe(releaseSubId, updateRelays.drop(1).associateWith { listOf(releaseFilter) })
+        }
 
         timeoutJob = scope.launch {
             delay(EOSE_TIMEOUT_MS)
@@ -106,7 +134,7 @@ class ZapstoreUpdater(
         }
     }
 
-    private fun processReleaseEvent(event: Event) {
+    private suspend fun processReleaseEvent(event: Event) {
         if (!event.verify()) {
             Log.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
             return
@@ -124,7 +152,10 @@ class ZapstoreUpdater(
         // tag (legacy releases) are treated as stable and shown on both channels.
         val channelTag = tags.firstOrNull { it.size > 1 && it[0] == "c" }?.getOrNull(1)
         val isBeta = channelTag.equals("beta", ignoreCase = true)
-        if (isBeta && Amber.instance.settings.updateChannel == UpdateChannel.STABLE) return
+        val settings = withContext(Dispatchers.IO) {
+            LocalPreferences.loadSettingsFromEncryptedStorage()
+        }
+        if (isBeta && settings.updateChannel == UpdateChannel.STABLE) return
 
         val version = tags.firstOrNull { it.size > 1 && it[0] == "version" }?.getOrNull(1) ?: return
         if (!isNewerVersion(version)) return
@@ -243,8 +274,11 @@ class ZapstoreUpdater(
         }
     }
 
-    private fun downloadApk(context: Context, release: ZapstoreRelease): File? {
-        val useProxy = Amber.instance.settings.torMode != com.greenart7c3.nostrsigner.models.TorMode.DISABLED
+    private suspend fun downloadApk(context: Context, release: ZapstoreRelease): File? {
+        val settings = withContext(Dispatchers.IO) {
+            LocalPreferences.loadSettingsFromEncryptedStorage()
+        }
+        val useProxy = settings.torMode != com.greenart7c3.nostrsigner.models.TorMode.DISABLED
         val client = HttpClientManager.getHttpClient(useProxy)
         val request = Request.Builder().url(release.url).build()
         val response = client.newCall(request).execute()

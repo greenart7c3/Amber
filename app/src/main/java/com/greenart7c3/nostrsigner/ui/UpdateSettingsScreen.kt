@@ -104,11 +104,13 @@ fun UpdateSettingsScreen(modifier: Modifier = Modifier) {
         // Action button
         Button(
             onClick = {
-                if (latestRelease != null && dlState == DownloadState.IDLE) {
-                    updater.downloadAndInstall(context, latestRelease!!)
-                } else if (!isChecking && dlState != DownloadState.DOWNLOADING) {
-                    LocalPreferences.setLastUpdateCheckTime(context, 0L)
-                    updater.checkForUpdates()
+                Amber.instance.applicationIOScope.launch {
+                    if (latestRelease != null && dlState == DownloadState.IDLE) {
+                        updater.downloadAndInstall(context, latestRelease!!)
+                    } else if (!isChecking && dlState != DownloadState.DOWNLOADING) {
+                        LocalPreferences.setLastUpdateCheckTime(context, 0L)
+                        updater.checkForUpdates()
+                    }
                 }
             },
             enabled = !isChecking && dlState != DownloadState.DOWNLOADING,

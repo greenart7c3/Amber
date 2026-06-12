@@ -15,6 +15,7 @@ import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
+import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
 import java.util.Timer
 import java.util.TimerTask
 import kotlin.collections.set
@@ -37,6 +38,9 @@ class ConnectivityService : Service() {
                 if (Amber.instance.settings.killSwitch.value) return
 
                 if (lastNetwork != null && lastNetwork != network) {
+                    // New network: give previously-dead relays a fresh chance. The
+                    // 30s updateFilter tick re-adds them to the subscription set.
+                    RelayHealthTracker.reset()
                     scope.launch(Dispatchers.IO) {
                         if (!Amber.instance.client.isActive()) {
                             Amber.instance.client.connect()
@@ -58,6 +62,10 @@ class ConnectivityService : Service() {
                 if (Amber.instance.settings.killSwitch.value) return
 
                 val changed = Amber.instance.updateNetworkCapabilities(networkCapabilities)
+                if (changed) {
+                    // Transport changed (e.g. wifi <-> mobile): retry dead relays.
+                    RelayHealthTracker.reset()
+                }
 
                 scope.launch(Dispatchers.IO) {
                     Log.d(

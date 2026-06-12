@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Soo Celiyo</string>
     <string name="signin_restore_skip">Ka dhaaf</string>
     <string name="event_kind_39701">Calaamadda shabakadda dadweynaha</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Akoonka &amp; furayaasha</string>
+    <string name="settings_section_network">Shabakad</string>
+    <string name="settings_section_service">Adeeg</string>
+    <string name="settings_section_general">Guud</string>
+    <string name="settings_section_help">Caawimaad</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Furitaanka PIN iyo biyometriga</string>
+    <string name="backup_keys_subtitle">Soo dejiso furahaaga gaarka ah</string>
+    <string name="sign_policy_subtitle">Sida codsiyada saxiixa loo ansixiyo</string>
+    <string name="tor_subtitle">U marsii xiriiradka Tor</string>
+    <string name="relays_subtitle">Maaree relayskaaga</string>
+    <string name="service_settings_subtitle">Habdhaqanka adeegga gadaal</string>
+    <string name="applications_backup_subtitle">Kaydi abke ka samee barnaamijyadaada la oggolaaday</string>
+    <string name="language_subtitle">Luqadda bandhigga ee app-ka</string>
+    <string name="auth_whitelist_subtitle">Magacyada martida macaamiisha la aamini karo</string>
+    <string name="logs_subtitle">Eeg dhaqdhaqaaqa app-ka</string>
+    <string name="give_us_feedback_subtitle">Soo sheeg cilad ama codso astaan</string>
+    <string name="update_settings_subtitle">Hubi noocyada cusub</string>
 </resources>

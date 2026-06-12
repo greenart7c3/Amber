@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Atkurti</string>
     <string name="signin_restore_skip">Praleisti</string>
     <string name="event_kind_39701">Vieša interneto žymelė</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Paskyra ir raktai</string>
+    <string name="settings_section_network">Tinklas</string>
+    <string name="settings_section_service">Paslauga</string>
+    <string name="settings_section_general">Bendra</string>
+    <string name="settings_section_help">Pagalba</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Atrakinimas PIN kodu ir biometrija</string>
+    <string name="backup_keys_subtitle">Eksportuoti privatų raktą</string>
+    <string name="sign_policy_subtitle">Kaip tvirtinami pasirašymo prašymai</string>
+    <string name="tor_subtitle">Nukreipti ryšius per Tor</string>
+    <string name="relays_subtitle">Tvarkyti savo retransliatorius</string>
+    <string name="service_settings_subtitle">Foninės paslaugos elgsena</string>
+    <string name="applications_backup_subtitle">Kurti autorizuotų programų atsargines kopijas</string>
+    <string name="language_subtitle">Programos rodymo kalba</string>
+    <string name="auth_whitelist_subtitle">Patikimi klientų pagrindinių kompiuterių vardai</string>
+    <string name="logs_subtitle">Peržiūrėti programos veiklą</string>
+    <string name="give_us_feedback_subtitle">Pranešti apie klaidą arba paprašyti funkcijos</string>
+    <string name="update_settings_subtitle">Tikrinti, ar yra naujų versijų</string>
 </resources>

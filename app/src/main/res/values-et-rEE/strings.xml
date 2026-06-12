@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">Taasta</string>
     <string name="signin_restore_skip">Jäta vahele</string>
     <string name="event_kind_39701">Avalik veebijärjehoidja</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Konto ja võtmed</string>
+    <string name="settings_section_network">Võrk</string>
+    <string name="settings_section_service">Teenus</string>
+    <string name="settings_section_general">Üldine</string>
+    <string name="settings_section_help">Abi</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN- ja biomeetriline avamine</string>
+    <string name="backup_keys_subtitle">Ekspordi oma privaatvõti</string>
+    <string name="sign_policy_subtitle">Kuidas allkirjastamistaotlused kinnitatakse</string>
+    <string name="tor_subtitle">Suuna ühendused läbi Tori</string>
+    <string name="relays_subtitle">Halda oma releesid</string>
+    <string name="service_settings_subtitle">Taustateenuse käitumine</string>
+    <string name="applications_backup_subtitle">Varunda oma volitatud rakendused</string>
+    <string name="language_subtitle">Rakenduse kuvakeel</string>
+    <string name="auth_whitelist_subtitle">Usaldusväärsed kliendi hostinimed</string>
+    <string name="logs_subtitle">Vaata rakenduse tegevust</string>
+    <string name="give_us_feedback_subtitle">Teata veast või taotle funktsiooni</string>
+    <string name="update_settings_subtitle">Otsi uusi versioone</string>
 </resources>

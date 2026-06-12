@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Gendan</string>
     <string name="signin_restore_skip">Spring over</string>
     <string name="event_kind_39701">Offentligt webbogmærke</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Konto og nøgler</string>
+    <string name="settings_section_network">Netværk</string>
+    <string name="settings_section_service">Tjeneste</string>
+    <string name="settings_section_general">Generelt</string>
+    <string name="settings_section_help">Hjælp</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Oplåsning med PIN og biometri</string>
+    <string name="backup_keys_subtitle">Eksportér din private nøgle</string>
+    <string name="sign_policy_subtitle">Hvordan signeringsanmodninger godkendes</string>
+    <string name="tor_subtitle">Dirigér forbindelser gennem Tor</string>
+    <string name="relays_subtitle">Administrér dine relæer</string>
+    <string name="service_settings_subtitle">Baggrundstjenestens adfærd</string>
+    <string name="applications_backup_subtitle">Sikkerhedskopiér dine godkendte apps</string>
+    <string name="language_subtitle">Appens visningssprog</string>
+    <string name="auth_whitelist_subtitle">Betroede klientværtsnavne</string>
+    <string name="logs_subtitle">Se appaktivitet</string>
+    <string name="give_us_feedback_subtitle">Rapportér en fejl eller anmod om en funktion</string>
+    <string name="update_settings_subtitle">Søg efter nye versioner</string>
 </resources>

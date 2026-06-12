@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">સસ</string>
     <string name="signin_restore_skip">સસ</string>
     <string name="event_kind_39701">જાહેર વેબ બુકમાર્ક</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">ખાતું અને કી</string>
+    <string name="settings_section_network">નેટવર્ક</string>
+    <string name="settings_section_service">સેવા</string>
+    <string name="settings_section_general">સામાન્ય</string>
+    <string name="settings_section_help">મદદ</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">પિન અને બાયોમેટ્રિક અનલૉક</string>
+    <string name="backup_keys_subtitle">તમારી ખાનગી કી નિકાસ કરો</string>
+    <string name="sign_policy_subtitle">સહી વિનંતીઓ કેવી રીતે મંજૂર થાય છે</string>
+    <string name="tor_subtitle">Tor દ્વારા કનેક્શન રૂટ કરો</string>
+    <string name="relays_subtitle">તમારા રિલે મેનેજ કરો</string>
+    <string name="service_settings_subtitle">બેકગ્રાઉન્ડ સેવાનું વર્તન</string>
+    <string name="applications_backup_subtitle">તમારી અધિકૃત ઍપ્સનો બેકઅપ લો</string>
+    <string name="language_subtitle">ઍપ પ્રદર્શન ભાષા</string>
+    <string name="auth_whitelist_subtitle">વિશ્વસનીય ક્લાયન્ટ હોસ્ટનામ</string>
+    <string name="logs_subtitle">ઍપ પ્રવૃત્તિ જુઓ</string>
+    <string name="give_us_feedback_subtitle">બગની જાણ કરો અથવા સુવિધાની વિનંતી કરો</string>
+    <string name="update_settings_subtitle">નવા સંસ્કરણો તપાસો</string>
 </resources>

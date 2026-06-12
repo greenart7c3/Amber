@@ -707,4 +707,23 @@
     <string name="signin_restore_accept">Rejesha</string>
     <string name="signin_restore_skip">Ruka</string>
     <string name="event_kind_39701">Alamisho ya wavuti ya umma</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Akaunti na funguo</string>
+    <string name="settings_section_network">Mtandao</string>
+    <string name="settings_section_service">Huduma</string>
+    <string name="settings_section_general">Jumla</string>
+    <string name="settings_section_help">Msaada</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Kufungua kwa PIN na biometriki</string>
+    <string name="backup_keys_subtitle">Hamisha ufunguo wako wa faragha</string>
+    <string name="sign_policy_subtitle">Jinsi maombi ya kutia saini yanavyoidhinishwa</string>
+    <string name="tor_subtitle">Elekeza miunganisho kupitia Tor</string>
+    <string name="relays_subtitle">Dhibiti rele zako</string>
+    <string name="service_settings_subtitle">Tabia ya huduma ya chinichini</string>
+    <string name="applications_backup_subtitle">Hifadhi nakala za programu zako zilizoidhinishwa</string>
+    <string name="language_subtitle">Lugha ya kuonyesha programu</string>
+    <string name="auth_whitelist_subtitle">Majina ya seva pangishi ya wateja yanayoaminika</string>
+    <string name="logs_subtitle">Tazama shughuli za programu</string>
+    <string name="give_us_feedback_subtitle">Ripoti hitilafu au omba kipengele</string>
+    <string name="update_settings_subtitle">Angalia matoleo mapya</string>
 </resources>

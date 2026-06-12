@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">Visszaállítás</string>
     <string name="signin_restore_skip">Kihagyás</string>
     <string name="event_kind_39701">Nyilvános webes könyvjelző</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Fiók és kulcsok</string>
+    <string name="settings_section_network">Hálózat</string>
+    <string name="settings_section_service">Szolgáltatás</string>
+    <string name="settings_section_general">Általános</string>
+    <string name="settings_section_help">Súgó</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN-es és biometrikus feloldás</string>
+    <string name="backup_keys_subtitle">Privát kulcs exportálása</string>
+    <string name="sign_policy_subtitle">Hogyan hagyják jóvá az aláírási kéréseket</string>
+    <string name="tor_subtitle">Kapcsolatok útválasztása Toron keresztül</string>
+    <string name="relays_subtitle">Relék kezelése</string>
+    <string name="service_settings_subtitle">Háttérszolgáltatás viselkedése</string>
+    <string name="applications_backup_subtitle">Engedélyezett alkalmazások biztonsági mentése</string>
+    <string name="language_subtitle">Az alkalmazás megjelenítési nyelve</string>
+    <string name="auth_whitelist_subtitle">Megbízható kliens gazdagépnevek</string>
+    <string name="logs_subtitle">Alkalmazás tevékenységének megtekintése</string>
+    <string name="give_us_feedback_subtitle">Hiba jelentése vagy funkció kérése</string>
+    <string name="update_settings_subtitle">Új verziók keresése</string>
 </resources>

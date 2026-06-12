@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Obnovit</string>
     <string name="signin_restore_skip">Přeskočit</string>
     <string name="event_kind_39701">Veřejná webová záložka</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Účet a klíče</string>
+    <string name="settings_section_network">Síť</string>
+    <string name="settings_section_service">Služba</string>
+    <string name="settings_section_general">Obecné</string>
+    <string name="settings_section_help">Nápověda</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Odemknutí PINem a biometrií</string>
+    <string name="backup_keys_subtitle">Exportovat váš soukromý klíč</string>
+    <string name="sign_policy_subtitle">Jak se schvalují žádosti o podpis</string>
+    <string name="tor_subtitle">Směrovat připojení přes Tor</string>
+    <string name="relays_subtitle">Spravovat vaše relays</string>
+    <string name="service_settings_subtitle">Chování služby na pozadí</string>
+    <string name="applications_backup_subtitle">Zálohovat autorizované aplikace</string>
+    <string name="language_subtitle">Jazyk zobrazení aplikace</string>
+    <string name="auth_whitelist_subtitle">Důvěryhodné názvy hostitelů klientů</string>
+    <string name="logs_subtitle">Zobrazit aktivitu aplikace</string>
+    <string name="give_us_feedback_subtitle">Nahlásit chybu nebo požádat o funkci</string>
+    <string name="update_settings_subtitle">Zkontrolovat nové verze</string>
 </resources>

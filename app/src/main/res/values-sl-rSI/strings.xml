@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Obnovi</string>
     <string name="signin_restore_skip">Preskoči</string>
     <string name="event_kind_39701">Javna spletna zaznamek</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Račun in ključi</string>
+    <string name="settings_section_network">Omrežje</string>
+    <string name="settings_section_service">Storitev</string>
+    <string name="settings_section_general">Splošno</string>
+    <string name="settings_section_help">Pomoč</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Odklepanje s PIN-om in biometrijo</string>
+    <string name="backup_keys_subtitle">Izvozi svoj zasebni ključ</string>
+    <string name="sign_policy_subtitle">Kako se odobrijo zahteve za podpis</string>
+    <string name="tor_subtitle">Usmeri povezave prek Tor</string>
+    <string name="relays_subtitle">Upravljaj svoje releje</string>
+    <string name="service_settings_subtitle">Vedenje storitve v ozadju</string>
+    <string name="applications_backup_subtitle">Varnostno kopiraj pooblaščene aplikacije</string>
+    <string name="language_subtitle">Jezik prikaza aplikacije</string>
+    <string name="auth_whitelist_subtitle">Zaupanja vredna imena gostiteljev odjemalcev</string>
+    <string name="logs_subtitle">Prikaži dejavnost aplikacije</string>
+    <string name="give_us_feedback_subtitle">Prijavi napako ali zahtevaj funkcijo</string>
+    <string name="update_settings_subtitle">Preveri nove različice</string>
 </resources>

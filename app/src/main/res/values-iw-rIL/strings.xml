@@ -689,4 +689,23 @@
     <string name="signin_restore_accept">שחזר</string>
     <string name="signin_restore_skip">דלג</string>
     <string name="event_kind_39701">סימניית אינטרנט ציבורית</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">חשבון ומפתחות</string>
+    <string name="settings_section_network">רשת</string>
+    <string name="settings_section_service">שירות</string>
+    <string name="settings_section_general">כללי</string>
+    <string name="settings_section_help">עזרה</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">ביטול נעילה בקוד PIN ובאמצעים ביומטריים</string>
+    <string name="backup_keys_subtitle">ייצוא המפתח הפרטי שלך</string>
+    <string name="sign_policy_subtitle">כיצד מאושרות בקשות חתימה</string>
+    <string name="tor_subtitle">ניתוב חיבורים דרך Tor</string>
+    <string name="relays_subtitle">ניהול הממסרים שלך</string>
+    <string name="service_settings_subtitle">התנהגות שירות הרקע</string>
+    <string name="applications_backup_subtitle">גיבוי האפליקציות המורשות שלך</string>
+    <string name="language_subtitle">שפת התצוגה של האפליקציה</string>
+    <string name="auth_whitelist_subtitle">שמות מארחי לקוח מהימנים</string>
+    <string name="logs_subtitle">הצגת פעילות האפליקציה</string>
+    <string name="give_us_feedback_subtitle">דיווח על באג או בקשת תכונה</string>
+    <string name="update_settings_subtitle">בדיקת גרסאות חדשות</string>
 </resources>

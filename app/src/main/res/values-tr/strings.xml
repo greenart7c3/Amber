@@ -709,4 +709,23 @@
     <string name="signin_restore_accept">Geri Yükle</string>
     <string name="signin_restore_skip">Atla</string>
     <string name="event_kind_39701">Herkese açık web yer imi</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Hesap ve anahtarlar</string>
+    <string name="settings_section_network">Ağ</string>
+    <string name="settings_section_service">Hizmet</string>
+    <string name="settings_section_general">Genel</string>
+    <string name="settings_section_help">Yardım</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN ve biyometrik kilit açma</string>
+    <string name="backup_keys_subtitle">Özel anahtarınızı dışa aktarın</string>
+    <string name="sign_policy_subtitle">İmzalama isteklerinin nasıl onaylandığı</string>
+    <string name="tor_subtitle">Bağlantıları Tor üzerinden yönlendir</string>
+    <string name="relays_subtitle">Aktarıcılarınızı yönetin</string>
+    <string name="service_settings_subtitle">Arka plan hizmeti davranışı</string>
+    <string name="applications_backup_subtitle">Yetkili uygulamalarınızı yedekleyin</string>
+    <string name="language_subtitle">Uygulama görüntüleme dili</string>
+    <string name="auth_whitelist_subtitle">Güvenilir istemci ana bilgisayar adları</string>
+    <string name="logs_subtitle">Uygulama etkinliğini görüntüleyin</string>
+    <string name="give_us_feedback_subtitle">Hata bildirin veya özellik isteyin</string>
+    <string name="update_settings_subtitle">Yeni sürümleri kontrol edin</string>
 </resources>

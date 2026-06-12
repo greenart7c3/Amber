@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Restaurar</string>
     <string name="signin_restore_skip">Ignorar</string>
     <string name="event_kind_39701">Marcador web público</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Conta e chaves</string>
+    <string name="settings_section_network">Rede</string>
+    <string name="settings_section_service">Serviço</string>
+    <string name="settings_section_general">Geral</string>
+    <string name="settings_section_help">Ajuda</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Desbloqueio por PIN e biometria</string>
+    <string name="backup_keys_subtitle">Exportar sua chave privada</string>
+    <string name="sign_policy_subtitle">Como as solicitações de assinatura são aprovadas</string>
+    <string name="tor_subtitle">Rotear conexões pelo Tor</string>
+    <string name="relays_subtitle">Gerenciar seus relays</string>
+    <string name="service_settings_subtitle">Comportamento do serviço em segundo plano</string>
+    <string name="applications_backup_subtitle">Fazer backup dos seus apps autorizados</string>
+    <string name="language_subtitle">Idioma do aplicativo</string>
+    <string name="auth_whitelist_subtitle">Nomes de host de clientes confiáveis</string>
+    <string name="logs_subtitle">Ver a atividade do app</string>
+    <string name="give_us_feedback_subtitle">Relatar um erro ou solicitar um recurso</string>
+    <string name="update_settings_subtitle">Verificar novas versões</string>
 </resources>

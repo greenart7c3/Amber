@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">بازیاب کریں</string>
     <string name="signin_restore_skip">چھوڑیں</string>
     <string name="event_kind_39701">عوامی ویب بُک مارک</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">اکاؤنٹ اور کلیدیں</string>
+    <string name="settings_section_network">نیٹ ورک</string>
+    <string name="settings_section_service">سروس</string>
+    <string name="settings_section_general">عمومی</string>
+    <string name="settings_section_help">مدد</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">پن اور بایومیٹرک سے غیر مقفل کرنا</string>
+    <string name="backup_keys_subtitle">اپنی نجی کلید برآمد کریں</string>
+    <string name="sign_policy_subtitle">دستخط کی درخواستوں کی منظوری کیسے ہوتی ہے</string>
+    <string name="tor_subtitle">کنکشن Tor کے ذریعے روٹ کریں</string>
+    <string name="relays_subtitle">اپنے ریلے کا نظم کریں</string>
+    <string name="service_settings_subtitle">پس منظر سروس کا رویہ</string>
+    <string name="applications_backup_subtitle">اپنی مجاز ایپس کا بیک اپ لیں</string>
+    <string name="language_subtitle">ایپ کی ڈسپلے زبان</string>
+    <string name="auth_whitelist_subtitle">قابل اعتماد کلائنٹ ہوسٹ نام</string>
+    <string name="logs_subtitle">ایپ کی سرگرمی دیکھیں</string>
+    <string name="give_us_feedback_subtitle">بگ کی اطلاع دیں یا فیچر کی درخواست کریں</string>
+    <string name="update_settings_subtitle">نئے ورژن کی جانچ کریں</string>
 </resources>

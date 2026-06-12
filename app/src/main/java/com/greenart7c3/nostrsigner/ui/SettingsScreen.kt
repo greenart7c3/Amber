@@ -1,26 +1,38 @@
 package com.greenart7c3.nostrsigner.ui
 
 import android.util.Log
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Feedback
-import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Key
 import androidx.compose.material.icons.filled.Language
 import androidx.compose.material.icons.filled.PowerSettingsNew
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material.icons.filled.SystemUpdate
+import androidx.compose.material.icons.filled.VerifiedUser
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -33,11 +45,13 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.graphics.painter.Painter
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.SpanStyle
@@ -60,7 +74,6 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
-import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
@@ -115,67 +128,45 @@ fun SettingsScreen(
     if (isLoading) {
         CenterCircularProgressIndicator(modifier, status)
     } else {
+        val isOffline = BuildFlavorChecker.isOfflineFlavor()
+
         Column(
             modifier,
         ) {
-            Box(
-                Modifier
-                    .padding(bottom = 8.dp),
-            ) {
-                IconRow(
+            SettingsSection(title = stringResource(R.string.settings_section_account)) {
+                SettingsItem(
                     title = stringResource(R.string.security),
-                    icon = Icons.Default.Security,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.Security.route)
-                    },
+                    subtitle = stringResource(R.string.security_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.Security),
+                    onClick = { onNav(Route.Security.route) },
                 )
-            }
-
-            Box(
-                Modifier
-                    .padding(vertical = 8.dp),
-            ) {
-                IconRow(
+                SettingsDivider()
+                SettingsItem(
                     title = stringResource(R.string.backup_keys),
-                    icon = Icons.Default.Key,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.AccountBackup.route)
-                    },
+                    subtitle = stringResource(R.string.backup_keys_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.Key),
+                    onClick = { onNav(Route.AccountBackup.route) },
+                )
+                SettingsDivider()
+                SettingsItem(
+                    title = stringResource(R.string.sign_policy),
+                    subtitle = stringResource(R.string.sign_policy_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.Draw),
+                    onClick = { onNav(Route.SignPolicy.route) },
                 )
             }
 
-            Box(
-                Modifier
-                    .padding(vertical = 8.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.language),
-                    icon = Icons.Default.Language,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.Language.route)
-                    },
-                )
-            }
-
-            if (!BuildFlavorChecker.isOfflineFlavor()) {
-                Box(
-                    Modifier
-                        .padding(vertical = 8.dp),
-                ) {
-                    IconRow(
+            if (!isOffline) {
+                SettingsSection(title = stringResource(R.string.settings_section_network)) {
+                    SettingsItem(
                         title = when (torMode) {
                             TorMode.BUILTIN -> stringResource(R.string.disconnect_builtin_tor)
                             TorMode.ORBOT -> stringResource(R.string.disconnect_from_your_orbot_setup)
                             TorMode.DISABLED -> stringResource(R.string.connect_via_tor_short)
                         },
-                        icon = R.drawable.ic_tor,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        onLongClick = {
-                            onNav(Route.TorSettings.route)
-                        },
+                        subtitle = stringResource(R.string.tor_subtitle),
+                        painter = painterResource(R.drawable.ic_tor),
+                        onLongClick = { onNav(Route.TorSettings.route) },
                         onClick = {
                             if (torMode != TorMode.DISABLED) {
                                 disconnectTorDialog = true
@@ -184,123 +175,80 @@ fun SettingsScreen(
                             }
                         },
                     )
-                }
-
-                Box(
-                    Modifier
-                        .padding(vertical = 8.dp),
-                ) {
-                    IconRow(
+                    SettingsDivider()
+                    SettingsItem(
                         title = stringResource(R.string.relays),
-                        icon = ImageVector.vectorResource(R.drawable.relays),
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        onClick = {
-                            onNav(Route.RelaysScreen.route)
-                        },
+                        subtitle = stringResource(R.string.relays_subtitle),
+                        painter = painterResource(R.drawable.relays),
+                        onClick = { onNav(Route.RelaysScreen.route) },
                     )
                 }
 
-                Box(
-                    Modifier
-                        .padding(vertical = 8.dp),
-                ) {
-                    IconRow(
+                SettingsSection(title = stringResource(R.string.settings_section_service)) {
+                    SettingsItem(
                         title = stringResource(R.string.service_settings),
-                        icon = Icons.Default.PowerSettingsNew,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        onClick = {
-                            onNav(Route.ServiceSettings.route)
-                        },
+                        subtitle = stringResource(R.string.service_settings_subtitle),
+                        painter = rememberVectorPainter(Icons.Default.PowerSettingsNew),
+                        onClick = { onNav(Route.ServiceSettings.route) },
                     )
-                }
-            }
-
-            Box(
-                Modifier
-                    .padding(vertical = 8.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.logs),
-                    icon = Icons.Default.FilterList,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.Logs.route)
-                    },
-                )
-            }
-
-            Box(
-                Modifier
-                    .padding(vertical = 8.dp),
-            ) {
-                IconRow(
-                    title = stringResource(R.string.sign_policy),
-                    icon = Icons.Default.Draw,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.SignPolicy.route)
-                    },
-                )
-            }
-
-            if (!BuildFlavorChecker.isOfflineFlavor()) {
-                Box(
-                    Modifier
-                        .padding(vertical = 8.dp),
-                ) {
-                    IconRow(
+                    SettingsDivider()
+                    SettingsItem(
                         title = stringResource(R.string.applications_backup),
-                        icon = Icons.Default.CloudUpload,
-                        tint = MaterialTheme.colorScheme.onBackground,
-                        onClick = {
-                            onNav(Route.ApplicationsBackup.route)
-                        },
+                        subtitle = stringResource(R.string.applications_backup_subtitle),
+                        painter = rememberVectorPainter(Icons.Default.CloudUpload),
+                        onClick = { onNav(Route.ApplicationsBackup.route) },
                     )
                 }
             }
 
-            Box(
-                Modifier
-                    .padding(vertical = 8.dp),
-            ) {
-                IconRow(
+            SettingsSection(title = stringResource(R.string.settings_section_general)) {
+                SettingsItem(
+                    title = stringResource(R.string.language),
+                    subtitle = stringResource(R.string.language_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.Language),
+                    onClick = { onNav(Route.Language.route) },
+                )
+                SettingsDivider()
+                SettingsItem(
                     title = stringResource(R.string.auth_whitelist),
-                    icon = Icons.Default.FilterList,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.AuthWhitelist.route)
-                    },
+                    subtitle = stringResource(R.string.auth_whitelist_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.VerifiedUser),
+                    onClick = { onNav(Route.AuthWhitelist.route) },
+                )
+                SettingsDivider()
+                SettingsItem(
+                    title = stringResource(R.string.logs),
+                    subtitle = stringResource(R.string.logs_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.Article),
+                    onClick = { onNav(Route.Logs.route) },
                 )
             }
 
-            Box(
-                Modifier
-                    .padding(vertical = 8.dp),
-            ) {
-                IconRow(
+            SettingsSection(title = stringResource(R.string.settings_section_help)) {
+                SettingsItem(
                     title = stringResource(R.string.give_us_feedback),
-                    icon = Icons.Default.Feedback,
-                    tint = MaterialTheme.colorScheme.onBackground,
-                    onClick = {
-                        onNav(Route.Feedback.route)
-                    },
+                    subtitle = stringResource(R.string.give_us_feedback_subtitle),
+                    painter = rememberVectorPainter(Icons.Default.Feedback),
+                    onClick = { onNav(Route.Feedback.route) },
                 )
-            }
 
-            if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
-                val updater = Amber.instance.zapstoreUpdater
-                if (updater != null) {
-                    val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
+                if (!isOffline && !BuildConfig.IS_FDROID_BUILD) {
+                    val updater = Amber.instance.zapstoreUpdater
+                    if (updater != null) {
+                        val latestRelease by updater.latestRelease.collectAsStateWithLifecycle()
+                        val updateAvailable = latestRelease != null
 
-                    Box(Modifier.padding(vertical = 8.dp)) {
-                        IconRow(
-                            title = if (latestRelease != null) {
+                        SettingsDivider()
+                        SettingsItem(
+                            title = if (updateAvailable) {
                                 stringResource(R.string.update_available, latestRelease!!.version)
                             } else {
                                 stringResource(R.string.update_settings)
                             },
-                            icon = Icons.Default.SystemUpdate,
-                            tint = if (latestRelease != null) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                            subtitle = stringResource(R.string.update_settings_subtitle),
+                            painter = rememberVectorPainter(Icons.Default.SystemUpdate),
+                            iconTint = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
+                            titleColor = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onBackground,
                             onClick = { onNav(Route.UpdateSettings.route) },
                         )
                     }
@@ -313,7 +261,8 @@ fun SettingsScreen(
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth(),
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
                 Text(stringResource(R.string.database_size_mb, sizeInMBFormatted), color = Color.Gray)
@@ -487,6 +436,114 @@ fun SettingsRow(
             modifier = Modifier
                 .windowInsetsPadding(WindowInsets(0.dp, 0.dp, 0.dp, 0.dp))
                 .weight(1f),
+        )
+    }
+}
+
+@Composable
+private fun SettingsSection(
+    title: String,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
+    ) {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium,
+            color = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.padding(start = 12.dp, bottom = 6.dp),
+        )
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f),
+            ),
+        ) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                content = content,
+            )
+        }
+    }
+}
+
+@Composable
+private fun SettingsDivider() {
+    HorizontalDivider(
+        modifier = Modifier.padding(start = 70.dp),
+        thickness = 0.5.dp,
+        color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f),
+    )
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun SettingsItem(
+    title: String,
+    painter: Painter,
+    modifier: Modifier = Modifier,
+    subtitle: String? = null,
+    iconTint: Color = MaterialTheme.colorScheme.onBackground,
+    titleColor: Color = MaterialTheme.colorScheme.onBackground,
+    onClick: () -> Unit,
+    onLongClick: (() -> Unit)? = null,
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .combinedClickable(
+                onClick = onClick,
+                onLongClick = onLongClick,
+            )
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(iconTint.copy(alpha = 0.12f)),
+            contentAlignment = Alignment.Center,
+        ) {
+            Icon(
+                painter = painter,
+                contentDescription = null,
+                modifier = Modifier.size(20.dp),
+                tint = iconTint,
+            )
+        }
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(start = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                color = titleColor,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            subtitle?.let {
+                Text(
+                    text = it,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.Gray,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                )
+            }
+        }
+        Icon(
+            imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+            contentDescription = null,
+            tint = Color.Gray,
         )
     }
 }

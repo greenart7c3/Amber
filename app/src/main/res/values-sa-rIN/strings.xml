@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">पुनर्स्थापयतु</string>
     <string name="signin_restore_skip">अतिक्रामतु</string>
     <string name="event_kind_39701">सार्वजनिकं वेब-बुकमार्कम्</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">लेखा कुञ्जिकाश्च</string>
+    <string name="settings_section_network">जालम्</string>
+    <string name="settings_section_service">सेवा</string>
+    <string name="settings_section_general">सामान्यम्</string>
+    <string name="settings_section_help">साहाय्यम्</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">पिन्-जैविकमापन-अनावरणम्</string>
+    <string name="backup_keys_subtitle">स्वकीयां गुप्तकुञ्जिकां निर्यापयतु</string>
+    <string name="sign_policy_subtitle">हस्ताक्षरनिवेदनानि कथम् अनुमन्यन्ते</string>
+    <string name="tor_subtitle">सम्बन्धान् Tor-माध्यमेन प्रेषयतु</string>
+    <string name="relays_subtitle">स्वकीयान् रिले-यन्त्रान् प्रबन्धयतु</string>
+    <string name="service_settings_subtitle">पृष्ठभूमिसेवायाः व्यवहारः</string>
+    <string name="applications_backup_subtitle">स्वकीयानि अधिकृतानि अनुप्रयोगानि सुरक्षयतु</string>
+    <string name="language_subtitle">अनुप्रयोगस्य प्रदर्शनभाषा</string>
+    <string name="auth_whitelist_subtitle">विश्वसनीयानि ग्राहक-आतिथेयनामानि</string>
+    <string name="logs_subtitle">अनुप्रयोगस्य क्रियाकलापं पश्यतु</string>
+    <string name="give_us_feedback_subtitle">दोषं निवेदयतु अथवा सुविधां याचयतु</string>
+    <string name="update_settings_subtitle">नूतनसंस्करणानि परीक्षयतु</string>
 </resources>

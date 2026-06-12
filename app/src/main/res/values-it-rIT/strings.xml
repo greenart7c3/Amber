@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Ripristina</string>
     <string name="signin_restore_skip">Salta</string>
     <string name="event_kind_39701">Segnalibro web pubblico</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Account e chiavi</string>
+    <string name="settings_section_network">Rete</string>
+    <string name="settings_section_service">Servizio</string>
+    <string name="settings_section_general">Generale</string>
+    <string name="settings_section_help">Aiuto</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Sblocco con PIN e biometria</string>
+    <string name="backup_keys_subtitle">Esporta la tua chiave privata</string>
+    <string name="sign_policy_subtitle">Come vengono approvate le richieste di firma</string>
+    <string name="tor_subtitle">Instrada le connessioni tramite Tor</string>
+    <string name="relays_subtitle">Gestisci i tuoi relay</string>
+    <string name="service_settings_subtitle">Comportamento del servizio in background</string>
+    <string name="applications_backup_subtitle">Esegui il backup delle app autorizzate</string>
+    <string name="language_subtitle">Lingua dell\'app</string>
+    <string name="auth_whitelist_subtitle">Nomi host dei client attendibili</string>
+    <string name="logs_subtitle">Visualizza l\'attività dell\'app</string>
+    <string name="give_us_feedback_subtitle">Segnala un bug o richiedi una funzionalità</string>
+    <string name="update_settings_subtitle">Controlla nuove versioni</string>
 </resources>

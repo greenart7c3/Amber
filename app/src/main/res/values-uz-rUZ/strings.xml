@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Tiklash</string>
     <string name="signin_restore_skip">O\'tkazib yuborish</string>
     <string name="event_kind_39701">Ommaviy veb-xatchо\'p</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Hisob va kalitlar</string>
+    <string name="settings_section_network">Tarmoq</string>
+    <string name="settings_section_service">Xizmat</string>
+    <string name="settings_section_general">Umumiy</string>
+    <string name="settings_section_help">Yordam</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">PIN va biometrik qulfdan chiqarish</string>
+    <string name="backup_keys_subtitle">Maxfiy kalitingizni eksport qiling</string>
+    <string name="sign_policy_subtitle">Imzolash so\'rovlari qanday tasdiqlanadi</string>
+    <string name="tor_subtitle">Ulanishlarni Tor orqali yo\'naltirish</string>
+    <string name="relays_subtitle">Relelaringizni boshqaring</string>
+    <string name="service_settings_subtitle">Fon xizmatining harakati</string>
+    <string name="applications_backup_subtitle">Ruxsat etilgan ilovalaringizni zaxiralang</string>
+    <string name="language_subtitle">Ilova ko\'rsatish tili</string>
+    <string name="auth_whitelist_subtitle">Ishonchli mijoz host nomlari</string>
+    <string name="logs_subtitle">Ilova faoliyatini ko\'rish</string>
+    <string name="give_us_feedback_subtitle">Xato haqida xabar bering yoki funksiya so\'rang</string>
+    <string name="update_settings_subtitle">Yangi versiyalarni tekshirish</string>
 </resources>

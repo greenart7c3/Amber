@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Adfer</string>
     <string name="signin_restore_skip">Hepgor</string>
     <string name="event_kind_39701">Nod tudalen gwe cyhoeddus</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Cyfrif ac allweddi</string>
+    <string name="settings_section_network">Rhwydwaith</string>
+    <string name="settings_section_service">Gwasanaeth</string>
+    <string name="settings_section_general">Cyffredinol</string>
+    <string name="settings_section_help">Cymorth</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Datgloi PIN a biometrig</string>
+    <string name="backup_keys_subtitle">Allforio eich allwedd breifat</string>
+    <string name="sign_policy_subtitle">Sut mae ceisiadau llofnodi\'n cael eu cymeradwyo</string>
+    <string name="tor_subtitle">Llwybro cysylltiadau drwy Tor</string>
+    <string name="relays_subtitle">Rheoli eich relays</string>
+    <string name="service_settings_subtitle">Ymddygiad y gwasanaeth cefndir</string>
+    <string name="applications_backup_subtitle">Wrth gefn eich apiau awdurdodedig</string>
+    <string name="language_subtitle">Iaith arddangos yr ap</string>
+    <string name="auth_whitelist_subtitle">Enwau gwesteiwr cleient dibynadwy</string>
+    <string name="logs_subtitle">Gweld gweithgaredd yr ap</string>
+    <string name="give_us_feedback_subtitle">Adrodd am wall neu ofyn am nodwedd</string>
+    <string name="update_settings_subtitle">Gwirio am fersiynau newydd</string>
 </resources>

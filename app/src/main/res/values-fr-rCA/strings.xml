@@ -713,4 +713,23 @@
     <string name="signin_restore_accept">Restaurer</string>
     <string name="signin_restore_skip">Ignorer</string>
     <string name="event_kind_39701">Signet web public</string>
+    <!-- Settings screen sections -->
+    <string name="settings_section_account">Compte &amp; clés</string>
+    <string name="settings_section_network">Réseau</string>
+    <string name="settings_section_service">Service</string>
+    <string name="settings_section_general">Général</string>
+    <string name="settings_section_help">Aide</string>
+    <!-- Settings screen item subtitles -->
+    <string name="security_subtitle">Déverrouillage par PIN et biométrie</string>
+    <string name="backup_keys_subtitle">Exporter votre clé privée</string>
+    <string name="sign_policy_subtitle">Comment les demandes de signature sont approuvées</string>
+    <string name="tor_subtitle">Acheminer les connexions via Tor</string>
+    <string name="relays_subtitle">Gérer vos relais</string>
+    <string name="service_settings_subtitle">Comportement du service en arrière-plan</string>
+    <string name="applications_backup_subtitle">Sauvegarder vos applications autorisées</string>
+    <string name="language_subtitle">Langue d\'affichage de l\'application</string>
+    <string name="auth_whitelist_subtitle">Noms d\'hôtes clients de confiance</string>
+    <string name="logs_subtitle">Voir l\'activité de l\'application</string>
+    <string name="give_us_feedback_subtitle">Signaler un bug ou demander une fonctionnalité</string>
+    <string name="update_settings_subtitle">Rechercher de nouvelles versions</string>
 </resources>

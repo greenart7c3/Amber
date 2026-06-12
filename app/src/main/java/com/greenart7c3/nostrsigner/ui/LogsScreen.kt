@@ -24,6 +24,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -32,6 +33,7 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import java.io.File
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
@@ -86,12 +88,21 @@ fun LogsScreen(
                                         TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time)
                                     "$time | ${log.url} | ${log.type} | ${log.message}"
                                 }
+                            val logsFile = File(context.cacheDir, "amber-logs.txt")
+                            logsFile.writeText(logsText)
+                            val logsUri =
+                                FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    logsFile,
+                                )
 
                             withContext(Dispatchers.Main) {
                                 val shareIntent =
                                     Intent(Intent.ACTION_SEND).apply {
                                         type = "text/plain"
-                                        putExtra(Intent.EXTRA_TEXT, logsText)
+                                        putExtra(Intent.EXTRA_STREAM, logsUri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
                                     }
 
                                 context.startActivity(

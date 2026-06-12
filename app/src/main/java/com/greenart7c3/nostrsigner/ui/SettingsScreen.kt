@@ -248,7 +248,7 @@ fun SettingsScreen(
                             subtitle = stringResource(R.string.update_settings_subtitle),
                             painter = rememberVectorPainter(Icons.Default.SystemUpdate),
                             iconTint = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurfaceVariant,
-                            titleColor = if (updateAvailable) MaterialTheme.colorScheme.primary else Color.Unspecified,
+                            titleColor = if (updateAvailable) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.onSurface,
                             onClick = { onNav(Route.UpdateSettings.route) },
                         )
                     }
@@ -454,7 +454,7 @@ private fun SettingsSection(
         Text(
             text = title,
             style = MaterialTheme.typography.labelLarge,
-            color = MaterialTheme.colorScheme.primary,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(start = 12.dp, bottom = 6.dp),
         )
         Card(
@@ -489,7 +489,7 @@ private fun SettingsItem(
     modifier: Modifier = Modifier,
     subtitle: String? = null,
     iconTint: Color = MaterialTheme.colorScheme.onSurfaceVariant,
-    titleColor: Color = Color.Unspecified,
+    titleColor: Color = MaterialTheme.colorScheme.onSurface,
     onClick: () -> Unit,
     onLongClick: (() -> Unit)? = null,
 ) {

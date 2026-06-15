@@ -41,14 +41,20 @@ import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 object BunkerRequestUtils {
     val state = MutableStateFlow<ImmutableList<AmberBunkerRequest>>(persistentListOf())
 
     fun addRequest(request: AmberBunkerRequest) {
-        if (state.value.any { it.request.id == request.request.id }) return
-        state.tryEmit((state.value + request).toPersistentList())
+        state.update { current ->
+            if (current.any { it.request.id == request.request.id }) {
+                current
+            } else {
+                (current + request).toPersistentList()
+            }
+        }
     }
 
     fun clearRequests() {
@@ -56,7 +62,9 @@ object BunkerRequestUtils {
     }
 
     fun remove(id: String) {
-        state.tryEmit(state.value.filter { it.request.id != id }.toPersistentList())
+        state.update { current ->
+            current.filter { it.request.id != id }.toPersistentList()
+        }
     }
 
     fun getBunkerRequests(): List<AmberBunkerRequest> = state.value

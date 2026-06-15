@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s ले %2$s अनुमतिसँग सम्बन्धित यी इभेन्टहरूमा हस्ताक्षर गर्न माग गर्दैछ।</string>
     <string name="relay_filter_failed">Relay ले Bunker इभेन्टहरू पुनःप्राप्त गर्न समर्थन गर्दैन। के तपाईं यसलाई फेरि पनि थप्न चाहनुहुन्छ?</string>
     <string name="active_relays">सक्रिय relays</string>
+    <string name="active_relays_default_description">प्रत्येक नयाँ एप जडानका लागि प्रयोग गरिन्छ।</string>
+    <string name="relays_used_by_connections">जडान relays</string>
+    <string name="active_relays_connections_description">यस्ता relays जुन अवस्थित जडानहरूले अझै प्रयोग गर्छन् तर तपाईंको पूर्वनिर्धारित सेटमा छैनन्। प्रयोग गरिने relays परिवर्तन गर्न जडान सम्पादन गर्नुहोस्।</string>
     <string name="default_profile_relays">पूर्वनिर्धारित प्रोफाइल relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">तपाईंको प्रोफाइल डेटा प्राप्त गर्न प्रयोग हुने relays व्यवस्थापन गर्नुहोस्</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">बाह्य एप्लिकेसनहरूसँग सञ्चार गर्न प्रयोग हुने relays व्यवस्थापन गर्नुहोस्</string>

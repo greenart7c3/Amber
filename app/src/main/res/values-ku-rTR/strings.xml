@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s dixwaze ku ev bûyerên ku bi destûrnameyê %2$s ve girêdayî ne îmze biken.</string>
     <string name="relay_filter_failed">Relay piştgiriya vekişandina bûyerên Bunker nake. Ma dixwazî wî bi her awayî zêde bikî?</string>
     <string name="active_relays">Relay-ên çalak</string>
+    <string name="active_relays_default_description">Ji bo her girêdana sepanê ya nû tê bikaranîn.</string>
+    <string name="relays_used_by_connections">Relay-ên girêdanê</string>
+    <string name="active_relays_connections_description">Relay-ên ku girêdanên heyî hîn jî bikar tînin lê ne di koma we ya berdest de ne. Girêdanekê biguherîne da ku relay-ên ku ew bikar tîne biguherî.</string>
     <string name="default_profile_relays">Relay-ên profîla xwerû</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Relay-ên ku ji bo vekişandina daneyên profîla te têne bikar anîn birêve bibe</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Relay-ên ku ji bo ragihandina bi sepanên derveyî têne bikar anîn birêve bibe</string>

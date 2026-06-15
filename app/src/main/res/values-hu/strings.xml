@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s aláírást kér a %2$s engedélyhez kapcsolódó eseményekre.</string>
     <string name="relay_filter_failed">A relay nem támogatja a Bunker események lekérését. Szeretné mégis hozzáadni?</string>
     <string name="active_relays">Aktív relay-ek</string>
+    <string name="active_relays_default_description">Minden új alkalmazáskapcsolathoz használatos.</string>
+    <string name="relays_used_by_connections">Kapcsolati relay-ek</string>
+    <string name="active_relays_connections_description">Olyan relay-ek, amelyeket a meglévő kapcsolatok még használnak, de nem szerepelnek az alapértelmezett készletedben. Szerkessz egy kapcsolatot az általa használt relay-ek módosításához.</string>
     <string name="default_profile_relays">Alapértelmezett profil relay-ek</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">A profil adatok lekéréséhez használt relay-ek kezelése</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">A külső alkalmazásokkal való kommunikációhoz használt relay-ek kezelése</string>

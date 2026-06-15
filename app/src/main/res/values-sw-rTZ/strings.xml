@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s inahitaji uweke saini matukio haya yanayohusiana na ruhusa ya %2$s.</string>
     <string name="relay_filter_failed">Relay haisaidii kupata matukio ya Bunker. Je, ungependa kuiongeza hata hivyo?</string>
     <string name="active_relays">Relay zinazofanya kazi</string>
+    <string name="active_relays_default_description">Hutumika kwa kila muunganisho mpya wa programu.</string>
+    <string name="relays_used_by_connections">Relay za miunganisho</string>
+    <string name="active_relays_connections_description">Relay ambazo miunganisho iliyopo bado inazitumia lakini haziko katika seti yako chaguo-msingi. Hariri muunganisho ili kubadilisha relay zinazotumika.</string>
     <string name="default_profile_relays">Relay za chaguomsingi za wasifu</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Simamia relay zinazotumika kupata data ya wasifu wako</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Simamia relay zinazotumika kuwasiliana na programu za nje</string>

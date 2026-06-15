@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s يطلب توقيع هذه الأحداث المتعلقة بإذن %2$s.</string>
     <string name="relay_filter_failed">لا يدعم Relay استرداد أحداث Bunker. هل تريد إضافته على أي حال؟</string>
     <string name="active_relays">Relays النشطة</string>
+    <string name="active_relays_default_description">تُستخدم مع كل اتصال تطبيق جديد.</string>
+    <string name="relays_used_by_connections">Relays الاتصالات</string>
+    <string name="active_relays_connections_description">Relays التي لا تزال الاتصالات الحالية تستخدمها ولكنها ليست ضمن مجموعتك الافتراضية. عدّل اتصالاً لتغيير الـ relays التي يستخدمها.</string>
     <string name="default_profile_relays">Relays الملف الشخصي الافتراضية</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">أدِر Relays المستخدمة لجلب بيانات ملفك الشخصي</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">أدِر Relays المستخدمة للتواصل مع التطبيقات الخارجية</string>

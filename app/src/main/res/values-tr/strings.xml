@@ -442,6 +442,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s, %2$s izniyle ilgili bu etkinlikleri imzalamanızı istiyor.</string>
     <string name="relay_filter_failed">Relay, Bunker etkinliklerini almayı desteklemiyor. Yine de eklemek ister misiniz?</string>
     <string name="active_relays">Aktif relay\'ler</string>
+    <string name="active_relays_default_description">Her yeni uygulama bağlantısı için kullanılır.</string>
+    <string name="relays_used_by_connections">Bağlantı relay\'leri</string>
+    <string name="active_relays_connections_description">Mevcut bağlantıların hâlâ kullandığı ancak varsayılan kümenizde olmayan relay\'ler. Bir bağlantının kullandığı relay\'leri değiştirmek için bağlantıyı düzenleyin.</string>
     <string name="default_profile_relays">Varsayılan profil relay\'leri</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Profil verilerinizi getirmek için kullanılan relay\'leri yönetin</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Harici uygulamalarla iletişim için kullanılan relay\'leri yönetin</string>

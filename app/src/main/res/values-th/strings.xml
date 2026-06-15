@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s กำลังขอลงนามอีเวนต์เหล่านี้ที่เกี่ยวข้องกับสิทธิ์ %2$s</string>
     <string name="relay_filter_failed">Relay ไม่รองรับการดึงอีเวนต์ Bunker คุณต้องการเพิ่มไว้อยู่ดีหรือไม่?</string>
     <string name="active_relays">Relay ที่ใช้งานอยู่</string>
+    <string name="active_relays_default_description">ใช้สำหรับการเชื่อมต่อแอปใหม่ทุกครั้ง</string>
+    <string name="relays_used_by_connections">Relay ของการเชื่อมต่อ</string>
+    <string name="active_relays_connections_description">Relay ที่การเชื่อมต่อที่มีอยู่ยังคงใช้อยู่ แต่ไม่อยู่ในชุดค่าเริ่มต้นของคุณ แก้ไขการเชื่อมต่อเพื่อเปลี่ยน relay ที่ใช้</string>
     <string name="default_profile_relays">Relay โปรไฟล์เริ่มต้น</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">จัดการ relay ที่ใช้สำหรับดึงข้อมูลโปรไฟล์ของคุณ</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">จัดการ relay ที่ใช้สำหรับการสื่อสารกับแอปพลิเคชันภายนอก</string>

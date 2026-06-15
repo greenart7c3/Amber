@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s이(가) %2$s 권한과 관련된 이벤트에 서명을 요청하고 있습니다.</string>
     <string name="relay_filter_failed">이 relay는 Bunker 이벤트 검색을 지원하지 않습니다. 그래도 추가하시겠습니까?</string>
     <string name="active_relays">활성 relay</string>
+    <string name="active_relays_default_description">모든 새 앱 연결에 사용됩니다.</string>
+    <string name="relays_used_by_connections">연결 relay</string>
+    <string name="active_relays_connections_description">기존 연결이 여전히 사용하지만 기본 설정에는 포함되지 않은 relay입니다. 연결이 사용하는 relay를 변경하려면 해당 연결을 편집하세요.</string>
     <string name="default_profile_relays">기본 프로필 relay</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">프로필 데이터를 가져오는 데 사용되는 relay를 관리합니다</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">외부 애플리케이션과 통신하는 데 사용되는 relay를 관리합니다</string>

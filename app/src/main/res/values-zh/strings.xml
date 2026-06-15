@@ -427,6 +427,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s 需要签署与权限「%2$s」相关的事件。</string>
     <string name="relay_filter_failed">中继不支持检索 Bunker 事件。依旧继续添加？</string>
     <string name="active_relays">活动中继</string>
+    <string name="active_relays_default_description">用于每个新的应用连接。</string>
+    <string name="relays_used_by_connections">连接中继</string>
+    <string name="active_relays_connections_description">现有连接仍在使用但不在你默认集合中的中继。编辑某个连接以更改它使用的中继。</string>
     <string name="default_profile_relays">默认用户资料中继</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">管理用于获取个人资料的中继</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">管理用于外部应用通讯的中继</string>

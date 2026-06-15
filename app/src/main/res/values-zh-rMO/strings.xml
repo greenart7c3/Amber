@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s 請求簽署與 %2$s 權限相關的這些事件。</string>
     <string name="relay_filter_failed">Relay 不支持獲取 Bunker 事件，是否仍要添加？</string>
     <string name="active_relays">活躍 relays</string>
+    <string name="active_relays_default_description">用於每個新的應用程式連線。</string>
+    <string name="relays_used_by_connections">連線 relay</string>
+    <string name="active_relays_connections_description">現有連線仍在使用但不在你預設集合中的 relay。編輯某個連線即可變更它使用的 relay。</string>
     <string name="default_profile_relays">默認個人資料 relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">管理用於獲取個人資料數據的 relay</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">管理用於與外部應用通信的 relay</string>

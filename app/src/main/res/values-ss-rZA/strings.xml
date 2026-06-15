@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s udinga kusayina tizigameko letihlobene ne-%2$s imvume.</string>
     <string name="relay_filter_failed">Irelay ayisekeli kukhokhela tizigameko te-Bunker. Ufuna kuyengeta noma kunjalo?</string>
     <string name="active_relays">Tirelay tesebentako</string>
+    <string name="active_relays_default_description">Tisetjentiselwa kuko konkhe kuchumana lokusha kwe-app.</string>
+    <string name="relays_used_by_connections">Tirelay tekuchumana</string>
+    <string name="active_relays_connections_description">Tirelay lesisetjentiswa kuchumana lokukhona kodvwa lokungekho kusethi yakho lebekiwe. Hlela kuchumana kute ushintje tirelay letikusebentisako.</string>
     <string name="default_profile_relays">Tirelay tejwayelekile teprofile</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Phatha tirelay tokulanda idatha yeprofile yakho</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Phatha tirelay tokukhulumana netihlelo tangaphandle</string>

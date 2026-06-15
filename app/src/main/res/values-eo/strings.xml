@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s postulas subskribi tiujn ĉi eventojn rilatajn al la permeso %2$s.</string>
     <string name="relay_filter_failed">Relay ne subtenas preni Bunker-eventojn. Ĉu vi volas aldoni ĝin tamen?</string>
     <string name="active_relays">Aktivaj relay-oj</string>
+    <string name="active_relays_default_description">Uzata por ĉiu nova konekto de aplikaĵo.</string>
+    <string name="relays_used_by_connections">Relay-oj de konektoj</string>
+    <string name="active_relays_connections_description">Relay-oj kiujn ekzistantaj konektoj ankoraŭ uzas sed kiuj ne estas en via defaŭlta aro. Redaktu konekton por ŝanĝi la relay-ojn kiujn ĝi uzas.</string>
     <string name="default_profile_relays">Defaŭltaj profilaj relay-oj</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Administri la relay-ojn uzatajn por alporti viajn profildatumojn</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Administri la relay-ojn uzatajn por komuniki kun eksteraj aplikaĵoj</string>

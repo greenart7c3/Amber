@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s prašo pasirašyti šiuos įvykius, susijusius su %2$s leidimu.</string>
     <string name="relay_filter_failed">Relay nepalaiko Bunker įvykių gavimo. Ar vis tiek norite jį pridėti?</string>
     <string name="active_relays">Aktyvūs relay</string>
+    <string name="active_relays_default_description">Naudojama kiekvienam naujam programos prisijungimui.</string>
+    <string name="relays_used_by_connections">Prisijungimo relay</string>
+    <string name="active_relays_connections_description">Relay, kuriuos vis dar naudoja esami prisijungimai, bet kurių nėra jūsų numatytajame rinkinyje. Norėdami pakeisti naudojamus relay, redaguokite prisijungimą.</string>
     <string name="default_profile_relays">Numatytieji profilio relay</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Valdykite relay, naudojamus jūsų profilio duomenims gauti</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Valdykite relay, naudojamus bendravimui su išorinėmis programomis</string>

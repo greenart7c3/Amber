@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s waxay codsanaysaa inaad saxiixdo dhacdooyinkan la xiriira fasaxa %2$s.</string>
     <string name="relay_filter_failed">Relay-ku ma taageerayo keenista dhacdooyinka Bunker. Ma rabtaa inaad ku dartid si kastaba?</string>
     <string name="active_relays">Relay-yada firfircoon</string>
+    <string name="active_relays_default_description">Loo isticmaalo xiriir kasta oo cusub oo app.</string>
+    <string name="relays_used_by_connections">Relay-yada xiriirka</string>
+    <string name="active_relays_connections_description">Relay-yada ay xiriirrada jira wali isticmaalaan laakiin aan ku jirin koobkaaga caadiga ah. Wax ka beddel xiriir si aad u beddesho relay-yada uu isticmaalo.</string>
     <string name="default_profile_relays">Relay-yada profile-ka caadiga ah</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Maamul relay-yada la isticmaalo si loo keeno xogta profile-kaaga</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Maamul relay-yada la isticmaalo xiriirka barnaamijyada dibadda</string>

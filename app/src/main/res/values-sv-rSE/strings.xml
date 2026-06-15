@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s begär att signera dessa händelser relaterade till %2$s behörighet.</string>
     <string name="relay_filter_failed">Reläet stöder inte hämtning av bunker-händelser. Vill du lägga till det ändå?</string>
     <string name="active_relays">Aktiva reläer</string>
+    <string name="active_relays_default_description">Används för varje ny appanslutning.</string>
+    <string name="relays_used_by_connections">Anslutningsreläer</string>
+    <string name="active_relays_connections_description">Reläer som befintliga anslutningar fortfarande använder men som inte finns i din standarduppsättning. Redigera en anslutning för att ändra vilka reläer den använder.</string>
     <string name="default_profile_relays">Standardprofilreläer</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Hantera reläerna som används för att hämta din profildata</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Hantera reläerna som används för kommunikation med externa applikationer</string>

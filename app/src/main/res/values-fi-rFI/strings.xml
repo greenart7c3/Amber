@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s pyytää allekirjoittamaan nämä tapahtumat, jotka liittyvät %2$s-käyttöoikeuteen.</string>
     <string name="relay_filter_failed">Relay ei tue bunker-tapahtumien hakemista. Haluatko silti lisätä sen?</string>
     <string name="active_relays">Aktiiviset relays</string>
+    <string name="active_relays_default_description">Käytetään jokaisessa uudessa sovellusyhteydessä.</string>
+    <string name="relays_used_by_connections">Yhteyksien relayt</string>
+    <string name="active_relays_connections_description">Relayt, joita olemassa olevat yhteydet yhä käyttävät mutta jotka eivät ole oletusjoukossasi. Muokkaa yhteyttä muuttaaksesi sen käyttämiä relayta.</string>
     <string name="default_profile_relays">Oletusprofiilin relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Hallinnoi profiilitietojesi hakemiseen käytettäviä relaita</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Hallinnoi ulkoisten sovellusten kanssa viestintään käytettäviä relaita</string>

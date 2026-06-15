@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s biður um at undirskirva hesar hendingar í sambandi við %2$s-loyvi.</string>
     <string name="relay_filter_failed">Relay stuðlar ikki við at inna Bunker-hendingar. Vil tú leggja hann aftrat líkavæl?</string>
     <string name="active_relays">Virkar relays</string>
+    <string name="active_relays_default_description">Brúkt fyri hvørja nýggja app-sambinding.</string>
+    <string name="relays_used_by_connections">Sambindingar-relays</string>
+    <string name="active_relays_connections_description">Relays sum verandi sambindingar enn brúka, men sum ikki eru í tínum standardsetti. Rætta eina sambinding fyri at broyta tey relays hon brúkar.</string>
     <string name="default_profile_relays">Sjálvfaldnar profílrelays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Stýr relaysslunum, sum eru nýttar til at inna profilgøgn tín</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Stýr relaysslunum, sum eru nýttar til samskifti við uttanhýsis forrit</string>

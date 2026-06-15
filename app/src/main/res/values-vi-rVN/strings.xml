@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s đang yêu cầu ký các sự kiện liên quan đến quyền %2$s.</string>
     <string name="relay_filter_failed">Relay không hỗ trợ truy xuất sự kiện Bunker. Bạn có muốn thêm nó không?</string>
     <string name="active_relays">Relay đang hoạt động</string>
+    <string name="active_relays_default_description">Được dùng cho mọi kết nối ứng dụng mới.</string>
+    <string name="relays_used_by_connections">Relay kết nối</string>
+    <string name="active_relays_connections_description">Các relay mà những kết nối hiện có vẫn đang dùng nhưng không nằm trong bộ mặc định của bạn. Chỉnh sửa một kết nối để thay đổi các relay mà nó sử dụng.</string>
     <string name="default_profile_relays">Relay hồ sơ mặc định</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Quản lý các relay dùng để tải dữ liệu hồ sơ của bạn</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Quản lý các relay dùng để giao tiếp với các ứng dụng bên ngoài</string>

@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s prosi o podpisanie zdarzeń powiązanych z uprawnieniem %2$s.</string>
     <string name="relay_filter_failed">Relay nie obsługuje pobierania zdarzeń Bunker. Czy chcesz mimo to go dodać?</string>
     <string name="active_relays">Aktywne relay</string>
+    <string name="active_relays_default_description">Używane przy każdym nowym połączeniu aplikacji.</string>
+    <string name="relays_used_by_connections">Relay połączeń</string>
+    <string name="active_relays_connections_description">Relay, których nadal używają istniejące połączenia, ale które nie znajdują się w Twoim domyślnym zestawie. Edytuj połączenie, aby zmienić używane przez nie relay.</string>
     <string name="default_profile_relays">Domyślne relay profilu</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Zarządzaj relay używanymi do pobierania danych profilu</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Zarządzaj relay używanymi do komunikacji z zewnętrznymi aplikacjami</string>

@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s %2$s اجازت سے متعلق ان ایونٹس پر دستخط کرنے کا تقاضا کر رہا ہے۔</string>
     <string name="relay_filter_failed">Relay Bunker ایونٹس بازیاب کرنے کی حمایت نہیں کرتا۔ کیا آپ پھر بھی اسے شامل کرنا چاہتے ہیں؟</string>
     <string name="active_relays">فعال relays</string>
+    <string name="active_relays_default_description">ہر نئے ایپ کنکشن کے لیے استعمال ہوتا ہے۔</string>
+    <string name="relays_used_by_connections">کنکشن relays</string>
+    <string name="active_relays_connections_description">وہ relays جو موجودہ کنکشن اب بھی استعمال کرتے ہیں لیکن جو آپ کے پہلے سے طے شدہ سیٹ میں نہیں ہیں۔ کسی کنکشن کے استعمال کردہ relays کو تبدیل کرنے کے لیے اسے ترمیم کریں۔</string>
     <string name="default_profile_relays">پہلے سے طے شدہ پروفائل relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">آپ کا پروفائل ڈیٹا لانے کے لیے استعمال ہونے والے relays کا انتظام کریں</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">بیرونی ایپلیکیشنز سے مواصلات کے لیے استعمال ہونے والے relays کا انتظام کریں</string>

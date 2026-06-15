@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s %2$s அனுமதி தொடர்பான இந்த நிகழ்வுகளில் கையொப்பமிட கோருகிறது.</string>
     <string name="relay_filter_failed">Relay Bunker நிகழ்வுகளை மீட்டெடுப்பதை ஆதரிக்கவில்லை. இருந்தாலும் சேர்க்க விரும்புகிறீர்களா?</string>
     <string name="active_relays">செயலில் உள்ள relays</string>
+    <string name="active_relays_default_description">ஒவ்வொரு புதிய பயன்பாட்டு இணைப்பிற்கும் பயன்படுத்தப்படுகிறது.</string>
+    <string name="relays_used_by_connections">இணைப்பு relays</string>
+    <string name="active_relays_connections_description">ஏற்கனவே உள்ள இணைப்புகள் இன்னும் பயன்படுத்தும் ஆனால் உங்கள் இயல்புநிலை தொகுப்பில் இல்லாத relays. ஒரு இணைப்பு பயன்படுத்தும் relays-ஐ மாற்ற அந்த இணைப்பைத் திருத்தவும்.</string>
     <string name="default_profile_relays">இயல்புநிலை சுயவிவர relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">உங்கள் சுயவிவர தரவை பெற பயன்படுத்தப்படும் relays ஐ நிர்வகிக்கவும்</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">வெளிப்புற பயன்பாடுகளுடன் தொடர்பு கொள்ள பயன்படுத்தப்படும் relays ஐ நிர்வகிக்கவும்</string>

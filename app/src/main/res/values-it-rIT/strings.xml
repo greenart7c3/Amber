@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s richiede di firmare questi eventi relativi al permesso %2$s.</string>
     <string name="relay_filter_failed">Il relay non supporta il recupero degli eventi Bunker. Vuoi aggiungerlo comunque?</string>
     <string name="active_relays">Relay attivi</string>
+    <string name="active_relays_default_description">Usati per ogni nuova connessione dell\'app.</string>
+    <string name="relays_used_by_connections">Relay di connessione</string>
+    <string name="active_relays_connections_description">Relay che le connessioni esistenti utilizzano ancora ma che non fanno parte del tuo set predefinito. Modifica una connessione per cambiare i relay che utilizza.</string>
     <string name="default_profile_relays">Relay profilo predefiniti</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Gestisci i relay usati per recuperare i dati del tuo profilo</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Gestisci i relay usati per comunicare con le applicazioni esterne</string>

@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s zahteva podpis teh dogodkov, povezanih z dovoljenjem %2$s.</string>
     <string name="relay_filter_failed">Relay strežnik ne podpira pridobivanja Bunker dogodkov. Ali ga želite vseeno dodati?</string>
     <string name="active_relays">Aktivni relay strežniki</string>
+    <string name="active_relays_default_description">Uporabljeno za vsako novo povezavo aplikacije.</string>
+    <string name="relays_used_by_connections">Relay strežniki povezav</string>
+    <string name="active_relays_connections_description">Relay strežniki, ki jih obstoječe povezave še vedno uporabljajo, vendar niso v vašem privzetem naboru. Uredite povezavo, da spremenite relay strežnike, ki jih uporablja.</string>
     <string name="default_profile_relays">Privzeti relay strežniki profila</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Upravljajte relay strežnike, ki se uporabljajo za pridobivanje podatkov vašega profila</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Upravljajte relay strežnike, ki se uporabljajo za komunikacijo z zunanjimi aplikacijami</string>

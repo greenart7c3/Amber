@@ -443,6 +443,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s fordert die Signierung dieser Ereignisse im Zusammenhang mit der Berechtigung %2$s an.</string>
     <string name="relay_filter_failed">Der Relay unterstützt das Abrufen von Bunker-Ereignissen nicht. Möchtest du ihn trotzdem hinzufügen?</string>
     <string name="active_relays">Aktive Relays</string>
+    <string name="active_relays_default_description">Wird für jede neue App-Verbindung verwendet.</string>
+    <string name="relays_used_by_connections">Verbindungs-Relays</string>
+    <string name="active_relays_connections_description">Relays, die bestehende Verbindungen noch verwenden, die aber nicht in deinem Standardsatz enthalten sind. Bearbeite eine Verbindung, um die von ihr verwendeten Relays zu ändern.</string>
     <string name="default_profile_relays">Standard-Profil-Relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Verwalte die Relays, die zum Abrufen deiner Profildaten verwendet werden</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Verwalte die Relays, die zur Kommunikation mit externen Anwendungen verwendet werden</string>

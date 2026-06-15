@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s требует подписать события, связанные с разрешением %2$s.</string>
     <string name="relay_filter_failed">Relay не поддерживает получение событий Bunker. Всё равно добавить?</string>
     <string name="active_relays">Активные relay</string>
+    <string name="active_relays_default_description">Используется для каждого нового подключения приложения.</string>
+    <string name="relays_used_by_connections">Relay подключений</string>
+    <string name="active_relays_connections_description">Relay, которые по-прежнему используются существующими подключениями, но которых нет в вашем наборе по умолчанию. Измените подключение, чтобы изменить используемые им relay.</string>
     <string name="default_profile_relays">Relay профиля по умолчанию</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Управляйте relay, используемыми для получения данных вашего профиля</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Управляйте relay, используемыми для связи с внешними приложениями</string>

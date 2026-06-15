@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s zahtijeva potpisivanje ovih događaja koji se odnose na dozvolu %2$s.</string>
     <string name="relay_filter_failed">Relay ne podržava dohvaćanje Bunker događaja. Želite li ga svejedno dodati?</string>
     <string name="active_relays">Aktivni relays</string>
+    <string name="active_relays_default_description">Koriste se za svaku novu vezu aplikacije.</string>
+    <string name="relays_used_by_connections">Relays za veze</string>
+    <string name="active_relays_connections_description">Relays koje postojeće veze i dalje koriste, ali koji nisu u vašem zadanom skupu. Uredite vezu kako biste promijenili relays koje koristi.</string>
     <string name="default_profile_relays">Zadani profilni relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Upravljajte relayima koji se koriste za dohvaćanje podataka profila</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Upravljajte relayima koji se koriste za komunikaciju s vanjskim aplikacijama</string>

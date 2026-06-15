@@ -14,8 +14,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ContentPaste
@@ -68,6 +70,7 @@ import com.greenart7c3.nostrsigner.ui.CenterCircularProgressIndicator
 import com.greenart7c3.nostrsigner.ui.RelayCard
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.SectionLabel
 import com.greenart7c3.nostrsigner.ui.components.TrustScoreBadge
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
@@ -590,23 +593,30 @@ fun ActiveRelaysScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
-    val relays2 =
-        remember {
-            mutableStateListOf<NormalizedRelayUrl>()
-        }
+    // Relays configured as defaults — these are used for every new connection.
+    val defaultRelays = remember { mutableStateListOf<NormalizedRelayUrl>() }
+    // Relays that existing connections still use but that are not part of the
+    // default set. Shown separately so it is clear they come from individual app
+    // connections, not from the default relay settings.
+    val connectionRelays = remember { mutableStateListOf<NormalizedRelayUrl>() }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(Unit) {
         withContext(Dispatchers.IO) {
-            relays2.addAll(Amber.instance.getSavedRelays(account) + Amber.instance.settings.defaultRelays)
+            val defaults = Amber.instance.settings.defaultRelays
+            val saved = Amber.instance.getSavedRelays(account)
+            defaultRelays.clear()
+            defaultRelays.addAll(defaults.distinct())
+            connectionRelays.clear()
+            connectionRelays.addAll(saved.filterNot { it in defaults })
         }
     }
 
-    // Fetch trust scores for all relays
-    LaunchedEffect(relays2.toList()) {
+    // Fetch trust scores for every relay shown
+    LaunchedEffect(defaultRelays.toList(), connectionRelays.toList()) {
         if (!BuildFlavorChecker.isOfflineFlavor()) {
-            relays2.forEach { relay ->
+            (defaultRelays + connectionRelays).forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {
                     loadingScores[url] = true
@@ -622,73 +632,103 @@ fun ActiveRelaysScreen(
 
     Column(
         modifier = modifier
-            .fillMaxSize(),
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState()),
     ) {
-        relays2.forEach { relay ->
+        SectionLabel(stringResource(R.string.default_relays))
+        Text(
+            text = stringResource(R.string.active_relays_default_description),
+            fontSize = 14.sp,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        defaultRelays.forEach { relay ->
+            ActiveRelayRow(relay, trustScores, loadingScores, navController)
+        }
+
+        if (connectionRelays.isNotEmpty()) {
+            SectionLabel(stringResource(R.string.relays_used_by_connections))
+            Text(
+                text = stringResource(R.string.active_relays_connections_description),
+                fontSize = 14.sp,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            connectionRelays.forEach { relay ->
+                ActiveRelayRow(relay, trustScores, loadingScores, navController)
+            }
+        }
+    }
+}
+
+@SuppressLint("StateFlowValueCalledInComposition")
+@Composable
+private fun ActiveRelayRow(
+    relay: NormalizedRelayUrl,
+    trustScores: Map<String, Int?>,
+    loadingScores: Map<String, Boolean>,
+    navController: NavController,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 4.dp)
+            .clickable {
+                navController.navigate(
+                    "RelayLogScreen/${
+                        Base64
+                            .getEncoder()
+                            .encodeToString(relay.url.toByteArray())
+                    }",
+                )
+            },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Column(
+            verticalArrangement = Arrangement.Center,
+        ) {
+            val isConnected by remember(relay) {
+                Amber.instance.client.connectedRelaysFlow().map { status ->
+                    relay in status
+                }
+            }.collectAsStateWithLifecycle(relay in Amber.instance.client.connectedRelaysFlow().value)
+
             Row(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(vertical = 4.dp)
-                    .clickable {
-                        navController.navigate(
-                            "RelayLogScreen/${
-                                Base64
-                                    .getEncoder()
-                                    .encodeToString(relay.url.toByteArray())
-                            }",
-                        )
-                    },
+                    .fillMaxWidth()
+                    .padding(top = 16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Column(
-                    verticalArrangement = Arrangement.Center,
-                ) {
-                    val isConnected by remember(relay) {
-                        Amber.instance.client.connectedRelaysFlow().map { status ->
-                            relay in status
-                        }
-                    }.collectAsStateWithLifecycle(relay in Amber.instance.client.connectedRelaysFlow().value)
-
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Text(
-                            modifier = Modifier.weight(1f),
-                            text = relay.url,
-                            fontSize = 24.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = if (isConnected) Color.Unspecified else Color.Gray,
-                        )
-                        TrustScoreBadge(
-                            score = trustScores[relay.url],
-                            isLoading = loadingScores[relay.url] == true,
-                        )
-                    }
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        Text(
-                            modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
-                            text = if (isConnected) "${Amber.instance.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
-                            fontSize = 16.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            color = if (isConnected) Color.Unspecified else Color.Gray,
-                        )
-                    }
-
-                    Spacer(Modifier.weight(1f))
-                    HorizontalDivider(
-                        color = MaterialTheme.colorScheme.primary,
-                    )
-                }
+                Text(
+                    modifier = Modifier.weight(1f),
+                    text = relay.url,
+                    fontSize = 24.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isConnected) Color.Unspecified else Color.Gray,
+                )
+                TrustScoreBadge(
+                    score = trustScores[relay.url],
+                    isLoading = loadingScores[relay.url] == true,
+                )
             }
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+            ) {
+                Text(
+                    modifier = Modifier.padding(top = 4.dp, bottom = 16.dp),
+                    text = if (isConnected) "${Amber.instance.relayStats.get(relay).pingInMs}ms ping" else "Unavailable",
+                    fontSize = 16.sp,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = if (isConnected) Color.Unspecified else Color.Gray,
+                )
+            }
+
+            Spacer(Modifier.weight(1f))
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.primary,
+            )
         }
     }
 }

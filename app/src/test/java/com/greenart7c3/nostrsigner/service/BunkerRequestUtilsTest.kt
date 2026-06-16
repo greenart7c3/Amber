@@ -6,6 +6,9 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import io.mockk.every
 import io.mockk.mockk
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.joinAll
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -266,6 +269,18 @@ class BunkerRequestUtilsTest {
         val request = createAmberBunkerRequest("id1")
         BunkerRequestUtils.addRequest(request)
         BunkerRequestUtils.addRequest(request)
+        assertEquals(1, BunkerRequestUtils.getBunkerRequests().size)
+    }
+
+    @Test
+    fun `addRequest is safe under concurrent duplicate ids`() = runBlocking {
+        // The same NIP-46 request id can be delivered concurrently by multiple
+        // relays. A TOCTOU race in addRequest used to let duplicates through,
+        // producing duplicate LazyColumn keys and crashing the UI.
+        val request = createAmberBunkerRequest("17856")
+        (1..200).map {
+            launch(Dispatchers.Default) { BunkerRequestUtils.addRequest(request) }
+        }.joinAll()
         assertEquals(1, BunkerRequestUtils.getBunkerRequests().size)
     }
 

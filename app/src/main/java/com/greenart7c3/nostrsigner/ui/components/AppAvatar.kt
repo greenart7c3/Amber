@@ -20,6 +20,7 @@ import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import java.io.File
 
 /**
  * App avatar resolved in priority order:
@@ -36,18 +37,28 @@ fun AppAvatar(
     name: String = "",
     size: Dp = 48.dp,
 ) {
-    val systemIcon = packageName
-        ?.takeIf { it.isNotBlank() }
-        ?.let { rememberAppDisplayInfo(it).icon }
-
     val avatarModifier = modifier
         .size(size)
         .clip(CircleShape)
 
+    // A persisted native-app icon is a local file path; a remote client icon is
+    // an http(s) URL. Local files load on every flavor (no network); remote URLs
+    // are skipped on the offline flavor.
+    val isRemote = iconUrl?.startsWith("http", ignoreCase = true) == true
+    val model: Any? = when {
+        iconUrl.isNullOrBlank() -> null
+        isRemote -> if (BuildFlavorChecker.isOfflineFlavor()) null else iconUrl
+        else -> File(iconUrl)
+    }
+
+    // Only query PackageManager when there's no stored icon to show — avoids a
+    // futile (and log-noisy) lookup for rows that aren't native apps.
+    val systemIcon = if (model == null) rememberAppIcon(packageName) else null
+
     when {
-        !iconUrl.isNullOrBlank() && !BuildFlavorChecker.isOfflineFlavor() -> {
+        model != null -> {
             AsyncImage(
-                model = iconUrl,
+                model = model,
                 contentDescription = name.ifBlank { null },
                 modifier = avatarModifier,
             )

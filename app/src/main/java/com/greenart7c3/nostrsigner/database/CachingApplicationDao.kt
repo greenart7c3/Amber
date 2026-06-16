@@ -225,6 +225,11 @@ class CachingApplicationDao(
         // lastUsed doesn't affect any cached read, so no invalidation needed.
     }
 
+    override suspend fun updateNameAndIcon(key: String, name: String, icon: String) {
+        delegate.updateNameAndIcon(key, name, icon)
+        invalidateApp(key)
+    }
+
     companion object {
         private const val MAX_ENTRIES = 512
     }

@@ -68,6 +68,41 @@ object IntentUtils {
     private val _intents = MutableStateFlow<ImmutableList<IntentData>>(persistentListOf())
     val intents = _intents.asStateFlow()
 
+    /**
+     * Captures a native (intent/ContentProvider) app's launcher icon and label
+     * onto its saved [com.greenart7c3.nostrsigner.database.ApplicationEntity]
+     * while the app is visible to us (i.e. it just sent a request). Other,
+     * non-interactive screens (the applications list) can then show them without
+     * the broad QUERY_ALL_PACKAGES permission — Android 11+ package visibility
+     * otherwise hides installed apps that aren't currently interacting with us.
+     *
+     * Only edits an already-saved app and only fills blank name/icon, so it
+     * effectively runs once per app and never overwrites existing values.
+     */
+    suspend fun persistNativeAppMetadata(
+        context: Context,
+        account: Account,
+        packageName: String?,
+    ) {
+        if (packageName.isNullOrBlank()) return
+        val dao = Amber.instance.dao(account.npub)
+        val saved = dao.getByKey(packageName)?.application ?: return
+        if (saved.name.isNotBlank() && saved.icon.isNotBlank()) return
+
+        val newIcon = saved.icon.ifBlank {
+            AppIconStore.resolveIconPath(context, packageName) ?: ""
+        }
+        val newName = saved.name.ifBlank {
+            runCatching {
+                val info = context.packageManager.getApplicationInfo(packageName, 0)
+                context.packageManager.getApplicationLabel(info).toString()
+            }.getOrNull().orEmpty()
+        }
+
+        if (newName == saved.name && newIcon == saved.icon) return
+        dao.updateNameAndIcon(packageName, newName.ifBlank { saved.name }, newIcon)
+    }
+
     data class InvalidIntentInfo(
         val id: String,
         val dataString: String?,

@@ -205,7 +205,7 @@ fun BunkerConnectRequestScreen(
                 .padding(horizontal = horizontalPadding),
         ) {
             val clientImage = bunkerRequest.clientMetadata?.image.orEmpty()
-            RemoteAppIcon(imageUrl = clientImage, size = 64.dp)
+            RemoteAppIcon(imageUrl = clientImage, name = appName.value, size = 64.dp)
 
             Text(
                 modifier = Modifier

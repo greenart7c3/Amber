@@ -40,7 +40,7 @@ fun BunkerPingScreen(
     Column(
         modifier,
     ) {
-        RemoteAppIcon(iconUrl)
+        RemoteAppIcon(iconUrl, appName)
 
         val message = stringResource(R.string.ping)
 

@@ -66,7 +66,7 @@ fun Nip44v3ApprovalData(
 
     Column(modifier) {
         if (isBunker) {
-            RemoteAppIcon(iconUrl)
+            RemoteAppIcon(iconUrl, appName)
             Text(
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

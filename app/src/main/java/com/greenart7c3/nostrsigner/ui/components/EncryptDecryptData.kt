@@ -271,7 +271,7 @@ fun BunkerEncryptDecryptData(
     Column(
         modifier,
     ) {
-        RemoteAppIcon(iconUrl)
+        RemoteAppIcon(iconUrl, appName)
 
         Text(
             buildAnnotatedString {

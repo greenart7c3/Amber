@@ -68,7 +68,7 @@ fun BunkerRelayAuthScreen(
     ) {
         Spacer(Modifier.size(16.dp))
 
-        RemoteAppIcon(iconUrl)
+        RemoteAppIcon(iconUrl, appName)
 
         Text(
             buildAnnotatedString {

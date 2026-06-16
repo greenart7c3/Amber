@@ -116,7 +116,7 @@ fun BunkerMultiEventHomeScreen(
     Column(
         modifier,
     ) {
-        RemoteAppIcon(appIcon)
+        RemoteAppIcon(appIcon, appName)
 
         Text(
             stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),

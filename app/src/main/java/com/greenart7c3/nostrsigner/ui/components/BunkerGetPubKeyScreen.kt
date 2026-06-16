@@ -31,7 +31,7 @@ fun BunkerGetPubKeyScreen(
     Column(
         modifier,
     ) {
-        RemoteAppIcon(iconUrl)
+        RemoteAppIcon(iconUrl, applicationName)
 
         Text(
             modifier = Modifier.fillMaxWidth(),

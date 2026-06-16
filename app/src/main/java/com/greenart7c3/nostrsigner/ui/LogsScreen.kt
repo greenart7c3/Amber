@@ -1,11 +1,13 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.content.Intent
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -17,10 +19,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.FileProvider
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -29,8 +33,11 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import java.io.File
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @Composable
 fun LogsScreen(
@@ -38,6 +45,7 @@ fun LogsScreen(
     account: Account,
 ) {
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     val pager =
         Pager(
             PagingConfig(
@@ -58,15 +66,66 @@ fun LogsScreen(
         contentPadding = paddingValues,
     ) {
         item {
-            AmberButton(
-                modifier = Modifier.padding(bottom = 8.dp),
-                onClick = {
-                    scope.launch(Dispatchers.IO) {
-                        Amber.instance.getLogDatabase(account.npub).dao().clearLogs()
-                    }
-                },
-                text = stringResource(R.string.clear_logs),
-            )
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                AmberButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        scope.launch(Dispatchers.IO) {
+                            val logs =
+                                Amber.instance
+                                    .getLogDatabase(account.npub)
+                                    .dao()
+                                    .getLogs()
+                                    .first()
+                            val logsText =
+                                logs.joinToString("\n") { log ->
+                                    val time =
+                                        TimeUtils.formatLongToCustomDateTimeWithSeconds(log.time)
+                                    "$time | ${log.url} | ${log.type} | ${log.message}"
+                                }
+                            val logsFile = File(context.cacheDir, "amber-logs.txt")
+                            logsFile.writeText(logsText)
+                            val logsUri =
+                                FileProvider.getUriForFile(
+                                    context,
+                                    "${context.packageName}.fileprovider",
+                                    logsFile,
+                                )
+
+                            withContext(Dispatchers.Main) {
+                                val shareIntent =
+                                    Intent(Intent.ACTION_SEND).apply {
+                                        type = "text/plain"
+                                        putExtra(Intent.EXTRA_STREAM, logsUri)
+                                        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+                                    }
+
+                                context.startActivity(
+                                    Intent.createChooser(
+                                        shareIntent,
+                                        context.getString(R.string.export_logs),
+                                    ),
+                                )
+                            }
+                        }
+                    },
+                    text = stringResource(R.string.export_logs),
+                )
+                AmberButton(
+                    modifier = Modifier.weight(1f),
+                    onClick = {
+                        scope.launch(Dispatchers.IO) {
+                            Amber.instance.getLogDatabase(account.npub).dao().clearLogs()
+                        }
+                    },
+                    text = stringResource(R.string.clear_logs),
+                )
+            }
         }
         items(lazyPagingItems.itemCount) { index ->
             val log = lazyPagingItems[index]

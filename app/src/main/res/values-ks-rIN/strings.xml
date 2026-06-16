@@ -195,6 +195,7 @@
     <string name="save">محفوظ کرو</string>
     <string name="logs">لاگز</string>
     <string name="clear_logs">لاگز صاف کرو</string>
+    <string name="export_logs">لاگز ایکسپورٹ کرٕو</string>
     <string name="default_relays">ڈیفالٹ relays</string>
     <string name="requests">ریکویسٹاں</string>
     <string name="authenticate">ایپ استعمال کرنے کیتے تصدیق ضروری اِچھ</string>

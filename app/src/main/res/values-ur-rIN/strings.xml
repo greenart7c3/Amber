@@ -219,6 +219,7 @@
     <string name="save">محفوظ کریں</string>
     <string name="logs">لاگز</string>
     <string name="clear_logs">لاگز صاف کریں</string>
+    <string name="export_logs">لاگز ایکسپورٹ کریں</string>
     <string name="default_relays">پہلے سے طے شدہ relays</string>
     <string name="requests">درخواستیں</string>
     <string name="authenticate">ایپ استعمال کرنے کے لیے تصدیق درکار ہے</string>

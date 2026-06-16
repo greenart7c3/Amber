@@ -215,6 +215,7 @@
     <string name="save">Kaydet</string>
     <string name="logs">Kayıtlar</string>
     <string name="clear_logs">Kayıtları temizle</string>
+    <string name="export_logs">Kayıtları dışa aktar</string>
     <string name="default_relays">Varsayılan relay\'ler</string>
     <string name="requests">istekler</string>
     <string name="authenticate">Uygulamayı kullanmak için kimlik doğrulama gerekli</string>

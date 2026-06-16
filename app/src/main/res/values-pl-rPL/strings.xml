@@ -195,6 +195,7 @@
     <string name="save">Zapisz</string>
     <string name="logs">Logi</string>
     <string name="clear_logs">Wyczyść logi</string>
+    <string name="export_logs">Eksportuj logi</string>
     <string name="default_relays">Domyślne relay</string>
     <string name="requests">żądania</string>
     <string name="authenticate">Wymagane uwierzytelnienie do korzystania z aplikacji</string>

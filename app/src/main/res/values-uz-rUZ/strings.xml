@@ -219,6 +219,7 @@
     <string name="save">Saqlash</string>
     <string name="logs">Jurnallar</string>
     <string name="clear_logs">Jurnallarni tozalash</string>
+    <string name="export_logs">Jurnallarni eksport qilish</string>
     <string name="default_relays">Standart relay-lar</string>
     <string name="requests">so\'rovlar</string>
     <string name="authenticate">Ilovadan foydalanish uchun autentifikatsiya talab qilinadi</string>

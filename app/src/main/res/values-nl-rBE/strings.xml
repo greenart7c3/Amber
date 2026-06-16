@@ -219,6 +219,7 @@
     <string name="save">Opslaan</string>
     <string name="logs">Logboeken</string>
     <string name="clear_logs">Logboeken wissen</string>
+    <string name="export_logs">Logboeken exporteren</string>
     <string name="default_relays">Standaard relays</string>
     <string name="requests">verzoeken</string>
     <string name="authenticate">Verificatie vereist om de app te gebruiken</string>

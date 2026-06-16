@@ -219,6 +219,7 @@
     <string name="save">Gem</string>
     <string name="logs">Logfiler</string>
     <string name="clear_logs">Ryd logfiler</string>
+    <string name="export_logs">Eksporter logfiler</string>
     <string name="default_relays">Standard-relays</string>
     <string name="requests">anmodninger</string>
     <string name="authenticate">Godkendelse kræves for at bruge appen</string>

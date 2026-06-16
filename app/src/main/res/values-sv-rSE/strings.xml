@@ -195,6 +195,7 @@
     <string name="save">Spara</string>
     <string name="logs">Loggar</string>
     <string name="clear_logs">Rensa loggar</string>
+    <string name="export_logs">Exportera loggar</string>
     <string name="default_relays">Standardreläer</string>
     <string name="requests">förfrågningar</string>
     <string name="authenticate">Autentisering krävs för att använda appen</string>

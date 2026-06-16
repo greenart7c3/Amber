@@ -219,6 +219,7 @@
     <string name="save">Simpan</string>
     <string name="logs">Log</string>
     <string name="clear_logs">Hapus log</string>
+    <string name="export_logs">Ekspor log</string>
     <string name="default_relays">Relay default</string>
     <string name="requests">permintaan</string>
     <string name="authenticate">Autentikasi diperlukan untuk menggunakan aplikasi</string>

@@ -195,6 +195,7 @@
     <string name="save">Spremi</string>
     <string name="logs">Zapisnici</string>
     <string name="clear_logs">Očisti zapisnike</string>
+    <string name="export_logs">Izvezi zapisnike</string>
     <string name="default_relays">Zadani relays</string>
     <string name="requests">zahtjevi</string>
     <string name="authenticate">Potrebna je provjera autentičnosti za korištenje aplikacije</string>

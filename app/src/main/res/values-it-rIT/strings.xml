@@ -219,6 +219,7 @@
     <string name="save">Salva</string>
     <string name="logs">Log</string>
     <string name="clear_logs">Cancella log</string>
+    <string name="export_logs">Esporta log</string>
     <string name="default_relays">Relay predefiniti</string>
     <string name="requests">richieste</string>
     <string name="authenticate">Autenticazione necessaria per usare l\'app</string>

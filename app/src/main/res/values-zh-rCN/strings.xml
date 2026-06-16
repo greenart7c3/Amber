@@ -200,6 +200,7 @@
     <string name="save">保存</string>
     <string name="logs">日志</string>
     <string name="clear_logs">清理日志</string>
+    <string name="export_logs">导出日志</string>
     <string name="default_relays">默认中继</string>
     <string name="requests">请求</string>
     <string name="authenticate">使用应用需要身份验证</string>

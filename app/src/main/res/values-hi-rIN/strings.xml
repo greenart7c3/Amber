@@ -219,6 +219,7 @@
     <string name="save">सहेजें</string>
     <string name="logs">लॉग</string>
     <string name="clear_logs">लॉग साफ़ करें</string>
+    <string name="export_logs">लॉग निर्यात करें</string>
     <string name="default_relays">डिफ़ॉल्ट relay</string>
     <string name="requests">अनुरोध</string>
     <string name="authenticate">ऐप उपयोग करने के लिए प्रमाणीकरण आवश्यक है</string>

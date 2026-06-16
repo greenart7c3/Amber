@@ -219,6 +219,7 @@
     <string name="save">சேமி</string>
     <string name="logs">பதிவுகள்</string>
     <string name="clear_logs">பதிவுகளை அழி</string>
+    <string name="export_logs">பதிவுகளை ஏற்றுமதி செய்</string>
     <string name="default_relays">இயல்புநிலை relays</string>
     <string name="requests">கோரிக்கைகள்</string>
     <string name="authenticate">பயன்பாட்டை பயன்படுத்த அங்கீகாரம் தேவை</string>

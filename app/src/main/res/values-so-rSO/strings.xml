@@ -219,6 +219,7 @@
     <string name="save">Kaydi</string>
     <string name="logs">Diiwaanka</string>
     <string name="clear_logs">Nadiifi diiwaanka</string>
+    <string name="export_logs">Dhoofi diiwaanka</string>
     <string name="default_relays">Relay-yada caadiga ah</string>
     <string name="requests">codsiyada</string>
     <string name="authenticate">Xaqiijinta ayaa loo baahan yahay si barnaamijka loo isticmaalo</string>

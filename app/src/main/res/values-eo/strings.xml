@@ -219,6 +219,7 @@
     <string name="save">Konservi</string>
     <string name="logs">Protokoloj</string>
     <string name="clear_logs">Forviŝi protokolojn</string>
+    <string name="export_logs">Eksporti protokolojn</string>
     <string name="default_relays">Defaŭltaj relay-oj</string>
     <string name="requests">petoj</string>
     <string name="authenticate">Aŭtentikigo bezonata por uzi la aplikaĵon</string>

@@ -195,6 +195,7 @@
     <string name="save">Lưu</string>
     <string name="logs">Nhật ký</string>
     <string name="clear_logs">Xóa nhật ký</string>
+    <string name="export_logs">Xuất nhật ký</string>
     <string name="default_relays">Relay mặc định</string>
     <string name="requests">yêu cầu</string>
     <string name="authenticate">Cần xác thực để sử dụng ứng dụng</string>

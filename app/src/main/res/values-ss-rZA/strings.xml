@@ -219,6 +219,7 @@
     <string name="save">Gcina</string>
     <string name="logs">Tilogi</string>
     <string name="clear_logs">Sula tilogi</string>
+    <string name="export_logs">Khipha tilogi</string>
     <string name="default_relays">Tirelay tejwayelekile</string>
     <string name="requests">tificelo</string>
     <string name="authenticate">Kudingeka kufakazela ukusebentisa uhlelo</string>

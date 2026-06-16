@@ -219,6 +219,7 @@
     <string name="save">Uložit</string>
     <string name="logs">Záznamy</string>
     <string name="clear_logs">Vymazat záznamy</string>
+    <string name="export_logs">Exportovat záznamy</string>
     <string name="default_relays">Výchozí relay</string>
     <string name="requests">požadavky</string>
     <string name="authenticate">Pro použití aplikace je vyžadováno ověření</string>

@@ -219,6 +219,7 @@
     <string name="save">Αποθήκευση</string>
     <string name="logs">Αρχεία καταγραφής</string>
     <string name="clear_logs">Εκκαθάριση αρχείων καταγραφής</string>
+    <string name="export_logs">Εξαγωγή αρχείων καταγραφής</string>
     <string name="default_relays">Προεπιλεγμένα relay</string>
     <string name="requests">αιτήματα</string>
     <string name="authenticate">Απαιτείται αυθεντικοποίηση για τη χρήση της εφαρμογής</string>

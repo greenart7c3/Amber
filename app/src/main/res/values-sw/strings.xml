@@ -219,6 +219,7 @@
     <string name="save">Hifadhi</string>
     <string name="logs">Kumbukumbu</string>
     <string name="clear_logs">Futa kumbukumbu</string>
+    <string name="export_logs">Hamisha kumbukumbu</string>
     <string name="default_relays">Relay za msingi</string>
     <string name="requests">maombi</string>
     <string name="authenticate">Uthibitishaji unahitajika kutumia programu</string>

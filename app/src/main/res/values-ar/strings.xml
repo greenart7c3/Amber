@@ -219,6 +219,7 @@
     <string name="save">حفظ</string>
     <string name="logs">السجلات</string>
     <string name="clear_logs">مسح السجلات</string>
+    <string name="export_logs">تصدير السجلات</string>
     <string name="default_relays">Relays الافتراضية</string>
     <string name="requests">الطلبات</string>
     <string name="authenticate">المصادقة مطلوبة لاستخدام التطبيق</string>

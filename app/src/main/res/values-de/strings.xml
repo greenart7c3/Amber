@@ -216,6 +216,7 @@
     <string name="save">Speichern</string>
     <string name="logs">Protokolle</string>
     <string name="clear_logs">Logs löschen</string>
+    <string name="export_logs">Logs exportieren</string>
     <string name="default_relays">Standard Relais</string>
     <string name="requests">beantragt</string>
     <string name="authenticate">Authentifizierung benötigt, um die App zu nutzen</string>

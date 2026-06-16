@@ -219,6 +219,7 @@
     <string name="save">Goym</string>
     <string name="logs">Skrásetingar</string>
     <string name="clear_logs">Tøm skrásetingar</string>
+    <string name="export_logs">Útflyt skrásetingar</string>
     <string name="default_relays">Sjálvfaldnar relays</string>
     <string name="requests">beiðnir</string>
     <string name="authenticate">Auðkenning kravd til at nýta appin</string>

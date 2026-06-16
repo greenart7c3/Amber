@@ -219,6 +219,7 @@
     <string name="save">सेभ गर्नुहोस्</string>
     <string name="logs">लगहरू</string>
     <string name="clear_logs">लगहरू खाली गर्नुहोस्</string>
+    <string name="export_logs">लगहरू निर्यात गर्नुहोस्</string>
     <string name="default_relays">पूर्वनिर्धारित relays</string>
     <string name="requests">अनुरोधहरू</string>
     <string name="authenticate">एप प्रयोग गर्न प्रमाणीकरण आवश्यक छ</string>

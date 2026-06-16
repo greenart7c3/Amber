@@ -195,6 +195,7 @@
     <string name="save">Mentés</string>
     <string name="logs">Naplók</string>
     <string name="clear_logs">Naplók törlése</string>
+    <string name="export_logs">Naplók exportálása</string>
     <string name="default_relays">Alapértelmezett relay-ek</string>
     <string name="requests">kérések</string>
     <string name="authenticate">Hitelesítés szükséges az alkalmazás használatához</string>

@@ -219,6 +219,7 @@
     <string name="save">儲存</string>
     <string name="logs">日誌</string>
     <string name="clear_logs">清除日誌</string>
+    <string name="export_logs">匯出日誌</string>
     <string name="default_relays">預設 relays</string>
     <string name="requests">請求</string>
     <string name="authenticate">需要驗證身份才能使用應用程式</string>

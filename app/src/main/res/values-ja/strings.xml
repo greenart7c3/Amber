@@ -195,6 +195,7 @@
     <string name="save">保存</string>
     <string name="logs">ログ</string>
     <string name="clear_logs">ログを消去</string>
+    <string name="export_logs">ログをエクスポート</string>
     <string name="default_relays">デフォルト relay</string>
     <string name="requests">リクエスト</string>
     <string name="authenticate">アプリを使用するには認証が必要です</string>

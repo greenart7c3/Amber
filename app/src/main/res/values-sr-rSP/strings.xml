@@ -195,6 +195,7 @@
     <string name="save">Sačuvaj</string>
     <string name="logs">Dnevnici</string>
     <string name="clear_logs">Obriši dnevnike</string>
+    <string name="export_logs">Izvezi dnevnike</string>
     <string name="default_relays">Podrazumevani relay-i</string>
     <string name="requests">zahtevi</string>
     <string name="authenticate">Potrebna autentifikacija za korišćenje aplikacije</string>

@@ -214,6 +214,7 @@
     <string name="save">Salvar</string>
     <string name="logs">Registros</string>
     <string name="clear_logs">Limpar logs</string>
+    <string name="export_logs">Exportar logs</string>
     <string name="default_relays">Relays padrão</string>
     <string name="requests">solicita</string>
     <string name="authenticate">Autenticação necessária para usar o aplicativo</string>

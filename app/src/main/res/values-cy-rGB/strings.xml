@@ -219,6 +219,7 @@
     <string name="save">Cadw</string>
     <string name="logs">Logiau</string>
     <string name="clear_logs">Clirio logiau</string>
+    <string name="export_logs">Allforio logiau</string>
     <string name="default_relays">Relays rhagosodedig</string>
     <string name="requests">ceisiadau</string>
     <string name="authenticate">Angen awthentigo i ddefnyddio\'r ap</string>

@@ -195,6 +195,7 @@
     <string name="save">שמור</string>
     <string name="logs">יומנים</string>
     <string name="clear_logs">נקה יומנים</string>
+    <string name="export_logs">ייצוא יומנים</string>
     <string name="default_relays">Relays ברירת מחדל</string>
     <string name="requests">בקשות</string>
     <string name="authenticate">נדרש אימות לשימוש באפליקציה</string>

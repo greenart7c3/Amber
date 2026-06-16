@@ -219,6 +219,7 @@
     <string name="save">Сохранить</string>
     <string name="logs">Журналы</string>
     <string name="clear_logs">Очистить журналы</string>
+    <string name="export_logs">Экспортировать журналы</string>
     <string name="default_relays">Relay по умолчанию</string>
     <string name="requests">запросы</string>
     <string name="authenticate">Для использования приложения необходима аутентификация</string>

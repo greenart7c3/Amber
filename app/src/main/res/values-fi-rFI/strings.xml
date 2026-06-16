@@ -195,6 +195,7 @@
     <string name="save">Tallenna</string>
     <string name="logs">Lokit</string>
     <string name="clear_logs">Tyhjennä lokit</string>
+    <string name="export_logs">Vie lokit</string>
     <string name="default_relays">Oletusrelays</string>
     <string name="requests">pyynnöt</string>
     <string name="authenticate">Sovelluksen käyttö vaatii todennuksen</string>

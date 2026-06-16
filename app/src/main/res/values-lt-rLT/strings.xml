@@ -219,6 +219,7 @@
     <string name="save">Išsaugoti</string>
     <string name="logs">Žurnalai</string>
     <string name="clear_logs">Išvalyti žurnalus</string>
+    <string name="export_logs">Eksportuoti žurnalus</string>
     <string name="default_relays">Numatytieji relay</string>
     <string name="requests">užklausos</string>
     <string name="authenticate">Reikalinga autentifikacija programai naudoti</string>

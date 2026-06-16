@@ -219,6 +219,7 @@
     <string name="save">Shrani</string>
     <string name="logs">Dnevniki</string>
     <string name="clear_logs">Počisti dnevnike</string>
+    <string name="export_logs">Izvozi dnevnike</string>
     <string name="default_relays">Privzeti relay strežniki</string>
     <string name="requests">zahteve</string>
     <string name="authenticate">Za uporabo aplikacije je potrebna preverjanje pristnosti</string>

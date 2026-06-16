@@ -219,6 +219,7 @@
     <string name="save">ذخیره</string>
     <string name="logs">گزارش‌ها</string>
     <string name="clear_logs">پاک کردن گزارش‌ها</string>
+    <string name="export_logs">صدور گزارش‌ها</string>
     <string name="default_relays">relay های پیش‌فرض</string>
     <string name="requests">درخواست‌ها</string>
     <string name="authenticate">برای استفاده از برنامه احراز هویت لازم است</string>

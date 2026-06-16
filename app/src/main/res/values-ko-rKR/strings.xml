@@ -219,6 +219,7 @@
     <string name="save">저장</string>
     <string name="logs">로그</string>
     <string name="clear_logs">로그 지우기</string>
+    <string name="export_logs">로그 내보내기</string>
     <string name="default_relays">기본 relay</string>
     <string name="requests">요청</string>
     <string name="authenticate">앱을 사용하려면 인증이 필요합니다</string>

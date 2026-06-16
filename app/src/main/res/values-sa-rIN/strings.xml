@@ -219,6 +219,7 @@
     <string name="save">सुरक्षयतु</string>
     <string name="logs">लॉग्स्</string>
     <string name="clear_logs">लॉग्स् स्वच्छयतु</string>
+    <string name="export_logs">लॉग्स् निर्यातयतु</string>
     <string name="default_relays">पूर्वनिर्धारित-relays</string>
     <string name="requests">अनुरोधाः</string>
     <string name="authenticate">अनुप्रयोगं उपयोक्तुं प्रमाणीकरणम् आवश्यकम्</string>

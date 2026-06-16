@@ -219,6 +219,7 @@
     <string name="save">Tomarkirin</string>
     <string name="logs">Têketin</string>
     <string name="clear_logs">Têketinên pak bike</string>
+    <string name="export_logs">Têketinan derxe</string>
     <string name="default_relays">Relay-ên xwerû</string>
     <string name="requests">daxwaz</string>
     <string name="authenticate">Ji bo bikaranîna sepanê nasnamedêrî pêwist e</string>

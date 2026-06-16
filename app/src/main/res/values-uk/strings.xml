@@ -195,6 +195,7 @@
     <string name="save">Зберегти</string>
     <string name="logs">Журнали</string>
     <string name="clear_logs">Очистити журнали</string>
+    <string name="export_logs">Експортувати журнали</string>
     <string name="default_relays">Relay-сервери за замовчуванням</string>
     <string name="requests">запити</string>
     <string name="authenticate">Для використання застосунку потрібна автентифікація</string>

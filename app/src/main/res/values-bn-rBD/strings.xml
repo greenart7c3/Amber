@@ -219,6 +219,7 @@
     <string name="save">সংরক্ষণ</string>
     <string name="logs">লগ</string>
     <string name="clear_logs">লগ মুছুন</string>
+    <string name="export_logs">লগ এক্সপোর্ট করুন</string>
     <string name="default_relays">ডিফল্ট relay</string>
     <string name="requests">রিকোয়েস্ট</string>
     <string name="authenticate">অ্যাপ ব্যবহার করতে প্রমাণীকরণ প্রয়োজন</string>

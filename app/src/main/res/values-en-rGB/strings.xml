@@ -195,6 +195,7 @@
     <string name="save">Save</string>
     <string name="logs">Logs</string>
     <string name="clear_logs">Clear logs</string>
+    <string name="export_logs">Export logs</string>
     <string name="default_relays">Default relays</string>
     <string name="requests">requests</string>
     <string name="authenticate">Authentication needed to use the app</string>

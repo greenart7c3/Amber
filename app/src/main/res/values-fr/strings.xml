@@ -216,6 +216,7 @@
     <string name="save">Enregistrer</string>
     <string name="logs">Journaux</string>
     <string name="clear_logs">Effacer les logs</string>
+    <string name="export_logs">Exporter les logs</string>
     <string name="default_relays">Relais par défaut</string>
     <string name="requests">requêtes</string>
     <string name="authenticate">Authentification nécessaire pour utiliser l\'application</string>

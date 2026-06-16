@@ -219,6 +219,7 @@
     <string name="save">Сақтау</string>
     <string name="logs">Журналдар</string>
     <string name="clear_logs">Журналдарды тазалау</string>
+    <string name="export_logs">Журналдарды экспорттау</string>
     <string name="default_relays">Әдепкі relay-лар</string>
     <string name="requests">сұраулар</string>
     <string name="authenticate">Қолданбаны пайдалану үшін аутентификация қажет</string>

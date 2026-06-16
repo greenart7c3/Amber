@@ -195,6 +195,7 @@
     <string name="save">บันทึก</string>
     <string name="logs">บันทึกการทำงาน</string>
     <string name="clear_logs">ล้างบันทึก</string>
+    <string name="export_logs">ส่งออกบันทึก</string>
     <string name="default_relays">Relay เริ่มต้น</string>
     <string name="requests">คำขอ</string>
     <string name="authenticate">ต้องการการยืนยันตัวตนเพื่อใช้แอป</string>

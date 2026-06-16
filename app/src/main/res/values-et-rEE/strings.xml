@@ -195,6 +195,7 @@
     <string name="save">Salvesta</string>
     <string name="logs">Logid</string>
     <string name="clear_logs">Puhasta logid</string>
+    <string name="export_logs">Ekspordi logid</string>
     <string name="default_relays">Vaikerelayd</string>
     <string name="requests">taotlused</string>
     <string name="authenticate">Rakenduse kasutamiseks on vaja autentimist</string>

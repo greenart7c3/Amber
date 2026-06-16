@@ -260,6 +260,7 @@ fun BunkerEncryptDecryptData(
     defaultScope: DecryptTypeScope = DecryptTypeScope.ALL,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
+    iconUrl: String = "",
 ) {
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
@@ -270,6 +271,8 @@ fun BunkerEncryptDecryptData(
     Column(
         modifier,
     ) {
+        RemoteAppIcon(iconUrl, appName)
+
         Text(
             buildAnnotatedString {
                 withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

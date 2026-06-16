@@ -83,6 +83,7 @@ fun BunkerMultiEventHomeScreen(
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
     var appName by remember { mutableStateOf(ApplicationNameCache["$localAccount-$key"] ?: key.toShortenHex()) }
+    var appIcon by remember { mutableStateOf(bunkerRequests.first().clientMetadata?.image ?: "") }
 
     LaunchedEffect(Unit) {
         MultiEventScreenIntents.checkedStates.clear()
@@ -97,8 +98,8 @@ fun BunkerMultiEventHomeScreen(
                 bunkerRequests.first().currentAccount,
             )?.npub?.toShortenHex() ?: ""
 
+            val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
             if (ApplicationNameCache["$localAccount-$key"] == null) {
-                val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
                 app?.let {
                     appName = it.application.name
                     ApplicationNameCache["$localAccount-$key"] = it.application.name
@@ -108,12 +109,15 @@ fun BunkerMultiEventHomeScreen(
                     appName = it
                 }
             }
+            app?.application?.icon?.let { if (it.isNotBlank()) appIcon = it }
         }
     }
 
     Column(
         modifier,
     ) {
+        RemoteAppIcon(appIcon, appName)
+
         Text(
             stringResource(R.string.is_requiring_some_permissions_please_review_them, appName),
             Modifier
@@ -328,10 +332,10 @@ fun BunkerMultiEventHomeScreen(
                                     savedApplication ?: ApplicationWithPermissions(
                                         application = ApplicationEntity(
                                             localKey,
-                                            "",
+                                            request.clientMetadata?.name ?: "",
                                             listOf(),
-                                            "",
-                                            "",
+                                            request.clientMetadata?.url ?: "",
+                                            request.clientMetadata?.image ?: "",
                                             "",
                                             thisAccount.hexKey,
                                             true,

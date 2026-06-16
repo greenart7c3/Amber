@@ -88,6 +88,9 @@ fun BunkerSingleEventHomeScreen(
 
     var appName = applicationEntity?.application?.name ?: bunkerRequest.name
     appName = appName.ifBlank { key.toShortenHex() }
+    // Prefer the persisted application icon, falling back to the icon carried by
+    // the connect request's client metadata (nostr-protocol/nips#2381).
+    val appIcon = (applicationEntity?.application?.icon ?: "").ifBlank { bunkerRequest.clientMetadata?.image ?: "" }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
     val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest.request)
@@ -115,6 +118,7 @@ fun BunkerSingleEventHomeScreen(
             BunkerPingScreen(
                 modifier = modifier,
                 appName = appName,
+                iconUrl = appIcon,
                 shouldRunOnAccept = acceptOrReject,
                 onAccept = {
                     val result = "pong"
@@ -310,6 +314,7 @@ fun BunkerSingleEventHomeScreen(
             BunkerGetPubKeyScreen(
                 modifier = modifier,
                 applicationName = appName,
+                iconUrl = appIcon,
                 onAccept = { permissions, signPolicy, closeApplication, rememberType ->
                     val result = account.hexKey
 
@@ -381,6 +386,7 @@ fun BunkerSingleEventHomeScreen(
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
+                iconUrl = appIcon,
                 type = type,
                 account = account,
                 onAccept = { rememberType, scope ->
@@ -454,6 +460,7 @@ fun BunkerSingleEventHomeScreen(
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
+                iconUrl = appIcon,
                 type = type,
                 account = account,
                 onAccept = { rememberType, scope ->
@@ -529,6 +536,7 @@ fun BunkerSingleEventHomeScreen(
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
+                iconUrl = appIcon,
                 type = type,
                 account = account,
                 onAccept = { rememberType, scope ->
@@ -604,6 +612,7 @@ fun BunkerSingleEventHomeScreen(
                 encryptedData = bunkerRequest.encryptedData,
                 shouldRunOnAccept = acceptOrReject,
                 appName = appName,
+                iconUrl = appIcon,
                 type = type,
                 account = account,
                 onAccept = { rememberType, scope ->
@@ -696,6 +705,7 @@ fun BunkerSingleEventHomeScreen(
                 BunkerRelayAuthScreen(
                     modifier = modifier,
                     appName = appName,
+                    iconUrl = appIcon,
                     relayUrl = relayUrl,
                     shouldAcceptOrReject = acceptOrReject,
                     defaultScope = RelayAuthScope.SPECIFIC,
@@ -768,6 +778,7 @@ fun BunkerSingleEventHomeScreen(
                     modifier = modifier,
                     shouldAcceptOrReject = acceptOrReject,
                     appName = appName,
+                    iconUrl = appIcon,
                     event = event,
                     account = account,
                     onAccept = {
@@ -831,6 +842,7 @@ fun BunkerSingleEventHomeScreen(
                     modifier = modifier,
                     isBunker = true,
                     appName = appName,
+                    iconUrl = appIcon,
                     packageName = null,
                     type = type,
                     account = account,
@@ -968,6 +980,7 @@ fun BunkerSingleEventHomeScreen(
                     decoded = decoded,
                     shouldRunOnAccept = acceptOrReject,
                     appName = appName,
+                    iconUrl = appIcon,
                     onAccept = {
                         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
                             try {

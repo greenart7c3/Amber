@@ -356,6 +356,13 @@ class Amber :
         instance = this
         stats.createNotificationChannel()
         Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+
+        // Build Coil's singleton ImageLoader off the main thread. Its factory
+        // (newImageLoader) touches cacheDir, so letting the first AsyncImage
+        // build it lazily during composition trips StrictMode's DiskReadViolation.
+        applicationIOScope.launch {
+            SingletonImageLoader.get(this@Amber)
+        }
     }
 
     private fun enableStrictMode() {

@@ -253,6 +253,18 @@ fun rememberAppDisplayInfo(packageName: String): AppDisplayInfo {
     }
 }
 
+/** Resolves a native app's launcher icon, or null when it can't be queried. */
+@Composable
+fun rememberAppIcon(packageName: String?): Drawable? {
+    if (packageName.isNullOrBlank()) return null
+    val context = LocalContext.current
+    return remember(packageName) {
+        runCatching {
+            context.packageManager.getApplicationIcon(packageName)
+        }.getOrNull()
+    }
+}
+
 data class AppDisplayInfo(
     val name: String,
     val icon: Drawable? = null,

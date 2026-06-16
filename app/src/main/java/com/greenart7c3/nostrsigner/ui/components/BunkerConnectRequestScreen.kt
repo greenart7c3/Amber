@@ -204,6 +204,9 @@ fun BunkerConnectRequestScreen(
                 .verticalScroll(scrollState)
                 .padding(horizontal = horizontalPadding),
         ) {
+            val clientImage = bunkerRequest.clientMetadata?.image.orEmpty()
+            RemoteAppIcon(imageUrl = clientImage, name = appName.value, size = 64.dp)
+
             Text(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -213,6 +216,21 @@ fun BunkerConnectRequestScreen(
                 fontSize = 18.sp,
                 textAlign = TextAlign.Center,
             )
+
+            val clientUrl = bunkerRequest.clientMetadata?.url.orEmpty()
+            if (clientUrl.isNotBlank()) {
+                Text(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 4.dp),
+                    text = clientUrl,
+                    fontSize = 13.sp,
+                    textAlign = TextAlign.Center,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
 
             // Account section
             SectionLabel(stringResource(R.string.account))

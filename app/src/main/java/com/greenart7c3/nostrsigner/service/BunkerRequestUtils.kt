@@ -341,8 +341,8 @@ object BunkerRequestUtils {
                         key,
                         appName ?: "",
                         relays,
-                        "",
-                        "",
+                        bunkerRequest.clientMetadata?.url ?: "",
+                        bunkerRequest.clientMetadata?.image ?: "",
                         "",
                         account.hexKey,
                         true,
@@ -363,6 +363,23 @@ object BunkerRequestUtils {
                 application = application.copy(
                     application = application.application.copy(localKey = newPrivKey),
                 )
+            }
+
+            // Persist client metadata (nostr-protocol/nips#2381) carried by the
+            // connect request. The bunker:// application is created up-front when
+            // its URI is generated, so savedApplication is usually non-null here —
+            // the new-entity branch above never runs for it. Update name/url/icon
+            // in place so the metadata is stored on every connect.
+            if (bunkerRequest.request is BunkerRequestConnect) {
+                bunkerRequest.clientMetadata?.let { metadata ->
+                    application = application.copy(
+                        application = application.application.copy(
+                            name = metadata.name.ifBlank { application.application.name },
+                            url = metadata.url.ifBlank { application.application.url },
+                            icon = metadata.image.ifBlank { application.application.icon },
+                        ),
+                    )
+                }
             }
 
             val activity = Amber.instance.getMainActivity()

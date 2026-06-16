@@ -49,6 +49,7 @@ import com.greenart7c3.nostrsigner.service.KillSwitchReceiver
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.AmberWarningCard
+import com.greenart7c3.nostrsigner.ui.components.AppAvatar
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlinx.coroutines.Dispatchers
@@ -190,6 +191,13 @@ fun ApplicationsScreen(
                             },
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
+                        AppAvatar(
+                            modifier = Modifier.padding(end = 12.dp),
+                            iconUrl = applicationWithHistory.icon,
+                            packageName = applicationWithHistory.key,
+                            name = applicationWithHistory.name.ifBlank { applicationWithHistory.key.toShortenHex() },
+                            size = 40.dp,
+                        )
                         Column(
                             verticalArrangement = Arrangement.Center,
                         ) {

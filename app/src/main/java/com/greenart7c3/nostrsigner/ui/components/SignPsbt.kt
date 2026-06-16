@@ -85,10 +85,13 @@ fun BunkerSignPsbt(
     appName: String,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     Column(modifier) {
+        RemoteAppIcon(iconUrl, appName)
+
         val message = stringResource(R.string.sign_psbt)
 
         Text(

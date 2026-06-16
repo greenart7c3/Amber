@@ -129,6 +129,7 @@ fun BunkerEventData(
     account: Account,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    iconUrl: String = "",
 ) {
     var showMore by androidx.compose.runtime.remember {
         mutableStateOf(false)
@@ -143,6 +144,7 @@ fun BunkerEventData(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.size(16.dp))
+        RemoteAppIcon(iconUrl, appName)
         val permission = Permission("sign_event", event.kind)
         val kindTranslation = permission.toLocalizedString(context)
         val unknownKindString = stringResource(R.string.event_kind, event.kind.toString())

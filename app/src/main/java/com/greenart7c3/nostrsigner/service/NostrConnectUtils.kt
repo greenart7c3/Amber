@@ -6,6 +6,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.BunkerMetadata
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
@@ -32,6 +33,8 @@ object NostrConnectUtils {
             val split = data.split("?")
             val relays: MutableList<NormalizedRelayUrl> = mutableListOf()
             var name = ""
+            var url = ""
+            var image = ""
             val pubKey = split.first()
             val parsedData = IntentUtils.decodeData(split.drop(1).joinToString { it })
             val splitParsedData = parsedData.split("&")
@@ -51,6 +54,14 @@ object NostrConnectUtils {
                 }
                 if (paramName == "name") {
                     name = json
+                }
+
+                if (paramName == "url") {
+                    url = json
+                }
+
+                if (paramName == "image") {
+                    image = json
                 }
 
                 if (paramName == "secret") {
@@ -83,6 +94,14 @@ object NostrConnectUtils {
                 if (paramName == "metadata") {
                     val bunkerMetada = metaDataFromJson(json)
                     name = bunkerMetada.name
+                    if (bunkerMetada.url.isNotEmpty()) {
+                        url = bunkerMetada.url
+                    }
+                    BunkerClientMetadata.parseOrNull(json)?.let { clientMetadata ->
+                        if (clientMetadata.image.isNotEmpty()) {
+                            image = clientMetadata.image
+                        }
+                    }
                     if (bunkerMetada.perms.isNotEmpty()) {
                         val splitPerms = bunkerMetada.perms.split(",")
                         splitPerms.forEach { perm ->
@@ -109,6 +128,9 @@ object NostrConnectUtils {
             permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
             permissions.removeIf { it.type == "nip" && (it.kind == null || !it.kind.containsNip()) }
 
+            val clientMetadata = BunkerClientMetadata(name = name, url = url, image = image)
+                .takeUnless { it.isEmpty() }
+
             BunkerRequestUtils.addRequest(
                 AmberBunkerRequest(
                     BunkerRequestConnect(
@@ -131,6 +153,7 @@ object NostrConnectUtils {
                     encryptedData = null,
                     encryptionType = EncryptionType.NIP44,
                     isNostrConnectUri = true,
+                    clientMetadata = clientMetadata,
                 ),
             )
         } catch (e: Exception) {

@@ -8,6 +8,7 @@ import android.net.Uri
 import android.util.Log
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
+import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
@@ -27,6 +28,19 @@ class SignerProvider : ContentProvider() {
     private val scope get() = Amber.instance.applicationIOScope
 
     private fun rejectedCursor(): Cursor = MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+
+    /**
+     * Capture the calling app's launcher icon/name onto its saved app while it is
+     * visible to us. Dispatched off the binder thread so it adds no latency to the
+     * signing response, and gated to run once per app (see [IntentUtils.persistNativeAppMetadata]).
+     */
+    private fun captureCallerMetadata(account: Account) {
+        val pkg = callingPackage ?: return
+        val ctx = context ?: return
+        scope.launch {
+            IntentUtils.persistNativeAppMetadata(ctx, account, pkg)
+        }
+    }
 
     // Decodes the Base64 v3 wire value to readable plaintext for history.
     @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
@@ -93,6 +107,7 @@ class SignerProvider : ContentProvider() {
                         Log.d(Amber.TAG, "No account from storage")
                         return null
                     }
+                    captureCallerMetadata(account)
                     val event = try {
                         IntentUtils.getUnsignedEvent(json, account)
                     } catch (e: Exception) {
@@ -243,6 +258,7 @@ class SignerProvider : ContentProvider() {
                     val stringType = uriString.replace("content://$appId.", "")
                     val pubkey = projection[1]
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context!!, npub) ?: return null
+                    captureCallerMetadata(account)
                     val logDatabase = Amber.instance.getLogDatabase(account.npub)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permDao = Amber.instance.dao(account.npub)
@@ -452,6 +468,7 @@ class SignerProvider : ContentProvider() {
                         Log.d(Amber.TAG, "No account from storage")
                         return null
                     }
+                    captureCallerMetadata(account)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permDao = Amber.instance.dao(account.npub)
                     val permission =
@@ -547,6 +564,7 @@ class SignerProvider : ContentProvider() {
                     if (account == null) {
                         return null
                     }
+                    captureCallerMetadata(account)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permDao = Amber.instance.dao(account.npub)
                     val permission =

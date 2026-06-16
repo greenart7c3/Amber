@@ -134,6 +134,8 @@ class MainViewModel(val context: Context) : ViewModel() {
                 if (intentData != null) {
                     IntentUtils.addAll(listOf(intentData))
                     addedIntentIds.add(intentData.id)
+                    // The calling app is visible to us now; capture its icon/name.
+                    IntentUtils.persistNativeAppMetadata(context, acc, callingPackage)
                 }
 
                 intent.getStringExtra("route")?.let { route ->

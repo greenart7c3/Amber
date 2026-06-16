@@ -55,6 +55,7 @@ fun Nip44v3ApprovalData(
     defaultScope: DecryptTypeScope = DecryptTypeScope.SPECIFIC,
     onAccept: (RememberType, DecryptTypeScope) -> Unit,
     onReject: (RememberType, DecryptTypeScope) -> Unit,
+    iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var grantScope by remember { mutableStateOf(defaultScope) }
@@ -65,6 +66,7 @@ fun Nip44v3ApprovalData(
 
     Column(modifier) {
         if (isBunker) {
+            RemoteAppIcon(iconUrl, appName)
             Text(
                 buildAnnotatedString {
                     withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {

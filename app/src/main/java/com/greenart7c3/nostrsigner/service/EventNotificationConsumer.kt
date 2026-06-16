@@ -36,6 +36,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptionType
@@ -229,6 +230,17 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
 
+        // NIP-46 connect requests may carry optional client metadata as the 4th
+        // param (nostr-protocol/nips#2381) so the signer can show who is
+        // connecting over the bunker:// flow. It must be read from the raw request
+        // JSON: Quartz's BunkerRequestConnect only keeps params[0..2] and drops the
+        // metadata element when it rebuilds its params array.
+        val clientMetadata = if (bunkerRequest is BunkerRequestConnect) {
+            BunkerClientMetadata.fromConnectRequest(requestStr)
+        } else {
+            null
+        }
+
         var request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
@@ -236,12 +248,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             currentAccount = acc.npub,
             nostrConnectSecret = "",
             closeApplication = true,
-            name = "",
+            name = clientMetadata?.name ?: "",
             signedEvent = signedEvent,
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
+            clientMetadata = clientMetadata,
         )
 
         val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
@@ -358,12 +371,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             currentAccount = acc.npub,
             nostrConnectSecret = "",
             closeApplication = true,
-            name = "",
+            name = clientMetadata?.name ?: "",
             signedEvent = signedEvent,
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
+            clientMetadata = clientMetadata,
         )
 
         if (type == SignerType.SWITCH_RELAYS) {

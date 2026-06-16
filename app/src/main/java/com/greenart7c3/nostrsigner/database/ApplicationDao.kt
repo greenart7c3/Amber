@@ -200,6 +200,10 @@ interface ApplicationDao {
     @Transaction
     suspend fun updateLastUsed(key: String, time: Long)
 
+    @Query("UPDATE application SET name = :name, icon = :icon WHERE `key` = :key")
+    @Transaction
+    suspend fun updateNameAndIcon(key: String, name: String, icon: String)
+
     @Delete
     @Transaction
     suspend fun deletePermission(permission: ApplicationPermissionsEntity)

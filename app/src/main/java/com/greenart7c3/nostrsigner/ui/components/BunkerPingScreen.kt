@@ -31,6 +31,7 @@ fun BunkerPingScreen(
     appName: String,
     onAccept: (RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    iconUrl: String = "",
 ) {
     var rememberType by remember {
         mutableStateOf(RememberType.NEVER)
@@ -39,6 +40,8 @@ fun BunkerPingScreen(
     Column(
         modifier,
     ) {
+        RemoteAppIcon(iconUrl)
+
         val message = stringResource(R.string.ping)
 
         Text(

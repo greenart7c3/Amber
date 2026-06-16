@@ -24,12 +24,15 @@ fun BunkerGetPubKeyScreen(
     applicationName: String,
     onAccept: (List<Permission>?, Int, Boolean?, RememberType) -> Unit,
     onReject: (RememberType) -> Unit,
+    iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
 
     Column(
         modifier,
     ) {
+        RemoteAppIcon(iconUrl)
+
         Text(
             modifier = Modifier.fillMaxWidth(),
             text = applicationName,

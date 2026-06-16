@@ -47,6 +47,7 @@ fun BunkerRelayAuthScreen(
     account: Account,
     onAccept: (RememberType, RelayAuthScope) -> Unit,
     onReject: (RememberType, RelayAuthScope) -> Unit,
+    iconUrl: String = "",
 ) {
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var scope by remember { mutableStateOf(defaultScope) }
@@ -66,6 +67,8 @@ fun BunkerRelayAuthScreen(
         horizontalAlignment = Alignment.CenterHorizontally,
     ) {
         Spacer(Modifier.size(16.dp))
+
+        RemoteAppIcon(iconUrl)
 
         Text(
             buildAnnotatedString {

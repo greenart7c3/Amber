@@ -59,4 +59,34 @@ class BunkerClientMetadataTest {
         assertEquals("App", metadata?.name)
         assertEquals("https://x.com", metadata?.url)
     }
+
+    @Test
+    fun `fromConnectRequest reads the 4th param`() {
+        val request = """
+            {"id":"1","method":"connect","params":["remotepk","secret","sign_event:1","{\"name\":\"Web Client\",\"url\":\"https://web.client\",\"image\":\"https://web.client/i.png\"}"]}
+        """.trimIndent()
+        val metadata = BunkerClientMetadata.fromConnectRequest(request)
+        assertEquals("Web Client", metadata?.name)
+        assertEquals("https://web.client", metadata?.url)
+        assertEquals("https://web.client/i.png", metadata?.image)
+    }
+
+    @Test
+    fun `fromConnectRequest returns null when metadata param is absent`() {
+        val request = """{"id":"1","method":"connect","params":["remotepk","secret","sign_event:1"]}"""
+        assertNull(BunkerClientMetadata.fromConnectRequest(request))
+    }
+
+    @Test
+    fun `fromConnectRequest returns null when params missing or not an array`() {
+        assertNull(BunkerClientMetadata.fromConnectRequest("""{"id":"1","method":"connect"}"""))
+        assertNull(BunkerClientMetadata.fromConnectRequest("""{"id":"1","method":"connect","params":"x"}"""))
+    }
+
+    @Test
+    fun `fromConnectRequest returns null for null blank or malformed input`() {
+        assertNull(BunkerClientMetadata.fromConnectRequest(null))
+        assertNull(BunkerClientMetadata.fromConnectRequest(""))
+        assertNull(BunkerClientMetadata.fromConnectRequest("not json"))
+    }
 }

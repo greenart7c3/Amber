@@ -41,6 +41,26 @@ data class BunkerClientMetadata(
             }
         }
 
+        /**
+         * Extracts the client metadata from a raw decrypted NIP-46 `connect`
+         * request JSON, reading the 4th element of its `params` array.
+         *
+         * This deliberately works off the raw request rather than a parsed
+         * `BunkerRequestConnect`: Quartz only keeps `params[0..2]` (remote key,
+         * secret, permissions) and rebuilds the `params` array from those, so the
+         * `optional_client_metadata` element would otherwise be lost.
+         */
+        fun fromConnectRequest(requestJson: String?): BunkerClientMetadata? {
+            if (requestJson.isNullOrBlank()) return null
+            return try {
+                val params = mapper.readTree(requestJson).get("params")
+                if (params == null || !params.isArray) return null
+                parseOrNull(params.get(3)?.asText())
+            } catch (_: Exception) {
+                null
+            }
+        }
+
         private fun fromJson(node: JsonNode): BunkerClientMetadata = BunkerClientMetadata(
             name = node.get("name")?.asText()?.trim().orEmpty(),
             url = node.get("url")?.asText()?.trim().orEmpty(),

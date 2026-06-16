@@ -232,9 +232,11 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         // NIP-46 connect requests may carry optional client metadata as the 4th
         // param (nostr-protocol/nips#2381) so the signer can show who is
-        // connecting over the bunker:// flow.
+        // connecting over the bunker:// flow. It must be read from the raw request
+        // JSON: Quartz's BunkerRequestConnect only keeps params[0..2] and drops the
+        // metadata element when it rebuilds its params array.
         val clientMetadata = if (bunkerRequest is BunkerRequestConnect) {
-            BunkerClientMetadata.parseOrNull(bunkerRequest.params.getOrNull(3))
+            BunkerClientMetadata.fromConnectRequest(requestStr)
         } else {
             null
         }

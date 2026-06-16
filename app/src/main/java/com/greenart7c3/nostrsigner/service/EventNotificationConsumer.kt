@@ -36,6 +36,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptionType
@@ -229,6 +230,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
 
         val encryptedDataKind = getEncryptedDataKind(bunkerRequest, acc, relay.url)
 
+        // NIP-46 connect requests may carry optional client metadata as the 4th
+        // param (nostr-protocol/nips#2381) so the signer can show who is
+        // connecting over the bunker:// flow.
+        val clientMetadata = if (bunkerRequest is BunkerRequestConnect) {
+            BunkerClientMetadata.parseOrNull(bunkerRequest.params.getOrNull(3))
+        } else {
+            null
+        }
+
         var request = AmberBunkerRequest(
             request = bunkerRequest,
             localKey = event.pubKey,
@@ -236,12 +246,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             currentAccount = acc.npub,
             nostrConnectSecret = "",
             closeApplication = true,
-            name = "",
+            name = clientMetadata?.name ?: "",
             signedEvent = signedEvent,
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
+            clientMetadata = clientMetadata,
         )
 
         val type = BunkerRequestUtils.getTypeFromBunker(bunkerRequest)
@@ -358,12 +369,13 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             currentAccount = acc.npub,
             nostrConnectSecret = "",
             closeApplication = true,
-            name = "",
+            name = clientMetadata?.name ?: "",
             signedEvent = signedEvent,
             encryptedData = encryptedDataKind,
             encryptionType = encryptionType,
             isNostrConnectUri = false,
             signerPrivKey = connectionPrivKey,
+            clientMetadata = clientMetadata,
         )
 
         if (type == SignerType.SWITCH_RELAYS) {

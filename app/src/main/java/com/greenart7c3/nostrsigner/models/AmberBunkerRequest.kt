@@ -24,4 +24,5 @@ data class AmberBunkerRequest(
     val encryptionType: EncryptionType,
     val isNostrConnectUri: Boolean,
     val signerPrivKey: String = "",
+    val clientMetadata: BunkerClientMetadata? = null,
 )

@@ -895,6 +895,10 @@ object IntentUtils {
 
                 if (packageName != null) {
                     dao.insertApplicationWithPermissions(application)
+                    // The calling app is visible to us now (mid-request); capture its
+                    // launcher icon + label so a first-ever connection populates them
+                    // immediately, not only on a later request.
+                    persistNativeAppMetadata(context, account, packageName)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     Amber.instance.applicationIOScope.launch {
                         historyDatabase.dao().addHistory(

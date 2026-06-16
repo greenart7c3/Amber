@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s está a solicitar a assinatura destes eventos relacionados com a permissão %2$s.</string>
     <string name="relay_filter_failed">O relay não suporta a recuperação de eventos Bunker. Deseja adicioná-lo mesmo assim?</string>
     <string name="active_relays">Relays ativos</string>
+    <string name="active_relays_default_description">Usados em cada nova ligação de aplicação.</string>
+    <string name="relays_used_by_connections">Relays de ligação</string>
+    <string name="active_relays_connections_description">Relays que as ligações existentes ainda utilizam, mas que não estão no seu conjunto predefinido. Edite uma ligação para alterar os relays que esta utiliza.</string>
     <string name="default_profile_relays">Relays de perfil predefinidos</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Gira os relays utilizados para obter os dados do seu perfil</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Gira os relays utilizados para comunicar com aplicações externas</string>

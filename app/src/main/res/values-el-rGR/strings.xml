@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">Το %1$s ζητά να υπογράψετε αυτά τα συμβάντα που σχετίζονται με την άδεια %2$s.</string>
     <string name="relay_filter_failed">Το relay δεν υποστηρίζει ανάκτηση συμβάντων Bunker. Θέλετε να το προσθέσετε παρόλα αυτά;</string>
     <string name="active_relays">Ενεργά relay</string>
+    <string name="active_relays_default_description">Χρησιμοποιείται για κάθε νέα σύνδεση εφαρμογής.</string>
+    <string name="relays_used_by_connections">Relay συνδέσεων</string>
+    <string name="active_relays_connections_description">Relay που οι υπάρχουσες συνδέσεις εξακολουθούν να χρησιμοποιούν αλλά δεν βρίσκονται στο προεπιλεγμένο σας σύνολο. Επεξεργαστείτε μια σύνδεση για να αλλάξετε τα relay που χρησιμοποιεί.</string>
     <string name="default_profile_relays">Προεπιλεγμένα relay προφίλ</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Διαχείριση των relay που χρησιμοποιούνται για την ανάκτηση δεδομένων προφίλ σας</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Διαχείριση των relay που χρησιμοποιούνται για επικοινωνία με εξωτερικές εφαρμογές</string>

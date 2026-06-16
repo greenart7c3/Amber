@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s इन घटनाओं को हस्ताक्षरयितुमिच्छति जाः %2$s अनुमति-सम्बद्धाः सन्ति।</string>
     <string name="relay_filter_failed">Relay Bunker-घटनाः प्राप्तुं समर्थः नास्ति। क्या भवान् तथापि योजयितुमिच्छति?</string>
     <string name="active_relays">सक्रिय-relays</string>
+    <string name="active_relays_default_description">प्रत्येकस्मै नूतनाय अनुप्रयोगसम्बन्धाय उपयुज्यते।</string>
+    <string name="relays_used_by_connections">सम्बन्ध-relays</string>
+    <string name="active_relays_connections_description">यानि relays विद्यमानाः सम्बन्धाः अद्यापि उपयुञ्जते किन्तु यानि भवतः पूर्वनिर्धारितसमुच्चये न सन्ति। उपयुज्यमानानि relays परिवर्तयितुं सम्बन्धं सम्पादयतु।</string>
     <string name="default_profile_relays">पूर्वनिर्धारित-प्रोफ़ाइल-relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">भवतः प्रोफ़ाइल-दत्तांश-आहरणार्थं उपयुक्त-relays प्रबन्धयतु</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">बाह्य-अनुप्रयोगैः संचारार्थं उपयुक्त-relays प्रबन्धयतु</string>

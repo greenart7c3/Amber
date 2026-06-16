@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s %2$s اجازت سے متعلق اِن ایونٹاں پر دستخط کرنے کیتے کہہ رہیا اِچھ۔</string>
     <string name="relay_filter_failed">Relay، Bunker ایونٹ حاصل کرنے دی حمایت نہیں کردی۔ کیا تُسی پھر بھی اِسے شامل کرنا چاہندے ہو؟</string>
     <string name="active_relays">فعال relays</string>
+    <string name="active_relays_default_description">ہر نئے ایپ کنکشن خاطرٕ استعمال کرنہٕ یوان چھُ۔</string>
+    <string name="relays_used_by_connections">کنکشن relays</string>
+    <string name="active_relays_connections_description">تِم relays یم موجوٗد کنکشن وُنہِ تام استعمال کران چھِ مگر یم توٚہنٛدِس ڈیفالٹ سیٹس منٛز نہٕ چھِ۔ کنکشنہٕ ہنٛد استعمال کرنہٕ آمت relays بدلاونہٕ خاطرٕ سُہ کنکشن ایڈٹ کریو۔</string>
     <string name="default_profile_relays">ڈیفالٹ پروفائل relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">اپنا پروفائل ڈیٹا حاصل کرنے کیتے استعمال شدہ relays منظم کرو</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">بیرونی ایپلی کیشناں سے رابطے کیتے استعمال شدہ relays منظم کرو</string>

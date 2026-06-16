@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">Mae %1$s yn gofyn am lofnodi\'r digwyddiadau hyn sy\'n ymwneud â chaniatâd %2$s.</string>
     <string name="relay_filter_failed">Nid yw\'r relay yn cefnogi adalw digwyddiadau Bunker. A hoffech ei ychwanegu beth bynnag?</string>
     <string name="active_relays">Relays gweithredol</string>
+    <string name="active_relays_default_description">Defnyddir ar gyfer pob cysylltiad app newydd.</string>
+    <string name="relays_used_by_connections">Relays cysylltiadau</string>
+    <string name="active_relays_connections_description">Relays y mae cysylltiadau presennol yn dal i\'w defnyddio ond nad ydynt yn eich set ddiofyn. Golygwch gysylltiad i newid y relays y mae\'n eu defnyddio.</string>
     <string name="default_profile_relays">Relays proffil rhagosodedig</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Rheoli\'r relays a ddefnyddir i nôl data eich proffil</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Rheoli\'r relays a ddefnyddir i gyfathrebu â chymwysiadau allanol</string>

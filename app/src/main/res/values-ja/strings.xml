@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s が %2$s 権限に関連するイベントへの署名を求めています。</string>
     <string name="relay_filter_failed">Relay が Bunker イベントの取得をサポートしていません。それでも追加しますか？</string>
     <string name="active_relays">アクティブな relay</string>
+    <string name="active_relays_default_description">すべての新しいアプリ接続に使用されます。</string>
+    <string name="relays_used_by_connections">接続用 relay</string>
+    <string name="active_relays_connections_description">既存の接続が引き続き使用しているが、デフォルトのセットには含まれていない relay です。接続が使用する relay を変更するには、その接続を編集してください。</string>
     <string name="default_profile_relays">デフォルトプロフィール relay</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">プロフィールデータの取得に使用する relay を管理</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">外部アプリケーションとの通信に使用する relay を管理</string>

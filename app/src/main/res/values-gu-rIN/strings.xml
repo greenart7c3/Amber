@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s સસ %2$s સસ સસ સસ સસ.</string>
     <string name="relay_filter_failed">Relay Bunker સસ સસ. સસ સસ?</string>
     <string name="active_relays">સસ relays</string>
+    <string name="active_relays_default_description">દરેક નવા એપ કનેક્શન માટે વપરાય છે.</string>
+    <string name="relays_used_by_connections">કનેક્શન relays</string>
+    <string name="active_relays_connections_description">એવા relays જે હાલના કનેક્શન હજુ પણ વાપરે છે પરંતુ જે તમારા ડિફૉલ્ટ સેટમાં નથી. કનેક્શન જે relays વાપરે છે તે બદલવા માટે તે કનેક્શન સંપાદિત કરો.</string>
     <string name="default_profile_relays">સસ સસ relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">સસ સસ relays સસ</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">સસ સસ relays સસ</string>

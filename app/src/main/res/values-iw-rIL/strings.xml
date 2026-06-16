@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s דורש לחתום על אירועים אלה הקשורים להרשאת %2$s.</string>
     <string name="relay_filter_failed">ה-relay אינו תומך באחזור אירועי Bunker. האם להוסיף אותו בכל זאת?</string>
     <string name="active_relays">Relays פעילים</string>
+    <string name="active_relays_default_description">בשימוש עבור כל חיבור אפליקציה חדש.</string>
+    <string name="relays_used_by_connections">Relays של חיבורים</string>
+    <string name="active_relays_connections_description">Relays שחיבורים קיימים עדיין משתמשים בהם אך אינם נמצאים בערכת ברירת המחדל שלך. ערוך חיבור כדי לשנות את ה-relays שבהם הוא משתמש.</string>
     <string name="default_profile_relays">Relays ברירת מחדל לפרופיל</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">נהל את ה-relays המשמשים לאחזור נתוני הפרופיל שלך</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">נהל את ה-relays המשמשים לתקשורת עם אפליקציות חיצוניות</string>

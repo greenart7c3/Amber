@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s požaduje podpis těchto událostí souvisejících s oprávněním %2$s.</string>
     <string name="relay_filter_failed">Relay nepodporuje načítání událostí bunkeru. Chcete ji přesto přidat?</string>
     <string name="active_relays">Aktivní relay</string>
+    <string name="active_relays_default_description">Použito pro každé nové připojení aplikace.</string>
+    <string name="relays_used_by_connections">Relay připojení</string>
+    <string name="active_relays_connections_description">Relay, které stávající připojení stále používají, ale nejsou ve vaší výchozí sadě. Upravte připojení a změňte relay, které používá.</string>
     <string name="default_profile_relays">Výchozí relay profilu</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Spravujte relay používané k načítání dat vašeho profilu</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Spravujte relay používané pro komunikaci s externími aplikacemi</string>

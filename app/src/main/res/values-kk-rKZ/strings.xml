@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s %2$s рұқсатына қатысты мына оқиғаларға қол қоюды сұрайды.</string>
     <string name="relay_filter_failed">Relay Bunker оқиғаларын алуды қолдамайды. Дегенмен оны қосқыңыз келе ме?</string>
     <string name="active_relays">Белсенді relay-лар</string>
+    <string name="active_relays_default_description">Әрбір жаңа қолданба қосылымы үшін қолданылады.</string>
+    <string name="relays_used_by_connections">Қосылым relay-лары</string>
+    <string name="active_relays_connections_description">Бар қосылымдар әлі де қолданатын, бірақ әдепкі жиынтығыңызда жоқ relay-лар. Қосылым қолданатын relay-ларды өзгерту үшін сол қосылымды өңдеңіз.</string>
     <string name="default_profile_relays">Профильдің әдепкі relay-лары</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Профиль деректерін алу үшін пайдаланылатын relay-ларды басқарыңыз</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Сыртқы қолданбалармен байланысу үшін пайдаланылатын relay-ларды басқарыңыз</string>

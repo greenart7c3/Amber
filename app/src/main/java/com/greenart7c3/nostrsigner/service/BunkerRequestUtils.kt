@@ -322,7 +322,17 @@ object BunkerRequestUtils {
             if (bunkerRequest.request is BunkerRequestConnect) {
                 savedApplication?.application?.deleteAfter = deleteAfter
             }
-            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
+            // For a brand-new connection, only honor bunkerRequest.relays when they came
+            // from a nostrconnect:// URI (client-specified). Relay-delivered bunker
+            // requests carry just the single relay that delivered the event, which may be
+            // a write-restricted indexer/profile relay — fall back to the configured
+            // default relays instead.
+            val newConnectionRelays = if (bunkerRequest.isNostrConnectUri) {
+                bunkerRequest.relays.ifEmpty { defaultRelays }
+            } else {
+                defaultRelays
+            }
+            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: newConnectionRelays
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 
             var application =
@@ -537,7 +547,15 @@ object BunkerRequestUtils {
         Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             val savedApplication = Amber.instance.dao(account.npub).getByKey(key)
             val defaultRelays = Amber.instance.settings.defaultRelays
-            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: bunkerRequest.relays.ifEmpty { defaultRelays }
+            // Mirror sendResult: a brand-new connection only honors bunkerRequest.relays
+            // for nostrconnect:// URIs. Relay-delivered requests fall back to the
+            // configured default relays rather than the single delivering relay.
+            val newConnectionRelays = if (bunkerRequest.isNostrConnectUri) {
+                bunkerRequest.relays.ifEmpty { defaultRelays }
+            } else {
+                defaultRelays
+            }
+            val relays = savedApplication?.application?.relays?.ifEmpty { defaultRelays } ?: newConnectionRelays
 
             val secret = if (bunkerRequest.request is BunkerRequestConnect) bunkerRequest.request.secret ?: "" else ""
 

@@ -422,6 +422,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s nõuab nende sündmuste allkirjastamist, mis on seotud %2$s õigusega.</string>
     <string name="relay_filter_failed">Relay ei toeta bunkeri sündmuste toomist. Kas soovid selle ikkagi lisada?</string>
     <string name="active_relays">Aktiivsed relayd</string>
+    <string name="active_relays_default_description">Kasutatakse iga uue rakenduse ühenduse jaoks.</string>
+    <string name="relays_used_by_connections">Ühenduste relayd</string>
+    <string name="active_relays_connections_description">Relayd, mida olemasolevad ühendused endiselt kasutavad, kuid mis ei ole sinu vaikekomplektis. Muuda ühendust, et muuta selle kasutatavaid relaysid.</string>
     <string name="default_profile_relays">Vaikimisi profiilirelayd</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Halda relay\'i, mida kasutatakse sinu profiiliandmete toomiseks</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Halda relay\'i, mida kasutatakse väliste rakendustega suhtlemiseks</string>

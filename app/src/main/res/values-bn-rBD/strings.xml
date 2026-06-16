@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s %2$s অনুমতি সংক্রান্ত এই ইভেন্টগুলো সাইন করতে বলছে।</string>
     <string name="relay_filter_failed">Relay Bunker ইভেন্ট পুনরুদ্ধার সমর্থন করে না। আপনি কি তবুও এটি যোগ করতে চান?</string>
     <string name="active_relays">সক্রিয় relay</string>
+    <string name="active_relays_default_description">প্রতিটি নতুন অ্যাপ সংযোগের জন্য ব্যবহৃত হয়।</string>
+    <string name="relays_used_by_connections">সংযোগের relay</string>
+    <string name="active_relays_connections_description">যে relay গুলো বিদ্যমান সংযোগগুলো এখনও ব্যবহার করে কিন্তু আপনার ডিফল্ট সেটে নেই। কোন relay ব্যবহার করা হবে তা পরিবর্তন করতে একটি সংযোগ সম্পাদনা করুন।</string>
     <string name="default_profile_relays">ডিফল্ট প্রোফাইল relay</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">আপনার প্রোফাইল ডেটা আনতে ব্যবহৃত relay পরিচালনা করুন</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">বাহ্যিক অ্যাপ্লিকেশনের সাথে যোগাযোগের জন্য ব্যবহৃত relay পরিচালনা করুন</string>

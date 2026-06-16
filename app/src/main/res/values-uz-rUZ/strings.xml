@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s %2$s ruxsatiga oid ushbu voqealarni imzolashni talab qilmoqda.</string>
     <string name="relay_filter_failed">Relay Bunker voqealarini olishni qo\'llab-quvvatlamaydi. Baribir qo\'shmoqchimisiz?</string>
     <string name="active_relays">Faol relay-lar</string>
+    <string name="active_relays_default_description">Har bir yangi ilova ulanishi uchun ishlatiladi.</string>
+    <string name="relays_used_by_connections">Ulanish relay-lari</string>
+    <string name="active_relays_connections_description">Mavjud ulanishlar hali ham foydalanayotgan, lekin sizning standart to\'plamingizda bo\'lmagan relay-lar. Ulanish foydalanadigan relay-larni o\'zgartirish uchun uni tahrirlang.</string>
     <string name="default_profile_relays">Standart profil relay-lari</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Profil ma\'lumotlarini olish uchun ishlatiladigan relay-larni boshqarish</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Tashqi ilovalar bilan muloqot qilish uchun ishlatiladigan relay-larni boshqarish</string>

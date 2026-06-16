@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s vraagt deze events te ondertekenen die gerelateerd zijn aan de machtiging %2$s.</string>
     <string name="relay_filter_failed">Relay ondersteunt het ophalen van bunker-events niet. Wil je het toch toevoegen?</string>
     <string name="active_relays">Actieve relays</string>
+    <string name="active_relays_default_description">Gebruikt voor elke nieuwe app-verbinding.</string>
+    <string name="relays_used_by_connections">Verbindingsrelays</string>
+    <string name="active_relays_connections_description">Relays die bestaande verbindingen nog gebruiken maar die niet in je standaardset zitten. Bewerk een verbinding om de relays die ze gebruikt te wijzigen.</string>
     <string name="default_profile_relays">Standaard profielrelays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Beheer de relays die worden gebruikt om je profielgegevens op te halen</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Beheer de relays die worden gebruikt voor communicatie met externe applicaties</string>

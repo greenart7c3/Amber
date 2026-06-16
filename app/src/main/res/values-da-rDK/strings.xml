@@ -446,6 +446,9 @@
     <string name="is_requiring_to_sign_these_events_related_to_permission">%1$s kræver underskrivelse af disse begivenheder relateret til %2$s-tilladelse.</string>
     <string name="relay_filter_failed">Relay understøtter ikke hentning af Bunker-begivenheder. Vil du tilføje det alligevel?</string>
     <string name="active_relays">Aktive relays</string>
+    <string name="active_relays_default_description">Bruges til hver ny app-forbindelse.</string>
+    <string name="relays_used_by_connections">Forbindelsesrelays</string>
+    <string name="active_relays_connections_description">Relays som eksisterende forbindelser stadig bruger, men som ikke er i dit standardsæt. Rediger en forbindelse for at ændre de relays, den bruger.</string>
     <string name="default_profile_relays">Standard profilrelays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Administrer de relays, der bruges til at hente dine profildata</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Administrer de relays, der bruges til kommunikation med eksterne applikationer</string>

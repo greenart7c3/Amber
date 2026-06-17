@@ -52,6 +52,7 @@ import com.greenart7c3.nostrsigner.service.ClearLogsWorker
 import com.greenart7c3.nostrsigner.service.ConnectivityService
 import com.greenart7c3.nostrsigner.service.NotificationSubscription
 import com.greenart7c3.nostrsigner.service.ProfileSubscription
+import com.greenart7c3.nostrsigner.service.ProxyResponseSubscription
 import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
@@ -138,6 +139,9 @@ class Amber :
     val relayStats = RelayStats(client)
 
     val notificationSubscription = NotificationSubscription(client, this)
+
+    // Listens for NIP-46 responses from remote bunkers we're acting as a proxy for.
+    val proxyResponseSubscription = ProxyResponseSubscription(client, this)
 
     // Per-account profile metadata fetch, started/stopped by the composables that display
     // each account (see ProfileSubscriptionEffect) rather than app-wide.
@@ -542,6 +546,7 @@ class Amber :
                 profileSubscription.updateFilters()
             }
             notificationSubscription.updateFilter()
+            proxyResponseSubscription.updateFilter()
         }
         AmberLog.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
         if (!wasActive) {

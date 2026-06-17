@@ -151,6 +151,151 @@ object IntentUtils {
         }
     }
 
+    /**
+     * Bunker-proxy short-circuit for `nostrsigner://` intents. Forwards the request
+     * to the remote bunker (or computes the result locally for trivial methods) and
+     * delivers the result back to the caller via [Activity.setResult] or the
+     * provided callback URL. Per-app permissions and approval UI are skipped.
+     *
+     * Returns true if the intent was handled (so the caller should not enqueue it
+     * for the approval UI).
+     */
+    suspend fun handleProxyIntent(
+        context: Context,
+        account: Account,
+        intentData: IntentData,
+        packageName: String?,
+    ): Boolean {
+        if (!account.isProxy) return false
+
+        // GET_PUBLIC_KEY with more than one account: fall through to the existing
+        // approval UI so the user can pick which account to expose.
+        if (intentData.type == SignerType.GET_PUBLIC_KEY &&
+            LocalPreferences.allSavedAccounts(context).size > 1
+        ) {
+            return false
+        }
+
+        try {
+            val (event, value) = when (intentData.type) {
+                SignerType.GET_PUBLIC_KEY -> Pair("", account.hexKey)
+                SignerType.PING -> Pair("", "pong")
+                SignerType.SIGN_EVENT -> {
+                    val unsigned = intentData.event ?: return false
+                    val signed = RemoteBunkerClient.remoteSignEventSync(
+                        account = account,
+                        createdAt = unsigned.createdAt,
+                        kind = unsigned.kind,
+                        tags = unsigned.tags,
+                        content = unsigned.content,
+                    )
+                    Pair(signed.toJson(), signed.sig)
+                }
+                SignerType.NIP04_ENCRYPT -> {
+                    val cipher = RemoteBunkerClient.remoteEncrypt(account, intentData.data, intentData.pubKey, useNip44 = false)
+                    Pair(cipher, cipher)
+                }
+                SignerType.NIP44_ENCRYPT -> {
+                    val cipher = RemoteBunkerClient.remoteEncrypt(account, intentData.data, intentData.pubKey, useNip44 = true)
+                    Pair(cipher, cipher)
+                }
+                SignerType.NIP04_DECRYPT -> {
+                    val plain = RemoteBunkerClient.remoteDecrypt(account, intentData.data, intentData.pubKey, useNip44 = false)
+                    Pair(plain, plain)
+                }
+                SignerType.NIP44_DECRYPT -> {
+                    val plain = RemoteBunkerClient.remoteDecrypt(account, intentData.data, intentData.pubKey, useNip44 = true)
+                    Pair(plain, plain)
+                }
+                SignerType.DECRYPT_ZAP_EVENT -> {
+                    val plain = RemoteBunkerClient.remoteDecryptZapEvent(account, intentData.data)
+                    Pair(plain, plain)
+                }
+                SignerType.SIGN_PSBT -> {
+                    val signed = RemoteBunkerClient.remoteSignPsbt(account, intentData.data)
+                    Pair(signed, signed)
+                }
+                else -> return false
+            }
+
+            deliverProxyResult(context, packageName, account, intentData, event, value)
+            return true
+        } catch (e: Exception) {
+            AmberLog.e(Amber.TAG, "Bunker proxy intent forwarding failed", e)
+            Amber.instance.applicationIOScope.launch {
+                Amber.instance.getLogDatabase(account.npub).dao().insertLog(
+                    LogEntity(
+                        0,
+                        packageName ?: "intent",
+                        "bunker proxy intent",
+                        e.message ?: "unknown error",
+                        System.currentTimeMillis(),
+                    ),
+                )
+            }
+            deliverProxyRejection()
+            return true
+        }
+    }
+
+    private fun deliverProxyResult(
+        context: Context,
+        packageName: String?,
+        account: Account,
+        intentData: IntentData,
+        event: String,
+        value: String,
+    ) {
+        if (packageName != null) {
+            val intent = Intent()
+            intent.putExtra("signature", value)
+            intent.putExtra("result", value)
+            intent.putExtra("id", intentData.id)
+            intent.putExtra("event", event)
+            if (intentData.type == SignerType.GET_PUBLIC_KEY) {
+                intent.putExtra("package", BuildConfig.APPLICATION_ID)
+            }
+            Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
+        } else if (!intentData.callBackUrl.isNullOrBlank()) {
+            if (intentData.returnType == ReturnType.SIGNATURE) {
+                val ai = Intent(Intent.ACTION_VIEW)
+                ai.data = (intentData.callBackUrl + Uri.encode(value)).toUri()
+                context.startActivity(ai)
+            } else {
+                val ai = Intent(Intent.ACTION_VIEW)
+                ai.data = (intentData.callBackUrl + Uri.encode(event)).toUri()
+                context.startActivity(ai)
+            }
+        }
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
+                listOf(
+                    HistoryEntity(
+                        0,
+                        packageName ?: "",
+                        intentData.type.toString(),
+                        intentData.event?.kind,
+                        TimeUtils.now(),
+                        true,
+                        content = if (event.isNotEmpty()) event else value,
+                    ),
+                ),
+                account.npub,
+            )
+        }
+        Amber.instance.getMainActivity()?.let {
+            it.intent = null
+            it.finishAndRemoveTask()
+        }
+    }
+
+    private fun deliverProxyRejection() {
+        Amber.instance.getMainActivity()?.let {
+            it.intent = null
+            it.finishAndRemoveTask()
+        }
+    }
+
     fun removeAll(list: List<IntentData>) {
         _intents.update { current -> (current - list.toSet()).toPersistentList() }
     }

@@ -7,13 +7,16 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.ProxyAccountMetadata
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.BackupPayload
 import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
@@ -198,6 +201,42 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 AmberLog.d(Amber.TAG, "Account saved")
                 LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
             }
+        }
+    }
+
+    suspend fun startProxyUI(
+        localKeyPair: KeyPair,
+        remotePubkeyHex: String,
+        relays: List<NormalizedRelayUrl>,
+        bunkerName: String,
+        nostrConnectSecret: String,
+    ) {
+        val proxyMetadata = ProxyAccountMetadata(
+            remotePubkey = remotePubkeyHex,
+            relays = relays,
+            bunkerName = bunkerName,
+            nostrConnectSecret = nostrConnectSecret,
+        )
+        val account = Account(
+            hexKey = remotePubkeyHex,
+            npub = remotePubkeyHex.hexToByteArray().toNpub(),
+            name = MutableStateFlow(bunkerName),
+            picture = MutableStateFlow(""),
+            signPolicy = 1,
+            didBackup = true,
+            signer = NostrSignerInternal(localKeyPair),
+            proxy = proxyMetadata,
+        )
+        LocalPreferences.updatePrefsForLogin(
+            Amber.instance,
+            account,
+            remotePubkeyHex,
+            localKeyPair.privKey!!.toHexKey(),
+            null,
+        )
+        startUI(account, null)
+        Amber.instance.applicationIOScope.launch {
+            Amber.instance.proxyResponseSubscription.updateFilter()
         }
     }
 

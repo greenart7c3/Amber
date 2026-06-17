@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Қалпына келтіру</string>
     <string name="signin_restore_skip">Өткізіп жіберу</string>
     <string name="event_kind_39701">Жалпыға ашық веб-бетбелгі</string>
+    <string name="event_kind_30618">Репозиторий күйі туралы хабарландырулар</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Тіркелгі және кілттер</string>
     <string name="settings_section_network">Желі</string>

@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Gendan</string>
     <string name="signin_restore_skip">Spring over</string>
     <string name="event_kind_39701">Offentligt webbogmærke</string>
+    <string name="event_kind_30618">Meddelelser om lagerstatus</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Konto og nøgler</string>
     <string name="settings_section_network">Netværk</string>

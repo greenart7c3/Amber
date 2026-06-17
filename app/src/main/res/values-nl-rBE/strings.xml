@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Herstellen</string>
     <string name="signin_restore_skip">Overslaan</string>
     <string name="event_kind_39701">Openbare webbladwijzer</string>
+    <string name="event_kind_30618">Aankondigingen over repositorystatus</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Account &amp; sleutels</string>
     <string name="settings_section_network">Netwerk</string>

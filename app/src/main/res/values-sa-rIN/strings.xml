@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">पुनर्स्थापयतु</string>
     <string name="signin_restore_skip">अतिक्रामतु</string>
     <string name="event_kind_39701">सार्वजनिकं वेब-बुकमार्कम्</string>
+    <string name="event_kind_30618">भण्डारस्य स्थिति-घोषणाः</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">लेखा कुञ्जिकाश्च</string>
     <string name="settings_section_network">जालम्</string>

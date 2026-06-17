@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">Khôi phục</string>
     <string name="signin_restore_skip">Bỏ qua</string>
     <string name="event_kind_39701">Dấu trang web công khai</string>
+    <string name="event_kind_30618">Thông báo trạng thái kho lưu trữ</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Tài khoản và khóa</string>
     <string name="settings_section_network">Mạng</string>

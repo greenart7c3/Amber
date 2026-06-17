@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Restaurar</string>
     <string name="signin_restore_skip">Omitir</string>
     <string name="event_kind_39701">Marcador web público</string>
+    <string name="event_kind_30618">Anuncios de estado del repositorio</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Cuenta y claves</string>
     <string name="settings_section_network">Red</string>

@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">மீட்டெடு</string>
     <string name="signin_restore_skip">தவிர்</string>
     <string name="event_kind_39701">பொது வலை புக்மார்க்</string>
+    <string name="event_kind_30618">களஞ்சிய நிலை அறிவிப்புகள்</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">கணக்கு மற்றும் விசைகள்</string>
     <string name="settings_section_network">நெட்வொர்க்</string>

@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Pulihkan</string>
     <string name="signin_restore_skip">Lewati</string>
     <string name="event_kind_39701">Bookmark web publik</string>
+    <string name="event_kind_30618">Pengumuman status repositori</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Akun &amp; kunci</string>
     <string name="settings_section_network">Jaringan</string>

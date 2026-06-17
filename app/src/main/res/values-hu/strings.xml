@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">Visszaállítás</string>
     <string name="signin_restore_skip">Kihagyás</string>
     <string name="event_kind_39701">Nyilvános webes könyvjelző</string>
+    <string name="event_kind_30618">Tároló állapotának bejelentései</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Fiók és kulcsok</string>
     <string name="settings_section_network">Hálózat</string>

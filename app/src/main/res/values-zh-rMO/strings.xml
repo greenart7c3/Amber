@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">恢復</string>
     <string name="signin_restore_skip">跳過</string>
     <string name="event_kind_39701">公開網絡書籤</string>
+    <string name="event_kind_30618">儲存庫狀態公告</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">帳戶與金鑰</string>
     <string name="settings_section_network">網路</string>

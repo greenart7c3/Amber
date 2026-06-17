@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Ripristina</string>
     <string name="signin_restore_skip">Salta</string>
     <string name="event_kind_39701">Segnalibro web pubblico</string>
+    <string name="event_kind_30618">Annunci sullo stato del repository</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Account e chiavi</string>
     <string name="settings_section_network">Rete</string>

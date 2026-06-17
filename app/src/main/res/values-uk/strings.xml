@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">Відновити</string>
     <string name="signin_restore_skip">Пропустити</string>
     <string name="event_kind_39701">Публічна веб-закладка</string>
+    <string name="event_kind_30618">Оголошення про стан репозиторію</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Обліковий запис і ключі</string>
     <string name="settings_section_network">Мережа</string>

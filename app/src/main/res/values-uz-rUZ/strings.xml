@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Tiklash</string>
     <string name="signin_restore_skip">O\'tkazib yuborish</string>
     <string name="event_kind_39701">Ommaviy veb-xatchо\'p</string>
+    <string name="event_kind_30618">Ombor holati e\'lonlari</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Hisob va kalitlar</string>
     <string name="settings_section_network">Tarmoq</string>

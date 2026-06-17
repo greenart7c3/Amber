@@ -718,6 +718,7 @@
     <string name="signin_restore_accept">Buyisela</string>
     <string name="signin_restore_skip">Dlula</string>
     <string name="event_kind_39701">Ibhukhimakhi yewebhu yomphakathi</string>
+    <string name="event_kind_30618">Tatiso tesimo sendzawo yekugcina</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">I-akhawunti netikhiya</string>
     <string name="settings_section_network">Inethiwekhi</string>

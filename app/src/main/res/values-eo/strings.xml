@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Restarigi</string>
     <string name="signin_restore_skip">Preteriri</string>
     <string name="event_kind_39701">Publika retosigno</string>
+    <string name="event_kind_30618">Anoncoj pri deponeja stato</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Konto kaj ŝlosiloj</string>
     <string name="settings_section_network">Reto</string>

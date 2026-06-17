@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">पुनर्स्थापित करें</string>
     <string name="signin_restore_skip">छोड़ें</string>
     <string name="event_kind_39701">सार्वजनिक वेब बुकमार्क</string>
+    <string name="event_kind_30618">रिपॉजिटरी स्थिति घोषणाएँ</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">खाता और कुंजियाँ</string>
     <string name="settings_section_network">नेटवर्क</string>

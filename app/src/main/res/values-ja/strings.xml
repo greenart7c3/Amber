@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">復元</string>
     <string name="signin_restore_skip">スキップ</string>
     <string name="event_kind_39701">公開ウェブブックマーク</string>
+    <string name="event_kind_30618">リポジトリ状態のお知らせ</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">アカウントと鍵</string>
     <string name="settings_section_network">ネットワーク</string>

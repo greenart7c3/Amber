@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">পুনরুদ্ধার করুন</string>
     <string name="signin_restore_skip">এড়িয়ে যান</string>
     <string name="event_kind_39701">পাবলিক ওয়েব বুকমার্ক</string>
+    <string name="event_kind_30618">রিপোজিটরি স্টেট ঘোষণা</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">অ্যাকাউন্ট ও কী</string>
     <string name="settings_section_network">নেটওয়ার্ক</string>

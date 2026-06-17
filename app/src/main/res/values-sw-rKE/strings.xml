@@ -711,6 +711,7 @@
     <string name="signin_restore_accept">Rejesha</string>
     <string name="signin_restore_skip">Ruka</string>
     <string name="event_kind_39701">Alamisho ya wavuti ya umma</string>
+    <string name="event_kind_30618">Matangazo ya hali ya hifadhi</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Akaunti na funguo</string>
     <string name="settings_section_network">Mtandao</string>

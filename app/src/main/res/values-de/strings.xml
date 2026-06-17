@@ -714,6 +714,7 @@
     <string name="signin_restore_accept">Wiederherstellen</string>
     <string name="signin_restore_skip">Überspringen</string>
     <string name="event_kind_39701">Öffentliches Web-Lesezeichen</string>
+    <string name="event_kind_30618">Ankündigungen zum Repository-Status</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Konto &amp; Schlüssel</string>
     <string name="settings_section_network">Netzwerk</string>

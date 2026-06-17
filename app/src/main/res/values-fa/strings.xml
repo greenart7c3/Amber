@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">بازیابی</string>
     <string name="signin_restore_skip">رد کردن</string>
     <string name="event_kind_39701">نشانک عمومی وب</string>
+    <string name="event_kind_30618">اعلان‌های وضعیت مخزن</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">حساب و کلیدها</string>
     <string name="settings_section_network">شبکه</string>

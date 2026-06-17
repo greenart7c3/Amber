@@ -713,6 +713,7 @@
     <string name="signin_restore_accept">Geri Yükle</string>
     <string name="signin_restore_skip">Atla</string>
     <string name="event_kind_39701">Herkese açık web yer imi</string>
+    <string name="event_kind_30618">Depo durumu duyuruları</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Hesap ve anahtarlar</string>
     <string name="settings_section_network">Ağ</string>

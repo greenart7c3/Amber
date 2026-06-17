@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">Przywróć</string>
     <string name="signin_restore_skip">Pomiń</string>
     <string name="event_kind_39701">Publiczna zakładka internetowa</string>
+    <string name="event_kind_30618">Ogłoszenia o stanie repozytorium</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Konto i klucze</string>
     <string name="settings_section_network">Sieć</string>

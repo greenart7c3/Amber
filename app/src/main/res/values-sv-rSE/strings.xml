@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">Återställ</string>
     <string name="signin_restore_skip">Hoppa över</string>
     <string name="event_kind_39701">Offentligt webbokärke</string>
+    <string name="event_kind_30618">Meddelanden om förvarets tillstånd</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Konto och nycklar</string>
     <string name="settings_section_network">Nätverk</string>

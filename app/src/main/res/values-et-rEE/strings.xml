@@ -693,6 +693,7 @@
     <string name="signin_restore_accept">Taasta</string>
     <string name="signin_restore_skip">Jäta vahele</string>
     <string name="event_kind_39701">Avalik veebijärjehoidja</string>
+    <string name="event_kind_30618">Hoidla oleku teated</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Konto ja võtmed</string>
     <string name="settings_section_network">Võrk</string>

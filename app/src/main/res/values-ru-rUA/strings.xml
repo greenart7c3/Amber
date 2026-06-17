@@ -717,6 +717,7 @@
     <string name="signin_restore_accept">Восстановить</string>
     <string name="signin_restore_skip">Пропустить</string>
     <string name="event_kind_39701">Публичная веб-закладка</string>
+    <string name="event_kind_30618">Объявления о состоянии репозитория</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Учётная запись и ключи</string>
     <string name="settings_section_network">Сеть</string>

@@ -103,6 +103,7 @@ import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.TorMode
@@ -312,6 +313,17 @@ fun MainPage(
                             },
                             text = stringResource(R.string.recover_from_backup),
                         )
+
+                        if (!BuildFlavorChecker.isOfflineFlavor()) {
+                            AmberButton(
+                                onClick = {
+                                    Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+                                        navHostControllerWrapper.navController.navigate("bunkerProxyLogin")
+                                    }
+                                },
+                                text = stringResource(R.string.bunker_proxy_login_button),
+                            )
+                        }
                     }
 
                     Spacer(Modifier.weight(1f))
@@ -392,6 +404,16 @@ fun MainLoginPage(
                     accountViewModel = accountViewModel,
                     navHostControllerWrapper = navHostControllerWrapper,
                     onFinish = {},
+                )
+            },
+        )
+
+        composable(
+            "bunkerProxyLogin",
+            content = {
+                BunkerProxyLoginScreen(
+                    accountViewModel = accountViewModel,
+                    navHostControllerWrapper = navHostControllerWrapper,
                 )
             },
         )

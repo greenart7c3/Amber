@@ -10,6 +10,7 @@ import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
 import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
+import com.greenart7c3.nostrsigner.models.ProxyAccountMetadata
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -42,6 +43,10 @@ private enum class PrefKeys(val key: String) {
     USER_RELAYS_CREATED_AT("user_relays_created_at"),
     DID_BACKUP("did_backup"),
     BACKUP_APPLICATIONS("backup_applications"),
+    PROXY_REMOTE_PUBKEY("proxy_remote_pubkey"),
+    PROXY_RELAYS("proxy_relays"),
+    PROXY_BUNKER_NAME("proxy_bunker_name"),
+    PROXY_NOSTR_CONNECT_SECRET("proxy_nostr_connect_secret"),
 }
 
 private enum class SettingsKeys(val key: String) {
@@ -480,6 +485,17 @@ object LocalPreferences {
                 putString(PrefKeys.PROFILE_URL.key, account.picture.value)
                 putInt(PrefKeys.SIGN_POLICY.key, account.signPolicy)
                 putBoolean(PrefKeys.DID_BACKUP.key, account.didBackup)
+                account.proxy?.let { proxy ->
+                    putString(PrefKeys.PROXY_REMOTE_PUBKEY.key, proxy.remotePubkey)
+                    putString(PrefKeys.PROXY_RELAYS.key, proxy.relays.joinToString(separator = COMMA) { it.url })
+                    putString(PrefKeys.PROXY_BUNKER_NAME.key, proxy.bunkerName)
+                    putString(PrefKeys.PROXY_NOSTR_CONNECT_SECRET.key, proxy.nostrConnectSecret)
+                } ?: run {
+                    remove(PrefKeys.PROXY_REMOTE_PUBKEY.key)
+                    remove(PrefKeys.PROXY_RELAYS.key)
+                    remove(PrefKeys.PROXY_BUNKER_NAME.key)
+                    remove(PrefKeys.PROXY_NOSTR_CONNECT_SECRET.key)
+                }
             }
         }
 
@@ -727,6 +743,22 @@ object LocalPreferences {
             val signPolicy = getInt(PrefKeys.SIGN_POLICY.key, 1)
             val didBackup = getBoolean(PrefKeys.DID_BACKUP.key, true)
 
+            val proxyRemote = getString(PrefKeys.PROXY_REMOTE_PUBKEY.key, null)
+            val proxy = if (!proxyRemote.isNullOrBlank()) {
+                val relayCsv = getString(PrefKeys.PROXY_RELAYS.key, "") ?: ""
+                val relays = relayCsv.split(COMMA)
+                    .mapNotNull { it.trim().takeIf(String::isNotEmpty) }
+                    .mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
+                ProxyAccountMetadata(
+                    remotePubkey = proxyRemote,
+                    relays = relays,
+                    bunkerName = getString(PrefKeys.PROXY_BUNKER_NAME.key, "") ?: "",
+                    nostrConnectSecret = getString(PrefKeys.PROXY_NOSTR_CONNECT_SECRET.key, "") ?: "",
+                )
+            } else {
+                null
+            }
+
             val account =
                 Account(
                     signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
@@ -736,6 +768,7 @@ object LocalPreferences {
                     picture = MutableStateFlow(picture),
                     signPolicy = signPolicy,
                     didBackup = didBackup,
+                    proxy = proxy,
                 )
             accountCache.put(npub, account)
             return account

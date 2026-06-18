@@ -3,9 +3,9 @@ package com.greenart7c3.nostrsigner.service
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.core.content.FileProvider
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -120,23 +120,23 @@ class ZapstoreUpdater(
             LocalPreferences.loadSettingsFromEncryptedStorage()
         }
         if (settings.updateChannel == UpdateChannel.STABLE) {
-            Log.d("zapstore", "zapstore relay")
+            AmberLog.d("zapstore", "zapstore relay")
             client.subscribe(releaseSubId, listOf(updateRelays.first()).associateWith { listOf(releaseFilter) })
         } else {
-            Log.d("zapstore", "other relays")
+            AmberLog.d("zapstore", "other relays")
             client.subscribe(releaseSubId, updateRelays.drop(1).associateWith { listOf(releaseFilter) })
         }
 
         timeoutJob = scope.launch {
             delay(EOSE_TIMEOUT_MS)
-            Log.w(Amber.TAG, "ZapstoreUpdater: timeout waiting for EOSE")
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: timeout waiting for EOSE")
             onReleaseEose()
         }
     }
 
     private suspend fun processReleaseEvent(event: Event) {
         if (!event.verify()) {
-            Log.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: invalid release event: ${event.toJson()}")
             return
         }
 
@@ -160,7 +160,7 @@ class ZapstoreUpdater(
         val version = tags.firstOrNull { it.size > 1 && it[0] == "version" }?.getOrNull(1) ?: return
         if (!isNewerVersion(version)) return
 
-        Log.d(Amber.TAG, "ZapstoreUpdater: found release $version (current: ${BuildConfig.VERSION_NAME})")
+        AmberLog.d(Amber.TAG, "ZapstoreUpdater: found release $version (current: ${BuildConfig.VERSION_NAME})")
 
         // Try direct URL first (some release events include it)
         val directUrl = tags.firstOrNull { it.size > 1 && it[0] == "url" }?.getOrNull(1)
@@ -199,7 +199,7 @@ class ZapstoreUpdater(
 
     private fun processFileEvent(event: Event) {
         if (!event.verify()) {
-            Log.w(Amber.TAG, "ZapstoreUpdater: invalid file event: ${event.toJson()}")
+            AmberLog.w(Amber.TAG, "ZapstoreUpdater: invalid file event: ${event.toJson()}")
             return
         }
 
@@ -268,7 +268,7 @@ class ZapstoreUpdater(
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                Log.e(Amber.TAG, "ZapstoreUpdater: download failed", e)
+                AmberLog.e(Amber.TAG, "ZapstoreUpdater: download failed", e)
                 downloadState.value = DownloadState.ERROR
             }
         }
@@ -284,7 +284,7 @@ class ZapstoreUpdater(
         val response = client.newCall(request).execute()
 
         if (!response.isSuccessful) {
-            Log.e(Amber.TAG, "ZapstoreUpdater: HTTP ${response.code} for ${release.url}")
+            AmberLog.e(Amber.TAG, "ZapstoreUpdater: HTTP ${response.code} for ${release.url}")
             return null
         }
 
@@ -314,11 +314,11 @@ class ZapstoreUpdater(
             val actualHash = digest.digest().joinToString("") { "%02x".format(it) }
             val expectedHash = release.hash.removePrefix("sha256:")
             if (!actualHash.equals(expectedHash, ignoreCase = true)) {
-                Log.e(Amber.TAG, "ZapstoreUpdater: hash mismatch! expected=$expectedHash actual=$actualHash")
+                AmberLog.e(Amber.TAG, "ZapstoreUpdater: hash mismatch! expected=$expectedHash actual=$actualHash")
                 apkFile.delete()
                 return null
             }
-            Log.d(Amber.TAG, "ZapstoreUpdater: hash verified OK")
+            AmberLog.d(Amber.TAG, "ZapstoreUpdater: hash verified OK")
         }
 
         return apkFile

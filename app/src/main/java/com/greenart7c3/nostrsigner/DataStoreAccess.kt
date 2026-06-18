@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner
 
 import android.content.Context
-import android.util.Log
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.PreferenceDataStoreFactory
 import androidx.datastore.preferences.core.Preferences
@@ -15,7 +14,7 @@ object DataStoreAccess {
     private val storeCache = ConcurrentHashMap<String, DataStore<Preferences>>()
 
     private fun getDataStore(context: Context, npub: String): DataStore<Preferences> = storeCache.computeIfAbsent(npub) {
-        Log.d(Amber.TAG, "Creating new DataStore for $npub on ${Thread.currentThread().name}")
+        AmberLog.d(Amber.TAG, "Creating new DataStore for $npub on ${Thread.currentThread().name}")
 
         PreferenceDataStoreFactory.create(
             scope = Amber.instance.applicationIOScope,

@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.util.Log
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -73,7 +73,7 @@ object TrustScoreService {
                 try {
                     getScore(url)
                 } catch (e: Exception) {
-                    Log.e(TAG, "Error prefetching score for $url", e)
+                    AmberLog.e(TAG, "Error prefetching score for $url", e)
                 }
             }
         }
@@ -102,7 +102,7 @@ object TrustScoreService {
                 val response = client.newCall(request).execute()
 
                 if (!response.isSuccessful) {
-                    Log.w(TAG, "Failed to fetch trust score for $relayUrl: ${response.code}")
+                    AmberLog.w(TAG, "Failed to fetch trust score for $relayUrl: ${response.code}")
                     cacheResult(normalizedUrl, null, isFailed = true)
                     return@withContext null
                 }
@@ -117,7 +117,7 @@ object TrustScoreService {
                 cacheResult(normalizedUrl, score, isFailed = false)
                 score
             } catch (e: Exception) {
-                Log.e(TAG, "Error fetching trust score for $relayUrl", e)
+                AmberLog.e(TAG, "Error fetching trust score for $relayUrl", e)
                 val normalizedUrl = normalizeUrl(relayUrl)
                 cacheResult(normalizedUrl, null, isFailed = true)
                 null
@@ -134,7 +134,7 @@ object TrustScoreService {
             }
             json.get("data")?.get("score")?.asInt()
         } catch (e: Exception) {
-            Log.e(TAG, "Error parsing trust score response", e)
+            AmberLog.e(TAG, "Error parsing trust score response", e)
             null
         }
     }

@@ -22,12 +22,12 @@ package com.greenart7c3.nostrsigner.service
 
 import android.app.NotificationManager
 import android.content.Context
-import android.util.Log
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -76,7 +76,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         url: String,
         npub: String? = null,
     ) {
-        Log.d(Amber.TAG, "$url: $text")
+        AmberLog.d(Amber.TAG, "$url: $text")
         Amber.instance.applicationIOScope.launch {
             if (npub != null) {
                 val dao = Amber.instance.getLogDatabase(npub).dao()

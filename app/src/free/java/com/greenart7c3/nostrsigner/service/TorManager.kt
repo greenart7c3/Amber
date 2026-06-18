@@ -7,12 +7,12 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
@@ -127,7 +127,7 @@ object TorManager {
                     // Log all runtime events for debugging
                     RuntimeEvent.entries().forEach { event ->
                         observerStatic(event, OnEvent.Executor.Immediate) { data ->
-                            Log.d(TAG, data.toString())
+                            AmberLog.d(TAG, data.toString())
                         }
                     }
 
@@ -137,12 +137,12 @@ object TorManager {
                         if (addr != null) {
                             try {
                                 val port = addr.port.value
-                                Log.i(TAG, "Built-in Tor SOCKS proxy on port $port")
+                                AmberLog.i(TAG, "Built-in Tor SOCKS proxy on port $port")
                                 _socksPort.value = port
                                 _isRunning.value = true
                                 appContext?.let { showNotification(it.getString(R.string.builtin_tor_active)) }
                             } catch (e: Exception) {
-                                Log.e(TAG, "Failed to read Tor SOCKS port", e)
+                                AmberLog.e(TAG, "Failed to read Tor SOCKS port", e)
                             }
                         }
                     }
@@ -154,9 +154,9 @@ object TorManager {
 
                 torRuntime = runtime
                 runtime.startDaemonAsync()
-                Log.i(TAG, "Built-in Tor started")
+                AmberLog.i(TAG, "Built-in Tor started")
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to start built-in Tor", e)
+                AmberLog.e(TAG, "Failed to start built-in Tor", e)
                 torRuntime = null
                 _isRunning.value = false
             }
@@ -171,9 +171,9 @@ object TorManager {
         cancelNotification()
         try {
             runBlocking(Dispatchers.IO) { runtime.stopDaemonAsync() }
-            Log.i(TAG, "Built-in Tor stopped")
+            AmberLog.i(TAG, "Built-in Tor stopped")
         } catch (e: Exception) {
-            Log.e(TAG, "Error stopping built-in Tor", e)
+            AmberLog.e(TAG, "Error stopping built-in Tor", e)
         }
     }
 }

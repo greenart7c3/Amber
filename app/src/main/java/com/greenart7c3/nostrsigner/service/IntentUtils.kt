@@ -6,13 +6,13 @@ import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.provider.Browser
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.core.net.toUri
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.FailedMigrationException
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -635,7 +635,7 @@ object IntentUtils {
                             EventEncryptedDataKind(event, null, result)
                         }
                     } catch (e: Exception) {
-                        Log.e("IntentUtils", "Error parsing JSON: ${e.message}")
+                        AmberLog.e("IntentUtils", "Error parsing JSON: ${e.message}")
                         ClearTextEncryptedDataKind(data, result)
                     }
                 } else if (data.startsWith("[")) {
@@ -643,7 +643,7 @@ object IntentUtils {
                         val tagArray = JacksonMapper.fromJsonToTagArray(data)
                         TagArrayEncryptedDataKind(tagArray, result)
                     } catch (e: Exception) {
-                        Log.e("IntentUtils", "Error parsing TagArray: ${e.message}")
+                        AmberLog.e("IntentUtils", "Error parsing TagArray: ${e.message}")
                         ClearTextEncryptedDataKind(data, result)
                     }
                 } else {
@@ -667,7 +667,7 @@ object IntentUtils {
                                     val tagArray = JacksonMapper.fromJsonToTagArray(decryptedSealData)
                                     EventEncryptedDataKind(event, TagArrayEncryptedDataKind(tagArray, decryptedSealData), decryptedSealData)
                                 } catch (e: Exception) {
-                                    Log.e("IntentUtils", "Error parsing TagArray: ${e.message}")
+                                    AmberLog.e("IntentUtils", "Error parsing TagArray: ${e.message}")
                                     EventEncryptedDataKind(event, ClearTextEncryptedDataKind(event.content, decryptedSealData), result)
                                 }
                             } else {
@@ -677,7 +677,7 @@ object IntentUtils {
                             EventEncryptedDataKind(event, null, result)
                         }
                     } catch (e: Exception) {
-                        Log.e("IntentUtils", "Error parsing JSON: ${e.message}")
+                        AmberLog.e("IntentUtils", "Error parsing JSON: ${e.message}")
                         ClearTextEncryptedDataKind(data, result)
                     }
                 } else if (result.startsWith("[")) {
@@ -685,7 +685,7 @@ object IntentUtils {
                         val tagArray = JacksonMapper.fromJsonToTagArray(result)
                         TagArrayEncryptedDataKind(tagArray, result)
                     } catch (e: Exception) {
-                        Log.e("IntentUtils", "Error parsing TagArray: ${e.message}")
+                        AmberLog.e("IntentUtils", "Error parsing TagArray: ${e.message}")
                         ClearTextEncryptedDataKind(data, result)
                     }
                 } else {
@@ -751,7 +751,7 @@ object IntentUtils {
                 return getIntentDataWithoutExtras(context, intent.data?.toString() ?: "", intent, packageName, route, localAccount)
             }
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
+            AmberLog.e(Amber.TAG, "Error parsing intent: ${e.message}", e)
             emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
             Amber.instance.applicationIOScope.launch {
                 LocalPreferences.allSavedAccounts(Amber.instance).forEach {

@@ -1,11 +1,11 @@
 package com.greenart7c3.nostrsigner.service
 
-import android.util.Log
 import com.fasterxml.jackson.annotation.JsonProperty
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.module.kotlin.jacksonObjectMapper
 import com.fasterxml.jackson.module.kotlin.readValue
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
@@ -185,7 +185,7 @@ object ApplicationBackup {
             delay(INBOX_FETCH_TIMEOUT_MS)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.w(Amber.TAG, "ApplicationBackup: inbox relay fetch failed", e)
+            AmberLog.w(Amber.TAG, "ApplicationBackup: inbox relay fetch failed", e)
         } finally {
             runCatching { client.unsubscribe(subId) }
             client.removeConnectionListener(listener)
@@ -212,7 +212,7 @@ object ApplicationBackup {
         try {
             val payload = buildPayload(npub, account)
             if (payload.applications.isEmpty()) {
-                Log.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
+                AmberLog.d(Amber.TAG, "ApplicationBackup: no applications to backup for $npub, skipping")
                 return true
             }
             val json = toJson(payload)
@@ -228,15 +228,15 @@ object ApplicationBackup {
             )
             val relays = resolveWriteRelays(account)
             if (relays.isEmpty()) {
-                Log.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
+                AmberLog.w(Amber.TAG, "ApplicationBackup: no relays resolved for backup")
                 return false
             }
             val ok = Amber.instance.client.publishAndConfirm(event, relays)
-            Log.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
+            AmberLog.d(Amber.TAG, "ApplicationBackup: publish for $npub result=$ok relays=${relays.size}")
             return ok
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.e(Amber.TAG, "ApplicationBackup: failed to publish backup for $npub", e)
+            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to publish backup for $npub", e)
             return false
         }
     }
@@ -277,7 +277,7 @@ object ApplicationBackup {
             delay(BACKUP_FETCH_TIMEOUT_MS)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.e(Amber.TAG, "ApplicationBackup: failed to fetch backup event", e)
+            AmberLog.e(Amber.TAG, "ApplicationBackup: failed to fetch backup event", e)
         } finally {
             runCatching { client.unsubscribe(subId) }
             client.removeConnectionListener(listener)
@@ -291,7 +291,7 @@ object ApplicationBackup {
         fromJson(json)
     } catch (e: Exception) {
         if (e is CancellationException) throw e
-        Log.e(Amber.TAG, "ApplicationBackup: failed to decrypt/parse backup payload", e)
+        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to decrypt/parse backup payload", e)
         null
     }
 
@@ -346,7 +346,7 @@ object ApplicationBackup {
         RestoreResult.Success(apps, permissions)
     } catch (e: Exception) {
         if (e is CancellationException) throw e
-        Log.e(Amber.TAG, "ApplicationBackup: failed to restore payload for $npub", e)
+        AmberLog.e(Amber.TAG, "ApplicationBackup: failed to restore payload for $npub", e)
         RestoreResult.Failed(e.message ?: "Unknown error")
     }
 

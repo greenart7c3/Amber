@@ -20,8 +20,8 @@
  */
 package com.greenart7c3.nostrsigner.okhttp
 
-import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import java.net.InetSocketAddress
 import java.net.Proxy
 import java.time.Duration
@@ -65,7 +65,7 @@ object HttpClientManager {
 
     private fun setDefaultProxy(proxy: Proxy?) {
         if (currentProxy != proxy) {
-            Log.d(Amber.TAG, "Changing proxy to: ${proxy != null}")
+            AmberLog.d(Amber.TAG, "Changing proxy to: ${proxy != null}")
             currentProxy = proxy
 
             // Invalidate so the proxied client is rebuilt lazily on the next
@@ -78,7 +78,7 @@ object HttpClientManager {
     }
 
     fun setDefaultTimeout(timeout: Duration) {
-        Log.d(Amber.TAG, "Changing timeout to: $timeout")
+        AmberLog.d(Amber.TAG, "Changing timeout to: $timeout")
         if (defaultTimeout.seconds != timeout.seconds) {
             defaultTimeout = timeout
 
@@ -89,7 +89,7 @@ object HttpClientManager {
     }
 
     fun setDefaultUserAgent(userAgentHeader: String) {
-        Log.d(Amber.TAG, "Changing userAgent")
+        AmberLog.d(Amber.TAG, "Changing userAgent")
         if (userAgent != userAgentHeader) {
             userAgent = userAgentHeader
 

@@ -7,7 +7,6 @@ import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
 import android.os.StrictMode
-import android.util.Log
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
 import androidx.compose.runtime.mutableStateOf
@@ -98,7 +97,7 @@ class Amber :
     val pendingTranslationReport = MutableStateFlow<String?>(null)
 
     fun setMainActivity(activity: AppCompatActivity?) {
-        Log.d(TAG, "Setting main activity ref to $activity")
+        AmberLog.d(TAG, "Setting main activity ref to $activity")
         mainActivityRef = WeakReference(activity)
     }
 
@@ -107,7 +106,7 @@ class Amber :
     // Exists to avoid exceptions stopping the coroutine
     val exceptionHandler =
         CoroutineExceptionHandler { _, throwable ->
-            Log.e("AmberCoroutine", "Caught exception: ${throwable.message}", throwable)
+            AmberLog.e("AmberCoroutine", "Caught exception: ${throwable.message}", throwable)
             if (throwable is FailedMigrationException) throw throwable
         }
 
@@ -159,7 +158,7 @@ class Amber :
     private var processLifecycleObserverRegistered = false
     private val processLifecycleObserver = object : DefaultLifecycleObserver {
         override fun onStart(owner: LifecycleOwner) {
-            Log.d("ProcessLifecycleOwner", "App in foreground")
+            AmberLog.d("ProcessLifecycleOwner", "App in foreground")
             isAppInForeground = true
 
             // activates the profile filter only when the app is in the foreground
@@ -174,7 +173,7 @@ class Amber :
         }
 
         override fun onStop(owner: LifecycleOwner) {
-            Log.d("ProcessLifecycleOwner", "App in background")
+            AmberLog.d("ProcessLifecycleOwner", "App in background")
             isAppInForeground = false
 
             // closes the filter when in the background
@@ -230,7 +229,7 @@ class Amber :
             } else if (e.message?.contains("socket failed: EPERM (Operation not permitted)") == true) {
                 ToastManager.toast(getString(R.string.warning), getString(R.string.network_permission_message))
             }
-            Log.e(TAG, "Failed to connect to proxy", e)
+            AmberLog.e(TAG, "Failed to connect to proxy", e)
             return false
         }
     }
@@ -427,7 +426,7 @@ class Amber :
                 }
                 onDone()
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to run migrations", e)
+                AmberLog.e(TAG, "Failed to run migrations", e)
                 if (e is CancellationException) throw e
                 if (e is FailedMigrationException) throw e
             }
@@ -447,7 +446,7 @@ class Amber :
     fun startService() {
         if (BuildFlavorChecker.isOfflineFlavor()) return
         try {
-            Log.d(TAG, "Starting ConnectivityService")
+            AmberLog.d(TAG, "Starting ConnectivityService")
             val operation = PendingIntent.getForegroundService(
                 this,
                 10,
@@ -457,7 +456,7 @@ class Amber :
             val alarmManager = this.getSystemService(ALARM_SERVICE) as AlarmManager
             alarmManager.set(AlarmManager.RTC_WAKEUP, 1000, operation)
         } catch (e: Exception) {
-            Log.e(TAG, "Failed to start ConnectivityService", e)
+            AmberLog.e(TAG, "Failed to start ConnectivityService", e)
             if (e is CancellationException) throw e
         }
     }
@@ -471,7 +470,7 @@ class Amber :
         if (settings.killSwitch.value) {
             return
         }
-        Log.d(TAG, "reconnecting relays")
+        AmberLog.d(TAG, "reconnecting relays")
         val wasActive = client.isActive()
         // Always call connect() so that failed relays (socket == null) are retried
         // directly, bypassing BasicRelayClient's internal backoff delay. For relays
@@ -552,7 +551,7 @@ class Amber :
             }
             notificationSubscription.updateFilter()
         }
-        Log.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
+        AmberLog.d(TAG, "checkForNewRelaysAndUpdateAllFilters wasActive: $wasActive")
         if (!wasActive) {
             delay(3000)
             client.connect()
@@ -604,11 +603,11 @@ class Amber :
             .eventListener(
                 object : EventListener() {
                     override fun onStart(request: ImageRequest) {
-                        Log.d(TAG, "Coil: loading ${request.data}")
+                        AmberLog.d(TAG, "Coil: loading ${request.data}")
                     }
 
                     override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                        Log.d(
+                        AmberLog.d(
                             TAG,
                             "Coil: loaded ${request.data} from ${result.dataSource}" +
                                 " | mem=${memCache.size / 1024}/${memCache.maxSize / 1024} KB" +
@@ -617,11 +616,11 @@ class Amber :
                     }
 
                     override fun onError(request: ImageRequest, result: ErrorResult) {
-                        Log.w(TAG, "Coil: error loading ${request.data}", result.throwable)
+                        AmberLog.w(TAG, "Coil: error loading ${request.data}", result.throwable)
                     }
 
                     override fun onCancel(request: ImageRequest) {
-                        Log.d(TAG, "Coil: cancelled ${request.data}")
+                        AmberLog.d(TAG, "Coil: cancelled ${request.data}")
                     }
                 },
             )

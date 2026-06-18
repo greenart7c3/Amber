@@ -4,7 +4,6 @@ import android.content.Context
 import android.database.Cursor
 import android.database.MatrixCursor
 import android.net.Uri
-import android.util.Log
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -83,7 +82,7 @@ object SignerProviderQuery {
         operationUri: Uri,
         arguments: Array<String>?,
     ): Cursor? {
-        Log.d(Amber.TAG, "Querying $operationUri")
+        AmberLog.d(Amber.TAG, "Querying $operationUri")
 
         val appId = BuildConfig.APPLICATION_ID
         val uriString = operationUri.toString()
@@ -92,24 +91,24 @@ object SignerProviderQuery {
                 "content://$appId.SIGN_EVENT" -> {
                     val json = arguments?.first()
                     if (json == null) {
-                        Log.d(Amber.TAG, "No json")
+                        AmberLog.d(Amber.TAG, "No json")
                         return null
                     }
                     val npub = IntentUtils.parsePubKey(arguments[2])
                     if (npub == null) {
-                        Log.d(Amber.TAG, "No npub")
+                        AmberLog.d(Amber.TAG, "No npub")
                         return null
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context, npub)
                     if (account == null) {
-                        Log.d(Amber.TAG, "No account from storage")
+                        AmberLog.d(Amber.TAG, "No account from storage")
                         return null
                     }
                     captureCallerMetadata(context, callerPackageName, account)
                     val event = try {
                         IntentUtils.getUnsignedEvent(json, account)
                     } catch (e: Exception) {
-                        Log.d(Amber.TAG, "Failed to parse event from $requesterId", e)
+                        AmberLog.d(Amber.TAG, "Failed to parse event from $requesterId", e)
                         return null
                     }
 
@@ -285,7 +284,7 @@ object SignerProviderQuery {
                         val scopeStr = arguments.getOrNull(4) ?: ""
                         val parsedKind = kindStr?.toIntOrNull()
                         if (parsedKind == null) {
-                            Log.d(Amber.TAG, "NIP-44 v3 request missing/invalid kind")
+                            AmberLog.d(Amber.TAG, "NIP-44 v3 request missing/invalid kind")
                             return rejectedCursor()
                         }
                         parsedKind to scopeStr
@@ -453,17 +452,17 @@ object SignerProviderQuery {
                 "content://$appId.SIGN_PSBT" -> {
                     val psbtHex = arguments?.first()
                     if (psbtHex == null) {
-                        Log.d(Amber.TAG, "No psbt")
+                        AmberLog.d(Amber.TAG, "No psbt")
                         return null
                     }
                     val npub = IntentUtils.parsePubKey(arguments[2])
                     if (npub == null) {
-                        Log.d(Amber.TAG, "No npub")
+                        AmberLog.d(Amber.TAG, "No npub")
                         return null
                     }
                     val account = LocalPreferences.loadFromEncryptedStorageSync(context, npub)
                     if (account == null) {
-                        Log.d(Amber.TAG, "No account from storage")
+                        AmberLog.d(Amber.TAG, "No account from storage")
                         return null
                     }
                     captureCallerMetadata(context, callerPackageName, account)
@@ -505,7 +504,7 @@ object SignerProviderQuery {
                     val result = try {
                         runBlocking { account.signPsbt(psbtHex) }
                     } catch (e: Exception) {
-                        Log.d(Amber.TAG, "Failed to sign psbt", e)
+                        AmberLog.d(Amber.TAG, "Failed to sign psbt", e)
                         scope.launch {
                             val logDb = Amber.instance.getLogDatabase(account.npub)
                             logDb.dao().insertLog(

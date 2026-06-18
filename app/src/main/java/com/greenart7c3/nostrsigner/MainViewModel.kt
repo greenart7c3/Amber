@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -36,13 +35,13 @@ class MainViewModel(val context: Context) : ViewModel() {
             if (!userFromIntent.isNullOrBlank()) {
                 if (userFromIntent.startsWith("npub")) {
                     if (LocalPreferences.containsAccount(context, userFromIntent)) {
-                        Log.d(Amber.TAG, "getAccount: $userFromIntent")
+                        AmberLog.d(Amber.TAG, "getAccount: $userFromIntent")
                         return userFromIntent
                     }
                 } else {
                     val localNpub = Hex.decode(userFromIntent).toNpub()
                     if (LocalPreferences.containsAccount(context, localNpub)) {
-                        Log.d(Amber.TAG, "getAccount: $localNpub")
+                        AmberLog.d(Amber.TAG, "getAccount: $localNpub")
                         return localNpub
                     }
                 }
@@ -60,36 +59,36 @@ class MainViewModel(val context: Context) : ViewModel() {
 
             if (pubKeys.isEmpty()) {
                 if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {
-                    Log.d(Amber.TAG, "getAccount: $currentAccount")
+                    AmberLog.d(Amber.TAG, "getAccount: $currentAccount")
                     return currentAccount
                 }
 
                 val acc = LocalPreferences.allSavedAccounts(context).firstOrNull()
                 if (acc != null) {
-                    Log.d(Amber.TAG, "getAccount: ${acc.npub}")
+                    AmberLog.d(Amber.TAG, "getAccount: ${acc.npub}")
                     return acc.npub
                 } else {
-                    Log.d(Amber.TAG, "getAccount: null")
+                    AmberLog.d(Amber.TAG, "getAccount: null")
                     return null
                 }
             }
 
             val npub = Hex.decode(pubKeys.first()).toNpub()
-            Log.d(Amber.TAG, "getAccount: $npub")
+            AmberLog.d(Amber.TAG, "getAccount: $npub")
             return npub
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "Error getting account", e)
+            AmberLog.e(Amber.TAG, "Error getting account", e)
             if (currentAccount != null && LocalPreferences.containsAccount(context, currentAccount)) {
-                Log.d(Amber.TAG, "getAccount: $currentAccount")
+                AmberLog.d(Amber.TAG, "getAccount: $currentAccount")
                 return currentAccount
             }
 
             val acc = LocalPreferences.allSavedAccounts(context).firstOrNull()
             if (acc != null) {
-                Log.d(Amber.TAG, "getAccount: ${acc.npub}")
+                AmberLog.d(Amber.TAG, "getAccount: ${acc.npub}")
                 return acc.npub
             } else {
-                Log.d(Amber.TAG, "getAccount: null")
+                AmberLog.d(Amber.TAG, "getAccount: null")
                 return null
             }
         }
@@ -107,13 +106,13 @@ class MainViewModel(val context: Context) : ViewModel() {
                 val currentAccount = LocalPreferences.currentAccount(context)
                 if (currentAccount != null && npub != null && currentAccount != npub && npub.isNotBlank()) {
                     if (npub.startsWith("npub")) {
-                        Log.d(Amber.TAG, "Switching account to $npub")
+                        AmberLog.d(Amber.TAG, "Switching account to $npub")
                         if (LocalPreferences.containsAccount(context, npub)) {
                             accountStateViewModel?.switchUser(npub, Route.IncomingRequest.route)
                         }
                     } else {
                         val localNpub = Hex.decode(npub).toNpub()
-                        Log.d(Amber.TAG, "Switching account to $localNpub")
+                        AmberLog.d(Amber.TAG, "Switching account to $localNpub")
                         if (LocalPreferences.containsAccount(context, localNpub)) {
                             accountStateViewModel?.switchUser(localNpub, Route.IncomingRequest.route)
                         }
@@ -158,7 +157,7 @@ class MainViewModel(val context: Context) : ViewModel() {
                                 }
                                 error = false
                             } catch (e: Exception) {
-                                Log.e(Amber.TAG, "Error navigating to $route", e)
+                                AmberLog.e(Amber.TAG, "Error navigating to $route", e)
                             }
                         }
                     }

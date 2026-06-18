@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.util.Log
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.combinedClickable
@@ -66,6 +65,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -280,13 +280,13 @@ fun SettingsScreen(
                                     val historyDatabase = Amber.instance.getHistoryDatabase(it.npub)
                                     val deletedHistory = historyDatabase.dao().deleteOldHistory(oneWeekAgo)
                                     if (deletedHistory > 0) {
-                                        Log.d(Amber.TAG, "Deleted $deletedHistory old history entries")
+                                        AmberLog.d(Amber.TAG, "Deleted $deletedHistory old history entries")
                                     }
 
                                     val logDatabase = Amber.instance.getLogDatabase(it.npub)
                                     val deletedLogs = logDatabase.dao().deleteOldLog(oneWeek)
                                     if (deletedLogs > 0) {
-                                        Log.d(Amber.TAG, "Deleted $deletedLogs old log entries")
+                                        AmberLog.d(Amber.TAG, "Deleted $deletedLogs old log entries")
                                     }
 
                                     val dbFile = context.getDatabasePath("amber_db_${account.npub}")
@@ -300,7 +300,7 @@ fun SettingsScreen(
                                 } catch (e: Exception) {
                                     isLoading = false
                                     if (e is CancellationException) throw e
-                                    Log.e(Amber.TAG, "Error deleting old log entries", e)
+                                    AmberLog.e(Amber.TAG, "Error deleting old log entries", e)
                                     val dbFile = context.getDatabasePath("amber_db_${account.npub}")
                                     val logFile = context.getDatabasePath("log_db_${account.npub}")
                                     val historyFile = context.getDatabasePath("history_db_${account.npub}")

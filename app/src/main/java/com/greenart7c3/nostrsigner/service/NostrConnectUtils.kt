@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Intent
-import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
@@ -157,7 +157,7 @@ object NostrConnectUtils {
                 ),
             )
         } catch (e: Exception) {
-            Log.e(Amber.TAG, e.message, e)
+            AmberLog.e(Amber.TAG, e.message, e)
             Amber.instance.applicationIOScope.launch {
                 Amber.instance.getLogDatabase(account.npub).dao().insertLog(
                     LogEntity(

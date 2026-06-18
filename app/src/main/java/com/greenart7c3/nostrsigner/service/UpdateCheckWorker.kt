@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import kotlin.coroutines.cancellation.CancellationException
@@ -35,7 +35,7 @@ class UpdateCheckWorker(appContext: Context, workerParams: WorkerParameters) : C
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
-            Log.e(Amber.TAG, "UpdateCheckWorker: error checking for updates", e)
+            AmberLog.e(Amber.TAG, "UpdateCheckWorker: error checking for updates", e)
         }
 
         return Result.success()

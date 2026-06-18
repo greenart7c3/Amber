@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.database
 
-import android.util.Log
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
 import androidx.paging.PagingSource
@@ -11,6 +10,7 @@ import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.models.Permission
 import com.vitorpamplona.quartz.utils.TimeUtils
 
@@ -124,7 +124,7 @@ interface HistoryDao {
                 }
             }
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "Error adding history", e)
+            AmberLog.e(Amber.TAG, "Error adding history", e)
         }
     }
 }

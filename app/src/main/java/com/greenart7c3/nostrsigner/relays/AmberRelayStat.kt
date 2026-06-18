@@ -8,13 +8,13 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
-import android.util.Log
 import androidx.core.app.ActivityCompat
 import androidx.core.app.NotificationChannelCompat
 import androidx.core.app.NotificationChannelGroupCompat
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.MainActivity
 import com.greenart7c3.nostrsigner.R
@@ -53,7 +53,7 @@ class AmberRelayStats(
                 client.availableRelaysFlow().value,
                 false,
             )?.let { notification ->
-                Log.d(Amber.TAG, "updateNotification")
+                AmberLog.d(Amber.TAG, "updateNotification")
                 notificationManager.notify(2, notification)
             }
         }
@@ -154,7 +154,7 @@ class AmberRelayStats(
     ): Notification? {
         try {
             if (available.isEmpty() && connected.isEmpty() && !Amber.instance.settings.killSwitch.value) {
-                Log.d(Amber.TAG, "No relays available, removing relay notification")
+                AmberLog.d(Amber.TAG, "No relays available, removing relay notification")
                 val notificationManager = NotificationManagerCompat.from(appContext)
                 notificationManager.cancel(2)
                 return null
@@ -230,7 +230,7 @@ class AmberRelayStats(
 
             return notificationBuilder.build()
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "failed to create notification", e)
+            AmberLog.e(Amber.TAG, "failed to create notification", e)
             return null
         }
     }
@@ -243,7 +243,7 @@ class AmberRelayStats(
                 connected,
                 available,
             )?.let {
-                Log.d(Amber.TAG, "updateNotification")
+                AmberLog.d(Amber.TAG, "updateNotification")
                 notificationManager.notify(2, it)
             }
         }

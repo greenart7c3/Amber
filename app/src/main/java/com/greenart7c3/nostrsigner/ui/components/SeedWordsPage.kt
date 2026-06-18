@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.components
 
-import android.content.ClipData
 import android.view.WindowManager
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -32,6 +31,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.newSensitivePlainText
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 
@@ -76,7 +76,7 @@ fun SeedWordsPage(
                     scope.launch {
                         clipboardManager.setClipEntry(
                             ClipEntry(
-                                ClipData.newPlainText("", seedWords.joinToString(" ")),
+                                newSensitivePlainText("", seedWords.joinToString(" ")),
                             ),
                         )
                     }

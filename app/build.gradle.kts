@@ -141,6 +141,14 @@ android {
         register("offline") {
             dimension = "version"
         }
+        // Online variant (same network stack as `free`) built and uploaded by CI on
+        // every push so changes can be installed and reviewed per commit. The distinct
+        // applicationId suffix lets it sit side-by-side with a production install.
+        register("benchmark") {
+            dimension = "version"
+            applicationIdSuffix = ".benchmark"
+            versionNameSuffix = "-BENCHMARK"
+        }
     }
 
     splits {
@@ -237,6 +245,12 @@ dependencies {
     "freeImplementation"(libs.okhttpCoroutines)
     "freeImplementation"(libs.kmptor.runtime)
     "freeImplementation"(libs.kmptor.resource.exec)
+
+    // benchmark mirrors the `free` online network stack
+    "benchmarkImplementation"(libs.okhttp)
+    "benchmarkImplementation"(libs.okhttpCoroutines)
+    "benchmarkImplementation"(libs.kmptor.runtime)
+    "benchmarkImplementation"(libs.kmptor.resource.exec)
 
     // Load images from the web.
     implementation(libs.coil.compose)

@@ -19,7 +19,6 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -31,7 +30,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
-import com.greenart7c3.nostrsigner.ui.newSensitivePlainText
+import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 
@@ -74,11 +73,7 @@ fun SeedWordsPage(
             AmberButton(
                 onClick = {
                     scope.launch {
-                        clipboardManager.setClipEntry(
-                            ClipEntry(
-                                newSensitivePlainText("", seedWords.joinToString(" ")),
-                            ),
-                        )
+                        clipboardManager.setSensitiveClip("", seedWords.joinToString(" "))
                     }
                 },
                 text = stringResource(R.string.copy_to_clipboard),

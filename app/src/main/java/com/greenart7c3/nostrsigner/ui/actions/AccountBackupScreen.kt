@@ -69,7 +69,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.autofill.ContentType
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -106,7 +105,7 @@ import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.MarkdownText
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
-import com.greenart7c3.nostrsigner.ui.newSensitivePlainText
+import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.greenart7c3.nostrsigner.ui.theme.Size35dp
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
@@ -797,7 +796,7 @@ private fun encryptCopyNSec(
                 account.didBackup = true
                 onBackupDone()
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                    clipboardManager.setClipEntry(ClipEntry(newSensitivePlainText("", key)))
+                    clipboardManager.setSensitiveClip("", key)
                     Toast.makeText(context, context.getString(R.string.secret_key_copied_to_clipboard), Toast.LENGTH_SHORT).show()
                 }
                 onLoading(false)

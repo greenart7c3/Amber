@@ -3,13 +3,12 @@ package com.greenart7c3.nostrsigner.models
 import android.widget.Toast
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.Stable
-import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.DataStoreAccess
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.nip44v3.Nip44v3
-import com.greenart7c3.nostrsigner.ui.newSensitivePlainText
+import com.greenart7c3.nostrsigner.ui.setSensitiveClip
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.HexKey
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
@@ -120,11 +119,7 @@ class Account(
             didBackup = true
             val nsec = getNsec()
             Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
-                clipboardManager.setClipEntry(
-                    ClipEntry(
-                        newSensitivePlainText("", nsec),
-                    ),
-                )
+                clipboardManager.setSensitiveClip("", nsec)
 
                 Toast.makeText(
                     Amber.instance,

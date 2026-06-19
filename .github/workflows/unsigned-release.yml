@@ -40,7 +40,7 @@ jobs:
 
       - name: Build AAB and APKs
         run: |
-          ./gradlew bundleRelease assembleRelease --stacktrace
+          ./gradlew bundleFreeRelease bundleOfflineRelease assembleFreeRelease assembleOfflineRelease --stacktrace
 
       - name: Upload all APKs as artifacts
         uses: actions/upload-artifact@v4

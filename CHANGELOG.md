@@ -1,3 +1,26 @@
+## Amber 6.2.2
+
+- Show native app icons and NIP-46 client metadata on the request screens and app list
+- Persist client metadata on every connect and capture the native app icon and name at connect/accept time
+- Add support for event kind 30618
+- Add an export/share button to the Logs screen
+- Separate default and connection relays in the Active relays screen, and use default relays for new relay-delivered bunker connections
+- Stop logging decrypted NIP-46 request/response bodies and store encrypt/decrypt payloads as ciphertext, decrypting on demand
+- Gate all logcat output behind BuildConfig.DEBUG
+- Force always-ask for null-package (browser) callers
+- Flag nsec, ncryptsec and seed words clipboard copies as sensitive and clear them after a delay
+- Add explicit backup/data-extraction excludes as defense-in-depth
+- Fix a crash from nested scrolling in the Active relays screen
+- Fix a LazyColumn duplicate key crash from racy bunker request dedup
+- Fix the release update check missing a file subscription on an EOSE race
+- Fix the overlapping feedback type selector with long labels
+- Warm up the Coil ImageLoader off the main thread
+- Update translations
+
+Download it with [Zapstore](https://zapstore.dev/apps/com.greenart7c3.nostrsigner), [Obtainium](https://github.com/ImranR98/Obtainium), [f-droid](https://f-droid.org/packages/com.greenart7c3.nostrsigner) or download it directly in the [releases page](https://github.com/greenart7c3/Amber/releases/tag/v6.2.2)
+
+If you like my work consider making a [donation](https://greenart7c3.com)
+
 ## Amber 6.2.1
 
 - Reduce battery drain from relay reconnects and websocket pings

@@ -21,8 +21,8 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.relays.RelayHealthTracker
@@ -62,7 +62,7 @@ class NotificationSubscription(
     }
 
     override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
-        Log.d("NotificationSubscription", "onSend: ${relay.url}, $cmdStr, $success")
+        AmberLog.d("NotificationSubscription", "onSend: ${relay.url}, $cmdStr, $success")
         super.onSent(relay, cmdStr, cmd, success)
     }
 

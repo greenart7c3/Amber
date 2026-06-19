@@ -1,9 +1,9 @@
 package com.greenart7c3.nostrsigner.ui
 
-import android.util.Log
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
@@ -192,7 +192,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         observerJob?.cancel()
         observerJob = Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
             account.saveable.collect {
-                Log.d(Amber.TAG, "Account saved")
+                AmberLog.d(Amber.TAG, "Account saved")
                 LocalPreferences.saveToEncryptedStorage(Amber.instance, it.account, null, null, null)
             }
         }
@@ -223,7 +223,7 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
                 restorePrompt.value = RestorePromptState.Found(account, payload, event.createdAt)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                Log.e(Amber.TAG, "maybeOfferRestore: failed", e)
+                AmberLog.e(Amber.TAG, "maybeOfferRestore: failed", e)
                 restorePrompt.value = null
             }
         }

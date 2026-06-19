@@ -20,7 +20,7 @@
  */
 package com.greenart7c3.nostrsigner.okhttp
 
-import android.util.Log
+import com.greenart7c3.nostrsigner.AmberLog
 import com.vitorpamplona.quartz.utils.ciphers.AESGCM
 import com.vitorpamplona.quartz.utils.ciphers.NostrCipher
 import okhttp3.Interceptor
@@ -40,7 +40,7 @@ class EncryptedBlobInterceptor(
     private fun Response.decryptOrNull(cipher: NostrCipher): Response? = try {
         decrypt(cipher)
     } catch (e: Exception) {
-        Log.w("EncryptedBlobInterceptor", "Failed to decrypt", e)
+        AmberLog.w("EncryptedBlobInterceptor", "Failed to decrypt", e)
         null
     }
 

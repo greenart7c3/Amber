@@ -1,8 +1,8 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerActivity
 import com.greenart7c3.nostrsigner.database.ApplicationEntity
@@ -164,7 +164,7 @@ object BunkerRequestUtils {
             encryptedContent,
         )
 
-        Log.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
+        AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
         val success = retryWithBackoff {
             val result = Amber.instance.client.publishAndConfirm(
@@ -197,12 +197,12 @@ object BunkerRequestUtils {
         }
 
         if (success) {
-            Log.d(Amber.TAG, "Success response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
+            AmberLog.d(Amber.TAG, "Success response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
             onDone(true)
         } else {
             onDone(false)
             AmberListenerSingleton.showErrorMessage()
-            Log.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
+            AmberLog.d(Amber.TAG, "Failed response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
         }
         onLoading(false)
     }

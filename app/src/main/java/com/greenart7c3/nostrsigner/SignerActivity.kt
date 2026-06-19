@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner
 import android.content.Intent
 import android.net.ConnectivityManager
 import android.os.Bundle
-import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -58,7 +57,7 @@ class SignerActivity : AppCompatActivity() {
     lateinit var mainViewModel: MainViewModel
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        Log.d(Amber.TAG, "onCreate SignerActivity")
+        AmberLog.d(Amber.TAG, "onCreate SignerActivity")
         Amber.isAppInForeground = true
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
@@ -75,7 +74,7 @@ class SignerActivity : AppCompatActivity() {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
 
                 if (intent?.isLaunchFromHistory() == true) {
-                    Log.d(Amber.TAG, "Cleared intent history")
+                    AmberLog.d(Amber.TAG, "Cleared intent history")
                     intent = Intent()
                 }
 
@@ -161,13 +160,13 @@ class SignerActivity : AppCompatActivity() {
                                             val currentAccount = LocalPreferences.currentAccount(context)
                                             if (currentAccount != null && localNpub != null && currentAccount != localNpub && localNpub.isNotBlank()) {
                                                 if (localNpub.startsWith("npub")) {
-                                                    Log.d(Amber.TAG, "Switching account to $localNpub")
+                                                    AmberLog.d(Amber.TAG, "Switching account to $localNpub")
                                                     if (LocalPreferences.containsAccount(context, localNpub)) {
                                                         accountStateViewModel.switchUser(localNpub, Route.IncomingRequest.route)
                                                     }
                                                 } else {
                                                     val localNpub2 = Hex.decode(localNpub).toNpub()
-                                                    Log.d(Amber.TAG, "Switching account to $localNpub2")
+                                                    AmberLog.d(Amber.TAG, "Switching account to $localNpub2")
                                                     if (LocalPreferences.containsAccount(context, localNpub2)) {
                                                         accountStateViewModel.switchUser(localNpub2, Route.IncomingRequest.route)
                                                     }
@@ -195,13 +194,13 @@ class SignerActivity : AppCompatActivity() {
     }
 
     override fun onPause() {
-        Log.d(Amber.TAG, "onPause SignerActivity")
+        AmberLog.d(Amber.TAG, "onPause SignerActivity")
         Amber.isAppInForeground = false
         super.onPause()
     }
 
     override fun onResume() {
-        Log.d(Amber.TAG, "onResume SignerActivity")
+        AmberLog.d(Amber.TAG, "onResume SignerActivity")
         Amber.isAppInForeground = true
         Amber.instance.setMainActivity(this)
         Amber.instance.startServiceFromUi()
@@ -252,7 +251,7 @@ class SignerActivity : AppCompatActivity() {
                 Toast.LENGTH_SHORT,
             ).show()
         }
-        Log.w(Amber.TAG, "Rate-limited intent from ${key.pkg} type=${key.type} kind=${key.kind}")
+        AmberLog.w(Amber.TAG, "Rate-limited intent from ${key.pkg} type=${key.type} kind=${key.kind}")
         finishAndRemoveTask()
         return true
     }

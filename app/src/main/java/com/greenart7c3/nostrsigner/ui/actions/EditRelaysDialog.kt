@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui.actions
 
 import android.annotation.SuppressLint
 import android.content.Context
-import android.util.Log
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +54,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
@@ -391,7 +391,7 @@ fun onAddRelay(
                     }
 
                     override fun onDisconnected(relay: IRelayClient) {
-                        Log.d(Amber.TAG, "Disconnected from ${relay.url.url}")
+                        AmberLog.d(Amber.TAG, "Disconnected from ${relay.url.url}")
                         super.onDisconnected(relay)
                     }
                     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {

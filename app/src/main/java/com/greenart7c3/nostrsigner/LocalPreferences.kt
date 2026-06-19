@@ -3,7 +3,6 @@ package com.greenart7c3.nostrsigner
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.SharedPreferences
-import android.util.Log
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.runtime.Immutable
 import androidx.core.content.edit
@@ -94,10 +93,10 @@ object LocalPreferences {
 
     fun currentAccount(context: Context): String? {
         if (currentAccount == null) {
-            Log.d(Amber.TAG, "currentAccount is null fetching from shared preferences")
+            AmberLog.d(Amber.TAG, "currentAccount is null fetching from shared preferences")
             currentAccount = sharedPrefs(context).getString(SettingsKeys.CURRENT_ACCOUNT.key, null)
             if (currentAccount == null) {
-                Log.d(Amber.TAG, "currentAccount is null fetching from all saved accounts")
+                AmberLog.d(Amber.TAG, "currentAccount is null fetching from all saved accounts")
                 currentAccount = allSavedAccounts(context).firstOrNull()?.npub
             }
         }
@@ -356,9 +355,9 @@ object LocalPreferences {
             if (it.contains(npub)) {
                 try {
                     val result = File(prefsDir, it).delete()
-                    Log.d(Amber.TAG, "deleted $it: $result")
+                    AmberLog.d(Amber.TAG, "deleted $it: $result")
                 } catch (e: Exception) {
-                    Log.d(Amber.TAG, "failed to delete $it", e)
+                    AmberLog.d(Amber.TAG, "failed to delete $it", e)
                 }
             }
         }
@@ -472,7 +471,7 @@ object LocalPreferences {
 
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
         if (savedAccounts == null || accountCache.size() == 0 || savedAccounts?.size != accountCache.size()) {
-            Log.d(Amber.TAG, "accountCache is null loading accounts")
+            AmberLog.d(Amber.TAG, "accountCache is null loading accounts")
             runBlocking {
                 allSavedAccounts(context).forEach {
                     loadFromEncryptedStorage(context, it.npub)
@@ -641,11 +640,11 @@ object LocalPreferences {
                 DataStoreAccess.NOSTR_PRIVKEY,
             )
         } catch (e: InvalidKeyException) {
-            Log.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
+            AmberLog.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
             Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
             return null
         } catch (e: KeyStoreException) {
-            Log.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
+            AmberLog.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
             Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
             return null
         }

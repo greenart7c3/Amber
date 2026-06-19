@@ -1,10 +1,10 @@
 package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
-import android.util.Log
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.vitorpamplona.quartz.utils.TimeUtils
@@ -28,11 +28,11 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
 
                 val deletedHistory = historyDao.deleteOldHistory(oneWeekAgo)
                 if (deletedHistory > 0) {
-                    Log.d(Amber.TAG, "Deleted $deletedHistory old history entries")
+                    AmberLog.d(Amber.TAG, "Deleted $deletedHistory old history entries")
                 }
                 val excessHistory = historyDao.deleteExcessHistory(MAX_HISTORY_ENTRIES)
                 if (excessHistory > 0) {
-                    Log.d(Amber.TAG, "Trimmed $excessHistory excess history entries (cap: $MAX_HISTORY_ENTRIES)")
+                    AmberLog.d(Amber.TAG, "Trimmed $excessHistory excess history entries (cap: $MAX_HISTORY_ENTRIES)")
                 }
 
                 val logDatabase = Amber.instance.getLogDatabase(it.npub)
@@ -40,11 +40,11 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
 
                 val deletedLogs = logDao.deleteOldLog(threeDaysAgo)
                 if (deletedLogs > 0) {
-                    Log.d(Amber.TAG, "Deleted $deletedLogs old log entries")
+                    AmberLog.d(Amber.TAG, "Deleted $deletedLogs old log entries")
                 }
                 val excessLogs = logDao.deleteExcessLogs(MAX_LOG_ENTRIES)
                 if (excessLogs > 0) {
-                    Log.d(Amber.TAG, "Trimmed $excessLogs excess log entries (cap: $MAX_LOG_ENTRIES)")
+                    AmberLog.d(Amber.TAG, "Trimmed $excessLogs excess log entries (cap: $MAX_LOG_ENTRIES)")
                 }
 
                 val dao = Amber.instance.dao(it.npub)
@@ -63,7 +63,7 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                 }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
-                Log.e(Amber.TAG, "Error in ClearLogsWorker", e)
+                AmberLog.e(Amber.TAG, "Error in ClearLogsWorker", e)
             }
         }
         return Result.success()

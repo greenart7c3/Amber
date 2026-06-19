@@ -1,6 +1,5 @@
 package com.greenart7c3.nostrsigner.ui.actions
 
-import android.util.Log
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
@@ -27,6 +26,7 @@ import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.ui.ActivityFilter
@@ -127,11 +127,11 @@ fun ActivityScreen(
             lazyPagingItems.apply {
                 when (loadState.refresh) {
                     is LoadState.Loading -> item {
-                        Log.d("ActivitiesScreen", "Loading...")
+                        AmberLog.d("ActivitiesScreen", "Loading...")
                         Text("Loading...", Modifier.padding(16.dp))
                     }
                     is LoadState.Error -> item {
-                        Log.d("ActivitiesScreen", "Error loading data")
+                        AmberLog.d("ActivitiesScreen", "Error loading data")
                         Text("Error loading data", Modifier.padding(16.dp))
                     }
                     is LoadState.NotLoading -> { }

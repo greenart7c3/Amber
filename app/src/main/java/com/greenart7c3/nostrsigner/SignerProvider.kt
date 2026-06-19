@@ -4,7 +4,6 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
-import android.util.Log
 
 class SignerProvider : ContentProvider() {
     override fun delete(
@@ -31,7 +30,7 @@ class SignerProvider : ContentProvider() {
     ): Cursor? {
         val ctx = context
         if (ctx == null) {
-            Log.d(Amber.TAG, "No context")
+            AmberLog.d(Amber.TAG, "No context")
             return null
         }
         // External apps are always attributed to their own Android package. The
@@ -39,7 +38,7 @@ class SignerProvider : ContentProvider() {
         // caller-supplied query arguments, so an app cannot impersonate another one.
         val caller = callingPackage
         if (caller == null) {
-            Log.d(Amber.TAG, "No calling package")
+            AmberLog.d(Amber.TAG, "No calling package")
             return null
         }
         return SignerProviderQuery.query(

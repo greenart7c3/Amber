@@ -1,7 +1,6 @@
 package com.greenart7c3.nostrsigner.database
 
 import android.content.Context
-import android.util.Log
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -9,6 +8,7 @@ import androidx.room.TypeConverters
 import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import java.util.concurrent.Executors
 
 val MIGRATION_1_2 =
@@ -110,7 +110,7 @@ val MIGRATION_11_12 = object : Migration(11, 12) {
         try {
             db.execSQL("DROP TABLE notification")
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "No notification table", e)
+            AmberLog.e(Amber.TAG, "No notification table", e)
         }
     }
 }
@@ -120,7 +120,7 @@ val MIGRATION_12_13 = object : Migration(12, 13) {
         try {
             db.execSQL("DROP TABLE history")
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "No history table", e)
+            AmberLog.e(Amber.TAG, "No history table", e)
         }
     }
 }
@@ -136,7 +136,7 @@ val MIGRATION_14_15 = object : Migration(14, 15) {
         try {
             db.execSQL("DROP TABLE amber_log")
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "No amber_log table", e)
+            AmberLog.e(Amber.TAG, "No amber_log table", e)
         }
     }
 }
@@ -146,7 +146,7 @@ val MIGRATION_15_16 = object : Migration(15, 16) {
         try {
             db.execSQL("DROP TABLE history2")
         } catch (e: Exception) {
-            Log.e(Amber.TAG, "No amber_log table", e)
+            AmberLog.e(Amber.TAG, "No amber_log table", e)
         }
     }
 }

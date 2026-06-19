@@ -6,7 +6,6 @@ import android.os.Build
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
-import android.util.Log
 import java.nio.ByteBuffer
 import java.security.KeyStore
 import javax.crypto.Cipher
@@ -82,7 +81,7 @@ object SecureCryptoHelper {
                 keyGenerator.init(paramsBuilder.build())
                 return keyGenerator.generateKey()
             } catch (e: Exception) {
-                Log.w("SecureCryptoHelper", "StrongBox generation failed, falling back to TEE", e)
+                AmberLog.w("SecureCryptoHelper", "StrongBox generation failed, falling back to TEE", e)
                 paramsBuilder.setIsStrongBoxBacked(false)
                 keyGenerator.init(paramsBuilder.build())
                 return keyGenerator.generateKey()

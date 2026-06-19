@@ -8,9 +8,9 @@ import android.net.Network
 import android.net.NetworkCapabilities
 import android.os.Build
 import android.os.IBinder
-import android.util.Log
 import androidx.core.app.ServiceCompat
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -68,7 +68,7 @@ class ConnectivityService : Service() {
                 }
 
                 scope.launch(Dispatchers.IO) {
-                    Log.d(
+                    AmberLog.d(
                         "ServiceManager NetworkCallback",
                         "onCapabilitiesChanged: ${network.networkHandle} hasMobileData ${Amber.instance.isOnMobileDataState.value} hasWifi ${Amber.instance.isOnWifiDataState.value}",
                     )
@@ -98,7 +98,7 @@ class ConnectivityService : Service() {
     override fun onBind(intent: Intent): IBinder? = null
 
     override fun onCreate() {
-        Log.d(Amber.TAG, "onCreate ConnectivityService")
+        AmberLog.d(Amber.TAG, "onCreate ConnectivityService")
 
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             TorManager.init(this)
@@ -174,19 +174,19 @@ class ConnectivityService : Service() {
         timer.cancel()
         if (!BuildFlavorChecker.isOfflineFlavor()) {
             try {
-                Log.d(Amber.TAG, "unregisterNetworkCallback")
+                AmberLog.d(Amber.TAG, "unregisterNetworkCallback")
                 val connectivityManager =
                     (getSystemService(ConnectivityManager::class.java) as ConnectivityManager)
                 connectivityManager.unregisterNetworkCallback(networkCallback)
             } catch (e: Exception) {
-                Log.d(Amber.TAG, "Failed to unregisterNetworkCallback", e)
+                AmberLog.d(Amber.TAG, "Failed to unregisterNetworkCallback", e)
             }
         }
         super.onDestroy()
     }
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Log.d(Amber.TAG, "onStartCommand")
+        AmberLog.d(Amber.TAG, "onStartCommand")
         val foregroundServiceType =
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
                 ServiceInfo.FOREGROUND_SERVICE_TYPE_SPECIAL_USE
@@ -203,7 +203,7 @@ class ConnectivityService : Service() {
         } catch (e: Exception) {
             // Android 12+ can refuse a background FGS start with ForegroundServiceStartNotAllowedException;
             // swallow it and let the next foreground start (startServiceFromUi) retry.
-            Log.e(Amber.TAG, "Failed to start ConnectivityService in foreground", e)
+            AmberLog.e(Amber.TAG, "Failed to start ConnectivityService in foreground", e)
             stopSelf(startId)
             return START_NOT_STICKY
         }

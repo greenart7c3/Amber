@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.ui
 
 import android.content.Context
 import android.content.Intent
-import android.util.Log
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -41,6 +40,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -185,7 +185,7 @@ fun ApplicationsScreen(
                                     runCatching {
                                         navController.navigate("Permission/${applicationWithHistory.key}")
                                     }.onFailure {
-                                        Log.e("ApplicationsScreen", "Failed to open permissions for ${applicationWithHistory.key}", it)
+                                        AmberLog.e("ApplicationsScreen", "Failed to open permissions for ${applicationWithHistory.key}", it)
                                     }
                                 }
                             },

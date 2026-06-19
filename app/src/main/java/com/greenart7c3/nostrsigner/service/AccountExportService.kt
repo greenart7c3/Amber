@@ -2,11 +2,11 @@ package com.greenart7c3.nostrsigner.service
 
 import android.content.Context
 import android.net.Uri
-import android.util.Log
 import android.widget.Toast
 import com.anggrayudi.storage.extension.toDocumentFile
 import com.anggrayudi.storage.file.openInputStream
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -68,7 +68,7 @@ object AccountExportService {
                             } catch (e: Exception) {
                                 if (e is CancellationException) throw e
 
-                                Log.e("Amber", "Error importing account", e)
+                                AmberLog.e("Amber", "Error importing account", e)
                             }
                         }
                         onFinish()
@@ -137,7 +137,7 @@ object AccountExportService {
                     LocalPreferences.updatePrefsForLogin(Amber.instance, account, hexKey.toHexKey(), privKey, null)
                 } catch (e: Exception) {
                     if (e is CancellationException) throw e
-                    Log.e("Amber", "Error importing ncryptsec at index $index", e)
+                    AmberLog.e("Amber", "Error importing ncryptsec at index $index", e)
                 }
             }
             onFinish()

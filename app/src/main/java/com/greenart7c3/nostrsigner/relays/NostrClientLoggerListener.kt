@@ -2,9 +2,8 @@ package com.greenart7c3.nostrsigner.relays
 
 import android.app.NotificationManager
 import android.content.Context
-import android.util.Log
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildConfig
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -63,9 +62,7 @@ class NostrClientLoggerListener(
     // successful connection (onConnected) or a network change / manual reconnect.
     private fun scheduleReconnect(relay: NormalizedRelayUrl) {
         if (!RelayHealthTracker.recordFailure(relay)) {
-            if (BuildConfig.DEBUG) {
-                Log.d(Amber.TAG, "Relay ${relay.url} marked dead; skipping reconnect")
-            }
+            AmberLog.d(Amber.TAG, "Relay ${relay.url} marked dead; skipping reconnect")
             return
         }
         reconnectWithBackoff()
@@ -80,7 +77,7 @@ class NostrClientLoggerListener(
 
         reconnectJob?.cancel()
         reconnectJob = scope.launch {
-            if (BuildConfig.DEBUG) Log.d(Amber.TAG, "Reconnecting in ${reconnectDelay / 1000}s...")
+            AmberLog.d(Amber.TAG, "Reconnecting in ${reconnectDelay / 1000}s...")
             delay(reconnectDelay)
             reconnectDelay = (reconnectDelay * 2).coerceAtMost(60_000L)
             if (!BuildFlavorChecker.isOfflineFlavor() && !Amber.instance.settings.killSwitch.value) {
@@ -123,7 +120,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onCannotConnect(relay: IRelayClient, errorMessage: String) {
-        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onCannotConnect: ${relay.url.url} error: $errorMessage")
+        AmberLog.d(Amber.TAG, "onCannotConnect: ${relay.url.url} error: $errorMessage")
         saveLog(relay.url.url, "onCannotConnect", errorMessage)
 
         if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
@@ -136,7 +133,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
-        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onSent: ${relay.url.url} success: $success cmd: $cmdStr")
+        AmberLog.d(Amber.TAG, "onSent: ${relay.url.url} success: $success cmd: $cmdStr")
 
         if (cmd is ReqCmd) {
             saveLog(relay.url.url, "onSent", "Subscribed to relay: $success")
@@ -159,7 +156,7 @@ class NostrClientLoggerListener(
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onIncomingMessage: ${relay.url.url} msg: $msgStr")
+        AmberLog.d(Amber.TAG, "onIncomingMessage: ${relay.url.url} msg: $msgStr")
 
         if (msg is OkMessage) {
             saveLog(relay.url.url, "onIncomingMessage", "Relay accepted message: ${msg.success}")
@@ -173,11 +170,11 @@ class NostrClientLoggerListener(
     }
 
     override fun onDisconnected(relay: IRelayClient) {
-        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onDisconnected: ${relay.url.url}")
+        AmberLog.d(Amber.TAG, "onDisconnected: ${relay.url.url}")
         saveLog(relay.url.url, "onDisconnected", "Disconnected")
 
         if (System.currentTimeMillis() - Amber.instance.intentionalDisconnectTime < 2_000) {
-            if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onDisconnected: ${relay.url.url} intentional, skipping reconnect")
+            AmberLog.d(Amber.TAG, "onDisconnected: ${relay.url.url} intentional, skipping reconnect")
             super.onDisconnected(relay)
             return
         }
@@ -187,13 +184,13 @@ class NostrClientLoggerListener(
     }
 
     override fun onConnecting(relay: IRelayClient) {
-        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onConnecting: ${relay.url.url}")
+        AmberLog.d(Amber.TAG, "onConnecting: ${relay.url.url}")
         saveLog(relay.url.url, "onConnecting", "Connecting")
         super.onConnecting(relay)
     }
 
     override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
-        if (BuildConfig.DEBUG) Log.d(Amber.TAG, "onConnected: ${relay.url.url} ping: ${pingMillis}ms compressed: $compressed")
+        AmberLog.d(Amber.TAG, "onConnected: ${relay.url.url} ping: ${pingMillis}ms compressed: $compressed")
         saveLog(relay.url.url, "onConnected", "Connected")
         // Relay recovered: clear its failure streak so it is eligible for the
         // normal reconnect-with-backoff path (and the subscription) again.

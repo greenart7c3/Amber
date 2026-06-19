@@ -219,9 +219,12 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         if (notification != null) return
         Amber.instance.notificationCache.put(event.id, event.createdAt)
 
-        saveLog("Decrypted request: $requestStr", relay.url, acc.npub)
-
         val bunkerRequest = JacksonMapper.mapper.readValue(requestStr, BunkerRequest::class.java)
+
+        // Never persist the decrypted request body — it can contain plaintext
+        // (e.g. the message to encrypt, or the event to sign). The encrypted event
+        // is already logged above; here we record only non-sensitive metadata.
+        saveLog("Decrypted request ${bunkerRequest.id} method ${bunkerRequest.method}", relay.url, acc.npub)
 
         val signedEvent = if (bunkerRequest is BunkerRequestSign) {
             acc.sign(bunkerRequest.event)

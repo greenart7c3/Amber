@@ -105,13 +105,16 @@ object BunkerRequestUtils {
         }
 
         Amber.instance.applicationIOScope.launch {
+            // Never persist the response result — for a decrypt request it is the
+            // plaintext. Record only non-sensitive metadata (id + error status).
+            val sanitizedResponse = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"}"
             relays.forEach { relay ->
                 Amber.instance.getLogDatabase(account.npub).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url,
                         type = "bunker response",
-                        message = JacksonMapper.mapper.writeValueAsString(bunkerResponse),
+                        message = sanitizedResponse,
                         time = System.currentTimeMillis(),
                     ),
                 )

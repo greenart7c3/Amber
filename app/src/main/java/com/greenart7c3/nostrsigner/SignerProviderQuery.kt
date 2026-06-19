@@ -87,7 +87,6 @@ object SignerProviderQuery {
 
         val appId = BuildConfig.APPLICATION_ID
         val uriString = operationUri.toString()
-        val packageName = requesterId
         return try {
             when (uriString) {
                 "content://$appId.SIGN_EVENT" -> {
@@ -110,7 +109,7 @@ object SignerProviderQuery {
                     val event = try {
                         IntentUtils.getUnsignedEvent(json, account)
                     } catch (e: Exception) {
-                        Log.d(Amber.TAG, "Failed to parse event from $packageName", e)
+                        Log.d(Amber.TAG, "Failed to parse event from $requesterId", e)
                         return null
                     }
 
@@ -135,7 +134,7 @@ object SignerProviderQuery {
                                         listOf(
                                             HistoryEntity(
                                                 0,
-                                                packageName,
+                                                requesterId,
                                                 uriString.replace("content://$appId.", ""),
                                                 event.kind,
                                                 TimeUtils.now(),
@@ -155,12 +154,12 @@ object SignerProviderQuery {
 
                     var permission = if (event.kind == 22242) {
                         // Kind 22242 = relay client auth (NIP-42): check relay-specific permission first
-                        permDao.getPermissionForRelay(packageName, "SIGN_EVENT", 22242, relayHost)
-                            ?: permDao.getWildcardRelayPermission(packageName, "SIGN_EVENT", 22242)
+                        permDao.getPermissionForRelay(requesterId, "SIGN_EVENT", 22242, relayHost)
+                            ?: permDao.getWildcardRelayPermission(requesterId, "SIGN_EVENT", 22242)
                     } else {
                         permDao
                             .getPermission(
-                                packageName,
+                                requesterId,
                                 "SIGN_EVENT",
                                 event.kind,
                             )
@@ -173,14 +172,14 @@ object SignerProviderQuery {
                             } else {
                                 permDao
                                     .getPermission(
-                                        packageName,
+                                        requesterId,
                                         "NIP",
                                         nipNumber,
                                     )
                             }
                         }
                     }
-                    val signPolicy = permDao.getSignPolicy(packageName)
+                    val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = whitelistAutoAccept || IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
@@ -188,7 +187,7 @@ object SignerProviderQuery {
                                 listOf(
                                     HistoryEntity(
                                         0,
-                                        packageName,
+                                        requesterId,
                                         uriString.replace("content://$appId.", ""),
                                         event.kind,
                                         TimeUtils.now(),
@@ -215,7 +214,7 @@ object SignerProviderQuery {
                             listOf(
                                 HistoryEntity(
                                     0,
-                                    packageName,
+                                    requesterId,
                                     "SIGN_EVENT",
                                     event.kind,
                                     TimeUtils.now(),
@@ -315,7 +314,7 @@ object SignerProviderQuery {
                                     logDatabase.dao().insertLog(
                                         LogEntity(
                                             0,
-                                            packageName,
+                                            requesterId,
                                             uriString.replace("content://$appId.", ""),
                                             e.message ?: "Could not decrypt the message",
                                             System.currentTimeMillis(),
@@ -338,14 +337,14 @@ object SignerProviderQuery {
                         // "all kinds" (kind IS NULL) grant only, never to any
                         // other kind — otherwise e.g. a kind-A reject would
                         // leak to a kind-B request.
-                        permDao.getPermission(packageName, type.toString(), v3Kind!!)
-                            ?: permDao.getPermissionAllKinds(packageName, type.toString())
+                        permDao.getPermission(requesterId, type.toString(), v3Kind!!)
+                            ?: permDao.getPermissionAllKinds(requesterId, type.toString())
                     } else {
                         // Classify the content to determine EncryptedDataKind-based permission type
                         val classifyContent = if (isEncrypt) content else (result ?: content)
                         val permType = permissionTypeFromContent(classifyContent, isEncrypt, type)
-                        permDao.getPermission(packageName, permType)
-                            ?: permDao.getPermission(packageName, type.toString())
+                        permDao.getPermission(requesterId, permType)
+                            ?: permDao.getPermission(requesterId, type.toString())
                     }
                     if (permission == null && !isV3) {
                         val nip = when (stringType) {
@@ -360,13 +359,13 @@ object SignerProviderQuery {
                             permission =
                                 permDao
                                     .getPermission(
-                                        packageName,
+                                        requesterId,
                                         "NIP",
                                         it,
                                     )
                         }
                     }
-                    val signPolicy = permDao.getSignPolicy(packageName)
+                    val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
@@ -374,7 +373,7 @@ object SignerProviderQuery {
                                 listOf(
                                     HistoryEntity(
                                         0,
-                                        packageName,
+                                        requesterId,
                                         uriString.replace("content://$appId.", ""),
                                         v3Kind,
                                         TimeUtils.now(),
@@ -412,7 +411,7 @@ object SignerProviderQuery {
                                 logDatabase.dao().insertLog(
                                     LogEntity(
                                         0,
-                                        packageName,
+                                        requesterId,
                                         uriString.replace("content://$appId.", ""),
                                         e.message ?: "Could not decrypt the message",
                                         System.currentTimeMillis(),
@@ -434,7 +433,7 @@ object SignerProviderQuery {
                             listOf(
                                 HistoryEntity(
                                     0,
-                                    packageName,
+                                    requesterId,
                                     uriString.replace("content://$appId.", ""),
                                     v3Kind,
                                     TimeUtils.now(),
@@ -473,10 +472,10 @@ object SignerProviderQuery {
                     val permission =
                         permDao
                             .getPermission(
-                                packageName,
+                                requesterId,
                                 "SIGN_PSBT",
                             )
-                    val signPolicy = permDao.getSignPolicy(packageName)
+                    val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
@@ -484,7 +483,7 @@ object SignerProviderQuery {
                                 listOf(
                                     HistoryEntity(
                                         0,
-                                        packageName,
+                                        requesterId,
                                         uriString.replace("content://$appId.", ""),
                                         null,
                                         TimeUtils.now(),
@@ -512,7 +511,7 @@ object SignerProviderQuery {
                             logDb.dao().insertLog(
                                 LogEntity(
                                     0,
-                                    packageName,
+                                    requesterId,
                                     "SIGN_PSBT",
                                     e.message ?: "Could not sign the psbt",
                                     System.currentTimeMillis(),
@@ -527,7 +526,7 @@ object SignerProviderQuery {
                             listOf(
                                 HistoryEntity(
                                     0,
-                                    packageName,
+                                    requesterId,
                                     "SIGN_PSBT",
                                     null,
                                     TimeUtils.now(),
@@ -552,7 +551,7 @@ object SignerProviderQuery {
                     } else {
                         LocalPreferences.allSavedAccounts(context).firstNotNullOfOrNull { accountInfo ->
                             val localDatabase = Amber.instance.getDatabase(accountInfo.npub)
-                            val hasAccount = localDatabase.dao().getByKeySync(packageName) != null
+                            val hasAccount = localDatabase.dao().getByKeySync(requesterId) != null
                             if (hasAccount) {
                                 LocalPreferences.loadFromEncryptedStorageSync(context, accountInfo.npub)
                             } else {
@@ -569,11 +568,11 @@ object SignerProviderQuery {
                     val permission =
                         permDao
                             .getPermission(
-                                packageName,
+                                requesterId,
                                 "PING",
                             )
 
-                    val signPolicy = permDao.getSignPolicy(packageName)
+                    val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
@@ -581,7 +580,7 @@ object SignerProviderQuery {
                                 listOf(
                                     HistoryEntity(
                                         0,
-                                        packageName,
+                                        requesterId,
                                         uriString.replace("content://$appId.", ""),
                                         null,
                                         TimeUtils.now(),
@@ -605,7 +604,7 @@ object SignerProviderQuery {
                             listOf(
                                 HistoryEntity(
                                     0,
-                                    packageName,
+                                    requesterId,
                                     uriString.replace("content://$appId.", ""),
                                     null,
                                     TimeUtils.now(),
@@ -629,9 +628,9 @@ object SignerProviderQuery {
                     database.dao().insertLog(
                         LogEntity(
                             0,
-                            packageName,
+                            requesterId,
                             uriString.replace("content://$appId.", ""),
-                            e.message ?: "Error from ${callerPackageName ?: packageName} $operationUri",
+                            e.message ?: "Error from ${callerPackageName ?: requesterId} $operationUri",
                             System.currentTimeMillis(),
                         ),
                     )

@@ -1,13 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?><!--
-   Sample backup rules file; uncomment and customize as necessary.
+   Backup rules used for fullBackupContent on devices older than API 31.
    See https://developer.android.com/guide/topics/data/autobackup
    for details.
-   Note: This file is ignored for devices older that API 31
-   See https://developer.android.com/about/versions/12/backup-restore
+
+   Amber sets android:allowBackup="false", so backups are already disabled.
+   These explicit excludes are defense-in-depth: even if backups were ever
+   enabled, the signer's secret material (encrypted keys, per-account
+   SharedPreferences, Room databases and DataStore files) must never leave
+   the device.
 -->
 <full-backup-content>
-    <!--
-   <include domain="sharedpref" path="."/>
-   <exclude domain="sharedpref" path="device.xml"/>
--->
+    <!-- Encrypted keys / settings live in SharedPreferences (prefs, prefs_<npub>). -->
+    <exclude domain="sharedpref" path="." />
+    <!-- Per-account apps/permissions, logs and history Room databases (amber_db_<npub>, etc.). -->
+    <exclude domain="database" path="." />
+    <!-- DataStore preferences (secure_datastore_<npub>, app_datastore). -->
+    <exclude domain="file" path="datastore" />
 </full-backup-content>

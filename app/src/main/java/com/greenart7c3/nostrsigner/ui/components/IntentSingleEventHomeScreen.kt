@@ -63,6 +63,12 @@ fun IntentSingleEventHomeScreen(
     val key = "$packageName"
 
     LaunchedEffect(Unit) {
+        // Browser deep-links (nostrsigner://) arrive with no calling package, so
+        // every web caller would otherwise share the single "null" key. Honoring a
+        // remembered grant for that shared identity would let a grant given to one
+        // website auto-approve any other website. Never load (and thus never honor)
+        // the shared "null" application: force always-ask for null-package callers.
+        if (packageName == null) return@LaunchedEffect
         launch(Dispatchers.IO) {
             applicationEntity = Amber.instance.getDatabase(account.npub).dao().getByKey(key)
         }

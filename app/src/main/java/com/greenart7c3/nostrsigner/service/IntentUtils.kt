@@ -35,7 +35,8 @@ import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.containsNip
-import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
+import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
+import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
@@ -900,6 +901,19 @@ object IntentUtils {
                     // immediately, not only on a later request.
                     persistNativeAppMetadata(context, account, packageName)
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
+                    val isV3 = intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT
+                    // Persist the encrypted form (ciphertext), never the plaintext:
+                    // encrypt requests store their ciphertext output (`value`), decrypt
+                    // requests store the ciphertext input (`intentData.data`). The
+                    // plaintext is recovered on demand in the activity/history UI.
+                    val historyContent = when (intentData.type) {
+                        SignerType.SIGN_EVENT -> event
+                        SignerType.NIP04_ENCRYPT,
+                        SignerType.NIP44_ENCRYPT,
+                        SignerType.NIP44_V3_ENCRYPT,
+                        -> value
+                        else -> intentData.data
+                    }
                     Amber.instance.applicationIOScope.launch {
                         historyDatabase.dao().addHistory(
                             listOf(
@@ -907,24 +921,16 @@ object IntentUtils {
                                     0,
                                     key,
                                     intentData.type.toString(),
-                                    kind,
+                                    if (isV3) intentData.nip44v3Kind else kind,
                                     TimeUtils.now(),
                                     true,
-                                    content = when (intentData.type) {
-                                        SignerType.SIGN_EVENT -> event
-                                        SignerType.NIP04_DECRYPT,
-                                        SignerType.NIP44_DECRYPT,
-                                        SignerType.DECRYPT_ZAP_EVENT,
-                                        -> value
-
-                                        // v3 wire values are Base64; log the readable
-                                        // plaintext already decoded into encryptedData.
-                                        SignerType.NIP44_V3_ENCRYPT,
-                                        SignerType.NIP44_V3_DECRYPT,
-                                        -> intentData.encryptedData.nip44v3Plaintext()
-
-                                        else -> intentData.data
+                                    content = historyContent,
+                                    encryptionPubKey = if (intentData.type in encryptDecryptSignerTypes && intentData.type != SignerType.DECRYPT_ZAP_EVENT) {
+                                        intentData.pubKey
+                                    } else {
+                                        ""
                                     },
+                                    encryptionScope = if (isV3) intentData.nip44v3Scope else "",
                                 ),
                             ),
                             account.npub,
@@ -1058,16 +1064,27 @@ object IntentUtils {
             }
 
             Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
+            val isV3 = intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT
+            // A rejected encrypt request was never performed, so no ciphertext exists —
+            // store nothing rather than leaking the plaintext input. Decrypt requests
+            // carry their ciphertext in the request, so persist it and decrypt on demand.
+            val historyContent = if (intentData.type in encryptSignerTypes) "" else intentData.data
             Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
                 listOf(
                     HistoryEntity(
                         0,
                         key,
                         intentData.type.toString(),
-                        kind,
+                        if (isV3) intentData.nip44v3Kind else kind,
                         TimeUtils.now(),
                         false,
-                        content = intentData.data,
+                        content = historyContent,
+                        encryptionPubKey = if (historyContent.isNotEmpty() && intentData.type in encryptDecryptSignerTypes && intentData.type != SignerType.DECRYPT_ZAP_EVENT) {
+                            intentData.pubKey
+                        } else {
+                            ""
+                        },
+                        encryptionScope = if (isV3) intentData.nip44v3Scope else "",
                     ),
                 ),
                 account.npub,

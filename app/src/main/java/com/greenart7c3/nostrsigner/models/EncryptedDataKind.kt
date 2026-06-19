@@ -48,6 +48,19 @@ val encryptDecryptSignerTypes = setOf(
     SignerType.DECRYPT_ZAP_EVENT,
 )
 
+val encryptSignerTypes = setOf(
+    SignerType.NIP04_ENCRYPT,
+    SignerType.NIP44_ENCRYPT,
+    SignerType.NIP44_V3_ENCRYPT,
+)
+
+/**
+ * History rows for these request types store the ciphertext (encrypted form) in
+ * `content` rather than the plaintext, so the value must never be truncated —
+ * a partial ciphertext can no longer be decrypted on demand.
+ */
+val encryptDecryptHistoryTypeNames: Set<String> = encryptDecryptSignerTypes.mapTo(mutableSetOf()) { it.name }
+
 /**
  * Determines the permission type string based on content string and operation direction.
  * For ENCRYPT: pass the plaintext to classify what kind of data is being encrypted.

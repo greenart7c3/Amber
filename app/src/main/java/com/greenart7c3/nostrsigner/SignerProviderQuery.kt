@@ -8,6 +8,7 @@ import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.SignerType
+import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.kindToNip
 import com.greenart7c3.nostrsigner.models.permissionTypeFromContent
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -48,14 +49,6 @@ object SignerProviderQuery {
         scope.launch {
             IntentUtils.persistNativeAppMetadata(context, account, pkg)
         }
-    }
-
-    // Decodes the Base64 v3 wire value to readable plaintext for history.
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
-    private fun nip44v3Plaintext(wireValue: String): String = try {
-        kotlin.io.encoding.Base64.decode(wireValue).toString(Charsets.UTF_8)
-    } catch (_: Exception) {
-        wireValue
     }
 
     /**
@@ -367,6 +360,11 @@ object SignerProviderQuery {
                     val signPolicy = permDao.getSignPolicy(requesterId)
                     val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
+                        // A rejected encrypt request was never performed, so no
+                        // ciphertext exists — store nothing rather than leaking the
+                        // plaintext input. Decrypt requests carry their ciphertext as
+                        // input, so persist it and decrypt on demand.
+                        val rejectedContent = if (isEncrypt) "" else content
                         scope.launch {
                             historyDatabase.dao().addHistory(
                                 listOf(
@@ -377,7 +375,9 @@ object SignerProviderQuery {
                                         v3Kind,
                                         TimeUtils.now(),
                                         false,
-                                        content = content,
+                                        content = rejectedContent,
+                                        encryptionPubKey = if (rejectedContent.isNotEmpty() && type in encryptDecryptSignerTypes && type != SignerType.DECRYPT_ZAP_EVENT) pubkey else "",
+                                        encryptionScope = if (isV3) v3Scope else "",
                                     ),
                                 ),
                                 account.npub,
@@ -420,13 +420,11 @@ object SignerProviderQuery {
                             "Could not decrypt the message"
                         }
 
-                    // For v3 the wire value is Base64; this auto-accept path has no
-                    // EncryptedDataKind, so decode it once for the readable log.
-                    val historyContent = if (isV3) {
-                        nip44v3Plaintext(if (!isEncrypt) finalResult else content)
-                    } else {
-                        if (!isEncrypt) finalResult else content
-                    }
+                    // Persist the encrypted form (ciphertext), never the plaintext:
+                    // encrypt requests store their ciphertext output (`finalResult`),
+                    // decrypt requests store the ciphertext input (`content`). The
+                    // plaintext is recovered on demand in the activity/history UI.
+                    val historyContent = if (isEncrypt) finalResult else content
                     scope.launch {
                         historyDatabase.dao().addHistory(
                             listOf(
@@ -438,6 +436,8 @@ object SignerProviderQuery {
                                     TimeUtils.now(),
                                     true,
                                     content = historyContent,
+                                    encryptionPubKey = if (type in encryptDecryptSignerTypes && type != SignerType.DECRYPT_ZAP_EVENT) pubkey else "",
+                                    encryptionScope = if (isV3) v3Scope else "",
                                 ),
                             ),
                             account.npub,

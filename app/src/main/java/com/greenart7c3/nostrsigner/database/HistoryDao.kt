@@ -12,6 +12,7 @@ import androidx.room.Transaction
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.models.encryptDecryptHistoryTypeNames
 import com.vitorpamplona.quartz.utils.TimeUtils
 
 private const val MAX_CONTENT_LENGTH = 500
@@ -110,9 +111,12 @@ interface HistoryDao {
         try {
             val localEntities = entities.map { entity ->
                 val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)
+                // Ciphertext stored for encrypt/decrypt rows must be kept whole so it
+                // can still be decrypted on demand; only truncate plaintext content.
+                val isEncryptedContent = entity.type in encryptDecryptHistoryTypeNames
                 entity.copy(
                     translatedPermission = permission.toLocalizedString(Amber.instance, true),
-                    content = if (entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
+                    content = if (!isEncryptedContent && entity.content.length > MAX_CONTENT_LENGTH) entity.content.take(MAX_CONTENT_LENGTH) else entity.content,
                 )
             }
             innerAddHistory(localEntities)

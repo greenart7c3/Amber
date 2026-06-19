@@ -21,11 +21,18 @@ val migration_2_3 = object : Migration(2, 3) {
     }
 }
 
+val migration_3_4 = object : Migration(3, 4) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE history ADD COLUMN encryptionPubKey TEXT NOT NULL DEFAULT ''")
+        db.execSQL("ALTER TABLE history ADD COLUMN encryptionScope TEXT NOT NULL DEFAULT ''")
+    }
+}
+
 @Database(
     entities = [
         HistoryEntity::class,
     ],
-    version = 3,
+    version = 4,
 )
 @TypeConverters(Converters::class)
 abstract class HistoryDatabase : RoomDatabase() {
@@ -47,7 +54,7 @@ abstract class HistoryDatabase : RoomDatabase() {
                 )
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
-                    .addMigrations(migration_1_2, migration_2_3)
+                    .addMigrations(migration_1_2, migration_2_3, migration_3_4)
                     .build()
 
             instance

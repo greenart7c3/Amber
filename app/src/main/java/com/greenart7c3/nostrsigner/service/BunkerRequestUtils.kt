@@ -16,7 +16,8 @@ import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
-import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
+import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
+import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -104,13 +105,16 @@ object BunkerRequestUtils {
         }
 
         Amber.instance.applicationIOScope.launch {
+            // Never persist the response result — for a decrypt request it is the
+            // plaintext. Record only non-sensitive metadata (id + error status).
+            val sanitizedResponse = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"}"
             relays.forEach { relay ->
                 Amber.instance.getLogDatabase(account.npub).dao().insertLog(
                     LogEntity(
                         id = 0,
                         url = relay.url,
                         type = "bunker response",
-                        message = JacksonMapper.mapper.writeValueAsString(bunkerResponse),
+                        message = sanitizedResponse,
                         time = System.currentTimeMillis(),
                     ),
                 )
@@ -455,28 +459,35 @@ object BunkerRequestUtils {
             // assume that everything worked and try to revert it if it fails
             EventNotificationConsumer(context).notificationManager().cancelAll()
             dao.insertApplicationWithPermissions(application)
+            val isV3 = type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT
+            // Persist the encrypted form (ciphertext), never the plaintext: encrypt
+            // requests store their ciphertext output (`response`), decrypt requests
+            // store the ciphertext input that arrived in the request. The plaintext
+            // is recovered on demand in the activity/history UI.
+            val historyContent = when (type) {
+                SignerType.NIP04_ENCRYPT,
+                SignerType.NIP44_ENCRYPT,
+                SignerType.NIP44_V3_ENCRYPT,
+                SignerType.SIGN_EVENT,
+                -> response
+                else -> getDataFromBunker(bunkerRequest.request)
+            }
             historyDatabase.dao().addHistory(
                 listOf(
                     HistoryEntity(
                         0,
                         key,
                         type.toString(),
-                        kind,
+                        if (isV3) getNip44v3Kind(bunkerRequest.request) else kind,
                         TimeUtils.now(),
                         true,
-                        content = when (type) {
-                            SignerType.SIGN_EVENT,
-                            SignerType.NIP04_DECRYPT,
-                            SignerType.NIP44_DECRYPT,
-                            SignerType.DECRYPT_ZAP_EVENT,
-                            -> response
-                            // v3 wire values are Base64; log the readable plaintext
-                            // already decoded into encryptedData.
-                            SignerType.NIP44_V3_ENCRYPT,
-                            SignerType.NIP44_V3_DECRYPT,
-                            -> bunkerRequest.encryptedData.nip44v3Plaintext()
-                            else -> getDataFromBunker(bunkerRequest.request)
+                        content = historyContent,
+                        encryptionPubKey = if (type in encryptDecryptSignerTypes && type != SignerType.DECRYPT_ZAP_EVENT) {
+                            bunkerRequest.request.params.firstOrNull() ?: ""
+                        } else {
+                            ""
                         },
+                        encryptionScope = if (isV3) getNip44v3Scope(bunkerRequest.request) else "",
                     ),
                 ),
                 account.npub,
@@ -630,16 +641,28 @@ object BunkerRequestUtils {
 
             if (bunkerRequest.request !is BunkerRequestConnect) {
                 Amber.instance.dao(account.npub).insertApplicationWithPermissions(application)
+                val isV3 = signerType == SignerType.NIP44_V3_ENCRYPT || signerType == SignerType.NIP44_V3_DECRYPT
+                // A rejected encrypt request was never performed, so no ciphertext
+                // exists — store nothing rather than leaking the plaintext input.
+                // Decrypt requests carry their ciphertext in the request, so it is
+                // safe to persist and decrypt on demand.
+                val historyContent = if (signerType in encryptSignerTypes) "" else getDataFromBunker(bunkerRequest.request)
                 Amber.instance.getHistoryDatabase(account.npub).dao().addHistory(
                     listOf(
                         HistoryEntity(
                             0,
                             key,
                             signerType.toString(),
-                            null,
+                            if (isV3) getNip44v3Kind(bunkerRequest.request) else null,
                             TimeUtils.now(),
                             false,
-                            content = getDataFromBunker(bunkerRequest.request),
+                            content = historyContent,
+                            encryptionPubKey = if (historyContent.isNotEmpty() && signerType in encryptDecryptSignerTypes && signerType != SignerType.DECRYPT_ZAP_EVENT) {
+                                bunkerRequest.request.params.firstOrNull() ?: ""
+                            } else {
+                                ""
+                            },
+                            encryptionScope = if (isV3) getNip44v3Scope(bunkerRequest.request) else "",
                         ),
                     ),
                     account.npub,

@@ -25,6 +25,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
@@ -51,6 +52,7 @@ import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TimeUtils
 import com.greenart7c3.nostrsigner.models.supportedKindNumbers
 import com.greenart7c3.nostrsigner.service.ApplicationNameCache
@@ -188,14 +190,52 @@ fun ActivitiesScreen(
     }
 }
 
+/**
+ * Recovers the readable plaintext for a history row on demand. Encrypt/decrypt
+ * rows persist only the ciphertext, so the plaintext is derived here using the
+ * stored counterparty key (and, for NIP-44 v3, the kind + scope). Falls back to
+ * the stored content if the row is not encrypted or decryption fails (e.g. old
+ * rows created before ciphertext-at-rest, or a missing counterparty key).
+ */
+suspend fun decryptHistoryContent(activity: HistoryEntity, account: Account): String {
+    if (activity.content.isBlank()) return ""
+    return try {
+        when (activity.type) {
+            SignerType.NIP04_ENCRYPT.name, SignerType.NIP44_ENCRYPT.name,
+            SignerType.NIP04_DECRYPT.name, SignerType.NIP44_DECRYPT.name,
+            ->
+                if (activity.encryptionPubKey.isBlank()) {
+                    activity.content
+                } else {
+                    account.decrypt(activity.content, activity.encryptionPubKey)
+                }
+            SignerType.NIP44_V3_ENCRYPT.name, SignerType.NIP44_V3_DECRYPT.name -> {
+                val kind = activity.kind
+                if (activity.encryptionPubKey.isBlank() || kind == null) {
+                    activity.content
+                } else {
+                    account.nip44v3Decrypt(activity.content, activity.encryptionPubKey, kind, activity.encryptionScope).decodeToString()
+                }
+            }
+            SignerType.DECRYPT_ZAP_EVENT.name -> account.decryptZapEvent(activity.content) ?: activity.content
+            else -> activity.content
+        }
+    } catch (_: Exception) {
+        activity.content
+    }
+}
+
 @Composable
 fun ActivityRow(activity: HistoryEntity, account: Account) {
     val clipboard = LocalClipboard.current
-    val parsedEvent = remember(activity.content) {
-        if (activity.content.isBlank()) {
+    val displayContent by produceState(initialValue = "", activity.id, activity.content) {
+        value = withContext(Dispatchers.IO) { decryptHistoryContent(activity, account) }
+    }
+    val parsedEvent = remember(displayContent) {
+        if (displayContent.isBlank()) {
             null
         } else {
-            runCatching { AmberEvent.fromJson(activity.content).toEvent() }.getOrNull()
+            runCatching { AmberEvent.fromJson(displayContent).toEvent() }.getOrNull()
         }
     }
 
@@ -250,11 +290,11 @@ fun ActivityRow(activity: HistoryEntity, account: Account) {
                             },
                         )
                     }
-                } else if (activity.content.isNotBlank()) {
+                } else if (displayContent.isNotBlank()) {
                     Spacer(Modifier.height(4.dp))
                     Text(
                         modifier = Modifier.padding(top = 2.dp),
-                        text = activity.content,
+                        text = displayContent,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
                         fontSize = 14.sp,

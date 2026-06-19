@@ -31,6 +31,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
@@ -532,12 +533,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             else -> arrayOf(data, pubKey, acc.npub)
         }
         val cursor =
-            applicationContext.contentResolver.query(
-                "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
-                projection,
-                "Amber",
-                null,
-                event.pubKey,
+            SignerProviderQuery.query(
+                context = applicationContext,
+                // NIP-46 requests are attributed to the client's pubkey, not an
+                // installed app. There is no installed caller, so nothing to capture.
+                requesterId = event.pubKey,
+                callerPackageName = null,
+                operationUri = "content://${BuildConfig.APPLICATION_ID}.$type".toUri(),
+                arguments = projection,
             )
 
         cursor.use { localCursor ->

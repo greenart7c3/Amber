@@ -64,6 +64,17 @@ Permissions are stored in `ApplicationEntity` + `ApplicationPermissionsEntity` (
 
 Before showing the approval UI, all three ingestion paths query the database; if a matching auto-accept rule exists, signing proceeds silently.
 
+### Biometric / PIN lock is UI-only
+
+The biometric/PIN prompt (`useAuth` / `usePin` in `AmberSettings`, configured in `SecurityScreen`) is **only an app-launch UI gate**, not a signing gate. It is rendered by `BiometricAuthScreen`, which is invoked exclusively from the two UI entry points — `MainActivity` and `SignerActivity` — to unlock the app's screens before any approval bottom sheet is shown.
+
+It does **not** protect the signing operations themselves:
+
+- **ContentProvider IPC** (`SignerProvider`) and **NIP-46 relay events** (`EventNotificationConsumer` → `BunkerRequestUtils`) never touch `BiometricAuthScreen`, `Biometrics`, `useAuth`, or `usePin`. They sign in the background based purely on the permission database.
+- When an auto-accept rule matches, all three paths sign silently **without** triggering the biometric/PIN prompt — including `nostrsigner://` intents, which auto-finish before the UI is interacted with.
+
+In other words, the lock controls who can open and navigate the app UI; it does not stand between a request and `Account.sign()`. Authorization for automatic signing is governed solely by the permission system (`rememberType` / `acceptUntil` / `kind`).
+
 ### Key files
 
 | File | Purpose |
@@ -75,3 +86,6 @@ Before showing the approval UI, all three ingestion paths query the database; if
 | `BunkerRequestUtils.kt` | NIP-46 protocol handling, relay responses |
 | `AccountStateViewModel.kt` | Auth state, account switching, toast notifications |
 | `ConnectivityService.kt` | Foreground service, network monitoring, relay reconnection |
+| `BiometricAuthScreen.kt` | UI-only app-launch lock (biometric/PIN); not a signing gate |
+| `Biometrics.kt` | Wraps `BiometricPrompt` / keyguard credential prompt |
+| `SecurityScreen.kt` | Toggles `useAuth` / `usePin` and the re-prompt interval |

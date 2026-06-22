@@ -175,6 +175,20 @@ android {
     }
 }
 
+// The benchmark flavor is built as a release APK, where the release build type's
+// resValue sets app_name to "Amber". Build-type resValues take precedence over
+// product-flavor resValues, so override app_name here via the variant API (the
+// highest-priority tier) to give the side-by-side benchmark install its own
+// launcher name.
+androidComponents {
+    onVariants(selector().withFlavor("version" to "benchmark")) { variant ->
+        variant.resValues.put(
+            variant.makeResValueKey("string", "app_name"),
+            com.android.build.api.variant.ResValue("@string/app_name_benchmark"),
+        )
+    }
+}
+
 composeCompiler {
     reportsDestination.set(layout.buildDirectory.dir("compose_compiler"))
 }

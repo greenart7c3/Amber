@@ -17,6 +17,7 @@ import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.withTimeoutOrNull
 
 /**
@@ -89,11 +90,11 @@ object RemoteBunkerClient {
                 ),
             )
 
-            val published = Amber.instance.client.publishAndConfirm(
-                event = event,
-                relayList = proxy.relays.toSet(),
-                timeoutInSeconds = 5,
-            )
+            // Publish with retry/backoff. The first attempt may be rejected if the
+            // relay is still negotiating NIP-42 AUTH; the auth coordinator answers
+            // the challenge in the background and subsequent retries succeed once
+            // the relay accepts our AUTH event.
+            val published = publishWithAuthRetry(event, proxy.relays.toSet())
 
             if (!published) {
                 Log.w(Amber.TAG, "Failed to publish bunker proxy request id=$id")
@@ -293,16 +294,48 @@ object RemoteBunkerClient {
                 tags = arrayOf(arrayOf("p", remotePubkey)),
                 content = encrypted,
             )
-            val published = Amber.instance.client.publishAndConfirm(
-                event = event,
-                relayList = relays.toSet(),
-                timeoutInSeconds = 5,
-            )
+            // Retry-with-backoff so the relay's NIP-42 AUTH challenge has time to
+            // be answered by the auth coordinator before the bunker request itself
+            // is published — without this, the very first bunker `connect` attempt
+            // races the AUTH and is rejected.
+            val published = publishWithAuthRetry(event, relays.toSet())
             if (!published) return null
             return withTimeoutOrNull(timeoutMs) { deferred.await() }
         } finally {
             pending.remove(id)
         }
+    }
+
+    /**
+     * Publishes [event] to [relays] using the same retry/backoff strategy as
+     * [BunkerRequestUtils.retryWithBackoff]. Inlined here so we don't pull a
+     * `Context` parameter through the client just for logging. The retry covers
+     * the case where a relay (e.g. wss://auth.nostr1.com) demands NIP-42 AUTH
+     * before accepting writes: the first attempt may fail with auth-required,
+     * the [com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator]
+     * answers the challenge in the background, and the next attempt succeeds.
+     */
+    private suspend fun publishWithAuthRetry(
+        event: Event,
+        relays: Set<com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl>,
+        maxRetries: Int = 5,
+        initialDelayMs: Long = 200L,
+        maxDelayMs: Long = 3_200L,
+    ): Boolean {
+        var currentDelay = initialDelayMs
+        repeat(maxRetries) { attempt ->
+            if (attempt > 0) delay(currentDelay)
+            val ok = Amber.instance.client.publishAndConfirm(
+                event = event,
+                relayList = relays,
+                timeoutInSeconds = 5,
+            )
+            if (ok) return true
+            if (attempt < maxRetries - 1) {
+                currentDelay = (currentDelay * 2).coerceAtMost(maxDelayMs)
+            }
+        }
+        return false
     }
 }
 

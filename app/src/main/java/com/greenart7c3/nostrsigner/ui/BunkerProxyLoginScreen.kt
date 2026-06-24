@@ -161,15 +161,25 @@ private fun PasteBunkerUriTab(
 
                     Amber.instance.proxyResponseSubscription.registerTransientLogin(localKeyPair.privKey!!, parsed.remotePubkey)
                     Amber.instance.proxyResponseSubscription.subscribeForLocalKey(localKeyPair.pubKey.toHexKey(), parsed.remotePubkey, parsed.relays)
+                    // Make our login keypair available to the relay AUTH coordinator so
+                    // relays like wss://auth.nostr1.com can challenge us before we have
+                    // a saved account to fall back on.
+                    Amber.instance.registerTransientAuthSigner(signer)
 
-                    val connectResp = RemoteBunkerClient.connect(
-                        localSigner = signer,
-                        remotePubkey = parsed.remotePubkey,
-                        relays = parsed.relays,
-                        secret = parsed.secret,
-                        permissions = "",
-                    )
+                    val connectResp = try {
+                        RemoteBunkerClient.connect(
+                            localSigner = signer,
+                            remotePubkey = parsed.remotePubkey,
+                            relays = parsed.relays,
+                            secret = parsed.secret,
+                            permissions = "",
+                        )
+                    } catch (e: Exception) {
+                        Amber.instance.unregisterTransientAuthSigner(signer)
+                        throw e
+                    }
                     if (connectResp == null || !connectResp.error.isNullOrBlank()) {
+                        Amber.instance.unregisterTransientAuthSigner(signer)
                         errorMessage = connectResp?.error ?: context.getString(R.string.bunker_proxy_connect_failed)
                         isLoading.value = false
                         return@launch
@@ -178,10 +188,15 @@ private fun PasteBunkerUriTab(
                     val pubKeyResp = RemoteBunkerClient.getPublicKey(signer, parsed.remotePubkey, parsed.relays)
                     val remoteUserPubkey = pubKeyResp?.result
                     if (remoteUserPubkey.isNullOrBlank()) {
+                        Amber.instance.unregisterTransientAuthSigner(signer)
                         errorMessage = context.getString(R.string.bunker_proxy_no_pubkey)
                         isLoading.value = false
                         return@launch
                     }
+
+                    // Account is about to be saved; the proxy account's own signer will
+                    // be picked up by the auth coordinator going forward.
+                    Amber.instance.unregisterTransientAuthSigner(signer)
 
                     accountViewModel.startProxyUI(
                         localKeyPair = localKeyPair,
@@ -254,8 +269,9 @@ private fun GenerateNostrConnectUriTab(
             errorMessage = null
             isLoading.value = true
             scope.launch(Dispatchers.IO) {
+                val signer = NostrSignerInternal(keyPair)
+                Amber.instance.registerTransientAuthSigner(signer)
                 try {
-                    val signer = NostrSignerInternal(keyPair)
                     val pending = Amber.instance.proxyResponseSubscription.awaitInitialConnect(
                         localKeyPair = keyPair,
                         relays = defaultRelays,
@@ -265,6 +281,7 @@ private fun GenerateNostrConnectUriTab(
                     if (pending == null) {
                         errorMessage = context.getString(R.string.bunker_proxy_connect_failed)
                         isLoading.value = false
+                        Amber.instance.unregisterTransientAuthSigner(signer)
                         return@launch
                     }
                     val pubKeyResp = RemoteBunkerClient.getPublicKey(
@@ -276,9 +293,11 @@ private fun GenerateNostrConnectUriTab(
                     if (remoteUserPubkey.isNullOrBlank()) {
                         errorMessage = context.getString(R.string.bunker_proxy_no_pubkey)
                         isLoading.value = false
+                        Amber.instance.unregisterTransientAuthSigner(signer)
                         return@launch
                     }
 
+                    Amber.instance.unregisterTransientAuthSigner(signer)
                     accountViewModel.startProxyUI(
                         localKeyPair = keyPair,
                         remotePubkeyHex = remoteUserPubkey,
@@ -298,6 +317,7 @@ private fun GenerateNostrConnectUriTab(
                     }
                 } catch (e: Exception) {
                     errorMessage = e.message ?: context.getString(R.string.bunker_proxy_connect_failed)
+                    Amber.instance.unregisterTransientAuthSigner(signer)
                 } finally {
                     isLoading.value = false
                 }

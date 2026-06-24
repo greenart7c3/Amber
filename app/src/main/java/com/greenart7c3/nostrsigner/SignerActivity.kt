@@ -68,7 +68,20 @@ class SignerActivity : AppCompatActivity() {
 
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
+
+        // If the request will be served by a bunker proxy account, the proxy
+        // forwards it transparently and finishes the activity itself. Render
+        // nothing so the user does not see the approval bottom sheet flash.
+        val isProxyHandled = isProxyHandledIntent(intent)
+
         intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
+
+        if (isProxyHandled) {
+            window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            setContent { }
+            return
+        }
+
         setContent {
             NostrSignerTheme {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
@@ -221,6 +234,11 @@ class SignerActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (::mainViewModel.isInitialized) {
+            // Mirror the onCreate gate: if a proxy account will silently
+            // forward this intent, we never want to surface the approval UI.
+            if (isProxyHandledIntent(intent)) {
+                window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+            }
             mainViewModel.onNewIntent(intent, callingPackage)
         }
     }
@@ -237,6 +255,21 @@ class SignerActivity : AppCompatActivity() {
             IntentUtils.clearInvalidIntents()
         }
         super.onDestroy()
+    }
+
+    /**
+     * Returns true if the current intent will be handled silently by the bunker
+     * proxy. In that case the activity should not render its approval UI — the
+     * proxy forwards the request to the remote bunker and calls
+     * [finishAndRemoveTask] from [IntentUtils.handleProxyIntent].
+     */
+    private fun isProxyHandledIntent(intent: Intent?): Boolean {
+        if (intent == null) return false
+        if (intent.action != Intent.ACTION_VIEW && intent.data == null) return false
+        val userFromIntent = intent.getStringExtra("current_user")
+        val npub = mainViewModel.getAccount(userFromIntent) ?: return false
+        val account = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, npub) ?: return false
+        return account.isProxy
     }
 
     private fun rejectIfRateLimited(intent: Intent?): Boolean {

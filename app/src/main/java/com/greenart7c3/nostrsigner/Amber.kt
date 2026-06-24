@@ -66,6 +66,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.auth.RelayAuthenticator
 import com.vitorpamplona.quartz.nip01Core.relay.client.stats.RelayStats
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
@@ -129,11 +130,36 @@ class Amber :
         client.addConnectionListener(it)
     }
 
+    /**
+     * Signers registered transiently for relay AUTH only. Used while pairing
+     * with a remote bunker over a relay that requires NIP-42 auth, before the
+     * proxy account is created. Also covers any other "pre-login" relay
+     * publish that needs to auth.
+     */
+    val transientAuthSigners: MutableSet<NostrSignerInternal> = java.util.concurrent.ConcurrentHashMap.newKeySet()
+
+    fun registerTransientAuthSigner(signer: NostrSignerInternal) {
+        transientAuthSigners.add(signer)
+    }
+
+    fun unregisterTransientAuthSigner(signer: NostrSignerInternal) {
+        transientAuthSigners.remove(signer)
+    }
+
     // Authenticates with relays.
     val authCoordinator = RelayAuthenticator(client, applicationIOScope) { event ->
-        LocalPreferences.allAccounts(this).map { account ->
-            account.sign(event)
+        // Proxy accounts MUST sign auth events with their local keypair, not the
+        // remote bunker — the bunker lives behind these very relays, so forwarding
+        // would deadlock. For non-proxy accounts the usual path is fine.
+        val saved = LocalPreferences.allAccounts(this).map { account ->
+            if (account.isProxy) {
+                account.signer.sign(event)
+            } else {
+                account.sign(event)
+            }
         }
+        val transient = transientAuthSigners.map { it.sign(event) }
+        saved + transient
     }
 
     val relayStats = RelayStats(client)

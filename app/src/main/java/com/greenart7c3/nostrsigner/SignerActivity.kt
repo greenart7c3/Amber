@@ -30,6 +30,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.Density
+import androidx.core.graphics.drawable.toDrawable
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.rememberNavController
@@ -70,14 +71,17 @@ class SignerActivity : AppCompatActivity() {
         mainViewModel = MainViewModel(applicationContext)
 
         // If the request will be served by a bunker proxy account, the proxy
-        // forwards it transparently and finishes the activity itself. Render
-        // nothing so the user does not see the approval bottom sheet flash.
+        // forwards it transparently and finishes the activity itself. Make the
+        // activity completely invisible — no focus, no dim, no animation, no
+        // window content — so the user never sees Amber come up at all.
         val isProxyHandled = isProxyHandledIntent(intent)
+        if (isProxyHandled) {
+            makeWindowInvisible()
+        }
 
         intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
 
         if (isProxyHandled) {
-            window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
             setContent { }
             return
         }
@@ -237,9 +241,37 @@ class SignerActivity : AppCompatActivity() {
             // Mirror the onCreate gate: if a proxy account will silently
             // forward this intent, we never want to surface the approval UI.
             if (isProxyHandledIntent(intent)) {
-                window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+                makeWindowInvisible()
             }
             mainViewModel.onNewIntent(intent, callingPackage)
+        }
+    }
+
+    /**
+     * Makes the activity's window completely invisible and non-interactive. Used for
+     * bunker proxy accounts so the source app never loses focus and the user never
+     * sees Amber come to the foreground while the proxy forwards the request to the
+     * remote bunker.
+     */
+    private fun makeWindowInvisible() {
+        overridePendingTransition(0, 0)
+        window.setBackgroundDrawable(android.graphics.Color.TRANSPARENT.toDrawable())
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        window.addFlags(
+            android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+        )
+        // Shrink the window to a single off-screen pixel so it cannot draw anything
+        // even briefly. The activity is still alive in the background to receive the
+        // proxy's setResult / finishAndRemoveTask call.
+        window.attributes = window.attributes.apply {
+            width = 1
+            height = 1
+            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+            x = 0
+            y = 0
+            dimAmount = 0f
         }
     }
 

@@ -27,6 +27,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
@@ -237,12 +238,17 @@ fun BunkerSingleEventHomeScreen(
                 shouldCloseApp = applicationEntity?.application?.closeApplication ?: bunkerRequest.closeApplication,
                 account = account,
                 bunkerRequest = bunkerRequest,
-                permissions = bunkerRequest.request.permissions?.split(",")?.map {
-                    val split = it.split(":")
-                    if (split.size > 1) {
-                        Permission(split[0].trim(), split[1].toInt())
-                    } else {
-                        Permission(split[0].trim(), null)
+                permissions = bunkerRequest.request.permissions?.split(",")?.mapNotNull {
+                    try {
+                        val split = it.split(":")
+                        if (split.size > 1) {
+                            Permission(split[0].trim(), split[1].toInt())
+                        } else {
+                            Permission(split[0].trim(), null)
+                        }
+                    } catch (e: Exception) {
+                        AmberLog.e(Amber.TAG, "Error parsing permission", e)
+                        null
                     }
                 }?.toImmutableList(),
                 onAccept = { permissions, signPolicy, closeApplication, rememberType, deleteAfter, acc ->

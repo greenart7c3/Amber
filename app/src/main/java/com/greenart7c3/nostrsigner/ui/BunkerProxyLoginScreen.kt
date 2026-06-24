@@ -159,12 +159,19 @@ private fun PasteBunkerUriTab(
                     val localKeyPair = KeyPair(privKey = RandomInstance.bytes(32))
                     val signer = NostrSignerInternal(localKeyPair)
 
+                    // Make our login keypair available to the relay AUTH coordinator
+                    // BEFORE we trigger any traffic to the bunker's relays — otherwise
+                    // a relay (e.g. wss://auth.nostr1.com) would issue its NIP-42
+                    // challenge with no signer registered to answer it.
+                    Amber.instance.registerTransientAuthSigner(signer)
                     Amber.instance.proxyResponseSubscription.registerTransientLogin(localKeyPair.privKey!!, parsed.remotePubkey)
                     Amber.instance.proxyResponseSubscription.subscribeForLocalKey(localKeyPair.pubKey.toHexKey(), parsed.remotePubkey, parsed.relays)
-                    // Make our login keypair available to the relay AUTH coordinator so
-                    // relays like wss://auth.nostr1.com can challenge us before we have
-                    // a saved account to fall back on.
-                    Amber.instance.registerTransientAuthSigner(signer)
+
+                    // Give the relay a moment to send its AUTH challenge and the auth
+                    // coordinator a chance to deliver the signed AUTH response before we
+                    // publish the bunker `connect` event. Otherwise the very first
+                    // publish races the AUTH handshake and is rejected.
+                    kotlinx.coroutines.delay(750)
 
                     val connectResp = try {
                         RemoteBunkerClient.connect(

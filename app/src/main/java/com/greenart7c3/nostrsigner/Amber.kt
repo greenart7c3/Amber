@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
+import android.os.Build
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
@@ -57,6 +58,7 @@ import com.greenart7c3.nostrsigner.service.UpdateCheckWorker
 import com.greenart7c3.nostrsigner.service.ZapstoreUpdater
 import com.greenart7c3.nostrsigner.service.crashreports.CrashReportCache
 import com.greenart7c3.nostrsigner.service.crashreports.UnexpectedCrashSaver
+import com.greenart7c3.nostrsigner.signer.RemoteSigner
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.vitorpamplona.quartz.nip01Core.hints.EventHintBundle
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -69,6 +71,7 @@ import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip34Git.issue.GitIssueEvent
 import com.vitorpamplona.quartz.nip34Git.repository.GitRepositoryEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.io.File
 import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
@@ -114,38 +117,51 @@ class Amber :
 
     var settings: AmberSettings = AmberSettings()
 
-    val factory = OkHttpWebSocket.Builder { url ->
-        val useProxy = if (isPrivateIp(url.url)) false else settings.torMode != TorMode.DISABLED
-        HttpClientManager.getHttpClient(useProxy)
-    }
-
-    val client: NostrClient = NostrClient(factory, applicationIOScope)
-
-    val stats = AmberRelayStats(client, this)
-
-    // logs and stat counts.
-    val listener = NostrClientLoggerListener(this, stats, applicationIOScope).also {
-        client.addConnectionListener(it)
-    }
-
-    // Authenticates with relays.
-    val authCoordinator = RelayAuthenticator(client, applicationIOScope) { event ->
-        LocalPreferences.allAccounts(this).map { account ->
-            account.sign(event)
+    // The relay/networking singletons below are lazy so the isolated :signer
+    // process (which shares this Application class) never constructs them — it
+    // only needs DataStore + Keystore. The main process warms them eagerly in
+    // onCreate so their construction-time side effects (logger/auth registration
+    // on the client) run exactly as before.
+    val factory by lazy {
+        OkHttpWebSocket.Builder { url ->
+            val useProxy = if (isPrivateIp(url.url)) false else settings.torMode != TorMode.DISABLED
+            HttpClientManager.getHttpClient(useProxy)
         }
     }
 
-    val relayStats = RelayStats(client)
+    val client: NostrClient by lazy { NostrClient(factory, applicationIOScope) }
 
-    val notificationSubscription = NotificationSubscription(client, this)
+    val stats by lazy { AmberRelayStats(client, this) }
+
+    // logs and stat counts.
+    val listener by lazy {
+        NostrClientLoggerListener(this, stats, applicationIOScope).also {
+            client.addConnectionListener(it)
+        }
+    }
+
+    // Authenticates with relays.
+    val authCoordinator by lazy {
+        RelayAuthenticator(client, applicationIOScope) { event ->
+            LocalPreferences.allAccounts(this).map { account ->
+                account.sign(event)
+            }
+        }
+    }
+
+    val relayStats by lazy { RelayStats(client) }
+
+    val notificationSubscription by lazy { NotificationSubscription(client, this) }
 
     // This runs on the foreground only
-    val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
+    val profileSubscription by lazy { ProfileSubscription(client, this, applicationIOScope) }
 
-    val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
-        ZapstoreUpdater(client, applicationIOScope)
-    } else {
-        null
+    val zapstoreUpdater: ZapstoreUpdater? by lazy {
+        if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
+            ZapstoreUpdater(client, applicationIOScope)
+        } else {
+            null
+        }
     }
 
     var databases = ConcurrentHashMap<String, AppDatabase>()
@@ -348,13 +364,27 @@ class Amber :
     override fun onCreate() {
         super.onCreate()
 
+        instance = this
+        Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+
+        if (isSignerProcess()) {
+            // The isolated crypto process needs only the (process-independent)
+            // encrypted DataStore + Android Keystore and the applicationIOScope
+            // field. Skip the relay client, subscriptions, workers, Coil,
+            // StrictMode VM policy and ProcessLifecycle entirely.
+            AmberLog.d(TAG, "Started :signer process; minimal init")
+            return
+        }
+
         if (BuildConfig.DEBUG) {
             enableStrictMode()
         }
 
-        instance = this
         stats.createNotificationChannel()
-        Thread.setDefaultUncaughtExceptionHandler(UnexpectedCrashSaver(crashReportCache, applicationIOScope))
+        warmMainProcessSingletons()
+
+        // The main process talks to the :signer process for every crypto op.
+        RemoteSigner.bind(this)
 
         // Build Coil's singleton ImageLoader off the main thread. Its factory
         // (newImageLoader) touches cacheDir, so letting the first AsyncImage
@@ -362,6 +392,34 @@ class Amber :
         applicationIOScope.launch {
             SingletonImageLoader.get(this@Amber)
         }
+    }
+
+    /** True when running in the isolated ":signer" crypto process. */
+    private fun isSignerProcess(): Boolean {
+        val name = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            getProcessName()
+        } else {
+            runCatching { File("/proc/self/cmdline").readText().trim { it <= ' ' } }.getOrNull()
+        }
+        return name?.endsWith(":signer") == true
+    }
+
+    /**
+     * Touches the lazy relay/networking singletons so their construction-time
+     * side effects (the logger listener and relay authenticator registering on
+     * the client) run at main-process startup, exactly as when they were eager
+     * fields — but they never construct in the :signer process.
+     */
+    private fun warmMainProcessSingletons() {
+        factory
+        client
+        stats
+        listener
+        authCoordinator
+        relayStats
+        notificationSubscription
+        profileSubscription
+        zapstoreUpdater
     }
 
     private fun enableStrictMode() {
@@ -633,7 +691,7 @@ class Amber :
     }
 
     suspend fun maybeCheckForUpdates() {
-        if (zapstoreUpdater == null) return
+        val updater = zapstoreUpdater ?: return
         val lastCheck = LocalPreferences.getLastUpdateCheckTime(this)
         val now = System.currentTimeMillis()
         val shouldCheck = when (settings.updateCheckFrequency) {
@@ -643,7 +701,7 @@ class Amber :
         }
         if (shouldCheck) {
             LocalPreferences.setLastUpdateCheckTime(this, now)
-            zapstoreUpdater.checkForUpdates()
+            updater.checkForUpdates()
         }
     }
 

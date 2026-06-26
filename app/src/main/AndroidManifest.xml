@@ -56,6 +56,13 @@
             </intent-filter>
         </receiver>
 
+        <!-- All private-key crypto runs here, isolated from the main/UI process. -->
+        <service
+            android:name=".signer.SignerService"
+            android:enabled="true"
+            android:exported="false"
+            android:process=":signer" />
+
         <provider
             android:name=".SignerProvider"
             android:authorities="${applicationId}.PING;${applicationId}.SIGN_EVENT;${applicationId}.NIP04_ENCRYPT;${applicationId}.NIP04_DECRYPT;${applicationId}.NIP44_ENCRYPT;${applicationId}.NIP44_DECRYPT;${applicationId}.NIP44_V3_ENCRYPT;${applicationId}.NIP44_V3_DECRYPT;${applicationId}.GET_PUBLIC_KEY;${applicationId}.DECRYPT_ZAP_EVENT"

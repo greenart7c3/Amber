@@ -30,7 +30,7 @@ object PsbtDecoder {
     fun decode(psbtHex: String, account: Account): DecodedPsbt = try {
         val psbt = Psbt.parse(psbtHex)
         val tx = psbt.unsignedTx
-        val xOnlyPubKey = account.signer.keyPair.pubKey
+        val xOnlyPubKey = Hex.decode(account.hexKey)
 
         var anyInputMissingValue = false
         var inputTotal = 0L

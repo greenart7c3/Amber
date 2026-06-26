@@ -16,16 +16,13 @@ import com.greenart7c3.nostrsigner.models.defaultAppRelays
 import com.greenart7c3.nostrsigner.models.defaultIndexerRelays
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.greenart7c3.nostrsigner.service.TorManager
+import com.greenart7c3.nostrsigner.signer.RemoteSigner
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.cache.LargeCache
 import java.io.File
-import java.security.InvalidKeyException
-import java.security.KeyStoreException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.runBlocking
 
@@ -216,6 +213,8 @@ object LocalPreferences {
         currentAccount = null
         savedAccounts = null
         accountCache.clear()
+        // Drop the live keys held in the :signer process too.
+        RemoteSigner.evictAll()
         allSavedAccounts(context).forEach {
             loadFromEncryptedStorage(context, it.npub)
         }
@@ -386,6 +385,8 @@ object LocalPreferences {
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
         accountCache.remove(npub)
+        // Drop the live key from the :signer process before its on-disk copy is deleted.
+        RemoteSigner.evict(npub)
         // Close Room handles BEFORE deleting on-disk preference/data files so
         // we release file locks and worker-pool threads instead of leaking
         // them for the lifetime of the process.
@@ -633,21 +634,11 @@ object LocalPreferences {
         if (!containsAccount(context, npub)) {
             return null
         }
-        val privKey = try {
-            DataStoreAccess.getEncryptedKey(
-                context,
-                npub,
-                DataStoreAccess.NOSTR_PRIVKEY,
-            )
-        } catch (e: InvalidKeyException) {
-            AmberLog.e(Amber.TAG, "AndroidKeyStore key for $npub is broken (device KeyMint may not support key upgrade). Account skipped.", e)
-            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
-            return null
-        } catch (e: KeyStoreException) {
-            AmberLog.e(Amber.TAG, "KeyStore operation failed for $npub. Account skipped.", e)
-            Amber.instance.keystoreFailedAccounts.value = (Amber.instance.keystoreFailedAccounts.value + npub).distinct()
-            return null
-        }
+        // Strict isolation: the main process never decrypts the private key. The
+        // Account built here is metadata-only; all crypto is forwarded to the
+        // :signer process, which loads the key from the same encrypted storage. A
+        // broken AndroidKeyStore key (KeyMint bug) is therefore surfaced lazily on
+        // the first crypto call — RemoteSigner records it into keystoreFailedAccounts.
         sharedPrefs(context, npub).apply {
             val pubKey = getString(PrefKeys.NOSTR_PUBKEY.key, null) ?: return null
             val name = getString(PrefKeys.ACCOUNT_NAME.key, "") ?: ""
@@ -657,7 +648,6 @@ object LocalPreferences {
 
             val account =
                 Account(
-                    signer = NostrSignerInternal(KeyPair(privKey.hexToByteArray())),
                     hexKey = pubKey,
                     npub = pubKey.hexToByteArray().toNpub(),
                     name = MutableStateFlow(name),

@@ -123,7 +123,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,
             didBackup = true,
-            signer = NostrSignerInternal(keyPair),
         )
 
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
@@ -162,7 +161,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             picture = MutableStateFlow(""),
             signPolicy = signPolicy,
             didBackup = false,
-            signer = NostrSignerInternal(keyPair),
         )
         if (LocalPreferences.allSavedAccounts(Amber.instance).isEmpty()) {
             Amber.instance.settings = Amber.instance.settings.copy(

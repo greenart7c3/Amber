@@ -99,7 +99,7 @@ object ReportSender {
                 expiration(TimeUtils.now() + thirtyDaysInSeconds)
             }
             val signedEvents = account.createMessageNIP17(template)
-            signedEvents.wraps.forEach { wrap ->
+            signedEvents.forEach { wrap ->
                 client.publish(
                     event = wrap,
                     relayList = setOf(

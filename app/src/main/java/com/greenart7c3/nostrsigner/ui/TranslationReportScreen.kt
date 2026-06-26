@@ -165,7 +165,7 @@ fun TranslationReportScreen(
                                 expiration(TimeUtils.now() + tenDaysInSeconds)
                             }
                             val signedEvents = account.createMessageNIP17(template)
-                            signedEvents.wraps.forEach { wrap ->
+                            signedEvents.forEach { wrap ->
                                 client.publish(
                                     event = wrap,
                                     relayList = setOf(

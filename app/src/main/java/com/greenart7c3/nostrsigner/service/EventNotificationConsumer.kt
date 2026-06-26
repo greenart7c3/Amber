@@ -47,13 +47,11 @@ import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.NotificationUtils.sendNotification
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.signer.RemoteSigner
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
@@ -187,8 +185,8 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         Amber.instance.applicationIOScope.launch {
             val decrypted = try {
                 if (connectionPrivKey.isNotEmpty()) {
-                    val connSigner = NostrSignerInternal(KeyPair(privKey = connectionPrivKey.hexToByteArray()))
-                    connSigner.decrypt(event.content, event.pubKey)
+                    // Connection-scoped (NIP-46 localKey) decrypt runs in the :signer process too.
+                    RemoteSigner.connDecrypt(connectionPrivKey, event.content, event.pubKey)
                 } else {
                     acc.decrypt(event.content, event.pubKey)
                 }

@@ -164,6 +164,7 @@ android {
         compose = true
         buildConfig = true
         resValues = true
+        aidl = true
     }
 
     packaging {

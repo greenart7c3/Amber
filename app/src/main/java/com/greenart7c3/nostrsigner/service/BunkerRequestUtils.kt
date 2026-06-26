@@ -20,16 +20,14 @@ import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
 import com.greenart7c3.nostrsigner.models.encryptSignerTypes
 import com.greenart7c3.nostrsigner.relays.AmberListenerSingleton
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
+import com.greenart7c3.nostrsigner.signer.RemoteSigner
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.ToastManager
 import com.greenart7c3.nostrsigner.ui.components.DecryptTypeScope
 import com.vitorpamplona.quartz.nip01Core.core.Event
-import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
-import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
-import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
@@ -141,32 +139,26 @@ object BunkerRequestUtils {
         onLoading: (Boolean) -> Unit,
         onDone: (Boolean) -> Unit,
     ) {
-        val connSigner = if (bunkerRequest.signerPrivKey.isNotEmpty()) {
-            NostrSignerInternal(KeyPair(privKey = bunkerRequest.signerPrivKey.hexToByteArray()))
-        } else {
-            null
-        }
+        // Connection-scoped (NIP-46 localKey) crypto runs in the :signer process,
+        // just like the account-key crypto — no private key is materialized here.
+        val connKey = bunkerRequest.signerPrivKey.takeIf { it.isNotEmpty() }
 
         val plainText = JacksonMapper.mapper.writeValueAsString(bunkerResponse)
-        var encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-            connSigner?.nip44Encrypt(plainText, bunkerRequest.localKey)
-                ?: account.nip44Encrypt(plainText, bunkerRequest.localKey)
+
+        suspend fun encryptResponse(): String = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
+            if (connKey != null) RemoteSigner.connNip44Encrypt(connKey, plainText, bunkerRequest.localKey) else account.nip44Encrypt(plainText, bunkerRequest.localKey)
         } else {
-            connSigner?.nip04Encrypt(plainText, bunkerRequest.localKey)
-                ?: account.nip04Encrypt(plainText, bunkerRequest.localKey)
+            if (connKey != null) RemoteSigner.connNip04Encrypt(connKey, plainText, bunkerRequest.localKey) else account.nip04Encrypt(plainText, bunkerRequest.localKey)
         }
 
-        var signedEvent = connSigner?.signerSync?.sign<Event>(
-            TimeUtils.now(),
-            NostrConnectEvent.KIND,
-            arrayOf(arrayOf("p", localKey)),
-            encryptedContent,
-        ) ?: account.signSync<Event>(
-            TimeUtils.now(),
-            NostrConnectEvent.KIND,
-            arrayOf(arrayOf("p", localKey)),
-            encryptedContent,
-        )
+        fun signResponse(content: String): Event = if (connKey != null) {
+            Event.fromJson(RemoteSigner.connSignEvent(connKey, TimeUtils.now(), NostrConnectEvent.KIND, arrayOf(arrayOf("p", localKey)), content))
+        } else {
+            account.signSync(TimeUtils.now(), NostrConnectEvent.KIND, arrayOf(arrayOf("p", localKey)), content)
+        }
+
+        var encryptedContent = encryptResponse()
+        var signedEvent = signResponse(encryptedContent)
 
         AmberLog.d(Amber.TAG, "Sending response to relays ${relays.map { relay -> relay.url }} type ${bunkerRequest.request.method}")
 
@@ -177,25 +169,8 @@ object BunkerRequestUtils {
                 timeoutInSeconds = 5,
             )
             if (!result) {
-                encryptedContent = if (bunkerRequest.encryptionType == EncryptionType.NIP44) {
-                    connSigner?.nip44Encrypt(plainText, bunkerRequest.localKey)
-                        ?: account.nip44Encrypt(plainText, bunkerRequest.localKey)
-                } else {
-                    connSigner?.nip04Encrypt(plainText, bunkerRequest.localKey)
-                        ?: account.nip04Encrypt(plainText, bunkerRequest.localKey)
-                }
-
-                signedEvent = connSigner?.signerSync?.sign(
-                    createdAt = TimeUtils.now(),
-                    kind = NostrConnectEvent.KIND,
-                    tags = arrayOf(arrayOf("p", localKey)),
-                    content = encryptedContent,
-                ) ?: account.signSync(
-                    createdAt = TimeUtils.now(),
-                    kind = NostrConnectEvent.KIND,
-                    tags = arrayOf(arrayOf("p", localKey)),
-                    content = encryptedContent,
-                )
+                encryptedContent = encryptResponse()
+                signedEvent = signResponse(encryptedContent)
             }
             result
         }

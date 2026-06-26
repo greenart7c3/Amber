@@ -4,6 +4,7 @@ import android.content.ContentProvider
 import android.content.ContentValues
 import android.database.Cursor
 import android.net.Uri
+import com.greenart7c3.nostrsigner.signer.RemoteSigner
 
 class SignerProvider : ContentProvider() {
     override fun delete(
@@ -33,6 +34,9 @@ class SignerProvider : ContentProvider() {
             AmberLog.d(Amber.TAG, "No context")
             return null
         }
+        // A ContentProvider query can arrive before Application.onCreate has bound
+        // the signer service (provider onCreate runs first). Bind is idempotent.
+        RemoteSigner.bind(ctx)
         // External apps are always attributed to their own Android package. The
         // requester identity is taken from the binder's calling package, never from
         // caller-supplied query arguments, so an app cannot impersonate another one.

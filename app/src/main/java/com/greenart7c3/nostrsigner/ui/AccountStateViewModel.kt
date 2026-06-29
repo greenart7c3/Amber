@@ -35,7 +35,7 @@ sealed interface RestorePromptState {
 
 @Stable
 class AccountStateViewModel(npub: String?) : ViewModel() {
-    private val _accountContent = MutableStateFlow<AccountState>(AccountState.LoggedOff)
+    private val _accountContent = MutableStateFlow<AccountState>(AccountState.Loading)
     val accountContent = _accountContent.asStateFlow()
     private var observerJob: Job? = null
 
@@ -50,28 +50,32 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
         npub: String?,
         forceLogout: Boolean = false,
     ) {
-        var currentUser = npub ?: LocalPreferences.currentAccount(Amber.instance)
-        val allAccounts = LocalPreferences.allSavedAccounts(Amber.instance)
-        if (currentUser != null && !LocalPreferences.containsAccount(Amber.instance, currentUser) && allAccounts.any { it.npub == currentUser }) {
-            currentUser = LocalPreferences.currentAccount(Amber.instance)
-        }
-        if (forceLogout) {
-            currentUser = null
-        }
-        LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
-            startUI(it, route)
-            Amber.instance.applicationIOScope.launch {
+        // Loading the account decrypts keys via the Android KeyStore, which is a slow
+        // blocking call. Run it off the main thread to avoid StrictMode violations and jank.
+        Amber.instance.applicationIOScope.launch {
+            var currentUser = npub ?: LocalPreferences.currentAccount(Amber.instance)
+            val allAccounts = LocalPreferences.allSavedAccounts(Amber.instance)
+            if (currentUser != null && !LocalPreferences.containsAccount(Amber.instance, currentUser) && allAccounts.any { it.npub == currentUser }) {
+                currentUser = LocalPreferences.currentAccount(Amber.instance)
+            }
+            if (forceLogout) {
+                currentUser = null
+            }
+            LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
+                startUI(it, route)
                 Amber.instance.profileSubscription.updateFilter()
             }
-        }
-        if (currentUser == null) {
-            _accountContent.update { AccountState.LoggedOff }
+            if (currentUser == null) {
+                _accountContent.update { AccountState.LoggedOff }
+            }
         }
     }
 
     private fun prepareLogoutOrSwitch() {
         observerJob?.cancel()
-        _accountContent.update { AccountState.LoggedOff }
+        // Show the loading state while the next account decrypts off the main thread,
+        // so the login page does not flash during an account switch.
+        _accountContent.update { AccountState.Loading }
     }
 
     fun logOff(npub: String) {

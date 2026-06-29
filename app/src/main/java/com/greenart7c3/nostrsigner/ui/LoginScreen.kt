@@ -415,7 +415,7 @@ fun SignUpPage(
     val percentage = (screenWidthDp * 0.93f)
     val verticalPadding = (screenWidthDp - percentage)
     var nickname by remember { mutableStateOf(TextFieldValue()) }
-    var keyPair by remember { mutableStateOf(KeyPair()) }
+    var keyPair by remember { mutableStateOf<KeyPair?>(null) }
     val state = rememberPagerState {
         2
     }
@@ -513,7 +513,7 @@ fun SignUpPage(
                                     .background(Color(0xFFFFDE9E)),
                             ) {
                                 Text(
-                                    text = keyPair.pubKey.toNpub(),
+                                    text = keyPair?.pubKey?.toNpub() ?: "",
                                     modifier = Modifier.padding(10.dp),
                                     color = Color.Black,
                                 )
@@ -823,7 +823,7 @@ fun LoginPage(
     }
     val scope = rememberCoroutineScope()
     val focusRequester = remember { FocusRequester() }
-    var keyPair by remember { mutableStateOf(KeyPair()) }
+    var keyPair by remember { mutableStateOf<KeyPair?>(null) }
     var isMnemonicMode by rememberSaveable { mutableStateOf(false) }
     var mnemonicWordCount by rememberSaveable { mutableIntStateOf(12) }
     var mnemonicWords by remember { mutableStateOf(List(12) { "" }) }
@@ -1427,10 +1427,12 @@ fun LoginPage(
                                         return@AmberButton
                                     }
 
+                                    val currentKeyPair = keyPair ?: return@AmberButton
+
                                     Amber.instance.applicationIOScope.launch {
                                         isLoading = true
                                         accountViewModel.startUI(
-                                            keyPair = keyPair,
+                                            keyPair = currentKeyPair,
                                             route = null,
                                             torMode = torMode,
                                             signPolicy = selectedOption,

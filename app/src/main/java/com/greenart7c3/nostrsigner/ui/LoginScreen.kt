@@ -171,7 +171,6 @@ fun MainPage(
                                 }
                             }
                             Amber.instance.notificationSubscription.updateFilter()
-                            Amber.instance.profileSubscription.updateFilter()
                         }
                     },
                 )
@@ -379,7 +378,6 @@ fun MainLoginPage(
                     navHostControllerWrapper = navHostControllerWrapper,
                     onFinish = {
                         Amber.instance.applicationIOScope.launch {
-                            Amber.instance.profileSubscription.updateFilter()
                             Amber.instance.notificationSubscription.updateFilter()
                         }
                     },

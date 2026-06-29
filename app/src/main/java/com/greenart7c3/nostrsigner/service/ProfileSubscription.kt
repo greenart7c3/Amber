@@ -54,6 +54,10 @@ class ProfileSubscription(
     private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
     private val timeoutJobs = mutableMapOf<String, Job>()
 
+    // hexKey -> the cached Account instance a live composable cares about. Updating the
+    // StateFlows on these instances is what reflects fresh metadata in the UI.
+    private val accounts = mutableMapOf<String, Account>()
+
     init {
         // listens until the app crashes.
         client.addConnectionListener(this)
@@ -73,9 +77,10 @@ class ProfileSubscription(
                 }
             }
 
-            scope.launch {
-                val account = LocalPreferences.loadFromEncryptedStorage(appContext) ?: return@launch
-                if (msg.subId == subIds[account.hexKey]) {
+            val hexKey = subIds.entries.firstOrNull { it.value == subId }?.key
+            val account = hexKey?.let { accounts[it] }
+            if (account != null) {
+                scope.launch {
                     LocalPreferences.setLastCheck(Amber.instance, account.npub, TimeUtils.now())
                 }
             }
@@ -83,8 +88,7 @@ class ProfileSubscription(
         if (msg is EventMessage) {
             if (this.subIds.containsValue(msg.subId)) {
                 if (msg.event.kind == MetadataEvent.KIND && msg.event.verify()) {
-                    val account = LocalPreferences.loadFromEncryptedStorageSync(appContext) ?: return
-                    if (account.hexKey != msg.event.pubKey) return
+                    val account = accounts[msg.event.pubKey] ?: return
 
                     (msg.event as MetadataEvent).contactMetaData()?.let { metadata ->
                         val npub = account.npub
@@ -117,20 +121,14 @@ class ProfileSubscription(
     }
 
     /**
-     * Call this method every time the relay list or the user list changes
+     * Starts (or refreshes) the throttled, one-shot metadata fetch for [account].
+     * Tracks the account so incoming events update its StateFlows; safe to call from
+     * any composable displaying the account.
      */
-    suspend fun updateFilter() {
+    suspend fun updateFilter(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
-        val account = LocalPreferences.loadFromEncryptedStorage(appContext) ?: return
 
-        subIds.keys.filter { it != account.hexKey }.forEach {
-            val subId = subIds.remove(it)
-            if (subId != null) {
-                timeoutJobs.remove(subId)?.cancel()
-                client.unsubscribe(subId)
-                relaysPerSubId.remove(subId)
-            }
-        }
+        accounts[account.hexKey] = account
 
         if (!subIds.containsKey(account.hexKey)) {
             subIds[account.hexKey] = UUID.randomUUID().toString()
@@ -157,7 +155,26 @@ class ProfileSubscription(
     }
 
     /**
-     * Call this function when you want to stop updates
+     * Re-runs the fetch for every currently tracked account. Call when the relay list changes.
+     */
+    suspend fun updateFilters() {
+        accounts.values.toList().forEach { updateFilter(it) }
+    }
+
+    /**
+     * Stops updates for a single [account] (call when the composable leaves composition).
+     */
+    fun closeSub(account: Account) {
+        accounts.remove(account.hexKey)
+        val subId = subIds.remove(account.hexKey) ?: return
+        timeoutJobs.remove(subId)?.cancel()
+        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+        client.unsubscribe(subId)
+        relaysPerSubId.remove(subId)
+    }
+
+    /**
+     * Stops updates for all accounts (e.g. after a backup restore).
      */
     fun closeSub() {
         Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
@@ -167,6 +184,7 @@ class ProfileSubscription(
         }
         relaysPerSubId.clear()
         subIds.clear()
+        accounts.clear()
     }
 
     private fun createProfileFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {

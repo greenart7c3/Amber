@@ -69,6 +69,7 @@ import kotlinx.collections.immutable.ImmutableList
 
 @Composable
 fun ProfilePictureIcon(account: Account) {
+    ProfileSubscriptionEffect(account)
     val profileUrl by account.picture.collectAsStateWithLifecycle()
     if (profileUrl.isNotBlank() && !BuildFlavorChecker.isOfflineFlavor()) {
         AsyncImage(

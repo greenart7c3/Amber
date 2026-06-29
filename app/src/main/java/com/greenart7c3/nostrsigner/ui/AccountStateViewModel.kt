@@ -63,7 +63,6 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             }
             LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
                 startUI(it, route)
-                Amber.instance.profileSubscription.updateFilter()
             }
             if (currentUser == null) {
                 _accountContent.update { AccountState.LoggedOff }

@@ -607,12 +607,14 @@ class Amber :
                     }
 
                     override fun onSuccess(request: ImageRequest, result: SuccessResult) {
-                        AmberLog.d(
-                            TAG,
-                            "Coil: loaded ${request.data} from ${result.dataSource}" +
-                                " | mem=${memCache.size / 1024}/${memCache.maxSize / 1024} KB" +
-                                " | disk=${diskCache.size / 1024}/${diskCache.maxSize / 1024} KB",
-                        )
+                        applicationIOScope.launch {
+                            AmberLog.d(
+                                TAG,
+                                "Coil: loaded ${request.data} from ${result.dataSource}" +
+                                    " | mem=${memCache.size / 1024}/${memCache.maxSize / 1024} KB" +
+                                    " | disk=${diskCache.size / 1024}/${diskCache.maxSize / 1024} KB",
+                            )
+                        }
                     }
 
                     override fun onError(request: ImageRequest, result: ErrorResult) {

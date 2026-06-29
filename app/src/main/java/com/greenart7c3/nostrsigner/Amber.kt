@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Intent
 import android.net.NetworkCapabilities
 import android.net.TrafficStats
+import android.os.Build
 import android.os.StrictMode
 import androidx.appcompat.app.AppCompatActivity
 import androidx.collection.LruCache
@@ -73,6 +74,7 @@ import java.lang.ref.WeakReference
 import java.net.InetSocketAddress
 import java.net.Socket
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import kotlin.coroutines.cancellation.CancellationException
 import kotlinx.coroutines.CoroutineExceptionHandler
@@ -371,12 +373,36 @@ class Amber :
                 .penaltyLog()
                 .build(),
         )
-        StrictMode.setVmPolicy(
-            StrictMode.VmPolicy.Builder()
-                .detectAll()
-                .penaltyLog()
-                .build(),
-        )
+
+        val vmPolicy = StrictMode.VmPolicy.Builder()
+            .detectAll()
+
+        // The autofill/IME framework hands the app inline-suggestion surfaces wrapped
+        // in a SurfaceControlViewHost.SurfacePackage (unparceled via SurfacePackage(Parcel)).
+        // The platform owns and never releases the backing SurfaceControl, so it trips
+        // detectLeakedClosableObjects() on finalize even though no app code ever holds the
+        // Closeable. Route VM violations through a listener (API 28+) that drops this known
+        // framework leak and logs everything else, preserving penaltyLog() behavior on 26-27.
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
+            vmPolicy.penaltyListener(
+                Executors.newSingleThreadExecutor(),
+                StrictMode.OnVmViolationListener { violation ->
+                    if (isFrameworkSurfacePackageLeak(violation)) return@OnVmViolationListener
+                    AmberLog.d(TAG, "StrictMode VM policy violation", violation)
+                },
+            )
+        } else {
+            vmPolicy.penaltyLog()
+        }
+
+        StrictMode.setVmPolicy(vmPolicy.build())
+    }
+
+    // True when a StrictMode violation originates from the platform's SurfaceControl
+    // finalizer for a SurfacePackage handed in over IPC (autofill inline suggestions),
+    // which app code cannot close. See enableStrictMode().
+    private fun isFrameworkSurfacePackageLeak(violation: Throwable): Boolean = violation.stackTrace.any {
+        it.className == "android.view.SurfaceControl" && it.methodName == "finalize"
     }
 
     fun runMigrations(onDone: () -> Unit) {

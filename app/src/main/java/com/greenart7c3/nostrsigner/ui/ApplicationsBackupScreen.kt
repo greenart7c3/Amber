@@ -48,6 +48,7 @@ import com.greenart7c3.nostrsigner.service.ApplicationBackup
 import com.greenart7c3.nostrsigner.service.RestoreResult
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
+import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -138,6 +139,7 @@ private fun AccountBackupRow(
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+    ProfileSubscriptionEffect(account)
     val name by account.name.collectAsState()
     val picture by account.picture.collectAsState()
     var backupEnabled by remember(account.npub) {

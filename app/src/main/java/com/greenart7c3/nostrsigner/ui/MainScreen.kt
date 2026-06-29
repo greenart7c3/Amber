@@ -82,6 +82,7 @@ import com.greenart7c3.nostrsigner.ui.actions.RelayLogScreen
 import com.greenart7c3.nostrsigner.ui.components.AmberBottomBar
 import com.greenart7c3.nostrsigner.ui.components.AmberFloatingButton
 import com.greenart7c3.nostrsigner.ui.components.AmberTopAppBar
+import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import java.util.Base64
 import kotlinx.collections.immutable.ImmutableList
@@ -247,6 +248,9 @@ fun MainScreen(
 
     val items = listOf(Route.Applications, Route.IncomingRequest, Route.Settings, Route.Accounts)
 
+    // Keep the current account's profile metadata fresh while the main UI is shown.
+    ProfileSubscriptionEffect(account)
+
     var isLoading by remember { mutableStateOf(false) }
 
     val shouldShowBottomSheet = remember { mutableStateOf(false) }
@@ -339,7 +343,6 @@ fun MainScreen(
                                 navHostControllerWrapper = navController,
                                 onFinish = {
                                     Amber.instance.applicationIOScope.launch {
-                                        Amber.instance.profileSubscription.updateFilter()
                                         Amber.instance.notificationSubscription.updateFilter()
                                     }
                                     navController.navController.navigate(Route.Applications.route) {

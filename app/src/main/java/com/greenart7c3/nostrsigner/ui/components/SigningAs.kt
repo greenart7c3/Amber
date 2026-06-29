@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.ui.theme.fromHex
 
 @Composable
 fun SigningAs(account: Account, modifier: Modifier = Modifier) {
+    ProfileSubscriptionEffect(account)
     Column(
         modifier = modifier
             .fillMaxWidth()

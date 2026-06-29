@@ -41,7 +41,7 @@ All three paths converge on `Account.sign()` / encrypt/decrypt methods backed by
 - `applicationIOScope` — `CoroutineScope(Dispatchers.IO + SupervisorJob() + exceptionHandler)`, used for all background work
 - `client: NostrClient` — the Quartz Nostr relay client
 - `notificationSubscription` — keeps the NIP-46 filter alive in the background
-- `profileSubscription` — active only in the foreground (paused in background to save battery)
+- `profileSubscription` — per-account, throttled one-shot metadata (kind 0) fetch; started/stopped by the composables that display each account via `ProfileSubscriptionEffect` (not app-wide)
 - `isStartingAppState: MutableStateFlow<Boolean>` — set to `true` during `runMigrations()`; code that must wait for startup calls `isStartingAppState.first { !it }`
 - `settings.killSwitch` — when true, all relays are disconnected; checked before every relay operation
 

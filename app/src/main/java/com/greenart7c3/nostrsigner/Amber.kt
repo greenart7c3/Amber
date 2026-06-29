@@ -139,7 +139,8 @@ class Amber :
 
     val notificationSubscription = NotificationSubscription(client, this)
 
-    // This runs on the foreground only
+    // Per-account profile metadata fetch, started/stopped by the composables that display
+    // each account (see ProfileSubscriptionEffect) rather than app-wide.
     val profileSubscription = ProfileSubscription(client, this, applicationIOScope)
 
     val zapstoreUpdater: ZapstoreUpdater? = if (!BuildFlavorChecker.isOfflineFlavor() && !BuildConfig.IS_FDROID_BUILD) {
@@ -161,13 +162,9 @@ class Amber :
             AmberLog.d("ProcessLifecycleOwner", "App in foreground")
             isAppInForeground = true
 
-            // activates the profile filter only when the app is in the foreground
-            if (!settings.killSwitch.value) {
+            if (!settings.killSwitch.value && settings.autoCheckUpdates) {
                 applicationIOScope.launch {
-                    profileSubscription.updateFilter()
-                    if (settings.autoCheckUpdates) {
-                        maybeCheckForUpdates()
-                    }
+                    maybeCheckForUpdates()
                 }
             }
         }
@@ -175,11 +172,6 @@ class Amber :
         override fun onStop(owner: LifecycleOwner) {
             AmberLog.d("ProcessLifecycleOwner", "App in background")
             isAppInForeground = false
-
-            // closes the filter when in the background
-            applicationIOScope.launch {
-                profileSubscription.closeSub()
-            }
         }
     }
 
@@ -547,7 +539,7 @@ class Amber :
             // these update the relay list in the filters and send them to the
             // relay, reconnecting if needed
             if (isAppInForeground) {
-                profileSubscription.updateFilter()
+                profileSubscription.updateFilters()
             }
             notificationSubscription.updateFilter()
         }

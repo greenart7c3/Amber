@@ -103,6 +103,7 @@ import com.greenart7c3.nostrsigner.ui.QrCodeDrawer
 import com.greenart7c3.nostrsigner.ui.components.CloseButton
 import com.greenart7c3.nostrsigner.ui.components.IconRow
 import com.greenart7c3.nostrsigner.ui.components.MarkdownText
+import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.components.SeedWordsPage
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
@@ -341,6 +342,7 @@ private fun AccountBackupCard(
     onLoading: (Boolean) -> Unit,
     onShowQrCode: (String) -> Unit,
 ) {
+    ProfileSubscriptionEffect(account)
     val profileUrl = account.picture.collectAsState()
     val name = account.name.collectAsState()
     var didBackup by remember { mutableStateOf(account.didBackup) }

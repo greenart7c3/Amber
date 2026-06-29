@@ -44,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import coil3.compose.SubcomposeAsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
@@ -53,6 +54,7 @@ import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.NavHostControllerWrapper
 import com.greenart7c3.nostrsigner.ui.components.ActiveMarker
+import com.greenart7c3.nostrsigner.ui.components.ProfileSubscriptionEffect
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
@@ -105,16 +107,17 @@ fun AccountsBottomSheet(
                     Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
                 }
                 accounts.forEach { acc ->
-                    // Reading the name/picture from SharedPreferences touches disk, so do it
-                    // off the main thread instead of synchronously during composition.
-                    val accountInfo by produceState("" to "", acc.npub) {
+                    // Load the cached Account off the main thread (decrypts once, then cached) so we
+                    // can observe its name/picture StateFlows and refresh its metadata while the
+                    // sheet is open.
+                    val loadedAccount by produceState<Account?>(null, acc.npub) {
                         value = withContext(Dispatchers.IO) {
-                            LocalPreferences.getAccountName(context, acc.npub) to
-                                LocalPreferences.getProfileUrl(context, acc.npub)
+                            LocalPreferences.loadFromEncryptedStorage(context, acc.npub)
                         }
                     }
-                    val name = accountInfo.first
-                    val profileUrl = accountInfo.second
+                    loadedAccount?.let { ProfileSubscriptionEffect(it) }
+                    val name = loadedAccount?.name?.collectAsStateWithLifecycle()?.value ?: ""
+                    val profileUrl = loadedAccount?.picture?.collectAsStateWithLifecycle()?.value ?: ""
                     val borderColor = remember(acc.npub) {
                         Color.fromHex(acc.npub.bechToBytes().toHexKey().slice(0..5))
                     }

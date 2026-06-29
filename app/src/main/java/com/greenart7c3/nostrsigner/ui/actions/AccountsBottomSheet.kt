@@ -28,6 +28,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.produceState
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,7 +58,9 @@ import com.greenart7c3.nostrsigner.ui.theme.fromHex
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip19Bech32.bech32.bechToBytes
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -100,9 +105,19 @@ fun AccountsBottomSheet(
                     Text(stringResource(R.string.select_account), fontWeight = FontWeight.Bold)
                 }
                 accounts.forEach { acc ->
-                    val name = LocalPreferences.getAccountName(context, acc.npub)
-                    val profileUrl = LocalPreferences.getProfileUrl(context, acc.npub)
-                    val borderColor = Color.fromHex(acc.npub.bechToBytes().toHexKey().slice(0..5))
+                    // Reading the name/picture from SharedPreferences touches disk, so do it
+                    // off the main thread instead of synchronously during composition.
+                    val accountInfo by produceState("" to "", acc.npub) {
+                        value = withContext(Dispatchers.IO) {
+                            LocalPreferences.getAccountName(context, acc.npub) to
+                                LocalPreferences.getProfileUrl(context, acc.npub)
+                        }
+                    }
+                    val name = accountInfo.first
+                    val profileUrl = accountInfo.second
+                    val borderColor = remember(acc.npub) {
+                        Color.fromHex(acc.npub.bechToBytes().toHexKey().slice(0..5))
+                    }
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()

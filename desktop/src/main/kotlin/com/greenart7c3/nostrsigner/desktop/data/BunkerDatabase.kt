@@ -63,6 +63,8 @@ object BunkerDatabase {
                 )
                 """.trimIndent(),
             )
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS relays (url TEXT PRIMARY KEY)")
+            statement.executeUpdate("CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT NOT NULL)")
         }
         return connection
     }

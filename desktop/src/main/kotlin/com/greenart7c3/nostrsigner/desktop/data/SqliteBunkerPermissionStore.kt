@@ -46,9 +46,50 @@ class SqliteBunkerPermissionStore(private val connection: Connection) : BunkerPe
             statement.executeUpdate()
         }
     }
+
+    /** Lists every stored auto-accept/reject rule for one app, for the app-detail permission editor. */
+    suspend fun permissionsFor(appPubKey: String): List<StoredPermission> = withContext(Dispatchers.IO) {
+        connection.prepareStatement(
+            "SELECT method, kind, approved FROM permissions WHERE app_pub_key = ? ORDER BY method, kind",
+        ).use { statement ->
+            statement.setString(1, appPubKey)
+            statement.executeQuery().use { rows ->
+                buildList {
+                    while (rows.next()) {
+                        add(
+                            StoredPermission(
+                                appPubKey = appPubKey,
+                                method = BunkerMethod.valueOf(rows.getString("method")),
+                                kind = BunkerDatabase.columnToKind(rows.getInt("kind")),
+                                approved = rows.getInt("approved") != 0,
+                            ),
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+    /** Deletes a single stored rule, resetting that method/kind back to "ask next time". */
+    suspend fun deletePermission(appPubKey: String, method: BunkerMethod, kind: Int?) = withContext(Dispatchers.IO) {
+        connection.prepareStatement(
+            "DELETE FROM permissions WHERE app_pub_key = ? AND method = ? AND kind = ?",
+        ).use { statement ->
+            statement.setString(1, appPubKey)
+            statement.setString(2, method.name)
+            statement.setInt(3, BunkerDatabase.kindToColumn(kind))
+            statement.executeUpdate()
+        }
+    }
 }
 
+/** A single stored auto-accept/auto-reject rule, as shown in the app-detail permission editor. */
+data class StoredPermission(val appPubKey: String, val method: BunkerMethod, val kind: Int?, val approved: Boolean)
+
 data class ConnectedApp(val pubKey: String, val name: String, val connectedAt: Long)
+
+/** One row of stored history, including its autoincrement id (used as a stable LazyColumn key). */
+data class HistoryRow(val id: Long, val entry: BunkerHistoryEntry)
 
 class SqliteBunkerHistoryLogger(private val connection: Connection) : BunkerHistoryLogger {
     override suspend fun log(entry: BunkerHistoryEntry) {
@@ -65,12 +106,15 @@ class SqliteBunkerHistoryLogger(private val connection: Connection) : BunkerHist
             }
             connection.prepareStatement(
                 """
-                INSERT INTO applications (app_pub_key, connected_at) VALUES (?, ?)
-                ON CONFLICT(app_pub_key) DO UPDATE SET connected_at = excluded.connected_at
+                INSERT INTO applications (app_pub_key, name, connected_at) VALUES (?, ?, ?)
+                ON CONFLICT(app_pub_key) DO UPDATE SET
+                    connected_at = excluded.connected_at,
+                    name = CASE WHEN excluded.name != '' THEN excluded.name ELSE applications.name END
                 """.trimIndent(),
             ).use { statement ->
                 statement.setString(1, entry.appPubKey)
-                statement.setLong(2, entry.time)
+                statement.setString(2, entry.appName.orEmpty())
+                statement.setLong(3, entry.time)
                 statement.executeUpdate()
             }
         }
@@ -83,6 +127,55 @@ class SqliteBunkerHistoryLogger(private val connection: Connection) : BunkerHist
                     while (rows.next()) {
                         add(ConnectedApp(rows.getString("app_pub_key"), rows.getString("name"), rows.getLong("connected_at")))
                     }
+                }
+            }
+        }
+    }
+
+    /** The last known display name for an app, if any — used as [com.greenart7c3.nostrsigner.shared.BunkerSigningEngine]'s `appNameLookup` fallback. */
+    suspend fun nameFor(appPubKey: String): String? = withContext(Dispatchers.IO) {
+        connection.prepareStatement("SELECT name FROM applications WHERE app_pub_key = ?").use { statement ->
+            statement.setString(1, appPubKey)
+            statement.executeQuery().use { rows ->
+                if (rows.next()) rows.getString("name").takeIf { it.isNotBlank() } else null
+            }
+        }
+    }
+
+    /** The most recent history entries across all apps, newest first. */
+    suspend fun recentHistory(limit: Int = 200): List<HistoryRow> = withContext(Dispatchers.IO) {
+        queryHistory("SELECT id, app_pub_key, method, kind, approved, time FROM history ORDER BY time DESC LIMIT ?") { statement ->
+            statement.setInt(1, limit)
+        }
+    }
+
+    /** The most recent history entries for a single app, newest first. */
+    suspend fun recentHistoryFor(appPubKey: String, limit: Int = 50): List<HistoryRow> = withContext(Dispatchers.IO) {
+        queryHistory(
+            "SELECT id, app_pub_key, method, kind, approved, time FROM history WHERE app_pub_key = ? ORDER BY time DESC LIMIT ?",
+        ) { statement ->
+            statement.setString(1, appPubKey)
+            statement.setInt(2, limit)
+        }
+    }
+
+    private fun queryHistory(sql: String, bind: (java.sql.PreparedStatement) -> Unit): List<HistoryRow> = connection.prepareStatement(sql).use { statement ->
+        bind(statement)
+        statement.executeQuery().use { rows ->
+            buildList {
+                while (rows.next()) {
+                    add(
+                        HistoryRow(
+                            id = rows.getLong("id"),
+                            entry = BunkerHistoryEntry(
+                                appPubKey = rows.getString("app_pub_key"),
+                                method = BunkerMethod.valueOf(rows.getString("method")),
+                                kind = BunkerDatabase.columnToKind(rows.getInt("kind")),
+                                approved = rows.getInt("approved") != 0,
+                                time = rows.getLong("time"),
+                            ),
+                        ),
+                    )
                 }
             }
         }

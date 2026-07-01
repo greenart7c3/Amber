@@ -25,6 +25,7 @@ dependencies {
     implementation(libs.xerial.sqlite.jdbc)
 
     testImplementation(kotlin("test"))
+    testImplementation(libs.kotlinx.coroutines.test)
 }
 
 compose.desktop {

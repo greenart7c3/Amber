@@ -518,7 +518,7 @@
     <string name="start_service_on_boot">Önyüklemede servisi başlat</string>
     <string name="start_service_on_boot_description">Etkinleştirildiğinde Amber, cihaz başladıktan sonra arka plan servisini otomatik olarak başlatır; böylece uzak oturum açma ve NIP-46 istekleri çalışmaya devam eder.</string>
     <string name="profile_fetch_interval">Profil getirme aralığı</string>
-    <string name="profile_fetch_interval_description">Amber'ın güncellenmiş profil meta verilerini (ad ve resim) röleler üzerinden ne sıklıkla kontrol ettiği</string>
+    <string name="profile_fetch_interval_description">Amber\'ın güncellenmiş profil meta verilerini (ad ve resim) röleler üzerinden ne sıklıkla kontrol ettiği</string>
     <string name="profile_fetch_interval_always">Her zaman (her seferinde)</string>
     <string name="profile_fetch_interval_15_minutes">Her 15 dakikada bir</string>
     <string name="profile_fetch_interval_30_minutes">Her 30 dakikada bir</string>

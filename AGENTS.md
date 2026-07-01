@@ -20,6 +20,15 @@ Amber is a single-module Android app (`:app`, package `com.greenart7c3.nostrsign
 
 Required order when pushing: `ktlintCheck` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
 
+## Releases / version bumps
+
+When asked to "bump the version" / cut a release, do **all** of the following in a single change — never omit the verification block:
+
+1. Bump `versionCode` (+1) and `versionName` (new `X.Y.Z`) in `app/build.gradle.kts` (`defaultConfig`). These are the only places the version lives.
+2. Prepend a new `## Amber X.Y.Z` block at the top of `CHANGELOG.md`, summarizing the non-merge commits since the previous `vX.Y.Z` tag (`git log vX.Y.Z..HEAD --no-merges`), grouped as user-facing bullets. End the block with the standard "Download it with …" line (update the `releases/tag/vX.Y.Z` URL) and the "If you like my work …" donation line.
+3. **Always include the `## Verifying the release` block immediately after the donation line** (before the next `## Amber` heading). Copy it verbatim from the previous release entry and only change the `manifest-vX.Y.Z.txt` / `manifest-vX.Y.Z.txt.sig` filenames to the new version. Do **not** change the `gpg --recv-keys` key id, the `gpg: Signature made Fri 13 Sep 2024 …` block, or the surrounding prose — those are key-specific, not release-specific. This block must be part of the version-bump commit, not a follow-up.
+4. Do not commit unless explicitly asked (per the global rule). Do not edit `build.sh` — it takes the version as an argument.
+
 ## Product flavors (dimension `version`)
 
 | Flavor | Notes |

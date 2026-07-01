@@ -5,15 +5,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## Build & development commands
 
 ```bash
-./gradlew assembleDebug          # debug build
+./gradlew assembleDebug          # debug build (Android app, :app module)
 ./gradlew assembleRelease        # release build (requires signing keystore)
 ./gradlew ktlintCheck            # lint check (also runs on every git commit via pre-commit hook)
 ./gradlew ktlintFormat           # auto-fix lint issues
 ./gradlew test --no-daemon       # unit tests (also runs on every git push via pre-push hook)
 ./build.sh                       # builds both offline and free release variants to ~/release/
+
+./gradlew :desktop:run                    # run the desktop bunker app locally
+./gradlew :desktop:createDistributable    # build a runnable app image (no native installer)
+./gradlew :desktop:packageDeb             # Linux .deb (packageMsi/packageDmg need to run on Windows/macOS hosts)
+./gradlew :shared:desktopTest             # JVM unit tests for the shared bunker signing engine
 ```
 
 Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — no manual setup needed.
+
+## Modules
+
+| Module | Purpose |
+|--------|---------|
+| `:app` | The Android app — all three request-ingestion paths, full UI, Room-backed persistence. Unaffected by the `:shared`/`:desktop` split; still self-contained. |
+| `:shared` | Kotlin Multiplatform module (`androidTarget()` + `jvm("desktop")`) holding the portable NIP-46 bunker signing engine used by `:desktop`. See "Desktop bunker app" below. |
+| `:desktop` | Compose Multiplatform Desktop app — a focused bunker-only signer for Linux/Windows/Mac, not a port of the full Android UI. |
 
 ## Build flavors
 
@@ -21,6 +34,8 @@ Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — n
 |--------|---------|
 | `free` (default) | Online variant with full networking (OkHttp, Coil, relay connectivity) |
 | `offline` | No network stack; use `BuildFlavorChecker.isOfflineFlavor()` to guard network code |
+
+`:desktop` always has networking (a bunker signer is meaningless offline) and does not have flavors.
 
 ## Architecture
 
@@ -32,7 +47,17 @@ External apps and relays reach the signer through three distinct paths:
 2. **ContentProvider IPC** → `SignerProvider` → synchronous signing via `runBlocking`
 3. **NIP-46 relay events** (kind 24133) → `NotificationSubscription` → `EventNotificationConsumer` → `BunkerRequestUtils`
 
-All three paths converge on `Account.sign()` / encrypt/decrypt methods backed by `NostrSignerInternal`.
+All three paths converge on `Account.sign()` / encrypt/decrypt methods backed by `NostrSignerInternal`. This is all `:app` (Android); the desktop app is a separate, fourth entry point — see below.
+
+### Desktop bunker app (`:desktop` + `:shared`)
+
+The desktop app only implements the NIP-46/bunker path (paths 1–2 above are Android-only concepts — no intent scheme or ContentProvider on desktop) and is intentionally **not** a port of the full Android app: no history/settings UI parity, single account, no Tor/proxy support yet.
+
+- `shared/src/commonMain/.../BunkerSigningEngine.kt` — decrypts an incoming kind-24133 event, checks a `BunkerPermissionStore` for an auto-accept/reject rule (falling back to a `BunkerApprovalPort` prompt), performs the sign/nip04/nip44 operation via `BunkerSigner` (wraps Quartz's `NostrSignerInternal`), and returns the signed response event. This is new code written for the desktop use case — it does **not** replace or get called by `:app`'s `BunkerRequestUtils`/`EventNotificationConsumer`, which keep using their existing Room/Context-coupled implementation directly (rewiring the shipping Android signing path onto shared code was judged higher regression risk than the desktop use case warranted).
+- `shared/.../SecureCryptoHelper.kt` is `expect`/`actual`: the desktop `actual` (`desktopMain`) stores an AES-256 master key in the OS keychain via `java-keyring` (Windows Credential Manager / macOS Keychain / Linux Secret Service — requires a running Secret Service provider, e.g. gnome-keyring, on Linux) and AES-GCM-encrypts secrets at rest with it, mirroring the shape of the Android `actual` (Keystore-backed, itself a from-scratch mirror of `:app`'s own `SecureCryptoHelper.kt` — not wired in, kept for parity/future adoption).
+- `desktop/src/main/kotlin/.../data/` — `AccountStore` (generate/import the single desktop account, persisted encrypted), `SqliteBunkerPermissionStore`/`SqliteBunkerHistoryLogger` (plain JDBC against `org.xerial:sqlite-jdbc`, schema created on first run under `~/.amber-bunker/`, not Room).
+- `desktop/src/main/kotlin/.../relay/BunkerRelayConnection.kt` — subscribes to kind-24133 events addressed to the account pubkey using Quartz's own `NostrClient` + `BasicOkHttpWebSocket` (both resolve from the multiplatform `com.vitorpamplona.quartz:quartz` coordinate's `quartz-jvm` variant — no vendored crypto or websocket code was needed), and publishes engine responses back via `publishAndConfirm`.
+- `desktop/src/main/kotlin/.../ui/BunkerApp.kt` — Compose UI: account setup, `bunker://` connection string + QR code, approval dialog, connected-apps list.
 
 ### Global state — `Amber.kt`
 
@@ -89,3 +114,7 @@ In other words, the lock controls who can open and navigate the app UI; it does 
 | `BiometricAuthScreen.kt` | UI-only app-launch lock (biometric/PIN); not a signing gate |
 | `Biometrics.kt` | Wraps `BiometricPrompt` / keyguard credential prompt |
 | `SecurityScreen.kt` | Toggles `useAuth` / `usePin` and the re-prompt interval |
+| `shared/.../BunkerSigningEngine.kt` | Desktop's NIP-46 request handler (decrypt → permission check → sign/encrypt → respond) |
+| `shared/.../SecureCryptoHelper.kt` | `expect`/`actual` at-rest encryption: Android Keystore vs. desktop OS keychain |
+| `desktop/.../relay/BunkerRelayConnection.kt` | Desktop's kind-24133 relay subscription + response publishing |
+| `desktop/.../ui/BunkerApp.kt` | Desktop Compose UI: setup, connect screen, approval dialog |

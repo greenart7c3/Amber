@@ -132,6 +132,14 @@ class SqliteBunkerHistoryLogger(private val connection: Connection) : BunkerHist
         }
     }
 
+    /** Removes a connected app's `applications` record. Permissions/history are untouched — callers that also want those cleared should call [SqliteBunkerPermissionStore.revokeAll] separately. */
+    suspend fun removeApp(appPubKey: String) = withContext(Dispatchers.IO) {
+        connection.prepareStatement("DELETE FROM applications WHERE app_pub_key = ?").use { statement ->
+            statement.setString(1, appPubKey)
+            statement.executeUpdate()
+        }
+    }
+
     /** The last known display name for an app, if any — used as [com.greenart7c3.nostrsigner.shared.BunkerSigningEngine]'s `appNameLookup` fallback. */
     suspend fun nameFor(appPubKey: String): String? = withContext(Dispatchers.IO) {
         connection.prepareStatement("SELECT name FROM applications WHERE app_pub_key = ?").use { statement ->

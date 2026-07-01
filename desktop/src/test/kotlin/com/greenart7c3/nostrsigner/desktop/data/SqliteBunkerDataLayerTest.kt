@@ -80,6 +80,24 @@ class SqliteBunkerDataLayerTest {
     }
 
     @Test
+    fun removeAppDeletesApplicationRecordButKeepsHistoryAndPermissions() = runTest {
+        val permissionStore = SqliteBunkerPermissionStore(connection)
+        val logger = SqliteBunkerHistoryLogger(connection)
+        permissionStore.remember("app1", BunkerMethod.SIGN_EVENT, 1, true)
+        logger.log(BunkerHistoryEntry("app1", BunkerMethod.CONNECT, null, true, 1000L, appName = "My App"))
+
+        assertEquals(1, logger.connectedApps().size)
+
+        logger.removeApp("app1")
+
+        assertTrue(logger.connectedApps().isEmpty())
+        assertNull(logger.nameFor("app1"))
+        // History and permission rules are an audit trail / user choice independent of the "connected apps" list.
+        assertEquals(1, logger.recentHistoryFor("app1").size)
+        assertEquals(1, permissionStore.permissionsFor("app1").size)
+    }
+
+    @Test
     fun relayStoreAddsListsAndRemoves() = runTest {
         val relayStore = RelayStore(connection)
         relayStore.add("wss://relay.example.com")

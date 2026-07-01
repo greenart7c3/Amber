@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.desktop.ui
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Apps
 import androidx.compose.material.icons.filled.History
@@ -24,6 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.desktop.data.AccountStore
 import com.greenart7c3.nostrsigner.desktop.data.AppDataDir
 import com.greenart7c3.nostrsigner.desktop.data.BunkerDatabase
 import com.greenart7c3.nostrsigner.desktop.data.ConnectedApp
@@ -34,7 +37,9 @@ import com.greenart7c3.nostrsigner.desktop.data.SqliteBunkerPermissionStore
 import com.greenart7c3.nostrsigner.desktop.data.StoredPermission
 import com.greenart7c3.nostrsigner.desktop.relay.BunkerRelayConnection
 import com.greenart7c3.nostrsigner.desktop.relay.DEFAULT_BUNKER_RELAYS
+import com.greenart7c3.nostrsigner.desktop.ui.components.ConfirmDialog
 import com.greenart7c3.nostrsigner.desktop.ui.components.copyToClipboard
+import com.greenart7c3.nostrsigner.desktop.ui.components.shortenHex
 import com.greenart7c3.nostrsigner.desktop.ui.nav.Screen
 import com.greenart7c3.nostrsigner.desktop.ui.theme.DesktopTheme
 import com.greenart7c3.nostrsigner.desktop.ui.theme.ThemeMode
@@ -42,7 +47,6 @@ import com.greenart7c3.nostrsigner.desktop.ui.theme.resolveIsDark
 import com.greenart7c3.nostrsigner.shared.BunkerHistoryEntry
 import com.greenart7c3.nostrsigner.shared.BunkerSigner
 import com.greenart7c3.nostrsigner.shared.BunkerSigningEngine
-import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import java.awt.Desktop
@@ -63,18 +67,39 @@ private class BunkerServices(
 
 /** The desktop bunker's main shell: nav rail + current screen + the approval dialog overlay. */
 @Composable
-fun AppShell(account: KeyPair, scope: CoroutineScope) {
-    val pubKeyHex = remember(account) { account.pubKey.toHexKey() }
+fun AppShell(
+    pubKeyHex: String,
+    accounts: List<String>,
+    scope: CoroutineScope,
+    onSwitchAccount: (String) -> Unit,
+    onAddAccount: () -> Unit,
+    onLogout: (String) -> Unit,
+) {
     var currentScreen by remember { mutableStateOf<Screen>(Screen.Home) }
     var themeMode by remember { mutableStateOf(ThemeMode.SYSTEM) }
+    var account by remember(pubKeyHex) { mutableStateOf<KeyPair?>(null) }
+    var showAccountSwitcher by remember { mutableStateOf(false) }
+    var showLogoutConfirm by remember { mutableStateOf(false) }
 
-    val services = remember(pubKeyHex) {
-        val db = BunkerDatabase.open()
+    LaunchedEffect(pubKeyHex) {
+        account = AccountStore.load(pubKeyHex)
+    }
+
+    val currentAccount = account
+    if (currentAccount == null) {
+        DesktopTheme(darkTheme = themeMode.resolveIsDark()) {
+            Box(modifier = Modifier.fillMaxSize().padding(24.dp)) { Text("Loading...") }
+        }
+        return
+    }
+
+    val services = remember(pubKeyHex, currentAccount) {
+        val db = BunkerDatabase.open(pubKeyHex)
         val permissionStore = SqliteBunkerPermissionStore(db)
         val historyLogger = SqliteBunkerHistoryLogger(db)
         val approvalPort = DesktopApprovalPort()
         val engine = BunkerSigningEngine(
-            account = BunkerSigner(account),
+            account = BunkerSigner(currentAccount),
             permissionStore = permissionStore,
             approvalPort = approvalPort,
             historyLogger = historyLogger,
@@ -156,6 +181,7 @@ fun AppShell(account: KeyPair, scope: CoroutineScope) {
                         connectedAppsCount = connectedApps.size,
                         pendingApprovalCount = pending.size,
                         onCopyPubKey = { copyToClipboard(pubKeyHex) },
+                        onOpenAccountMenu = { showAccountSwitcher = true },
                     )
                     Screen.Connect -> ConnectScreen(
                         bunkerUri = relayConnection?.let { conn -> "bunker://$pubKeyHex?" + conn.relays.joinToString("&") { "relay=${it.url}" } },
@@ -197,6 +223,14 @@ fun AppShell(account: KeyPair, scope: CoroutineScope) {
                                     refreshDetail(screen.appPubKey)
                                 }
                             },
+                            onRemoveApp = {
+                                scope.launch {
+                                    services.permissionStore.revokeAll(screen.appPubKey)
+                                    services.historyLogger.removeApp(screen.appPubKey)
+                                    currentScreen = Screen.ConnectedApps
+                                    refreshConnectedApps()
+                                }
+                            },
                             onCopyUri = { copyToClipboard(it) },
                             onBack = { currentScreen = Screen.ConnectedApps },
                         )
@@ -235,6 +269,40 @@ fun AppShell(account: KeyPair, scope: CoroutineScope) {
                     )
                 }
             }
+        }
+
+        if (showAccountSwitcher) {
+            AccountSwitcherDialog(
+                accounts = accounts,
+                currentPubKeyHex = pubKeyHex,
+                onSelect = { selected ->
+                    showAccountSwitcher = false
+                    onSwitchAccount(selected)
+                },
+                onAddAccount = {
+                    showAccountSwitcher = false
+                    onAddAccount()
+                },
+                onLogout = {
+                    showAccountSwitcher = false
+                    showLogoutConfirm = true
+                },
+                onDismiss = { showAccountSwitcher = false },
+            )
+        }
+
+        if (showLogoutConfirm) {
+            ConfirmDialog(
+                title = "Log out of this account?",
+                message = "This permanently deletes the locally-stored key for ${pubKeyHex.shortenHex()} from this device. " +
+                    "Make sure you have it backed up elsewhere — it cannot be recovered from Amber Bunker afterward.",
+                confirmLabel = "Log out",
+                onConfirm = {
+                    showLogoutConfirm = false
+                    onLogout(pubKeyHex)
+                },
+                onCancel = { showLogoutConfirm = false },
+            )
         }
     }
 }

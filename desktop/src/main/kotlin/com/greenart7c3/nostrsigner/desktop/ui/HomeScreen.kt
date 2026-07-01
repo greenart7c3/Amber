@@ -31,10 +31,11 @@ fun HomeScreen(
     connectedAppsCount: Int,
     pendingApprovalCount: Int,
     onCopyPubKey: () -> Unit,
+    onOpenAccountMenu: () -> Unit,
 ) {
     Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
         Row {
-            LetterAvatar(pubKeyHex, size = 56.dp)
+            LetterAvatar(pubKeyHex, size = 56.dp, modifier = Modifier.clickable(onClick = onOpenAccountMenu))
             Spacer(Modifier.width(16.dp))
             Column {
                 Text("Amber Bunker", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)

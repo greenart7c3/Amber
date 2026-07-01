@@ -13,10 +13,25 @@ object AppDataDir {
         }
     }
 
+    val accountsDir: File by lazy {
+        File(directory, "accounts").apply {
+            mkdirs()
+            restrictToOwnerOnly(this, isDirectory = true)
+        }
+    }
+
+    val activeAccountFile: File get() = file("active_account")
+
     fun file(name: String): File = File(directory, name)
+
+    /** Each account's own directory, holding its `account.key` and `bunker.db`. */
+    fun accountDir(pubKeyHex: String): File = File(accountsDir, pubKeyHex).apply {
+        mkdirs()
+        restrictToOwnerOnly(this, isDirectory = true)
+    }
 }
 
-/** Opens (and, on first run, creates the schema for) the desktop bunker's SQLite database. */
+/** Opens (and, on first run, creates the schema for) one account's SQLite database. */
 object BunkerDatabase {
     private const val NO_KIND = -1
 
@@ -24,8 +39,8 @@ object BunkerDatabase {
 
     fun columnToKind(value: Int): Int? = if (value == NO_KIND) null else value
 
-    fun open(): Connection {
-        val dbFile = AppDataDir.file("bunker.db")
+    fun open(pubKeyHex: String): Connection {
+        val dbFile = File(AppDataDir.accountDir(pubKeyHex), "bunker.db")
         val connection = DriverManager.getConnection("jdbc:sqlite:${dbFile.absolutePath}")
         // Restrict on every open, not just first creation, so upgrading from a version
         // predating this fix also tightens an already-existing database file.

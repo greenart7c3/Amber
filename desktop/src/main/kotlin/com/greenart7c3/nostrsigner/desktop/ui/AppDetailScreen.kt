@@ -19,14 +19,20 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.data.StoredPermission
+import com.greenart7c3.nostrsigner.desktop.ui.components.ConfirmDialog
 import com.greenart7c3.nostrsigner.desktop.ui.components.LetterAvatar
 import com.greenart7c3.nostrsigner.desktop.ui.components.bunkerMethodDescription
 import com.greenart7c3.nostrsigner.desktop.ui.components.relativeTimeFromNow
 import com.greenart7c3.nostrsigner.desktop.ui.components.shortenHex
+import com.greenart7c3.nostrsigner.desktop.ui.theme.negativeColor
 import com.greenart7c3.nostrsigner.desktop.ui.theme.orange
 import com.greenart7c3.nostrsigner.shared.BunkerHistoryEntry
 
@@ -41,10 +47,12 @@ fun AppDetailScreen(
     onDeny: (StoredPermission) -> Unit,
     onAsk: (StoredPermission) -> Unit,
     onRevokeAll: () -> Unit,
+    onRemoveApp: () -> Unit,
     onCopyUri: (String) -> Unit,
     onBack: () -> Unit,
 ) {
     val displayName = appName.ifBlank { appPubKey.shortenHex() }
+    var showRemoveConfirm by remember { mutableStateOf(false) }
 
     Column(modifier = Modifier.padding(24.dp).fillMaxSize()) {
         Row {
@@ -98,6 +106,27 @@ fun AppDetailScreen(
                 Text("Revoke all permissions")
             }
         }
+
+        Button(
+            modifier = Modifier.padding(top = 12.dp),
+            colors = ButtonDefaults.buttonColors(containerColor = negativeColor),
+            onClick = { showRemoveConfirm = true },
+        ) {
+            Text("Remove app")
+        }
+    }
+
+    if (showRemoveConfirm) {
+        ConfirmDialog(
+            title = "Remove $displayName?",
+            message = "This removes the app from your connected apps list and revokes all of its permissions. It can reconnect later if it sends a new request.",
+            confirmLabel = "Remove",
+            onConfirm = {
+                showRemoveConfirm = false
+                onRemoveApp()
+            },
+            onCancel = { showRemoveConfirm = false },
+        )
     }
 }
 

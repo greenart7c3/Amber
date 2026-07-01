@@ -112,7 +112,7 @@ private fun PermissionRow(
         modifier = Modifier
             .fillMaxWidth()
             .padding(vertical = 4.dp)
-            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.primary), RoundedCornerShape(6.dp))
+            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.outline), RoundedCornerShape(6.dp))
             .padding(12.dp),
     ) {
         Text(bunkerMethodDescription(permission.method, permission.kind), style = MaterialTheme.typography.bodyLarge)

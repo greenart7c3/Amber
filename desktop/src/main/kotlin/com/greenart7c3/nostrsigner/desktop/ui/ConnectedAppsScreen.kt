@@ -51,7 +51,7 @@ fun ConnectedAppsScreen(connectedApps: List<ConnectedApp>, onAppClick: (String) 
                         Text("Last used ${relativeTimeFromNow(app.connectedAt)}", style = MaterialTheme.typography.bodySmall)
                     }
                 }
-                HorizontalDivider(color = MaterialTheme.colorScheme.primary)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outline)
             }
         }
     }

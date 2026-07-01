@@ -22,6 +22,8 @@ import com.greenart7c3.nostrsigner.desktop.ui.components.LetterAvatar
 import com.greenart7c3.nostrsigner.desktop.ui.components.bunkerMethodDescription
 import com.greenart7c3.nostrsigner.desktop.ui.components.relativeTimeFromNow
 import com.greenart7c3.nostrsigner.desktop.ui.components.shortenHex
+import com.greenart7c3.nostrsigner.desktop.ui.theme.negativeColor
+import com.greenart7c3.nostrsigner.desktop.ui.theme.positiveColor
 
 @Composable
 fun ActivityScreen(history: List<HistoryRow>) {
@@ -65,7 +67,7 @@ fun ActivityScreen(history: List<HistoryRow>) {
 
 @Composable
 private fun ApprovedBadge(approved: Boolean) {
-    val color = if (approved) Color(0xFF2E7D32) else Color(0xFFC62828)
+    val color = if (approved) positiveColor else negativeColor
     Surface(color = color, shape = RoundedCornerShape(4.dp)) {
         Text(
             if (approved) "Allowed" else "Rejected",

@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.ui.components.LetterAvatar
 import com.greenart7c3.nostrsigner.desktop.ui.components.shortenHex
+import com.greenart7c3.nostrsigner.desktop.ui.theme.negativeColor
+import com.greenart7c3.nostrsigner.desktop.ui.theme.positiveColor
 
 @Composable
 fun HomeScreen(
@@ -52,7 +54,7 @@ fun HomeScreen(
                 "Connected to $connectedRelayCount of $totalRelays relays"
             },
             style = MaterialTheme.typography.bodySmall,
-            color = if (connectedRelayCount > 0) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error,
+            color = if (connectedRelayCount > 0) positiveColor else negativeColor,
         )
 
         Spacer(Modifier.height(24.dp))

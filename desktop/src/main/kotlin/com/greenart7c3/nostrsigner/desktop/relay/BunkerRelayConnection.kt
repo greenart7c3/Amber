@@ -14,6 +14,10 @@ import com.vitorpamplona.quartz.nip01Core.relay.sockets.okhttp.BasicOkHttpWebSoc
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import okhttp3.OkHttpClient
 
@@ -37,6 +41,11 @@ class BunkerRelayConnection(
     private val client = NostrClient(BasicOkHttpWebSocket.Builder { httpClient }, scope)
     private val subId = UUID.randomUUID().toString()
 
+    private val _connectedRelays = MutableStateFlow<Set<NormalizedRelayUrl>>(emptySet())
+
+    /** Relays currently connected, for a "connection status" indicator in the UI. */
+    val connectedRelays: StateFlow<Set<NormalizedRelayUrl>> = _connectedRelays.asStateFlow()
+
     fun start() {
         client.addConnectionListener(this)
         client.subscribe(
@@ -52,6 +61,15 @@ class BunkerRelayConnection(
         client.unsubscribe(subId)
         client.disconnect()
         client.removeConnectionListener(this)
+        _connectedRelays.value = emptySet()
+    }
+
+    override fun onConnected(relay: IRelayClient, pingMillis: Int, compressed: Boolean) {
+        _connectedRelays.update { it + relay.url }
+    }
+
+    override fun onDisconnected(relay: IRelayClient) {
+        _connectedRelays.update { it - relay.url }
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {

@@ -68,7 +68,23 @@ class SignerActivity : AppCompatActivity() {
 
         Amber.instance.setMainActivity(this)
         mainViewModel = MainViewModel(applicationContext)
+
+        // If the request will be served by a bunker proxy account, the proxy
+        // forwards it transparently and finishes the activity itself. Make the
+        // activity completely invisible — no focus, no dim, no animation, no
+        // window content — so the user never sees Amber come up at all.
+        val isProxyHandled = isProxyHandledIntent(intent)
+        if (isProxyHandled) {
+            makeWindowInvisible()
+        }
+
         intent?.let { mainViewModel.onNewIntent(it, callingPackage) }
+
+        if (isProxyHandled) {
+            setContent { }
+            return
+        }
+
         setContent {
             NostrSignerTheme {
                 HttpClientManager.setDefaultUserAgent("Amber/${BuildConfig.VERSION_NAME}")
@@ -221,7 +237,40 @@ class SignerActivity : AppCompatActivity() {
         super.onNewIntent(intent)
         setIntent(intent)
         if (::mainViewModel.isInitialized) {
+            // Mirror the onCreate gate: if a proxy account will silently
+            // forward this intent, we never want to surface the approval UI.
+            if (isProxyHandledIntent(intent)) {
+                makeWindowInvisible()
+            }
             mainViewModel.onNewIntent(intent, callingPackage)
+        }
+    }
+
+    /**
+     * Makes the activity's window completely invisible and non-interactive. Used for
+     * bunker proxy accounts so the source app never loses focus and the user never
+     * sees Amber come to the foreground while the proxy forwards the request to the
+     * remote bunker.
+     */
+    private fun makeWindowInvisible() {
+        overridePendingTransition(0, 0)
+        window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.TRANSPARENT))
+        window.clearFlags(android.view.WindowManager.LayoutParams.FLAG_DIM_BEHIND)
+        window.addFlags(
+            android.view.WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE or
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCHABLE or
+                android.view.WindowManager.LayoutParams.FLAG_NOT_TOUCH_MODAL,
+        )
+        // Shrink the window to a single off-screen pixel so it cannot draw anything
+        // even briefly. The activity is still alive in the background to receive the
+        // proxy's setResult / finishAndRemoveTask call.
+        window.attributes = window.attributes.apply {
+            width = 1
+            height = 1
+            gravity = android.view.Gravity.TOP or android.view.Gravity.START
+            x = 0
+            y = 0
+            dimAmount = 0f
         }
     }
 
@@ -237,6 +286,21 @@ class SignerActivity : AppCompatActivity() {
             IntentUtils.clearInvalidIntents()
         }
         super.onDestroy()
+    }
+
+    /**
+     * Returns true if the current intent will be handled silently by the bunker
+     * proxy. In that case the activity should not render its approval UI — the
+     * proxy forwards the request to the remote bunker and calls
+     * [finishAndRemoveTask] from [IntentUtils.handleProxyIntent].
+     */
+    private fun isProxyHandledIntent(intent: Intent?): Boolean {
+        if (intent == null) return false
+        if (intent.action != Intent.ACTION_VIEW && intent.data == null) return false
+        val userFromIntent = intent.getStringExtra("current_user")
+        val npub = mainViewModel.getAccount(userFromIntent) ?: return false
+        val account = LocalPreferences.loadFromEncryptedStorageSync(applicationContext, npub) ?: return false
+        return account.isProxy
     }
 
     private fun rejectIfRateLimited(intent: Intent?): Boolean {

@@ -521,6 +521,16 @@
     <string name="stop_service">Detener servicio</string>
     <string name="start_service_on_boot">Iniciar servicio al arrancar</string>
     <string name="start_service_on_boot_description">Cuando está activado, Amber iniciará su servicio en segundo plano automáticamente tras el arranque del dispositivo, para que el inicio de sesión remoto y las solicitudes NIP-46 sigan funcionando.</string>
+    <string name="profile_fetch_interval">Intervalo de obtención de perfil</string>
+    <string name="profile_fetch_interval_description">Con qué frecuencia Amber consulta los relés en busca de metadatos de perfil actualizados (nombre e imagen)</string>
+    <string name="profile_fetch_interval_always">Siempre (cada vez)</string>
+    <string name="profile_fetch_interval_15_minutes">Cada 15 minutos</string>
+    <string name="profile_fetch_interval_30_minutes">Cada 30 minutos</string>
+    <string name="profile_fetch_interval_1_hour">Cada hora</string>
+    <string name="profile_fetch_interval_3_hours">Cada 3 horas</string>
+    <string name="profile_fetch_interval_6_hours">Cada 6 horas</string>
+    <string name="profile_fetch_interval_1_day">Cada día</string>
+    <string name="profile_fetch_interval_never">Nunca (deshabilitado)</string>
     <string name="update_check_frequency">Frecuencia de comprobación</string>
     <string name="update_frequency_on_startup">En cada inicio de la aplicación</string>
     <string name="update_frequency_daily">Diariamente</string>

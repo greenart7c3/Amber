@@ -502,6 +502,16 @@
     <string name="stop_service">停止服务</string>
     <string name="start_service_on_boot">开启时启动服务</string>
     <string name="start_service_on_boot_description">启用后，Amber将在设备启动后自动启动后台服务，可以使远程登录和 NIP-46 请求继续保持运行。</string>
+    <string name="profile_fetch_interval">个人资料获取间隔</string>
+    <string name="profile_fetch_interval_description">Amber 检查中继以获取更新的个人资料元数据(名称和图片)的频率</string>
+    <string name="profile_fetch_interval_always">总是(每次)</string>
+    <string name="profile_fetch_interval_15_minutes">每 15 分钟</string>
+    <string name="profile_fetch_interval_30_minutes">每 30 分钟</string>
+    <string name="profile_fetch_interval_1_hour">每小时</string>
+    <string name="profile_fetch_interval_3_hours">每 3 小时</string>
+    <string name="profile_fetch_interval_6_hours">每 6 小时</string>
+    <string name="profile_fetch_interval_1_day">每天</string>
+    <string name="profile_fetch_interval_never">从不(已禁用)</string>
     <string name="update_check_frequency">检查频率</string>
     <string name="update_frequency_on_startup">每次应用启动时</string>
     <string name="update_frequency_daily">每天</string>

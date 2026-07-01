@@ -497,6 +497,16 @@
     <string name="stop_service">サービスを停止</string>
     <string name="start_service_on_boot">起動時にサービスを開始</string>
     <string name="start_service_on_boot_description">有効にすると、デバイス起動後に Amber がバックグラウンドサービスを自動的に開始し、リモートログインと NIP-46 リクエストが継続して機能します。</string>
+    <string name="profile_fetch_interval">プロフィール取得間隔</string>
+    <string name="profile_fetch_interval_description">Amberが更新されたプロフィールメタデータ(名前と画像)をリレーで確認する頻度</string>
+    <string name="profile_fetch_interval_always">常に(毎回)</string>
+    <string name="profile_fetch_interval_15_minutes">15分ごと</string>
+    <string name="profile_fetch_interval_30_minutes">30分ごと</string>
+    <string name="profile_fetch_interval_1_hour">1時間ごと</string>
+    <string name="profile_fetch_interval_3_hours">3時間ごと</string>
+    <string name="profile_fetch_interval_6_hours">6時間ごと</string>
+    <string name="profile_fetch_interval_1_day">1日ごと</string>
+    <string name="profile_fetch_interval_never">しない(無効)</string>
     <string name="update_check_frequency">確認頻度</string>
     <string name="update_frequency_on_startup">アプリ起動のたびに</string>
     <string name="update_frequency_daily">毎日</string>

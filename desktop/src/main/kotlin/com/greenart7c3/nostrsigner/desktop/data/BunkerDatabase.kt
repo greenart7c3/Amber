@@ -7,7 +7,10 @@ import java.sql.DriverManager
 /** The on-disk home for all Amber Bunker desktop state: `~/.amber-bunker/`. */
 object AppDataDir {
     val directory: File by lazy {
-        File(System.getProperty("user.home"), ".amber-bunker").apply { mkdirs() }
+        File(System.getProperty("user.home"), ".amber-bunker").apply {
+            mkdirs()
+            restrictToOwnerOnly(this, isDirectory = true)
+        }
     }
 
     fun file(name: String): File = File(directory, name)
@@ -24,6 +27,9 @@ object BunkerDatabase {
     fun open(): Connection {
         val dbFile = AppDataDir.file("bunker.db")
         val connection = DriverManager.getConnection("jdbc:sqlite:${dbFile.absolutePath}")
+        // Restrict on every open, not just first creation, so upgrading from a version
+        // predating this fix also tightens an already-existing database file.
+        restrictToOwnerOnly(dbFile)
         connection.createStatement().use { statement ->
             statement.executeUpdate(
                 """

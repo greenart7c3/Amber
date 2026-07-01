@@ -30,7 +30,10 @@ object AccountStore {
     private suspend fun save(keyPair: KeyPair): KeyPair {
         val privKeyHex = requireNotNull(keyPair.privKey) { "Generated key pair is missing a private key" }.toHexKey()
         val encrypted = SecureCryptoHelper.encrypt(privKeyHex)
-        withContext(Dispatchers.IO) { keyFile.writeText(encrypted) }
+        withContext(Dispatchers.IO) {
+            keyFile.writeText(encrypted)
+            restrictToOwnerOnly(keyFile)
+        }
         return keyPair
     }
 }

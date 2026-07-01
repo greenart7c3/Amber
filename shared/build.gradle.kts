@@ -7,6 +7,16 @@ plugins {
 }
 
 kotlin {
+    targets.configureEach {
+        compilations.configureEach {
+            compileTaskProvider.configure {
+                compilerOptions {
+                    freeCompilerArgs.add("-Xexpect-actual-classes")
+                }
+            }
+        }
+    }
+
     android {
         namespace = "com.greenart7c3.nostrsigner.shared"
         compileSdk = 37
@@ -32,6 +42,11 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
             implementation(libs.kotlinx.coroutines.test)
+        }
+        val desktopMain by getting {
+            dependencies {
+                implementation(libs.java.keyring)
+            }
         }
     }
 }

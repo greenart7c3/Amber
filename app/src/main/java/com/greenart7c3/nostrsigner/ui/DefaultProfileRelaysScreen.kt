@@ -2,8 +2,10 @@ package com.greenart7c3.nostrsigner.ui
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.text.KeyboardActions
@@ -20,11 +22,13 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalContext
@@ -38,8 +42,11 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.greenart7c3.nostrsigner.service.TrustScoreService
 import com.greenart7c3.nostrsigner.ui.actions.onAddRelay
+import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
+import kotlinx.collections.immutable.toImmutableList
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -63,6 +70,7 @@ fun DefaultProfileRelaysScreen(
         }
     val trustScores = remember { mutableStateMapOf<String, Int?>() }
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
+    var fetchInterval by remember { mutableStateOf(Amber.instance.settings.profileFetchInterval) }
 
     // Fetch trust scores for all relays
     LaunchedEffect(relays2.toList()) {
@@ -101,6 +109,26 @@ fun DefaultProfileRelaysScreen(
                     text = stringResource(R.string.manage_the_relays_used_to_fetch_your_profile_data),
                     modifier = Modifier.padding(bottom = 8.dp),
                 )
+
+                val fetchIntervalOptions = ProfileFetchInterval.entries.map {
+                    TitleExplainer(stringResource(it.resourceId))
+                }.toImmutableList()
+
+                SettingsRow(
+                    name = R.string.profile_fetch_interval,
+                    description = R.string.profile_fetch_interval_description,
+                    selectedItems = fetchIntervalOptions,
+                    selectedIndex = ProfileFetchInterval.entries.indexOf(fetchInterval),
+                    onSelect = { index ->
+                        val selected = ProfileFetchInterval.entries[index]
+                        fetchInterval = selected
+                        scope.launch(Dispatchers.IO) {
+                            LocalPreferences.updateProfileFetchInterval(context, selected)
+                        }
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
                     modifier = Modifier

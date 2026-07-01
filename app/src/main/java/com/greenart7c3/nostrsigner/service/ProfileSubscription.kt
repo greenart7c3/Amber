@@ -136,8 +136,8 @@ class ProfileSubscription(
         val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, account.npub)
         val lastCheck = LocalPreferences.getLastCheck(appContext, account.npub)
         val oneDayAgo = TimeUtils.oneDayAgo()
-        val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
-        if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
+        val fetchIntervalAgo = TimeUtils.now() - (Amber.instance.settings.profileFetchInterval.minutes * 60)
+        if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fetchIntervalAgo > lastCheck)) {
             val subId = subIds[account.hexKey]!!
             val profileFilter = createProfileFilter(account)
             relaysPerSubId[subId] = profileFilter.keys.toMutableSet()

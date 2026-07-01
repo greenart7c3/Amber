@@ -214,7 +214,6 @@ private fun PasteBunkerUriTab(
                     )
                     Amber.instance.applicationIOScope.launch {
                         Amber.instance.notificationSubscription.updateFilter()
-                        Amber.instance.profileSubscription.updateFilter()
                         Amber.instance.proxyResponseSubscription.updateFilter()
                     }
                     Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
@@ -314,7 +313,6 @@ private fun GenerateNostrConnectUriTab(
                     )
                     Amber.instance.applicationIOScope.launch {
                         Amber.instance.notificationSubscription.updateFilter()
-                        Amber.instance.profileSubscription.updateFilter()
                         Amber.instance.proxyResponseSubscription.updateFilter()
                     }
                     Amber.instance.applicationIOScope.launch(Dispatchers.Main) {

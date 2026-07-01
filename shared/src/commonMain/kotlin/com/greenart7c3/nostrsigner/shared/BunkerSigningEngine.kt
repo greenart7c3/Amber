@@ -8,8 +8,8 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 
-/** A decrypted, parsed NIP-46 request together with the encoding it arrived in. */
-private data class DecodedRequest(val bunkerRequest: BunkerRequest, val nip04: Boolean)
+/** A decrypted, parsed NIP-46 request together with the encoding it arrived in and its raw plaintext. */
+private data class DecodedRequest(val bunkerRequest: BunkerRequest, val nip04: Boolean, val rawJson: String)
 
 /**
  * Handles the NIP-46 "bunker" request/response cycle for a single account: decrypt an
@@ -20,12 +20,17 @@ private data class DecodedRequest(val bunkerRequest: BunkerRequest, val nip04: B
  * [com.greenart7c3.nostrsigner] Android's `BunkerRequestUtils`/`EventNotificationConsumer`
  * pipeline but does not attempt to replicate its Android-specific bookkeeping
  * (notifications, WorkManager, per-app relay/history persistence details).
+ *
+ * @param appNameLookup optional fallback used to resolve a display name for requests other
+ * than `connect` (whose own optional client metadata, when present, always takes priority).
+ * Lets a platform back this with its own connected-apps storage without :shared depending on it.
  */
 class BunkerSigningEngine(
     private val account: BunkerSigner,
     private val permissionStore: BunkerPermissionStore,
     private val approvalPort: BunkerApprovalPort,
     private val historyLogger: BunkerHistoryLogger? = null,
+    private val appNameLookup: (suspend (String) -> String?)? = null,
 ) {
     /** Decrypts, handles, and produces a signed response event for an incoming kind-24133 event; null if it should be ignored. */
     suspend fun handleIncomingEvent(senderPubKey: String, encryptedContent: String, appName: String? = null): Event? {
@@ -35,9 +40,10 @@ class BunkerSigningEngine(
         val request = decoded.bunkerRequest
         val method = bunkerMethodOf(request.method)
         val kind = if (method == BunkerMethod.SIGN_EVENT) signEventKind(request) else null
+        val resolvedAppName = resolveAppName(senderPubKey, method, decoded.rawJson, appName)
 
-        val approved = resolveApproval(senderPubKey, appName, method, kind, request)
-        historyLogger?.log(BunkerHistoryEntry(senderPubKey, method, kind, approved, TimeUtils.now()))
+        val approved = resolveApproval(senderPubKey, resolvedAppName, method, kind, request)
+        historyLogger?.log(BunkerHistoryEntry(senderPubKey, method, kind, approved, TimeUtils.now(), resolvedAppName))
 
         val response = if (!approved) {
             BunkerResponse(request.id, "", "user rejected")
@@ -58,7 +64,13 @@ class BunkerSigningEngine(
         val bunkerRequest = runCatching {
             JacksonMapper.mapper.readValue(plainText, BunkerRequest::class.java)
         }.getOrNull() ?: return null
-        return DecodedRequest(bunkerRequest, nip04)
+        return DecodedRequest(bunkerRequest, nip04, plainText)
+    }
+
+    private suspend fun resolveAppName(senderPubKey: String, method: BunkerMethod, rawJson: String, explicitAppName: String?): String? = if (method == BunkerMethod.CONNECT) {
+        BunkerClientMetadata.fromConnectRequest(rawJson)?.name?.takeIf { it.isNotBlank() } ?: explicitAppName
+    } else {
+        explicitAppName ?: appNameLookup?.invoke(senderPubKey)
     }
 
     private suspend fun resolveApproval(

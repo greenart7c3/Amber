@@ -32,6 +32,7 @@ data class BunkerHistoryEntry(
     val kind: Int?,
     val approved: Boolean,
     val time: Long,
+    val appName: String? = null,
 )
 
 /** Records handled requests for the connected-apps/history UI. Implemented per-platform. */

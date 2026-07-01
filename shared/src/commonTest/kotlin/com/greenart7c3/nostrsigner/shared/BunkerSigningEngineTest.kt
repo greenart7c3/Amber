@@ -18,6 +18,14 @@ private class FakePermissionStore(private val decisions: MutableMap<String, Bool
     }
 }
 
+private class FakeHistoryLogger : BunkerHistoryLogger {
+    val entries = mutableListOf<BunkerHistoryEntry>()
+
+    override suspend fun log(entry: BunkerHistoryEntry) {
+        entries.add(entry)
+    }
+}
+
 class BunkerSigningEngineTest {
     private suspend fun sendRequest(client: BunkerSigner, account: BunkerSigner, request: BunkerRequest): String {
         val plainText = JacksonMapper.mapper.writeValueAsString(request)
@@ -95,5 +103,51 @@ class BunkerSigningEngineTest {
         assertEquals("hello from bunker desktop", signedEvent.content)
         assertTrue(signedEvent.sig.isNotEmpty())
         assertTrue(signedEvent.id.isNotEmpty())
+    }
+
+    @Test
+    fun connectRequestMetadataNameFlowsIntoHistoryAndApprovalPrompt() = runTest {
+        val account = BunkerSigner(KeyPair())
+        val client = BunkerSigner(KeyPair())
+        val historyLogger = FakeHistoryLogger()
+        var promptedAppName: String? = "not called"
+        val engine = BunkerSigningEngine(
+            account = account,
+            permissionStore = FakePermissionStore(),
+            approvalPort = BunkerApprovalPort {
+                promptedAppName = it.appName
+                BunkerApprovalDecision(approved = true, remember = false)
+            },
+            historyLogger = historyLogger,
+        )
+
+        val request = BunkerRequest("req-4", "connect", arrayOf(account.pubKey, "", "", """{"name":"My App"}"""))
+        val encrypted = sendRequest(client, account, request)
+
+        engine.handleIncomingEvent(client.pubKey, encrypted)
+
+        assertEquals("My App", promptedAppName)
+        assertEquals("My App", historyLogger.entries.single().appName)
+    }
+
+    @Test
+    fun appNameLookupIsUsedAsFallbackForNonConnectRequests() = runTest {
+        val account = BunkerSigner(KeyPair())
+        val client = BunkerSigner(KeyPair())
+        val historyLogger = FakeHistoryLogger()
+        val engine = BunkerSigningEngine(
+            account = account,
+            permissionStore = FakePermissionStore(mutableMapOf("${client.pubKey}:PING:null" to true)),
+            approvalPort = BunkerApprovalPort { error("should not prompt when a rule already exists") },
+            historyLogger = historyLogger,
+            appNameLookup = { pubKey -> if (pubKey == client.pubKey) "Known App" else null },
+        )
+
+        val request = BunkerRequest("req-5", "ping", arrayOf())
+        val encrypted = sendRequest(client, account, request)
+
+        engine.handleIncomingEvent(client.pubKey, encrypted)
+
+        assertEquals("Known App", historyLogger.entries.single().appName)
     }
 }

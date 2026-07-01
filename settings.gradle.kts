@@ -17,3 +17,5 @@ dependencyResolutionManagement {
 }
 rootProject.name = "Nostr Signer"
 include(":app")
+include(":shared")
+include(":desktop")

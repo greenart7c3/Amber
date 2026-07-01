@@ -34,8 +34,8 @@ kmpTor = "2.6.0"
 kmpTorResource = "409.5.0"
 secp256k1Jni = "0.23.0"
 composeMultiplatform = "1.11.1"
-androidxSqliteBundled = "2.6.2"
 javaKeyring = "1.0.4"
+xerialSqliteJdbc = "3.53.2.0"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -88,8 +88,8 @@ kotlinx-coroutines-test = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-t
 kmptor-runtime = { module = "io.matthewnelson.kmp-tor:runtime", version.ref = "kmpTor" }
 kmptor-resource-exec = { module = "io.matthewnelson.kmp-tor:resource-exec-tor", version.ref = "kmpTorResource" }
 secp256k1-jni-jvm = { module = "fr.acinq.secp256k1:secp256k1-kmp-jni-jvm", version.ref = "secp256k1Jni" }
-androidx-sqlite-bundled = { module = "androidx.sqlite:sqlite-bundled", version.ref = "androidxSqliteBundled" }
 java-keyring = { module = "com.github.javakeyring:java-keyring", version.ref = "javaKeyring" }
+xerial-sqlite-jdbc = { module = "org.xerial:sqlite-jdbc", version.ref = "xerialSqliteJdbc" }
 
 [plugins]
 androidLibrary = { id = "com.android.library", version.ref = "agp" }

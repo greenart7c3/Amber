@@ -20,9 +20,9 @@ dependencies {
 
     implementation(libs.quartz.multiplatform)
     implementation(libs.kotlinx.coroutines.core)
+    implementation(libs.okhttp)
     implementation(libs.core) // zxing core, for bunker connection QR codes
-    implementation(libs.java.keyring)
-    implementation(libs.androidx.sqlite.bundled)
+    implementation(libs.xerial.sqlite.jdbc)
 
     testImplementation(kotlin("test"))
 }

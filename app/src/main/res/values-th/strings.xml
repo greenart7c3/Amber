@@ -497,6 +497,16 @@
     <string name="stop_service">หยุดบริการ</string>
     <string name="start_service_on_boot">เริ่มบริการเมื่อเปิดเครื่อง</string>
     <string name="start_service_on_boot_description">เมื่อเปิดใช้งาน Amber จะเริ่มบริการพื้นหลังโดยอัตโนมัติหลังจากอุปกรณ์เปิดเครื่อง เพื่อให้การล็อกอินระยะไกลและคำขอ NIP-46 ยังคงทำงานได้</string>
+    <string name="profile_fetch_interval">ช่วงเวลาดึงข้อมูลโปรไฟล์</string>
+    <string name="profile_fetch_interval_description">ความถี่ที่ Amber ตรวจสอบรีเลย์เพื่อหาข้อมูลเมตาโปรไฟล์ที่อัปเดต (ชื่อและรูปภาพ)</string>
+    <string name="profile_fetch_interval_always">เสมอ (ทุกครั้ง)</string>
+    <string name="profile_fetch_interval_15_minutes">ทุก 15 นาที</string>
+    <string name="profile_fetch_interval_30_minutes">ทุก 30 นาที</string>
+    <string name="profile_fetch_interval_1_hour">ทุกชั่วโมง</string>
+    <string name="profile_fetch_interval_3_hours">ทุก 3 ชั่วโมง</string>
+    <string name="profile_fetch_interval_6_hours">ทุก 6 ชั่วโมง</string>
+    <string name="profile_fetch_interval_1_day">ทุกวัน</string>
+    <string name="profile_fetch_interval_never">ไม่ทำ (ปิดใช้งาน)</string>
     <string name="update_check_frequency">ความถี่การตรวจสอบ</string>
     <string name="update_frequency_on_startup">ทุกครั้งที่เปิดแอป</string>
     <string name="update_frequency_daily">ทุกวัน</string>

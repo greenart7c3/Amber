@@ -521,6 +521,16 @@
     <string name="stop_service">Остановить службу</string>
     <string name="start_service_on_boot">Запускать службу при загрузке</string>
     <string name="start_service_on_boot_description">При включении Amber будет автоматически запускать фоновую службу после загрузки устройства, чтобы удалённый вход и запросы NIP-46 продолжали работать.</string>
+    <string name="profile_fetch_interval">Интервал получения профиля</string>
+    <string name="profile_fetch_interval_description">Как часто Amber проверяет реле на наличие обновлённых метаданных профиля (имя и изображение)</string>
+    <string name="profile_fetch_interval_always">Всегда (каждый раз)</string>
+    <string name="profile_fetch_interval_15_minutes">Каждые 15 минут</string>
+    <string name="profile_fetch_interval_30_minutes">Каждые 30 минут</string>
+    <string name="profile_fetch_interval_1_hour">Каждый час</string>
+    <string name="profile_fetch_interval_3_hours">Каждые 3 часа</string>
+    <string name="profile_fetch_interval_6_hours">Каждые 6 часов</string>
+    <string name="profile_fetch_interval_1_day">Каждый день</string>
+    <string name="profile_fetch_interval_never">Никогда (отключено)</string>
     <string name="update_check_frequency">Частота проверки</string>
     <string name="update_frequency_on_startup">При каждом запуске</string>
     <string name="update_frequency_daily">Ежедневно</string>

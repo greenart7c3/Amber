@@ -9,6 +9,7 @@ import androidx.core.content.edit
 import androidx.core.os.LocaleListCompat
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberSettings
+import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.models.UpdateCheckFrequency
@@ -71,6 +72,7 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_ENABLED("rate_limit_enabled"),
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
+    PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
 }
 
 @Immutable
@@ -289,6 +291,13 @@ object LocalPreferences {
                 rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
                 rateLimitMaxPerWindow = getInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, 5),
                 rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
+                profileFetchInterval = try {
+                    ProfileFetchInterval.valueOf(
+                        getString(SettingsKeys.PROFILE_FETCH_INTERVAL.key, ProfileFetchInterval.FIFTEEN_MINUTES.name)!!,
+                    )
+                } catch (_: IllegalArgumentException) {
+                    ProfileFetchInterval.FIFTEEN_MINUTES
+                },
             )
         }
     }
@@ -561,6 +570,15 @@ object LocalPreferences {
         sharedPrefs(context).edit {
             apply {
                 putString(SettingsKeys.UPDATE_CHECK_FREQUENCY.key, frequency.name)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    fun updateProfileFetchInterval(context: Context, interval: ProfileFetchInterval) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.PROFILE_FETCH_INTERVAL.key, interval.name)
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()

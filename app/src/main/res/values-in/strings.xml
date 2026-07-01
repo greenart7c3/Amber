@@ -521,6 +521,16 @@
     <string name="stop_service">Hentikan layanan</string>
     <string name="start_service_on_boot">Mulai layanan saat boot</string>
     <string name="start_service_on_boot_description">Jika diaktifkan, Amber akan memulai layanan latar belakangnya secara otomatis setelah perangkat boot sehingga login jarak jauh dan permintaan NIP-46 tetap berfungsi.</string>
+    <string name="profile_fetch_interval">Interval pengambilan profil</string>
+    <string name="profile_fetch_interval_description">Seberapa sering Amber memeriksa relay untuk metadata profil yang diperbarui (nama dan gambar)</string>
+    <string name="profile_fetch_interval_always">Selalu (setiap saat)</string>
+    <string name="profile_fetch_interval_15_minutes">Setiap 15 menit</string>
+    <string name="profile_fetch_interval_30_minutes">Setiap 30 menit</string>
+    <string name="profile_fetch_interval_1_hour">Setiap jam</string>
+    <string name="profile_fetch_interval_3_hours">Setiap 3 jam</string>
+    <string name="profile_fetch_interval_6_hours">Setiap 6 jam</string>
+    <string name="profile_fetch_interval_1_day">Setiap hari</string>
+    <string name="profile_fetch_interval_never">Tidak pernah (dinonaktifkan)</string>
     <string name="update_check_frequency">Frekuensi pemeriksaan</string>
     <string name="update_frequency_on_startup">Setiap kali aplikasi dibuka</string>
     <string name="update_frequency_daily">Harian</string>

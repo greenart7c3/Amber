@@ -497,6 +497,16 @@
     <string name="stop_service">Dừng dịch vụ</string>
     <string name="start_service_on_boot">Khởi động dịch vụ khi bật máy</string>
     <string name="start_service_on_boot_description">Khi được bật, Amber sẽ tự động khởi động dịch vụ nền sau khi thiết bị khởi động để đăng nhập từ xa và các yêu cầu NIP-46 tiếp tục hoạt động.</string>
+    <string name="profile_fetch_interval">Khoảng thời gian lấy hồ sơ</string>
+    <string name="profile_fetch_interval_description">Tần suất Amber kiểm tra relay để tìm siêu dữ liệu hồ sơ đã cập nhật (tên và ảnh)</string>
+    <string name="profile_fetch_interval_always">Luôn luôn (mỗi lần)</string>
+    <string name="profile_fetch_interval_15_minutes">Mỗi 15 phút</string>
+    <string name="profile_fetch_interval_30_minutes">Mỗi 30 phút</string>
+    <string name="profile_fetch_interval_1_hour">Mỗi giờ</string>
+    <string name="profile_fetch_interval_3_hours">Mỗi 3 giờ</string>
+    <string name="profile_fetch_interval_6_hours">Mỗi 6 giờ</string>
+    <string name="profile_fetch_interval_1_day">Mỗi ngày</string>
+    <string name="profile_fetch_interval_never">Không bao giờ (đã tắt)</string>
     <string name="update_check_frequency">Tần suất kiểm tra</string>
     <string name="update_frequency_on_startup">Mỗi lần khởi động ứng dụng</string>
     <string name="update_frequency_daily">Hàng ngày</string>

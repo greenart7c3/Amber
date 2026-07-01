@@ -25,6 +25,7 @@ import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.ProfileFetchInterval
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.metadata.MetadataEvent
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
@@ -128,16 +129,24 @@ class ProfileSubscription(
     suspend fun updateFilter(account: Account) {
         if (BuildFlavorChecker.isOfflineFlavor()) return
 
+        val interval = Amber.instance.settings.profileFetchInterval
+        if (interval == ProfileFetchInterval.NEVER) return
+
         accounts[account.hexKey] = account
 
         if (!subIds.containsKey(account.hexKey)) {
             subIds[account.hexKey] = UUID.randomUUID().toString()
         }
-        val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, account.npub)
-        val lastCheck = LocalPreferences.getLastCheck(appContext, account.npub)
-        val oneDayAgo = TimeUtils.oneDayAgo()
-        val fifteenMinutesAgo = TimeUtils.fifteenMinutesAgo()
-        if ((lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fifteenMinutesAgo > lastCheck)) {
+        val shouldFetch = if (interval == ProfileFetchInterval.ALWAYS) {
+            true
+        } else {
+            val lastMetaData = LocalPreferences.getLastMetadataUpdate(appContext, account.npub)
+            val lastCheck = LocalPreferences.getLastCheck(appContext, account.npub)
+            val oneDayAgo = TimeUtils.oneDayAgo()
+            val fetchIntervalAgo = TimeUtils.now() - (interval.minutes * 60)
+            (lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fetchIntervalAgo > lastCheck)
+        }
+        if (shouldFetch) {
             val subId = subIds[account.hexKey]!!
             val profileFilter = createProfileFilter(account)
             relaysPerSubId[subId] = profileFilter.keys.toMutableSet()

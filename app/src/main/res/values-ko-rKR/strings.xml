@@ -521,6 +521,16 @@
     <string name="stop_service">서비스 중지</string>
     <string name="start_service_on_boot">부팅 시 서비스 시작</string>
     <string name="start_service_on_boot_description">활성화하면 기기 부팅 후 Amber가 백그라운드 서비스를 자동으로 시작하여 원격 로그인 및 NIP-46 요청이 계속 작동합니다.</string>
+    <string name="profile_fetch_interval">프로필 가져오기 간격</string>
+    <string name="profile_fetch_interval_description">Amber가 업데이트된 프로필 메타데이터(이름 및 사진)를 릴레이에서 확인하는 빈도</string>
+    <string name="profile_fetch_interval_always">항상(매번)</string>
+    <string name="profile_fetch_interval_15_minutes">15분마다</string>
+    <string name="profile_fetch_interval_30_minutes">30분마다</string>
+    <string name="profile_fetch_interval_1_hour">1시간마다</string>
+    <string name="profile_fetch_interval_3_hours">3시간마다</string>
+    <string name="profile_fetch_interval_6_hours">6시간마다</string>
+    <string name="profile_fetch_interval_1_day">매일</string>
+    <string name="profile_fetch_interval_never">안 함(비활성화)</string>
     <string name="update_check_frequency">확인 빈도</string>
     <string name="update_frequency_on_startup">앱 시작 시마다</string>
     <string name="update_frequency_daily">매일</string>

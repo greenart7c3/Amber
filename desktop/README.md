@@ -20,6 +20,11 @@ for the JVM) and mirrors the mobile UI and permission model.
   per-application sign policies (basic / manual / sign everything)
 - Per-application activity history and relay logs
 - Default bunker relays management
+- System tray: closing the window minimizes Amber to the tray so it keeps
+  answering requests (with Open / Lock now / Quit menu), and new approval
+  requests raise a system notification and bring the window back — both
+  configurable under Settings → Desktop
+- Optional passphrase lock (see Key storage below)
 - Light/dark theme following the mobile look
 
 Not included: NIP-55 (`nostrsigner:` intents and the content provider) —

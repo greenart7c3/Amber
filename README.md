@@ -11,6 +11,10 @@ Amber is a nostr event signer for Android. It allows users to keep their nsec se
 
 </div>
 
+# Desktop
+
+Amber also runs on Windows, macOS and Linux as a NIP-46 signer built with Compose for Desktop. It supports the same accounts, permissions and bunker connections as the Android app (minus NIP-55, which is Android-only IPC). See [desktop/README.md](desktop/README.md) for build and usage instructions.
+
 # Current Features
 
 - [x] Offline

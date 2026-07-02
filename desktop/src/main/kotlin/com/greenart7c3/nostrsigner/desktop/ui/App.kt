@@ -36,6 +36,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 
 sealed class Route(val title: String, val icon: ImageVector) {
@@ -76,6 +77,12 @@ fun App() {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             CircularProgressIndicator()
         }
+        return
+    }
+
+    val lockStatus by PassphraseLock.state.collectAsState()
+    if (lockStatus == PassphraseLock.Status.LOCKED) {
+        UnlockScreen()
         return
     }
 

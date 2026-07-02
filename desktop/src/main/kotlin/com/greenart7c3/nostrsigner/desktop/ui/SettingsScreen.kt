@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
+import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.text.DateFormat
@@ -149,10 +150,12 @@ fun SettingsScreen(account: DesktopAccount) {
         Spacer(Modifier.height(16.dp))
         SectionTitle("Security")
         Text(
-            "Keys are encrypted with AES-256; the keystore password is kept in: " +
+            "Keys are encrypted with AES-256; the encryption key is protected by: " +
                 (DesktopKeyStore.passwordSourceDescription ?: "…"),
             style = MaterialTheme.typography.bodySmall,
         )
+        Spacer(Modifier.height(8.dp))
+        SecuritySection()
 
         Spacer(Modifier.height(16.dp))
         SectionTitle("Diagnostics")
@@ -190,6 +193,183 @@ fun SettingsScreen(account: DesktopAccount) {
 private fun SectionTitle(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium)
     HorizontalDivider(Modifier.padding(vertical = 4.dp))
+}
+
+@Composable
+private fun SecuritySection() {
+    val scope = rememberCoroutineScope()
+    val lockStatus by PassphraseLock.state.collectAsState()
+    val settings by SettingsStore.settings.collectAsState()
+    var dialog by remember { mutableStateOf<PassphraseDialogMode?>(null) }
+    var showRemoveConfirm by remember { mutableStateOf(false) }
+
+    if (lockStatus == PassphraseLock.Status.DISABLED) {
+        Text(
+            "Set a passphrase to keep your keys encrypted even against software " +
+                "that can read your files. You will be asked for it when Amber starts.",
+            style = MaterialTheme.typography.bodySmall,
+        )
+        AmberButton(text = "Set a passphrase", onClick = { dialog = PassphraseDialogMode.SET })
+    } else {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            AmberOutlinedButton(
+                modifier = Modifier.weight(1f),
+                text = "Lock now",
+                onClick = { PassphraseLock.lock() },
+            )
+            AmberOutlinedButton(
+                modifier = Modifier.weight(1f),
+                text = "Change passphrase",
+                onClick = { dialog = PassphraseDialogMode.CHANGE },
+            )
+            AmberOutlinedButton(
+                modifier = Modifier.weight(1f),
+                text = "Remove passphrase",
+                onClick = { showRemoveConfirm = true },
+            )
+        }
+        Spacer(Modifier.height(8.dp))
+        Text("Lock automatically after", style = MaterialTheme.typography.bodySmall)
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(0 to "Never", 5 to "5 min", 15 to "15 min", 60 to "1 hour").forEach { (minutes, label) ->
+                FilterChip(
+                    selected = settings.autoLockMinutes == minutes,
+                    onClick = {
+                        SettingsStore.update { it.copy(autoLockMinutes = minutes) }
+                        PassphraseLock.touch()
+                    },
+                    label = { Text(label) },
+                )
+            }
+        }
+    }
+
+    dialog?.let { mode ->
+        PassphraseDialog(mode) { dialog = null }
+    }
+    if (showRemoveConfirm) {
+        AlertDialog(
+            onDismissRequest = { showRemoveConfirm = false },
+            title = { Text("Remove the passphrase?") },
+            text = {
+                Text(
+                    "The encryption key will go back to the OS credential store " +
+                        "(or a local file), and Amber will no longer ask for a " +
+                        "passphrase at startup.",
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        showRemoveConfirm = false
+                        scope.launch {
+                            PassphraseLock.disable()
+                            Toaster.toast("Passphrase removed")
+                        }
+                    },
+                ) { Text("Remove") }
+            },
+            dismissButton = {
+                TextButton(onClick = { showRemoveConfirm = false }) { Text("Cancel") }
+            },
+        )
+    }
+}
+
+private enum class PassphraseDialogMode { SET, CHANGE }
+
+@Composable
+private fun PassphraseDialog(
+    mode: PassphraseDialogMode,
+    onDismiss: () -> Unit,
+) {
+    val scope = rememberCoroutineScope()
+    var current by remember { mutableStateOf("") }
+    var new by remember { mutableStateOf("") }
+    var confirm by remember { mutableStateOf("") }
+    var working by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = { if (!working) onDismiss() },
+        title = { Text(if (mode == PassphraseDialogMode.SET) "Set a passphrase" else "Change the passphrase") },
+        text = {
+            Column {
+                Text(
+                    "The passphrase is never stored anywhere. If you forget it, the " +
+                        "only way back in is restoring your keys from a backup (nsec " +
+                        "or seed words).",
+                    style = MaterialTheme.typography.bodySmall,
+                )
+                Spacer(Modifier.height(8.dp))
+                if (mode == PassphraseDialogMode.CHANGE) {
+                    OutlinedTextField(
+                        value = current,
+                        onValueChange = { current = it },
+                        label = { Text("Current passphrase") },
+                        singleLine = true,
+                        visualTransformation = PasswordVisualTransformation(),
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    Spacer(Modifier.height(8.dp))
+                }
+                OutlinedTextField(
+                    value = new,
+                    onValueChange = { new = it },
+                    label = { Text("New passphrase (min. 8 characters)") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                OutlinedTextField(
+                    value = confirm,
+                    onValueChange = { confirm = it },
+                    label = { Text("Repeat the new passphrase") },
+                    singleLine = true,
+                    visualTransformation = PasswordVisualTransformation(),
+                    modifier = Modifier.fillMaxWidth(),
+                )
+            }
+        },
+        confirmButton = {
+            TextButton(
+                enabled = !working,
+                onClick = {
+                    if (new.length < 8) {
+                        Toaster.toast("Use at least 8 characters")
+                        return@TextButton
+                    }
+                    if (new != confirm) {
+                        Toaster.toast("The passphrases do not match")
+                        return@TextButton
+                    }
+                    working = true
+                    scope.launch {
+                        try {
+                            if (mode == PassphraseDialogMode.SET) {
+                                PassphraseLock.enable(new.toCharArray())
+                                Toaster.toast("Passphrase set")
+                                onDismiss()
+                            } else {
+                                if (PassphraseLock.changePassphrase(current.toCharArray(), new.toCharArray())) {
+                                    Toaster.toast("Passphrase changed")
+                                    onDismiss()
+                                } else {
+                                    Toaster.toast("Wrong current passphrase")
+                                }
+                            }
+                        } catch (e: Exception) {
+                            Toaster.toast(e.message ?: "Failed to update the passphrase")
+                        }
+                        working = false
+                    }
+                },
+            ) { Text(if (working) "Working…" else "Save") }
+        },
+        dismissButton = {
+            TextButton(enabled = !working, onClick = onDismiss) { Text("Cancel") }
+        },
+    )
 }
 
 @Composable

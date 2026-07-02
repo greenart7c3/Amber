@@ -158,6 +158,8 @@ data class DesktopSettings(
     ),
     val currentAccount: String = "",
     val darkTheme: Boolean? = null,
+    /** Auto-lock delay for the passphrase lock, in minutes; 0 = never. */
+    val autoLockMinutes: Int = 0,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 }

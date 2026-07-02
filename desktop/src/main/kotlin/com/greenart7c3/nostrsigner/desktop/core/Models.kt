@@ -160,6 +160,10 @@ data class DesktopSettings(
     val darkTheme: Boolean? = null,
     /** Auto-lock delay for the passphrase lock, in minutes; 0 = never. */
     val autoLockMinutes: Int = 0,
+    /** Keep running in the system tray when the window is closed. */
+    val closeToTray: Boolean = true,
+    /** Show a system notification when a request needs approval. */
+    val showNotifications: Boolean = true,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 }

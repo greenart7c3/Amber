@@ -24,6 +24,9 @@ dependencies {
     // freedesktop Secret Service) for the keystore password.
     implementation(libs.java.keyring)
     runtimeOnly(libs.slf4j.nop)
+
+    // Argon2id for the optional passphrase lock.
+    implementation(libs.bouncycastle)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.collections.immutable)
 

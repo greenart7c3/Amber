@@ -33,6 +33,7 @@ coroutinesTest = "1.11.0"
 kmpTor = "2.6.0"
 kmpTorResource = "409.5.0"
 secp256k1Jni = "0.23.0"
+composeMultiplatform = "1.11.1"
 
 [libraries]
 datastore-preferences = { module = "androidx.datastore:datastore-preferences", version.ref = "datastorePreferences" }
@@ -53,6 +54,7 @@ material-icons-extended = { module = "androidx.compose.material:material-icons-e
 material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
 navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "nav_version" }
 quartz = { module = "com.vitorpamplona.quartz:quartz-android", version.ref = "quartz" }
+quartz-jvm = { module = "com.vitorpamplona.quartz:quartz-jvm", version.ref = "quartz" }
 kotlinx-collections-immutable = { module = "org.jetbrains.kotlinx:kotlinx-collections-immutable", version.ref = "collections" }
 room-compiler = { module = "androidx.room:room-compiler", version.ref = "roomKtx" }
 room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
@@ -91,3 +93,5 @@ gradle_ktlint = { id = "org.jlleitschuh.gradle.ktlint", version = "ktlint" }
 serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
 kotlin_ksp = { id = "com.google.devtools.ksp", version = "ksp" }
 jetbrainsComposeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlinJvm = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
+jetbrainsCompose = { id = "org.jetbrains.compose", version.ref = "composeMultiplatform" }

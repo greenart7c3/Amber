@@ -22,6 +22,11 @@ Git hooks are auto-installed via the root `build.gradle.kts` preBuild task — n
 | `free` (default) | Online variant with full networking (OkHttp, Coil, relay connectivity) |
 | `offline` | No network stack; use `BuildFlavorChecker.isOfflineFlavor()` to guard network code |
 
+## Modules
+
+- `:app` — the Android app (everything below in Architecture refers to it)
+- `:desktop` — Compose for Desktop (JVM) NIP-46 signer for Windows/macOS/Linux; standalone port that mirrors the Android permission model against `quartz-jvm` (no NIP-55). `./gradlew :desktop:run` to launch, `:desktop:packageDistributionForCurrentOs` to package. Its core mirrors `NotificationSubscription`/`EventNotificationConsumer`/`BunkerRequestUtils` in `desktop/.../core/BunkerEngine.kt` — behavior changes to the Android bunker flow should be ported there too. Keys are AES-encrypted via a PKCS12 Java KeyStore (`DesktopKeyStore`); state is JSON files per account (no Room). See `desktop/README.md`.
+
 ## Architecture
 
 ### Request ingestion — three paths

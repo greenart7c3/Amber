@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.serialization) apply false
     alias(libs.plugins.kotlin.ksp) version libs.versions.ksp.get() apply false
     alias(libs.plugins.gradle.ktlint) version libs.versions.ktlint.get() apply false
+    alias(libs.plugins.kotlinJvm) apply false
+    alias(libs.plugins.jetbrainsCompose) apply false
 }
 
 tasks.register<Copy>("installGitHook") {

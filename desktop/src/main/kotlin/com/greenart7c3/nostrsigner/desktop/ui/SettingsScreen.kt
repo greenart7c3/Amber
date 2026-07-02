@@ -37,6 +37,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.text.DateFormat
@@ -144,6 +145,14 @@ fun SettingsScreen(account: DesktopAccount) {
             }
         }
         AmberOutlinedButton(text = "Add an account", onClick = { Session.addingAccount.value = true })
+
+        Spacer(Modifier.height(16.dp))
+        SectionTitle("Security")
+        Text(
+            "Keys are encrypted with AES-256; the keystore password is kept in: " +
+                (DesktopKeyStore.passwordSourceDescription ?: "…"),
+            style = MaterialTheme.typography.bodySmall,
+        )
 
         Spacer(Modifier.height(16.dp))
         SectionTitle("Diagnostics")

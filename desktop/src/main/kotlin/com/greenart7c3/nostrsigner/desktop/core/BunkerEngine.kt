@@ -112,7 +112,12 @@ class BunkerEngine(
     }
 
     /** Mirrors `NotificationSubscription.updateFilter`. */
-    suspend fun updateFilter() = filterMutex.withLock {
+    suspend fun updateFilter() {
+        if (PassphraseLock.isLocked()) return
+        updateFilterLocked()
+    }
+
+    private suspend fun updateFilterLocked() = filterMutex.withLock {
         val activeSubKeys = mutableSetOf<String>()
         val indexEntries = mutableMapOf<String, Pair<String, String>>()
 
@@ -192,6 +197,7 @@ class BunkerEngine(
 
     /** Mirrors `EventNotificationConsumer.consume` + `notify`. */
     suspend fun consume(event: Event, relay: NormalizedRelayUrl) {
+        if (PassphraseLock.isLocked()) return
         if (event.kind != NostrConnectEvent.KIND) return
         if (!event.verify()) return
         if (event.content.isEmpty()) return
@@ -547,6 +553,7 @@ class BunkerEngine(
         grantedPermissions: List<RequestedPermission> = emptyList(),
         signPolicy: Int? = null,
     ) {
+        PassphraseLock.touch()
         removePending(req.request.id)
         val acc = req.account
         val store = AmberDesktop.store(acc.npub)
@@ -640,6 +647,7 @@ class BunkerEngine(
         req: PendingBunkerRequest,
         rememberType: RememberType,
     ) {
+        PassphraseLock.touch()
         removePending(req.request.id)
         val acc = req.account
         val store = AmberDesktop.store(acc.npub)

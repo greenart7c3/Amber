@@ -73,6 +73,11 @@ object AmberDesktop {
         stores.remove(npub)
     }
 
+    /** Drops every decrypted account key from memory (passphrase lock). */
+    fun evictAllAccounts() {
+        accountCache.clear()
+    }
+
     val settings: DesktopSettings get() = SettingsStore.settings.value
 
     fun defaultRelays(): List<NormalizedRelayUrl> = settings.normalizedDefaultRelays()

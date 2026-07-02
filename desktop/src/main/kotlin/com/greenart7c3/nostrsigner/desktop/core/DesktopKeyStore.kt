@@ -13,12 +13,16 @@ import kotlinx.coroutines.sync.withLock
 
 /**
  * Desktop counterpart of the Android `SecureCryptoHelper`: private keys are
- * encrypted at rest with an AES-256 key held in a Java KeyStore (PKCS12)
- * file. The keystore password lives in the OS credential store (macOS
- * Keychain, Windows Credential Manager, or the freedesktop Secret Service)
- * when one is available, so the data directory alone is not enough to
- * unlock the keys; systems without a secret daemon fall back to an
- * owner-only password file next to the keystore (see [KeystorePassword]).
+ * encrypted at rest with an AES-256 master key.
+ *
+ * Where that master key lives depends on the security mode:
+ * - Default: in a Java KeyStore (PKCS12) file whose password is kept in the
+ *   OS credential store (macOS Keychain, Windows Credential Manager,
+ *   freedesktop Secret Service) when available, falling back to an
+ *   owner-only password file (see [KeystorePassword]).
+ * - Passphrase lock enabled ([PassphraseLock]): the master key exists on
+ *   disk only wrapped under a key derived from the user's passphrase; it is
+ *   installed here at unlock time and evicted on lock.
  */
 object DesktopKeyStore {
     private const val KEY_ALIAS = "AMBER_AES_KEY"
@@ -31,11 +35,13 @@ object DesktopKeyStore {
     private val passwordFile: File get() = File(AppDirs.dataDir, "keystore.pass")
 
     private var cachedKey: SecretKey? = null
-    private var cachedSource: PasswordStore? = null
+    private var sourceDescription: String? = null
 
-    /** Where the keystore password is kept, for display in Settings. */
+    /** Where the master key/its password is kept, for display in Settings. */
     val passwordSourceDescription: String?
-        get() = cachedSource?.description
+        get() = sourceDescription
+
+    class LockedException : IllegalStateException("The key store is locked. Unlock it with your passphrase first.")
 
     suspend fun encrypt(plainText: String): String = mutex.withLock {
         val key = getOrCreateSecretKey()
@@ -69,6 +75,58 @@ object DesktopKeyStore {
         return String(plainBytes, Charsets.UTF_8)
     }
 
+    // ----- master key management (used by PassphraseLock) -----
+
+    /** Installs an unwrapped master key (unlock, or right after enabling the lock). */
+    internal fun installMasterKey(key: SecretKey, source: String) {
+        cachedKey = key
+        sourceDescription = source
+    }
+
+    /** Evicts the in-memory master key (lock). */
+    internal fun clearMasterKey() {
+        cachedKey = null
+        sourceDescription = null
+    }
+
+    /**
+     * Returns the master key for wrapping under a passphrase, creating it
+     * through the regular keystore path when it does not exist yet. Must only
+     * be called while the passphrase lock is disabled or unlocked.
+     */
+    internal suspend fun masterKeyForWrapping(): SecretKey = mutex.withLock {
+        cachedKey ?: loadOrCreateFromKeystore()
+    }
+
+    /**
+     * Deletes the unprotected key copies (PKCS12 keystore + its password in
+     * the OS credential store / password file) after the passphrase lock has
+     * taken ownership of the master key.
+     */
+    internal fun removeUnprotectedCopies() {
+        keyStoreFile.delete()
+        FilePasswordStore(passwordFile).delete()
+        OsCredentialStore().delete()
+    }
+
+    /**
+     * Re-creates the unprotected storage (keystore + credential-store/file
+     * password) from [key] when the passphrase lock is removed.
+     */
+    internal suspend fun recreateUnprotectedStore(key: SecretKey): Unit = mutex.withLock {
+        val resolved = KeystorePassword.resolve(
+            osStore = OsCredentialStore(),
+            fileStore = FilePasswordStore(passwordFile),
+            keystoreExists = false,
+            opens = { false },
+        )
+        writeKeystore(key, resolved.password.toCharArray())
+        cachedKey = key
+        sourceDescription = resolved.source.description
+    }
+
+    // ----- keystore-backed path (passphrase lock disabled) -----
+
     private fun loadKeyStore(password: CharArray): KeyStore {
         val keyStore = KeyStore.getInstance("PKCS12")
         keyStoreFile.inputStream().use { keyStore.load(it, password) }
@@ -82,7 +140,23 @@ object DesktopKeyStore {
         false
     }
 
+    private fun writeKeystore(key: SecretKey, password: CharArray) {
+        val keyStore = KeyStore.getInstance("PKCS12")
+        keyStore.load(null, password)
+        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(key), KeyStore.PasswordProtection(password))
+        keyStoreFile.outputStream().use { keyStore.store(it, password) }
+        AppDirs.restrictToOwner(keyStoreFile)
+    }
+
     private fun getOrCreateSecretKey(): SecretKey {
+        cachedKey?.let { return it }
+        if (PassphraseLock.isEnabled()) {
+            throw LockedException()
+        }
+        return loadOrCreateFromKeystore()
+    }
+
+    private fun loadOrCreateFromKeystore(): SecretKey {
         cachedKey?.let { return it }
 
         val resolved = KeystorePassword.resolve(
@@ -91,7 +165,7 @@ object DesktopKeyStore {
             keystoreExists = keyStoreFile.exists(),
             opens = ::canOpen,
         )
-        cachedSource = resolved.source
+        sourceDescription = resolved.source.description
         AmberLogger.d("DesktopKeyStore", "Keystore password source: ${resolved.source.description}")
         val password = resolved.password.toCharArray()
 
@@ -112,12 +186,8 @@ object DesktopKeyStore {
             return key
         }
 
-        val keyStore = KeyStore.getInstance("PKCS12")
-        keyStore.load(null, password)
         val key = generateKey()
-        keyStore.setEntry(KEY_ALIAS, KeyStore.SecretKeyEntry(key), KeyStore.PasswordProtection(password))
-        keyStoreFile.outputStream().use { keyStore.store(it, password) }
-        AppDirs.restrictToOwner(keyStoreFile)
+        writeKeystore(key, password)
         cachedKey = key
         return key
     }

@@ -56,6 +56,34 @@ protection too. If you move the data directory to another machine, also
 transfer the `com.greenart7c3.nostrsigner` entry from the credential store
 (or keep the legacy `keystore.pass` file).
 
+### Passphrase lock (stronger, opt-in)
+
+Enable a passphrase under **Settings → Security** for defence that does not
+depend on the OS credential store. The AES master key is then stored only
+wrapped (AES-256-GCM) under a key derived from your passphrase with
+**Argon2id**, in `master.key.enc`; the plain keystore and its
+credential-store/file password are deleted. The passphrase is never written
+anywhere.
+
+With the lock on:
+
+- Copying the data directory (or the credential store) is useless — without
+  the passphrase there is no way to decrypt the keys.
+- Amber asks for the passphrase at startup and can auto-lock after an idle
+  timeout (5 min / 15 min / 1 hour / never) or immediately via **Lock now**.
+  Locking evicts all key material from memory and disconnects the relays, so
+  no request can be signed until you unlock again.
+
+Residual risk it cannot remove: while unlocked, the keys are in the
+process's memory, so malware that can scrape another process's memory or
+log your keystrokes in your session could still capture them — that is
+inherent to any software signer on a general-purpose OS. Hardware-backed,
+per-signature consent (Touch ID / Windows Hello / TPM) would be the next
+step and is tracked as future work.
+
+**If you forget the passphrase there is no recovery** — restore your keys
+from their nsec or seed-word backup instead.
+
 ## Run and build
 
 ```bash

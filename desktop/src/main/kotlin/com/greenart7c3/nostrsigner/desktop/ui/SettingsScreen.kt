@@ -17,6 +17,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.isTraySupported
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
@@ -118,6 +120,23 @@ fun SettingsScreen(account: DesktopAccount) {
         }
 
         Spacer(Modifier.height(16.dp))
+        SectionTitle("Desktop")
+        if (isTraySupported) {
+            SettingSwitch(
+                title = "Keep running in the tray",
+                description = "Closing the window minimizes Amber to the system tray so it keeps answering requests.",
+                checked = settings.closeToTray,
+                onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
+            )
+        }
+        SettingSwitch(
+            title = "Notifications",
+            description = "Show a system notification when a request needs your approval.",
+            checked = settings.showNotifications,
+            onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
+        )
+
+        Spacer(Modifier.height(16.dp))
         SectionTitle("Accounts")
         accounts.forEach { record ->
             Card(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
@@ -193,6 +212,25 @@ fun SettingsScreen(account: DesktopAccount) {
 private fun SectionTitle(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium)
     HorizontalDivider(Modifier.padding(vertical = 4.dp))
+}
+
+@Composable
+private fun SettingSwitch(
+    title: String,
+    description: String,
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        Modifier.fillMaxWidth().padding(vertical = 4.dp),
+        verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium)
+            Text(description, style = MaterialTheme.typography.bodySmall)
+        }
+        Switch(checked = checked, onCheckedChange = onCheckedChange)
+    }
 }
 
 @Composable

@@ -35,11 +35,26 @@ a Java KeyStore (PKCS12) file under the application data directory:
 - macOS: `~/Library/Application Support/Amber`
 - Linux: `$XDG_DATA_HOME/amber` (or `~/.local/share/amber`)
 
-Desktop platforms have no universal hardware-backed keystore, so the
-keystore password is a per-install random secret stored next to the
-keystore with owner-only permissions. Anyone with access to your OS user
-account can read your keys — use full-disk encryption and OS login
-protection.
+The keystore password is kept in the operating system's credential store:
+
+- macOS: Keychain
+- Windows: Credential Manager
+- Linux: the freedesktop Secret Service (GNOME Keyring / KWallet over D-Bus)
+
+so copying the data directory (or a backup of it) is not enough to unlock
+the keys. On systems without a secret daemon (headless Linux, minimal
+window managers) the password falls back to an owner-only file next to the
+keystore, and is migrated into the credential store automatically the
+first time one becomes available. The Settings screen shows which backend
+is in use.
+
+Note the trust model: any process running as your OS user can request the
+secret from the credential store, so this protects against offline attacks
+(disk theft, leaked backups, copied data directories) rather than against
+malware running in your session. Use full-disk encryption and OS login
+protection too. If you move the data directory to another machine, also
+transfer the `com.greenart7c3.nostrsigner` entry from the credential store
+(or keep the legacy `keystore.pass` file).
 
 ## Run and build
 

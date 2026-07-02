@@ -19,6 +19,11 @@ dependencies {
     implementation(libs.quartz.jvm)
     // Native secp256k1 bindings for the JVM (Schnorr signatures + ECDH).
     implementation(libs.secp256k1.jni.jvm)
+
+    // OS credential stores (macOS Keychain, Windows Credential Manager,
+    // freedesktop Secret Service) for the keystore password.
+    implementation(libs.java.keyring)
+    runtimeOnly(libs.slf4j.nop)
     implementation(libs.okhttp)
     implementation(libs.kotlinx.collections.immutable)
 

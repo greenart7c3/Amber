@@ -12,6 +12,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
@@ -26,13 +27,33 @@ object Session {
 
     fun boot() {
         AmberDesktop.applicationIOScope.launch {
-            val saved = AmberDesktop.settings.currentAccount
-            val npub = saved.ifBlank { AccountsStore.accounts.value.firstOrNull()?.npub ?: "" }
-            if (npub.isNotBlank()) {
-                account.value = AmberDesktop.account(npub)
+            var engineStarted = false
+            PassphraseLock.state.collect { status ->
+                when (status) {
+                    PassphraseLock.Status.LOCKED -> {
+                        // Key material is evicted; drop the account reference so
+                        // nothing in the UI can reach a decrypted signer.
+                        account.value = null
+                        loading.value = false
+                    }
+
+                    PassphraseLock.Status.DISABLED, PassphraseLock.Status.UNLOCKED -> {
+                        val saved = AmberDesktop.settings.currentAccount
+                        val npub = saved.ifBlank { AccountsStore.accounts.value.firstOrNull()?.npub ?: "" }
+                        if (npub.isNotBlank()) {
+                            account.value = AmberDesktop.account(npub)
+                        }
+                        loading.value = false
+                        if (engineStarted) {
+                            AmberDesktop.engine.updateFilter()
+                            AmberDesktop.client.connect()
+                        } else {
+                            AmberDesktop.engine.start()
+                            engineStarted = true
+                        }
+                    }
+                }
             }
-            loading.value = false
-            AmberDesktop.engine.start()
         }
     }
 

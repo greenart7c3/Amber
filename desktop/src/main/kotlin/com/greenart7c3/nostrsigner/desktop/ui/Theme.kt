@@ -27,21 +27,35 @@ val primaryVariant = Color(0xFFC8541A)
 val secondaryColor = Color(0xFFFFCA62)
 val orange = Color(0xFFFF6B00)
 
+// The accent (amber / orange) is light, so anything painted on top of it —
+// primary buttons, selected chips, the selected sidebar row — must use dark
+// text. The default dark scheme pairs these containers with light on-colors,
+// which is what produced the unreadable light-on-amber elements.
+private val onAccent = Color(0xFF201A0B)
+
 private val DarkColorPalette = darkColorScheme(
     primary = primaryColor,
-    onPrimary = Color.White,
+    onPrimary = onAccent,
     secondary = primaryVariant,
+    onSecondary = Color.White,
     tertiary = secondaryColor,
+    onTertiary = onAccent,
     primaryContainer = secondaryColor,
+    onPrimaryContainer = onAccent,
     secondaryContainer = secondaryColor,
+    onSecondaryContainer = onAccent,
 )
 
 private val LightColorPalette = lightColorScheme(
     primary = primaryColor,
+    onPrimary = onAccent,
     secondary = primaryVariant,
     tertiary = secondaryColor,
+    onTertiary = onAccent,
     primaryContainer = secondaryColor,
+    onPrimaryContainer = onAccent,
     secondaryContainer = secondaryColor,
+    onSecondaryContainer = onAccent,
     surface = Color(0xFFFFDE9E),
     surfaceContainer = Color(0xFFFFDE9E),
 )

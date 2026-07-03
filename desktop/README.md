@@ -74,6 +74,13 @@ With the lock on:
 
 - Copying the data directory (or the credential store) is useless — without
   the passphrase there is no way to decrypt the keys.
+- The per-account **database** (connected applications, permission grants,
+  request history, relay logs) is also encrypted at rest with the master
+  key — AES-256-GCM, with an `AMBERENC1:` header — so the metadata about
+  which apps you sign for stays private too. Enabling the passphrase
+  re-encrypts existing data immediately; removing it rewrites plaintext.
+  (`settings.json` and `accounts.json` stay plaintext, but the private keys
+  inside `accounts.json` are always encrypted with the master key.)
 - Amber asks for the passphrase at startup and can auto-lock after an idle
   timeout (5 min / 15 min / 1 hour / never) or immediately via **Lock now**.
   Locking evicts all key material from memory and disconnects the relays, so

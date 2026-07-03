@@ -36,7 +36,9 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 
@@ -95,6 +97,7 @@ private fun RequestCard(
 ) {
     val rememberChoices by UiState.rememberChoices.collectAsState()
     val rememberType = rememberChoices[req.request.id] ?: RememberType.NEVER
+    val language by Strings.currentLanguage.collectAsState()
     var working by remember { mutableStateOf(false) }
     val grantedPermissions = remember(req.request.id) { req.requestedPermissions.map { it.copy() } }
 
@@ -112,9 +115,9 @@ private fun RequestCard(
                 Text(req.appUrl, style = MaterialTheme.typography.bodySmall)
             }
             Spacer(Modifier.height(4.dp))
-            Text(req.type.describe(req.kind), style = MaterialTheme.typography.bodyLarge)
+            Text(req.type.describe(req.kind, language), style = MaterialTheme.typography.bodyLarge)
             Text(
-                "Account: ${req.account.npub.toShortenHex()}",
+                "${Strings.get("account", language)}: ${req.account.npub.toShortenHex()}",
                 style = MaterialTheme.typography.bodySmall,
             )
 
@@ -135,7 +138,7 @@ private fun RequestCard(
 
             if (req.type == SignerType.CONNECT && grantedPermissions.isNotEmpty()) {
                 Spacer(Modifier.height(8.dp))
-                Text("Requested permissions", style = MaterialTheme.typography.titleSmall)
+                Text(Strings.get("permissions", language), style = MaterialTheme.typography.titleSmall)
                 grantedPermissions.forEach { perm ->
                     var checked by remember { mutableStateOf(perm.checked) }
                     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -147,7 +150,7 @@ private fun RequestCard(
                             },
                         )
                         Text(
-                            perm.type + (perm.kind?.let { " (kind $it)" } ?: ""),
+                            SignerDescriptions.permission(perm.type, perm.kind, language),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                     }

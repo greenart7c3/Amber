@@ -25,6 +25,7 @@ import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
+import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
@@ -163,6 +164,15 @@ fun main() {
             visible = windowVisible,
             title = if (pending.isEmpty()) "Amber" else "Amber (${pending.size})",
             icon = painterResource("icon.png"),
+            onPreviewKeyEvent = { event ->
+                handleShortcut(
+                    event,
+                    hideWindow = {
+                        if (trayActive) windowVisible = false else exitApplication()
+                    },
+                    quit = ::exitApplication,
+                )
+            },
         ) {
             NostrSignerTheme {
                 App()

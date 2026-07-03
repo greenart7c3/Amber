@@ -77,6 +77,7 @@ fun UnlockScreen() {
             Spacer(Modifier.height(16.dp))
             AmberButton(
                 text = if (working) "Unlocking…" else "Unlock",
+                fillWidth = true,
                 enabled = passphrase.isNotEmpty() && !working,
                 onClick = ::submit,
             )

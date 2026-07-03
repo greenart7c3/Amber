@@ -100,4 +100,29 @@ class DesktopCoreTest {
         assertEquals(SignerType.NIP44_DECRYPT, BunkerEngine.typeFromMethod("nip44_decrypt"))
         assertEquals(SignerType.INVALID, BunkerEngine.typeFromMethod("bogus"))
     }
+
+    @Test
+    fun permissionTypeExpansionMatchesRequestPath() {
+        // NIP-specific perms map 1:1 to the type the request path queries.
+        assertEquals(listOf("NIP44_ENCRYPT"), BunkerEngine.expandPermissionTypes("nip44_encrypt"))
+        assertEquals(listOf("SIGN_EVENT"), BunkerEngine.expandPermissionTypes("sign_event"))
+        assertEquals(listOf("GET_PUBLIC_KEY"), BunkerEngine.expandPermissionTypes("get_public_key"))
+
+        // Content-scoped / generic encrypt-decrypt perms are NIP-agnostic, so a
+        // grant must cover both NIP variants the request path can produce —
+        // otherwise the grant is stored under a key never queried and the
+        // client is re-prompted every time.
+        assertEquals(
+            setOf("NIP04_ENCRYPT", "NIP44_ENCRYPT"),
+            BunkerEngine.expandPermissionTypes("encrypt_event").toSet(),
+        )
+        assertEquals(
+            setOf("NIP04_DECRYPT", "NIP44_DECRYPT"),
+            BunkerEngine.expandPermissionTypes("decrypt_clear_text").toSet(),
+        )
+        assertEquals(
+            setOf("NIP04_ENCRYPT", "NIP44_ENCRYPT"),
+            BunkerEngine.expandPermissionTypes("encrypt").toSet(),
+        )
+    }
 }

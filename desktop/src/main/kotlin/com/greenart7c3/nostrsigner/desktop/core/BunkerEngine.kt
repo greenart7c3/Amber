@@ -57,6 +57,7 @@ data class PendingBunkerRequest(
     val nostrConnectSecret: String = "",
     val appName: String = "",
     val appUrl: String = "",
+    val appIcon: String = "",
     val requestedPermissions: List<RequestedPermission> = emptyList(),
     val kind: Int? = null,
     val preview: String = "",
@@ -585,6 +586,7 @@ class BunkerEngine(
                 name = req.appName,
                 relays = relays.map { it.url },
                 url = req.appUrl,
+                icon = req.appIcon,
                 pubKey = acc.hexKey,
                 isConnected = true,
                 secret = secret,
@@ -719,11 +721,18 @@ class BunkerEngine(
     }
 
     private fun addAcceptedPermission(application: AppWithPermissions, perm: RequestedPermission) {
-        val type = normalizePermissionType(perm.type)
-        if (application.permissions.any { it.type == type && it.kind == perm.kind }) return
-        application.permissions.add(
-            AppPermissionRecord(type, perm.kind, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),
-        )
+        // A requested perm can map to more than one stored permission type: the
+        // request path keys encrypt/decrypt by NIP (NIP04_ENCRYPT/NIP44_ENCRYPT),
+        // but a content-scoped or generic perm (encrypt_event, encrypt) is
+        // NIP-agnostic, so it must grant both NIP variants — otherwise the grant
+        // is stored under a key the request path never queries and the client is
+        // re-prompted on every request.
+        expandPermissionTypes(perm.type).forEach { type ->
+            if (application.permissions.any { it.type == type && it.kind == perm.kind }) return@forEach
+            application.permissions.add(
+                AppPermissionRecord(type, perm.kind, true, RememberType.ALWAYS.screenCode, Long.MAX_VALUE / 1000, 0),
+            )
+        }
     }
 
     /** Mirrors `AmberUtils.acceptPermission` / rejection with ALL scope. */
@@ -837,6 +846,7 @@ class BunkerEngine(
             val relays = mutableListOf<NormalizedRelayUrl>()
             var name = ""
             var url = ""
+            var image = ""
             var nostrConnectSecret = ""
             val permissions = mutableListOf<RequestedPermission>()
 
@@ -849,25 +859,20 @@ class BunkerEngine(
                     "relay" -> RelayUrlNormalizer.normalizeOrNull(value)?.let { relays.add(it) }
                     "name" -> name = value
                     "url" -> url = value
+                    "image" -> image = value
                     "secret" -> nostrConnectSecret = value
-                    "perms" -> value.split(",").forEach { perm ->
-                        if (perm.isBlank()) return@forEach
-                        val permParts = perm.split(":")
-                        permissions.add(RequestedPermission(permParts.first().trim(), permParts.getOrNull(1)?.toIntOrNull()))
-                    }
+                    "perms" -> permissions.addAll(parsePermissionsParam(value))
                     "metadata" -> runCatching {
                         val node = JacksonMapper.mapper.readTree(value)
                         node.get("name")?.asText()?.let { if (it.isNotBlank()) name = it }
                         node.get("url")?.asText()?.let { if (it.isNotBlank()) url = it }
-                        node.get("perms")?.asText()?.split(",")?.forEach { perm ->
-                            if (perm.isBlank()) return@forEach
-                            val permParts = perm.split(":")
-                            permissions.add(RequestedPermission(permParts.first().trim(), permParts.getOrNull(1)?.toIntOrNull()))
-                        }
+                        node.get("image")?.asText()?.let { if (it.isNotBlank()) image = it }
+                        node.get("perms")?.asText()?.let { permissions.addAll(parsePermissionsParam(it)) }
                     }
                 }
             }
-            permissions.removeIf { it.kind == null && it.type == "sign_event" }
+            // Match Android: drop sign_event / nip perms that carry no valid kind.
+            permissions.removeIf { it.kind == null && (it.type == "sign_event" || it.type == "nip") }
 
             addPending(
                 PendingBunkerRequest(
@@ -884,6 +889,7 @@ class BunkerEngine(
                     nostrConnectSecret = nostrConnectSecret,
                     appName = name.ifBlank { pubKey.toShortenHex() },
                     appUrl = url,
+                    appIcon = image,
                     requestedPermissions = permissions,
                     result = "ack",
                     encryptionType = EncryptionType.NIP44,
@@ -956,21 +962,35 @@ class BunkerEngine(
             else -> SignerType.INVALID
         }
 
-        fun normalizePermissionType(type: String): String = when (type.lowercase()) {
-            "connect" -> SignerType.CONNECT.toString()
-            "sign_event" -> SignerType.SIGN_EVENT.toString()
-            "get_public_key" -> SignerType.GET_PUBLIC_KEY.toString()
-            "nip04_encrypt", "encrypt_clear_text" -> SignerType.NIP04_ENCRYPT.toString()
-            "nip04_decrypt", "decrypt_clear_text" -> SignerType.NIP04_DECRYPT.toString()
-            "nip44_encrypt" -> SignerType.NIP44_ENCRYPT.toString()
-            "nip44_decrypt" -> SignerType.NIP44_DECRYPT.toString()
-            "nip44v3_encrypt" -> SignerType.NIP44_V3_ENCRYPT.toString()
-            "nip44v3_decrypt" -> SignerType.NIP44_V3_DECRYPT.toString()
-            "decrypt_zap_event" -> SignerType.DECRYPT_ZAP_EVENT.toString()
-            "ping" -> SignerType.PING.toString()
-            "sign_psbt" -> SignerType.SIGN_PSBT.toString()
-            else -> type.uppercase()
+        /**
+         * Maps a requested permission string to the stored permission type(s)
+         * the request path actually queries. Content-scoped or generic
+         * encrypt/decrypt perms (Amber uses `encrypt_clear_text`,
+         * `encrypt_event`, `encrypt_tag_array`; standard NIP-46 uses
+         * `nip04_encrypt`/`nip44_encrypt`) grant both NIP variants because the
+         * desktop request path is keyed by NIP, not by content type.
+         */
+        fun expandPermissionTypes(type: String): List<String> = when (type.lowercase()) {
+            "connect" -> listOf(SignerType.CONNECT.toString())
+            "sign_event" -> listOf(SignerType.SIGN_EVENT.toString())
+            "get_public_key" -> listOf(SignerType.GET_PUBLIC_KEY.toString())
+            "nip04_encrypt" -> listOf(SignerType.NIP04_ENCRYPT.toString())
+            "nip04_decrypt" -> listOf(SignerType.NIP04_DECRYPT.toString())
+            "nip44_encrypt" -> listOf(SignerType.NIP44_ENCRYPT.toString())
+            "nip44_decrypt" -> listOf(SignerType.NIP44_DECRYPT.toString())
+            "nip44v3_encrypt" -> listOf(SignerType.NIP44_V3_ENCRYPT.toString())
+            "nip44v3_decrypt" -> listOf(SignerType.NIP44_V3_DECRYPT.toString())
+            "encrypt_clear_text", "encrypt_event", "encrypt_tag_array", "encrypt" ->
+                listOf(SignerType.NIP04_ENCRYPT.toString(), SignerType.NIP44_ENCRYPT.toString())
+            "decrypt_clear_text", "decrypt_event", "decrypt_tag_array", "decrypt" ->
+                listOf(SignerType.NIP04_DECRYPT.toString(), SignerType.NIP44_DECRYPT.toString())
+            "decrypt_zap_event" -> listOf(SignerType.DECRYPT_ZAP_EVENT.toString())
+            "ping" -> listOf(SignerType.PING.toString())
+            "sign_psbt" -> listOf(SignerType.SIGN_PSBT.toString())
+            else -> listOf(type.uppercase())
         }
+
+        fun normalizePermissionType(type: String): String = expandPermissionTypes(type).first()
     }
 }
 

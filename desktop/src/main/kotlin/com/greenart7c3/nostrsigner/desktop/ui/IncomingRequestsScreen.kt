@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -11,6 +13,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
@@ -18,6 +21,7 @@ import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -54,24 +58,50 @@ fun IncomingRequestsScreen(account: DesktopAccount) {
         return
     }
 
+    val selectedId by UiState.selectedRequestId.collectAsState()
+    val listState = rememberLazyListState()
+
+    // Keep the keyboard selection valid and visible as requests come and go.
+    LaunchedEffect(pending) {
+        UiState.pruneRequestState(pending)
+    }
+    LaunchedEffect(selectedId) {
+        val index = pending.indexOfFirst { it.request.id == selectedId }
+        if (index >= 0) listState.animateScrollToItem(index)
+    }
+
     LazyColumn(
         Modifier.fillMaxSize(),
+        state = listState,
         verticalArrangement = Arrangement.spacedBy(12.dp),
         contentPadding = androidx.compose.foundation.layout.PaddingValues(vertical = 12.dp),
     ) {
         items(pending.size, key = { pending[it].request.id }) { index ->
-            RequestCard(pending[index])
+            val req = pending[index]
+            RequestCard(
+                req = req,
+                selected = req.request.id == (selectedId ?: pending.firstOrNull()?.request?.id),
+                onSelect = { UiState.selectedRequestId.value = req.request.id },
+            )
         }
     }
 }
 
 @Composable
-private fun RequestCard(req: PendingBunkerRequest) {
-    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
+private fun RequestCard(
+    req: PendingBunkerRequest,
+    selected: Boolean,
+    onSelect: () -> Unit,
+) {
+    val rememberChoices by UiState.rememberChoices.collectAsState()
+    val rememberType = rememberChoices[req.request.id] ?: RememberType.NEVER
     var working by remember { mutableStateOf(false) }
     val grantedPermissions = remember(req.request.id) { req.requestedPermissions.map { it.copy() } }
 
-    Card(Modifier.fillMaxWidth()) {
+    Card(
+        Modifier.fillMaxWidth().clickable(onClick = onSelect),
+        border = if (selected) BorderStroke(2.dp, orange) else null,
+    ) {
         Column(Modifier.padding(16.dp)) {
             Text(
                 req.appName.ifBlank { req.localKey.toShortenHex() },
@@ -126,7 +156,7 @@ private fun RequestCard(req: PendingBunkerRequest) {
 
             Spacer(Modifier.height(12.dp))
             if (req.type != SignerType.CONNECT) {
-                RememberTypeSelector(rememberType) { rememberType = it }
+                RememberTypeSelector(rememberType) { UiState.setRememberChoice(req.request.id, it) }
                 Spacer(Modifier.height(8.dp))
             }
 
@@ -160,7 +190,7 @@ private fun RequestCard(req: PendingBunkerRequest) {
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    "${shortcutLabel("↵")} approve · ${shortcutLabel("↵", shift = true)} reject",
+                    "↑↓ select · ←→ remember · ${shortcutLabel("↵")} approve · ${shortcutLabel("↵", shift = true)} reject",
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

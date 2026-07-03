@@ -11,8 +11,10 @@ import androidx.compose.ui.input.key.type
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
+import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 
 /**
@@ -25,9 +27,55 @@ object UiState {
     /** null = list; non-null = the application detail screen for that key. */
     val selectedApplication = MutableStateFlow<String?>(null)
 
+    /** Request id the keyboard is acting on in the incoming-requests list. */
+    val selectedRequestId = MutableStateFlow<String?>(null)
+
+    /** Per-request "Remember" choice, shared by the dropdown and the shortcuts. */
+    val rememberChoices = MutableStateFlow<Map<String, RememberType>>(emptyMap())
+
     fun navigate(route: Route) {
         selectedApplication.value = null
         currentRoute.value = route
+    }
+
+    /** The selected pending request, falling back to the first one. */
+    fun selectedRequest(): PendingBunkerRequest? {
+        val pending = AmberDesktop.engine.pending.value
+        return pending.firstOrNull { it.request.id == selectedRequestId.value } ?: pending.firstOrNull()
+    }
+
+    fun moveRequestSelection(delta: Int) {
+        val pending = AmberDesktop.engine.pending.value
+        if (pending.isEmpty()) return
+        val current = pending.indexOfFirst { it.request.id == selectedRequestId.value }.coerceAtLeast(0)
+        selectedRequestId.value = pending[(current + delta).coerceIn(0, pending.size - 1)].request.id
+    }
+
+    fun rememberChoiceFor(requestId: String): RememberType = rememberChoices.value[requestId] ?: RememberType.NEVER
+
+    fun setRememberChoice(requestId: String, type: RememberType) {
+        rememberChoices.value = rememberChoices.value + (requestId to type)
+    }
+
+    /** Cycles the selected request's "Remember" duration with ←/→. */
+    fun cycleRememberChoice(delta: Int) {
+        val request = selectedRequest() ?: return
+        if (request.type == SignerType.CONNECT) return // connect approvals are always remembered
+        val order = rememberTypeDisplayOrder
+        val current = order.indexOf(rememberChoiceFor(request.request.id)).coerceAtLeast(0)
+        val next = (current + delta).mod(order.size)
+        setRememberChoice(request.request.id, order[next])
+    }
+
+    /** Drops selection/remember state for requests that no longer exist. */
+    fun pruneRequestState(pending: List<PendingBunkerRequest>) {
+        val ids = pending.map { it.request.id }.toSet()
+        if (selectedRequestId.value !in ids) {
+            selectedRequestId.value = pending.firstOrNull()?.request?.id
+        }
+        if (rememberChoices.value.keys.any { it !in ids }) {
+            rememberChoices.value = rememberChoices.value.filterKeys { it in ids }
+        }
     }
 }
 
@@ -44,8 +92,10 @@ fun shortcutLabel(key: String, shift: Boolean = false): String = buildString {
 /**
  * Window-level keyboard shortcuts:
  * - Ctrl/⌘ 1–4: switch between the sidebar sections
- * - Ctrl/⌘ Enter: approve the first pending request (just once)
- * - Ctrl/⌘ Shift Enter: reject the first pending request
+ * - ↑/↓ (incoming requests): select a pending request
+ * - ←/→ (incoming requests): cycle the selected request's "Remember" choice
+ * - Ctrl/⌘ Enter: approve the selected request with the chosen duration
+ * - Ctrl/⌘ Shift Enter: reject the selected request
  * - Ctrl/⌘ L: lock (when a passphrase is set)
  * - Ctrl/⌘ W: hide the window (to the tray when enabled)
  * - Ctrl/⌘ Q: quit
@@ -68,6 +118,36 @@ fun handleShortcut(
             UiState.selectedApplication.value = null
             return true
         }
+        // Plain arrows drive the incoming-requests list: ↑/↓ selects a card,
+        // ←/→ cycles its "Remember" duration. Only consumed on that screen so
+        // arrow keys elsewhere (text fields, scrolling) keep working.
+        val onIncoming = loggedIn &&
+            UiState.currentRoute.value == Route.IncomingRequest &&
+            UiState.selectedApplication.value == null &&
+            AmberDesktop.engine.pending.value.isNotEmpty()
+        if (onIncoming) {
+            when (event.key) {
+                Key.DirectionUp -> {
+                    UiState.moveRequestSelection(-1)
+                    return true
+                }
+
+                Key.DirectionDown -> {
+                    UiState.moveRequestSelection(1)
+                    return true
+                }
+
+                Key.DirectionLeft -> {
+                    UiState.cycleRememberChoice(-1)
+                    return true
+                }
+
+                Key.DirectionRight -> {
+                    UiState.cycleRememberChoice(1)
+                    return true
+                }
+            }
+        }
         return false
     }
 
@@ -79,14 +159,15 @@ fun handleShortcut(
 
         Key.Enter -> {
             if (!loggedIn) return false
-            val request = AmberDesktop.engine.pending.value.firstOrNull() ?: return false
+            val request = UiState.selectedRequest() ?: return false
+            val rememberType = UiState.rememberChoiceFor(request.request.id)
             if (event.isShiftPressed) {
-                AmberDesktop.engine.reject(request, RememberType.NEVER)
+                AmberDesktop.engine.reject(request, rememberType)
                 Toaster.toast("Request rejected")
             } else {
                 AmberDesktop.engine.approve(
                     request,
-                    if (request.type == SignerType.CONNECT) RememberType.ALWAYS else RememberType.NEVER,
+                    if (request.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
                     request.requestedPermissions,
                 )
                 Toaster.toast("Request approved")

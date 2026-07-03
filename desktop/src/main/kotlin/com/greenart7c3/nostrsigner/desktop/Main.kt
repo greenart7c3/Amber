@@ -176,19 +176,23 @@ fun main() {
         // request (or the tray icon, when present) brings it back.
         val trayActive = settings.closeToTray && (trayUsable || isLinux)
 
-        // Notify and surface the window whenever a new approval request arrives.
+        // Notify when a new approval request arrives. Do NOT force the window
+        // open — a minimized Amber should stay minimized and let the user open
+        // it from the notification or the tray. Only surface it as a last
+        // resort, when the user could not be reached any other way.
         var seenPending by remember { mutableStateOf(0) }
         LaunchedEffect(pending.size) {
             if (pending.size > seenPending) {
                 val request = pending.last()
+                var notified = false
                 if (settings.showNotifications) {
                     val message = "${request.appName} ${request.type.describe(request.kind, language)}"
                     // Prefer the OS-native notification channel (freedesktop /
                     // notify-send on Linux, incl. Wayland/Hyprland; osascript on
                     // macOS). Only fall back to the AWT tray notification — which
                     // needs a usable system tray — when there is no native channel.
-                    val delivered = withContext(Dispatchers.IO) { Notifier.notify("Amber", message) }
-                    if (!delivered && awtTrayUsable) {
+                    notified = withContext(Dispatchers.IO) { Notifier.notify("Amber", message) }
+                    if (!notified && awtTrayUsable) {
                         trayState.sendNotification(
                             Notification(
                                 title = "Amber",
@@ -196,9 +200,14 @@ fun main() {
                                 type = Notification.Type.Info,
                             ),
                         )
+                        notified = true
                     }
                 }
-                DesktopTray.windowVisible.value = true
+                // No notification reached the user and there's no tray to reopen
+                // from — surface the window so the request isn't missed.
+                if (!notified && !trayUsable) {
+                    DesktopTray.windowVisible.value = true
+                }
             }
             seenPending = pending.size
         }

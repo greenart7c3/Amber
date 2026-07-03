@@ -5,6 +5,8 @@ import dorkbox.systemTray.MenuItem
 import dorkbox.systemTray.Separator
 import dorkbox.systemTray.SystemTray
 import java.awt.event.ActionListener
+import java.io.File
+import java.nio.file.Files
 
 /**
  * A tray icon backed by the dorkbox SystemTray library, used on Linux.
@@ -45,6 +47,71 @@ class NativeTray private constructor(
         private fun isWayland(): Boolean = !System.getenv("WAYLAND_DISPLAY").isNullOrBlank() ||
             System.getenv("XDG_SESSION_TYPE").equals("wayland", ignoreCase = true)
 
+        /**
+         * dorkbox 4.4 only looks for the legacy `libappindicator3.so` family of
+         * names, never the Ayatana fork. Modern distros (Arch/Omarchy, recent
+         * Debian/Ubuntu, Fedora) ship only `libayatana-appindicator3.so.1`, so
+         * dorkbox finds nothing and the AppIndicator backend fails.
+         *
+         * Bridge that by symlinking the Ayatana library under the GTK3 names
+         * dorkbox probes into a private dir and prepending it to
+         * `jna.library.path` (which JNA re-reads per load). No root needed.
+         * Skipped when a real `libappindicator3.so.1` is already present.
+         */
+        private val SYSTEM_LIB_DIRS = listOf(
+            "/usr/lib",
+            "/usr/lib64",
+            "/usr/local/lib",
+            "/usr/lib/x86_64-linux-gnu",
+            "/lib/x86_64-linux-gnu",
+            "/usr/lib/aarch64-linux-gnu",
+            "/lib/aarch64-linux-gnu",
+        )
+
+        private fun ensureAppIndicatorLibrary() {
+            runCatching {
+                val tmp = File(System.getProperty("java.io.tmpdir"), "amber-appindicator-shim")
+                val shim = buildAppIndicatorShim(SYSTEM_LIB_DIRS, tmp) ?: return
+                val prop = "jna.library.path"
+                val existing = System.getProperty(prop)
+                System.setProperty(prop, if (existing.isNullOrBlank()) shim else "$shim${File.pathSeparator}$existing")
+                AmberLogger.i("NativeTray", "AppIndicator shim ready at $shim (jna.library.path)")
+            }.onFailure { AmberLogger.e("NativeTray", "AppIndicator shim failed: ${it.message}") }
+        }
+
+        /**
+         * If only the Ayatana appindicator library is present, symlink it under
+         * the GTK3 names dorkbox probes into [shimDir] and return that dir; else
+         * null (legacy lib already there, or no Ayatana lib at all). Package-
+         * visible for testing.
+         */
+        internal fun buildAppIndicatorShim(libDirs: List<String>, shimDir: File): String? {
+            // Nothing to do if the legacy library dorkbox wants already exists.
+            if (libDirs.any { File(it, "libappindicator3.so.1").exists() || File(it, "libappindicator3.so").exists() }) return null
+
+            val ayatana = libDirs.asSequence()
+                .flatMap { dir -> sequenceOf("libayatana-appindicator3.so.1", "libayatana-appindicator3.so").map { File(dir, it) } }
+                .firstOrNull { it.exists() } ?: return null
+
+            shimDir.mkdirs()
+            // Only the GTK3 names — we force PREFER_GTK3, and pointing a GTK2
+            // name at a GTK3 lib would mismatch.
+            listOf(
+                "libappindicator3.so",
+                "libappindicator3.so.1",
+                "libappindicator3-1.so",
+                "libappindicator-gtk3.so",
+                "libappindicator-gtk3-1.so",
+            ).forEach { name ->
+                val link = File(shimDir, name).toPath()
+                runCatching {
+                    Files.deleteIfExists(link)
+                    Files.createSymbolicLink(link, ayatana.toPath())
+                }
+            }
+            return shimDir.absolutePath
+        }
+
         private fun chosenTrayType(): SystemTray.TrayType {
             System.getenv("AMBER_TRAY_TYPE")?.let { name ->
                 runCatching { return SystemTray.TrayType.valueOf(name) }
@@ -73,8 +140,10 @@ class NativeTray private constructor(
             val type = chosenTrayType()
             runCatching {
                 if (type != SystemTray.TrayType.AutoDetect) SystemTray.FORCE_TRAY_TYPE = type
+                SystemTray.PREFER_GTK3 = true
                 if (System.getenv("AMBER_DEBUG") != null) SystemTray.DEBUG = true
             }
+            if (type == SystemTray.TrayType.AppIndicator) ensureAppIndicatorLibrary()
             AmberLogger.i("NativeTray", "initializing tray (wayland=${isWayland()}, backend=$type)")
 
             val tray = try {

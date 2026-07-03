@@ -103,7 +103,38 @@ object Session {
     }
 }
 
+/**
+ * Holds the native (dorkbox) tray and the window-visibility/quit signals it
+ * drives. The tray is built in [main] before Compose starts, so this bridges
+ * its off-thread menu callbacks to Compose via flows.
+ */
+private object DesktopTray {
+    val isLinux = System.getProperty("os.name").lowercase().let { it.contains("linux") || it.contains("nix") || it.contains("nux") }
+    val windowVisible = MutableStateFlow(true)
+    val quitRequested = MutableStateFlow(false)
+
+    @Volatile
+    var instance: NativeTray? = null
+}
+
 fun main() {
+    // The dorkbox tray MUST be created before Compose/AWT initializes GTK:
+    // dorkbox has to own GTK loading, otherwise the AppIndicator backend fails
+    // to start and SystemTray.get() returns null even when
+    // libayatana-appindicator is installed. So build it here, first thing.
+    if (DesktopTray.isLinux && System.getenv("AMBER_DISABLE_TRAY") == null) {
+        DesktopTray.instance = NativeTray.create(
+            iconStream = { NativeTray::class.java.getResourceAsStream("/icon.png") },
+            tooltip = Strings.get("d_tray_tooltip"),
+            openLabel = Strings.get("d_tray_open"),
+            lockLabel = Strings.get("d_lock_now"),
+            quitLabel = Strings.get("d_tray_quit"),
+            onToggle = { DesktopTray.windowVisible.value = !DesktopTray.windowVisible.value },
+            onLock = { PassphraseLock.lock() },
+            onQuit = { DesktopTray.quitRequested.value = true },
+        )
+    }
+
     Session.boot()
 
     application {
@@ -112,40 +143,21 @@ fun main() {
         val settings by SettingsStore.settings.collectAsState()
         val language by Strings.currentLanguage.collectAsState()
         val lockStatus by PassphraseLock.state.collectAsState()
-        // Window visibility is a flow so the native tray's menu callbacks (which
-        // fire on the tray library's own thread) can toggle it safely.
-        val windowVisibleState = remember { MutableStateFlow(true) }
-        val windowVisible by windowVisibleState.collectAsState()
+        val windowVisible by DesktopTray.windowVisible.collectAsState()
+        val quitRequested by DesktopTray.quitRequested.collectAsState()
         val trayState = rememberTrayState()
+        val isLinux = DesktopTray.isLinux
+        val nativeTray = DesktopTray.instance
 
-        val isLinux = remember {
-            System.getProperty("os.name").lowercase().let { it.contains("linux") || it.contains("nix") || it.contains("nux") }
-        }
         // AWT's tray only works with an XEmbed host, which excludes Wayland; on
-        // Linux we use the dorkbox tray (StatusNotifierItem/AppIndicator)
-        // instead, and keep AWT for Windows/macOS where it works well.
+        // Linux we use the dorkbox tray (created above) instead, and keep AWT
+        // for Windows/macOS where it works well.
         val awtTrayUsable = remember {
             !isLinux && isTraySupported && runCatching { java.awt.SystemTray.getSystemTray() }.isSuccess
         }
-        val nativeTray = remember {
-            // Escape hatch for environments where the native GTK/tray stack
-            // misbehaves: set AMBER_DISABLE_TRAY to skip it (the app then just
-            // exits on window close, and notifications still work).
-            if (isLinux && System.getenv("AMBER_DISABLE_TRAY") == null) {
-                NativeTray.create(
-                    iconStream = { NativeTray::class.java.getResourceAsStream("/icon.png") },
-                    tooltip = Strings.get("d_tray_tooltip", language),
-                    openLabel = Strings.get("d_tray_open", language),
-                    lockLabel = Strings.get("d_lock_now", language),
-                    quitLabel = Strings.get("d_tray_quit", language),
-                    onToggle = { windowVisibleState.value = !windowVisibleState.value },
-                    onLock = { PassphraseLock.lock() },
-                    onQuit = { java.awt.EventQueue.invokeLater { exitApplication() } },
-                )
-            } else {
-                null
-            }
-        }
+
+        // The tray's Quit routes here so we can exit the Compose app cleanly.
+        LaunchedEffect(quitRequested) { if (quitRequested) exitApplication() }
         DisposableEffect(Unit) { onDispose { nativeTray?.shutdown() } }
         LaunchedEffect(pending.size, windowVisible, lockStatus, language) {
             nativeTray?.update(
@@ -186,7 +198,7 @@ fun main() {
                         )
                     }
                 }
-                windowVisibleState.value = true
+                DesktopTray.windowVisible.value = true
             }
             seenPending = pending.size
         }
@@ -196,11 +208,11 @@ fun main() {
                 icon = painterResource("icon.png"),
                 state = trayState,
                 tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
-                onAction = { windowVisibleState.value = true },
+                onAction = { DesktopTray.windowVisible.value = true },
                 menu = {
                     Item(
                         if (windowVisible) Strings.get("d_tray_hide", language) else Strings.get("d_tray_open", language),
-                        onClick = { windowVisibleState.value = !windowVisibleState.value },
+                        onClick = { DesktopTray.windowVisible.value = !DesktopTray.windowVisible.value },
                     )
                     if (lockStatus == PassphraseLock.Status.UNLOCKED) {
                         Item(Strings.get("d_lock_now", language), onClick = { PassphraseLock.lock() })
@@ -214,7 +226,7 @@ fun main() {
         Window(
             onCloseRequest = {
                 if (trayActive) {
-                    windowVisibleState.value = false
+                    DesktopTray.windowVisible.value = false
                 } else {
                     exitApplication()
                 }
@@ -227,7 +239,7 @@ fun main() {
                 handleShortcut(
                     event,
                     hideWindow = {
-                        if (trayActive) windowVisibleState.value = false else exitApplication()
+                        if (trayActive) DesktopTray.windowVisible.value = false else exitApplication()
                     },
                     quit = ::exitApplication,
                 )

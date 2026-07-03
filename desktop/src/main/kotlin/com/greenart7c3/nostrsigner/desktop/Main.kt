@@ -157,7 +157,12 @@ fun main() {
         }
 
         val trayUsable = awtTrayUsable || nativeTray != null
-        val trayActive = trayUsable && settings.closeToTray
+        // "Minimize to tray" should keep Amber running in the background so it
+        // still answers requests. On Linux we honor it whenever close-to-tray
+        // is enabled — even if no tray icon could be published (Wayland trays
+        // are flaky) — so the window at least hides instead of quitting; a new
+        // request (or the tray icon, when present) brings it back.
+        val trayActive = settings.closeToTray && (trayUsable || isLinux)
 
         // Notify and surface the window whenever a new approval request arrives.
         var seenPending by remember { mutableStateOf(0) }

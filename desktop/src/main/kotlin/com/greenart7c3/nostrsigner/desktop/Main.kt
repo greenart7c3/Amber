@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.Notifier
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
@@ -27,8 +28,10 @@ import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
 import com.greenart7c3.nostrsigner.desktop.ui.handleShortcut
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 /** Desktop counterpart of `AccountStateViewModel`: which account is active. */
 object Session {
@@ -119,14 +122,22 @@ fun main() {
         LaunchedEffect(pending.size) {
             if (pending.size > seenPending) {
                 val request = pending.last()
-                if (settings.showNotifications && trayUsable) {
-                    trayState.sendNotification(
-                        Notification(
-                            title = "Amber",
-                            message = "${request.appName} ${request.type.describe(request.kind, language)}",
-                            type = Notification.Type.Info,
-                        ),
-                    )
+                if (settings.showNotifications) {
+                    val message = "${request.appName} ${request.type.describe(request.kind, language)}"
+                    // Prefer the OS-native notification channel (freedesktop /
+                    // notify-send on Linux, incl. Wayland/Hyprland; osascript on
+                    // macOS). Only fall back to the AWT tray notification — which
+                    // needs a usable system tray — when there is no native channel.
+                    val delivered = withContext(Dispatchers.IO) { Notifier.notify("Amber", message) }
+                    if (!delivered && trayUsable) {
+                        trayState.sendNotification(
+                            Notification(
+                                title = "Amber",
+                                message = message,
+                                type = Notification.Type.Info,
+                            ),
+                        )
+                    }
                 }
                 windowVisible = true
             }

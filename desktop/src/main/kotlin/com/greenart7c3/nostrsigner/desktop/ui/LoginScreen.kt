@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +40,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.Session
 import com.greenart7c3.nostrsigner.desktop.core.AccountManager
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
 
 @Composable
@@ -47,6 +49,7 @@ fun LoginScreen(
     snackbarHostState: SnackbarHostState,
 ) {
     val scope = rememberCoroutineScope()
+    val language by Strings.currentLanguage.collectAsState()
     var tab by remember { mutableStateOf(0) }
 
     LaunchedEffect(Unit) {
@@ -70,15 +73,15 @@ fun LoginScreen(
                     fontWeight = FontWeight.Bold,
                 )
                 Text(
-                    "Nostr event signer",
+                    Strings.get("d_tagline", language),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                 )
                 Spacer(Modifier.height(24.dp))
 
                 TabRow(selectedTabIndex = tab) {
-                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Add a key") })
-                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Create a new key") })
+                    Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(Strings.get("d_add_a_key", language)) })
+                    Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(Strings.get("d_create_a_new_key", language)) })
                 }
                 Spacer(Modifier.height(24.dp))
 
@@ -90,7 +93,7 @@ fun LoginScreen(
 
                 if (hasAccounts) {
                     TextButton(onClick = { Session.addingAccount.value = false }) {
-                        Text("Cancel")
+                        Text(Strings.get("cancel", language))
                     }
                 }
             }
@@ -100,6 +103,7 @@ fun LoginScreen(
 
 @Composable
 private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
+    val language by Strings.currentLanguage.collectAsState()
     var key by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
@@ -107,7 +111,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     OutlinedTextField(
         value = key,
         onValueChange = { key = it },
-        label = { Text("nsec, ncryptsec, hex key or seed words") },
+        label = { Text(Strings.get("d_import_key_label", language)) },
         modifier = Modifier.fillMaxWidth(),
         visualTransformation = PasswordVisualTransformation(),
         keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -117,7 +121,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
         OutlinedTextField(
             value = password,
             onValueChange = { password = it },
-            label = { Text("Password") },
+            label = { Text(Strings.get("d_password", language)) },
             modifier = Modifier.fillMaxWidth(),
             visualTransformation = PasswordVisualTransformation(),
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -125,7 +129,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     }
     Spacer(Modifier.height(16.dp))
     AmberButton(
-        text = if (working) "Adding…" else "Add key",
+        text = if (working) Strings.get("d_adding", language) else Strings.get("d_add_key", language),
         fillWidth = true,
         enabled = key.isNotBlank() && !working,
         onClick = {
@@ -141,7 +145,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                         Session.onAccountAdded(account)
                     },
                     onFailure = {
-                        Toaster.toast(it.message ?: "Invalid key")
+                        Toaster.toast(it.message ?: Strings.get("d_invalid_key", language))
                     },
                 )
                 working = false
@@ -152,6 +156,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
 
 @Composable
 private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
+    val language by Strings.currentLanguage.collectAsState()
     var name by remember { mutableStateOf("") }
     var working by remember { mutableStateOf(false) }
     val seedWords = remember { AccountManager.generateSeedWords() }
@@ -159,13 +164,13 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     OutlinedTextField(
         value = name,
         onValueChange = { name = it },
-        label = { Text("Name (optional)") },
+        label = { Text(Strings.get("d_name_optional", language)) },
         modifier = Modifier.fillMaxWidth(),
     )
     Spacer(Modifier.height(16.dp))
-    Text("Your seed words", style = MaterialTheme.typography.titleMedium)
+    Text(Strings.get("d_your_seed_words", language), style = MaterialTheme.typography.titleMedium)
     Text(
-        "Write them down and keep them safe. They are the only backup of your new key.",
+        Strings.get("d_seed_words_desc", language),
         style = MaterialTheme.typography.bodySmall,
     )
     Spacer(Modifier.height(8.dp))
@@ -186,7 +191,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     }
     Spacer(Modifier.height(16.dp))
     AmberButton(
-        text = if (working) "Creating…" else "Create account",
+        text = if (working) Strings.get("d_creating", language) else Strings.get("d_create_account", language),
         fillWidth = true,
         enabled = !working,
         onClick = {
@@ -203,7 +208,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
                         Session.onAccountAdded(account)
                     },
                     onFailure = {
-                        Toaster.toast(it.message ?: "Failed to create the key")
+                        Toaster.toast(it.message ?: Strings.get("d_failed_create_key", language))
                     },
                 )
                 working = false

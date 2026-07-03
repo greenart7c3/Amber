@@ -27,9 +27,12 @@ for the JVM) and mirrors the mobile UI and permission model.
   StatusNotifierItem / AppIndicator protocol on Linux (via the dorkbox
   SystemTray library), so the icon shows on Wayland compositors such as
   Hyprland/Sway (through waybar's tray module) and on GNOME/KDE, not just
-  X11. On Wayland this needs an SNI host and, for AppIndicator, the
-  `libayatana-appindicator` runtime library. Set `AMBER_DISABLE_TRAY=1` to
-  skip the tray entirely if the native stack misbehaves.
+  X11. It needs an SNI host (e.g. waybar's `tray` module — note it may sit
+  inside a `group`/drawer that you expand to reveal the icon) and the
+  `libayatana-appindicator` runtime library; Amber automatically bridges the
+  Ayatana library to the legacy `libappindicator3` names dorkbox looks for,
+  so no compat symlink is required. `AMBER_TRAY_TYPE=Gtk|AppIndicator|AutoDetect`
+  forces the backend and `AMBER_DISABLE_TRAY=1` skips the tray entirely.
 - Notifications go through the OS-native channel: the freedesktop
   notification daemon (mako, dunst, swaync, GNOME Shell, …) via `notify-send`
   or `gdbus` on Linux — so they work on Hyprland/Wayland — `osascript` on

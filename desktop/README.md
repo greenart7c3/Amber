@@ -57,7 +57,8 @@ Ctrl on Windows/Linux, ⌘ on macOS:
 | Ctrl/⌘ + Shift + Enter | Reject the selected request |
 | Escape | Leave the application detail view |
 | Ctrl/⌘ + L | Lock (when a passphrase is set) |
-| Ctrl/⌘ + W | Hide the window (to the tray when enabled) |
+| Ctrl/⌘ + M | Minimize to tray (keep running in the background) |
+| Ctrl/⌘ + W | Same as Ctrl/⌘ + M |
 | Ctrl/⌘ + Q | Quit |
 
 Not included: NIP-55 (`nostrsigner:` intents and the content provider) —

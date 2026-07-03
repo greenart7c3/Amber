@@ -72,6 +72,10 @@ object AmberLogger {
         if (System.getenv("AMBER_DEBUG") != null) println("D/$tag: $message")
     }
 
+    fun i(tag: String, message: String) {
+        println("I/$tag: $message")
+    }
+
     fun e(tag: String, message: String, e: Throwable? = null) {
         System.err.println("E/$tag: $message")
         e?.printStackTrace()

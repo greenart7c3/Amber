@@ -126,6 +126,7 @@ private fun ImportKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     Spacer(Modifier.height(16.dp))
     AmberButton(
         text = if (working) "Adding…" else "Add key",
+        fillWidth = true,
         enabled = key.isNotBlank() && !working,
         onClick = {
             working = true
@@ -186,6 +187,7 @@ private fun NewKeyPane(scope: kotlinx.coroutines.CoroutineScope) {
     Spacer(Modifier.height(16.dp))
     AmberButton(
         text = if (working) "Creating…" else "Create account",
+        fillWidth = true,
         enabled = !working,
         onClick = {
             working = true

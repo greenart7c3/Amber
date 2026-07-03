@@ -2,7 +2,6 @@ package com.greenart7c3.nostrsigner.desktop.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
@@ -38,12 +37,17 @@ object Toaster {
     }
 }
 
-/** Mirrors the mobile AmberButton style. */
+/**
+ * Amber's primary button. Sized to its content like a native desktop control;
+ * pass [fillWidth] for the few centered forms (login/unlock) that want the
+ * mobile-style full-width action.
+ */
 @Composable
 fun AmberButton(
     modifier: Modifier = Modifier,
     text: String,
     enabled: Boolean = true,
+    fillWidth: Boolean = false,
     onClick: () -> Unit,
 ) {
     Button(
@@ -51,7 +55,7 @@ fun AmberButton(
         shape = ButtonBorder,
         enabled = enabled,
         colors = ButtonDefaults.buttonColors(containerColor = orange, contentColor = Color.White),
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = if (fillWidth) modifier.fillMaxWidth() else modifier,
     ) {
         Text(text)
     }
@@ -61,12 +65,13 @@ fun AmberButton(
 fun AmberOutlinedButton(
     modifier: Modifier = Modifier,
     text: String,
+    fillWidth: Boolean = false,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
         shape = ButtonBorder,
-        modifier = modifier.fillMaxWidth().padding(vertical = 4.dp),
+        modifier = if (fillWidth) modifier.fillMaxWidth() else modifier,
     ) {
         Text(text)
     }

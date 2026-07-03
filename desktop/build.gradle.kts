@@ -23,6 +23,10 @@ dependencies {
     // OS credential stores (macOS Keychain, Windows Credential Manager,
     // freedesktop Secret Service) for the keystore password.
     implementation(libs.java.keyring)
+    // Cross-platform system tray. Unlike AWT's SystemTray it speaks the
+    // freedesktop StatusNotifierItem / AppIndicator protocol, so a tray icon
+    // shows on Wayland compositors (Hyprland, Sway, GNOME) via waybar etc.
+    implementation(libs.dorkbox.systemtray)
     runtimeOnly(libs.slf4j.nop)
 
     // Argon2id for the optional passphrase lock.

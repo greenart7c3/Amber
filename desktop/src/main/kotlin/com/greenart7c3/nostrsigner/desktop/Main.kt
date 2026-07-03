@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -110,11 +111,52 @@ fun main() {
         val pending by AmberDesktop.engine.pending.collectAsState()
         val settings by SettingsStore.settings.collectAsState()
         val language by Strings.currentLanguage.collectAsState()
-        var windowVisible by remember { mutableStateOf(true) }
+        val lockStatus by PassphraseLock.state.collectAsState()
+        // Window visibility is a flow so the native tray's menu callbacks (which
+        // fire on the tray library's own thread) can toggle it safely.
+        val windowVisibleState = remember { MutableStateFlow(true) }
+        val windowVisible by windowVisibleState.collectAsState()
         val trayState = rememberTrayState()
-        // AWT may claim support but fail to actually add the icon (e.g. bare
-        // X servers without a notification area); treat that as unsupported.
-        val trayUsable = remember { isTraySupported && runCatching { java.awt.SystemTray.getSystemTray() }.isSuccess }
+
+        val isLinux = remember {
+            System.getProperty("os.name").lowercase().let { it.contains("linux") || it.contains("nix") || it.contains("nux") }
+        }
+        // AWT's tray only works with an XEmbed host, which excludes Wayland; on
+        // Linux we use the dorkbox tray (StatusNotifierItem/AppIndicator)
+        // instead, and keep AWT for Windows/macOS where it works well.
+        val awtTrayUsable = remember {
+            !isLinux && isTraySupported && runCatching { java.awt.SystemTray.getSystemTray() }.isSuccess
+        }
+        val nativeTray = remember {
+            // Escape hatch for environments where the native GTK/tray stack
+            // misbehaves: set AMBER_DISABLE_TRAY to skip it (the app then just
+            // exits on window close, and notifications still work).
+            if (isLinux && System.getenv("AMBER_DISABLE_TRAY") == null) {
+                NativeTray.create(
+                    iconStream = { NativeTray::class.java.getResourceAsStream("/icon.png") },
+                    tooltip = Strings.get("d_tray_tooltip", language),
+                    openLabel = Strings.get("d_tray_open", language),
+                    lockLabel = Strings.get("d_lock_now", language),
+                    quitLabel = Strings.get("d_tray_quit", language),
+                    onToggle = { windowVisibleState.value = !windowVisibleState.value },
+                    onLock = { PassphraseLock.lock() },
+                    onQuit = { java.awt.EventQueue.invokeLater { exitApplication() } },
+                )
+            } else {
+                null
+            }
+        }
+        DisposableEffect(Unit) { onDispose { nativeTray?.shutdown() } }
+        LaunchedEffect(pending.size, windowVisible, lockStatus, language) {
+            nativeTray?.update(
+                tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
+                openLabel = if (windowVisible) Strings.get("d_tray_hide", language) else Strings.get("d_tray_open", language),
+                lockLabel = Strings.get("d_lock_now", language),
+                showLock = lockStatus == PassphraseLock.Status.UNLOCKED,
+            )
+        }
+
+        val trayUsable = awtTrayUsable || nativeTray != null
         val trayActive = trayUsable && settings.closeToTray
 
         // Notify and surface the window whenever a new approval request arrives.
@@ -129,7 +171,7 @@ fun main() {
                     // macOS). Only fall back to the AWT tray notification — which
                     // needs a usable system tray — when there is no native channel.
                     val delivered = withContext(Dispatchers.IO) { Notifier.notify("Amber", message) }
-                    if (!delivered && trayUsable) {
+                    if (!delivered && awtTrayUsable) {
                         trayState.sendNotification(
                             Notification(
                                 title = "Amber",
@@ -139,22 +181,21 @@ fun main() {
                         )
                     }
                 }
-                windowVisible = true
+                windowVisibleState.value = true
             }
             seenPending = pending.size
         }
 
-        if (trayUsable) {
-            val lockStatus by PassphraseLock.state.collectAsState()
+        if (awtTrayUsable) {
             Tray(
                 icon = painterResource("icon.png"),
                 state = trayState,
                 tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
-                onAction = { windowVisible = true },
+                onAction = { windowVisibleState.value = true },
                 menu = {
                     Item(
                         if (windowVisible) Strings.get("d_tray_hide", language) else Strings.get("d_tray_open", language),
-                        onClick = { windowVisible = !windowVisible },
+                        onClick = { windowVisibleState.value = !windowVisibleState.value },
                     )
                     if (lockStatus == PassphraseLock.Status.UNLOCKED) {
                         Item(Strings.get("d_lock_now", language), onClick = { PassphraseLock.lock() })
@@ -168,7 +209,7 @@ fun main() {
         Window(
             onCloseRequest = {
                 if (trayActive) {
-                    windowVisible = false
+                    windowVisibleState.value = false
                 } else {
                     exitApplication()
                 }
@@ -181,7 +222,7 @@ fun main() {
                 handleShortcut(
                     event,
                     hideWindow = {
-                        if (trayActive) windowVisible = false else exitApplication()
+                        if (trayActive) windowVisibleState.value = false else exitApplication()
                     },
                     quit = ::exitApplication,
                 )

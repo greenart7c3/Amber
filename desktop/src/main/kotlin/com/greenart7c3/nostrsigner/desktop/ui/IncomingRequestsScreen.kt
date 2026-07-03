@@ -130,9 +130,11 @@ private fun RequestCard(req: PendingBunkerRequest) {
                 Spacer(Modifier.height(8.dp))
             }
 
-            Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
                 AmberButton(
-                    modifier = Modifier.weight(1f),
                     text = if (working) "Working…" else "Approve",
                     enabled = !working,
                     onClick = {
@@ -149,13 +151,18 @@ private fun RequestCard(req: PendingBunkerRequest) {
                     },
                 )
                 AmberOutlinedButton(
-                    modifier = Modifier.weight(1f),
                     text = "Reject",
                     onClick = {
                         working = true
                         AmberDesktop.engine.reject(req, rememberType)
                         Toaster.toast("Request rejected")
                     },
+                )
+                Spacer(Modifier.weight(1f))
+                Text(
+                    "${shortcutLabel("↵")} approve · ${shortcutLabel("↵", shift = true)} reject",
+                    style = MaterialTheme.typography.labelSmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }

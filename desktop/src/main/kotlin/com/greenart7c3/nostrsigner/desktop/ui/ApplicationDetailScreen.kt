@@ -9,11 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -62,32 +62,37 @@ fun ApplicationDetailScreen(
     var name by remember { mutableStateOf(app.app.name) }
 
     Column(Modifier.fillMaxSize()) {
-        Spacer(Modifier.height(12.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
                 Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
             }
-            Text(
-                app.app.displayName(),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-            )
+            Column {
+                Text(
+                    app.app.displayName(),
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.SemiBold,
+                )
+                Text(
+                    buildString {
+                        append("Key: ${app.app.key.toShortenHex()}")
+                        if (app.app.relays.isNotEmpty()) append(" · Relays: ${app.app.relays.joinToString()}")
+                    },
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
-        Text("Key: ${app.app.key.toShortenHex()}", style = MaterialTheme.typography.bodySmall)
-        if (app.app.relays.isNotEmpty()) {
-            Text("Relays: ${app.app.relays.joinToString()}", style = MaterialTheme.typography.bodySmall)
-        }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Name") },
-                modifier = Modifier.weight(1f),
+                singleLine = true,
+                modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                modifier = Modifier.weight(0.4f),
                 text = "Save",
                 onClick = {
                     store.upsert(app.copy(app = app.app.copy(name = name)))
@@ -95,7 +100,7 @@ fun ApplicationDetailScreen(
                 },
             )
         }
-        Spacer(Modifier.height(8.dp))
+        Spacer(Modifier.height(12.dp))
 
         TabRow(selectedTabIndex = tab) {
             Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Permissions") })
@@ -106,55 +111,54 @@ fun ApplicationDetailScreen(
         if (tab == 0) {
             LazyColumn(
                 Modifier.weight(1f),
-                verticalArrangement = Arrangement.spacedBy(4.dp),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
                 items(app.permissions.size) { index ->
                     val permission = app.permissions[index]
-                    Card(Modifier.fillMaxWidth()) {
-                        Row(
-                            Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Column(Modifier.weight(1f)) {
-                                Text(
-                                    permission.type + (permission.kind?.let { " (kind $it)" } ?: ""),
-                                    style = MaterialTheme.typography.bodyMedium,
-                                )
-                                val until = if (permission.acceptable) permission.acceptUntil else permission.rejectUntil
-                                val untilLabel = when {
-                                    until >= Long.MAX_VALUE / 1000 -> "always"
-                                    until > TimeUtils.now() -> "until ${DateFormat.getDateTimeInstance().format(Date(until * 1000))}"
-                                    else -> "expired"
-                                }
-                                Text(
-                                    (if (permission.acceptable) "Accept" else "Reject") + " · $untilLabel",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                            }
-                            Switch(
-                                checked = permission.acceptable,
-                                onCheckedChange = { accepted ->
-                                    val newPermissions = app.permissions.toMutableList()
-                                    newPermissions[index] = permission.copy(
-                                        acceptable = accepted,
-                                        acceptUntil = if (accepted) RememberType.ALWAYS.acceptUntil() else 0,
-                                        rejectUntil = if (accepted) 0 else RememberType.ALWAYS.acceptUntil(),
-                                    )
-                                    store.upsert(app.copy(permissions = newPermissions))
-                                },
+                    Row(
+                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                permission.type + (permission.kind?.let { " (kind $it)" } ?: ""),
+                                style = MaterialTheme.typography.bodyMedium,
                             )
-                            IconButton(
-                                onClick = {
-                                    val newPermissions = app.permissions.toMutableList()
-                                    newPermissions.removeAt(index)
-                                    store.upsert(app.copy(permissions = newPermissions))
-                                },
-                            ) {
-                                Icon(Icons.Default.Delete, "Delete permission")
+                            val until = if (permission.acceptable) permission.acceptUntil else permission.rejectUntil
+                            val untilLabel = when {
+                                until >= Long.MAX_VALUE / 1000 -> "always"
+                                until > TimeUtils.now() -> "until ${DateFormat.getDateTimeInstance().format(Date(until * 1000))}"
+                                else -> "expired"
                             }
+                            Text(
+                                (if (permission.acceptable) "Accept" else "Reject") + " · $untilLabel",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        Switch(
+                            checked = permission.acceptable,
+                            onCheckedChange = { accepted ->
+                                val newPermissions = app.permissions.toMutableList()
+                                newPermissions[index] = permission.copy(
+                                    acceptable = accepted,
+                                    acceptUntil = if (accepted) RememberType.ALWAYS.acceptUntil() else 0,
+                                    rejectUntil = if (accepted) 0 else RememberType.ALWAYS.acceptUntil(),
+                                )
+                                store.upsert(app.copy(permissions = newPermissions))
+                            },
+                        )
+                        IconButton(
+                            onClick = {
+                                val newPermissions = app.permissions.toMutableList()
+                                newPermissions.removeAt(index)
+                                store.upsert(app.copy(permissions = newPermissions))
+                            },
+                        ) {
+                            Icon(Icons.Default.Delete, "Delete permission")
                         }
                     }
+                    HorizontalDivider()
                 }
             }
         } else {
@@ -187,7 +191,8 @@ fun ApplicationDetailScreen(
             }
         }
 
-        AmberButton(
+        Spacer(Modifier.height(8.dp))
+        AmberOutlinedButton(
             text = "Disconnect and delete application",
             onClick = {
                 // Deleting drops this screen from composition, so run the

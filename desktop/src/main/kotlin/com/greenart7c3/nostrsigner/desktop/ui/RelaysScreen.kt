@@ -9,10 +9,11 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.Card
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -40,23 +41,15 @@ fun RelaysScreen() {
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxSize()) {
-        Spacer(Modifier.height(12.dp))
-        Text("Default bunker relays", style = MaterialTheme.typography.titleMedium)
-        Text(
-            "New bunker connections listen and respond on these relays.",
-            style = MaterialTheme.typography.bodySmall,
-        )
-        Spacer(Modifier.height(8.dp))
-
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = newRelay,
                 onValueChange = { newRelay = it },
                 label = { Text("wss://relay.example.com") },
-                modifier = Modifier.weight(1f),
+                singleLine = true,
+                modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                modifier = Modifier.weight(0.3f),
                 text = "Add",
                 onClick = {
                     val normalized = RelayUrlNormalizer.normalizeOrNull(newRelay.trim())
@@ -79,37 +72,36 @@ fun RelaysScreen() {
 
         LazyColumn(
             Modifier.weight(1f),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
             contentPadding = PaddingValues(bottom = 8.dp),
         ) {
             items(settings.defaultRelays.size) { index ->
                 val relay = settings.defaultRelays[index]
-                Card(Modifier.fillMaxWidth()) {
-                    Row(
-                        Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically,
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
+                    IconButton(
+                        onClick = {
+                            if (settings.defaultRelays.size == 1) {
+                                Toaster.toast("At least one relay is required")
+                                return@IconButton
+                            }
+                            SettingsStore.update {
+                                it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
+                            }
+                            scope.launch { AmberDesktop.engine.updateFilter() }
+                        },
                     ) {
-                        Text(relay, Modifier.weight(1f), style = MaterialTheme.typography.bodyMedium)
-                        IconButton(
-                            onClick = {
-                                if (settings.defaultRelays.size == 1) {
-                                    Toaster.toast("At least one relay is required")
-                                    return@IconButton
-                                }
-                                SettingsStore.update {
-                                    it.copy(defaultRelays = it.defaultRelays.filter { url -> url != relay })
-                                }
-                                scope.launch { AmberDesktop.engine.updateFilter() }
-                            },
-                        ) {
-                            Icon(Icons.Default.Delete, "Remove relay")
-                        }
+                        Icon(Icons.Default.Delete, "Remove relay")
                     }
                 }
+                HorizontalDivider()
             }
         }
 
-        AmberButton(
+        Spacer(Modifier.height(8.dp))
+        AmberOutlinedButton(
             text = "Reconnect relays",
             onClick = {
                 scope.launch {

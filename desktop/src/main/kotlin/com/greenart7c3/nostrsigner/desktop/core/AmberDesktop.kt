@@ -78,6 +78,15 @@ object AmberDesktop {
         accountCache.clear()
     }
 
+    /**
+     * Rewrites every account's database in the current encryption state.
+     * Invoked when the passphrase lock is enabled or removed so the on-disk
+     * apps/history/logs are re-encrypted (or decrypted) immediately.
+     */
+    fun rewriteAllStores() {
+        AccountsStore.accounts.value.forEach { store(it.npub).rewriteAll() }
+    }
+
     val settings: DesktopSettings get() = SettingsStore.settings.value
 
     fun defaultRelays(): List<NormalizedRelayUrl> = settings.normalizedDefaultRelays()

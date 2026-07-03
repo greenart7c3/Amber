@@ -43,36 +43,37 @@ object DesktopKeyStore {
 
     class LockedException : IllegalStateException("The key store is locked. Unlock it with your passphrase first.")
 
-    suspend fun encrypt(plainText: String): String = mutex.withLock {
+    suspend fun encrypt(plainText: String): String = mutex.withLock { encryptString(plainText) }
+
+    suspend fun decrypt(encryptedText: String): String = mutex.withLock { decryptString(encryptedText) }
+
+    /**
+     * Synchronous AES-256-GCM encryption with the master key, for the storage
+     * layer (which reads/writes files on its own threads). Requires the master
+     * key to be available — throws [LockedException] when the passphrase lock
+     * is engaged and the app has not been unlocked.
+     */
+    fun encryptString(plainText: String): String {
         val key = getOrCreateSecretKey()
         val cipher = Cipher.getInstance(TRANSFORMATION)
-
         cipher.init(Cipher.ENCRYPT_MODE, key)
         val iv = cipher.iv
-
         val cipherText = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
-
         val combined = ByteBuffer.allocate(iv.size + cipherText.size)
         combined.put(iv)
         combined.put(cipherText)
-
         return Base64.getEncoder().withoutPadding().encodeToString(combined.array())
     }
 
-    suspend fun decrypt(encryptedText: String): String = mutex.withLock {
+    fun decryptString(encryptedText: String): String {
         val key = getOrCreateSecretKey()
         val data = Base64.getDecoder().decode(encryptedText)
         val buffer = ByteBuffer.wrap(data)
-
         val iv = ByteArray(IV_SIZE).also { buffer.get(it) }
         val cipherText = ByteArray(buffer.remaining()).also { buffer.get(it) }
-
         val cipher = Cipher.getInstance(TRANSFORMATION)
-        val spec = GCMParameterSpec(TAG_SIZE, iv)
-        cipher.init(Cipher.DECRYPT_MODE, key, spec)
-
-        val plainBytes = cipher.doFinal(cipherText)
-        return String(plainBytes, Charsets.UTF_8)
+        cipher.init(Cipher.DECRYPT_MODE, key, GCMParameterSpec(TAG_SIZE, iv))
+        return String(cipher.doFinal(cipherText), Charsets.UTF_8)
     }
 
     // ----- master key management (used by PassphraseLock) -----
@@ -148,6 +149,7 @@ object DesktopKeyStore {
         AppDirs.restrictToOwner(keyStoreFile)
     }
 
+    @Synchronized
     private fun getOrCreateSecretKey(): SecretKey {
         cachedKey?.let { return it }
         if (PassphraseLock.isEnabled()) {
@@ -155,6 +157,9 @@ object DesktopKeyStore {
         }
         return loadOrCreateFromKeystore()
     }
+
+    /** True when the master key is in memory (or loadable without a passphrase). */
+    fun isMasterKeyAvailable(): Boolean = cachedKey != null || !PassphraseLock.isEnabled()
 
     private fun loadOrCreateFromKeystore(): SecretKey {
         cachedKey?.let { return it }

@@ -8,6 +8,20 @@ import kotlinx.coroutines.flow.MutableStateFlow
 
 private val mapper = jacksonObjectMapper().configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
 
+/** Header on a file whose JSON payload is AES-GCM encrypted with the master key. */
+private const val ENC_MARKER = "AMBERENC1:"
+
+private fun atomicWrite(file: File, payload: String) {
+    val tmp = File(file.parentFile, "${file.name}.tmp")
+    tmp.writeText(payload)
+    if (!tmp.renameTo(file)) {
+        // Windows can refuse an atomic replace; fall back to copy + delete.
+        file.writeText(payload)
+        tmp.delete()
+    }
+    AppDirs.restrictToOwner(file)
+}
+
 private inline fun <reified T> readJson(file: File): T? = try {
     if (file.exists()) mapper.readValue<T>(file.readText()) else null
 } catch (e: Exception) {
@@ -16,14 +30,41 @@ private inline fun <reified T> readJson(file: File): T? = try {
 }
 
 private fun writeJson(file: File, value: Any) {
-    val tmp = File(file.parentFile, "${file.name}.tmp")
-    tmp.writeText(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value))
-    if (!tmp.renameTo(file)) {
-        // Windows can refuse an atomic replace; fall back to copy + delete.
-        file.writeText(tmp.readText())
-        tmp.delete()
+    atomicWrite(file, mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value))
+}
+
+/**
+ * Reads a JSON file that may be encrypted. Encrypted files carry the
+ * [ENC_MARKER] header (written while a passphrase is set); plaintext files
+ * are read as-is, so installs that predate the passphrase migrate
+ * transparently.
+ */
+private inline fun <reified T> readSecure(file: File): T? = try {
+    if (!file.exists()) {
+        null
+    } else {
+        val raw = file.readText()
+        val json = if (raw.startsWith(ENC_MARKER)) DesktopKeyStore.decryptString(raw.substring(ENC_MARKER.length)) else raw
+        mapper.readValue<T>(json)
     }
-    AppDirs.restrictToOwner(file)
+} catch (e: Exception) {
+    AmberLogger.e("Storage", "Failed to read ${file.name}", e)
+    null
+}
+
+/**
+ * Writes a JSON file, encrypting the payload with the master key whenever a
+ * passphrase lock is set. Refuses to write while locked rather than clobber
+ * ciphertext with an empty document.
+ */
+private fun writeSecure(file: File, value: Any) {
+    val encrypt = PassphraseLock.isEnabled()
+    if (encrypt && !DesktopKeyStore.isMasterKeyAvailable()) {
+        AmberLogger.e("Storage", "Refusing to write ${file.name} while the key store is locked")
+        return
+    }
+    val json = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(value)
+    atomicWrite(file, if (encrypt) ENC_MARKER + DesktopKeyStore.encryptString(json) else json)
 }
 
 object AmberLogger {
@@ -49,9 +90,13 @@ class AccountStore(val npub: String) {
     private val historyFile = File(dir, "history.json")
     private val logsFile = File(dir, "logs.json")
 
-    val apps = MutableStateFlow(readJson<List<AppWithPermissions>>(appsFile) ?: emptyList())
-    val history = MutableStateFlow(readJson<List<HistoryRecord>>(historyFile) ?: emptyList())
-    val logs = MutableStateFlow(readJson<List<LogRecord>>(logsFile) ?: emptyList())
+    // The per-account database (apps + permissions, request history, relay
+    // logs) is the sensitive metadata about who you sign for, so it is
+    // encrypted at rest with the master key whenever a passphrase lock is set
+    // (see writeSecure/readSecure).
+    val apps = MutableStateFlow(readSecure<List<AppWithPermissions>>(appsFile) ?: emptyList())
+    val history = MutableStateFlow(readSecure<List<HistoryRecord>>(historyFile) ?: emptyList())
+    val logs = MutableStateFlow(readSecure<List<LogRecord>>(logsFile) ?: emptyList())
 
     fun getByKey(key: String): AppWithPermissions? = apps.value.firstOrNull { it.app.key == key }
 
@@ -64,34 +109,47 @@ class AccountStore(val npub: String) {
     @Synchronized
     fun upsert(app: AppWithPermissions) {
         apps.value = apps.value.filter { it.app.key != app.app.key } + app
-        writeJson(appsFile, apps.value)
+        writeSecure(appsFile, apps.value)
     }
 
     @Synchronized
     fun delete(key: String) {
         apps.value = apps.value.filter { it.app.key != key }
         history.value = history.value.filter { it.appKey != key }
-        writeJson(appsFile, apps.value)
-        writeJson(historyFile, history.value)
+        writeSecure(appsFile, apps.value)
+        writeSecure(historyFile, history.value)
     }
 
     @Synchronized
     fun addHistory(record: HistoryRecord) {
         history.value = (history.value + record).takeLast(MAX_HISTORY)
-        writeJson(historyFile, history.value)
+        writeSecure(historyFile, history.value)
     }
 
     @Synchronized
     fun addLog(url: String, type: String, message: String) {
         AmberLogger.d("Amber", "$url: $message")
         logs.value = (logs.value + LogRecord(url, type, message, System.currentTimeMillis())).takeLast(MAX_LOGS)
-        writeJson(logsFile, logs.value)
+        writeSecure(logsFile, logs.value)
     }
 
     @Synchronized
     fun clearLogs() {
         logs.value = emptyList()
-        writeJson(logsFile, logs.value)
+        writeSecure(logsFile, logs.value)
+    }
+
+    /**
+     * Rewrites all files in the current encryption state. Called when the
+     * passphrase lock is enabled (plaintext → encrypted) or removed
+     * (encrypted → plaintext) so at-rest data matches immediately rather than
+     * only on the next natural write.
+     */
+    @Synchronized
+    fun rewriteAll() {
+        writeSecure(appsFile, apps.value)
+        writeSecure(historyFile, history.value)
+        writeSecure(logsFile, logs.value)
     }
 
     fun deleteAllFiles() {

@@ -36,8 +36,10 @@ Ctrl on Windows/Linux, ⌘ on macOS:
 | Shortcut | Action |
 |----------|--------|
 | Ctrl/⌘ + 1–4 | Switch between Incoming requests / Applications / Relays / Settings |
-| Ctrl/⌘ + Enter | Approve the first pending request (just once) |
-| Ctrl/⌘ + Shift + Enter | Reject the first pending request |
+| ↑ / ↓ | Select a pending request (Incoming requests) |
+| ← / → | Cycle the selected request's "Remember" duration |
+| Ctrl/⌘ + Enter | Approve the selected request with the chosen duration |
+| Ctrl/⌘ + Shift + Enter | Reject the selected request |
 | Escape | Leave the application detail view |
 | Ctrl/⌘ + L | Lock (when a passphrase is set) |
 | Ctrl/⌘ + W | Hide the window (to the tray when enabled) |

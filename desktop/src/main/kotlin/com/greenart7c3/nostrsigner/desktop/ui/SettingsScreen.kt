@@ -9,10 +9,10 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Card
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -58,18 +58,16 @@ fun SettingsScreen(account: DesktopAccount) {
     var name by remember { mutableStateOf(account.name.value) }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Spacer(Modifier.height(12.dp))
-
         SectionTitle("Account")
-        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
                 label = { Text("Name") },
-                modifier = Modifier.weight(1f),
+                singleLine = true,
+                modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                modifier = Modifier.weight(0.4f),
                 text = "Save",
                 onClick = {
                     account.name.value = name
@@ -78,7 +76,11 @@ fun SettingsScreen(account: DesktopAccount) {
                 },
             )
         }
-        Text("Public key: ${account.npub}", style = MaterialTheme.typography.bodySmall)
+        Text(
+            "Public key: ${account.npub}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
         Spacer(Modifier.height(8.dp))
         AmberButton(text = "Backup keys", onClick = { showBackupDialog = true })
 
@@ -139,31 +141,35 @@ fun SettingsScreen(account: DesktopAccount) {
         Spacer(Modifier.height(16.dp))
         SectionTitle("Accounts")
         accounts.forEach { record ->
-            Card(Modifier.fillMaxWidth().padding(vertical = 2.dp)) {
-                Row(
-                    Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                    verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                Column(Modifier.weight(1f)) {
+                    Text(
+                        record.name.ifBlank { record.npub.toShortenHex() },
+                        style = MaterialTheme.typography.bodyMedium,
+                    )
+                    if (record.npub == account.npub) {
                         Text(
-                            record.name.ifBlank { record.npub.toShortenHex() },
-                            style = MaterialTheme.typography.bodyMedium,
+                            "Active",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                        if (record.npub == account.npub) {
-                            Text("Active", style = MaterialTheme.typography.bodySmall)
-                        }
-                    }
-                    if (record.npub != account.npub) {
-                        TextButton(onClick = { scope.launch { Session.switchTo(record.npub) } }) {
-                            Text("Switch")
-                        }
-                    }
-                    TextButton(onClick = { showLogoutConfirm = record.npub }) {
-                        Text("Log out")
                     }
                 }
+                if (record.npub != account.npub) {
+                    TextButton(onClick = { scope.launch { Session.switchTo(record.npub) } }) {
+                        Text("Switch")
+                    }
+                }
+                TextButton(onClick = { showLogoutConfirm = record.npub }) {
+                    Text("Log out")
+                }
             }
+            HorizontalDivider()
         }
+        Spacer(Modifier.height(8.dp))
         AmberOutlinedButton(text = "Add an account", onClick = { Session.addingAccount.value = true })
 
         Spacer(Modifier.height(16.dp))
@@ -249,19 +255,16 @@ private fun SecuritySection() {
         )
         AmberButton(text = "Set a passphrase", onClick = { dialog = PassphraseDialogMode.SET })
     } else {
-        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             AmberOutlinedButton(
-                modifier = Modifier.weight(1f),
                 text = "Lock now",
                 onClick = { PassphraseLock.lock() },
             )
             AmberOutlinedButton(
-                modifier = Modifier.weight(1f),
                 text = "Change passphrase",
                 onClick = { dialog = PassphraseDialogMode.CHANGE },
             )
             AmberOutlinedButton(
-                modifier = Modifier.weight(1f),
                 text = "Remove passphrase",
                 onClick = { showRemoveConfirm = true },
             )

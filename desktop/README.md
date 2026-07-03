@@ -25,7 +25,23 @@ for the JVM) and mirrors the mobile UI and permission model.
   requests raise a system notification and bring the window back — both
   configurable under Settings → Desktop
 - Optional passphrase lock (see Key storage below)
-- Light/dark theme following the mobile look
+- Native desktop layout: sidebar navigation with an account switcher, dense
+  list views, and keyboard shortcuts
+- Light/dark theme using the Amber palette
+
+## Keyboard shortcuts
+
+Ctrl on Windows/Linux, ⌘ on macOS:
+
+| Shortcut | Action |
+|----------|--------|
+| Ctrl/⌘ + 1–4 | Switch between Incoming requests / Applications / Relays / Settings |
+| Ctrl/⌘ + Enter | Approve the first pending request (just once) |
+| Ctrl/⌘ + Shift + Enter | Reject the first pending request |
+| Escape | Leave the application detail view |
+| Ctrl/⌘ + L | Lock (when a passphrase is set) |
+| Ctrl/⌘ + W | Hide the window (to the tray when enabled) |
+| Ctrl/⌘ + Q | Quit |
 
 Not included: NIP-55 (`nostrsigner:` intents and the content provider) —
 that is Android IPC and does not exist on desktop. Web apps and other

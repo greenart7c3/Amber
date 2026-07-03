@@ -4,8 +4,10 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountManager
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.core.toHexKey
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.client.accessories.publishAndConfirm
@@ -38,6 +40,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withTimeout
 import okhttp3.OkHttpClient
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Assume.assumeTrue
 import org.junit.BeforeClass
 import org.junit.Test
@@ -67,6 +70,9 @@ class BunkerE2eTest {
         val signer = NostrSignerInternal(keyPair)
         val responses = MutableStateFlow<List<BunkerResponse>>(emptyList())
 
+        /** pubkey of the sender of the last connect response (the signer's per-connection key). */
+        val signerPubKey = MutableStateFlow<String?>(null)
+
         private val httpClient = OkHttpClient.Builder().pingInterval(10, TimeUnit.SECONDS).build()
         val client = NostrClient(
             object : WebsocketBuilder {
@@ -84,6 +90,7 @@ class BunkerE2eTest {
                                 runCatching {
                                     val decrypted = signer.decrypt(msg.event.content, msg.event.pubKey)
                                     val response = JacksonMapper.mapper.readValue(decrypted, BunkerResponse::class.java)
+                                    signerPubKey.value = msg.event.pubKey
                                     responses.value = responses.value + response
                                 }
                             }
@@ -164,6 +171,126 @@ class BunkerE2eTest {
             client.responses.first { list -> list.any { it.id == "e2e-gpk" } }
         }.first { it.id == "e2e-gpk" }
         assertEquals(account.hexKey, gpk.result)
+
+        client.stop()
+    }
+
+    /**
+     * Two logged-in accounts, each with its own bunker connection on the same
+     * relay. A request to account B's connection must be answered with B's key,
+     * and A's with A's — proving the multi-account subscription/routing works.
+     */
+    @Test
+    fun twoAccountsRouteToTheCorrectKey() = runBlocking {
+        assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
+
+        val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
+        SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
+
+        val accountA = AccountManager.addAccount(KeyPair(), name = "A")
+        val accountB = AccountManager.addAccount(KeyPair(), name = "B")
+        assertTrue(accountA.hexKey != accountB.hexKey)
+
+        val engine = AmberDesktop.engine
+        engine.start()
+
+        val bunkerA = engine.createBunkerConnection(accountA, "app-A", listOf(relay))
+        val bunkerB = engine.createBunkerConnection(accountB, "app-B", listOf(relay))
+        val signerA = bunkerA.removePrefix("bunker://").substringBefore("?")
+        val signerB = bunkerB.removePrefix("bunker://").substringBefore("?")
+        val secretA = bunkerA.substringAfter("secret=")
+        val secretB = bunkerB.substringAfter("secret=")
+        assertTrue(signerA != signerB)
+
+        val clientA = Client(relay, KeyPair())
+        val clientB = Client(relay, KeyPair())
+        delay(4000)
+
+        // Connect + approve both.
+        clientB.send(signerB, relay, """{"id":"cB","method":"connect","params":["$signerB","$secretB"]}""")
+        clientA.send(signerA, relay, """{"id":"cA","method":"connect","params":["$signerA","$secretA"]}""")
+
+        withTimeout(30_000) { engine.pending.first { it.size >= 2 } }
+        engine.pending.value.toList().forEach { engine.approve(it, RememberType.ALWAYS) }
+
+        withTimeout(30_000) { clientA.responses.first { l -> l.any { it.id == "cA" } } }
+        withTimeout(30_000) { clientB.responses.first { l -> l.any { it.id == "cB" } } }
+
+        // get_public_key on each connection returns that connection's account key.
+        clientA.send(signerA, relay, """{"id":"gA","method":"get_public_key","params":[]}""")
+        clientB.send(signerB, relay, """{"id":"gB","method":"get_public_key","params":[]}""")
+
+        val gA = withTimeout(30_000) { clientA.responses.first { l -> l.any { it.id == "gA" } } }.first { it.id == "gA" }
+        val gB = withTimeout(30_000) { clientB.responses.first { l -> l.any { it.id == "gB" } } }.first { it.id == "gB" }
+
+        assertEquals(accountA.hexKey, gA.result)
+        assertEquals(accountB.hexKey, gB.result)
+
+        clientA.stop()
+        clientB.stop()
+    }
+
+    /**
+     * The nostrconnect:// flow real web apps use: the client publishes a URI,
+     * Amber imports it, the user approves, Amber sends the connect ack from a
+     * fresh per-connection key, and the client can then issue get_public_key
+     * to that key.
+     */
+    @Test
+    fun nostrConnectFlowOverRelay() = runBlocking {
+        assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
+
+        val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
+        SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
+
+        val account = AccountManager.addAccount(KeyPair(), name = "nc")
+        val engine = AmberDesktop.engine
+        engine.start()
+
+        val client = Client(relay, KeyPair())
+        delay(2000)
+
+        val clientPubKey = client.keyPair.pubKey.toHexKey()
+        val secret = "nc-secret-123"
+        val uri = "nostrconnect://$clientPubKey?relay=${relay.url}&secret=$secret&perms=sign_event:1,get_public_key&name=WebApp"
+
+        // Amber imports the URI -> a pending CONNECT request appears.
+        val error = engine.addNostrConnect(uri, account)
+        assertEquals(null, error)
+        withTimeout(10_000) { engine.pending.first { it.isNotEmpty() } }
+        // Simulate the approval UI, which passes the requested permissions so
+        // the granted perms (sign_event:1, get_public_key) are remembered.
+        val connectReq = engine.pending.value.first()
+        engine.approve(connectReq, RememberType.ALWAYS, connectReq.requestedPermissions)
+
+        // The client receives the connect ack (result == secret) from the signer key.
+        val ack = withTimeout(30_000) {
+            client.responses.first { l -> l.any { it.result == secret } }
+        }.first { it.result == secret }
+        assertEquals(secret, ack.result)
+
+        val signerKey = withTimeout(5_000) { client.signerPubKey.first { it != null } }!!
+
+        // Follow-up request goes to the signer's per-connection key.
+        client.send(signerKey, relay, """{"id":"nc-gpk","method":"get_public_key","params":[]}""")
+        val gpk = withTimeout(30_000) {
+            client.responses.first { l -> l.any { it.id == "nc-gpk" } }
+        }.first { it.id == "nc-gpk" }
+        assertEquals(account.hexKey, gpk.result)
+
+        // sign_event kind 1 was granted in the connect perms, so it must be
+        // signed automatically without landing in the approval queue.
+        val eventJson = """{"kind":1,"content":"hello from a bunker","tags":[],"created_at":${TimeUtils.now()},"pubkey":"${account.hexKey}"}"""
+        val escaped = eventJson.replace("\\", "\\\\").replace("\"", "\\\"")
+        client.send(signerKey, relay, """{"id":"nc-sign","method":"sign_event","params":["$escaped"]}""")
+        val signResp = withTimeout(30_000) {
+            client.responses.first { l -> l.any { it.id == "nc-sign" } }
+        }.first { it.id == "nc-sign" }
+        assertTrue("sign_event should not have been rejected: ${signResp.error}", signResp.error.isNullOrEmpty())
+        val signed = Event.fromJson(signResp.result!!)
+        assertEquals(account.hexKey, signed.pubKey)
+        assertEquals(1, signed.kind)
+        assertTrue("signature must verify", signed.verify())
 
         client.stop()
     }

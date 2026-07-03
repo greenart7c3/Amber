@@ -31,12 +31,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import kotlinx.coroutines.launch
 
 @Composable
 fun RelaysScreen() {
     val settings by SettingsStore.settings.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
     var newRelay by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
 
@@ -45,16 +47,16 @@ fun RelaysScreen() {
             OutlinedTextField(
                 value = newRelay,
                 onValueChange = { newRelay = it },
-                label = { Text("wss://relay.example.com") },
+                label = { Text(Strings.get("d_relay_hint", language)) },
                 singleLine = true,
                 modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                text = "Add",
+                text = Strings.get("add", language),
                 onClick = {
                     val normalized = RelayUrlNormalizer.normalizeOrNull(newRelay.trim())
                     if (normalized == null) {
-                        Toaster.toast("Invalid relay URL")
+                        Toaster.toast(Strings.get("d_invalid_relay", language))
                         return@AmberOutlinedButton
                     }
                     SettingsStore.update {
@@ -84,7 +86,7 @@ fun RelaysScreen() {
                     IconButton(
                         onClick = {
                             if (settings.defaultRelays.size == 1) {
-                                Toaster.toast("At least one relay is required")
+                                Toaster.toast(Strings.get("d_one_relay_required", language))
                                 return@IconButton
                             }
                             SettingsStore.update {
@@ -93,7 +95,7 @@ fun RelaysScreen() {
                             scope.launch { AmberDesktop.engine.updateFilter() }
                         },
                     ) {
-                        Icon(Icons.Default.Delete, "Remove relay")
+                        Icon(Icons.Default.Delete, Strings.get("d_remove_relay", language))
                     }
                 }
                 HorizontalDivider()
@@ -102,13 +104,13 @@ fun RelaysScreen() {
 
         Spacer(Modifier.height(8.dp))
         AmberOutlinedButton(
-            text = "Reconnect relays",
+            text = Strings.get("d_reconnect_relays", language),
             onClick = {
                 scope.launch {
                     AmberDesktop.engine.updateFilter()
                     AmberDesktop.client.connect()
                     AmberDesktop.client.reconnect(true)
-                    Toaster.toast("Reconnecting…")
+                    Toaster.toast(Strings.get("d_reconnecting", language))
                 }
             },
         )

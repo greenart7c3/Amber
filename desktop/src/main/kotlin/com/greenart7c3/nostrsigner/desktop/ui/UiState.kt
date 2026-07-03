@@ -14,6 +14,7 @@ import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.PendingBunkerRequest
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import kotlinx.coroutines.flow.MutableStateFlow
 
@@ -163,14 +164,14 @@ fun handleShortcut(
             val rememberType = UiState.rememberChoiceFor(request.request.id)
             if (event.isShiftPressed) {
                 AmberDesktop.engine.reject(request, rememberType)
-                Toaster.toast("Request rejected")
+                Toaster.toast(Strings.get("d_request_rejected"))
             } else {
                 AmberDesktop.engine.approve(
                     request,
                     if (request.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
                     request.requestedPermissions,
                 )
-                Toaster.toast("Request approved")
+                Toaster.toast(Strings.get("d_request_approved"))
             }
         }
 

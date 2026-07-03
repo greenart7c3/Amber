@@ -25,7 +25,7 @@ object SignerDescriptions {
         "decrypt_event" -> Strings.get("decrypt_event", language)
         "encrypt_tag_array" -> Strings.get("encrypt_tag_array", language)
         "decrypt_tag_array" -> Strings.get("decrypt_tag_array", language)
-        "ping" -> "Ping"
+        "ping" -> Strings.get("ping", language)
         "sign_event" -> signEventDescription(kind, language)
         "connect" -> Strings.get("would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf", language)
         "nip" -> nipDescription(kind, language).ifEmpty { Strings.format("event_kind", kind.toString(), language = language) }

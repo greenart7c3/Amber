@@ -36,6 +36,8 @@ import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.text.DateFormat
@@ -51,6 +53,7 @@ fun ApplicationDetailScreen(
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
     val history by store.history.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
     val app = apps.firstOrNull { it.app.key == appKey }
     var tab by remember { mutableStateOf(0) }
 
@@ -64,7 +67,7 @@ fun ApplicationDetailScreen(
     Column(Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             IconButton(onClick = onBack) {
-                Icon(Icons.AutoMirrored.Filled.ArrowBack, "Back")
+                Icon(Icons.AutoMirrored.Filled.ArrowBack, Strings.get("d_back", language))
             }
             Column {
                 Text(
@@ -74,8 +77,8 @@ fun ApplicationDetailScreen(
                 )
                 Text(
                     buildString {
-                        append("Key: ${app.app.key.toShortenHex()}")
-                        if (app.app.relays.isNotEmpty()) append(" · Relays: ${app.app.relays.joinToString()}")
+                        append(Strings.format("d_key_label", app.app.key.toShortenHex(), language = language))
+                        if (app.app.relays.isNotEmpty()) append(" · ${Strings.format("d_relays_label", app.app.relays.joinToString(), language = language)}")
                     },
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -88,23 +91,23 @@ fun ApplicationDetailScreen(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(Strings.get("name", language)) },
                 singleLine = true,
                 modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                text = "Save",
+                text = Strings.get("save", language),
                 onClick = {
                     store.upsert(app.copy(app = app.app.copy(name = name)))
-                    Toaster.toast("Application updated")
+                    Toaster.toast(Strings.get("d_application_updated", language))
                 },
             )
         }
         Spacer(Modifier.height(12.dp))
 
         TabRow(selectedTabIndex = tab) {
-            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text("Permissions") })
-            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text("Activity") })
+            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(Strings.get("permissions", language)) })
+            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(Strings.get("d_activity", language)) })
         }
         Spacer(Modifier.height(8.dp))
 
@@ -121,17 +124,17 @@ fun ApplicationDetailScreen(
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(
-                                com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions.permission(permission.type, permission.kind),
+                                SignerDescriptions.permission(permission.type, permission.kind, language),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             val until = if (permission.acceptable) permission.acceptUntil else permission.rejectUntil
                             val untilLabel = when {
-                                until >= Long.MAX_VALUE / 1000 -> "always"
-                                until > TimeUtils.now() -> "until ${DateFormat.getDateTimeInstance().format(Date(until * 1000))}"
-                                else -> "expired"
+                                until >= Long.MAX_VALUE / 1000 -> Strings.get("d_until_always", language)
+                                until > TimeUtils.now() -> Strings.format("d_until", DateFormat.getDateTimeInstance().format(Date(until * 1000)), language = language)
+                                else -> Strings.get("d_expired", language)
                             }
                             Text(
-                                (if (permission.acceptable) "Accept" else "Reject") + " · $untilLabel",
+                                (if (permission.acceptable) Strings.get("d_accept", language) else Strings.get("reject", language)) + " · $untilLabel",
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
@@ -155,7 +158,7 @@ fun ApplicationDetailScreen(
                                 store.upsert(app.copy(permissions = newPermissions))
                             },
                         ) {
-                            Icon(Icons.Default.Delete, "Delete permission")
+                            Icon(Icons.Default.Delete, Strings.get("d_delete_permission", language))
                         }
                     }
                     HorizontalDivider()
@@ -170,19 +173,19 @@ fun ApplicationDetailScreen(
             ) {
                 if (appHistory.isEmpty()) {
                     item {
-                        Text("No activity yet", style = MaterialTheme.typography.bodyMedium)
+                        Text(Strings.get("d_no_activity", language), style = MaterialTheme.typography.bodyMedium)
                     }
                 }
                 items(appHistory.size) { index ->
                     val entry = appHistory[index]
                     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Text(
-                            entry.type + (entry.kind?.let { " (kind $it)" } ?: ""),
+                            entry.type + (entry.kind?.let { " (${Strings.format("d_kind_paren", it, language = language)})" } ?: ""),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
                             "${DateFormat.getDateTimeInstance().format(Date(entry.time * 1000))} · " +
-                                if (entry.accepted) "accepted" else "rejected",
+                                if (entry.accepted) Strings.get("d_accepted", language) else Strings.get("d_rejected", language),
                             style = MaterialTheme.typography.bodySmall,
                         )
                         HorizontalDivider()
@@ -193,7 +196,7 @@ fun ApplicationDetailScreen(
 
         Spacer(Modifier.height(8.dp))
         AmberOutlinedButton(
-            text = "Disconnect and delete application",
+            text = Strings.get("d_disconnect_delete", language),
             onClick = {
                 // Deleting drops this screen from composition, so run the
                 // unsubscribe on the application scope (not this composable's)
@@ -202,7 +205,7 @@ fun ApplicationDetailScreen(
                 AmberDesktop.applicationIOScope.launch {
                     store.delete(appKey)
                     AmberDesktop.engine.updateFilter()
-                    Toaster.toast("Application removed")
+                    Toaster.toast(Strings.get("d_application_removed", language))
                 }
                 onBack()
             },

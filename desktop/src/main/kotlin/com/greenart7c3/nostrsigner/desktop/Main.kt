@@ -191,7 +191,9 @@ fun main() {
                     // notify-send on Linux, incl. Wayland/Hyprland; osascript on
                     // macOS). Only fall back to the AWT tray notification — which
                     // needs a usable system tray — when there is no native channel.
-                    notified = withContext(Dispatchers.IO) { Notifier.notify("Amber", message) }
+                    notified = withContext(Dispatchers.IO) {
+                        Notifier.notify("Amber", message, onActivate = { DesktopTray.windowVisible.value = true })
+                    }
                     if (!notified && awtTrayUsable) {
                         trayState.sendNotification(
                             Notification(

@@ -28,7 +28,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -53,7 +52,6 @@ fun ApplicationDetailScreen(
     val apps by store.apps.collectAsState()
     val history by store.history.collectAsState()
     val app = apps.firstOrNull { it.app.key == appKey }
-    val scope = rememberCoroutineScope()
     var tab by remember { mutableStateOf(0) }
 
     if (app == null) {
@@ -192,12 +190,16 @@ fun ApplicationDetailScreen(
         AmberButton(
             text = "Disconnect and delete application",
             onClick = {
-                scope.launch {
+                // Deleting drops this screen from composition, so run the
+                // unsubscribe on the application scope (not this composable's)
+                // to be sure updateFilter() completes and no stale relay
+                // subscription is left behind.
+                AmberDesktop.applicationIOScope.launch {
                     store.delete(appKey)
                     AmberDesktop.engine.updateFilter()
                     Toaster.toast("Application removed")
-                    onBack()
                 }
+                onBack()
             },
         )
         Spacer(Modifier.height(12.dp))

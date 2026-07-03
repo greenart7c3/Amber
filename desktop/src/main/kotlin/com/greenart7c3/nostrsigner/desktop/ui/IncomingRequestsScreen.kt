@@ -22,7 +22,6 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -36,7 +35,6 @@ import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerType
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
-import kotlinx.coroutines.launch
 
 @Composable
 fun IncomingRequestsScreen(account: DesktopAccount) {
@@ -69,7 +67,6 @@ fun IncomingRequestsScreen(account: DesktopAccount) {
 
 @Composable
 private fun RequestCard(req: PendingBunkerRequest) {
-    val scope = rememberCoroutineScope()
     var rememberType by remember { mutableStateOf(RememberType.NEVER) }
     var working by remember { mutableStateOf(false) }
     val grantedPermissions = remember(req.request.id) { req.requestedPermissions.map { it.copy() } }
@@ -140,14 +137,15 @@ private fun RequestCard(req: PendingBunkerRequest) {
                     enabled = !working,
                     onClick = {
                         working = true
-                        scope.launch {
-                            AmberDesktop.engine.approve(
-                                req,
-                                if (req.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
-                                grantedPermissions,
-                            )
-                            Toaster.toast("Request approved")
-                        }
+                        // approve() runs on the engine's application scope, so it
+                        // survives this card leaving composition and still
+                        // publishes the relay response. Toast optimistically.
+                        AmberDesktop.engine.approve(
+                            req,
+                            if (req.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
+                            grantedPermissions,
+                        )
+                        Toaster.toast("Request approved")
                     },
                 )
                 AmberOutlinedButton(
@@ -155,10 +153,8 @@ private fun RequestCard(req: PendingBunkerRequest) {
                     text = "Reject",
                     onClick = {
                         working = true
-                        scope.launch {
-                            AmberDesktop.engine.reject(req, rememberType)
-                            Toaster.toast("Request rejected")
-                        }
+                        AmberDesktop.engine.reject(req, rememberType)
+                        Toaster.toast("Request rejected")
                     },
                 )
             }

@@ -34,6 +34,7 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -547,8 +548,22 @@ class BunkerEngine(
         pending.value = pending.value.filter { it.request.id != id }
     }
 
-    /** Mirrors `BunkerRequestUtils.sendResult` for the approval UI. */
-    suspend fun approve(
+    /**
+     * Mirrors `BunkerRequestUtils.sendResult`. Runs on the engine's
+     * application scope (a SupervisorJob), never the caller's — approving
+     * removes the request card from the UI, so a caller-scoped coroutine would
+     * be cancelled mid-flight (during the publish retry/backoff) before the
+     * relay response is ever sent. Returns the [Job] so callers/tests can
+     * await completion if they need to.
+     */
+    fun approve(
+        req: PendingBunkerRequest,
+        rememberType: RememberType,
+        grantedPermissions: List<RequestedPermission> = emptyList(),
+        signPolicy: Int? = null,
+    ): Job = scope.launch { doApprove(req, rememberType, grantedPermissions, signPolicy) }
+
+    private suspend fun doApprove(
         req: PendingBunkerRequest,
         rememberType: RememberType,
         grantedPermissions: List<RequestedPermission> = emptyList(),
@@ -644,8 +659,17 @@ class BunkerEngine(
         )
     }
 
-    /** Mirrors `BunkerRequestUtils.sendRejection`. */
-    suspend fun reject(
+    /**
+     * Mirrors `BunkerRequestUtils.sendRejection`. Runs on the application
+     * scope for the same reason as [approve] — the rejection response must be
+     * published even though the request card is gone.
+     */
+    fun reject(
+        req: PendingBunkerRequest,
+        rememberType: RememberType,
+    ): Job = scope.launch { doReject(req, rememberType) }
+
+    private suspend fun doReject(
         req: PendingBunkerRequest,
         rememberType: RememberType,
     ) {

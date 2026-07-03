@@ -11,6 +11,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -24,6 +25,7 @@ import com.google.zxing.BarcodeFormat
 import com.google.zxing.EncodeHintType
 import com.google.zxing.qrcode.QRCodeWriter
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.rememberTypeDisplayOrder
 import java.awt.image.BufferedImage
 import kotlinx.coroutines.flow.MutableSharedFlow
@@ -84,11 +86,12 @@ fun RememberTypeSelector(
     onValueChange: (RememberType) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
+    val language by Strings.currentLanguage.collectAsState()
     OutlinedButton(
         onClick = { expanded = true },
         shape = ButtonBorder,
     ) {
-        Text("Remember: ${value.label}", style = MaterialTheme.typography.bodySmall)
+        Text(Strings.format("d_remember_prefix", value.label(language), language = language), style = MaterialTheme.typography.bodySmall)
     }
     DropdownMenu(
         expanded = expanded,
@@ -96,7 +99,7 @@ fun RememberTypeSelector(
     ) {
         rememberTypeDisplayOrder.forEach { type ->
             DropdownMenuItem(
-                text = { Text(type.label) },
+                text = { Text(type.label(language)) },
                 onClick = {
                     onValueChange(type)
                     expanded = false
@@ -130,7 +133,7 @@ fun QrCodeImage(
     }
     Image(
         bitmap = image,
-        contentDescription = "QR code",
+        contentDescription = Strings.get("d_qr_code"),
         modifier = modifier.size(size),
     )
 }

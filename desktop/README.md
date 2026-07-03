@@ -28,6 +28,11 @@ for the JVM) and mirrors the mobile UI and permission model.
 - Native desktop layout: sidebar navigation with an account switcher, dense
   list views, and keyboard shortcuts
 - Light/dark theme using the Amber palette
+- Fully localized UI in 14 languages, switchable live under Settings →
+  Language. The Android `strings.xml` translations (and event-kind
+  descriptions) are bundled verbatim under `resources/i18n/strings_<lang>.xml`
+  and loaded by `core/Strings.kt`; desktop-only strings live in
+  `strings_en.xml` (prefixed `d_`) and fall back to English in other locales
 
 ## Keyboard shortcuts
 

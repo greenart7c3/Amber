@@ -22,6 +22,7 @@ import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.describe
 import com.greenart7c3.nostrsigner.desktop.ui.App
 import com.greenart7c3.nostrsigner.desktop.ui.NostrSignerTheme
@@ -105,6 +106,7 @@ fun main() {
         val windowState = rememberWindowState(size = DpSize(1100.dp, 780.dp))
         val pending by AmberDesktop.engine.pending.collectAsState()
         val settings by SettingsStore.settings.collectAsState()
+        val language by Strings.currentLanguage.collectAsState()
         var windowVisible by remember { mutableStateOf(true) }
         val trayState = rememberTrayState()
         // AWT may claim support but fail to actually add the icon (e.g. bare
@@ -121,7 +123,7 @@ fun main() {
                     trayState.sendNotification(
                         Notification(
                             title = "Amber",
-                            message = "${request.appName} ${request.type.describe(request.kind)}",
+                            message = "${request.appName} ${request.type.describe(request.kind, language)}",
                             type = Notification.Type.Info,
                         ),
                     )
@@ -136,18 +138,18 @@ fun main() {
             Tray(
                 icon = painterResource("icon.png"),
                 state = trayState,
-                tooltip = if (pending.isEmpty()) "Amber — Nostr signer" else "Amber — ${pending.size} pending request(s)",
+                tooltip = if (pending.isEmpty()) Strings.get("d_tray_tooltip", language) else Strings.format("d_tray_pending", pending.size, language = language),
                 onAction = { windowVisible = true },
                 menu = {
                     Item(
-                        if (windowVisible) "Hide Amber" else "Open Amber",
+                        if (windowVisible) Strings.get("d_tray_hide", language) else Strings.get("d_tray_open", language),
                         onClick = { windowVisible = !windowVisible },
                     )
                     if (lockStatus == PassphraseLock.Status.UNLOCKED) {
-                        Item("Lock now", onClick = { PassphraseLock.lock() })
+                        Item(Strings.get("d_lock_now", language), onClick = { PassphraseLock.lock() })
                     }
                     Separator()
-                    Item("Quit Amber", onClick = ::exitApplication)
+                    Item(Strings.get("d_tray_quit", language), onClick = ::exitApplication)
                 },
             )
         }

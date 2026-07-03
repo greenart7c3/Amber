@@ -56,49 +56,50 @@ fun SettingsScreen(account: DesktopAccount) {
     val scope = rememberCoroutineScope()
     val settings by SettingsStore.settings.collectAsState()
     val accounts by AccountsStore.accounts.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
     var showBackupDialog by remember { mutableStateOf(false) }
     var showLogsDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf<String?>(null) }
     var name by remember { mutableStateOf(account.name.value) }
 
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        SectionTitle("Account")
+        SectionTitle(Strings.get("account", language))
         Row(verticalAlignment = androidx.compose.ui.Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it },
-                label = { Text("Name") },
+                label = { Text(Strings.get("name", language)) },
                 singleLine = true,
                 modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                text = "Save",
+                text = Strings.get("save", language),
                 onClick = {
                     account.name.value = name
                     Session.saveMeta(account)
-                    Toaster.toast("Saved")
+                    Toaster.toast(Strings.get("d_saved", language))
                 },
             )
         }
         Text(
-            "Public key: ${account.npub}",
+            Strings.format("d_public_key", account.npub, language = language),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Spacer(Modifier.height(8.dp))
-        AmberButton(text = "Backup keys", onClick = { showBackupDialog = true })
+        AmberButton(text = Strings.get("backup_keys", language), onClick = { showBackupDialog = true })
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle("Sign policy")
+        SectionTitle(Strings.get("d_sign_policy", language))
         Text(
-            "Default policy applied to newly connected applications.",
+            Strings.get("d_sign_policy_sub", language),
             style = MaterialTheme.typography.bodySmall,
         )
         Spacer(Modifier.height(4.dp))
         val policies = listOf(
-            0 to "Basic permissions",
-            1 to "Approve requested permissions",
-            2 to "Sign everything",
+            0 to Strings.get("d_policy_basic", language),
+            1 to Strings.get("d_policy_approve", language),
+            2 to Strings.get("d_policy_sign_all", language),
         )
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             policies.forEach { (value, label) ->
@@ -114,9 +115,13 @@ fun SettingsScreen(account: DesktopAccount) {
         }
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle("Theme")
+        SectionTitle(Strings.get("d_theme", language))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf<Pair<Boolean?, String>>(null to "System", false to "Light", true to "Dark").forEach { (value, label) ->
+            listOf<Pair<Boolean?, String>>(
+                null to Strings.get("d_theme_system", language),
+                false to Strings.get("d_theme_light", language),
+                true to Strings.get("d_theme_dark", language),
+            ).forEach { (value, label) ->
                 FilterChip(
                     selected = settings.darkTheme == value,
                     onClick = { SettingsStore.update { it.copy(darkTheme = value) } },
@@ -126,28 +131,28 @@ fun SettingsScreen(account: DesktopAccount) {
         }
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle(Strings.get("language"))
+        SectionTitle(Strings.get("language", language))
         LanguagePicker()
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle("Desktop")
+        SectionTitle(Strings.get("d_desktop", language))
         if (isTraySupported) {
             SettingSwitch(
-                title = "Keep running in the tray",
-                description = "Closing the window minimizes Amber to the system tray so it keeps answering requests.",
+                title = Strings.get("d_keep_in_tray", language),
+                description = Strings.get("d_keep_in_tray_sub", language),
                 checked = settings.closeToTray,
                 onCheckedChange = { value -> SettingsStore.update { it.copy(closeToTray = value) } },
             )
         }
         SettingSwitch(
-            title = "Notifications",
-            description = "Show a system notification when a request needs your approval.",
+            title = Strings.get("d_notifications", language),
+            description = Strings.get("d_notifications_sub", language),
             checked = settings.showNotifications,
             onCheckedChange = { value -> SettingsStore.update { it.copy(showNotifications = value) } },
         )
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle("Accounts")
+        SectionTitle(Strings.get("accounts", language))
         accounts.forEach { record ->
             Row(
                 Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
@@ -160,7 +165,7 @@ fun SettingsScreen(account: DesktopAccount) {
                     )
                     if (record.npub == account.npub) {
                         Text(
-                            "Active",
+                            Strings.get("d_active", language),
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -168,31 +173,30 @@ fun SettingsScreen(account: DesktopAccount) {
                 }
                 if (record.npub != account.npub) {
                     TextButton(onClick = { scope.launch { Session.switchTo(record.npub) } }) {
-                        Text("Switch")
+                        Text(Strings.get("d_switch", language))
                     }
                 }
                 TextButton(onClick = { showLogoutConfirm = record.npub }) {
-                    Text("Log out")
+                    Text(Strings.get("d_log_out", language))
                 }
             }
             HorizontalDivider()
         }
         Spacer(Modifier.height(8.dp))
-        AmberOutlinedButton(text = "Add an account", onClick = { Session.addingAccount.value = true })
+        AmberOutlinedButton(text = Strings.get("d_add_an_account", language), onClick = { Session.addingAccount.value = true })
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle("Security")
+        SectionTitle(Strings.get("security", language))
         Text(
-            "Keys are encrypted with AES-256; the encryption key is protected by: " +
-                (DesktopKeyStore.passwordSourceDescription ?: "…"),
+            Strings.format("d_security_keys_desc", DesktopKeyStore.passwordSourceDescription ?: "…", language = language),
             style = MaterialTheme.typography.bodySmall,
         )
         Spacer(Modifier.height(8.dp))
         SecuritySection()
 
         Spacer(Modifier.height(16.dp))
-        SectionTitle("Diagnostics")
-        AmberOutlinedButton(text = "View logs", onClick = { showLogsDialog = true })
+        SectionTitle(Strings.get("d_diagnostics", language))
+        AmberOutlinedButton(text = Strings.get("d_view_logs", language), onClick = { showLogsDialog = true })
         Spacer(Modifier.height(24.dp))
     }
 
@@ -205,18 +209,18 @@ fun SettingsScreen(account: DesktopAccount) {
     showLogoutConfirm?.let { npub ->
         AlertDialog(
             onDismissRequest = { showLogoutConfirm = null },
-            title = { Text("Log out?") },
-            text = { Text("This deletes the account key and its connections from this device. Make sure the key is backed up.") },
+            title = { Text(Strings.get("d_log_out_q", language)) },
+            text = { Text(Strings.get("d_log_out_confirm", language)) },
             confirmButton = {
                 TextButton(
                     onClick = {
                         showLogoutConfirm = null
                         scope.launch { Session.logout(npub) }
                     },
-                ) { Text("Log out") }
+                ) { Text(Strings.get("d_log_out", language)) }
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = null }) { Text("Cancel") }
+                TextButton(onClick = { showLogoutConfirm = null }) { Text(Strings.get("cancel", language)) }
             },
         )
     }
@@ -274,35 +278,40 @@ private fun SecuritySection() {
     val scope = rememberCoroutineScope()
     val lockStatus by PassphraseLock.state.collectAsState()
     val settings by SettingsStore.settings.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
     var dialog by remember { mutableStateOf<PassphraseDialogMode?>(null) }
     var showRemoveConfirm by remember { mutableStateOf(false) }
 
     if (lockStatus == PassphraseLock.Status.DISABLED) {
         Text(
-            "Set a passphrase to keep your keys encrypted even against software " +
-                "that can read your files. You will be asked for it when Amber starts.",
+            Strings.get("d_passphrase_desc", language),
             style = MaterialTheme.typography.bodySmall,
         )
-        AmberButton(text = "Set a passphrase", onClick = { dialog = PassphraseDialogMode.SET })
+        AmberButton(text = Strings.get("d_set_passphrase", language), onClick = { dialog = PassphraseDialogMode.SET })
     } else {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             AmberOutlinedButton(
-                text = "Lock now",
+                text = Strings.get("d_lock_now", language),
                 onClick = { PassphraseLock.lock() },
             )
             AmberOutlinedButton(
-                text = "Change passphrase",
+                text = Strings.get("d_change_passphrase", language),
                 onClick = { dialog = PassphraseDialogMode.CHANGE },
             )
             AmberOutlinedButton(
-                text = "Remove passphrase",
+                text = Strings.get("d_remove_passphrase", language),
                 onClick = { showRemoveConfirm = true },
             )
         }
         Spacer(Modifier.height(8.dp))
-        Text("Lock automatically after", style = MaterialTheme.typography.bodySmall)
+        Text(Strings.get("d_lock_after", language), style = MaterialTheme.typography.bodySmall)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-            listOf(0 to "Never", 5 to "5 min", 15 to "15 min", 60 to "1 hour").forEach { (minutes, label) ->
+            listOf(
+                0 to Strings.get("d_lock_never", language),
+                5 to Strings.get("d_lock_5min", language),
+                15 to Strings.get("d_lock_15min", language),
+                60 to Strings.get("d_lock_1hour", language),
+            ).forEach { (minutes, label) ->
                 FilterChip(
                     selected = settings.autoLockMinutes == minutes,
                     onClick = {
@@ -321,13 +330,9 @@ private fun SecuritySection() {
     if (showRemoveConfirm) {
         AlertDialog(
             onDismissRequest = { showRemoveConfirm = false },
-            title = { Text("Remove the passphrase?") },
+            title = { Text(Strings.get("d_remove_passphrase_q", language)) },
             text = {
-                Text(
-                    "The encryption key will go back to the OS credential store " +
-                        "(or a local file), and Amber will no longer ask for a " +
-                        "passphrase at startup.",
-                )
+                Text(Strings.get("d_remove_passphrase_desc", language))
             },
             confirmButton = {
                 TextButton(
@@ -335,13 +340,13 @@ private fun SecuritySection() {
                         showRemoveConfirm = false
                         scope.launch {
                             PassphraseLock.disable()
-                            Toaster.toast("Passphrase removed")
+                            Toaster.toast(Strings.get("d_passphrase_removed", language))
                         }
                     },
-                ) { Text("Remove") }
+                ) { Text(Strings.get("remove", language)) }
             },
             dismissButton = {
-                TextButton(onClick = { showRemoveConfirm = false }) { Text("Cancel") }
+                TextButton(onClick = { showRemoveConfirm = false }) { Text(Strings.get("cancel", language)) }
             },
         )
     }
@@ -355,6 +360,7 @@ private fun PassphraseDialog(
     onDismiss: () -> Unit,
 ) {
     val scope = rememberCoroutineScope()
+    val language by Strings.currentLanguage.collectAsState()
     var current by remember { mutableStateOf("") }
     var new by remember { mutableStateOf("") }
     var confirm by remember { mutableStateOf("") }
@@ -362,13 +368,11 @@ private fun PassphraseDialog(
 
     AlertDialog(
         onDismissRequest = { if (!working) onDismiss() },
-        title = { Text(if (mode == PassphraseDialogMode.SET) "Set a passphrase" else "Change the passphrase") },
+        title = { Text(if (mode == PassphraseDialogMode.SET) Strings.get("d_set_passphrase", language) else Strings.get("d_change_the_passphrase", language)) },
         text = {
             Column {
                 Text(
-                    "The passphrase is never stored anywhere. If you forget it, the " +
-                        "only way back in is restoring your keys from a backup (nsec " +
-                        "or seed words).",
+                    Strings.get("d_passphrase_never_stored", language),
                     style = MaterialTheme.typography.bodySmall,
                 )
                 Spacer(Modifier.height(8.dp))
@@ -376,7 +380,7 @@ private fun PassphraseDialog(
                     OutlinedTextField(
                         value = current,
                         onValueChange = { current = it },
-                        label = { Text("Current passphrase") },
+                        label = { Text(Strings.get("d_current_passphrase", language)) },
                         singleLine = true,
                         visualTransformation = PasswordVisualTransformation(),
                         modifier = Modifier.fillMaxWidth(),
@@ -386,7 +390,7 @@ private fun PassphraseDialog(
                 OutlinedTextField(
                     value = new,
                     onValueChange = { new = it },
-                    label = { Text("New passphrase (min. 8 characters)") },
+                    label = { Text(Strings.get("d_new_passphrase", language)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -395,7 +399,7 @@ private fun PassphraseDialog(
                 OutlinedTextField(
                     value = confirm,
                     onValueChange = { confirm = it },
-                    label = { Text("Repeat the new passphrase") },
+                    label = { Text(Strings.get("d_repeat_passphrase", language)) },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
@@ -407,11 +411,11 @@ private fun PassphraseDialog(
                 enabled = !working,
                 onClick = {
                     if (new.length < 8) {
-                        Toaster.toast("Use at least 8 characters")
+                        Toaster.toast(Strings.get("d_use_8_chars", language))
                         return@TextButton
                     }
                     if (new != confirm) {
-                        Toaster.toast("The passphrases do not match")
+                        Toaster.toast(Strings.get("d_passphrases_no_match", language))
                         return@TextButton
                     }
                     working = true
@@ -419,26 +423,26 @@ private fun PassphraseDialog(
                         try {
                             if (mode == PassphraseDialogMode.SET) {
                                 PassphraseLock.enable(new.toCharArray())
-                                Toaster.toast("Passphrase set")
+                                Toaster.toast(Strings.get("d_passphrase_set", language))
                                 onDismiss()
                             } else {
                                 if (PassphraseLock.changePassphrase(current.toCharArray(), new.toCharArray())) {
-                                    Toaster.toast("Passphrase changed")
+                                    Toaster.toast(Strings.get("d_passphrase_changed", language))
                                     onDismiss()
                                 } else {
-                                    Toaster.toast("Wrong current passphrase")
+                                    Toaster.toast(Strings.get("d_wrong_current_passphrase", language))
                                 }
                             }
                         } catch (e: Exception) {
-                            Toaster.toast(e.message ?: "Failed to update the passphrase")
+                            Toaster.toast(e.message ?: Strings.get("d_failed_update_passphrase", language))
                         }
                         working = false
                     }
                 },
-            ) { Text(if (working) "Working…" else "Save") }
+            ) { Text(if (working) Strings.get("d_working", language) else Strings.get("save", language)) }
         },
         dismissButton = {
-            TextButton(enabled = !working, onClick = onDismiss) { Text("Cancel") }
+            TextButton(enabled = !working, onClick = onDismiss) { Text(Strings.get("cancel", language)) }
         },
     )
 }
@@ -450,6 +454,7 @@ private fun BackupDialog(
 ) {
     val clipboard = LocalClipboardManager.current
     val scope = rememberCoroutineScope()
+    val language by Strings.currentLanguage.collectAsState()
     var showSecret by remember { mutableStateOf(false) }
     var password by remember { mutableStateOf("") }
     var ncryptsec by remember { mutableStateOf("") }
@@ -457,15 +462,15 @@ private fun BackupDialog(
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Backup keys") },
+        title = { Text(Strings.get("backup_keys", language)) },
         text = {
             Column(Modifier.verticalScroll(rememberScrollState())) {
-                Text("Secret key (nsec)", style = MaterialTheme.typography.titleSmall)
+                Text(Strings.get("d_secret_key_nsec", language), style = MaterialTheme.typography.titleSmall)
                 if (showSecret) {
                     Text(account.getNsec(), fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                     if (seedWords.isNotBlank()) {
                         Spacer(Modifier.height(8.dp))
-                        Text("Seed words", style = MaterialTheme.typography.titleSmall)
+                        Text(Strings.get("d_seed_words", language), style = MaterialTheme.typography.titleSmall)
                         Text(seedWords, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
@@ -474,7 +479,7 @@ private fun BackupDialog(
                             showSecret = true
                             scope.launch { seedWords = AccountManager.seedWords(account.npub) }
                         },
-                    ) { Text("Show") }
+                    ) { Text(Strings.get("d_show", language)) }
                 }
                 Row {
                     TextButton(
@@ -482,17 +487,17 @@ private fun BackupDialog(
                             clipboard.setText(AnnotatedString(account.getNsec()))
                             account.didBackup = true
                             Session.saveMeta(account)
-                            Toaster.toast("Secret key copied. Clear your clipboard after pasting it!")
+                            Toaster.toast(Strings.get("d_nsec_copied", language))
                         },
-                    ) { Text("Copy nsec") }
+                    ) { Text(Strings.get("d_copy_nsec", language)) }
                 }
 
                 Spacer(Modifier.height(12.dp))
-                Text("Encrypted backup (ncryptsec)", style = MaterialTheme.typography.titleSmall)
+                Text(Strings.get("d_encrypted_backup", language), style = MaterialTheme.typography.titleSmall)
                 OutlinedTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = { Text("Password") },
+                    label = { Text(Strings.get("d_password", language)) },
                     visualTransformation = PasswordVisualTransformation(),
                     modifier = Modifier.fillMaxWidth(),
                 )
@@ -508,20 +513,20 @@ private fun BackupDialog(
                 TextButton(
                     onClick = {
                         if (password.isBlank()) {
-                            Toaster.toast("Password is required")
+                            Toaster.toast(Strings.get("d_password_required", language))
                             return@TextButton
                         }
                         ncryptsec = account.nip49Encrypt(password)
                         clipboard.setText(AnnotatedString(ncryptsec))
                         account.didBackup = true
                         Session.saveMeta(account)
-                        Toaster.toast("Encrypted key copied to the clipboard")
+                        Toaster.toast(Strings.get("d_encrypted_key_copied", language))
                     },
-                ) { Text("Encrypt and copy") }
+                ) { Text(Strings.get("d_encrypt_and_copy", language)) }
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text(Strings.get("d_close", language)) }
         },
     )
 }
@@ -533,14 +538,15 @@ private fun LogsDialog(
 ) {
     val store = AmberDesktop.store(account.npub)
     val logs by store.logs.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Logs") },
+        title = { Text(Strings.get("d_logs", language)) },
         text = {
             Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
                 if (logs.isEmpty()) {
-                    Text("No logs")
+                    Text(Strings.get("d_no_logs", language))
                 }
                 logs.sortedByDescending { it.time }.forEach { log ->
                     Text(
@@ -557,10 +563,10 @@ private fun LogsDialog(
                 onClick = {
                     store.clearLogs()
                 },
-            ) { Text("Clear") }
+            ) { Text(Strings.get("d_clear", language)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Close") }
+            TextButton(onClick = onDismiss) { Text(Strings.get("d_close", language)) }
         },
     )
 }

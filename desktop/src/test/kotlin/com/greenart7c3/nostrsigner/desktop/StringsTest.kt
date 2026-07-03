@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.desktop
 
+import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import org.junit.Assert.assertEquals
@@ -55,6 +56,24 @@ class StringsTest {
     fun unknownKindFallsBackToNipOrKindNumber() {
         val text = SignerDescriptions.signEventDescription(987654, "en")
         assertTrue("should mention the kind number", text.contains("987654"))
+    }
+
+    @Test
+    fun desktopUiKeysResolveInEnglishAndFallBack() {
+        // Desktop-only supplement keys exist in English...
+        assertEquals("Approve", Strings.get("d_approve", "en"))
+        assertEquals("Incoming requests", Strings.get("d_route_incoming_title", "en"))
+        // ...and, absent from the translated files, fall back to the English text.
+        assertEquals(Strings.get("d_approve", "en"), Strings.get("d_approve", "de"))
+        assertEquals(Strings.get("d_route_incoming_title", "en"), Strings.get("d_route_incoming_title", "ja"))
+    }
+
+    @Test
+    fun rememberTypeLabelsAreLocalized() {
+        assertEquals("Just once", RememberType.NEVER.label("en"))
+        assertEquals("Always", RememberType.ALWAYS.label("en"))
+        assertEquals("1 day", RememberType.ONE_DAY.label("en"))
+        assertEquals("1 week", RememberType.ONE_WEEK.label("en"))
     }
 
     @Test

@@ -13,6 +13,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -25,11 +26,13 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import kotlinx.coroutines.launch
 
 @Composable
 fun UnlockScreen() {
     val scope = rememberCoroutineScope()
+    val language by Strings.currentLanguage.collectAsState()
     var passphrase by remember { mutableStateOf("") }
     var error by remember { mutableStateOf<String?>(null) }
     var working by remember { mutableStateOf(false) }
@@ -41,7 +44,7 @@ fun UnlockScreen() {
         scope.launch {
             val ok = PassphraseLock.unlock(passphrase.toCharArray())
             if (!ok) {
-                error = "Wrong passphrase"
+                error = Strings.get("d_wrong_passphrase", language)
             } else {
                 passphrase = ""
             }
@@ -59,12 +62,12 @@ fun UnlockScreen() {
                 style = MaterialTheme.typography.headlineLarge,
                 fontWeight = FontWeight.Bold,
             )
-            Text("Locked", style = MaterialTheme.typography.bodyMedium)
+            Text(Strings.get("d_locked", language), style = MaterialTheme.typography.bodyMedium)
             Spacer(Modifier.height(24.dp))
             OutlinedTextField(
                 value = passphrase,
                 onValueChange = { passphrase = it },
-                label = { Text("Passphrase") },
+                label = { Text(Strings.get("d_passphrase", language)) },
                 singleLine = true,
                 visualTransformation = PasswordVisualTransformation(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
@@ -76,7 +79,7 @@ fun UnlockScreen() {
             }
             Spacer(Modifier.height(16.dp))
             AmberButton(
-                text = if (working) "Unlocking…" else "Unlock",
+                text = if (working) Strings.get("d_unlocking", language) else Strings.get("d_unlock", language),
                 fillWidth = true,
                 enabled = passphrase.isNotEmpty() && !working,
                 onClick = ::submit,

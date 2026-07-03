@@ -45,14 +45,15 @@ import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 @Composable
 fun IncomingRequestsScreen(account: DesktopAccount) {
     val pending by AmberDesktop.engine.pending.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
 
     if (pending.isEmpty()) {
         Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
             Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                Text("No requests waiting for approval", style = MaterialTheme.typography.titleMedium)
+                Text(Strings.get("d_no_requests_title", language), style = MaterialTheme.typography.titleMedium)
                 Spacer(Modifier.height(8.dp))
                 Text(
-                    "Connect an application from the Applications tab and its signing requests will show up here.",
+                    Strings.get("d_no_requests_sub", language),
                     style = MaterialTheme.typography.bodyMedium,
                 )
             }
@@ -168,7 +169,7 @@ private fun RequestCard(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 AmberButton(
-                    text = if (working) "Working…" else "Approve",
+                    text = if (working) Strings.get("d_working", language) else Strings.get("d_approve", language),
                     enabled = !working,
                     onClick = {
                         working = true
@@ -180,20 +181,20 @@ private fun RequestCard(
                             if (req.type == SignerType.CONNECT) RememberType.ALWAYS else rememberType,
                             grantedPermissions,
                         )
-                        Toaster.toast("Request approved")
+                        Toaster.toast(Strings.get("d_request_approved", language))
                     },
                 )
                 AmberOutlinedButton(
-                    text = "Reject",
+                    text = Strings.get("reject", language),
                     onClick = {
                         working = true
                         AmberDesktop.engine.reject(req, rememberType)
-                        Toaster.toast("Request rejected")
+                        Toaster.toast(Strings.get("d_request_rejected", language))
                     },
                 )
                 Spacer(Modifier.weight(1f))
                 Text(
-                    "↑↓ select · ←→ remember · ${shortcutLabel("↵")} approve · ${shortcutLabel("↵", shift = true)} reject",
+                    Strings.format("d_shortcut_hint", shortcutLabel("↵"), shortcutLabel("↵", shift = true), language = language),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

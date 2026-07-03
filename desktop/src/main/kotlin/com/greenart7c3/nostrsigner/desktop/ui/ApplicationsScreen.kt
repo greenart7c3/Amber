@@ -38,6 +38,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.launch
@@ -49,20 +50,21 @@ fun ApplicationsScreen(
 ) {
     val store = AmberDesktop.store(account.npub)
     val apps by store.apps.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
     var showNostrConnectDialog by remember { mutableStateOf(false) }
     var showBunkerDialog by remember { mutableStateOf(false) }
 
     Column(Modifier.fillMaxSize()) {
         Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            AmberButton(text = "Connect with nostrconnect://", onClick = { showNostrConnectDialog = true })
-            AmberOutlinedButton(text = "Create a bunker connection", onClick = { showBunkerDialog = true })
+            AmberButton(text = Strings.get("d_connect_nostrconnect", language), onClick = { showNostrConnectDialog = true })
+            AmberOutlinedButton(text = Strings.get("d_create_bunker", language), onClick = { showBunkerDialog = true })
         }
         Spacer(Modifier.height(16.dp))
 
         if (apps.isEmpty()) {
             Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
                 Text(
-                    "No applications connected yet",
+                    Strings.get("d_no_apps", language),
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -87,10 +89,10 @@ fun ApplicationsScreen(
                             )
                             Text(
                                 buildString {
-                                    append(if (app.app.isConnected) "Connected" else "Waiting for the app to connect")
-                                    append(" · ${app.permissions.size} permissions")
+                                    append(if (app.app.isConnected) Strings.get("d_app_connected", language) else Strings.get("d_app_waiting", language))
+                                    append(" · ${Strings.format("d_permissions_count", app.permissions.size, language = language)}")
                                     if (app.app.lastUsed > 0) {
-                                        append(" · last used ${DateFormat.getDateTimeInstance().format(Date(app.app.lastUsed * 1000))}")
+                                        append(" · ${Strings.format("d_last_used", DateFormat.getDateTimeInstance().format(Date(app.app.lastUsed * 1000)), language = language)}")
                                     }
                                 },
                                 style = MaterialTheme.typography.bodySmall,
@@ -124,13 +126,14 @@ private fun NostrConnectDialog(
 ) {
     var uri by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
+    val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add an application") },
+        title = { Text(Strings.get("d_add_an_application", language)) },
         text = {
             Column {
-                Text("Paste the nostrconnect:// URI shown by the application.")
+                Text(Strings.get("d_paste_nostrconnect", language))
                 Spacer(Modifier.height(8.dp))
                 OutlinedTextField(
                     value = uri,
@@ -145,7 +148,7 @@ private fun NostrConnectDialog(
                 onClick = {
                     scope.launch {
                         if (!uri.trim().startsWith("nostrconnect://")) {
-                            Toaster.toast("Invalid nostrconnect URI")
+                            Toaster.toast(Strings.get("d_invalid_nostrconnect", language))
                             return@launch
                         }
                         val error = AmberDesktop.engine.addNostrConnect(uri, account)
@@ -156,10 +159,10 @@ private fun NostrConnectDialog(
                         }
                     }
                 },
-            ) { Text("Add") }
+            ) { Text(Strings.get("add", language)) }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
+            TextButton(onClick = onDismiss) { Text(Strings.get("cancel", language)) }
         },
     )
 }
@@ -173,10 +176,11 @@ private fun NewBunkerDialog(
     var bunkerUri by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboardManager.current
+    val language by Strings.currentLanguage.collectAsState()
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(if (bunkerUri == null) "Add a nsecBunker" else "Bunker connection created") },
+        title = { Text(if (bunkerUri == null) Strings.get("d_add_nsecbunker", language) else Strings.get("d_bunker_created", language)) },
         text = {
             Column(
                 Modifier.verticalScroll(rememberScrollState()),
@@ -184,12 +188,12 @@ private fun NewBunkerDialog(
             ) {
                 val uri = bunkerUri
                 if (uri == null) {
-                    Text("Creates a bunker:// URI you can paste (or scan) in the client application.")
+                    Text(Strings.get("d_bunker_desc", language))
                     Spacer(Modifier.height(8.dp))
                     OutlinedTextField(
                         value = name,
                         onValueChange = { name = it },
-                        label = { Text("Application name") },
+                        label = { Text(Strings.get("d_application_name", language)) },
                         modifier = Modifier.fillMaxWidth(),
                     )
                 } else {
@@ -205,7 +209,7 @@ private fun NewBunkerDialog(
                 TextButton(
                     onClick = {
                         if (name.isBlank()) {
-                            Toaster.toast("Name is required")
+                            Toaster.toast(Strings.get("d_name_required", language))
                             return@TextButton
                         }
                         scope.launch {
@@ -216,18 +220,18 @@ private fun NewBunkerDialog(
                             )
                         }
                     },
-                ) { Text("Create") }
+                ) { Text(Strings.get("d_create", language)) }
             } else {
                 TextButton(
                     onClick = {
                         clipboard.setText(AnnotatedString(uri))
-                        Toaster.toast("Copied to the clipboard")
+                        Toaster.toast(Strings.get("d_copied_clipboard", language))
                     },
-                ) { Text("Copy") }
+                ) { Text(Strings.get("copy", language).trim()) }
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(if (bunkerUri == null) "Cancel" else "Close") }
+            TextButton(onClick = onDismiss) { Text(if (bunkerUri == null) Strings.get("cancel", language) else Strings.get("d_close", language)) }
         },
     )
 }

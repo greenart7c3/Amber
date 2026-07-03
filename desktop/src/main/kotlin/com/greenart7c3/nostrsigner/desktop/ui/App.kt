@@ -55,14 +55,15 @@ import com.greenart7c3.nostrsigner.desktop.core.AccountsStore
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import kotlinx.coroutines.launch
 
-sealed class Route(val title: String, val subtitle: String, val icon: ImageVector) {
-    data object IncomingRequest : Route("Incoming requests", "Approve or reject what applications ask this signer to do", Icons.Default.Notifications)
-    data object Applications : Route("Applications", "Connected applications and their permissions", Icons.Default.Apps)
-    data object Relays : Route("Relays", "Default relays used by bunker connections", Icons.Default.CellTower)
-    data object Settings : Route("Settings", "Account, security and application preferences", Icons.Default.Settings)
+sealed class Route(val titleKey: String, val subtitleKey: String, val icon: ImageVector) {
+    data object IncomingRequest : Route("d_route_incoming_title", "d_route_incoming_sub", Icons.Default.Notifications)
+    data object Applications : Route("applications", "d_route_applications_sub", Icons.Default.Apps)
+    data object Relays : Route("relays", "d_route_relays_sub", Icons.Default.CellTower)
+    data object Settings : Route("settings", "d_route_settings_sub", Icons.Default.Settings)
 }
 
 val sidebarRoutes = listOf(Route.IncomingRequest, Route.Applications, Route.Relays, Route.Settings)
@@ -77,6 +78,7 @@ fun App() {
 
     val currentRoute by UiState.currentRoute.collectAsState()
     val selectedApplication by UiState.selectedApplication.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
 
     LaunchedEffect(Unit) {
         Toaster.messages.collect { snackbarHostState.showSnackbar(it) }
@@ -132,9 +134,9 @@ fun App() {
                 val selectedApp = selectedApplication
                 Column(Modifier.widthIn(max = 880.dp)) {
                     if (selectedApp == null) {
-                        Text(currentRoute.title, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
+                        Text(Strings.get(currentRoute.titleKey, language), style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.SemiBold)
                         Text(
-                            currentRoute.subtitle,
+                            Strings.get(currentRoute.subtitleKey, language),
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -186,7 +188,7 @@ private fun Sidebar(
             modifier = Modifier.padding(horizontal = 8.dp),
         )
         Text(
-            "Nostr event signer",
+            Strings.get("d_tagline"),
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(horizontal = 8.dp),
@@ -218,6 +220,8 @@ private fun SidebarItem(
     shortcut: String,
     onClick: () -> Unit,
 ) {
+    val language by Strings.currentLanguage.collectAsState()
+    val title = Strings.get(route.titleKey, language)
     Surface(
         shape = RoundedCornerShape(8.dp),
         color = if (selected) MaterialTheme.colorScheme.secondaryContainer else MaterialTheme.colorScheme.surface,
@@ -229,10 +233,10 @@ private fun SidebarItem(
                 .padding(horizontal = 10.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Icon(route.icon, route.title, Modifier.size(18.dp))
+            Icon(route.icon, title, Modifier.size(18.dp))
             Spacer(Modifier.width(10.dp))
             Text(
-                route.title,
+                title,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
@@ -269,6 +273,7 @@ private fun SidebarItem(
 private fun AccountSwitcher(account: DesktopAccount) {
     val accounts by AccountsStore.accounts.collectAsState()
     val name by account.name.collectAsState()
+    val language by Strings.currentLanguage.collectAsState()
     val scope = rememberCoroutineScope()
     var expanded by remember { mutableStateOf(false) }
 
@@ -296,7 +301,7 @@ private fun AccountSwitcher(account: DesktopAccount) {
             Spacer(Modifier.width(10.dp))
             Column(Modifier.weight(1f)) {
                 Text(
-                    name.ifBlank { "Account" },
+                    name.ifBlank { Strings.get("account", language) },
                     style = MaterialTheme.typography.bodyMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
@@ -309,7 +314,7 @@ private fun AccountSwitcher(account: DesktopAccount) {
                     overflow = TextOverflow.Ellipsis,
                 )
             }
-            Icon(Icons.Default.UnfoldMore, "Switch account", Modifier.size(18.dp))
+            Icon(Icons.Default.UnfoldMore, Strings.get("d_switch_account", language), Modifier.size(18.dp))
         }
 
         DropdownMenu(
@@ -334,7 +339,7 @@ private fun AccountSwitcher(account: DesktopAccount) {
             }
             HorizontalDivider()
             DropdownMenuItem(
-                text = { Text("Add an account") },
+                text = { Text(Strings.get("d_add_an_account", language)) },
                 leadingIcon = { Icon(Icons.Default.Add, null, Modifier.size(18.dp)) },
                 onClick = {
                     expanded = false

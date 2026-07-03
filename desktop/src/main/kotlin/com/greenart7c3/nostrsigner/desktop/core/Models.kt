@@ -28,16 +28,19 @@ enum class EncryptionType {
 }
 
 /** Mirrors the Android `RememberType` screen codes so exports stay compatible. */
-enum class RememberType(val screenCode: Int, val label: String) {
-    NEVER(0, "Just once"),
-    ONE_MINUTE(1, "1 minute"),
-    FIVE_MINUTES(2, "5 minutes"),
-    TEN_MINUTES(3, "10 minutes"),
-    ALWAYS(4, "Always"),
-    ONE_HOUR(5, "1 hour"),
-    ONE_DAY(6, "1 day"),
-    ONE_WEEK(7, "1 week"),
+enum class RememberType(val screenCode: Int, val labelKey: String) {
+    NEVER(0, "d_remember_never"),
+    ONE_MINUTE(1, "d_remember_1m"),
+    FIVE_MINUTES(2, "d_remember_5m"),
+    TEN_MINUTES(3, "d_remember_10m"),
+    ALWAYS(4, "d_remember_always"),
+    ONE_HOUR(5, "d_remember_1h"),
+    ONE_DAY(6, "d_remember_1d"),
+    ONE_WEEK(7, "d_remember_1w"),
     ;
+
+    /** Localized display label. */
+    fun label(language: String = Strings.currentLanguage.value): String = Strings.get(labelKey, language)
 
     fun acceptUntil(): Long = when (this) {
         ALWAYS -> Long.MAX_VALUE / 1000
@@ -219,6 +222,6 @@ fun SignerType.describe(kind: Int?, language: String = Strings.currentLanguage.v
     SignerType.SWITCH_RELAYS -> Strings.get("switch_relays", language)
     SignerType.LOGOUT -> Strings.get("logout", language)
     SignerType.INVALID -> Strings.get("invalid_request", language)
-    SignerType.PING -> "Ping"
+    SignerType.PING -> Strings.get("ping", language)
     else -> "${Strings.get("requests", language)} ${SignerDescriptions.permission(methodString(), kind, language)}"
 }

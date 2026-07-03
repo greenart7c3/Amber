@@ -183,6 +183,9 @@ fun handleShortcut(
             }
         }
 
+        // Ctrl/⌘ + M — minimize to tray (keep running in the background).
+        // Ctrl/⌘ + W stays as an alias.
+        Key.M -> hideWindow()
         Key.W -> hideWindow()
         Key.Q -> quit()
         else -> return false

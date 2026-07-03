@@ -245,7 +245,13 @@ private fun SidebarItem(
                 Text(
                     shortcut,
                     style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    // On the selected (amber) row inherit the container's dark
+                    // on-color; otherwise use the muted variant.
+                    color = if (selected) {
+                        MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
                     maxLines = 1,
                     softWrap = false,
                 )

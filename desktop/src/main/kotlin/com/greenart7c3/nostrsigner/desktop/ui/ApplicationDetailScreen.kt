@@ -121,7 +121,7 @@ fun ApplicationDetailScreen(
                     ) {
                         Column(Modifier.weight(1f)) {
                             Text(
-                                permission.type + (permission.kind?.let { " (kind $it)" } ?: ""),
+                                com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions.permission(permission.type, permission.kind),
                                 style = MaterialTheme.typography.bodyMedium,
                             )
                             val until = if (permission.acceptable) permission.acceptUntil else permission.rejectUntil

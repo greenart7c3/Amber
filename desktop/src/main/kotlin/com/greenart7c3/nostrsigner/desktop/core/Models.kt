@@ -164,6 +164,8 @@ data class DesktopSettings(
     val closeToTray: Boolean = true,
     /** Show a system notification when a request needs approval. */
     val showNotifications: Boolean = true,
+    /** UI language tag (matches Strings.supportedLanguages); null = follow the OS. */
+    val language: String? = null,
 ) {
     fun normalizedDefaultRelays(): List<NormalizedRelayUrl> = defaultRelays.mapNotNull { RelayUrlNormalizer.normalizeOrNull(it) }
 }
@@ -199,20 +201,24 @@ fun isRemembered(signPolicy: Int?, permission: AppPermissionRecord?): Boolean? {
     }
 }
 
-fun SignerType.describe(kind: Int?): String = when (this) {
-    SignerType.CONNECT -> "wants to connect"
-    SignerType.SIGN_EVENT -> "wants you to sign an event" + (kind?.let { " (kind $it)" } ?: "")
-    SignerType.NIP04_ENCRYPT -> "wants to encrypt a text with NIP-04"
-    SignerType.NIP04_DECRYPT -> "wants to read encrypted content (NIP-04)"
-    SignerType.NIP44_ENCRYPT -> "wants to encrypt a text with NIP-44"
-    SignerType.NIP44_DECRYPT -> "wants to read encrypted content (NIP-44)"
-    SignerType.NIP44_V3_ENCRYPT -> "wants to encrypt data with NIP-44 v3"
-    SignerType.NIP44_V3_DECRYPT -> "wants to read encrypted content (NIP-44 v3)"
-    SignerType.GET_PUBLIC_KEY -> "wants to read your public key"
-    SignerType.DECRYPT_ZAP_EVENT -> "wants to decrypt a private zap"
-    SignerType.PING -> "sent a ping"
-    SignerType.SWITCH_RELAYS -> "wants to switch relays"
-    SignerType.SIGN_PSBT -> "wants you to sign a PSBT"
-    SignerType.LOGOUT -> "wants to log out"
-    SignerType.INVALID -> "sent an invalid request"
+/** The NIP-46 method string for a signer type (e.g. SIGN_EVENT -> "sign_event"). */
+fun SignerType.methodString(): String = name.lowercase()
+
+/**
+ * A localized action phrase for a request, e.g. "wants you to sign a Short
+ * text note" — built from the same translations and event-kind descriptions
+ * as the Android app.
+ */
+fun SignerType.describe(kind: Int?, language: String = Strings.currentLanguage.value): String = when (this) {
+    SignerType.CONNECT -> SignerDescriptions.permission("connect", null, language)
+    SignerType.SIGN_EVENT -> Strings.format(
+        "wants_you_to_sign_a",
+        SignerDescriptions.signEventDescription(kind, language),
+        language = language,
+    )
+    SignerType.SWITCH_RELAYS -> Strings.get("switch_relays", language)
+    SignerType.LOGOUT -> Strings.get("logout", language)
+    SignerType.INVALID -> Strings.get("invalid_request", language)
+    SignerType.PING -> "Ping"
+    else -> "${Strings.get("requests", language)} ${SignerDescriptions.permission(methodString(), kind, language)}"
 }

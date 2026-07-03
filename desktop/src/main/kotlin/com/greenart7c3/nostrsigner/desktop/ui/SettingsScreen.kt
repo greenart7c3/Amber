@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop.ui
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -13,6 +14,8 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -42,6 +45,7 @@ import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.DesktopKeyStore
 import com.greenart7c3.nostrsigner.desktop.core.PassphraseLock
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
+import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
 import java.text.DateFormat
 import java.util.Date
@@ -120,6 +124,10 @@ fun SettingsScreen(account: DesktopAccount) {
                 )
             }
         }
+
+        Spacer(Modifier.height(16.dp))
+        SectionTitle(Strings.get("language"))
+        LanguagePicker()
 
         Spacer(Modifier.height(16.dp))
         SectionTitle("Desktop")
@@ -218,6 +226,28 @@ fun SettingsScreen(account: DesktopAccount) {
 private fun SectionTitle(text: String) {
     Text(text, style = MaterialTheme.typography.titleMedium)
     HorizontalDivider(Modifier.padding(vertical = 4.dp))
+}
+
+@Composable
+private fun LanguagePicker() {
+    val current by Strings.currentLanguage.collectAsState()
+    var expanded by remember { mutableStateOf(false) }
+    val currentName = Strings.supportedLanguages.firstOrNull { it.first == current }?.second ?: current
+
+    Box {
+        AmberOutlinedButton(text = currentName, onClick = { expanded = true })
+        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+            Strings.supportedLanguages.forEach { (tag, name) ->
+                DropdownMenuItem(
+                    text = { Text(name + if (tag == current) "  ✓" else "") },
+                    onClick = {
+                        Strings.setLanguage(tag)
+                        expanded = false
+                    },
+                )
+            }
+        }
+    }
 }
 
 @Composable

@@ -83,6 +83,8 @@ object PassphraseLock {
         writeBlob(key, passphrase, params)
         DesktopKeyStore.removeUnprotectedCopies()
         DesktopKeyStore.installMasterKey(key, SOURCE_DESCRIPTION)
+        // isEnabled() is now true, so re-encrypt every account's database at rest.
+        AmberDesktop.rewriteAllStores()
         state.value = Status.UNLOCKED
         scheduleAutoLock()
     }
@@ -118,6 +120,8 @@ object PassphraseLock {
         val key = DesktopKeyStore.masterKeyForWrapping()
         DesktopKeyStore.recreateUnprotectedStore(key)
         blobFile.delete()
+        // isEnabled() is now false, so rewrite every account's database as plaintext.
+        AmberDesktop.rewriteAllStores()
         autoLockJob?.cancel()
         state.value = Status.DISABLED
     }

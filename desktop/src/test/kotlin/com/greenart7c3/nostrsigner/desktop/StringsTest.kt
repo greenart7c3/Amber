@@ -59,13 +59,28 @@ class StringsTest {
     }
 
     @Test
-    fun desktopUiKeysResolveInEnglishAndFallBack() {
-        // Desktop-only supplement keys exist in English...
+    fun desktopUiKeysResolveInEnglish() {
         assertEquals("Approve", Strings.get("d_approve", "en"))
         assertEquals("Incoming requests", Strings.get("d_route_incoming_title", "en"))
-        // ...and, absent from the translated files, fall back to the English text.
-        assertEquals(Strings.get("d_approve", "en"), Strings.get("d_approve", "de"))
-        assertEquals(Strings.get("d_route_incoming_title", "en"), Strings.get("d_route_incoming_title", "ja"))
+    }
+
+    @Test
+    fun desktopUiKeysAreTranslatedInEveryLanguage() {
+        // The desktop-only d_ strings are now translated in all shipped
+        // locales (no English fallback). Spot-check a representative key.
+        Strings.supportedLanguages.forEach { (tag, _) ->
+            val value = Strings.get("d_approve", tag)
+            assertTrue("d_approve missing for $tag", value.isNotBlank() && value != "d_approve")
+            if (tag != "en") {
+                assertTrue(
+                    "d_approve not translated for $tag (still English)",
+                    Strings.get("d_approve", tag) != "Approve" || tag == "en",
+                )
+            }
+        }
+        // Format specifiers survive translation.
+        assertTrue(Strings.format("d_public_key", "npub1abc", language = "de").contains("npub1abc"))
+        assertTrue(Strings.format("d_public_key", "npub1abc", language = "ja").contains("npub1abc"))
     }
 
     @Test

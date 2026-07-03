@@ -23,7 +23,17 @@ for the JVM) and mirrors the mobile UI and permission model.
 - System tray: closing the window minimizes Amber to the tray so it keeps
   answering requests (with Open / Lock now / Quit menu), and new approval
   requests raise a system notification and bring the window back — both
-  configurable under Settings → Desktop
+  configurable under Settings → Desktop. The tray uses the freedesktop
+  StatusNotifierItem / AppIndicator protocol on Linux (via the dorkbox
+  SystemTray library), so the icon shows on Wayland compositors such as
+  Hyprland/Sway (through waybar's tray module) and on GNOME/KDE, not just
+  X11. On Wayland this needs an SNI host and, for AppIndicator, the
+  `libayatana-appindicator` runtime library. Set `AMBER_DISABLE_TRAY=1` to
+  skip the tray entirely if the native stack misbehaves.
+- Notifications go through the OS-native channel: the freedesktop
+  notification daemon (mako, dunst, swaync, GNOME Shell, …) via `notify-send`
+  or `gdbus` on Linux — so they work on Hyprland/Wayland — `osascript` on
+  macOS, and the AWT tray notification on Windows
 - Optional passphrase lock (see Key storage below)
 - Native desktop layout: sidebar navigation with an account switcher, dense
   list views, and keyboard shortcuts

@@ -156,7 +156,7 @@ class BunkerE2eTest {
         withTimeout(30_000) { engine.pending.first { it.isNotEmpty() } }
         val pendingRequest = engine.pending.value.first()
         assertEquals("e2e-connect", pendingRequest.request.id)
-        engine.approve(pendingRequest, RememberType.ALWAYS)
+        engine.approve(pendingRequest, RememberType.ALWAYS).join()
 
         val ack = withTimeout(30_000) {
             client.responses.first { list -> list.any { it.id == "e2e-connect" } }
@@ -171,6 +171,50 @@ class BunkerE2eTest {
             client.responses.first { list -> list.any { it.id == "e2e-gpk" } }
         }.first { it.id == "e2e-gpk" }
         assertEquals(account.hexKey, gpk.result)
+
+        client.stop()
+    }
+
+    /**
+     * Regression: approving must publish the response even if the coroutine
+     * that triggered it is cancelled immediately afterwards — which is exactly
+     * what happens in the UI, where approving removes the request card from the
+     * list and tears down its composition scope. The engine runs the work on
+     * its own application scope, so a cancelled caller must not stop delivery.
+     */
+    @Test
+    fun approvalSurvivesCallerCancellation() = runBlocking {
+        assumeTrue("Set AMBER_E2E=1 to run the relay round-trip test", System.getenv("AMBER_E2E") != null)
+
+        val relay = RelayUrlNormalizer.normalize("wss://nos.lol/")
+        SettingsStore.update { it.copy(defaultRelays = listOf(relay.url)) }
+
+        val account = AccountManager.addAccount(KeyPair(), name = "cancel")
+        val engine = AmberDesktop.engine
+        engine.start()
+        val bunkerUri = engine.createBunkerConnection(account, "cancel-app", listOf(relay))
+        val signerPubKey = bunkerUri.removePrefix("bunker://").substringBefore("?")
+        val secret = bunkerUri.substringAfter("secret=")
+
+        val client = Client(relay, KeyPair())
+        delay(3000)
+
+        client.send(signerPubKey, relay, """{"id":"cc","method":"connect","params":["$signerPubKey","$secret"]}""")
+        withTimeout(30_000) { engine.pending.first { it.isNotEmpty() } }
+        val req = engine.pending.value.first()
+
+        // Simulate the UI: fire approve from a scope, then cancel that scope
+        // right away (as the removed card's composition scope would be).
+        val callerScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+        callerScope.launch { engine.approve(req, RememberType.ALWAYS) }
+        delay(50)
+        callerScope.cancel()
+
+        // Despite the cancelled caller, the ack must still arrive.
+        val ack = withTimeout(30_000) {
+            client.responses.first { l -> l.any { it.id == "cc" } }
+        }.first { it.id == "cc" }
+        assertEquals("ack", ack.result)
 
         client.stop()
     }
@@ -211,7 +255,7 @@ class BunkerE2eTest {
         clientA.send(signerA, relay, """{"id":"cA","method":"connect","params":["$signerA","$secretA"]}""")
 
         withTimeout(30_000) { engine.pending.first { it.size >= 2 } }
-        engine.pending.value.toList().forEach { engine.approve(it, RememberType.ALWAYS) }
+        engine.pending.value.toList().map { engine.approve(it, RememberType.ALWAYS) }.forEach { it.join() }
 
         withTimeout(30_000) { clientA.responses.first { l -> l.any { it.id == "cA" } } }
         withTimeout(30_000) { clientB.responses.first { l -> l.any { it.id == "cB" } } }
@@ -261,7 +305,7 @@ class BunkerE2eTest {
         // Simulate the approval UI, which passes the requested permissions so
         // the granted perms (sign_event:1, get_public_key) are remembered.
         val connectReq = engine.pending.value.first()
-        engine.approve(connectReq, RememberType.ALWAYS, connectReq.requestedPermissions)
+        engine.approve(connectReq, RememberType.ALWAYS, connectReq.requestedPermissions).join()
 
         // The client receives the connect ack (result == secret) from the signer key.
         val ack = withTimeout(30_000) {

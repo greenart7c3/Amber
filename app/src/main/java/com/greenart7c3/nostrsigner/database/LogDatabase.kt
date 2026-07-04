@@ -32,6 +32,7 @@ abstract class LogDatabase : RoomDatabase() {
         ): LogDatabase = synchronized(this) {
             val executor = Executors.newCachedThreadPool()
             val transactionExecutor = Executors.newCachedThreadPool()
+            val encryptionFactory = DatabaseEncryption.prepare(context, "log_db_$npub")
 
             val instance =
                 Room.databaseBuilder(
@@ -39,6 +40,7 @@ abstract class LogDatabase : RoomDatabase() {
                     LogDatabase::class.java,
                     "log_db_$npub",
                 )
+                    .apply { encryptionFactory?.let { openHelperFactory(it) } }
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
                     .addMigrations(migration_1_2)

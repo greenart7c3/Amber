@@ -254,6 +254,8 @@ dependencies {
     implementation(libs.room.ktx)
     implementation(libs.room.runtime)
     implementation(libs.room.paging)
+    // At-rest database encryption (opt-in via the Security settings screen)
+    implementation(libs.sqlcipher.android)
 
     "freeImplementation"(libs.okhttp)
     "freeImplementation"(libs.okhttpCoroutines)

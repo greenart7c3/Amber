@@ -45,6 +45,7 @@ abstract class HistoryDatabase : RoomDatabase() {
         ): HistoryDatabase = synchronized(this) {
             val executor = Executors.newCachedThreadPool()
             val transactionExecutor = Executors.newCachedThreadPool()
+            val encryptionFactory = DatabaseEncryption.prepare(context, "history_db_$npub")
 
             val instance =
                 Room.databaseBuilder(
@@ -52,6 +53,7 @@ abstract class HistoryDatabase : RoomDatabase() {
                     HistoryDatabase::class.java,
                     "history_db_$npub",
                 )
+                    .apply { encryptionFactory?.let { openHelperFactory(it) } }
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
                     .addMigrations(migration_1_2, migration_2_3, migration_3_4)

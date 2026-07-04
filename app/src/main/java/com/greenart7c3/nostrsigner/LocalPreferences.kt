@@ -73,6 +73,8 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
+    ENCRYPT_DATABASE("encrypt_database"),
+    DATABASE_KEY("database_key_encrypted"),
 }
 
 @Immutable
@@ -151,6 +153,9 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, settings.rateLimitEnabled)
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
+                // ENCRYPT_DATABASE is deliberately NOT written here: the flag must only ever
+                // change together with the database file conversion, via updateEncryptDatabase
+                // (called by DatabaseEncryption.setEncryptionEnabled).
             }
         }
     }
@@ -298,6 +303,7 @@ object LocalPreferences {
                 } catch (_: IllegalArgumentException) {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
+                encryptDatabase = getBoolean(SettingsKeys.ENCRYPT_DATABASE.key, false),
             )
         }
     }
@@ -582,6 +588,36 @@ object LocalPreferences {
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    /**
+     * Synchronous read used by DatabaseEncryption on the database-open path, which can run
+     * before AmberSettings is loaded (e.g. SignerProvider IPC).
+     */
+    fun isDatabaseEncryptionEnabled(context: Context): Boolean = sharedPrefs(context).getBoolean(SettingsKeys.ENCRYPT_DATABASE.key, false)
+
+    /**
+     * Only DatabaseEncryption.setEncryptionEnabled may call this, after all database files
+     * were converted — the flag must always match the state of the files on disk.
+     */
+    fun updateEncryptDatabase(context: Context, enabled: Boolean) {
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.ENCRYPT_DATABASE.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    /** The SQLCipher passphrase, sealed with SecureCryptoHelper (AndroidKeyStore). */
+    fun getSealedDatabaseKey(context: Context): String? = sharedPrefs(context).getString(SettingsKeys.DATABASE_KEY.key, null)
+
+    fun saveSealedDatabaseKey(context: Context, sealedKey: String) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.DATABASE_KEY.key, sealedKey)
+            }
+        }
     }
 
     fun updateUpdateChannel(context: Context, channel: UpdateChannel) {

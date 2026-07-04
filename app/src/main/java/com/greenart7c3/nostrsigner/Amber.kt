@@ -515,6 +515,16 @@ class Amber :
         ApplicationNameCache.clearForAccount(npub)
     }
 
+    /**
+     * Closes and evicts every cached Room handle for all accounts. Used when toggling
+     * database encryption so handles are lazily rebuilt against the converted files.
+     */
+    fun closeAllDatabases() {
+        (databases.keys + logDatabases.keys + historyDatabases.keys).toSet().forEach { npub ->
+            closeDatabasesFor(npub)
+        }
+    }
+
     fun getSavedRelays(account: Account): Set<NormalizedRelayUrl> {
         val database = getDatabase(account.npub)
         val savedRelays = buildSet {

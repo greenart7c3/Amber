@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui
 
+import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -24,12 +25,15 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.database.DatabaseEncryption
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TitleExplainer
 import com.greenart7c3.nostrsigner.ui.navigation.Route
 import kotlinx.collections.immutable.persistentListOf
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -50,6 +54,8 @@ fun SecurityScreen(
     var biometricsIndex by remember {
         mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
     }
+    var encryptDatabase by remember { mutableStateOf(Amber.instance.settings.encryptDatabase) }
+    var isMigratingDatabase by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     Surface(
         modifier.fillMaxSize(),
@@ -135,11 +141,60 @@ fun SecurityScreen(
                         biometricsIndex = it
                     }
                 }
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .padding(horizontal = 8.dp)
+                        .clickable {
+                            encryptDatabase = !encryptDatabase
+                        },
+                ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                    ) {
+                        Text(
+                            text = stringResource(R.string.encrypt_database),
+                        )
+                        Text(
+                            text = stringResource(R.string.encrypt_database_explainer),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    Switch(
+                        checked = encryptDatabase,
+                        onCheckedChange = {
+                            encryptDatabase = !encryptDatabase
+                        },
+                    )
+                }
             }
 
             AmberButton(
                 onClick = {
                     scope.launch(Dispatchers.IO) {
+                        try {
+                            if (encryptDatabase != Amber.instance.settings.encryptDatabase) {
+                                isMigratingDatabase = true
+                                DatabaseEncryption.setEncryptionEnabled(Amber.instance, encryptDatabase)
+                            }
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            AmberLog.e(Amber.TAG, "Failed to change database encryption", e)
+                            isMigratingDatabase = false
+                            encryptDatabase = Amber.instance.settings.encryptDatabase
+                            scope.launch(Dispatchers.Main) {
+                                Toast.makeText(
+                                    Amber.instance,
+                                    Amber.instance.getString(R.string.encrypt_database_error),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            return@launch
+                        }
+                        isMigratingDatabase = false
                         Amber.instance.settings = Amber.instance.settings.copy(
                             useAuth = enableBiometrics,
                             biometricsTimeType = parseBiometricsTimeType(biometricsIndex),
@@ -150,6 +205,7 @@ fun SecurityScreen(
                         }
                     }
                 },
+                enabled = !isMigratingDatabase,
                 text = stringResource(R.string.save),
             )
         }

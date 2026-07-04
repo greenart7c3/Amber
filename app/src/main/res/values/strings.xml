@@ -249,6 +249,9 @@
     <string name="security">Security</string>
     <string name="enable_biometrics">Enable biometrics</string>
     <string name="when_to_ask">When to ask</string>
+    <string name="encrypt_database">Encrypt the database</string>
+    <string name="encrypt_database_explainer">Encrypts app data (permissions, activity, logs) on disk. Your keys are already stored encrypted.</string>
+    <string name="encrypt_database_error">Could not change database encryption. Your data was not modified.</string>
     <string name="every_time">Every time</string>
     <string name="one_minute">One minute</string>
     <string name="five_minutes">Five minutes</string>

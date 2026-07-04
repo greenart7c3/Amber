@@ -15,6 +15,7 @@ quartz = "1.12.6"
 compose_ui = "1.11.3"
 roomKtx = "2.8.4"
 securityCryptoKtx = "1.1.0"
+sqlcipher = "4.16.0"
 zxingAndroidEmbedded = "4.3.0"
 okhttp = "5.4.0"
 kotlin = "2.4.0"
@@ -59,6 +60,7 @@ room-ktx = { module = "androidx.room:room-ktx", version.ref = "roomKtx" }
 room-runtime = { module = "androidx.room:room-runtime", version.ref = "roomKtx" }
 room-paging = { module = "androidx.room:room-paging", version.ref = "roomKtx" }
 security-crypto = { module = "androidx.security:security-crypto", version.ref = "securityCryptoKtx" }
+sqlcipher-android = { module = "net.zetetic:sqlcipher-android", version.ref = "sqlcipher" }
 security-crypto-ktx = { module = "androidx.security:security-crypto-ktx", version.ref = "securityCryptoKtx" }
 ui = { module = "androidx.compose.ui:ui", version.ref = "compose_ui" }
 ui-test-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "compose_ui" }

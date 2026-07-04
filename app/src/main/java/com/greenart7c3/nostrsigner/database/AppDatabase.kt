@@ -183,6 +183,7 @@ abstract class AppDatabase : RoomDatabase() {
         ): AppDatabase = synchronized(this) {
             val executor = Executors.newCachedThreadPool()
             val transactionExecutor = Executors.newCachedThreadPool()
+            val encryptionFactory = DatabaseEncryption.prepare(context, "amber_db_$npub")
 
             val instance =
                 Room.databaseBuilder(
@@ -190,6 +191,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "amber_db_$npub",
                 )
+                    .apply { encryptionFactory?.let { openHelperFactory(it) } }
                     .setQueryExecutor(executor)
                     .setTransactionExecutor(transactionExecutor)
                     .addMigrations(MIGRATION_1_2)

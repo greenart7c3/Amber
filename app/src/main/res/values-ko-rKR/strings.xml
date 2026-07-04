@@ -57,7 +57,7 @@
     <string name="copy_to_clipboard">클립보드에 복사</string>
     <string name="nothing_to_approve_yet">아직 승인할 항목이 없습니다</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">즐겨 사용하는 Nostr 앱을 조금 더 탐색해 보세요.</string>
-    <string name="more">%1$s 더 보기...</string>
+    <string name="more">%1$s 더 보기…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" 공개 키를 읽고 귀하를 대신하여 이벤트에 서명할 권한을 요청합니다"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Orbot으로 Tor에 연결하기
@@ -205,7 +205,6 @@
     <string name="psbt_sending">송금</string>
     <string name="psbt_change">잔돈</string>
     <string name="psbt_fee">수수료</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">Raw PSBT (hex)</string>
     <string name="psbt_decode_error">PSBT를 디코딩할 수 없습니다: %1$s</string>
     <string name="signing_as">서명 계정</string>
@@ -371,8 +370,8 @@
     <string name="password_too_short">비밀번호는 최소 8자 이상이어야 합니다</string>
     <string name="passwords_do_not_match">비밀번호가 일치하지 않습니다</string>
     <string name="export_all_accounts_button">모든 계정 내보내기</string>
-    <string name="preparing_export">내보내기 준비 중...</string>
-    <string name="exporting_accounts_progress">%2$d개 중 %1$d번째 계정 내보내는 중...</string>
+    <string name="preparing_export">내보내기 준비 중…</string>
+    <string name="exporting_accounts_progress">%2$d개 중 %1$d번째 계정 내보내는 중…</string>
     <string name="export_success">%d개 계정을 성공적으로 내보냈습니다</string>
     <string name="export_failed">내보내기 실패: %s</string>
     <string name="confirm_export_title">내보내기 확인</string>
@@ -416,7 +415,7 @@
     <string name="create">만들기</string>
     <string name="name">이름</string>
     <string name="no_relays_added">추가된 relay 없음</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"이름을 비워둘 수 없습니다 "</string>
     <string name="your_nsec_bunker_has_been_created">nsecbunker가 준비되었습니다!</string>
     <string name="use_this_url_in_your_app">앱에서 이 URL을 사용하세요:</string>
@@ -453,7 +452,7 @@
     <string name="default_profile_relays">기본 프로필 relay</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">프로필 데이터를 가져오는 데 사용되는 relay를 관리합니다</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">외부 애플리케이션과 통신하는 데 사용되는 relay를 관리합니다</string>
-    <string name="testing_relay">relay 테스트 중...</string>
+    <string name="testing_relay">relay 테스트 중…</string>
     <string name="a_nostr_secure_signer">NOSTR 보안 서명자</string>
     <string name="go_back">뒤로 가기</string>
     <string name="your_nostr_account_is_ready">Nostr 계정이 준비되었습니다!</string>
@@ -712,7 +711,6 @@
     <string name="event_kind_4454">클라이언트 키 공지</string>
     <string name="applications_backup">애플리케이션 백업</string>
     <string name="applications_backup_explainer">활성화하면 Amber가 연결된 애플리케이션과 권한의 암호화된 복사본을 하루에 한 번 relay에 게시하여 새 기기에서 복원할 수 있습니다. 본인만 백업을 복호화할 수 있습니다.</string>
-    <string name="enable_applications_backup">암호화된 애플리케이션 백업 활성화</string>
     <string name="backup_now">지금 백업</string>
     <string name="restore_from_relays">relay에서 복원</string>
     <string name="restore_confirm_title">애플리케이션을 복원하시겠습니까?</string>

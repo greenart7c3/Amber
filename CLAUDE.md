@@ -7,8 +7,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ```bash
 ./gradlew assembleDebug          # debug build
 ./gradlew assembleRelease        # release build (requires signing keystore)
-./gradlew ktlintCheck            # lint check (also runs on every git commit via pre-commit hook)
-./gradlew ktlintFormat           # auto-fix lint issues
+./gradlew ktlintCheck            # Kotlin style check (also runs on every git commit via pre-commit hook)
+./gradlew ktlintFormat           # auto-fix Kotlin style issues
+./gradlew lint                   # Android Lint, warnings fail the build (runs on commit and push via hooks)
 ./gradlew test --no-daemon       # unit tests (also runs on every git push via pre-push hook)
 ./build.sh                       # builds both offline and free release variants to ~/release/
 ```

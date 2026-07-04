@@ -55,7 +55,7 @@
     <string name="copy_to_clipboard">Copier dans le presse-papiers</string>
     <string name="nothing_to_approve_yet">Rien à approuver pour l\'instant</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Pourquoi ne pas explorer un peu votre application Nostr préférée ?</string>
-    <string name="more">%1$s plus...</string>
+    <string name="more">%1$s plus…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" aimerait avoir la permission de lire votre clé publique et de signer des évènements en votre nom"</string>
     <string name="connect_through_your_orbot_setup_markdown">        ## Se connecter à travers Tor avec Orbot
         \n\n1. Installe [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -202,7 +202,6 @@
     <string name="psbt_sending">Envoi</string>
     <string name="psbt_change">Monnaie</string>
     <string name="psbt_fee">Frais</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">PSBT brut (hex)</string>
     <string name="psbt_decode_error">Impossible de décoder le PSBT : %1$s</string>
     <string name="signing_as">Signature en tant que</string>
@@ -368,8 +367,8 @@
     <string name="password_too_short">Le mot de passe doit contenir au moins 8 caractères</string>
     <string name="passwords_do_not_match">Les mots de passe ne correspondent pas</string>
     <string name="export_all_accounts_button">Exporter tous les comptes</string>
-    <string name="preparing_export">Préparation de l\'exportation...</string>
-    <string name="exporting_accounts_progress">Exportation du compte %1$d sur %2$d...</string>
+    <string name="preparing_export">Préparation de l\'exportation…</string>
+    <string name="exporting_accounts_progress">Exportation du compte %1$d sur %2$d…</string>
     <string name="export_success">%d comptes exportés avec succès</string>
     <string name="export_failed">Échec de l\'exportation : %s</string>
     <string name="confirm_export_title">Confirmer l\'exportation</string>
@@ -413,7 +412,7 @@
     <string name="create">Créer</string>
     <string name="name">Nom</string>
     <string name="no_relays_added">Aucun relay ajouté</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"Le nom ne peut pas être vide "</string>
     <string name="your_nsec_bunker_has_been_created">Votre nsecbunker est prêt !</string>
     <string name="use_this_url_in_your_app">Utilisez cette URL dans votre application :</string>
@@ -450,7 +449,7 @@
     <string name="default_profile_relays">Relays de profil par défaut</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Gérez les relays utilisés pour récupérer les données de votre profil</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Gérez les relays utilisés pour communiquer avec les applications externes</string>
-    <string name="testing_relay">Test du relay...</string>
+    <string name="testing_relay">Test du relay…</string>
     <string name="a_nostr_secure_signer">UN SIGNATAIRE SÉCURISÉ NOSTR</string>
     <string name="go_back">Retour</string>
     <string name="your_nostr_account_is_ready">Votre compte Nostr est prêt !</string>
@@ -709,7 +708,6 @@
     <string name="event_kind_4454">Annonce de clé client</string>
     <string name="applications_backup">Sauvegarde des applications</string>
     <string name="applications_backup_explainer">Lorsqu\'il est activé, Amber publie une copie chiffrée de vos applications connectées et de leurs permissions sur les relays une fois par jour afin que vous puissiez les restaurer sur un nouvel appareil. Vous seul pouvez déchiffrer la sauvegarde.</string>
-    <string name="enable_applications_backup">Activer la sauvegarde chiffrée des applications</string>
     <string name="backup_now">Sauvegarder maintenant</string>
     <string name="restore_from_relays">Restaurer depuis les relays</string>
     <string name="restore_confirm_title">Restaurer les applications ?</string>

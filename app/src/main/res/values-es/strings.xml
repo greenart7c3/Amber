@@ -57,7 +57,7 @@
     <string name="copy_to_clipboard">Copiar al portapapeles</string>
     <string name="nothing_to_approve_yet">Nada que aprobar aún</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">¿Por qué no explorar un poco tu app favorita de nostr?</string>
-    <string name="more">%1$s más...</string>
+    <string name="more">%1$s más…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" desea tu permiso para leer tu clave pública y firmar eventos en tu nombre"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Conectarse a través de Tor con Orbot
@@ -205,7 +205,6 @@
     <string name="psbt_sending">Enviando</string>
     <string name="psbt_change">Cambio</string>
     <string name="psbt_fee">Comisión</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">PSBT sin formato (hex)</string>
     <string name="psbt_decode_error">No se pudo decodificar el PSBT: %1$s</string>
     <string name="signing_as">Firmando como</string>
@@ -371,8 +370,8 @@
     <string name="password_too_short">La contraseña debe tener al menos 8 caracteres</string>
     <string name="passwords_do_not_match">Las contraseñas no coinciden</string>
     <string name="export_all_accounts_button">Exportar todas las cuentas</string>
-    <string name="preparing_export">Preparando exportación...</string>
-    <string name="exporting_accounts_progress">Exportando cuenta %1$d de %2$d...</string>
+    <string name="preparing_export">Preparando exportación…</string>
+    <string name="exporting_accounts_progress">Exportando cuenta %1$d de %2$d…</string>
     <string name="export_success">Se exportaron correctamente %d cuentas</string>
     <string name="export_failed">Error en la exportación: %s</string>
     <string name="confirm_export_title">Confirmar exportación</string>
@@ -416,7 +415,7 @@
     <string name="create">Crear</string>
     <string name="name">Nombre</string>
     <string name="no_relays_added">No se han añadido relays</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"El nombre no puede estar vacío "</string>
     <string name="your_nsec_bunker_has_been_created">¡Tu nsecbunker está listo!</string>
     <string name="use_this_url_in_your_app">Usa esta URL en tu aplicación:</string>
@@ -453,7 +452,7 @@
     <string name="default_profile_relays">Relays de perfil predeterminados</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Gestiona los relays usados para obtener los datos de tu perfil</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Gestiona los relays usados para comunicarse con aplicaciones externas</string>
-    <string name="testing_relay">Probando relay...</string>
+    <string name="testing_relay">Probando relay…</string>
     <string name="a_nostr_secure_signer">UN FIRMANTE SEGURO DE NOSTR</string>
     <string name="go_back">Volver</string>
     <string name="your_nostr_account_is_ready">¡Tu cuenta de Nostr está lista!</string>
@@ -712,7 +711,6 @@
     <string name="event_kind_4454">Anuncio de clave de cliente</string>
     <string name="applications_backup">Copia de seguridad de aplicaciones</string>
     <string name="applications_backup_explainer">Cuando está activado, Amber publica una copia cifrada de tus aplicaciones conectadas y sus permisos en los relays una vez al día para que puedas restaurarlos en un nuevo dispositivo. Solo tú puedes descifrar la copia de seguridad.</string>
-    <string name="enable_applications_backup">Activar copia de seguridad cifrada de aplicaciones</string>
     <string name="backup_now">Hacer copia de seguridad ahora</string>
     <string name="restore_from_relays">Restaurar desde relays</string>
     <string name="restore_confirm_title">¿Restaurar aplicaciones?</string>

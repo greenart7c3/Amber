@@ -48,7 +48,7 @@
     <string name="copy_to_clipboard">คัดลอกไปยังคลิปบอร์ด</string>
     <string name="nothing_to_approve_yet">ยังไม่มีรายการที่ต้องอนุมัติ</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">ลองสำรวจแอป Nostr ที่คุณชื่นชอบสักหน่อยดีไหม?</string>
-    <string name="more">%1$s รายการเพิ่มเติม...</string>
+    <string name="more">%1$s รายการเพิ่มเติม…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" ต้องการขออนุญาตอ่านคีย์สาธารณะของคุณและลงนามในเหตุการณ์แทนคุณ"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## เชื่อมต่อผ่าน Tor ด้วย Orbot\n        \n\n1. ติดตั้ง [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. เริ่มต้น Orbot\n        \n3. ใน Orbot ตรวจสอบพอร์ต Socks ค่าเริ่มต้นคือ 9050\n        \n4. หากจำเป็น ให้เปลี่ยนพอร์ตใน Orbot\n        \n5. กำหนดค่าพอร์ต Socks ในหน้าจอนี้\n        \n6. กดปุ่ม เปิดใช้งาน เพื่อใช้ Orbot เป็น proxy\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. ติดตั้ง [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. เริ่มต้น Orbot\n        \n3. ใน Orbot ตรวจสอบพอร์ต Socks ค่าเริ่มต้นคือ 9050\n        \n4. หากจำเป็น ให้เปลี่ยนพอร์ตใน Orbot\n        \n5. กำหนดค่าพอร์ต Socks ในหน้าจอนี้\n        \n6. กดปุ่ม เปิดใช้งาน เพื่อใช้ Orbot เป็น proxy\n    </string>
@@ -181,7 +181,6 @@
     <string name="psbt_sending">กำลังส่ง</string>
     <string name="psbt_change">ทอน</string>
     <string name="psbt_fee">ค่าธรรมเนียม</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">Raw PSBT (hex)</string>
     <string name="psbt_decode_error">ไม่สามารถถอดรหัส PSBT ได้: %1$s</string>
     <string name="signing_as">กำลังลงนามในนาม</string>
@@ -347,8 +346,8 @@
     <string name="password_too_short">รหัสผ่านต้องมีอย่างน้อย 8 ตัวอักษร</string>
     <string name="passwords_do_not_match">รหัสผ่านไม่ตรงกัน</string>
     <string name="export_all_accounts_button">ส่งออกบัญชีทั้งหมด</string>
-    <string name="preparing_export">กำลังเตรียมการส่งออก...</string>
-    <string name="exporting_accounts_progress">กำลังส่งออกบัญชีที่ %1$d จาก %2$d...</string>
+    <string name="preparing_export">กำลังเตรียมการส่งออก…</string>
+    <string name="exporting_accounts_progress">กำลังส่งออกบัญชีที่ %1$d จาก %2$d…</string>
     <string name="export_success">ส่งออก %d บัญชีสำเร็จ</string>
     <string name="export_failed">การส่งออกล้มเหลว: %s</string>
     <string name="confirm_export_title">ยืนยันการส่งออก</string>
@@ -392,7 +391,7 @@
     <string name="create">สร้าง</string>
     <string name="name">ชื่อ</string>
     <string name="no_relays_added">ยังไม่มี relay ที่เพิ่ม</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"ชื่อต้องไม่ว่างเปล่า "</string>
     <string name="your_nsec_bunker_has_been_created">nsecbunker ของคุณพร้อมใช้งานแล้ว!</string>
     <string name="use_this_url_in_your_app">ใช้ URL นี้ในแอปของคุณ:</string>
@@ -429,7 +428,7 @@
     <string name="default_profile_relays">Relay โปรไฟล์เริ่มต้น</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">จัดการ relay ที่ใช้สำหรับดึงข้อมูลโปรไฟล์ของคุณ</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">จัดการ relay ที่ใช้สำหรับการสื่อสารกับแอปพลิเคชันภายนอก</string>
-    <string name="testing_relay">กำลังทดสอบ relay...</string>
+    <string name="testing_relay">กำลังทดสอบ relay…</string>
     <string name="a_nostr_secure_signer">ตัวลงนาม NOSTR ที่ปลอดภัย</string>
     <string name="go_back">กลับ</string>
     <string name="your_nostr_account_is_ready">บัญชี Nostr ของคุณพร้อมใช้งานแล้ว!</string>
@@ -688,7 +687,6 @@
     <string name="event_kind_4454">ประกาศคีย์ client</string>
     <string name="applications_backup">สำรองข้อมูลแอปพลิเคชัน</string>
     <string name="applications_backup_explainer">เมื่อเปิดใช้งาน Amber จะเผยแพร่สำเนาที่เข้ารหัสของแอปพลิเคชันที่เชื่อมต่อและสิทธิ์ไปยัง relay วันละครั้ง เพื่อให้คุณกู้คืนบนอุปกรณ์ใหม่ได้ มีเพียงคุณเท่านั้นที่สามารถถอดรหัสข้อมูลสำรอง</string>
-    <string name="enable_applications_backup">เปิดใช้งานการสำรองข้อมูลแอปพลิเคชันที่เข้ารหัส</string>
     <string name="backup_now">สำรองข้อมูลตอนนี้</string>
     <string name="restore_from_relays">กู้คืนจาก relay</string>
     <string name="restore_confirm_title">กู้คืนแอปพลิเคชัน?</string>

@@ -1,8 +1,11 @@
+<!-- VectorPath ignored: the artwork cannot be simplified without redrawing it -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:width="25dp"
     android:height="24dp"
     android:viewportWidth="25"
-    android:viewportHeight="24">
+    android:viewportHeight="24"
+    tools:ignore="VectorPath">
   <path
       android:pathData="M12.75,8.25C14.82,8.25 16.5,9.93 16.5,12C16.5,14.07 14.82,15.75 12.75,15.75C10.68,15.75 9,14.07 9,12C9,9.93 10.68,8.25 12.75,8.25ZM12.75,9.75C11.508,9.75 10.5,10.758 10.5,12C10.5,13.242 11.508,14.25 12.75,14.25C13.992,14.25 15,13.242 15,12C15,10.758 13.992,9.75 12.75,9.75Z"
       android:fillColor="#4C4C4C"

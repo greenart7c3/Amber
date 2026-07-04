@@ -1,7 +1,8 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <string name="app_name_release" translatable="false">Amber</string>
-    <string name="app_name_debug" translatable="false">Amber Debug</string>
-    <string name="app_name_benchmark" translatable="false">Amber Benchmark</string>
+    <!-- Referenced indirectly through resValue("string", "app_name", ...) in build.gradle.kts -->
+    <string name="app_name_debug" translatable="false" tools:ignore="UnusedResources">Amber Debug</string>
+    <string name="app_name_benchmark" translatable="false" tools:ignore="UnusedResources">Amber Benchmark</string>
     <!-- Settings screen sections -->
     <string name="settings_section_account">Account &amp; keys</string>
     <string name="settings_section_network">Network</string>
@@ -80,7 +81,7 @@
     <string name="copy_to_clipboard">Copy to clipboard</string>
     <string name="nothing_to_approve_yet">Nothing to approve yet</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Why not explore your favorite nostr app a bit?</string>
-    <string name="more">%1$s more...</string>
+    <string name="more">%1$s more…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"Would like your permission to read your public key and sign events on your behalf"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Connect through Tor with Orbot
@@ -228,7 +229,6 @@
     <string name="psbt_sending">Sending</string>
     <string name="psbt_change">Change</string>
     <string name="psbt_fee">Fee</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">Raw PSBT (hex)</string>
     <string name="psbt_decode_error">Could not decode PSBT: %1$s</string>
     <string name="signing_as">Signing as</string>
@@ -353,7 +353,7 @@
     <string name="enter_recovery_phrase_description">Enter each word of your seed phrase in order. You can also paste the full phrase using the clipboard button.</string>
     <string name="mnemonic_12_words">12 words</string>
     <string name="mnemonic_24_words">24 words</string>
-    <string name="mnemonic_words_entered">%1$d of %2$d words entered</string>
+    <string name="mnemonic_words_entered" tools:ignore="PluralsCandidate">%1$d of %2$d words entered</string>
     <string name="mnemonic_account_index">Account index</string>
     <string name="mnemonic_account_index_description">Use a different index if this mnemonic was used to create multiple accounts (m/44\'/1237\'/%1$d\'/0/0)</string>
     <string name="sign_policy">Sign policy</string>
@@ -394,12 +394,12 @@
     <string name="password_too_short">Password must be at least 8 characters</string>
     <string name="passwords_do_not_match">Passwords do not match</string>
     <string name="export_all_accounts_button">Export All Accounts</string>
-    <string name="preparing_export">Preparing export...</string>
-    <string name="exporting_accounts_progress">Exporting account %1$d of %2$d...</string>
-    <string name="export_success">Successfully exported %d accounts</string>
+    <string name="preparing_export">Preparing export…</string>
+    <string name="exporting_accounts_progress">Exporting account %1$d of %2$d…</string>
+    <string name="export_success" tools:ignore="PluralsCandidate">Successfully exported %d accounts</string>
     <string name="export_failed">Export failed: %s</string>
     <string name="confirm_export_title">Confirm Export</string>
-    <string name="confirm_export_message">You are about to export %d accounts to an encrypted file.</string>
+    <string name="confirm_export_message" tools:ignore="PluralsCandidate">You are about to export %d accounts to an encrypted file.</string>
     <string name="confirm_export_warning">This file will contain all your private keys. Store it securely!</string>
     <string name="export">Export</string>
     <string name="cloud_backup_title">Cloud Backup</string>
@@ -439,7 +439,7 @@
     <string name="create">Create</string>
     <string name="name">Name</string>
     <string name="no_relays_added">No relays added</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"Name can't be empty "</string>
     <string name="your_nsec_bunker_has_been_created">Your nsecbunker is ready!</string>
     <string name="use_this_url_in_your_app">Use this url in your app:</string>
@@ -476,7 +476,7 @@
     <string name="default_profile_relays">Default profile relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Manage the relays used to fetch your profile data</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Manage the relays used for communicating with external applications</string>
-    <string name="testing_relay">Testing relay...</string>
+    <string name="testing_relay">Testing relay…</string>
     <string name="a_nostr_secure_signer">A NOSTR SECURE SIGNER</string>
     <string name="go_back">Go back</string>
     <string name="your_nostr_account_is_ready">Your Nostr account is ready!</string>
@@ -605,7 +605,7 @@
     <string name="create_a_new_connection">Create a new connection</string>
     <string name="network_permission_message">Failed to connect to relay/proxy. Check if you enabled the network permission for Amber</string>
     <string name="reconnect">Reconnect</string>
-    <string name="of_connected_relays">%1$d of %2$d connected relays</string>
+    <string name="of_connected_relays" tools:ignore="PluralsCandidate">%1$d of %2$d connected relays</string>
     <string name="proxy">Proxy</string>
     <string name="default_relay_text">Default</string>
     <string name="enable_kill_switch">Enable kill switch</string>
@@ -739,18 +739,17 @@
     <string name="event_kind_4454">Client key announcement</string>
     <string name="applications_backup">Applications backup</string>
     <string name="applications_backup_explainer">When enabled, Amber publishes an encrypted copy of your connected applications and their permissions to relays once a day so you can restore them on a new device. Only you can decrypt the backup.</string>
-    <string name="enable_applications_backup">Enable encrypted applications backup</string>
     <string name="backup_now">Backup now</string>
     <string name="restore_from_relays">Restore from relays</string>
     <string name="restore_confirm_title">Restore applications?</string>
     <string name="restore_confirm_text">Permissions for applications that already exist on this device will be replaced with the backed-up permissions. New applications from the backup will be added. Continue?</string>
     <string name="backup_success">Backup published</string>
     <string name="backup_failed">Failed to publish backup</string>
-    <string name="restore_success">Restored %1$d applications and %2$d permissions</string>
+    <string name="restore_success" tools:ignore="PluralsCandidate">Restored %1$d applications and %2$d permissions</string>
     <string name="restore_failed">Restore failed: %1$s</string>
     <string name="restore_no_backup_found">No backup found on relays</string>
     <string name="signin_restore_title">Restore backup?</string>
-    <string name="signin_restore_message">Found an encrypted applications backup with %1$d applications and %2$d permissions. Restore now?</string>
+    <string name="signin_restore_message" tools:ignore="PluralsCandidate">Found an encrypted applications backup with %1$d applications and %2$d permissions. Restore now?</string>
     <string name="signin_restore_accept">Restore</string>
     <string name="signin_restore_skip">Skip</string>
     <string name="event_kind_39701">Public web bookmark</string>

@@ -12,13 +12,14 @@ Amber is a single-module Android app (`:app`, package `com.greenart7c3.nostrsign
 
 - `./gradlew ktlintCheck` — Kotlin style check (pre-commit hook runs this).
 - `./gradlew ktlintFormat` — auto-fix formatting issues.
-- `./gradlew test --no-daemon` — JVM unit tests for all variants (pre-push hook runs `./gradlew test`).
+- `./gradlew lint` — Android Lint on the default variant; `warningsAsErrors` is on, so any new warning fails the build (pre-commit and pre-push hooks run this). Version-freshness checks (`GradleDependency` etc.) are disabled in `app/build.gradle.kts`; per-path exemptions live in `app/lint.xml`.
+- `./gradlew test --no-daemon` — JVM unit tests for all variants (pre-push hook runs `./gradlew test lint`).
 - Run one test: `./gradlew :app:testFreeDebugUnitTest --tests "com.greenart7c3.nostrsigner.SomeTest"` (or `--tests "*SomeTest.method"`).
 - `./gradlew assembleDebug --no-daemon` — debug APK for both product flavors.
 - `./gradlew assembleRelease --no-daemon` — release APK; signing only activates when env `SIGN_RELEASE` is set **and** `keystore.properties` exists. CI otherwise `touch`es an empty one.
 - `./build.sh <version> <appName>` — builds free + offline release APKs/AABs into `~/release/` and calls `generate_manifest.sh`.
 
-Required order when pushing: `ktlintCheck` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
+Required order when pushing: `ktlintCheck` → `lint` → `test` → build (mirrored by the hooks, but run them directly; do not rely on hooks).
 
 ## Releases / version bumps
 

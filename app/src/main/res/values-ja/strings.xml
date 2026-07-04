@@ -48,7 +48,7 @@
     <string name="copy_to_clipboard">クリップボードにコピー</string>
     <string name="nothing_to_approve_yet">まだ承認するものはありません</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">お気に入りの Nostr アプリを少し探索してみませんか？</string>
-    <string name="more">あと %1$s 件...</string>
+    <string name="more">あと %1$s 件…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"あなたの公開鍵を読み取り、あなたに代わってイベントに署名する許可を求めています"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Orbot で Tor 接続する\n        \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) をインストール\n        \n2. Orbot を起動\n        \n3. Orbot で Socks ポートを確認（デフォルトは 9050）\n        \n4. 必要に応じて Orbot でポートを変更\n        \n5. この画面で Socks ポートを設定\n        \n6. 「有効化」ボタンを押して Orbot をプロキシとして使用\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android) をインストール\n        \n2. Orbot を起動\n        \n3. Orbot で Socks ポートを確認（デフォルトは 9050）\n        \n4. 必要に応じて Orbot でポートを変更\n        \n5. この画面で Socks ポートを設定\n        \n6. 「有効化」ボタンを押して Orbot をプロキシとして使用\n    </string>
@@ -181,7 +181,6 @@
     <string name="psbt_sending">送信額</string>
     <string name="psbt_change">おつり</string>
     <string name="psbt_fee">手数料</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">生の PSBT（hex）</string>
     <string name="psbt_decode_error">PSBT をデコードできませんでした: %1$s</string>
     <string name="signing_as">署名アカウント</string>
@@ -347,8 +346,8 @@
     <string name="password_too_short">パスワードは最低 8 文字必要です</string>
     <string name="passwords_do_not_match">パスワードが一致しません</string>
     <string name="export_all_accounts_button">すべてのアカウントをエクスポート</string>
-    <string name="preparing_export">エクスポートを準備中...</string>
-    <string name="exporting_accounts_progress">アカウント %1$d / %2$d をエクスポート中...</string>
+    <string name="preparing_export">エクスポートを準備中…</string>
+    <string name="exporting_accounts_progress">アカウント %1$d / %2$d をエクスポート中…</string>
     <string name="export_success">%d 件のアカウントを正常にエクスポートしました</string>
     <string name="export_failed">エクスポートに失敗しました: %s</string>
     <string name="confirm_export_title">エクスポートの確認</string>
@@ -392,7 +391,7 @@
     <string name="create">作成</string>
     <string name="name">名前</string>
     <string name="no_relays_added">Relay が追加されていません</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"名前は空にできません "</string>
     <string name="your_nsec_bunker_has_been_created">nsecbunker の準備ができました！</string>
     <string name="use_this_url_in_your_app">アプリでこの URL を使用してください:</string>
@@ -429,7 +428,7 @@
     <string name="default_profile_relays">デフォルトプロフィール relay</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">プロフィールデータの取得に使用する relay を管理</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">外部アプリケーションとの通信に使用する relay を管理</string>
-    <string name="testing_relay">Relay をテスト中...</string>
+    <string name="testing_relay">Relay をテスト中…</string>
     <string name="a_nostr_secure_signer">NOSTR セキュア署名者</string>
     <string name="go_back">戻る</string>
     <string name="your_nostr_account_is_ready">Nostr アカウントの準備ができました！</string>
@@ -688,7 +687,6 @@
     <string name="event_kind_4454">クライアントキーアナウンス</string>
     <string name="applications_backup">アプリケーションバックアップ</string>
     <string name="applications_backup_explainer">有効にすると、Amber は接続されたアプリケーションとその権限の暗号化されたコピーを 1 日 1 回 relay に公開します。これにより新しいデバイスで復元できます。バックアップを復号できるのはあなただけです。</string>
-    <string name="enable_applications_backup">暗号化されたアプリケーションバックアップを有効にする</string>
     <string name="backup_now">今すぐバックアップ</string>
     <string name="restore_from_relays">Relay から復元</string>
     <string name="restore_confirm_title">アプリケーションを復元しますか？</string>

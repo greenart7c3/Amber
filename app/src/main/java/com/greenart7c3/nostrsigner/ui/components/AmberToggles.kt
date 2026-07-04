@@ -94,7 +94,7 @@ fun <T> AmberToggles(
                 ) {
                     Box(
                         modifier = Modifier
-                            .offset(x = indicatorOffset)
+                            .offset { IntOffset(indicatorOffset.roundToPx(), 0) }
                             .width(segmentWidth)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(4.dp))

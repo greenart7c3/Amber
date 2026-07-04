@@ -24,9 +24,23 @@ android {
         vectorDrawables {
             useSupportLibrary = true
         }
-        lint {
-            disable += listOf("MissingTranslation", "LocalContextGetResourceValueCall")
-        }
+    }
+
+    lint {
+        // Any new warning fails the build (enforced by the pre-commit/pre-push hooks and CI)
+        warningsAsErrors = true
+        abortOnError = true
+        disable += listOf(
+            "MissingTranslation",
+            "LocalContextGetResourceValueCall",
+            // Version bumps are handled deliberately, not because a hook went red the
+            // day a new release was published
+            "AndroidGradlePluginVersion",
+            "GradleDependency",
+            "NewerVersionAvailable",
+            // Resource shrinking is a release-packaging decision, tracked separately
+            "NotShrinkingResources",
+        )
     }
 
     androidResources {

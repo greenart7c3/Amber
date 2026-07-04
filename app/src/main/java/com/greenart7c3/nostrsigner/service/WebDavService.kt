@@ -66,6 +66,7 @@ object WebDavService {
 
         client.newCall(request).execute().use { response ->
             if (response.isSuccessful) {
+                // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
                 val body = response.body?.string() ?: ""
                 Result.success(body)
             } else {

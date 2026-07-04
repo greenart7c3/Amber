@@ -55,7 +55,7 @@
     <string name="copy_to_clipboard">Panoya kopyala</string>
     <string name="nothing_to_approve_yet">Henüz onaylanacak bir şey yok</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Neden favori Nostr uygulamanızı biraz keşfetmiyorsunuz?</string>
-    <string name="more">%1$s tane daha...</string>
+    <string name="more">%1$s tane daha…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"Açık anahtarınızı okumak ve sizin adınıza olayları imzalamak için izninizi istiyor"</string>
     <string name="connect_through_your_orbot_setup_markdown">        ## Orbot aracılığıyla Tor\'a bağlanın
         \n\n1. [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\'u yükleyin
@@ -201,7 +201,6 @@
     <string name="psbt_sending">Gönderiliyor</string>
     <string name="psbt_change">Para üstü</string>
     <string name="psbt_fee">Ücret</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">Ham PSBT (hex)</string>
     <string name="psbt_decode_error">PSBT çözümlenemedi: %1$s</string>
     <string name="signing_as">Olarak imzalanıyor:</string>
@@ -367,8 +366,8 @@
     <string name="password_too_short">Şifre en az 8 karakter olmalıdır</string>
     <string name="passwords_do_not_match">Şifreler eşleşmiyor</string>
     <string name="export_all_accounts_button">Tüm Hesapları Dışa Aktar</string>
-    <string name="preparing_export">Dışa aktarmaya hazırlanıyor...</string>
-    <string name="exporting_accounts_progress">Hesap dışa aktarılıyor %1$d / %2$d...</string>
+    <string name="preparing_export">Dışa aktarmaya hazırlanıyor…</string>
+    <string name="exporting_accounts_progress">Hesap dışa aktarılıyor %1$d / %2$d…</string>
     <string name="export_success">%d hesap başarıyla dışa aktarıldı</string>
     <string name="export_failed">Dışa aktarma başarısız: %s</string>
     <string name="confirm_export_title">Dışa Aktarmayı Onayla</string>
@@ -412,7 +411,7 @@
     <string name="create">Oluştur</string>
     <string name="name">İsim</string>
     <string name="no_relays_added">Eklenmiş relay yok</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"İsim boş olamaz "</string>
     <string name="your_nsec_bunker_has_been_created">Nsecbunker\'ınız hazır!</string>
     <string name="use_this_url_in_your_app">Uygulamanızda bu URL\'yi kullanın:</string>
@@ -449,7 +448,7 @@
     <string name="default_profile_relays">Varsayılan profil relay\'leri</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Profil verilerinizi getirmek için kullanılan relay\'leri yönetin</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Harici uygulamalarla iletişim için kullanılan relay\'leri yönetin</string>
-    <string name="testing_relay">Relay test ediliyor...</string>
+    <string name="testing_relay">Relay test ediliyor…</string>
     <string name="a_nostr_secure_signer">BİR NOSTR GÜVENLİ İMZALAYICI</string>
     <string name="go_back">Geri git</string>
     <string name="your_nostr_account_is_ready">Nostr hesabınız hazır!</string>
@@ -708,7 +707,6 @@
     <string name="event_kind_4454">İstemci anahtar duyurusu</string>
     <string name="applications_backup">Uygulama yedekleme</string>
     <string name="applications_backup_explainer">Etkinleştirildiğinde Amber, bağlı uygulamalarınızın ve izinlerinin şifrelenmiş bir kopyasını günde bir kez relay\'lere yayımlar; böylece bunları yeni bir cihazda geri yükleyebilirsiniz. Yedeği yalnızca siz çözebilirsiniz.</string>
-    <string name="enable_applications_backup">Şifrelenmiş uygulama yedeklemeyi etkinleştir</string>
     <string name="backup_now">Şimdi yedekle</string>
     <string name="restore_from_relays">Relay\'lerden geri yükle</string>
     <string name="restore_confirm_title">Uygulamalar geri yüklensin mi?</string>

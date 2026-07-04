@@ -241,7 +241,6 @@ fun IntentSingleEventHomeScreen(
             val nip = when (intentData.type) {
                 SignerType.NIP04_DECRYPT, SignerType.NIP04_ENCRYPT -> 4
                 SignerType.NIP44_ENCRYPT, SignerType.NIP44_DECRYPT -> 44
-                SignerType.DECRYPT_ZAP_EVENT -> null
                 else -> null
             }
             val isEncrypt = intentData.type == SignerType.NIP04_ENCRYPT || intentData.type == SignerType.NIP44_ENCRYPT

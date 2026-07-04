@@ -55,7 +55,7 @@
     <string name="copy_to_clipboard">In Zwischenablage kopieren</string>
     <string name="nothing_to_approve_yet">Noch nichts zu genehmigen</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Warum nicht deine Lieblings-Nostr-App ein wenig erkunden?</string>
-    <string name="more">%1$s mehr...</string>
+    <string name="more">%1$s mehr…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" möchte deinen öffentlichen Schlüssel lesen und Events in deinem Namen signieren"</string>
     <string name="connect_through_your_orbot_setup_markdown">        ## Verbinde dich über Tor mit Orbot
         \n\n1. Installiere [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -202,7 +202,6 @@
     <string name="psbt_sending">Senden</string>
     <string name="psbt_change">Wechselgeld</string>
     <string name="psbt_fee">Gebühr</string>
-    <string name="psbt_amount_sats">%1$s Sats</string>
     <string name="psbt_raw">Rohes PSBT (Hex)</string>
     <string name="psbt_decode_error">PSBT konnte nicht dekodiert werden: %1$s</string>
     <string name="signing_as">Signieren als</string>
@@ -368,8 +367,8 @@
     <string name="password_too_short">Das Passwort muss mindestens 8 Zeichen lang sein</string>
     <string name="passwords_do_not_match">Passwörter stimmen nicht überein</string>
     <string name="export_all_accounts_button">Alle Konten exportieren</string>
-    <string name="preparing_export">Export wird vorbereitet...</string>
-    <string name="exporting_accounts_progress">Konto %1$d von %2$d wird exportiert...</string>
+    <string name="preparing_export">Export wird vorbereitet…</string>
+    <string name="exporting_accounts_progress">Konto %1$d von %2$d wird exportiert…</string>
     <string name="export_success">%d Konten erfolgreich exportiert</string>
     <string name="export_failed">Export fehlgeschlagen: %s</string>
     <string name="confirm_export_title">Export bestätigen</string>
@@ -413,7 +412,7 @@
     <string name="create">Erstellen</string>
     <string name="name">Name</string>
     <string name="no_relays_added">Keine Relays hinzugefügt</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"Name darf nicht leer sein "</string>
     <string name="your_nsec_bunker_has_been_created">Dein nsecbunker ist bereit!</string>
     <string name="use_this_url_in_your_app">Verwende diese URL in deiner App:</string>
@@ -450,7 +449,7 @@
     <string name="default_profile_relays">Standard-Profil-Relays</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Verwalte die Relays, die zum Abrufen deiner Profildaten verwendet werden</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Verwalte die Relays, die zur Kommunikation mit externen Anwendungen verwendet werden</string>
-    <string name="testing_relay">Relay wird getestet...</string>
+    <string name="testing_relay">Relay wird getestet…</string>
     <string name="a_nostr_secure_signer">EIN SICHERER NOSTR-SIGNIERER</string>
     <string name="go_back">Zurück</string>
     <string name="your_nostr_account_is_ready">Dein Nostr-Konto ist bereit!</string>
@@ -709,7 +708,6 @@
     <string name="event_kind_4454">Client-Schlüsselankündigung</string>
     <string name="applications_backup">Anwendungs-Backup</string>
     <string name="applications_backup_explainer">Wenn aktiviert, veröffentlicht Amber einmal täglich eine verschlüsselte Kopie deiner verbundenen Anwendungen und ihrer Berechtigungen auf Relays, damit du sie auf einem neuen Gerät wiederherstellen kannst. Nur du kannst das Backup entschlüsseln.</string>
-    <string name="enable_applications_backup">Verschlüsseltes Anwendungs-Backup aktivieren</string>
     <string name="backup_now">Jetzt sichern</string>
     <string name="restore_from_relays">Von Relays wiederherstellen</string>
     <string name="restore_confirm_title">Anwendungen wiederherstellen?</string>

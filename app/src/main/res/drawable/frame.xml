@@ -1,8 +1,11 @@
+<!-- VectorRaster ignored: the login logo is drawn at its intrinsic 244x225 size -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:width="244dp"
     android:height="225dp"
     android:viewportWidth="244"
-    android:viewportHeight="225">
+    android:viewportHeight="225"
+    tools:ignore="VectorRaster">
   <group>
     <clip-path
         android:pathData="M0,0.32h244v224h-244z"/>

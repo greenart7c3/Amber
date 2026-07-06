@@ -20,6 +20,7 @@ import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.parseBiometricsTimeType
 import com.vitorpamplona.quartz.nip01Core.core.hexToByteArray
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
@@ -37,6 +38,8 @@ private enum class PrefKeys(val key: String) {
     PROFILE_URL("profile_url"),
     LAST_METADATA_UPDATE("last_metadata_update"),
     LAST_CHECK("last_check"),
+    USER_RELAYS("user_relays"),
+    USER_RELAYS_CREATED_AT("user_relays_created_at"),
     DID_BACKUP("did_backup"),
     BACKUP_APPLICATIONS("backup_applications"),
 }
@@ -183,6 +186,21 @@ object LocalPreferences {
         sharedPrefs(context, npub).edit {
             apply {
                 putLong(PrefKeys.LAST_CHECK.key, time)
+            }
+        }
+    }
+
+    fun getUserRelays(context: Context, npub: String): List<NormalizedRelayUrl> = sharedPrefs(context, npub).getStringSet(PrefKeys.USER_RELAYS.key, null)?.mapNotNull {
+        RelayUrlNormalizer.normalizeOrNull(it)
+    } ?: emptyList()
+
+    fun getUserRelaysCreatedAt(context: Context, npub: String): Long = sharedPrefs(context, npub).getLong(PrefKeys.USER_RELAYS_CREATED_AT.key, 0)
+
+    fun setUserRelays(context: Context, npub: String, relays: List<NormalizedRelayUrl>, createdAt: Long) {
+        sharedPrefs(context, npub).edit {
+            apply {
+                putStringSet(PrefKeys.USER_RELAYS.key, relays.map { it.url }.toSet())
+                putLong(PrefKeys.USER_RELAYS_CREATED_AT.key, createdAt)
             }
         }
     }

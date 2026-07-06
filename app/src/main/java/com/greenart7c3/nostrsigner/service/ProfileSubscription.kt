@@ -36,6 +36,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.EventMessage
 import com.vitorpamplona.quartz.nip01Core.relay.commands.toClient.Message
 import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip65RelayList.AdvertisedRelayListEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlinx.coroutines.CoroutineScope
@@ -51,7 +52,11 @@ class ProfileSubscription(
     val appContext: Context,
     val scope: CoroutineScope,
 ) : RelayConnectionListener {
+    // hexKey -> subId of the kind-0 metadata subscription
     private val subIds = mutableMapOf<String, String>()
+
+    // hexKey -> subId of the kind-10002 relay list subscription that runs before the metadata one
+    private val relayListSubIds = mutableMapOf<String, String>()
     private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
     private val timeoutJobs = mutableMapOf<String, Job>()
 
@@ -71,10 +76,8 @@ class ProfileSubscription(
             if (relays != null) {
                 relays.remove(relay.url)
                 if (relays.isEmpty()) {
-                    timeoutJobs.remove(subId)?.cancel()
-                    Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-                    client.unsubscribe(subId)
-                    relaysPerSubId.remove(subId)
+                    unsubscribe(subId)
+                    onRelayListSubFinished(subId)
                 }
             }
 
@@ -87,6 +90,11 @@ class ProfileSubscription(
             }
         }
         if (msg is EventMessage) {
+            if (this.relayListSubIds.containsValue(msg.subId)) {
+                if (msg.event.kind == AdvertisedRelayListEvent.KIND && msg.event.verify()) {
+                    (msg.event as? AdvertisedRelayListEvent)?.let { saveUserRelays(it) }
+                }
+            }
             if (this.subIds.containsValue(msg.subId)) {
                 if (msg.event.kind == MetadataEvent.KIND && msg.event.verify()) {
                     val account = accounts[msg.event.pubKey] ?: return
@@ -123,6 +131,8 @@ class ProfileSubscription(
 
     /**
      * Starts (or refreshes) the throttled, one-shot metadata fetch for [account].
+     * First fetches the user's NIP-65 relay list (kind 10002), saves it locally, then
+     * fetches the metadata from the default profile relays plus the user's own relays.
      * Tracks the account so incoming events update its StateFlows; safe to call from
      * any composable displaying the account.
      */
@@ -134,9 +144,6 @@ class ProfileSubscription(
 
         accounts[account.hexKey] = account
 
-        if (!subIds.containsKey(account.hexKey)) {
-            subIds[account.hexKey] = UUID.randomUUID().toString()
-        }
         val shouldFetch = if (interval == ProfileFetchInterval.ALWAYS) {
             true
         } else {
@@ -147,20 +154,68 @@ class ProfileSubscription(
             (lastMetaData == 0L || oneDayAgo > lastMetaData) && (lastCheck == 0L || fetchIntervalAgo > lastCheck)
         }
         if (shouldFetch) {
-            val subId = subIds[account.hexKey]!!
-            val profileFilter = createProfileFilter(account)
-            relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
-            client.subscribe(subId, profileFilter)
-            timeoutJobs[subId] = scope.launch {
-                delay(EOSE_TIMEOUT_MS)
-                if (relaysPerSubId.containsKey(subId)) {
-                    Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-                    client.unsubscribe(subId)
-                    relaysPerSubId.remove(subId)
-                    timeoutJobs.remove(subId)
-                }
+            subscribeToUserRelayList(account)
+        }
+    }
+
+    private fun subscribeToUserRelayList(account: Account) {
+        val subId = relayListSubIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
+        val relayListFilter = createRelayListFilter(account)
+        timeoutJobs.remove(subId)?.cancel()
+        relaysPerSubId[subId] = relayListFilter.keys.toMutableSet()
+        client.subscribe(subId, relayListFilter)
+        timeoutJobs[subId] = scope.launch {
+            delay(EOSE_TIMEOUT_MS)
+            if (relaysPerSubId.containsKey(subId)) {
+                unsubscribe(subId)
+                // still fetch the profile with whatever relay list we have saved
+                onRelayListSubFinished(subId)
             }
         }
+    }
+
+    private fun subscribeToProfile(account: Account) {
+        val subId = subIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
+        val profileFilter = createProfileFilter(account)
+        timeoutJobs.remove(subId)?.cancel()
+        relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
+        client.subscribe(subId, profileFilter)
+        timeoutJobs[subId] = scope.launch {
+            delay(EOSE_TIMEOUT_MS)
+            if (relaysPerSubId.containsKey(subId)) {
+                unsubscribe(subId)
+            }
+        }
+    }
+
+    /**
+     * Called when a relay list subscription completes (all relays sent EOSE or the timeout
+     * fired). Starts the metadata fetch for the account using the just-saved relay list.
+     * No-op for metadata subscription ids.
+     */
+    private fun onRelayListSubFinished(subId: String) {
+        val hexKey = relayListSubIds.entries.firstOrNull { it.value == subId }?.key ?: return
+        relayListSubIds.remove(hexKey)
+        accounts[hexKey]?.let { subscribeToProfile(it) }
+    }
+
+    /**
+     * Saves the newest kind-10002 write relay list locally so profile fetches can also
+     * query the user's own relays.
+     */
+    private fun saveUserRelays(event: AdvertisedRelayListEvent) {
+        val account = accounts[event.pubKey] ?: return
+        val relays = event.writeRelaysNorm() ?: event.relaysNorm()
+        if (relays.isEmpty()) return
+        if (event.createdAt <= LocalPreferences.getUserRelaysCreatedAt(appContext, account.npub)) return
+        LocalPreferences.setUserRelays(appContext, account.npub, relays, event.createdAt)
+    }
+
+    private fun unsubscribe(subId: String) {
+        timeoutJobs.remove(subId)?.cancel()
+        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
+        client.unsubscribe(subId)
+        relaysPerSubId.remove(subId)
     }
 
     /**
@@ -175,11 +230,8 @@ class ProfileSubscription(
      */
     fun closeSub(account: Account) {
         accounts.remove(account.hexKey)
-        val subId = subIds.remove(account.hexKey) ?: return
-        timeoutJobs.remove(subId)?.cancel()
-        Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-        client.unsubscribe(subId)
-        relaysPerSubId.remove(subId)
+        relayListSubIds.remove(account.hexKey)?.let { unsubscribe(it) }
+        subIds.remove(account.hexKey)?.let { unsubscribe(it) }
     }
 
     /**
@@ -187,26 +239,40 @@ class ProfileSubscription(
      */
     fun closeSub() {
         Amber.instance.intentionalDisconnectTime = System.currentTimeMillis()
-        subIds.values.forEach {
+        (subIds.values + relayListSubIds.values).forEach {
             timeoutJobs.remove(it)?.cancel()
             client.unsubscribe(it)
         }
         relaysPerSubId.clear()
         subIds.clear()
+        relayListSubIds.clear()
         accounts.clear()
     }
 
-    private fun createProfileFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> {
-        val relays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays
-        val accounts = listOf(account.hexKey)
-        return relays.associateWith {
-            listOf(
-                Filter(
-                    kinds = listOf(MetadataEvent.KIND),
-                    authors = accounts,
-                    limit = accounts.size,
-                ),
-            )
-        }
+    /** Default profile relays from the settings plus the user's own saved relay list. */
+    private fun profileRelays(account: Account): Set<NormalizedRelayUrl> {
+        val defaultRelays = LocalPreferences.loadSettingsFromEncryptedStorage().defaultProfileRelays
+        val userRelays = LocalPreferences.getUserRelays(appContext, account.npub)
+        return (defaultRelays + userRelays).toSet()
+    }
+
+    private fun createRelayListFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> = profileRelays(account).associateWith {
+        listOf(
+            Filter(
+                kinds = listOf(AdvertisedRelayListEvent.KIND),
+                authors = listOf(account.hexKey),
+                limit = 1,
+            ),
+        )
+    }
+
+    private fun createProfileFilter(account: Account): Map<NormalizedRelayUrl, List<Filter>> = profileRelays(account).associateWith {
+        listOf(
+            Filter(
+                kinds = listOf(MetadataEvent.KIND),
+                authors = listOf(account.hexKey),
+                limit = 1,
+            ),
+        )
     }
 }

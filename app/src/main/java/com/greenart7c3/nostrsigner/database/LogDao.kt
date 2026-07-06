@@ -12,9 +12,6 @@ import kotlinx.coroutines.flow.Flow
 @Dao
 interface LogDao {
     @Insert
-    fun insertAll(items: List<LogEntity>)
-
-    @Insert
     @Transaction
     suspend fun insertLog(logEntity: LogEntity)
 

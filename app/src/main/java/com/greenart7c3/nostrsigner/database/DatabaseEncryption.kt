@@ -157,17 +157,32 @@ object DatabaseEncryption {
         newFile.delete()
 
         val db = SQLiteDatabase.openDatabase(dbFile.path, sourceKey, null, SQLiteDatabase.OPEN_READWRITE, null)
+        val version: Int
         try {
             // Fold the WAL into the main file so the export sees every committed row.
             db.rawExecSQL("PRAGMA wal_checkpoint(TRUNCATE)")
-            val version = db.version
+            version = db.version
             db.rawExecSQL("ATTACH DATABASE ? AS target KEY ?", newFile.path, targetKey)
             db.rawExecSQL("SELECT sqlcipher_export('target')")
-            // Carry the Room schema version over or Room would re-run every migration.
-            db.rawExecSQL("PRAGMA target.user_version = $version")
-            db.rawExecSQL("DETACH DATABASE target")
+            // No DETACH and no statements qualified with the `target` schema here: an
+            // attached schema is per-connection state, but SQLiteDatabase runs statements
+            // through a connection pool that routes read-only-classified statements
+            // (ATTACH/DETACH/SELECT per sqlite3_stmt_readonly) differently from writes, so
+            // a later `PRAGMA target...` can compile on a connection where the schema was
+            // never attached ("unknown database target"). Closing the handle detaches
+            // everything; the schema version is written on a direct open below.
         } finally {
             db.close()
+        }
+
+        // Carry the Room schema version over (or Room would re-run every migration) on a
+        // plain, unqualified PRAGMA. This also verifies the converted file opens with the
+        // target key before it is swapped into place.
+        val converted = SQLiteDatabase.openDatabase(newFile.path, targetKey, null, SQLiteDatabase.OPEN_READWRITE, null)
+        try {
+            converted.version = version
+        } finally {
+            converted.close()
         }
 
         File(dbFile.path + "-wal").delete()

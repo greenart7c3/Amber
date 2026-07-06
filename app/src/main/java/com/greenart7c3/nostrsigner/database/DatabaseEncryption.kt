@@ -157,24 +157,27 @@ object DatabaseEncryption {
         // Stale -journal/-wal next to a leftover .new would poison the fresh export.
         deleteWithAuxiliaryFiles(newFile)
 
+        // No rawExecSQL anywhere in this sequence: its native implementation
+        // (executeNonQueryRaw) discards the sqlite3_step error code, so a failed ATTACH or
+        // export is a silent no-op. execSQL throws on step errors (and its STATEMENT_ATTACH
+        // branch applies the library's attached-database mitigation); rawQuery+moveToFirst
+        // executes row-returning statements with error propagation.
         val db = SQLiteDatabase.openDatabase(dbFile.path, sourceKey, null, SQLiteDatabase.OPEN_READWRITE, null)
         val version: Int
         val sourceObjects: Long
         try {
             // Fold the WAL into the main file so the export sees every committed row.
-            db.rawExecSQL("PRAGMA wal_checkpoint(TRUNCATE)")
+            db.rawQuery("PRAGMA wal_checkpoint(TRUNCATE)", null).use { it.moveToFirst() }
             version = db.version
             sourceObjects = countSchemaObjects(db)
-            // Literal SQL (Zetetic's documented pattern) instead of bound parameters, and
-            // no DETACH or `target`-qualified statements afterwards: an attached schema is
-            // per-connection state, but SQLiteDatabase runs statements through a connection
-            // pool that routes read-only-classified statements (ATTACH/DETACH/SELECT per
-            // sqlite3_stmt_readonly) differently from writes, so a later `PRAGMA target...`
-            // can compile on a connection where the schema was never attached ("unknown
-            // database target"). Closing the handle detaches everything; the schema version
-            // is written on a direct open below.
-            db.rawExecSQL("ATTACH DATABASE '${escapeLiteral(newFile.path)}' AS target KEY '${escapeLiteral(targetKey)}'")
-            db.rawExecSQL("SELECT sqlcipher_export('target')")
+            // Literal SQL (Zetetic's documented pattern), and no DETACH or
+            // `target`-qualified statements afterwards: an attached schema is per-connection
+            // state, but SQLiteDatabase runs statements through a connection pool, so a
+            // later `PRAGMA target...` can compile on a connection where the schema was
+            // never attached ("unknown database target"). Closing the handle detaches
+            // everything; the schema version is written on a direct open below.
+            db.execSQL("ATTACH DATABASE '${escapeLiteral(newFile.path)}' AS target KEY '${escapeLiteral(targetKey)}'")
+            db.rawQuery("SELECT sqlcipher_export('target')", null).use { it.moveToFirst() }
         } finally {
             db.close()
         }

@@ -162,7 +162,12 @@ object DatabaseEncryption {
         // export is a silent no-op. execSQL throws on step errors (and its STATEMENT_ATTACH
         // branch applies the library's attached-database mitigation); rawQuery+moveToFirst
         // executes row-returning statements with error propagation.
-        val db = SQLiteDatabase.openDatabase(dbFile.path, sourceKey, null, SQLiteDatabase.OPEN_READWRITE, null)
+        //
+        // CREATE_IF_NECESSARY is required even though the source exists: SQLite opens
+        // ATTACHed databases with the main connection's open flags (attach.c uses
+        // db->openFlags), so without SQLITE_OPEN_CREATE the ATTACH below cannot create
+        // the .new target file and fails with SQLITE_CANTOPEN/ENOENT.
+        val db = SQLiteDatabase.openDatabase(dbFile.path, sourceKey, null, SQLiteDatabase.CREATE_IF_NECESSARY, null)
         val version: Int
         val sourceObjects: Long
         try {

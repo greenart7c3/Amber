@@ -154,40 +154,52 @@ object DatabaseEncryption {
         val targetKey = if (encrypt) passphrase else ""
         val newFile = File(dbFile.path + ".new")
         val oldFile = File(dbFile.path + ".old")
-        newFile.delete()
+        // Stale -journal/-wal next to a leftover .new would poison the fresh export.
+        deleteWithAuxiliaryFiles(newFile)
 
         val db = SQLiteDatabase.openDatabase(dbFile.path, sourceKey, null, SQLiteDatabase.OPEN_READWRITE, null)
         val version: Int
+        val sourceObjects: Long
         try {
             // Fold the WAL into the main file so the export sees every committed row.
             db.rawExecSQL("PRAGMA wal_checkpoint(TRUNCATE)")
             version = db.version
-            db.rawExecSQL("ATTACH DATABASE ? AS target KEY ?", newFile.path, targetKey)
+            sourceObjects = countSchemaObjects(db)
+            // Literal SQL (Zetetic's documented pattern) instead of bound parameters, and
+            // no DETACH or `target`-qualified statements afterwards: an attached schema is
+            // per-connection state, but SQLiteDatabase runs statements through a connection
+            // pool that routes read-only-classified statements (ATTACH/DETACH/SELECT per
+            // sqlite3_stmt_readonly) differently from writes, so a later `PRAGMA target...`
+            // can compile on a connection where the schema was never attached ("unknown
+            // database target"). Closing the handle detaches everything; the schema version
+            // is written on a direct open below.
+            db.rawExecSQL("ATTACH DATABASE '${escapeLiteral(newFile.path)}' AS target KEY '${escapeLiteral(targetKey)}'")
             db.rawExecSQL("SELECT sqlcipher_export('target')")
-            // No DETACH and no statements qualified with the `target` schema here: an
-            // attached schema is per-connection state, but SQLiteDatabase runs statements
-            // through a connection pool that routes read-only-classified statements
-            // (ATTACH/DETACH/SELECT per sqlite3_stmt_readonly) differently from writes, so
-            // a later `PRAGMA target...` can compile on a connection where the schema was
-            // never attached ("unknown database target"). Closing the handle detaches
-            // everything; the schema version is written on a direct open below.
         } finally {
             db.close()
         }
 
-        // Carry the Room schema version over (or Room would re-run every migration) on a
-        // plain, unqualified PRAGMA. This also verifies the converted file opens with the
-        // target key before it is swapped into place.
-        val converted = SQLiteDatabase.openDatabase(newFile.path, targetKey, null, SQLiteDatabase.OPEN_READWRITE, null)
+        // A source with an empty schema exports no pages and SQLite creates attached
+        // database files lazily, so .new may not exist here — CREATE_IF_NECESSARY then
+        // produces a valid empty database with the target key, which is the correct
+        // conversion of an empty source.
+        val converted = SQLiteDatabase.openDatabase(newFile.path, targetKey, null, SQLiteDatabase.CREATE_IF_NECESSARY, null)
         try {
+            // A non-empty source must never swap to an empty target — abort (data intact).
+            val convertedObjects = countSchemaObjects(converted)
+            if (sourceObjects > 0 && convertedObjects == 0L) {
+                throw IOException("Export of ${dbFile.name} produced an empty database ($sourceObjects objects expected)")
+            }
+            // Carry the Room schema version over (or Room would re-run every migration) on
+            // a plain, unqualified PRAGMA. Opening with the target key also verifies the
+            // converted file is readable before it is swapped into place.
             converted.version = version
         } finally {
             converted.close()
         }
+        deleteAuxiliaryFiles(newFile)
 
-        File(dbFile.path + "-wal").delete()
-        File(dbFile.path + "-shm").delete()
-        File(dbFile.path + "-journal").delete()
+        deleteAuxiliaryFiles(dbFile)
         oldFile.delete()
         if (!dbFile.renameTo(oldFile)) {
             newFile.delete()
@@ -198,6 +210,26 @@ object DatabaseEncryption {
             throw IOException("Could not move converted ${dbFile.name} into place")
         }
         oldFile.delete()
+        AmberLog.d(Amber.TAG, "Converted ${dbFile.name} (encrypt=$encrypt, $sourceObjects objects, ${dbFile.length()} bytes)")
+    }
+
+    private fun countSchemaObjects(db: SQLiteDatabase): Long = db.rawQuery("SELECT count(*) FROM sqlite_master", null).use { cursor ->
+        if (cursor.moveToFirst()) cursor.getLong(0) else 0L
+    }
+
+    // Paths and keys are app-controlled (bech32 npubs, hex passphrase); escaping is
+    // belt-and-braces for embedding them as SQL string literals.
+    private fun escapeLiteral(value: String): String = value.replace("'", "''")
+
+    private fun deleteAuxiliaryFiles(dbFile: File) {
+        File(dbFile.path + "-journal").delete()
+        File(dbFile.path + "-wal").delete()
+        File(dbFile.path + "-shm").delete()
+    }
+
+    private fun deleteWithAuxiliaryFiles(dbFile: File) {
+        dbFile.delete()
+        deleteAuxiliaryFiles(dbFile)
     }
 
     /**
@@ -209,11 +241,11 @@ object DatabaseEncryption {
         val newFile = File(dbFile.path + ".new")
         val oldFile = File(dbFile.path + ".old")
         if (!dbFile.exists() && oldFile.exists()) {
-            newFile.delete()
+            deleteWithAuxiliaryFiles(newFile)
             oldFile.renameTo(dbFile)
         } else {
-            if (oldFile.exists()) oldFile.delete()
-            if (newFile.exists()) newFile.delete()
+            deleteWithAuxiliaryFiles(oldFile)
+            deleteWithAuxiliaryFiles(newFile)
         }
     }
 

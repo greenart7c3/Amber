@@ -56,6 +56,7 @@ import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -121,6 +122,7 @@ object IntentUtils {
     )
     val invalidIntents = _invalidIntents.asSharedFlow()
 
+    @OptIn(ExperimentalCoroutinesApi::class)
     fun clearInvalidIntents() {
         _invalidIntents.resetReplayCache()
     }

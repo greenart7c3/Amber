@@ -57,7 +57,7 @@
     <string name="copy_to_clipboard">Копировать в буфер обмена</string>
     <string name="nothing_to_approve_yet">Пока нечего подтверждать</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Почему бы немного не изучить ваше любимое Nostr-приложение?</string>
-    <string name="more">Ещё %1$s...</string>
+    <string name="more">Ещё %1$s…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Запрашивает разрешение на чтение вашего публичного ключа и подпись событий от вашего имени"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Подключение через Tor с помощью Orbot
@@ -205,7 +205,6 @@
     <string name="psbt_sending">Отправка</string>
     <string name="psbt_change">Сдача</string>
     <string name="psbt_fee">Комиссия</string>
-    <string name="psbt_amount_sats">%1$s сат</string>
     <string name="psbt_raw">Исходный PSBT (hex)</string>
     <string name="psbt_decode_error">Не удалось декодировать PSBT: %1$s</string>
     <string name="signing_as">Подписывается как</string>
@@ -371,8 +370,8 @@
     <string name="password_too_short">Пароль должен содержать не менее 8 символов</string>
     <string name="passwords_do_not_match">Пароли не совпадают</string>
     <string name="export_all_accounts_button">Экспортировать все аккаунты</string>
-    <string name="preparing_export">Подготовка экспорта...</string>
-    <string name="exporting_accounts_progress">Экспорт аккаунта %1$d из %2$d...</string>
+    <string name="preparing_export">Подготовка экспорта…</string>
+    <string name="exporting_accounts_progress">Экспорт аккаунта %1$d из %2$d…</string>
     <string name="export_success">Успешно экспортировано %d аккаунтов</string>
     <string name="export_failed">Ошибка экспорта: %s</string>
     <string name="confirm_export_title">Подтвердить экспорт</string>
@@ -416,7 +415,7 @@
     <string name="create">Создать</string>
     <string name="name">Имя</string>
     <string name="no_relays_added">Relay-серверы не добавлены</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"Имя не может быть пустым "</string>
     <string name="your_nsec_bunker_has_been_created">Ваш nsecbunker готов!</string>
     <string name="use_this_url_in_your_app">Используйте этот URL в вашем приложении:</string>
@@ -453,7 +452,7 @@
     <string name="default_profile_relays">Relay-серверы профиля по умолчанию</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Управление relay-серверами для получения данных профиля</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Управление relay-серверами для связи с внешними приложениями</string>
-    <string name="testing_relay">Проверка relay-сервера...</string>
+    <string name="testing_relay">Проверка relay-сервера…</string>
     <string name="a_nostr_secure_signer">БЕЗОПАСНЫЙ ПОДПИСЧИК NOSTR</string>
     <string name="go_back">Назад</string>
     <string name="your_nostr_account_is_ready">Ваш Nostr-аккаунт готов!</string>
@@ -712,7 +711,6 @@
     <string name="event_kind_4454">Объявление ключа клиента</string>
     <string name="applications_backup">Резервное копирование приложений</string>
     <string name="applications_backup_explainer">При включении Amber публикует зашифрованную копию ваших подключённых приложений и их разрешений на relay-серверы раз в день, чтобы вы могли восстановить их на новом устройстве. Расшифровать резервную копию можете только вы.</string>
-    <string name="enable_applications_backup">Включить зашифрованное резервное копирование приложений</string>
     <string name="backup_now">Создать резервную копию сейчас</string>
     <string name="restore_from_relays">Восстановить с relay-серверов</string>
     <string name="restore_confirm_title">Восстановить приложения?</string>

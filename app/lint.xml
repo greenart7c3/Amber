@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<lint>
+    <!-- AAPT fails to resolve the launcher icon when the adaptive-icon lives in
+         mipmap-anydpi (without -v26), even with minSdk 26, so the folder must keep
+         its -v26 suffix despite lint suggesting the merge. -->
+    <issue id="ObsoleteSdkInt">
+        <ignore path="src/main/res/mipmap-anydpi-v26" />
+    </issue>
+</lint>

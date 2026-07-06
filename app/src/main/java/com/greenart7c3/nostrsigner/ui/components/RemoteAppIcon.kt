@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 @Composable
 fun RemoteAppIcon(
     imageUrl: String?,
-    name: String = "",
+    name: String,
     modifier: Modifier = Modifier,
     size: Dp = 48.dp,
 ) {

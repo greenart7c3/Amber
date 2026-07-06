@@ -16,8 +16,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Article
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Article
 import androidx.compose.material.icons.filled.CloudUpload
 import androidx.compose.material.icons.filled.Draw
 import androidx.compose.material.icons.filled.Feedback
@@ -219,7 +219,7 @@ fun SettingsScreen(
                 SettingsItem(
                     title = stringResource(R.string.logs),
                     subtitle = stringResource(R.string.logs_subtitle),
-                    painter = rememberVectorPainter(Icons.Default.Article),
+                    painter = rememberVectorPainter(Icons.AutoMirrored.Filled.Article),
                     onClick = { onNav(Route.Logs.route) },
                 )
             }

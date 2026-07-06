@@ -53,7 +53,7 @@
     <string name="copy_to_clipboard">Copiar para área de transferência</string>
     <string name="nothing_to_approve_yet">Nada para aprovar ainda</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Por que não explorar um pouco seu aplicativo nostr favorito?</string>
-    <string name="more">%1$s mais...</string>
+    <string name="more">%1$s mais…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" gostaria de sua permissão para ler sua chave pública e assinar eventos em seu nome"</string>
     <string name="connect_through_your_orbot_setup_markdown">        ## Conecte-se através do Tor com o Orbot
         \n\n1. Instale o [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)
@@ -200,7 +200,6 @@
     <string name="psbt_sending">Enviando</string>
     <string name="psbt_change">Troco</string>
     <string name="psbt_fee">Taxa</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">PSBT bruto (hex)</string>
     <string name="psbt_decode_error">Não foi possível decodificar o PSBT: %1$s</string>
     <string name="signing_as">Assinando como</string>
@@ -366,8 +365,8 @@
     <string name="password_too_short">A senha deve ter pelo menos 8 caracteres</string>
     <string name="passwords_do_not_match">Senhas não são iguais</string>
     <string name="export_all_accounts_button">Exportar Todas as Contas</string>
-    <string name="preparing_export">Preparando para exportar...</string>
-    <string name="exporting_accounts_progress">Exportando conta %1$d de %2$d...</string>
+    <string name="preparing_export">Preparando para exportar…</string>
+    <string name="exporting_accounts_progress">Exportando conta %1$d de %2$d…</string>
     <string name="export_success">Contas %d exportadas com sucesso</string>
     <string name="export_failed">Falha na exportação: %s</string>
     <string name="confirm_export_title">Confirmar Exportação</string>
@@ -411,7 +410,7 @@
     <string name="create">Criar</string>
     <string name="name">Nome</string>
     <string name="no_relays_added">Nenhum relay adicionado</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"O nome não pode estar vazio "</string>
     <string name="your_nsec_bunker_has_been_created">Seu nsecbunker está pronto!</string>
     <string name="use_this_url_in_your_app">Use esta URL em sua aplicação:</string>
@@ -448,7 +447,7 @@
     <string name="default_profile_relays">Relays de perfil padrão</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Gerenciar os relays usados para obter seus dados de perfil</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Gerenciar os relays usados para comunicação com aplicativos externos</string>
-    <string name="testing_relay">Testando relay...</string>
+    <string name="testing_relay">Testando relay…</string>
     <string name="a_nostr_secure_signer">UM ASSINADOR SEGURO NOSTR</string>
     <string name="go_back">Voltar</string>
     <string name="your_nostr_account_is_ready">Sua conta Nostr está pronta!</string>
@@ -707,7 +706,6 @@
     <string name="event_kind_4454">Anúncio de chave do cliente</string>
     <string name="applications_backup">Backup de aplicativos</string>
     <string name="applications_backup_explainer">Quando ativado, o Amber publica uma cópia criptografada dos seus aplicativos conectados e suas permissões nos relays uma vez por dia, para que você possa restaurá-los em um novo dispositivo. Somente você pode descriptografar o backup.</string>
-    <string name="enable_applications_backup">Ativar backup criptografado de aplicativos</string>
     <string name="backup_now">Fazer backup agora</string>
     <string name="restore_from_relays">Restaurar dos relays</string>
     <string name="restore_confirm_title">Restaurar aplicativos?</string>

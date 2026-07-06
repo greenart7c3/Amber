@@ -4,20 +4,21 @@ GREEN='\033[0;32m'
 NO_COLOR='\033[0m'
 
 echo "*********************************************************"
-echo "Running git pre-push hook. Running test... "
+echo "Running git pre-push hook. Running tests and Android Lint... "
 echo "*********************************************************"
 
-./gradlew test
+./gradlew test lint
 
 status=$?
 
 if [ "$status" = 0 ] ; then
-    echo "All test passed."
+    echo "All tests and lint checks passed."
     exit 0
 else
     echo "*********************************************************"
-    echo 1>&2 "Failing test"
+    echo 1>&2 "Failing tests or lint checks"
     printf "Run ${GREEN}./gradlew test${NO_COLOR} to make sure you have all tests green before pushing...\n"
+    printf "Run ${GREEN}./gradlew lint${NO_COLOR} and open the report to see Android Lint issues...\n"
     echo "*********************************************************"
     exit 1
 fi

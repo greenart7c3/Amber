@@ -53,7 +53,7 @@
     <string name="copy_to_clipboard">复制到剪贴板</string>
     <string name="nothing_to_approve_yet">暂无批复请求</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">为什么不去探索一下你喜欢的 Nostr 应用呢？</string>
-    <string name="more">%1$s 项其他权限...</string>
+    <string name="more">%1$s 项其他权限…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"想要获取权限读取公钥并签署事件"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## 通过 Tor 使用 Orbot 连接\n        \n\n1. 安装 [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. 启动 Orbot\n        \n3. 在 Orbot 中，检查 Socks 端口。默认使用 9050\n        \n4. 如有必要，在 Orbot 中更改端口\n        \n5. 在此界面中配置 Socks 端口\n        \n6. 按下\"激活\"按钮以将 Orbot 用作代理\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. 安装 [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. 启动 Orbot\n        \n3. 在 Orbot 中，检查 Socks 端口。默认使用 9050\n        \n4. 如有必要，在 Orbot 中更改端口\n        \n5. 在此界面中配置 Socks 端口\n        \n6. 按下\"激活\"按钮以将 Orbot 用作代理\n    </string>
@@ -186,7 +186,6 @@
     <string name="psbt_sending">发送</string>
     <string name="psbt_change">找零</string>
     <string name="psbt_fee">手续费</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">原始 PSBT（十六进制）</string>
     <string name="psbt_decode_error">无法解码 PSBT：%1$s</string>
     <string name="signing_as">签署为</string>
@@ -352,7 +351,7 @@
     <string name="password_too_short">密码必须至少八位字符</string>
     <string name="passwords_do_not_match">密码不一致</string>
     <string name="export_all_accounts_button">导出所有账户</string>
-    <string name="preparing_export">正在准备导出...</string>
+    <string name="preparing_export">正在准备导出…</string>
     <string name="exporting_accounts_progress">正在导出账户（%1$d/%2$d）</string>
     <string name="export_success">成功导出账户 %d</string>
     <string name="export_failed">导出失败：%s</string>
@@ -397,7 +396,7 @@
     <string name="create">创建</string>
     <string name="name">名称</string>
     <string name="no_relays_added">未添加中继器</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"名称不能为空"</string>
     <string name="your_nsec_bunker_has_been_created">nsecBunker 准备就绪！</string>
     <string name="use_this_url_in_your_app">在应用中使用这个链接：</string>
@@ -434,7 +433,7 @@
     <string name="default_profile_relays">默认用户资料中继</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">管理用于获取个人资料的中继</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">管理用于外部应用通讯的中继</string>
-    <string name="testing_relay">测试中继...</string>
+    <string name="testing_relay">测试中继…</string>
     <string name="a_nostr_secure_signer">NOSTR 安全签名器</string>
     <string name="go_back">返回</string>
     <string name="your_nostr_account_is_ready">Nostr 账户已准备就绪！</string>
@@ -693,7 +692,6 @@
     <string name="event_kind_4454">客户端密钥宣告</string>
     <string name="applications_backup">应用备份</string>
     <string name="applications_backup_explainer">启用后，Amber 每天将您已连接的应用及其权限的加密副本发布到 relay，以便您在新设备上恢复。只有您才能解密此备份。</string>
-    <string name="enable_applications_backup">启用加密应用备份</string>
     <string name="backup_now">立即备份</string>
     <string name="restore_from_relays">从 relay 恢复</string>
     <string name="restore_confirm_title">恢复应用？</string>

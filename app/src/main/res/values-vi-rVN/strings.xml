@@ -48,7 +48,7 @@
     <string name="copy_to_clipboard">Sao chép vào khay nhớ tạm</string>
     <string name="nothing_to_approve_yet">Chưa có gì để phê duyệt</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Tại sao không khám phá ứng dụng Nostr yêu thích của bạn một chút?</string>
-    <string name="more">%1$s thêm...</string>
+    <string name="more">%1$s thêm…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">" Muốn xin phép đọc khóa công khai của bạn và ký các sự kiện thay mặt bạn"</string>
     <string name="connect_through_your_orbot_setup_markdown">\n        ## Kết nối qua Tor với Orbot\n        \n\n1. Cài đặt [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Khởi động Orbot\n        \n3. Trong Orbot, kiểm tra cổng Socks. Mặc định sử dụng 9050\n        \n4. Nếu cần, thay đổi cổng trong Orbot\n        \n5. Cấu hình cổng Socks trên màn hình này\n        \n6. Nhấn nút Kích hoạt để sử dụng Orbot làm proxy\n    </string>
     <string name="connect_through_your_orbot_setup_markdown2">\n        1. Cài đặt [Orbot](https://play.google.com/store/apps/details?id=org.torproject.android)\n        \n2. Khởi động Orbot\n        \n3. Trong Orbot, kiểm tra cổng Socks. Mặc định sử dụng 9050\n        \n4. Nếu cần, thay đổi cổng trong Orbot\n        \n5. Cấu hình cổng Socks trên màn hình này\n        \n6. Nhấn nút Kích hoạt để sử dụng Orbot làm proxy\n    </string>
@@ -181,7 +181,6 @@
     <string name="psbt_sending">Đang gửi</string>
     <string name="psbt_change">Tiền thừa</string>
     <string name="psbt_fee">Phí</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">PSBT thô (hex)</string>
     <string name="psbt_decode_error">Không thể giải mã PSBT: %1$s</string>
     <string name="signing_as">Ký với tư cách</string>
@@ -347,8 +346,8 @@
     <string name="password_too_short">Mật khẩu phải có ít nhất 8 ký tự</string>
     <string name="passwords_do_not_match">Mật khẩu không khớp</string>
     <string name="export_all_accounts_button">Xuất Tất Cả Tài Khoản</string>
-    <string name="preparing_export">Đang chuẩn bị xuất...</string>
-    <string name="exporting_accounts_progress">Đang xuất tài khoản %1$d trong %2$d...</string>
+    <string name="preparing_export">Đang chuẩn bị xuất…</string>
+    <string name="exporting_accounts_progress">Đang xuất tài khoản %1$d trong %2$d…</string>
     <string name="export_success">Đã xuất thành công %d tài khoản</string>
     <string name="export_failed">Xuất thất bại: %s</string>
     <string name="confirm_export_title">Xác Nhận Xuất</string>
@@ -392,7 +391,7 @@
     <string name="create">Tạo</string>
     <string name="name">Tên</string>
     <string name="no_relays_added">Chưa thêm relay nào</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"Tên không được để trống "</string>
     <string name="your_nsec_bunker_has_been_created">nsecbunker của bạn đã sẵn sàng!</string>
     <string name="use_this_url_in_your_app">Sử dụng URL này trong ứng dụng của bạn:</string>
@@ -429,7 +428,7 @@
     <string name="default_profile_relays">Relay hồ sơ mặc định</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Quản lý các relay dùng để tải dữ liệu hồ sơ của bạn</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Quản lý các relay dùng để giao tiếp với các ứng dụng bên ngoài</string>
-    <string name="testing_relay">Đang kiểm tra relay...</string>
+    <string name="testing_relay">Đang kiểm tra relay…</string>
     <string name="a_nostr_secure_signer">TRÌNH KÝ NOSTR AN TOÀN</string>
     <string name="go_back">Quay lại</string>
     <string name="your_nostr_account_is_ready">Tài khoản Nostr của bạn đã sẵn sàng!</string>
@@ -688,7 +687,6 @@
     <string name="event_kind_4454">Thông báo khóa máy khách</string>
     <string name="applications_backup">Sao lưu ứng dụng</string>
     <string name="applications_backup_explainer">Khi được bật, Amber xuất bản bản sao được mã hóa của các ứng dụng đã kết nối và quyền của chúng lên relay mỗi ngày một lần để bạn có thể khôi phục trên thiết bị mới. Chỉ bạn mới có thể giải mã bản sao lưu.</string>
-    <string name="enable_applications_backup">Bật sao lưu ứng dụng được mã hóa</string>
     <string name="backup_now">Sao lưu ngay</string>
     <string name="restore_from_relays">Khôi phục từ relay</string>
     <string name="restore_confirm_title">Khôi phục ứng dụng?</string>

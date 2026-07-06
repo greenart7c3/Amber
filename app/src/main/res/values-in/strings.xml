@@ -57,7 +57,7 @@
     <string name="copy_to_clipboard">Salin ke clipboard</string>
     <string name="nothing_to_approve_yet">Belum ada yang perlu disetujui</string>
     <string name="why_not_explore_your_favorite_nostr_app_a_bit">Mengapa tidak menjelajahi aplikasi nostr favorit Anda sebentar?</string>
-    <string name="more">%1$s lagi...</string>
+    <string name="more">%1$s lagi…</string>
     <string name="would_like_your_permission_to_read_your_public_key_and_sign_events_on_your_behalf">"Meminta izin Anda untuk membaca kunci publik dan menandatangani event atas nama Anda"</string>
     <string name="connect_through_your_orbot_setup_markdown">
         ## Hubungkan melalui Tor dengan Orbot
@@ -205,7 +205,6 @@
     <string name="psbt_sending">Mengirim</string>
     <string name="psbt_change">Kembalian</string>
     <string name="psbt_fee">Biaya</string>
-    <string name="psbt_amount_sats">%1$s sats</string>
     <string name="psbt_raw">PSBT mentah (hex)</string>
     <string name="psbt_decode_error">Tidak dapat mendekode PSBT: %1$s</string>
     <string name="signing_as">Menandatangani sebagai</string>
@@ -371,8 +370,8 @@
     <string name="password_too_short">Kata sandi harus minimal 8 karakter</string>
     <string name="passwords_do_not_match">Kata sandi tidak cocok</string>
     <string name="export_all_accounts_button">Ekspor Semua Akun</string>
-    <string name="preparing_export">Menyiapkan ekspor...</string>
-    <string name="exporting_accounts_progress">Mengekspor akun %1$d dari %2$d...</string>
+    <string name="preparing_export">Menyiapkan ekspor…</string>
+    <string name="exporting_accounts_progress">Mengekspor akun %1$d dari %2$d…</string>
     <string name="export_success">Berhasil mengekspor %d akun</string>
     <string name="export_failed">Ekspor gagal: %s</string>
     <string name="confirm_export_title">Konfirmasi Ekspor</string>
@@ -416,7 +415,7 @@
     <string name="create">Buat</string>
     <string name="name">Nama</string>
     <string name="no_relays_added">Belum ada relay ditambahkan</string>
-    <string name="wss">wss://...</string>
+    <string name="wss">wss://…</string>
     <string name="name_cannot_be_empty">"Nama tidak boleh kosong "</string>
     <string name="your_nsec_bunker_has_been_created">nsecbunker Anda siap!</string>
     <string name="use_this_url_in_your_app">Gunakan URL ini di aplikasi Anda:</string>
@@ -453,7 +452,7 @@
     <string name="default_profile_relays">Relay profil default</string>
     <string name="manage_the_relays_used_to_fetch_your_profile_data">Kelola relay yang digunakan untuk mengambil data profil Anda</string>
     <string name="manage_the_relays_used_for_communicating_with_external_applications">Kelola relay yang digunakan untuk berkomunikasi dengan aplikasi eksternal</string>
-    <string name="testing_relay">Menguji relay...</string>
+    <string name="testing_relay">Menguji relay…</string>
     <string name="a_nostr_secure_signer">PENANDA AMAN NOSTR</string>
     <string name="go_back">Kembali</string>
     <string name="your_nostr_account_is_ready">Akun Nostr Anda siap!</string>
@@ -712,7 +711,6 @@
     <string name="event_kind_4454">Pengumuman kunci klien</string>
     <string name="applications_backup">Cadangan aplikasi</string>
     <string name="applications_backup_explainer">Jika diaktifkan, Amber menerbitkan salinan terenkripsi aplikasi yang terhubung dan izinnya ke relay sekali sehari sehingga Anda dapat memulihkannya di perangkat baru. Hanya Anda yang dapat mendekripsi cadangan.</string>
-    <string name="enable_applications_backup">Aktifkan cadangan aplikasi terenkripsi</string>
     <string name="backup_now">Cadangkan sekarang</string>
     <string name="restore_from_relays">Pulihkan dari relay</string>
     <string name="restore_confirm_title">Pulihkan aplikasi?</string>

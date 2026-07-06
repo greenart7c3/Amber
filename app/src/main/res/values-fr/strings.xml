@@ -221,6 +221,8 @@
     <string name="authenticate">Authentification nécessaire pour utiliser l\'application</string>
     <string name="security">Sécurité</string>
     <string name="enable_biometrics">Activer la biométrie</string>
+    <string name="privacy_mode">Mode de confidentialité</string>
+    <string name="privacy_mode_description">Désactive la journalisation et les statistiques d\'activité. Les journaux et l\'historique d\'activité existants sont supprimés lors de l\'activation.</string>
     <string name="when_to_ask">Quand demander</string>
     <string name="every_time">À chaque fois</string>
     <string name="one_minute">Une minute</string>

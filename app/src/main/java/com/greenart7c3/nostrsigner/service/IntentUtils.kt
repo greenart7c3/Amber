@@ -313,7 +313,7 @@ object IntentUtils {
                             }
                             Amber.instance.applicationIOScope.launch {
                                 val database = Amber.instance.getLogDatabase(account.npub)
-                                database.dao().insertLog(
+                                database.dao().insertLogIfEnabled(
                                     LogEntity(
                                         0,
                                         packageName ?: "",
@@ -498,7 +498,7 @@ object IntentUtils {
                         }
                         Amber.instance.applicationIOScope.launch {
                             val database = Amber.instance.getLogDatabase(account.npub)
-                            database.dao().insertLog(
+                            database.dao().insertLogIfEnabled(
                                 LogEntity(
                                     0,
                                     packageName ?: "",
@@ -758,7 +758,7 @@ object IntentUtils {
             emitInvalid(intent, packageName, "Error parsing intent: ${e.message}", e)
             Amber.instance.applicationIOScope.launch {
                 LocalPreferences.allSavedAccounts(Amber.instance).forEach {
-                    Amber.instance.getLogDatabase(it.npub).dao().insertLog(
+                    Amber.instance.getLogDatabase(it.npub).dao().insertLogIfEnabled(
                         LogEntity(
                             id = 0,
                             url = "IntentUtils",

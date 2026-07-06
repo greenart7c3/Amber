@@ -34,6 +34,7 @@ data class AmberSettings(
     val updateCheckFrequency: UpdateCheckFrequency = UpdateCheckFrequency.DAILY,
     val updateChannel: UpdateChannel = UpdateChannel.STABLE,
     val startServiceOnBoot: Boolean = true,
+    val privacyMode: Boolean = false,
     val rateLimitEnabled: Boolean = true,
     val rateLimitMaxPerWindow: Int = 5,
     val rateLimitWindowSeconds: Int = 30,

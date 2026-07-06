@@ -205,6 +205,8 @@
     <string name="authenticate">使用应用需要身份验证</string>
     <string name="security">安全性</string>
     <string name="enable_biometrics">启用生物识别解锁</string>
+    <string name="privacy_mode">隐私模式</string>
+    <string name="privacy_mode_description">禁用日志和活动统计。开启时将删除现有日志和活动历史。</string>
     <string name="when_to_ask">解锁请求</string>
     <string name="every_time">每次</string>
     <string name="one_minute">一分钟</string>

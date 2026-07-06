@@ -200,6 +200,8 @@
     <string name="authenticate">ต้องการการยืนยันตัวตนเพื่อใช้แอป</string>
     <string name="security">ความปลอดภัย</string>
     <string name="enable_biometrics">เปิดใช้งานไบโอเมตริก</string>
+    <string name="privacy_mode">โหมดความเป็นส่วนตัว</string>
+    <string name="privacy_mode_description">ปิดการบันทึกและสถิติการใช้งาน บันทึกและประวัติการใช้งานที่มีอยู่จะถูกลบเมื่อเปิดใช้งาน</string>
     <string name="when_to_ask">เมื่อใดที่จะถาม</string>
     <string name="every_time">ทุกครั้ง</string>
     <string name="one_minute">หนึ่งนาที</string>

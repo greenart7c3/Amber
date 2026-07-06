@@ -224,6 +224,8 @@
     <string name="authenticate">Требуется аутентификация для использования приложения</string>
     <string name="security">Безопасность</string>
     <string name="enable_biometrics">Включить биометрию</string>
+    <string name="privacy_mode">Конфиденциальный режим</string>
+    <string name="privacy_mode_description">Отключает ведение журнала и статистику активности. При включении существующие журналы и история активности удаляются.</string>
     <string name="when_to_ask">Когда спрашивать</string>
     <string name="every_time">Каждый раз</string>
     <string name="one_minute">Одна минута</string>

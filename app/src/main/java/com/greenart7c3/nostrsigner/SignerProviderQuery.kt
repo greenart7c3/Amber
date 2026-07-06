@@ -303,7 +303,7 @@ object SignerProviderQuery {
                                 }
                             } catch (e: Exception) {
                                 scope.launch {
-                                    logDatabase.dao().insertLog(
+                                    logDatabase.dao().insertLogIfEnabled(
                                         LogEntity(
                                             0,
                                             requesterId,
@@ -407,7 +407,7 @@ object SignerProviderQuery {
                             }
                         } catch (e: Exception) {
                             scope.launch {
-                                logDatabase.dao().insertLog(
+                                logDatabase.dao().insertLogIfEnabled(
                                     LogEntity(
                                         0,
                                         requesterId,
@@ -507,7 +507,7 @@ object SignerProviderQuery {
                         AmberLog.d(Amber.TAG, "Failed to sign psbt", e)
                         scope.launch {
                             val logDb = Amber.instance.getLogDatabase(account.npub)
-                            logDb.dao().insertLog(
+                            logDb.dao().insertLogIfEnabled(
                                 LogEntity(
                                     0,
                                     requesterId,
@@ -624,7 +624,7 @@ object SignerProviderQuery {
             scope.launch {
                 LocalPreferences.allSavedAccounts(context).forEach { accInfo ->
                     val database = Amber.instance.getLogDatabase(accInfo.npub)
-                    database.dao().insertLog(
+                    database.dao().insertLogIfEnabled(
                         LogEntity(
                             0,
                             requesterId,

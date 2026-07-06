@@ -6,6 +6,7 @@ import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
+import com.greenart7c3.nostrsigner.Amber
 import kotlinx.coroutines.flow.Flow
 
 @Dao
@@ -16,6 +17,17 @@ interface LogDao {
     @Insert
     @Transaction
     suspend fun insertLog(logEntity: LogEntity)
+
+    /**
+     * Inserts a log entry unless privacy mode is on, in which case the write is
+     * dropped. All call sites that record non-essential relay/bunker/request
+     * logs should use this instead of [insertLog].
+     */
+    @Transaction
+    suspend fun insertLogIfEnabled(logEntity: LogEntity) {
+        if (Amber.instance.settings.privacyMode) return
+        insertLog(logEntity)
+    }
 
     @Query("SELECT * FROM amber_log ORDER BY time DESC")
     fun getLogs(): Flow<List<LogEntity>>

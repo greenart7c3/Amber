@@ -219,6 +219,8 @@
     <string name="authenticate">Autenticação necessária para usar o aplicativo</string>
     <string name="security">Segurança</string>
     <string name="enable_biometrics">Habilitar biometria</string>
+    <string name="privacy_mode">Modo de privacidade</string>
+    <string name="privacy_mode_description">Desativa o registro de logs e estatísticas de atividade. Os logs e o histórico de atividade existentes são excluídos quando ativado.</string>
     <string name="when_to_ask">Quando perguntar</string>
     <string name="every_time">Sempre</string>
     <string name="one_minute">Um minuto</string>

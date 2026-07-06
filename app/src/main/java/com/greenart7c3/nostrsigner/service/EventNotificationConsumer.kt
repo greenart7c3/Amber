@@ -80,7 +80,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         Amber.instance.applicationIOScope.launch {
             if (npub != null) {
                 val dao = Amber.instance.getLogDatabase(npub).dao()
-                dao.insertLog(
+                dao.insertLogIfEnabled(
                     LogEntity(
                         0,
                         url,
@@ -94,7 +94,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
                 accounts.forEach {
                     LocalPreferences.loadFromEncryptedStorage(applicationContext, it.npub)?.let { acc ->
                         val dao = Amber.instance.getLogDatabase(acc.npub).dao()
-                        dao.insertLog(
+                        dao.insertLogIfEnabled(
                             LogEntity(
                                 0,
                                 url,

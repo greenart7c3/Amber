@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -20,6 +21,8 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -47,10 +50,12 @@ fun SecurityScreen(
         )
     var enableBiometrics by remember { mutableStateOf(Amber.instance.settings.useAuth) }
     val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
+    var privacyMode by remember { mutableStateOf(Amber.instance.settings.privacyMode) }
     var biometricsIndex by remember {
         mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
+    val context = LocalContext.current
     Surface(
         modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -79,6 +84,39 @@ fun SecurityScreen(
                         checked = enableBiometrics,
                         onCheckedChange = {
                             enableBiometrics = !enableBiometrics
+                        },
+                    )
+                }
+
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .clickable {
+                            val newValue = !privacyMode
+                            privacyMode = newValue
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.updatePrivacyMode(context, newValue)
+                            }
+                        },
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = stringResource(R.string.privacy_mode))
+                        Text(
+                            text = stringResource(R.string.privacy_mode_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                        )
+                    }
+                    Switch(
+                        checked = privacyMode,
+                        onCheckedChange = { enabled ->
+                            privacyMode = enabled
+                            scope.launch(Dispatchers.IO) {
+                                LocalPreferences.updatePrivacyMode(context, enabled)
+                            }
                         },
                     )
                 }

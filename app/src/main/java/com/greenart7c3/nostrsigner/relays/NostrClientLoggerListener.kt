@@ -94,7 +94,7 @@ class NostrClientLoggerListener(
         scope.launch {
             val account = LocalPreferences.currentAccount(context)
             if (account != null) {
-                Amber.instance.getLogDatabase(account).dao().insertLog(
+                Amber.instance.getLogDatabase(account).dao().insertLogIfEnabled(
                     LogEntity(
                         id = 0,
                         url = url,
@@ -105,7 +105,7 @@ class NostrClientLoggerListener(
                 )
             } else {
                 LocalPreferences.allSavedAccounts(context).forEach {
-                    Amber.instance.getLogDatabase(it.npub).dao().insertLog(
+                    Amber.instance.getLogDatabase(it.npub).dao().insertLogIfEnabled(
                         LogEntity(
                             id = 0,
                             url = url,

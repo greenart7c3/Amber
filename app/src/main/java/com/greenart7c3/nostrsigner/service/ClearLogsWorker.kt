@@ -51,7 +51,7 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                 dao.updateExpiredPermissions(TimeUtils.now())
                 val deleted = dao.deleteOldApplications(now / 1000)
                 if (deleted > 0) {
-                    logDao.insertLog(
+                    logDao.insertLogIfEnabled(
                         LogEntity(
                             id = 0,
                             url = "",

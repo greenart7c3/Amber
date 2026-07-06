@@ -200,6 +200,8 @@
     <string name="authenticate">アプリを使用するには認証が必要です</string>
     <string name="security">セキュリティ</string>
     <string name="enable_biometrics">生体認証を有効にする</string>
+    <string name="privacy_mode">プライバシーモード</string>
+    <string name="privacy_mode_description">ログ記録とアクティビティ統計を無効にします。オンにすると既存のログとアクティビティ履歴が削除されます。</string>
     <string name="when_to_ask">確認のタイミング</string>
     <string name="every_time">毎回</string>
     <string name="one_minute">1 分</string>

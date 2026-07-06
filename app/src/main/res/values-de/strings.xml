@@ -221,6 +221,8 @@
     <string name="authenticate">Authentifizierung benötigt, um die App zu nutzen</string>
     <string name="security">Sicherheit</string>
     <string name="enable_biometrics">Biometrische Daten aktivieren</string>
+    <string name="privacy_mode">Datenschutzmodus</string>
+    <string name="privacy_mode_description">Deaktiviert die Protokollierung und Aktivitätsstatistiken. Beim Einschalten werden vorhandene Protokolle und Aktivitätsverläufe gelöscht.</string>
     <string name="when_to_ask">Wer soll gefragt werden</string>
     <string name="every_time">Jedes Mal</string>
     <string name="one_minute">Eine Minute</string>

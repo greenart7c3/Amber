@@ -82,7 +82,7 @@ object BunkerRequestUtils {
         if (relays.isEmpty()) {
             onDone(true)
             onLoading(false)
-            Amber.instance.getLogDatabase(account.npub).dao().insertLog(
+            Amber.instance.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                 LogEntity(
                     id = 0,
                     url = bunkerRequest.localKey,
@@ -109,7 +109,7 @@ object BunkerRequestUtils {
             // plaintext. Record only non-sensitive metadata (id + error status).
             val sanitizedResponse = "id=${bunkerResponse.id} ${bunkerResponse.error?.let { "error=$it" } ?: "ok"}"
             relays.forEach { relay ->
-                Amber.instance.getLogDatabase(account.npub).dao().insertLog(
+                Amber.instance.getLogDatabase(account.npub).dao().insertLogIfEnabled(
                     LogEntity(
                         id = 0,
                         url = relay.url,

@@ -224,6 +224,8 @@
     <string name="authenticate">Autentikasi diperlukan untuk menggunakan aplikasi</string>
     <string name="security">Keamanan</string>
     <string name="enable_biometrics">Aktifkan biometrik</string>
+    <string name="privacy_mode">Mode privasi</string>
+    <string name="privacy_mode_description">Menonaktifkan pencatatan log dan statistik aktivitas. Log dan riwayat aktivitas yang ada dihapus saat diaktifkan.</string>
     <string name="when_to_ask">Kapan bertanya</string>
     <string name="every_time">Setiap kali</string>
     <string name="one_minute">Satu menit</string>

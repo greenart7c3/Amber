@@ -97,6 +97,10 @@ interface HistoryDao {
     @Transaction
     suspend fun deleteOldHistory(time: Long): Int
 
+    @Query("DELETE FROM history")
+    @Transaction
+    suspend fun clearHistory()
+
     @Delete
     @Transaction
     suspend fun deleteHistory(historyEntity: HistoryEntity)
@@ -108,6 +112,7 @@ interface HistoryDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
     suspend fun addHistory(entities: List<HistoryEntity>, npub: String?) {
+        if (Amber.instance.settings.privacyMode) return
         try {
             val localEntities = entities.map { entity ->
                 val permission = Permission(entity.type.toLowerCase(Locale.current), entity.kind)

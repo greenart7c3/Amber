@@ -67,6 +67,7 @@ private enum class SettingsKeys(val key: String) {
     UPDATE_CHANNEL("update_channel"),
     LAST_UPDATE_CHECK_TIME("last_update_check_time"),
     START_SERVICE_ON_BOOT("start_service_on_boot"),
+    PRIVACY_MODE("privacy_mode"),
     WEBDAV_URL("webdav_url"),
     WEBDAV_USERNAME("webdav_username"),
     WEBDAV_PASSWORD_ENCRYPTED("webdav_password_encrypted"),
@@ -151,6 +152,7 @@ object LocalPreferences {
                 putString(SettingsKeys.LANGUAGE_PREFS.key, settings.language)
                 putStringSet(SettingsKeys.AUTH_WHITELIST.key, settings.authWhitelist.toSet())
                 putBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, settings.startServiceOnBoot)
+                putBoolean(SettingsKeys.PRIVACY_MODE.key, settings.privacyMode)
                 putBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, settings.rateLimitEnabled)
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
@@ -306,6 +308,7 @@ object LocalPreferences {
                     UpdateChannel.STABLE
                 },
                 startServiceOnBoot = getBoolean(SettingsKeys.START_SERVICE_ON_BOOT.key, true),
+                privacyMode = getBoolean(SettingsKeys.PRIVACY_MODE.key, false),
                 rateLimitEnabled = getBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, true),
                 rateLimitMaxPerWindow = getInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, 5),
                 rateLimitWindowSeconds = getInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, 30),
@@ -582,6 +585,30 @@ object LocalPreferences {
             }
         }
         Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
+    /**
+     * Toggles privacy mode. When enabled, immediately wipes all existing logs and
+     * activity history for every account so no previously collected data survives.
+     * Future writes are blocked at the DAO layer while this setting stays on.
+     */
+    suspend fun updatePrivacyMode(context: Context, enabled: Boolean) {
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.PRIVACY_MODE.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+        if (enabled) {
+            allSavedAccounts(context).forEach {
+                try {
+                    Amber.instance.getLogDatabase(it.npub).dao().clearLogs()
+                    Amber.instance.getHistoryDatabase(it.npub).dao().clearHistory()
+                } catch (e: Exception) {
+                    AmberLog.e(Amber.TAG, "Error wiping data for privacy mode", e)
+                }
+            }
+        }
     }
 
     fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {

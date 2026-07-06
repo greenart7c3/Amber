@@ -224,6 +224,8 @@
     <string name="authenticate">앱을 사용하려면 인증이 필요합니다</string>
     <string name="security">보안</string>
     <string name="enable_biometrics">생체 인식 활성화</string>
+    <string name="privacy_mode">개인정보 보호 모드</string>
+    <string name="privacy_mode_description">로깅 및 활동 통계를 비활성화합니다. 켜면 기존 로그 및 활동 기록이 삭제됩니다.</string>
     <string name="when_to_ask">인증 요청 시점</string>
     <string name="every_time">매번</string>
     <string name="one_minute">1분</string>

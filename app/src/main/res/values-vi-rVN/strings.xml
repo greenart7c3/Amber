@@ -200,6 +200,8 @@
     <string name="authenticate">Cần xác thực để sử dụng ứng dụng</string>
     <string name="security">Bảo mật</string>
     <string name="enable_biometrics">Bật sinh trắc học</string>
+    <string name="privacy_mode">Chế độ riêng tư</string>
+    <string name="privacy_mode_description">Tắt ghi nhật ký và thống kê hoạt động. Nhật ký và lịch sử hoạt động hiện có sẽ bị xóa khi bật.</string>
     <string name="when_to_ask">Khi nào hỏi</string>
     <string name="every_time">Mỗi lần</string>
     <string name="one_minute">Một phút</string>

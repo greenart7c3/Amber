@@ -220,6 +220,8 @@
     <string name="authenticate">Uygulamayı kullanmak için kimlik doğrulama gerekli</string>
     <string name="security">Güvenlik</string>
     <string name="enable_biometrics">Biyometrik doğrulamayı etkinleştir</string>
+    <string name="privacy_mode">Gizlilik modu</string>
+    <string name="privacy_mode_description">Günlük kaydını ve etkinlik istatistiklerini devre dışı bırakır. Açıldığında mevcut günlükler ve etkinlik geçmişi silinir.</string>
     <string name="when_to_ask">Ne zaman sorulsun</string>
     <string name="every_time">Her zaman</string>
     <string name="one_minute">Bir dakika</string>

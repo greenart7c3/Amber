@@ -947,6 +947,37 @@ object IntentUtils {
                     if (intentData.type == SignerType.GET_PUBLIC_KEY) {
                         intent.putExtra("package", BuildConfig.APPLICATION_ID)
                     }
+                    if (!intent.fitsInActivityResult()) {
+                        // A result this big makes finishAndRemoveTask() throw
+                        // TransactionTooLargeException instead of delivering it. The full
+                        // event JSON is the oversized extra when only the signature was
+                        // requested, so try dropping it first; otherwise hand the payload
+                        // to the user via the clipboard and tell the calling app why it
+                        // got nothing.
+                        intent.removeExtra("event")
+                        if (intentData.returnType != ReturnType.SIGNATURE || !intent.fitsInActivityResult()) {
+                            val payload = if (intentData.returnType == ReturnType.SIGNATURE) value else event.ifBlank { value }
+                            withContext(Dispatchers.Main) {
+                                val copied = runCatching {
+                                    clipboardManager.setClipEntry(
+                                        ClipEntry(
+                                            ClipData.newPlainText("", payload),
+                                        ),
+                                    )
+                                }.isSuccess
+                                Toast.makeText(
+                                    context,
+                                    context.getString(
+                                        if (copied) R.string.result_too_large_copied_to_clipboard else R.string.result_too_large,
+                                    ),
+                                    Toast.LENGTH_LONG,
+                                ).show()
+                            }
+                            intent.removeExtra("signature")
+                            intent.removeExtra("result")
+                            intent.putExtra("error", context.getString(R.string.result_too_large))
+                        }
+                    }
                     Amber.instance.getMainActivity()?.setResult(RESULT_OK, intent)
                 } else if (!intentData.callBackUrl.isNullOrBlank()) {
                     if (intentData.returnType == ReturnType.SIGNATURE) {
@@ -1003,7 +1034,7 @@ object IntentUtils {
                 onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                 Amber.instance.getMainActivity()?.let {
                     it.intent = null
-                    it.finishAndRemoveTask()
+                    it.finishAndRemoveTaskSafely()
                 }
             } finally {
                 onLoading(false)
@@ -1096,7 +1127,7 @@ object IntentUtils {
             activity?.intent = null
             activity?.setResult(RESULT_OK, Intent().also { it.putExtra("rejected", true) })
             if (application.application.closeApplication) {
-                activity?.finishAndRemoveTask()
+                activity?.finishAndRemoveTaskSafely()
             }
             onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
             onLoading(false)

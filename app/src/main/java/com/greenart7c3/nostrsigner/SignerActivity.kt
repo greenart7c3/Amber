@@ -38,6 +38,7 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.IntentRateLimitInspector
 import com.greenart7c3.nostrsigner.service.IntentRateLimiter
 import com.greenart7c3.nostrsigner.service.IntentUtils
+import com.greenart7c3.nostrsigner.service.finishAndRemoveTaskSafely
 import com.greenart7c3.nostrsigner.ui.AccountScreen
 import com.greenart7c3.nostrsigner.ui.AccountStateViewModel
 import com.greenart7c3.nostrsigner.ui.IntentWrapper
@@ -108,7 +109,7 @@ class SignerActivity : AppCompatActivity() {
                     ModalBottomSheet(
                         sheetGesturesEnabled = false,
                         onDismissRequest = {
-                            finishAndRemoveTask()
+                            finishAndRemoveTaskSafely()
                         },
                         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
                         containerColor = MaterialTheme.colorScheme.background,
@@ -128,7 +129,7 @@ class SignerActivity : AppCompatActivity() {
                                     modifier = Modifier.fillMaxSize(),
                                     onClose = {
                                         IntentUtils.clearInvalidIntents()
-                                        finishAndRemoveTask()
+                                        finishAndRemoveTaskSafely()
                                     },
                                 )
                             } else {
@@ -252,7 +253,7 @@ class SignerActivity : AppCompatActivity() {
             ).show()
         }
         AmberLog.w(Amber.TAG, "Rate-limited intent from ${key.pkg} type=${key.type} kind=${key.kind}")
-        finishAndRemoveTask()
+        finishAndRemoveTaskSafely()
         return true
     }
 

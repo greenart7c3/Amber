@@ -54,6 +54,7 @@ import com.greenart7c3.nostrsigner.service.BunkerRequestUtils
 import com.greenart7c3.nostrsigner.service.EventNotificationConsumer
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.finishAndRemoveTaskSafely
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
@@ -671,7 +672,7 @@ private fun finishActivity(closeApp: Boolean) {
     val activity = Amber.instance.getMainActivity()
     activity?.intent = null
     if (closeApp) {
-        activity?.finishAndRemoveTask()
+        activity?.finishAndRemoveTaskSafely()
     }
 }
 

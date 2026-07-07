@@ -28,6 +28,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.minutesBetween
 import com.greenart7c3.nostrsigner.service.Biometrics
+import com.greenart7c3.nostrsigner.service.finishAndRemoveTaskSafely
 import com.greenart7c3.nostrsigner.ui.BiometricsTimeType
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -78,7 +79,7 @@ fun BiometricAuthScreen(
                                 onAuth(true)
                             },
                             { _, message ->
-                                Amber.instance.getMainActivity()?.finishAndRemoveTask()
+                                Amber.instance.getMainActivity()?.finishAndRemoveTaskSafely()
                                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                                     Toast.makeText(
                                         context,
@@ -99,7 +100,7 @@ fun BiometricAuthScreen(
             properties = DialogProperties(usePlatformDefaultWidth = false),
             onDismissRequest = {
                 showPinDialog = false
-                Amber.instance.getMainActivity()?.finishAndRemoveTask()
+                Amber.instance.getMainActivity()?.finishAndRemoveTaskSafely()
                 Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
                     Toast.makeText(
                         context,

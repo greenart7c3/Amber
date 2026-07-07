@@ -27,6 +27,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
+import com.greenart7c3.nostrsigner.service.finishAndRemoveTaskSafely
 import com.greenart7c3.nostrsigner.ui.components.BunkerSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.IntentSingleEventHomeScreen
 import com.greenart7c3.nostrsigner.ui.components.MultiEventHomeScreen
@@ -71,7 +72,7 @@ fun IncomingRequestScreen(
                     Spacer(Modifier.size(16.dp))
                     OutlinedButton(
                         onClick = {
-                            Amber.instance.getMainActivity()?.finishAndRemoveTask()
+                            Amber.instance.getMainActivity()?.finishAndRemoveTaskSafely()
                         },
                     ) {
                         Text(stringResource(R.string.invalid_intent_close_app))

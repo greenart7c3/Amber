@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -55,6 +56,8 @@ import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
 import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.finishAndRemoveTaskSafely
+import com.greenart7c3.nostrsigner.service.fitsInActivityResult
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.theme.orange
@@ -598,17 +601,14 @@ private fun finishActivity(closeApp: Boolean) {
     val activity = Amber.instance.getMainActivity()
     activity?.intent = null
     if (closeApp) {
-        activity?.finishAndRemoveTask()
+        activity?.finishAndRemoveTaskSafely()
     }
 }
 
 private fun sendRejectIntent(
     results: MutableList<Result>,
 ) {
-    val json = Permission.mapper.writeValueAsString(results)
-    val intent = Intent()
-    intent.putExtra("results", json)
-    Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
+    sendResultIntent(results)
 }
 
 private fun sendResultIntent(
@@ -617,5 +617,18 @@ private fun sendResultIntent(
     val json = Permission.mapper.writeValueAsString(results)
     val intent = Intent()
     intent.putExtra("results", json)
+    if (!intent.fitsInActivityResult()) {
+        // Delivering a result this big would make finishActivity() crash with
+        // TransactionTooLargeException; return an error the calling app can see.
+        intent.removeExtra("results")
+        intent.putExtra("error", Amber.instance.getString(R.string.result_too_large))
+        Amber.instance.applicationIOScope.launch(Dispatchers.Main) {
+            Toast.makeText(
+                Amber.instance,
+                Amber.instance.getString(R.string.result_too_large),
+                Toast.LENGTH_LONG,
+            ).show()
+        }
+    }
     Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
 }

@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.models.toPermissionType
 import com.greenart7c3.nostrsigner.service.IntentUtils
 import com.greenart7c3.nostrsigner.service.PsbtDecoder
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
+import com.greenart7c3.nostrsigner.service.finishAndRemoveTaskSafely
 import com.greenart7c3.nostrsigner.service.isPrivateEvent
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
@@ -112,7 +113,7 @@ fun IntentSingleEventHomeScreen(
                 onReject = {
                     val activity = Amber.instance.getMainActivity()
                     activity?.intent = null
-                    activity?.finishAndRemoveTask()
+                    activity?.finishAndRemoveTaskSafely()
                     onRemoveIntentData(listOf(intentData), IntentResultType.REMOVE)
                     onLoading(false)
                 },

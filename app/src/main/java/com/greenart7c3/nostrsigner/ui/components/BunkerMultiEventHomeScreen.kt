@@ -151,19 +151,49 @@ fun BunkerMultiEventHomeScreen(
             Text(stringResource(R.string.select_deselect_all))
         }
 
+        val groups = remember(bunkerRequests) {
+            groupRequests(bunkerRequests) {
+                requestGroupKey(
+                    type = BunkerRequestUtils.getTypeFromBunker(it.request),
+                    eventKind = (it.request as? BunkerRequestSign)?.event?.kind,
+                    encryptedData = it.encryptedData,
+                    nip44v3Kind = BunkerRequestUtils.getNip44v3Kind(it.request),
+                )
+            }
+        }
         LazyColumn(
             Modifier.weight(1f),
         ) {
-            items(bunkerRequests, key = { it.request.id }) { bunkerRequest ->
-                BunkerRequestCard(
-                    context = context,
-                    bunkerRequest = bunkerRequest,
-                    checked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
-                    onToggleChecked = {
-                        val current = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
-                        MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !current
-                    },
-                )
+            groups.forEach { (groupKey, groupItems) ->
+                if (groups.size > 1) {
+                    item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                        val groupState = when {
+                            groupItems.all { MultiEventScreenIntents.checkedStates[it.request.id] ?: true } -> ToggleableState.On
+                            groupItems.none { MultiEventScreenIntents.checkedStates[it.request.id] ?: true } -> ToggleableState.Off
+                            else -> ToggleableState.Indeterminate
+                        }
+                        RequestGroupHeader(
+                            label = groupKey.toLabel(context),
+                            count = groupItems.size,
+                            state = groupState,
+                            onToggle = {
+                                val newValue = groupState != ToggleableState.On
+                                MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.request.id to newValue })
+                            },
+                        )
+                    }
+                }
+                items(groupItems, key = { it.request.id }) { bunkerRequest ->
+                    BunkerRequestCard(
+                        context = context,
+                        bunkerRequest = bunkerRequest,
+                        checked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
+                        onToggleChecked = {
+                            val current = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
+                            MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !current
+                        },
+                    )
+                }
             }
         }
 

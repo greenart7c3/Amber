@@ -122,19 +122,44 @@ fun IntentMultiEventHomeScreen(
             Text(stringResource(R.string.select_deselect_all))
         }
 
+        val groups = remember(intents) {
+            groupRequests(intents) {
+                requestGroupKey(it.type, it.event?.kind, it.encryptedData, it.nip44v3Kind)
+            }
+        }
         LazyColumn(
             Modifier.weight(1f),
         ) {
-            items(intents, key = { it.id }) { intent ->
-                IntentRequestCard(
-                    context = context,
-                    intent = intent,
-                    checked = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
-                    onToggleChecked = {
-                        val current = MultiEventScreenIntents.checkedStates[intent.id] ?: true
-                        MultiEventScreenIntents.checkedStates[intent.id] = !current
-                    },
-                )
+            groups.forEach { (groupKey, groupIntents) ->
+                if (groups.size > 1) {
+                    item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                        val groupState = when {
+                            groupIntents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.On
+                            groupIntents.none { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.Off
+                            else -> ToggleableState.Indeterminate
+                        }
+                        RequestGroupHeader(
+                            label = groupKey.toLabel(context),
+                            count = groupIntents.size,
+                            state = groupState,
+                            onToggle = {
+                                val newValue = groupState != ToggleableState.On
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to newValue })
+                            },
+                        )
+                    }
+                }
+                items(groupIntents, key = { it.id }) { intent ->
+                    IntentRequestCard(
+                        context = context,
+                        intent = intent,
+                        checked = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
+                        onToggleChecked = {
+                            val current = MultiEventScreenIntents.checkedStates[intent.id] ?: true
+                            MultiEventScreenIntents.checkedStates[intent.id] = !current
+                        },
+                    )
+                }
             }
         }
 

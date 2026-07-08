@@ -23,6 +23,7 @@ import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -122,19 +123,52 @@ fun IntentMultiEventHomeScreen(
             Text(stringResource(R.string.select_deselect_all))
         }
 
+        val groups = remember(intents) {
+            groupRequests(intents) {
+                requestGroupKey(it.type, it.event?.kind, it.encryptedData, it.nip44v3Kind)
+            }
+        }
+        val expandedGroups = remember { mutableStateMapOf<RequestGroupKey, Boolean>() }
         LazyColumn(
             Modifier.weight(1f),
         ) {
-            items(intents, key = { it.id }) { intent ->
-                IntentRequestCard(
-                    context = context,
-                    intent = intent,
-                    checked = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
-                    onToggleChecked = {
-                        val current = MultiEventScreenIntents.checkedStates[intent.id] ?: true
-                        MultiEventScreenIntents.checkedStates[intent.id] = !current
-                    },
-                )
+            groups.forEach { (groupKey, groupIntents) ->
+                val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
+                if (groups.size > 1) {
+                    item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                        val groupState = when {
+                            groupIntents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.On
+                            groupIntents.none { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.Off
+                            else -> ToggleableState.Indeterminate
+                        }
+                        RequestGroupHeader(
+                            label = groupKey.toLabel(context),
+                            count = groupIntents.size,
+                            state = groupState,
+                            expanded = expanded,
+                            onToggle = {
+                                val newValue = groupState != ToggleableState.On
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to newValue })
+                            },
+                            onExpandToggle = {
+                                expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
+                            },
+                        )
+                    }
+                }
+                if (expanded) {
+                    items(groupIntents, key = { it.id }) { intent ->
+                        IntentRequestCard(
+                            context = context,
+                            intent = intent,
+                            checked = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
+                            onToggleChecked = {
+                                val current = MultiEventScreenIntents.checkedStates[intent.id] ?: true
+                                MultiEventScreenIntents.checkedStates[intent.id] = !current
+                            },
+                        )
+                    }
+                }
             }
         }
 

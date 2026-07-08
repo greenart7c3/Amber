@@ -21,6 +21,7 @@ import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -151,19 +152,57 @@ fun BunkerMultiEventHomeScreen(
             Text(stringResource(R.string.select_deselect_all))
         }
 
+        val groups = remember(bunkerRequests) {
+            groupRequests(bunkerRequests) {
+                requestGroupKey(
+                    type = BunkerRequestUtils.getTypeFromBunker(it.request),
+                    eventKind = (it.request as? BunkerRequestSign)?.event?.kind,
+                    encryptedData = it.encryptedData,
+                    nip44v3Kind = BunkerRequestUtils.getNip44v3Kind(it.request),
+                )
+            }
+        }
+        val expandedGroups = remember { mutableStateMapOf<RequestGroupKey, Boolean>() }
         LazyColumn(
             Modifier.weight(1f),
         ) {
-            items(bunkerRequests, key = { it.request.id }) { bunkerRequest ->
-                BunkerRequestCard(
-                    context = context,
-                    bunkerRequest = bunkerRequest,
-                    checked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
-                    onToggleChecked = {
-                        val current = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
-                        MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !current
-                    },
-                )
+            groups.forEach { (groupKey, groupItems) ->
+                val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
+                if (groups.size > 1) {
+                    item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                        val groupState = when {
+                            groupItems.all { MultiEventScreenIntents.checkedStates[it.request.id] ?: true } -> ToggleableState.On
+                            groupItems.none { MultiEventScreenIntents.checkedStates[it.request.id] ?: true } -> ToggleableState.Off
+                            else -> ToggleableState.Indeterminate
+                        }
+                        RequestGroupHeader(
+                            label = groupKey.toLabel(context),
+                            count = groupItems.size,
+                            state = groupState,
+                            expanded = expanded,
+                            onToggle = {
+                                val newValue = groupState != ToggleableState.On
+                                MultiEventScreenIntents.checkedStates.putAll(groupItems.associate { it.request.id to newValue })
+                            },
+                            onExpandToggle = {
+                                expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
+                            },
+                        )
+                    }
+                }
+                if (expanded) {
+                    items(groupItems, key = { it.request.id }) { bunkerRequest ->
+                        BunkerRequestCard(
+                            context = context,
+                            bunkerRequest = bunkerRequest,
+                            checked = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true,
+                            onToggleChecked = {
+                                val current = MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] ?: true
+                                MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !current
+                            },
+                        )
+                    }
+                }
             }
         }
 

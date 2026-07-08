@@ -119,6 +119,7 @@ import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 import com.vitorpamplona.quartz.nip06KeyDerivation.Nip06
 import com.vitorpamplona.quartz.nip19Bech32.toNpub
 import com.vitorpamplona.quartz.utils.RandomInstance
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -1055,7 +1056,7 @@ fun LoginPage(
                                                         if (isValid.first != null) {
                                                             keyPair = isValid.first!!
                                                             scope.launch {
-                                                                delay(200)
+                                                                delay(200.milliseconds)
                                                                 pageState.animateScrollToPage(1)
                                                             }
                                                         } else {
@@ -1139,7 +1140,7 @@ fun LoginPage(
                                                             if (isValid.first != null) {
                                                                 keyPair = isValid.first!!
                                                                 scope.launch {
-                                                                    delay(200)
+                                                                    delay(200.milliseconds)
                                                                     pageState.animateScrollToPage(1)
                                                                 }
                                                             } else {
@@ -1182,7 +1183,7 @@ fun LoginPage(
                                                     keyPair = isValid.first!!
                                                     keyboardController?.hide()
                                                     scope.launch {
-                                                        delay(200)
+                                                        delay(200.milliseconds)
                                                         pageState.animateScrollToPage(1)
                                                     }
                                                 } else {
@@ -1212,7 +1213,7 @@ fun LoginPage(
                                                         keyPair = isValid.first!!
                                                         keyboardController?.hide()
                                                         scope.launch {
-                                                            delay(200)
+                                                            delay(200.milliseconds)
                                                             pageState.animateScrollToPage(1)
                                                         }
                                                     } else {

@@ -89,6 +89,8 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.Base64
 import java.util.UUID
+import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -158,7 +160,7 @@ fun DefaultRelaysScreen(
                             scope.launch(Dispatchers.IO) {
                                 if (!BuildFlavorChecker.isOfflineFlavor()) {
                                     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
-                                    delay(2000)
+                                    delay(2.seconds)
                                     Amber.instance.client.reconnect()
                                     isLoading.value = false
                                 } else {
@@ -438,9 +440,9 @@ fun onAddRelay(
                     mapOf(addedWSS to filters),
                 )
 
-                val canContinue = withTimeoutOrNull(30000) {
+                val canContinue = withTimeoutOrNull(30.seconds) {
                     while (!canSendRequest) {
-                        delay(200)
+                        delay(200.milliseconds)
                     }
                     true
                 }
@@ -469,7 +471,7 @@ fun onAddRelay(
                     success = client.publishAndConfirm(signedEvent, setOf(addedWSS))
                     if (!success) {
                         errorCount++
-                        delay(1000)
+                        delay(1.seconds)
                         signedEvent = signer.signerSync.sign(
                             TimeUtils.now(),
                             NostrConnectEvent.KIND,
@@ -483,7 +485,7 @@ fun onAddRelay(
                     AmberListenerSingleton.latestErrorMessages.clear()
                     var count = 0
                     while (!filterResult && count < 10) {
-                        delay(1000)
+                        delay(1.seconds)
                         count++
                     }
                 } else {

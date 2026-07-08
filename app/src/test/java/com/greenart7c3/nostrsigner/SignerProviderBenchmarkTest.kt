@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner
 
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.first
@@ -77,7 +78,7 @@ class SignerProviderBenchmarkTest {
         runBlocking {
             val warmup = MutableStateFlow(true)
             launch {
-                delay(1)
+                delay(1.milliseconds)
                 warmup.value = false
             }
             warmup.first { !it }
@@ -87,7 +88,7 @@ class SignerProviderBenchmarkTest {
             val state = MutableStateFlow(true)
             runBlocking {
                 launch {
-                    delay(releaseAfterMs)
+                    delay(releaseAfterMs.milliseconds)
                     state.value = false
                 }
                 state.first { !it }

@@ -36,6 +36,8 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.toSet
+import kotlin.time.Duration
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -213,11 +215,11 @@ object BunkerRequestUtils {
 
     suspend fun retryWithBackoff(
         maxRetries: Int = 5,
-        initialDelayMs: Long = 200L,
-        maxDelayMs: Long = 3_200L,
+        initialDelay: Duration = 200.milliseconds,
+        maxDelay: Duration = 3_200.milliseconds,
         block: suspend () -> Boolean,
     ): Boolean {
-        var currentDelay = initialDelayMs
+        var currentDelay = initialDelay
 
         repeat(maxRetries) { attempt ->
             delay(currentDelay)
@@ -226,7 +228,7 @@ object BunkerRequestUtils {
             }
 
             if (attempt < maxRetries - 1) {
-                currentDelay = (currentDelay * 2).coerceAtMost(maxDelayMs)
+                currentDelay = (currentDelay * 2).coerceAtMost(maxDelay)
             }
         }
 
@@ -392,7 +394,7 @@ object BunkerRequestUtils {
                 activity?.finishAndRemoveTask()
             }
 
-            delay(500)
+            delay(500.milliseconds)
 
             if (signPolicy != null) {
                 AmberUtils.configureSignPolicy(application, signPolicy, key, permissions)

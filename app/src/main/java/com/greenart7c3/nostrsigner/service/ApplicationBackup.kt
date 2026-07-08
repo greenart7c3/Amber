@@ -24,13 +24,14 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
 
 private const val BACKUP_KIND = 30078
 private const val BACKUP_D_TAG = "amber-app-backup"
 private const val INBOX_KIND = 10002
-private const val INBOX_FETCH_TIMEOUT_MS = 10_000L
-private const val BACKUP_FETCH_TIMEOUT_MS = 15_000L
+private val INBOX_FETCH_TIMEOUT = 10.seconds
+private val BACKUP_FETCH_TIMEOUT = 15.seconds
 private const val PAYLOAD_VERSION = 1
 
 private val AGGREGATOR_RELAY = RelayUrlNormalizer.normalizeOrNull("wss://aggr.nostr.land/")
@@ -182,7 +183,7 @@ object ApplicationBackup {
                 limit = 1,
             )
             client.subscribe(subId, discoveryRelays.associateWith { listOf(filter) })
-            delay(INBOX_FETCH_TIMEOUT_MS)
+            delay(INBOX_FETCH_TIMEOUT)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             AmberLog.w(Amber.TAG, "ApplicationBackup: inbox relay fetch failed", e)
@@ -274,7 +275,7 @@ object ApplicationBackup {
                 limit = 1,
             )
             client.subscribe(subId, relays.associateWith { listOf(filter) })
-            delay(BACKUP_FETCH_TIMEOUT_MS)
+            delay(BACKUP_FETCH_TIMEOUT)
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             AmberLog.e(Amber.TAG, "ApplicationBackup: failed to fetch backup event", e)

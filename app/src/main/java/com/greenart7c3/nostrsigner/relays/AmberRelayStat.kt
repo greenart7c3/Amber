@@ -24,6 +24,7 @@ import com.greenart7c3.nostrsigner.service.StopServiceReceiver
 import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
+import kotlin.time.Duration.Companion.milliseconds
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
@@ -43,7 +44,7 @@ class AmberRelayStats(
     @SuppressLint("MissingPermission")
     val relayStatus = combine(client.availableRelaysFlow(), client.connectedRelaysFlow()) { available, connected ->
         available to connected
-    }.debounce(300).onEach {
+    }.debounce(300.milliseconds).onEach {
         this.available = it.first
         this.connected = it.second
         val notificationManager = NotificationManagerCompat.from(appContext)
@@ -96,13 +97,13 @@ class AmberRelayStats(
         notificationManager.createNotificationChannel(statusChannel)
 
         Amber.instance.applicationIOScope.launch {
-            Amber.instance.client.availableRelaysFlow().debounce(300).collect {
+            Amber.instance.client.availableRelaysFlow().debounce(300.milliseconds).collect {
                 available = it
                 updateNotification()
             }
         }
         Amber.instance.applicationIOScope.launch {
-            Amber.instance.client.connectedRelaysFlow().debounce(300).collect {
+            Amber.instance.client.connectedRelaysFlow().debounce(300.milliseconds).collect {
                 connected = it
                 updateNotification()
             }

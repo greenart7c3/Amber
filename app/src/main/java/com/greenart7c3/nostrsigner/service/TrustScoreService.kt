@@ -108,6 +108,7 @@ object TrustScoreService {
                 }
 
                 // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+                @Suppress("UNNECESSARY_SAFE_CALL")
                 val body = response.body?.string()
                 if (body == null) {
                     cacheResult(normalizedUrl, null, isFailed = true)

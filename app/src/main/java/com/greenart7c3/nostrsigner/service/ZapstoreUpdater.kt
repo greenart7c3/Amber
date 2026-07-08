@@ -26,6 +26,7 @@ import java.io.File
 import java.security.MessageDigest
 import java.util.UUID
 import kotlin.coroutines.cancellation.CancellationException
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -36,7 +37,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import okhttp3.Request
 
-private const val EOSE_TIMEOUT_MS = 15_000L
+private val EOSE_TIMEOUT = 15.seconds
 private const val RELEASE_KIND = 30063
 private val UPDATE_RELAY_URLS = listOf(
     "wss://relay.zapstore.dev",
@@ -128,7 +129,7 @@ class ZapstoreUpdater(
         }
 
         timeoutJob = scope.launch {
-            delay(EOSE_TIMEOUT_MS)
+            delay(EOSE_TIMEOUT)
             AmberLog.w(Amber.TAG, "ZapstoreUpdater: timeout waiting for EOSE")
             onReleaseEose()
         }
@@ -288,7 +289,8 @@ class ZapstoreUpdater(
             return null
         }
 
-        // Safe call needed: the offline flavor compiles against OkHttp 4, where body is nullable
+        // Elvis needed: the offline flavor compiles against OkHttp 4, where body is nullable
+        @Suppress("USELESS_ELVIS")
         val body = response.body ?: return null
         val contentLength = body.contentLength()
         val apkFile = File(context.cacheDir, "amber-update-${release.version}.apk")
@@ -338,7 +340,7 @@ class ZapstoreUpdater(
         }
         context.startActivity(intent)
         scope.launch(Dispatchers.Main) {
-            delay(2000)
+            delay(2.seconds)
             downloadState.value = DownloadState.IDLE
         }
     }

@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.service
 import android.content.Context
 import androidx.work.Worker
 import androidx.work.WorkerParameters
+import kotlin.time.Duration.Companion.minutes
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -17,7 +18,7 @@ class RelayDisconnectService(ctx: Context, params: WorkerParameters) : Worker(ct
         val job =
             ioScope.launch {
                 val url = inputData.getString("relay")
-                delay(60000)
+                delay(1.minutes)
                 url?.let {
                     // TODO: this class is not being used, but this new way of using Nostr client requires removing the relay from all filters to disconnect it
                     // val relay = Amber.instance.client.getRelay(it)

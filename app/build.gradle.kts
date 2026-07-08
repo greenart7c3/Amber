@@ -212,6 +212,8 @@ ksp {
 }
 
 dependencies {
+    lintChecks(project(":lint-rules"))
+
     implementation(libs.quartz) {
         exclude(group = "net.java.dev.jna")
     }

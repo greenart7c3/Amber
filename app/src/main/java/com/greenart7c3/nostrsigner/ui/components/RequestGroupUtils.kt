@@ -1,16 +1,24 @@
 package com.greenart7c3.nostrsigner.ui.components
 
 import android.content.Context
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ExpandMore
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.state.ToggleableState
+import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
@@ -106,13 +114,19 @@ fun RequestGroupHeader(
     label: String,
     count: Int,
     state: ToggleableState,
+    expanded: Boolean,
     onToggle: () -> Unit,
+    onExpandToggle: () -> Unit,
 ) {
+    val rotation by animateFloatAsState(
+        targetValue = if (expanded) 180f else 0f,
+        label = "group header chevron rotation",
+    )
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
-            .clickable { onToggle() },
+            .clickable { onExpandToggle() },
     ) {
         TriStateCheckbox(
             state = state,
@@ -121,6 +135,14 @@ fun RequestGroupHeader(
         Text(
             text = "$label ($count)",
             style = MaterialTheme.typography.titleSmall,
+            modifier = Modifier.weight(1f),
+        )
+        Icon(
+            imageVector = Icons.Default.ExpandMore,
+            contentDescription = null,
+            modifier = Modifier
+                .padding(end = 12.dp)
+                .rotate(rotation),
         )
     }
 }

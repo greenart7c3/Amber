@@ -635,6 +635,8 @@
     <string name="trust_fair">Orta</string>
     <string name="trust_poor">Zayıf</string>
     <string name="trust_unknown">Bilinmiyor</string>
+    <string name="relay_trust_score">Relay güven puanları</string>
+    <string name="relay_trust_score_description">trustedrelays.xyz\'den relay güven puanlarını getir ve görüntüle</string>
     <string name="relays_used">Kullanılan röleler</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Anahtar oluşturulana kadar uygulamadan ayrılmayın</string>
     <string name="status_detail">Durum Detayı</string>

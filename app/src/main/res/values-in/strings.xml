@@ -639,6 +639,8 @@
     <string name="trust_fair">Cukup</string>
     <string name="trust_poor">Buruk</string>
     <string name="trust_unknown">Tidak diketahui</string>
+    <string name="relay_trust_score">Skor kepercayaan relay</string>
+    <string name="relay_trust_score_description">Ambil dan tampilkan skor kepercayaan relay dari trustedrelays.xyz</string>
     <string name="relays_used">Relay yang digunakan</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Jangan tinggalkan aplikasi hingga kunci dibuat</string>
     <string name="status_detail">Detail Status</string>

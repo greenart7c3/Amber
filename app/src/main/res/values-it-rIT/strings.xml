@@ -639,6 +639,8 @@
     <string name="trust_fair">Discreto</string>
     <string name="trust_poor">Scarso</string>
     <string name="trust_unknown">Sconosciuto</string>
+    <string name="relay_trust_score">Punteggi di affidabilità dei relay</string>
+    <string name="relay_trust_score_description">Recupera e mostra i punteggi di affidabilità dei relay da trustedrelays.xyz</string>
     <string name="relays_used">Relay usati</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Non abbandonare l\'app fino alla generazione della chiave</string>
     <string name="status_detail">Dettaglio stato</string>

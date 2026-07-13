@@ -620,6 +620,8 @@
     <string name="trust_fair">合理</string>
     <string name="trust_poor">较差</string>
     <string name="trust_unknown">未知</string>
+    <string name="relay_trust_score">中继信任评分</string>
+    <string name="relay_trust_score_description">从 trustedrelays.xyz 获取并显示中继信任评分</string>
     <string name="relays_used">已使用的中继</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">在密钥生成之前不要离开应用</string>
     <string name="status_detail">状态详情</string>

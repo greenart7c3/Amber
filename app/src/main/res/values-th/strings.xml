@@ -615,6 +615,8 @@
     <string name="trust_fair">พอใช้</string>
     <string name="trust_poor">แย่</string>
     <string name="trust_unknown">ไม่ทราบ</string>
+    <string name="relay_trust_score">คะแนนความน่าเชื่อถือของ relay</string>
+    <string name="relay_trust_score_description">ดึงและแสดงคะแนนความน่าเชื่อถือของ relay จาก trustedrelays.xyz</string>
     <string name="relays_used">Relay ที่ใช้</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">อย่าออกจากแอปจนกว่าจะสร้างคีย์เสร็จสิ้น</string>
     <string name="status_detail">รายละเอียดสถานะ</string>

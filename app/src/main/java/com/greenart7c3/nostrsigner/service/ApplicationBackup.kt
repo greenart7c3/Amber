@@ -36,7 +36,6 @@ private const val PAYLOAD_VERSION = 1
 private val AGGREGATOR_RELAY = RelayUrlNormalizer.normalizeOrNull("wss://aggr.nostr.land/")
 private val INBOX_FALLBACK_RELAYS = listOfNotNull(
     RelayUrlNormalizer.normalizeOrNull("wss://nos.lol/"),
-    RelayUrlNormalizer.normalizeOrNull("wss://relay.damus.io/"),
 )
 
 data class BackupPermission(

@@ -190,6 +190,19 @@ fun BunkerMultiEventHomeScreen(
                         )
                     }
                 }
+                if (groupKey.hasGroupOptions()) {
+                    item(key = "group-options:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                        RequestGroupOptions(
+                            groupKey = groupKey,
+                            rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER,
+                            onRememberTypeChanged = { groupRememberTypes[groupKey] = it },
+                            relayAuthScope = groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC,
+                            onRelayAuthScopeChanged = { groupRelayAuthScopes[groupKey] = it },
+                            decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(groupKey.type),
+                            onDecryptTypeScopeChanged = { groupDecryptScopes[groupKey] = it },
+                        )
+                    }
+                }
                 if (expanded) {
                     items(groupItems, key = { it.request.id }) { bunkerRequest ->
                         BunkerRequestCard(
@@ -201,19 +214,6 @@ fun BunkerMultiEventHomeScreen(
                                 MultiEventScreenIntents.checkedStates[bunkerRequest.request.id] = !current
                             },
                         )
-                    }
-                    if (groupKey.hasGroupOptions()) {
-                        item(key = "group-options:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                            RequestGroupOptions(
-                                groupKey = groupKey,
-                                rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER,
-                                onRememberTypeChanged = { groupRememberTypes[groupKey] = it },
-                                relayAuthScope = groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC,
-                                onRelayAuthScopeChanged = { groupRelayAuthScopes[groupKey] = it },
-                                decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(groupKey.type),
-                                onDecryptTypeScopeChanged = { groupDecryptScopes[groupKey] = it },
-                            )
-                        }
                     }
                 }
             }

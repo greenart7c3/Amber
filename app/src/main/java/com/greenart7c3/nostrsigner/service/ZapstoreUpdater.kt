@@ -40,7 +40,6 @@ private const val EOSE_TIMEOUT_MS = 15_000L
 private const val RELEASE_KIND = 30063
 private val UPDATE_RELAY_URLS = listOf(
     "wss://relay.zapstore.dev",
-    "wss://relay.damus.io",
     "wss://nos.lol",
 )
 private const val APP_IDENTIFIER = "com.greenart7c3.nostrsigner"

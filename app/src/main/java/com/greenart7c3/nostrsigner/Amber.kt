@@ -649,7 +649,6 @@ class Amber :
     ): Boolean {
         val relays = setOfNotNull(
             RelayUrlNormalizer.normalizeOrNull("wss://nos.lol/"),
-            RelayUrlNormalizer.normalizeOrNull("wss://relay.damus.io/"),
         )
 
         val repositoryEvent = GitRepositoryEvent(

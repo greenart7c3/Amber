@@ -639,6 +639,8 @@
     <string name="trust_fair">Удовлетворительно</string>
     <string name="trust_poor">Плохо</string>
     <string name="trust_unknown">Неизвестно</string>
+    <string name="relay_trust_score">Оценки доверия relay-серверов</string>
+    <string name="relay_trust_score_description">Получать и отображать оценки доверия relay-серверов с trustedrelays.xyz</string>
     <string name="relays_used">Используемые relay-серверы</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Не покидайте приложение до завершения генерации ключа</string>
     <string name="status_detail">Подробности статуса</string>

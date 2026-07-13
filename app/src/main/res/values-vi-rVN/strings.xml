@@ -615,6 +615,8 @@
     <string name="trust_fair">Khá</string>
     <string name="trust_poor">Kém</string>
     <string name="trust_unknown">Không xác định</string>
+    <string name="relay_trust_score">Điểm tin cậy của relay</string>
+    <string name="relay_trust_score_description">Tải và hiển thị điểm tin cậy của relay từ trustedrelays.xyz</string>
     <string name="relays_used">Relay đã sử dụng</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Không rời ứng dụng cho đến khi khóa được tạo xong</string>
     <string name="status_detail">Chi Tiết Trạng Thái</string>

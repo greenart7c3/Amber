@@ -615,6 +615,8 @@
     <string name="trust_fair">普通</string>
     <string name="trust_poor">低い</string>
     <string name="trust_unknown">不明</string>
+    <string name="relay_trust_score">Relay の信頼スコア</string>
+    <string name="relay_trust_score_description">trustedrelays.xyz から relay の信頼スコアを取得して表示します</string>
     <string name="relays_used">使用中の relay</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">キーが生成されるまでアプリを離れないでください</string>
     <string name="status_detail">ステータス詳細</string>

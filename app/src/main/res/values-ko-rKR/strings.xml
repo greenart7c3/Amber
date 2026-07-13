@@ -639,6 +639,8 @@
     <string name="trust_fair">보통</string>
     <string name="trust_poor">낮음</string>
     <string name="trust_unknown">알 수 없음</string>
+    <string name="relay_trust_score">Relay 신뢰 점수</string>
+    <string name="relay_trust_score_description">trustedrelays.xyz에서 relay 신뢰 점수를 가져와 표시합니다</string>
     <string name="relays_used">사용된 relay</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">키가 생성될 때까지 앱을 벗어나지 마세요</string>
     <string name="status_detail">상태 상세</string>

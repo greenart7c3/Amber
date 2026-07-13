@@ -636,6 +636,8 @@
     <string name="trust_fair">Correct</string>
     <string name="trust_poor">Faible</string>
     <string name="trust_unknown">Inconnu</string>
+    <string name="relay_trust_score">Scores de confiance des relays</string>
+    <string name="relay_trust_score_description">Récupérer et afficher les scores de confiance des relays depuis trustedrelays.xyz</string>
     <string name="relays_used">Relays utilisés</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Ne quittez pas l\'application tant que la clé n\'est pas générée</string>
     <string name="status_detail">Détail du statut</string>

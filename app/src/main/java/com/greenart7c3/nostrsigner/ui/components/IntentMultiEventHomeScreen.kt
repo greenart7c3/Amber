@@ -75,9 +75,9 @@ fun IntentMultiEventHomeScreen(
     onLoading: (Boolean) -> Unit,
 ) {
     val context = LocalContext.current
-    val hasRelayAuthEvents = intents.any { it.type == SignerType.SIGN_EVENT && it.event?.kind == 22242 }
-    var rememberType by remember { mutableStateOf(RememberType.NEVER) }
-    var relayAuthScope by remember { mutableStateOf(RelayAuthScope.SPECIFIC) }
+    val groupRememberTypes = remember { mutableStateMapOf<RequestGroupKey, RememberType>() }
+    val groupRelayAuthScopes = remember { mutableStateMapOf<RequestGroupKey, RelayAuthScope>() }
+    val groupDecryptScopes = remember { mutableStateMapOf<RequestGroupKey, DecryptTypeScope>() }
 
     LaunchedEffect(Unit) {
         MultiEventScreenIntents.checkedStates.clear()
@@ -168,44 +168,22 @@ fun IntentMultiEventHomeScreen(
                             },
                         )
                     }
+                    if (groupKey.hasGroupOptions()) {
+                        item(key = "group-options:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
+                            RequestGroupOptions(
+                                groupKey = groupKey,
+                                rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER,
+                                onRememberTypeChanged = { groupRememberTypes[groupKey] = it },
+                                relayAuthScope = groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC,
+                                onRelayAuthScopeChanged = { groupRelayAuthScopes[groupKey] = it },
+                                decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(groupKey.type),
+                                onDecryptTypeScopeChanged = { groupDecryptScopes[groupKey] = it },
+                            )
+                        }
+                    }
                 }
             }
         }
-
-        if (hasRelayAuthEvents) {
-            LabeledBorderBox(
-                label = stringResource(R.string.relay_auth_scope),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 4.dp, vertical = 8.dp),
-            ) {
-                AmberToggles(
-                    selected = relayAuthScope,
-                    options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
-                    onSelected = { relayAuthScope = it },
-                    label = {
-                        stringResource(
-                            when (it) {
-                                RelayAuthScope.SPECIFIC -> R.string.for_this_relay_only
-                                RelayAuthScope.ALL -> R.string.for_all_relays
-                            },
-                        )
-                    },
-                )
-            }
-        }
-
-        RememberMyChoice(
-            alwaysShow = true,
-            shouldRunAcceptOrReject = null,
-            onAccept = {},
-            onReject = {},
-            onChanged = {
-                rememberType = it
-                MultiEventScreenIntents.rememberType = it
-            },
-            packageName = packageName,
-        )
 
         Row(
             Modifier
@@ -260,10 +238,18 @@ fun IntentMultiEventHomeScreen(
                             var permissionsChanged = false
                             for (intentData in accountIntents) {
                                 val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                val groupKey = requestGroupKey(intentData.type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
+                                val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
                                 if (rememberType != RememberType.NEVER && isChecked) {
-                                    val rejectKind = if (intentData.type == SignerType.SIGN_EVENT) intentData.event?.kind else null
+                                    val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(intentData.type)
+                                    val rejectKind = when {
+                                        intentData.type == SignerType.SIGN_EVENT -> intentData.event?.kind
+                                        intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT ->
+                                            if (decryptTypeScope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+                                        else -> null
+                                    }
                                     val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
-                                        if (relayAuthScope == RelayAuthScope.ALL) {
+                                        if ((groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL) {
                                             "*"
                                         } else {
                                             RelayUrlUtils.extractHostAndPort(AmberEvent.relay(intentData.event))
@@ -280,6 +266,7 @@ fun IntentMultiEventHomeScreen(
                                         rememberType,
                                         relay = rejectRelay,
                                         encryptedData = intentData.encryptedData,
+                                        decryptTypeScope = decryptTypeScope,
                                     )
                                     permissionsChanged = true
                                 }
@@ -359,13 +346,15 @@ fun IntentMultiEventHomeScreen(
                                 for (intentData in accountIntents) {
                                     val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
                                     val type = intentData.type
+                                    val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
+                                    val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
 
                                     if (type == SignerType.SIGN_EVENT) {
                                         val localEvent = intentData.event!!
 
                                         if (rememberType != RememberType.NEVER && isChecked) {
                                             val signRelay = if (localEvent.kind == 22242) {
-                                                if (relayAuthScope == RelayAuthScope.ALL) {
+                                                if ((groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL) {
                                                     "*"
                                                 } else {
                                                     RelayUrlUtils.extractHostAndPort(AmberEvent.relay(localEvent))
@@ -420,14 +409,21 @@ fun IntentMultiEventHomeScreen(
                                         }
                                     } else {
                                         if (rememberType != RememberType.NEVER && isChecked) {
+                                            val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(type)
+                                            val permissionKind = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                                                if (decryptTypeScope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+                                            } else {
+                                                null
+                                            }
                                             AmberUtils.updatePermission(
                                                 application,
                                                 localKey,
                                                 type,
-                                                null,
+                                                permissionKind,
                                                 true,
                                                 rememberType,
                                                 encryptedData = intentData.encryptedData,
+                                                decryptTypeScope = decryptTypeScope,
                                             )
                                             permissionsChanged = true
                                         }

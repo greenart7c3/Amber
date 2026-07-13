@@ -100,6 +100,35 @@ class RequestGroupUtilsTest {
     }
 
     @Test
+    fun `scopeKind maps relay auth encryption and v3 groups`() {
+        assertEquals(RequestGroupScopeKind.RELAY_AUTH, RequestGroupKey(SignerType.SIGN_EVENT, 22242, null).scopeKind())
+        assertEquals(RequestGroupScopeKind.NONE, RequestGroupKey(SignerType.SIGN_EVENT, 1, null).scopeKind())
+        assertEquals(RequestGroupScopeKind.ENCRYPTION_METHOD, RequestGroupKey(SignerType.NIP04_ENCRYPT, null, RequestPayloadShape.CLEAR_TEXT).scopeKind())
+        assertEquals(RequestGroupScopeKind.ENCRYPTION_METHOD, RequestGroupKey(SignerType.NIP44_DECRYPT, 4, RequestPayloadShape.EVENT).scopeKind())
+        assertEquals(RequestGroupScopeKind.NIP44_V3_KIND, RequestGroupKey(SignerType.NIP44_V3_ENCRYPT, 9, null).scopeKind())
+        assertEquals(RequestGroupScopeKind.NIP44_V3_KIND, RequestGroupKey(SignerType.NIP44_V3_DECRYPT, null, null).scopeKind())
+        assertEquals(RequestGroupScopeKind.NONE, RequestGroupKey(SignerType.DECRYPT_ZAP_EVENT, null, RequestPayloadShape.PRIVATE_ZAP).scopeKind())
+        assertEquals(RequestGroupScopeKind.NONE, RequestGroupKey(SignerType.CONNECT, null, null).scopeKind())
+    }
+
+    @Test
+    fun `defaultDecryptTypeScope is SPECIFIC for v3 and ALL otherwise`() {
+        assertEquals(DecryptTypeScope.SPECIFIC, defaultDecryptTypeScope(SignerType.NIP44_V3_ENCRYPT))
+        assertEquals(DecryptTypeScope.SPECIFIC, defaultDecryptTypeScope(SignerType.NIP44_V3_DECRYPT))
+        assertEquals(DecryptTypeScope.ALL, defaultDecryptTypeScope(SignerType.NIP04_DECRYPT))
+        assertEquals(DecryptTypeScope.ALL, defaultDecryptTypeScope(SignerType.NIP44_ENCRYPT))
+        assertEquals(DecryptTypeScope.ALL, defaultDecryptTypeScope(SignerType.DECRYPT_ZAP_EVENT))
+    }
+
+    @Test
+    fun `hasGroupOptions excludes connect and get public key`() {
+        assertEquals(false, RequestGroupKey(SignerType.CONNECT, null, null).hasGroupOptions())
+        assertEquals(false, RequestGroupKey(SignerType.GET_PUBLIC_KEY, null, null).hasGroupOptions())
+        assertEquals(true, RequestGroupKey(SignerType.SIGN_EVENT, 1, null).hasGroupOptions())
+        assertEquals(true, RequestGroupKey(SignerType.NIP44_DECRYPT, null, RequestPayloadShape.CLEAR_TEXT).hasGroupOptions())
+    }
+
+    @Test
     fun `groupRequests preserves input order within a group`() {
         data class Item(val id: String, val kind: Int)
 

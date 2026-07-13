@@ -373,25 +373,14 @@ fun MainScreen(
                         content = {
                             val scrollState = rememberScrollState()
 
-                            val modifier = if (intents.isEmpty() || packageName == null || destinationRoute != Route.IncomingRequest.route) {
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .verticalScrollbar(scrollState)
-                                    .verticalScroll(scrollState)
-                                    .padding(horizontal = verticalPadding)
-                                    .padding(top = verticalPadding * 1.5f)
-                            } else {
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(padding)
-                                    .verticalScrollbar(scrollState)
-                                    .verticalScroll(scrollState)
-                                    .padding(horizontal = verticalPadding)
-                            }
                             IncomingRequestScreen(
                                 horizontalPadding = verticalPadding,
-                                modifier = modifier,
+                                modifier = Modifier
+                                    .fillMaxSize()
+                                    .padding(padding)
+                                    .verticalScrollbar(scrollState)
+                                    .verticalScroll(scrollState)
+                                    .padding(horizontal = verticalPadding),
                                 scaffoldPadding = padding,
                                 intents = intents,
                                 bunkerRequests = bunkerRequests,

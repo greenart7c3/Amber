@@ -33,7 +33,6 @@ import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
@@ -56,7 +55,7 @@ fun AuthWhitelistScreen(
     val loadingScores = remember { mutableStateMapOf<String, Boolean>() }
 
     LaunchedEffect(whitelist.toList()) {
-        if (!BuildFlavorChecker.isOfflineFlavor()) {
+        if (TrustScoreService.isEnabled()) {
             whitelist.forEach { hostname ->
                 if (!trustScores.containsKey(hostname)) {
                     loadingScores[hostname] = true

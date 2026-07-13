@@ -77,6 +77,7 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_MAX_PER_WINDOW("rate_limit_max_per_window"),
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
+    TRUST_SCORE_ENABLED("trust_score_enabled"),
 }
 
 @Immutable
@@ -156,6 +157,7 @@ object LocalPreferences {
                 putBoolean(SettingsKeys.RATE_LIMIT_ENABLED.key, settings.rateLimitEnabled)
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
+                putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
             }
         }
     }
@@ -319,6 +321,7 @@ object LocalPreferences {
                 } catch (_: IllegalArgumentException) {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
+                trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, true),
             )
         }
     }

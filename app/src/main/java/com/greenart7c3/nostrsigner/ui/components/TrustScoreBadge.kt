@@ -18,6 +18,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.service.TrustScoreService
 
 enum class TrustLevel(val color: Color) {
     EXCELLENT(Color(0xFF4CAF50)), // Green - 80-100
@@ -47,6 +48,7 @@ fun getTrustLevelLabel(level: TrustLevel): String = when (level) {
 /**
  * A badge displaying the trust score with color-coding.
  * Shows the numeric score and optionally a label.
+ * Renders nothing when trust scores are disabled in the settings or on the offline flavor.
  */
 @Composable
 fun TrustScoreBadge(
@@ -55,6 +57,10 @@ fun TrustScoreBadge(
     isLoading: Boolean = false,
     showLabel: Boolean = false,
 ) {
+    if (!TrustScoreService.isEnabled()) {
+        return
+    }
+
     val trustLevel = getTrustLevel(score)
 
     if (isLoading) {

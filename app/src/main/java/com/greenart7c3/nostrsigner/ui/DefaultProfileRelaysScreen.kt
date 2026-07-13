@@ -74,7 +74,7 @@ fun DefaultProfileRelaysScreen(
 
     // Fetch trust scores for all relays
     LaunchedEffect(relays2.toList()) {
-        if (!BuildFlavorChecker.isOfflineFlavor()) {
+        if (TrustScoreService.isEnabled()) {
             relays2.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {

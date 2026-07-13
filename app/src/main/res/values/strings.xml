@@ -667,6 +667,8 @@
     <string name="trust_fair">Fair</string>
     <string name="trust_poor">Poor</string>
     <string name="trust_unknown">Unknown</string>
+    <string name="relay_trust_score">Relay trust scores</string>
+    <string name="relay_trust_score_description">Fetch and display relay trust scores from trustedrelays.xyz</string>
     <string name="relays_used">Relays used</string>
     <string name="do_not_leave_the_app_until_the_key_is_generated">Do not leave the app until the key is generated</string>
     <string name="status_detail">Status Detail</string>

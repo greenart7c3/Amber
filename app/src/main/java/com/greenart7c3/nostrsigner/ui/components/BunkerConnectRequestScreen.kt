@@ -53,7 +53,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
@@ -130,7 +129,7 @@ fun BunkerConnectRequestScreen(
 
     // Fetch trust scores for connection relays
     LaunchedEffect(connectionRelays) {
-        if (!BuildFlavorChecker.isOfflineFlavor() && connectionRelays.isNotEmpty()) {
+        if (TrustScoreService.isEnabled() && connectionRelays.isNotEmpty()) {
             connectionRelays.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {

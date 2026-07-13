@@ -47,7 +47,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
-import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
@@ -99,7 +98,7 @@ fun EditConfigurationScreen(
             )
         }
 
-        if (!BuildFlavorChecker.isOfflineFlavor()) {
+        if (TrustScoreService.isEnabled()) {
             relays.forEach { relay ->
                 val url = relay.url
                 if (!trustScores.containsKey(url)) {

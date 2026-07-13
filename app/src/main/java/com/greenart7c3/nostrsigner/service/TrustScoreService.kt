@@ -24,11 +24,17 @@ object TrustScoreService {
     private val mapper = jacksonObjectMapper()
 
     /**
+     * Whether trust scores should be fetched and displayed.
+     * False on the offline flavor or when the user disabled trust scores in the settings.
+     */
+    fun isEnabled(): Boolean = !BuildFlavorChecker.isOfflineFlavor() && Amber.instance.settings.trustScoreEnabled
+
+    /**
      * Gets the trust score for a relay URL.
      * Returns cached value if available and not expired, otherwise fetches from API.
      */
     suspend fun getScore(relayUrl: String): Int? {
-        if (BuildFlavorChecker.isOfflineFlavor()) {
+        if (!isEnabled()) {
             return null
         }
 
@@ -50,6 +56,10 @@ object TrustScoreService {
      * Returns null if not cached or expired.
      */
     fun getCachedScore(relayUrl: String): Int? {
+        if (!isEnabled()) {
+            return null
+        }
+
         val normalizedUrl = normalizeUrl(relayUrl)
         val cached = cache[normalizedUrl] ?: return null
 
@@ -64,7 +74,7 @@ object TrustScoreService {
      * Prefetches scores for multiple relay URLs in parallel.
      */
     suspend fun prefetchScores(relayUrls: List<String>) {
-        if (BuildFlavorChecker.isOfflineFlavor()) {
+        if (!isEnabled()) {
             return
         }
 
@@ -83,7 +93,7 @@ object TrustScoreService {
      * Fetches the trust score from the API.
      */
     private suspend fun fetchScore(relayUrl: String): Int? {
-        if (BuildFlavorChecker.isOfflineFlavor()) {
+        if (!isEnabled()) {
             return null
         }
 

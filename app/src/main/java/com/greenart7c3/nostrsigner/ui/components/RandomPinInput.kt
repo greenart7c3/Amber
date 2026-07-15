@@ -39,6 +39,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun RandomPinInput(
@@ -201,6 +203,19 @@ fun RandomPinInput(
                     )
                 }
             }
+        }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun RandomPinInputPreview() {
+    AmberPreview {
+        Box(Modifier.height(600.dp)) {
+            RandomPinInput(
+                text = "Enter your PIN",
+                onPinEntered = {},
+            )
         }
     }
 }

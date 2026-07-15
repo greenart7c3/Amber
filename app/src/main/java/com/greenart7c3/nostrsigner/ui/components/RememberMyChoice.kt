@@ -23,6 +23,8 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.rememberTypeDisplayOrder
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun LabeledBorderBox(
@@ -90,5 +92,36 @@ fun RememberMyChoice(
                 label = { stringResource(it.shortResourceId) },
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun LabeledBorderBoxPreview() {
+    AmberPreview {
+        LabeledBorderBox(
+            label = "Label",
+            modifier = Modifier.padding(8.dp),
+        ) {
+            Text(
+                text = "Content",
+                modifier = Modifier.padding(8.dp),
+            )
+        }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun RememberMyChoicePreview() {
+    AmberPreview {
+        RememberMyChoice(
+            shouldRunAcceptOrReject = null,
+            packageName = null,
+            alwaysShow = true,
+            onAccept = {},
+            onReject = {},
+            onChanged = {},
+        )
     }
 }

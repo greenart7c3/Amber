@@ -9,7 +9,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
 import com.greenart7c3.nostrsigner.ui.theme.ButtonBorder
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun RawJsonButton(
@@ -28,5 +30,16 @@ fun RawJsonButton(
         ) {
             Text(text)
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun RawJsonButtonPreview() {
+    AmberPreview {
+        RawJsonButton(
+            onCLick = {},
+            text = "Copy raw json",
+        )
     }
 }

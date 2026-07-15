@@ -23,6 +23,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun ChooseSignPolicy(
@@ -104,6 +106,19 @@ fun ChooseSignPolicy(
                     )
                 }
             }
+        }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun ChooseSignPolicyPreview() {
+    AmberPreview {
+        Column(Modifier.padding(8.dp)) {
+            ChooseSignPolicy(
+                selectedOption = 1,
+                onSelected = {},
+            )
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
@@ -42,6 +43,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.PopupProperties
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.vitorpamplona.quartz.nip06KeyDerivation.Bip39Mnemonics
 
 @Composable
@@ -225,5 +228,20 @@ private fun WordField(
                 )
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun MnemonicLoginInputPreview() {
+    AmberPreview {
+        MnemonicLoginInput(
+            wordCount = 12,
+            words = listOf("leader", "monkey", "parrot", "ring") + List(8) { "" },
+            onWordChange = { _, _ -> },
+            onWordCountChange = {},
+            onPaste = {},
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }

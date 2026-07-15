@@ -31,6 +31,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.setSensitiveClip
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.verticalScrollbar
 import kotlinx.coroutines.launch
 
@@ -167,5 +169,19 @@ fun SeedWordsPage(
             Amber.instance.getMainActivity()?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
             lifecycleOwner.lifecycle.removeObserver(observer)
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun SeedWordsPagePreview() {
+    AmberPreview {
+        SeedWordsPage(
+            seedWords = setOf(
+                "leader", "monkey", "parrot", "ring",
+                "crumble", "easily", "stove", "goose",
+                "spare", "tourist", "shell", "glance",
+            ),
+        )
     }
 }

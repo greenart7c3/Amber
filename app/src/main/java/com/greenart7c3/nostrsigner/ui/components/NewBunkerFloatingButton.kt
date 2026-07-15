@@ -15,6 +15,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun NewBunkerFloatingButton(
@@ -41,5 +43,13 @@ fun NewBunkerFloatingButton(
                 tint = Color.Black,
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun NewBunkerFloatingButtonPreview() {
+    AmberPreview {
+        NewBunkerFloatingButton(onClick = {})
     }
 }

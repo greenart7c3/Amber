@@ -4,7 +4,10 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -15,6 +18,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun ToggleOption(
@@ -43,5 +48,26 @@ fun ToggleOption(
             maxLines = 1,
             softWrap = false,
         )
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun ToggleOptionPreview() {
+    AmberPreview {
+        Row(Modifier.height(32.dp)) {
+            ToggleOption(
+                text = "Always",
+                isSelected = true,
+                modifier = Modifier.width(80.dp),
+                onClick = {},
+            )
+            ToggleOption(
+                text = "Never",
+                isSelected = false,
+                modifier = Modifier.width(80.dp),
+                onClick = {},
+            )
+        }
     }
 }

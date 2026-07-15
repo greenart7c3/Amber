@@ -7,6 +7,8 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.res.vectorResource
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun BackButtonAppBar(
@@ -31,6 +33,18 @@ fun BackButtonAppBar(
             icon = ImageVector.vectorResource(R.drawable.back),
             onClick = onPressed,
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun BackButtonAppBarPreview() {
+    AmberPreview {
+        BackButtonAppBar(
+            destinationRoute = "Settings",
+            localBackButtonTitle = "Applications",
+            onPressed = {},
         )
     }
 }

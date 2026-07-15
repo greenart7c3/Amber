@@ -56,7 +56,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun TextSpinner(
@@ -212,3 +215,20 @@ fun <T> SpinnerSelectionDialog(
 }
 
 @Immutable data class TitleExplainer(val title: String, val explainer: String? = null)
+
+@ThemePreviews
+@Composable
+private fun TextSpinnerPreview() {
+    AmberPreview {
+        TextSpinner(
+            label = "Language",
+            placeholder = "English",
+            options = persistentListOf(
+                TitleExplainer("English"),
+                TitleExplainer("Português", "Brazilian Portuguese"),
+            ),
+            onSelect = {},
+            modifier = Modifier.padding(16.dp),
+        )
+    }
+}

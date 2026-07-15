@@ -27,6 +27,8 @@ import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Permission
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun EnabledPermissions(
@@ -106,5 +108,19 @@ fun EnabledPermissions(
                 }
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun EnabledPermissionsPreview() {
+    AmberPreview {
+        EnabledPermissions(
+            localPermissions = listOf(
+                Permission("get_public_key", null),
+                Permission("sign_event", 1),
+                Permission("nip04_encrypt", null, checked = false),
+            ),
+        )
     }
 }

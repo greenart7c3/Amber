@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
@@ -23,6 +24,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun BunkerPingScreen(
@@ -95,6 +98,23 @@ fun BunkerPingScreen(
             onReject = {
                 onReject(rememberType)
             },
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun BunkerPingScreenPreview() {
+    AmberPreview {
+        BunkerPingScreen(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(500.dp)
+                .padding(16.dp),
+            shouldRunOnAccept = null,
+            appName = "Amethyst",
+            onAccept = {},
+            onReject = {},
         )
     }
 }

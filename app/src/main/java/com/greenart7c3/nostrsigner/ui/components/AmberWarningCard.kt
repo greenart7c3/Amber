@@ -16,6 +16,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun AmberWarningCard(
@@ -50,6 +52,20 @@ fun AmberWarningCard(
                         color = Color.Black,
                     )
                 },
+            )
+        }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun AmberWarningCardPreview() {
+    AmberPreview {
+        Box(Modifier.padding(8.dp)) {
+            AmberWarningCard(
+                message = "You have not backed up your account yet",
+                buttonText = "Back up now",
+                onClick = {},
             )
         }
     }

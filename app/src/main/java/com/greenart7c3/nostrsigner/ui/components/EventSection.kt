@@ -22,10 +22,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun EventSection(
@@ -71,6 +74,31 @@ fun EventSection(
                 },
             imageVector = Icons.Default.ContentCopy,
             contentDescription = stringResource(id = R.string.copy),
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun EventSectionPreview() {
+    AmberPreview {
+        EventSection(
+            label = "Content",
+            displayValue = "Hello Nostr! This is a sample note that is long enough to be ellipsized when the section is collapsed.",
+            onCopy = {},
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun EventSectionExpandedPreview() {
+    AmberPreview {
+        EventSection(
+            label = "Content",
+            displayValue = "Hello Nostr! This is a sample note that is long enough to be ellipsized when the section is collapsed.",
+            onCopy = {},
+            showFullContent = true,
         )
     }
 }

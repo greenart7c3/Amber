@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner.ui.components
 
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -18,6 +19,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 /**
  * Renders a subset of Markdown as styled Compose text.
@@ -142,5 +146,23 @@ private fun AnnotatedString.Builder.appendMarkdownInline(
                 remaining = remaining.substring(count)
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun MarkdownTextPreview() {
+    AmberPreview {
+        MarkdownText(
+            markdown = """
+                ## Amber
+                **Amber** is a Nostr event signer for Android.
+                - Keep your keys safe
+                - Sign events for [Nostr](https://nostr.com) apps
+                1. Install a Nostr client
+                2. Approve its requests
+            """.trimIndent(),
+            modifier = Modifier.padding(16.dp),
+        )
     }
 }

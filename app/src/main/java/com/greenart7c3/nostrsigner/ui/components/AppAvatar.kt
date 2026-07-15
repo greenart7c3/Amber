@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
@@ -14,12 +15,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.graphics.drawable.toBitmap
 import coil3.compose.AsyncImage
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import java.io.File
 
 /**
@@ -85,6 +89,26 @@ fun AppAvatar(
                     fontSize = (size.value / 2).sp,
                 )
             }
+        }
+    }
+}
+
+@ThemePreviews
+@Composable
+private fun AppAvatarPlaceholderPreview() {
+    AmberPreview {
+        Box(Modifier.padding(8.dp)) {
+            AppAvatar(name = "Amethyst")
+        }
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun AppAvatarNoNamePreview() {
+    AmberPreview {
+        Box(Modifier.padding(8.dp)) {
+            AppAvatar()
         }
     }
 }

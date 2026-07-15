@@ -3,12 +3,14 @@ package com.greenart7c3.nostrsigner.service
 import android.app.NotificationManager
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import androidx.core.content.FileProvider
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.BuildConfig
 import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.LocalPreferences
+import com.greenart7c3.nostrsigner.models.TorMode
 import com.greenart7c3.nostrsigner.models.UpdateChannel
 import com.greenart7c3.nostrsigner.okhttp.HttpClientManager
 import com.vitorpamplona.quartz.nip01Core.core.Event
@@ -224,7 +226,7 @@ class ZapstoreUpdater(
     }
 
     private fun isMatchingArch(arch: String): Boolean {
-        val supportedAbis = android.os.Build.SUPPORTED_ABIS.toList()
+        val supportedAbis = Build.SUPPORTED_ABIS.toList()
         return supportedAbis.any { it.equals(arch, ignoreCase = true) }
     }
 
@@ -277,7 +279,7 @@ class ZapstoreUpdater(
         val settings = withContext(Dispatchers.IO) {
             LocalPreferences.loadSettingsFromEncryptedStorage()
         }
-        val useProxy = settings.torMode != com.greenart7c3.nostrsigner.models.TorMode.DISABLED
+        val useProxy = settings.torMode != TorMode.DISABLED
         val client = HttpClientManager.getHttpClient(useProxy)
         val request = Request.Builder().url(release.url).build()
         val response = client.newCall(request).execute()

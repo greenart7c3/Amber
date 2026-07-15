@@ -49,9 +49,9 @@ import com.vitorpamplona.quartz.utils.Hex
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.io.ByteArrayOutputStream
 import java.net.URLDecoder
-import java.util.Base64
 import java.util.UUID
 import java.util.zip.GZIPOutputStream
+import kotlin.io.encoding.Base64
 import kotlinx.collections.immutable.ImmutableList
 import kotlinx.collections.immutable.persistentListOf
 import kotlinx.collections.immutable.toPersistentList
@@ -584,7 +584,6 @@ object IntentUtils {
         }
     }
 
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private suspend fun getEncryptedDataKind(
         type: SignerType,
         result: String,
@@ -599,7 +598,7 @@ object IntentUtils {
         // plaintext from `text`, while `result` keeps the wire value.
         SignerType.NIP44_V3_ENCRYPT -> {
             val plaintext = try {
-                kotlin.io.encoding.Base64.decode(data).toString(Charsets.UTF_8)
+                Base64.decode(data).toString(Charsets.UTF_8)
             } catch (_: Exception) {
                 data
             }
@@ -607,7 +606,7 @@ object IntentUtils {
         }
         SignerType.NIP44_V3_DECRYPT -> {
             val plaintext = try {
-                kotlin.io.encoding.Base64.decode(result).toString(Charsets.UTF_8)
+                Base64.decode(result).toString(Charsets.UTF_8)
             } catch (_: Exception) {
                 result
             }
@@ -960,7 +959,7 @@ object IntentUtils {
                                 GZIPOutputStream(bos).use { gzos ->
                                     gzos.write(event.toByteArray())
                                 }
-                                Base64.getEncoder().encodeToString(bos.toByteArray())
+                                Base64.encode(bos.toByteArray())
                             }
 
                             val intent = Intent(Intent.ACTION_VIEW)

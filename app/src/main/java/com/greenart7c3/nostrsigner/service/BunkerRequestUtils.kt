@@ -13,6 +13,7 @@ import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.database.generateBunkerPrivKey
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
@@ -290,7 +291,7 @@ object BunkerRequestUtils {
         oldKey: String = "",
         deleteAfter: Long = 0L,
         relay: String = "",
-        encryptedData: com.greenart7c3.nostrsigner.models.EncryptedDataKind? = null,
+        encryptedData: EncryptedDataKind? = null,
         decryptTypeScope: DecryptTypeScope = DecryptTypeScope.ALL,
     ) {
         onLoading(true)

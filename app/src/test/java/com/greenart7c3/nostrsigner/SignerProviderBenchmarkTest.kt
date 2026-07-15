@@ -1,5 +1,6 @@
 package com.greenart7c3.nostrsigner
 
+import java.net.URI
 import kotlin.system.measureNanoTime
 import kotlin.system.measureTimeMillis
 import kotlinx.coroutines.delay
@@ -178,7 +179,7 @@ class SignerProviderBenchmarkTest {
         val warmupIterations = 5_000
 
         fun extractHost(url: String): String = try {
-            java.net.URI(url).host ?: url
+            URI(url).host ?: url
         } catch (e: Exception) {
             url
         }
@@ -233,7 +234,7 @@ class SignerProviderBenchmarkTest {
         val uri = StringBuilder(prefix + "SIGN_EVENT")
 
         fun extractHost(url: String) = try {
-            java.net.URI(url).host ?: url
+            URI(url).host ?: url
         } catch (e: Exception) {
             url
         }

@@ -247,6 +247,7 @@ dependencies {
     androidTestImplementation(libs.ext.junit)
     androidTestImplementation(libs.espresso.core)
     androidTestImplementation(libs.ui.test.junit4)
+    debugImplementation(libs.leakcanary)
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
 

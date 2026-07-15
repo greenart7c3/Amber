@@ -26,6 +26,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import kotlin.math.roundToInt
 
 /**
@@ -143,5 +145,18 @@ fun <T> AmberToggles(
                 }
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun AmberTogglesPreview() {
+    AmberPreview {
+        AmberToggles(
+            selected = "10 min",
+            options = listOf("Never", "10 min", "1 hour", "Always"),
+            onSelected = {},
+            label = { it },
+        )
     }
 }

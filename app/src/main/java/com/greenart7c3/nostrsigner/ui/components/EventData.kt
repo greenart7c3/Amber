@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -32,6 +33,9 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip01Core.core.Event
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -238,4 +242,51 @@ fun ReportMissingEventKindButton(kind: Int, appName: String? = null) {
         },
         text = stringResource(R.string.report_missing_event_kind_translation),
     )
+}
+private fun previewEvent() = Event(
+    id = "0".repeat(64),
+    pubKey = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c",
+    createdAt = 1735689600,
+    kind = 1,
+    tags = arrayOf(arrayOf("t", "amber")),
+    content = "Hello Nostr!",
+    sig = "",
+)
+
+@ThemePreviews
+@Composable
+fun EventDataPreview() {
+    AmberPreview {
+        EventData(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(650.dp)
+                .padding(16.dp),
+            shouldAcceptOrReject = null,
+            packageName = null,
+            event = previewEvent(),
+            account = previewAccount(),
+            onAccept = {},
+            onReject = {},
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun BunkerEventDataPreview() {
+    AmberPreview {
+        BunkerEventData(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(650.dp)
+                .padding(16.dp),
+            shouldAcceptOrReject = null,
+            appName = "Amethyst",
+            event = previewEvent(),
+            account = previewAccount(),
+            onAccept = {},
+            onReject = {},
+        )
+    }
 }

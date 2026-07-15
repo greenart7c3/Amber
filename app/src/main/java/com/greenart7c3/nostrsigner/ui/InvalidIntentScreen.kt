@@ -33,6 +33,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun InvalidIntentScreen(
@@ -71,5 +73,13 @@ fun InvalidIntentScreen(
         ) {
             Text(stringResource(R.string.invalid_intent_close_app))
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun InvalidIntentScreenPreview() {
+    AmberPreview {
+        InvalidIntentScreen(onClose = {})
     }
 }

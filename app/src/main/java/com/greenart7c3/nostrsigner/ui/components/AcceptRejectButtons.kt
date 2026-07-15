@@ -11,6 +11,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun AcceptRejectButtons(
@@ -36,6 +38,17 @@ fun AcceptRejectButtons(
             Modifier.weight(1f),
             onClick = onAccept,
             text = stringResource(R.string.accept),
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun AcceptRejectButtonsPreview() {
+    AmberPreview {
+        AcceptRejectButtons(
+            onAccept = {},
+            onReject = {},
         )
     }
 }

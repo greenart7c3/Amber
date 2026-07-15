@@ -7,7 +7,10 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -18,6 +21,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -101,5 +107,31 @@ fun IconRow(
                 overflow = TextOverflow.Ellipsis,
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun IconRowVectorPreview() {
+    AmberPreview {
+        IconRow(
+            title = "Security",
+            icon = Icons.Default.Settings,
+            tint = MaterialTheme.colorScheme.onBackground,
+            onClick = {},
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun IconRowDrawablePreview() {
+    AmberPreview {
+        IconRow(
+            title = "Go back",
+            icon = R.drawable.back,
+            tint = MaterialTheme.colorScheme.onBackground,
+            onClick = {},
+        )
     }
 }

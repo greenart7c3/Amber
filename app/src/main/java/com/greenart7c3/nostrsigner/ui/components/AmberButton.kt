@@ -20,6 +20,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun AmberButton(
@@ -108,5 +110,39 @@ fun AmberElevatedButton(
                 )
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun AmberButtonPreview() {
+    AmberPreview {
+        AmberButton(
+            onClick = {},
+            text = "Accept",
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun AmberButtonDisabledPreview() {
+    AmberPreview {
+        AmberButton(
+            onClick = {},
+            enabled = false,
+            text = "Accept",
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun AmberElevatedButtonPreview() {
+    AmberPreview {
+        AmberElevatedButton(
+            onClick = {},
+            text = "Copy to clipboard",
+        )
     }
 }

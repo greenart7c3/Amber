@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Text
@@ -26,6 +27,9 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 
 /**
  * Scope for a kind 22242 relay authentication permission.
@@ -139,6 +143,26 @@ fun BunkerRelayAuthScreen(
         AcceptRejectButtons(
             onAccept = { onAccept(rememberType, scope) },
             onReject = { onReject(rememberType, scope) },
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun BunkerRelayAuthScreenPreview() {
+    AmberPreview {
+        BunkerRelayAuthScreen(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(600.dp)
+                .padding(16.dp),
+            appName = "Amethyst",
+            relayUrl = "wss://relay.damus.io",
+            shouldAcceptOrReject = null,
+            defaultScope = RelayAuthScope.SPECIFIC,
+            account = previewAccount(),
+            onAccept = { _, _ -> },
+            onReject = { _, _ -> },
         )
     }
 }

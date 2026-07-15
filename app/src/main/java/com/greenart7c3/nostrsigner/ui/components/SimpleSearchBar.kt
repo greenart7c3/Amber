@@ -28,6 +28,8 @@ import androidx.compose.ui.semantics.isTraversalGroup
 import androidx.compose.ui.semantics.semantics
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,5 +107,17 @@ fun SimpleSearchBar(
                 }
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun SimpleSearchBarPreview() {
+    AmberPreview {
+        SimpleSearchBar(
+            textFieldState = TextFieldState("amber"),
+            onSearch = {},
+            searchResults = emptyList(),
+        )
     }
 }

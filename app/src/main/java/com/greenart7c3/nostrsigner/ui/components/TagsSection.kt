@@ -25,6 +25,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun TagsSection(
@@ -93,6 +95,22 @@ fun TagsSection(
                 .clickable { onCopy() },
             imageVector = Icons.Default.ContentCopy,
             contentDescription = stringResource(id = R.string.copy_to_clipboard),
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun TagsSectionPreview() {
+    AmberPreview {
+        TagsSection(
+            label = "Tags",
+            tags = arrayOf(
+                arrayOf("p", "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"),
+                arrayOf("e", "3d842afecd5e293f28b6627933704a3fb8ce153aa91d790ab11f6a752d44a42d"),
+                arrayOf("t", "amber"),
+            ),
+            onCopy = {},
         )
     }
 }

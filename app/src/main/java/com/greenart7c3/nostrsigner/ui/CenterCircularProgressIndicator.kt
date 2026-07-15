@@ -12,6 +12,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun CenterCircularProgressIndicator(
@@ -32,5 +34,16 @@ fun CenterCircularProgressIndicator(
             }
             CircularProgressIndicator()
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun CenterCircularProgressIndicatorPreview() {
+    AmberPreview {
+        CenterCircularProgressIndicator(
+            modifier = Modifier.fillMaxSize(),
+            text = "Loading",
+        )
     }
 }

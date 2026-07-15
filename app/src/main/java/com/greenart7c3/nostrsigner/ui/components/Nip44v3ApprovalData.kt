@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
@@ -27,11 +28,15 @@ import androidx.compose.ui.unit.sp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
+import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.EncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.nip44v3Plaintext
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 
 /**
  * Dedicated approval screen for NIP-44 v3 encrypt/decrypt requests.
@@ -181,5 +186,29 @@ fun Nip44v3ContextBox(
                 ),
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun Nip44v3ApprovalDataPreview() {
+    AmberPreview {
+        Nip44v3ApprovalData(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(700.dp)
+                .padding(16.dp),
+            isBunker = false,
+            appName = "Amethyst",
+            packageName = null,
+            type = SignerType.NIP44_V3_ENCRYPT,
+            account = previewAccount(),
+            kind = null,
+            scope = "chat",
+            encryptedData = ClearTextEncryptedDataKind("Hello Nostr!", "Hello Nostr!"),
+            shouldRunOnAccept = null,
+            onAccept = { _, _ -> },
+            onReject = { _, _ -> },
+        )
     }
 }

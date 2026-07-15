@@ -29,6 +29,8 @@ import com.google.zxing.qrcode.encoder.ByteMatrix
 import com.google.zxing.qrcode.encoder.Encoder
 import com.google.zxing.qrcode.encoder.QRCode
 import com.greenart7c3.nostrsigner.ui.actions.QrCodeDialog
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 const val QR_MARGIN_PX = 100f
 
@@ -281,4 +283,14 @@ private fun DrawScope.drawQrCodeFinder(
             )
         },
     )
+}
+
+@ThemePreviews
+@Composable
+fun QrCodeDrawerPreview() {
+    AmberPreview {
+        QrCodeDrawer(
+            contents = "nostrconnect://460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c?relay=wss%3A%2F%2Frelay.nsec.app",
+        )
+    }
 }

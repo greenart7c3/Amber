@@ -63,9 +63,13 @@ import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
 import com.greenart7c3.nostrsigner.ui.navigation.Route
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.greenart7c3.nostrsigner.ui.theme.primaryVariant
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 
 @Composable
 fun ProfilePictureIcon(account: Account) {
@@ -440,5 +444,25 @@ fun LoginWithPubKey(
                 text = stringResource(R.string.connect),
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun LoginWithPubKeyPreview() {
+    AmberPreview {
+        LoginWithPubKey(
+            horizontalPadding = 16.dp,
+            modifier = Modifier.padding(horizontal = 16.dp),
+            account = previewAccount(),
+            packageName = null,
+            permissions = persistentListOf(
+                Permission("get_public_key", null),
+                Permission("sign_event", 1),
+                Permission("nip04_encrypt", null),
+            ),
+            onAccept = { _, _, _, _, _ -> },
+            onReject = {},
+        )
     }
 }

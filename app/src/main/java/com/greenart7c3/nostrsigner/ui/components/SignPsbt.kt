@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
@@ -29,6 +30,8 @@ import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.service.DecodedPsbt
 import com.greenart7c3.nostrsigner.service.DecodedPsbtOutput
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 
 @Composable
 fun SignPsbt(
@@ -242,3 +245,61 @@ private fun RawPsbtCard(psbtHex: String) {
 }
 
 private fun formatSats(sats: Long): String = "$sats sats"
+private fun previewDecodedPsbt() = DecodedPsbt(
+    outputs = listOf(
+        DecodedPsbtOutput(
+            valueSats = 50_000,
+            scriptPubKeyHex = "0014751e76e8199196d454941c45d1b3a323f1433bd6",
+            address = "bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4",
+            isChange = false,
+        ),
+        DecodedPsbtOutput(
+            valueSats = 12_345,
+            scriptPubKeyHex = "0014841b80d2cc75f5345c482af96294d04fdd66b2b7",
+            address = "bc1qssdcp5kvwh6nghzg9tuk99xsflwkdv4hgvq58q",
+            isChange = true,
+        ),
+    ),
+    totalSent = 50_000,
+    totalChange = 12_345,
+    feeSats = 500,
+    parseError = null,
+)
+
+@ThemePreviews
+@Composable
+fun SignPsbtPreview() {
+    AmberPreview {
+        SignPsbt(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(600.dp)
+                .padding(16.dp),
+            psbtHex = "70736274ff0100710200000001",
+            decoded = previewDecodedPsbt(),
+            shouldRunOnAccept = null,
+            packageName = null,
+            onAccept = {},
+            onReject = {},
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun BunkerSignPsbtPreview() {
+    AmberPreview {
+        BunkerSignPsbt(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(600.dp)
+                .padding(16.dp),
+            psbtHex = "70736274ff0100710200000001",
+            decoded = previewDecodedPsbt(),
+            shouldRunOnAccept = null,
+            appName = "Amethyst",
+            onAccept = {},
+            onReject = {},
+        )
+    }
+}

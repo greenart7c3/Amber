@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Card
@@ -35,6 +36,9 @@ import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 import com.vitorpamplona.quartz.nip02FollowList.ContactListEvent
 
 @Composable
@@ -436,6 +440,46 @@ fun BunkerEncryptDecryptData(
             onReject = {
                 onReject(rememberType, scope)
             },
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun EncryptDecryptDataPreview() {
+    AmberPreview {
+        EncryptDecryptData(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(600.dp)
+                .padding(16.dp),
+            encryptedData = ClearTextEncryptedDataKind("Hello Nostr!", "Hello Nostr!"),
+            shouldRunOnAccept = null,
+            packageName = null,
+            type = SignerType.NIP44_DECRYPT,
+            account = previewAccount(),
+            onAccept = { _, _ -> },
+            onReject = { _, _ -> },
+        )
+    }
+}
+
+@ThemePreviews
+@Composable
+fun BunkerEncryptDecryptDataPreview() {
+    AmberPreview {
+        BunkerEncryptDecryptData(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(600.dp)
+                .padding(16.dp),
+            encryptedData = ClearTextEncryptedDataKind("Hello Nostr!", "Hello Nostr!"),
+            shouldRunOnAccept = null,
+            appName = "Amethyst",
+            type = SignerType.NIP44_ENCRYPT,
+            account = previewAccount(),
+            onAccept = { _, _ -> },
+            onReject = { _, _ -> },
         )
     }
 }

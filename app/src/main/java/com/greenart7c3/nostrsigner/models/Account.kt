@@ -22,6 +22,7 @@ import com.vitorpamplona.quartz.nip49PrivKeyEnc.Nip49
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.nip57Zaps.PrivateZapRequestBuilder
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -38,6 +39,9 @@ class Account(
     val picture: MutableStateFlow<String>,
     signPolicy: Int,
     didBackup: Boolean,
+    // Watches name/picture to mark the account saveable; injectable so Compose
+    // previews can build an Account without the Amber Application singleton.
+    scope: CoroutineScope = Amber.instance.applicationIOScope,
 ) {
     var signPolicy: Int = signPolicy
         set(value) {
@@ -59,7 +63,7 @@ class Account(
     val saveable = _saveable.asStateFlow()
 
     init {
-        Amber.instance.applicationIOScope.launch {
+        scope.launch {
             combine(name, picture) { _, _ -> }.drop(1).collect {
                 _saveable.value = AccountState(this@Account)
             }

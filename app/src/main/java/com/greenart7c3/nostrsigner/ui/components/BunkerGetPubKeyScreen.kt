@@ -76,7 +76,7 @@ fun BunkerGetPubKeyScreen(
 
 @ThemePreviews
 @Composable
-private fun BunkerGetPubKeyScreenPreview() {
+fun BunkerGetPubKeyScreenPreview() {
     AmberPreview {
         BunkerGetPubKeyScreen(
             modifier = Modifier

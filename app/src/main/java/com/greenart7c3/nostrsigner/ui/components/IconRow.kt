@@ -112,7 +112,7 @@ fun IconRow(
 
 @ThemePreviews
 @Composable
-private fun IconRowVectorPreview() {
+fun IconRowVectorPreview() {
     AmberPreview {
         IconRow(
             title = "Security",
@@ -125,7 +125,7 @@ private fun IconRowVectorPreview() {
 
 @ThemePreviews
 @Composable
-private fun IconRowDrawablePreview() {
+fun IconRowDrawablePreview() {
     AmberPreview {
         IconRow(
             title = "Go back",

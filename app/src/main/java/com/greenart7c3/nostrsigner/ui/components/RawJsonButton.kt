@@ -35,7 +35,7 @@ fun RawJsonButton(
 
 @ThemePreviews
 @Composable
-private fun RawJsonButtonPreview() {
+fun RawJsonButtonPreview() {
     AmberPreview {
         RawJsonButton(
             onCLick = {},

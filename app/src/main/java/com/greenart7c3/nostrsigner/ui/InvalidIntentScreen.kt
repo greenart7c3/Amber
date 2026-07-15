@@ -78,7 +78,7 @@ fun InvalidIntentScreen(
 
 @ThemePreviews
 @Composable
-private fun InvalidIntentScreenPreview() {
+fun InvalidIntentScreenPreview() {
     AmberPreview {
         InvalidIntentScreen(onClose = {})
     }

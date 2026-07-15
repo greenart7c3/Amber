@@ -33,7 +33,7 @@ fun SignerConnectAppTab(
 
 @ThemePreviews
 @Composable
-private fun SignerConnectAppTabPreview() {
+fun SignerConnectAppTabPreview() {
     AmberPreview {
         PrimaryTabRow(selectedTabIndex = 0) {
             SignerConnectAppTab(

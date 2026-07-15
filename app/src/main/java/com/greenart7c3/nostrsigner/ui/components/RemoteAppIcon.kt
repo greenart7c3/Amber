@@ -38,7 +38,7 @@ fun RemoteAppIcon(
 
 @ThemePreviews
 @Composable
-private fun RemoteAppIconPreview() {
+fun RemoteAppIconPreview() {
     AmberPreview {
         RemoteAppIcon(
             imageUrl = null,

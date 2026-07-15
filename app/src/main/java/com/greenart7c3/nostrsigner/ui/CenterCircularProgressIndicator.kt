@@ -39,7 +39,7 @@ fun CenterCircularProgressIndicator(
 
 @ThemePreviews
 @Composable
-private fun CenterCircularProgressIndicatorPreview() {
+fun CenterCircularProgressIndicatorPreview() {
     AmberPreview {
         CenterCircularProgressIndicator(
             modifier = Modifier.fillMaxSize(),

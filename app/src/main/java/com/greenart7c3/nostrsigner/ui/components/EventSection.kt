@@ -80,7 +80,7 @@ fun EventSection(
 
 @ThemePreviews
 @Composable
-private fun EventSectionPreview() {
+fun EventSectionPreview() {
     AmberPreview {
         EventSection(
             label = "Content",
@@ -92,7 +92,7 @@ private fun EventSectionPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun EventSectionExpandedPreview() {
+fun EventSectionExpandedPreview() {
     AmberPreview {
         EventSection(
             label = "Content",

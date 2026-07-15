@@ -209,7 +209,7 @@ fun RandomPinInput(
 
 @ThemePreviews
 @Composable
-private fun RandomPinInputPreview() {
+fun RandomPinInputPreview() {
     AmberPreview {
         Box(Modifier.height(600.dp)) {
             RandomPinInput(

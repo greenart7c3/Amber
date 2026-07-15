@@ -20,7 +20,7 @@ fun CloseButton(onCancel: () -> Unit) {
 
 @ThemePreviews
 @Composable
-private fun CloseButtonPreview() {
+fun CloseButtonPreview() {
     AmberPreview {
         CloseButton(onCancel = {})
     }

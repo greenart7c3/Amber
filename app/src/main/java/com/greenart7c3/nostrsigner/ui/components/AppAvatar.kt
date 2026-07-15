@@ -95,7 +95,7 @@ fun AppAvatar(
 
 @ThemePreviews
 @Composable
-private fun AppAvatarPlaceholderPreview() {
+fun AppAvatarPlaceholderPreview() {
     AmberPreview {
         Box(Modifier.padding(8.dp)) {
             AppAvatar(name = "Amethyst")
@@ -105,7 +105,7 @@ private fun AppAvatarPlaceholderPreview() {
 
 @Preview(showBackground = true)
 @Composable
-private fun AppAvatarNoNamePreview() {
+fun AppAvatarNoNamePreview() {
     AmberPreview {
         Box(Modifier.padding(8.dp)) {
             AppAvatar()

@@ -29,7 +29,10 @@ import com.greenart7c3.nostrsigner.BuildFlavorChecker
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.service.toShortenHex
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.greenart7c3.nostrsigner.ui.theme.fromHex
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
 
 @Composable
 fun SigningAs(account: Account, modifier: Modifier = Modifier) {
@@ -111,5 +114,13 @@ fun SigningAs(account: Account, modifier: Modifier = Modifier) {
                 )
             }
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun SigningAsPreview() {
+    AmberPreview {
+        SigningAs(previewAccount())
     }
 }

@@ -97,7 +97,7 @@ fun RememberMyChoice(
 
 @ThemePreviews
 @Composable
-private fun LabeledBorderBoxPreview() {
+fun LabeledBorderBoxPreview() {
     AmberPreview {
         LabeledBorderBox(
             label = "Label",
@@ -113,7 +113,7 @@ private fun LabeledBorderBoxPreview() {
 
 @ThemePreviews
 @Composable
-private fun RememberMyChoicePreview() {
+fun RememberMyChoicePreview() {
     AmberPreview {
         RememberMyChoice(
             shouldRunAcceptOrReject = null,

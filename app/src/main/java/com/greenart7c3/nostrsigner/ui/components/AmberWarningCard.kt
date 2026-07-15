@@ -59,7 +59,7 @@ fun AmberWarningCard(
 
 @ThemePreviews
 @Composable
-private fun AmberWarningCardPreview() {
+fun AmberWarningCardPreview() {
     AmberPreview {
         Box(Modifier.padding(8.dp)) {
             AmberWarningCard(

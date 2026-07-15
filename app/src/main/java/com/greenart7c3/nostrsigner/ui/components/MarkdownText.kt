@@ -151,7 +151,7 @@ private fun AnnotatedString.Builder.appendMarkdownInline(
 
 @ThemePreviews
 @Composable
-private fun MarkdownTextPreview() {
+fun MarkdownTextPreview() {
     AmberPreview {
         MarkdownText(
             markdown = """

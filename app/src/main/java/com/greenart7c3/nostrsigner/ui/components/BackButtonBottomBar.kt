@@ -39,7 +39,7 @@ fun BackButtonAppBar(
 
 @ThemePreviews
 @Composable
-private fun BackButtonAppBarPreview() {
+fun BackButtonAppBarPreview() {
     AmberPreview {
         BackButtonAppBar(
             destinationRoute = "Settings",

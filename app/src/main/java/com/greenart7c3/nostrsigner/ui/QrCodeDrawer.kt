@@ -287,7 +287,7 @@ private fun DrawScope.drawQrCodeFinder(
 
 @ThemePreviews
 @Composable
-private fun QrCodeDrawerPreview() {
+fun QrCodeDrawerPreview() {
     AmberPreview {
         QrCodeDrawer(
             contents = "nostrconnect://460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c?relay=wss%3A%2F%2Frelay.nsec.app",

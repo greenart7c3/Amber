@@ -11,6 +11,8 @@ import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.res.stringResource
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 import com.vitorpamplona.quartz.nip01Core.core.TagArray
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -43,5 +45,19 @@ fun EncryptedTagArraySection(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
+    }
+}
+
+@ThemePreviews
+@Composable
+fun EncryptedTagArraySectionPreview() {
+    AmberPreview {
+        EncryptedTagArraySection(
+            modifier = Modifier,
+            tags = arrayOf(
+                arrayOf("p", "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"),
+                arrayOf("t", "amber"),
+            ),
+        )
     }
 }

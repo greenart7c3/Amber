@@ -21,7 +21,7 @@ fun CloseIcon() {
 
 @ThemePreviews
 @Composable
-private fun CloseIconPreview() {
+fun CloseIconPreview() {
     AmberPreview {
         CloseIcon()
     }

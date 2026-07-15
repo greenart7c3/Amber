@@ -489,6 +489,8 @@
     <string name="event_kind_2003">Торрент</string>
     <string name="event_kind_2004">Комментарий к торренту</string>
     <string name="event_kind_2022">Пул Coinjoin</string>
+    <string name="event_kind_12022">Список экспертов</string>
+    <string name="event_kind_32022">Набор экспертов</string>
     <string name="event_kind_1630_1633">Статус</string>
     <string name="event_kind_1622">Ответы</string>
     <string name="event_kind_1621">Задачи</string>

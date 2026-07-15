@@ -465,6 +465,8 @@
     <string name="event_kind_2003">Torrent</string>
     <string name="event_kind_2004">ความคิดเห็น Torrent</string>
     <string name="event_kind_2022">Coinjoin Pool</string>
+    <string name="event_kind_12022">รายชื่อผู้เชี่ยวชาญ</string>
+    <string name="event_kind_32022">แพ็กผู้เชี่ยวชาญ</string>
     <string name="event_kind_1630_1633">สถานะ</string>
     <string name="event_kind_1622">การตอบกลับ</string>
     <string name="event_kind_1621">ปัญหา</string>

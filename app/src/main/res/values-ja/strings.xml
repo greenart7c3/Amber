@@ -465,6 +465,8 @@
     <string name="event_kind_2003">トレント</string>
     <string name="event_kind_2004">トレントコメント</string>
     <string name="event_kind_2022">Coinjoin プール</string>
+    <string name="event_kind_12022">エキスパートリスト</string>
+    <string name="event_kind_32022">エキスパートパック</string>
     <string name="event_kind_1630_1633">ステータス</string>
     <string name="event_kind_1622">返信</string>
     <string name="event_kind_1621">課題</string>

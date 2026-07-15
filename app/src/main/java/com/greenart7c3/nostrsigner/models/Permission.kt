@@ -214,6 +214,7 @@ data class Permission(
                 10102 -> context.getString(R.string.event_kind_10102)
                 10443 -> context.getString(R.string.event_kind_10443)
                 11125 -> context.getString(R.string.event_kind_11125)
+                12022 -> context.getString(R.string.event_kind_12022)
                 13194 -> context.getString(R.string.event_kind_13194)
                 14919 -> context.getString(R.string.event_kind_14919)
                 14920 -> context.getString(R.string.event_kind_14920)
@@ -269,6 +270,7 @@ data class Permission(
                 34235 -> context.getString(R.string.event_kind_34235)
                 34236 -> context.getString(R.string.event_kind_34236)
                 34237 -> context.getString(R.string.event_kind_34237)
+                32022 -> context.getString(R.string.event_kind_32022)
                 32267 -> context.getString(R.string.event_kind_32267)
                 34139 -> context.getString(R.string.event_kind_34139)
                 34550 -> context.getString(R.string.event_kind_34550)
@@ -506,6 +508,8 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 2003),
     Permission("sign_event", 2004),
     Permission("sign_event", 2022),
+    Permission("sign_event", 12022),
+    Permission("sign_event", 32022),
     Permission("sign_event", 4550),
     Permission("sign_event", 5000),
     Permission("sign_event", 5999),

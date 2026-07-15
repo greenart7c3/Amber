@@ -3,7 +3,9 @@ package com.greenart7c3.nostrsigner.service.nip44v3
 import com.fasterxml.jackson.databind.JsonNode
 import com.vitorpamplona.quartz.nip01Core.crypto.KeyPair
 import com.vitorpamplona.quartz.nip01Core.jackson.JacksonMapper
+import com.vitorpamplona.quartz.utils.Secp256k1Instance
 import java.security.MessageDigest
+import kotlin.io.encoding.Base64
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -66,7 +68,7 @@ class Nip44v3Test {
 
             // Key derivation matches PRK / encryption_key / mac_key from spec
             val prk1 = Nip44v3.extract(
-                com.vitorpamplona.quartz.utils.Secp256k1Instance.pubKeyTweakMulCompact(pub2, priv1),
+                Secp256k1Instance.pubKeyTweakMulCompact(pub2, priv1),
                 nonce,
             )
             assertEquals("vector $idx: prk", expectedPrk, toHex(prk1))
@@ -238,10 +240,10 @@ class Nip44v3Test {
         val ownPub = pubKeyFor("0000000000000000000000000000000000000000000000000000000000000001")
 
         val ct = Nip44v3.encrypt("hello".toByteArray(), priv, peerPub, kind = 1, scope = "")
-        val decoded = kotlin.io.encoding.Base64.decode(ct)
+        val decoded = Base64.decode(ct)
         // Flip a bit in the MAC region (bytes 33..65)
         decoded[40] = (decoded[40].toInt() xor 0x01).toByte()
-        val tampered = kotlin.io.encoding.Base64.encode(decoded)
+        val tampered = Base64.encode(decoded)
         val ex = assertThrows(Nip44v3.Nip44v3Exception::class.java) {
             Nip44v3.decrypt(tampered, peer, ownPub, 1, "")
         }

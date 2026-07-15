@@ -72,6 +72,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.TorMode
+import com.greenart7c3.nostrsigner.service.TorManager
 import com.greenart7c3.nostrsigner.ui.actions.LogoutDialog
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
 import com.greenart7c3.nostrsigner.ui.components.TextSpinner
@@ -373,7 +374,7 @@ fun SettingsScreen(
                         torMode = TorMode.DISABLED
                         scope.launch(Dispatchers.IO) {
                             if (Amber.instance.settings.torMode == TorMode.BUILTIN) {
-                                com.greenart7c3.nostrsigner.service.TorManager.stop()
+                                TorManager.stop()
                             }
                             LocalPreferences.updateTorMode(context, TorMode.DISABLED)
                             Amber.instance.checkForNewRelaysAndUpdateAllFilters()

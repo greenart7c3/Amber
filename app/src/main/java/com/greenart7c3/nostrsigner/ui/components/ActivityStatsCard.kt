@@ -37,6 +37,7 @@ import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.R
@@ -198,7 +199,7 @@ private fun ActivityStatsBar(stats: WindowStats, maxTotal: Long) {
         Text(
             text = stats.total.toString(),
             modifier = Modifier.padding(start = 8.dp),
-            textAlign = androidx.compose.ui.text.style.TextAlign.End,
+            textAlign = TextAlign.End,
             fontWeight = FontWeight.Medium,
             maxLines = 1,
         )

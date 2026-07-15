@@ -2,6 +2,7 @@ package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.database.ApplicationPermissionsEntity
 import com.vitorpamplona.quartz.utils.TimeUtils
+import java.util.Locale
 import kotlin.system.measureNanoTime
 import org.junit.Test
 
@@ -278,7 +279,7 @@ class IntentUtilsBeforeAfterTest {
         // Warm up
         repeat(5_000) {
             inputs.forEach { s ->
-                s.lowercase(java.util.Locale.ROOT)
+                s.lowercase(Locale.ROOT)
                 s.lowercase()
             }
         }
@@ -286,7 +287,7 @@ class IntentUtilsBeforeAfterTest {
         val beforeNs = measureNanoTime {
             repeat(iterations) {
                 // OLD equivalent: toLowerCase(Locale.current) — uses java.util.Locale lookup
-                inputs.forEach { s -> s.lowercase(java.util.Locale.ROOT) }
+                inputs.forEach { s -> s.lowercase(Locale.ROOT) }
             }
         }
 

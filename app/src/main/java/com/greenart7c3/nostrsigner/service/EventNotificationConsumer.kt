@@ -68,6 +68,8 @@ import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.nip59Giftwrap.seals.SealedRumorEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
+import kotlin.io.encoding.Base64
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class EventNotificationConsumer(private val applicationContext: Context) {
@@ -844,7 +846,6 @@ class EventNotificationConsumer(private val applicationContext: Context) {
      * history/display can use the readable plaintext. Returns null if it can't
      * be produced (the request is auto-rejected elsewhere in that case).
      */
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     private fun nip44v3EncryptedDataKind(
         bunkerRequest: BunkerRequest,
         acc: Account,
@@ -856,15 +857,15 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         return try {
             // text = readable plaintext (for display/history); result = wire value.
             if (bunkerRequest.method == "nip44v3_encrypt") {
-                val plainBytes = kotlin.io.encoding.Base64.decode(data)
+                val plainBytes = Base64.decode(data)
                 val ciphertext = acc.nip44v3Encrypt(plainBytes, pubKey, kind, scope)
                 ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), ciphertext)
             } else {
                 val plainBytes = acc.nip44v3Decrypt(data, pubKey, kind, scope)
-                ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), kotlin.io.encoding.Base64.encode(plainBytes))
+                ClearTextEncryptedDataKind(plainBytes.toString(Charsets.UTF_8), Base64.encode(plainBytes))
             }
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is CancellationException) throw e
             null
         }
     }
@@ -889,7 +890,7 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             acc.nip44v3Decrypt(data, pubKey, kind, scope)
             null
         } catch (e: Exception) {
-            if (e is kotlinx.coroutines.CancellationException) throw e
+            if (e is CancellationException) throw e
             // Keep the response generic so we don't leak the ciphertext's
             // embedded context back to the requester.
             "could not decrypt the message"

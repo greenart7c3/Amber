@@ -22,6 +22,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
+import kotlin.io.encoding.Base64
 
 object AmberUtils {
     /**
@@ -31,7 +32,6 @@ object AmberUtils {
      * plaintext for logs/display comes from the EncryptedDataKind instead (see
      * [nip44v3Plaintext]). [nip44v3Kind]/[nip44v3Scope] are required for V3.
      */
-    @OptIn(kotlin.io.encoding.ExperimentalEncodingApi::class)
     suspend fun encryptOrDecryptData(
         data: String,
         type: SignerType,
@@ -54,11 +54,11 @@ object AmberUtils {
         }
         SignerType.NIP44_V3_ENCRYPT -> {
             requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_ENCRYPT" }
-            account.nip44v3Encrypt(kotlin.io.encoding.Base64.decode(data), pubKey, nip44v3Kind, nip44v3Scope)
+            account.nip44v3Encrypt(Base64.decode(data), pubKey, nip44v3Kind, nip44v3Scope)
         }
         SignerType.NIP44_V3_DECRYPT -> {
             requireNotNull(nip44v3Kind) { "kind is required for NIP44_V3_DECRYPT" }
-            kotlin.io.encoding.Base64.encode(account.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope))
+            Base64.encode(account.nip44v3Decrypt(data, pubKey, nip44v3Kind, nip44v3Scope))
         }
         else -> {
             account.nip44Decrypt(data, pubKey)

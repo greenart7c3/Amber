@@ -3,6 +3,7 @@ package com.greenart7c3.nostrsigner.ui.components
 import android.content.Context
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
@@ -28,6 +30,7 @@ import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.encryptDecryptSignerTypes
+import com.greenart7c3.nostrsigner.ui.RememberType
 
 enum class RequestPayloadShape {
     EVENT,
@@ -106,6 +109,124 @@ fun RequestGroupKey.toLabel(context: Context): String {
             }
         }
         else -> Permission(type.name.lowercase(), null).toLocalizedString(context)
+    }
+}
+
+enum class RequestGroupScopeKind {
+    NONE,
+    RELAY_AUTH,
+    ENCRYPTION_METHOD,
+    NIP44_V3_KIND,
+}
+
+fun RequestGroupKey.scopeKind(): RequestGroupScopeKind = when {
+    type == SignerType.SIGN_EVENT && kind == 22242 -> RequestGroupScopeKind.RELAY_AUTH
+    type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT -> RequestGroupScopeKind.NIP44_V3_KIND
+    type in encryptDecryptSignerTypes && type != SignerType.DECRYPT_ZAP_EVENT -> RequestGroupScopeKind.ENCRYPTION_METHOD
+    else -> RequestGroupScopeKind.NONE
+}
+
+// Mirrors the single-event defaults: EncryptDecryptData defaults to ALL, Nip44v3ApprovalData to SPECIFIC
+fun defaultDecryptTypeScope(type: SignerType): DecryptTypeScope = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+    DecryptTypeScope.SPECIFIC
+} else {
+    DecryptTypeScope.ALL
+}
+
+// CONNECT / GET_PUBLIC_KEY approvals never persist a permission from the grouped flow
+fun RequestGroupKey.hasGroupOptions(): Boolean = type != SignerType.CONNECT && type != SignerType.GET_PUBLIC_KEY
+
+@Composable
+fun RequestGroupOptions(
+    groupKey: RequestGroupKey,
+    rememberType: RememberType,
+    onRememberTypeChanged: (RememberType) -> Unit,
+    relayAuthScope: RelayAuthScope,
+    onRelayAuthScopeChanged: (RelayAuthScope) -> Unit,
+    decryptTypeScope: DecryptTypeScope,
+    onDecryptTypeScopeChanged: (DecryptTypeScope) -> Unit,
+) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 4.dp, vertical = 4.dp),
+    ) {
+        when (groupKey.scopeKind()) {
+            RequestGroupScopeKind.RELAY_AUTH -> {
+                LabeledBorderBox(
+                    label = stringResource(R.string.relay_auth_scope),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                ) {
+                    AmberToggles(
+                        selected = relayAuthScope,
+                        options = listOf(RelayAuthScope.SPECIFIC, RelayAuthScope.ALL),
+                        onSelected = onRelayAuthScopeChanged,
+                        label = {
+                            stringResource(
+                                when (it) {
+                                    RelayAuthScope.SPECIFIC -> R.string.for_this_relay_only
+                                    RelayAuthScope.ALL -> R.string.for_all_relays
+                                },
+                            )
+                        },
+                    )
+                }
+            }
+            RequestGroupScopeKind.ENCRYPTION_METHOD -> {
+                LabeledBorderBox(
+                    label = stringResource(R.string.encryption_scope),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 8.dp),
+                ) {
+                    AmberToggles(
+                        selected = decryptTypeScope,
+                        options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
+                        onSelected = onDecryptTypeScopeChanged,
+                        label = {
+                            stringResource(
+                                when (it) {
+                                    DecryptTypeScope.SPECIFIC -> R.string.for_this_method_only
+                                    DecryptTypeScope.ALL -> R.string.for_all_methods
+                                },
+                            )
+                        },
+                    )
+                }
+            }
+            RequestGroupScopeKind.NIP44_V3_KIND -> {
+                if (groupKey.kind != null) {
+                    LabeledBorderBox(
+                        label = stringResource(R.string.encryption_scope),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 8.dp),
+                    ) {
+                        AmberToggles(
+                            selected = decryptTypeScope,
+                            options = listOf(DecryptTypeScope.SPECIFIC, DecryptTypeScope.ALL),
+                            onSelected = onDecryptTypeScopeChanged,
+                            label = {
+                                stringResource(
+                                    when (it) {
+                                        DecryptTypeScope.SPECIFIC -> R.string.for_this_kind_only
+                                        DecryptTypeScope.ALL -> R.string.for_all_kinds
+                                    },
+                                )
+                            },
+                        )
+                    }
+                }
+            }
+            RequestGroupScopeKind.NONE -> {}
+        }
+
+        RememberMyChoiceToggles(
+            selected = rememberType,
+            onSelected = onRememberTypeChanged,
+        )
     }
 }
 

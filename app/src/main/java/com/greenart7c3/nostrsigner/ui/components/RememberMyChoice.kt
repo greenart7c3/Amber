@@ -60,6 +60,23 @@ fun LabeledBorderBox(
 }
 
 @Composable
+fun RememberMyChoiceToggles(
+    selected: RememberType,
+    onSelected: (RememberType) -> Unit,
+) {
+    LabeledBorderBox(
+        label = stringResource(R.string.automatically_sign_this_for),
+    ) {
+        AmberToggles(
+            selected = selected,
+            options = rememberTypeDisplayOrder,
+            onSelected = onSelected,
+            label = { stringResource(it.shortResourceId) },
+        )
+    }
+}
+
+@Composable
 fun RememberMyChoice(
     shouldRunAcceptOrReject: Boolean?,
     packageName: String?,
@@ -79,19 +96,13 @@ fun RememberMyChoice(
         }
     }
     if (packageName != null || alwaysShow) {
-        LabeledBorderBox(
-            label = stringResource(R.string.automatically_sign_this_for),
-        ) {
-            AmberToggles(
-                selected = selected,
-                options = rememberTypeDisplayOrder,
-                onSelected = {
-                    selected = it
-                    onChanged(it)
-                },
-                label = { stringResource(it.shortResourceId) },
-            )
-        }
+        RememberMyChoiceToggles(
+            selected = selected,
+            onSelected = {
+                selected = it
+                onChanged(it)
+            },
+        )
     }
 }
 

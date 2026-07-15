@@ -97,7 +97,7 @@ fun EncryptDecryptDetailModal(
                         )
                         EventSection(
                             stringResource(R.string.date),
-                            TimeUtils.formatLongToCustomDateTimeWithSeconds(event.createdAt),
+                            TimeUtils.formatLongToCustomDateTimeWithSeconds(event.createdAt * 1000),
                             { copyToClipboard(clipboard, "${event.createdAt}") },
                         )
                         if (event.content.isNotEmpty()) {

@@ -513,6 +513,8 @@
     <string name="event_kind_2003">Torrent</string>
     <string name="event_kind_2004">Torrent Comment</string>
     <string name="event_kind_2022">Coinjoin Pool</string>
+    <string name="event_kind_12022">Expert List</string>
+    <string name="event_kind_32022">Expert Pack</string>
     <string name="event_kind_1630_1633">Status</string>
     <string name="event_kind_1622">Replies</string>
     <string name="event_kind_1621">Issues</string>

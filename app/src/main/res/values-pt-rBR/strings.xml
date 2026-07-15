@@ -484,6 +484,8 @@
     <string name="event_kind_2003">Torrent</string>
     <string name="event_kind_2004">Comentário do Torrent</string>
     <string name="event_kind_2022">Pool de Coinjoin</string>
+    <string name="event_kind_12022">Lista de Especialistas</string>
+    <string name="event_kind_32022">Pacote de Especialistas</string>
     <string name="event_kind_1630_1633">Status</string>
     <string name="event_kind_1622">Respostas</string>
     <string name="event_kind_1621">Problemas</string>

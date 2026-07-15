@@ -489,6 +489,8 @@
     <string name="event_kind_2003">토렌트</string>
     <string name="event_kind_2004">토렌트 댓글</string>
     <string name="event_kind_2022">코인조인 풀</string>
+    <string name="event_kind_12022">전문가 목록</string>
+    <string name="event_kind_32022">전문가 팩</string>
     <string name="event_kind_1630_1633">상태</string>
     <string name="event_kind_1622">답글</string>
     <string name="event_kind_1621">이슈</string>

@@ -485,6 +485,8 @@
     <string name="event_kind_2003">Torrent</string>
     <string name="event_kind_2004">Torrent Yorumu</string>
     <string name="event_kind_2022">Coinjoin Havuzu</string>
+    <string name="event_kind_12022">Uzman Listesi</string>
+    <string name="event_kind_32022">Uzman Paketi</string>
     <string name="event_kind_1630_1633">Durum</string>
     <string name="event_kind_1622">Yanıtlar</string>
     <string name="event_kind_1621">Sorunlar</string>

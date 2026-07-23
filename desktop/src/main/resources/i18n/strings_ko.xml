@@ -871,7 +871,6 @@
     <string name="d_accept">수락</string>
     <string name="d_delete_permission">권한 삭제</string>
     <string name="d_no_activity">아직 활동이 없습니다</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">수락됨</string>
     <string name="d_rejected">거부됨</string>
     <string name="d_disconnect_delete">애플리케이션 연결 해제 및 삭제</string>
@@ -895,4 +894,6 @@
     <string name="d_tray_hide">Amber 숨기기</string>
     <string name="d_tray_open">Amber 열기</string>
     <string name="d_tray_quit">Amber 종료</string>
+    <string name="switch_relays">Relay 전환을 요청합니다</string>
+    <string name="invalid_request">잘못된 요청을 보냈습니다</string>
 </resources>

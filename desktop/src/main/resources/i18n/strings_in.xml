@@ -871,7 +871,6 @@
     <string name="d_accept">Terima</string>
     <string name="d_delete_permission">Hapus izin</string>
     <string name="d_no_activity">Belum ada aktivitas</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">diterima</string>
     <string name="d_rejected">ditolak</string>
     <string name="d_disconnect_delete">Putuskan dan hapus aplikasi</string>
@@ -895,4 +894,6 @@
     <string name="d_tray_hide">Sembunyikan Amber</string>
     <string name="d_tray_open">Buka Amber</string>
     <string name="d_tray_quit">Keluar dari Amber</string>
+    <string name="switch_relays">ingin mengganti relay</string>
+    <string name="invalid_request">mengirim permintaan yang tidak valid</string>
 </resources>

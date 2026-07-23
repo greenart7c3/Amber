@@ -868,7 +868,6 @@
     <string name="d_accept">Annehmen</string>
     <string name="d_delete_permission">Berechtigung löschen</string>
     <string name="d_no_activity">Noch keine Aktivität</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">angenommen</string>
     <string name="d_rejected">abgelehnt</string>
     <string name="d_disconnect_delete">Trennen und Anwendung löschen</string>
@@ -892,4 +891,6 @@
     <string name="d_tray_hide">Amber ausblenden</string>
     <string name="d_tray_open">Amber öffnen</string>
     <string name="d_tray_quit">Amber beenden</string>
+    <string name="switch_relays">möchte die Relais wechseln</string>
+    <string name="invalid_request">hat eine ungültige Anfrage gesendet</string>
 </resources>

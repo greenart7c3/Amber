@@ -27,9 +27,10 @@ class StringsTest {
 
     @Test
     fun missingKeyFallsBackToEnglishThenKey() {
-        // "switch_relays" only exists in the English supplement -> other locales fall back.
+        // "switch_relays" is translated everywhere now; use a key that exists
+        // nowhere but English to prove the English fallback.
         assertEquals("wants to switch relays", Strings.get("switch_relays", "en"))
-        assertEquals(Strings.get("switch_relays", "en"), Strings.get("switch_relays", "de"))
+        assertEquals("möchte die Relais wechseln", Strings.get("switch_relays", "de"))
         // A key that exists nowhere returns itself.
         assertEquals("totally_unknown_key", Strings.get("totally_unknown_key", "fr"))
     }
@@ -81,6 +82,20 @@ class StringsTest {
         // Format specifiers survive translation.
         assertTrue(Strings.format("d_public_key", "npub1abc", language = "de").contains("npub1abc"))
         assertTrue(Strings.format("d_public_key", "npub1abc", language = "ja").contains("npub1abc"))
+    }
+
+    @Test
+    fun requestDescriptionsAreTranslatedInEveryLanguage() {
+        Strings.supportedLanguages.filter { it.first != "en" }.forEach { (tag, _) ->
+            assertTrue(
+                "switch_relays not translated for $tag",
+                Strings.get("switch_relays", tag) != Strings.get("switch_relays", "en"),
+            )
+            assertTrue(
+                "invalid_request not translated for $tag",
+                Strings.get("invalid_request", tag) != Strings.get("invalid_request", "en"),
+            )
+        }
     }
 
     @Test

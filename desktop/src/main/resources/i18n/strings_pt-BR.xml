@@ -866,7 +866,6 @@
     <string name="d_accept">Aceitar</string>
     <string name="d_delete_permission">Excluir permissão</string>
     <string name="d_no_activity">Nenhuma atividade ainda</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">aceito</string>
     <string name="d_rejected">rejeitado</string>
     <string name="d_disconnect_delete">Desconectar e excluir aplicativo</string>
@@ -890,4 +889,6 @@
     <string name="d_tray_hide">Ocultar Amber</string>
     <string name="d_tray_open">Abrir Amber</string>
     <string name="d_tray_quit">Sair do Amber</string>
+    <string name="switch_relays">quer trocar os relays</string>
+    <string name="invalid_request">enviou uma solicitação inválida</string>
 </resources>

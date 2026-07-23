@@ -42,6 +42,9 @@ object AmberDesktop {
 
     val client: NostrClient by lazy { NostrClient(socketBuilder, applicationIOScope) }
 
+    /** A fresh, throwaway relay client (e.g. to probe a relay before adding it). */
+    fun newClient(): NostrClient = NostrClient(socketBuilder, applicationIOScope)
+
     // Authenticates with relays that request NIP-42 AUTH.
     @Suppress("unused")
     private val authCoordinator by lazy {

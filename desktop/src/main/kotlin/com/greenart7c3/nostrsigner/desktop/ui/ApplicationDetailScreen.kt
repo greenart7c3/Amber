@@ -25,7 +25,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -122,15 +121,19 @@ fun ApplicationDetailScreen(
                 title = { Text(Strings.get("remove", language)) },
                 text = { Text(Strings.get("remove_all_message", language)) },
                 confirmButton = {
-                    TextButton(
+                    AmberTextButton(
+                        text = Strings.get("remove", language),
                         onClick = {
                             showRemoveAll = false
                             store.upsert(app.copy(permissions = mutableListOf()))
                         },
-                    ) { Text(Strings.get("remove", language)) }
+                    )
                 },
                 dismissButton = {
-                    TextButton(onClick = { showRemoveAll = false }) { Text(Strings.get("cancel", language)) }
+                    AmberTextButton(
+                        text = Strings.get("cancel", language),
+                        onClick = { showRemoveAll = false },
+                    )
                 },
             )
         }

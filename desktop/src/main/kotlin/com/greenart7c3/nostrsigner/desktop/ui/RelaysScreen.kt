@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -30,9 +31,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.RelayChecker
 import com.greenart7c3.nostrsigner.desktop.core.SettingsStore
 import com.greenart7c3.nostrsigner.desktop.core.Strings
-import com.vitorpamplona.quartz.nip01Core.relay.normalizer.RelayUrlNormalizer
+import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import kotlinx.coroutines.launch
 
 @Composable
@@ -40,7 +42,45 @@ fun RelaysScreen() {
     val settings by SettingsStore.settings.collectAsState()
     val language by Strings.currentLanguage.collectAsState()
     var newRelay by remember { mutableStateOf("") }
+    var checking by remember { mutableStateOf(false) }
+    // Non-null while asking "the check failed — add anyway?"; holds the relay
+    // and the message key (could_not_connect_to_relay / relay_filter_failed).
+    var addAnyway by remember { mutableStateOf<Pair<NormalizedRelayUrl, String>?>(null) }
     val scope = rememberCoroutineScope()
+
+    fun addRelay(relay: NormalizedRelayUrl) {
+        SettingsStore.update {
+            it.copy(defaultRelays = (it.defaultRelays + relay.url).distinct())
+        }
+        newRelay = ""
+        scope.launch {
+            AmberDesktop.engine.updateFilter()
+            AmberDesktop.client.connect()
+        }
+    }
+
+    addAnyway?.let { (relay, messageKey) ->
+        AlertDialog(
+            onDismissRequest = { addAnyway = null },
+            title = { Text(Strings.get("relay", language)) },
+            text = { Text(Strings.get(messageKey, language)) },
+            confirmButton = {
+                AmberTextButton(
+                    text = Strings.get("yes", language),
+                    onClick = {
+                        addAnyway = null
+                        addRelay(relay)
+                    },
+                )
+            },
+            dismissButton = {
+                AmberTextButton(
+                    text = Strings.get("no", language),
+                    onClick = { addAnyway = null },
+                )
+            },
+        )
+    }
 
     Column(Modifier.fillMaxSize()) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
@@ -49,23 +89,37 @@ fun RelaysScreen() {
                 onValueChange = { newRelay = it },
                 label = { Text(Strings.get("d_relay_hint", language)) },
                 singleLine = true,
+                enabled = !checking,
                 modifier = Modifier.widthIn(max = 420.dp).weight(1f, fill = false),
             )
             AmberOutlinedButton(
-                text = Strings.get("add", language),
+                text = if (checking) Strings.get("d_working", language) else Strings.get("add", language),
+                enabled = !checking,
                 onClick = {
-                    val normalized = RelayUrlNormalizer.normalizeOrNull(newRelay.trim())
+                    // Mirrors the mobile onAddRelay flow: normalize (bare hosts
+                    // get wss://, .onion and private IPs ws://), then live-test
+                    // the relay as a bunker relay before adding; on failure ask
+                    // whether to add it anyway.
+                    val normalized = RelayChecker.normalizeUserInput(newRelay)
                     if (normalized == null) {
                         Toaster.toast(Strings.get("d_invalid_relay", language))
                         return@AmberOutlinedButton
                     }
-                    SettingsStore.update {
-                        it.copy(defaultRelays = (it.defaultRelays + normalized.url).distinct())
+                    if (settings.defaultRelays.contains(normalized.url)) {
+                        newRelay = ""
+                        return@AmberOutlinedButton
                     }
-                    newRelay = ""
+                    checking = true
                     scope.launch {
-                        AmberDesktop.engine.updateFilter()
-                        AmberDesktop.client.connect()
+                        try {
+                            when (RelayChecker.check(normalized)) {
+                                RelayChecker.Outcome.OK -> addRelay(normalized)
+                                RelayChecker.Outcome.CANNOT_CONNECT -> addAnyway = normalized to "could_not_connect_to_relay"
+                                RelayChecker.Outcome.FILTER_FAILED -> addAnyway = normalized to "relay_filter_failed"
+                            }
+                        } finally {
+                            checking = false
+                        }
                     }
                 },
             )

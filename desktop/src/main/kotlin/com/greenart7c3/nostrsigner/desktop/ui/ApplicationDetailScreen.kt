@@ -1,5 +1,7 @@
 package com.greenart7c3.nostrsigner.desktop.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -11,18 +13,19 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Switch
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,12 +37,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.desktop.core.AmberDesktop
+import com.greenart7c3.nostrsigner.desktop.core.AppPermissionRecord
 import com.greenart7c3.nostrsigner.desktop.core.DesktopAccount
 import com.greenart7c3.nostrsigner.desktop.core.RememberType
 import com.greenart7c3.nostrsigner.desktop.core.SignerDescriptions
 import com.greenart7c3.nostrsigner.desktop.core.Strings
 import com.greenart7c3.nostrsigner.desktop.core.toShortenHex
-import com.vitorpamplona.quartz.utils.TimeUtils
 import java.text.DateFormat
 import java.util.Date
 import kotlinx.coroutines.launch
@@ -105,63 +108,71 @@ fun ApplicationDetailScreen(
         }
         Spacer(Modifier.height(12.dp))
 
-        TabRow(selectedTabIndex = tab) {
-            Tab(selected = tab == 0, onClick = { tab = 0 }, text = { Text(Strings.get("permissions", language)) })
-            Tab(selected = tab == 1, onClick = { tab = 1 }, text = { Text(Strings.get("d_activity", language)) })
-        }
+        AmberTabRow(
+            selectedTabIndex = tab,
+            titles = listOf(Strings.get("permissions", language), Strings.get("d_activity", language)),
+            onSelect = { tab = it },
+        )
         Spacer(Modifier.height(8.dp))
+
+        var showRemoveAll by remember { mutableStateOf(false) }
+        if (showRemoveAll) {
+            AlertDialog(
+                onDismissRequest = { showRemoveAll = false },
+                title = { Text(Strings.get("remove", language)) },
+                text = { Text(Strings.get("remove_all_message", language)) },
+                confirmButton = {
+                    TextButton(
+                        onClick = {
+                            showRemoveAll = false
+                            store.upsert(app.copy(permissions = mutableListOf()))
+                        },
+                    ) { Text(Strings.get("remove", language)) }
+                },
+                dismissButton = {
+                    TextButton(onClick = { showRemoveAll = false }) { Text(Strings.get("cancel", language)) }
+                },
+            )
+        }
 
         if (tab == 0) {
             LazyColumn(
                 Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
                 contentPadding = PaddingValues(bottom = 8.dp),
             ) {
+                item {
+                    Text(
+                        Strings.get("edit_permissions_description", language),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
                 items(app.permissions.size) { index ->
                     val permission = app.permissions[index]
-                    Row(
-                        Modifier.fillMaxWidth().padding(horizontal = 4.dp, vertical = 2.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                SignerDescriptions.permission(permission.type, permission.kind, language),
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            val until = if (permission.acceptable) permission.acceptUntil else permission.rejectUntil
-                            val untilLabel = when {
-                                until >= Long.MAX_VALUE / 1000 -> Strings.get("d_until_always", language)
-                                until > TimeUtils.now() -> Strings.format("d_until", DateFormat.getDateTimeInstance().format(Date(until * 1000)), language = language)
-                                else -> Strings.get("d_expired", language)
-                            }
-                            Text(
-                                (if (permission.acceptable) Strings.get("d_accept", language) else Strings.get("reject", language)) + " · $untilLabel",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        Switch(
-                            checked = permission.acceptable,
-                            onCheckedChange = { accepted ->
-                                val newPermissions = app.permissions.toMutableList()
-                                newPermissions[index] = permission.copy(
-                                    acceptable = accepted,
-                                    acceptUntil = if (accepted) RememberType.ALWAYS.acceptUntil() else 0,
-                                    rejectUntil = if (accepted) 0 else RememberType.ALWAYS.acceptUntil(),
-                                )
-                                store.upsert(app.copy(permissions = newPermissions))
-                            },
+                    PermissionCard(
+                        permission = permission,
+                        language = language,
+                        onChange = { updated ->
+                            val newPermissions = app.permissions.toMutableList()
+                            newPermissions[index] = updated
+                            store.upsert(app.copy(permissions = newPermissions))
+                        },
+                        onDelete = {
+                            val newPermissions = app.permissions.toMutableList()
+                            newPermissions.removeAt(index)
+                            store.upsert(app.copy(permissions = newPermissions))
+                        },
+                    )
+                }
+                if (app.permissions.isNotEmpty()) {
+                    item {
+                        AmberButton(
+                            modifier = Modifier.padding(top = 12.dp),
+                            text = Strings.get("remove_all_permissions", language),
+                            onClick = { showRemoveAll = true },
                         )
-                        IconButton(
-                            onClick = {
-                                val newPermissions = app.permissions.toMutableList()
-                                newPermissions.removeAt(index)
-                                store.upsert(app.copy(permissions = newPermissions))
-                            },
-                        ) {
-                            Icon(Icons.Default.Delete, Strings.get("d_delete_permission", language))
-                        }
                     }
-                    HorizontalDivider()
                 }
             }
         } else {
@@ -211,5 +222,111 @@ fun ApplicationDetailScreen(
             },
         )
         Spacer(Modifier.height(12.dp))
+    }
+}
+
+/**
+ * One permission, with the same options as the mobile `PermissionRow`:
+ * an Allow / Deny / Ask action and, when not asking, the "automatically
+ * sign this for" duration. State is derived from the record so the card
+ * always reflects what is persisted.
+ */
+@Composable
+private fun PermissionCard(
+    permission: AppPermissionRecord,
+    language: String,
+    onChange: (AppPermissionRecord) -> Unit,
+    onDelete: () -> Unit,
+) {
+    val typeLower = permission.type.trim().lowercase()
+    val description = SignerDescriptions.permission(permission.type, permission.kind, language)
+    val title = if (typeLower == "sign_event" || typeLower == "nip") {
+        Strings.format("sign", description, language = language)
+    } else {
+        description
+    }
+
+    // Mirrors the mobile mapping: accept window -> Allow, reject window ->
+    // Deny, neither -> Ask; a NEVER remember choice edits as ALWAYS.
+    val optionIndex = when {
+        permission.acceptUntil > 0 -> 0
+        permission.rejectUntil > 0 -> 1
+        else -> 2
+    }
+    val rememberType = (RememberType.entries.firstOrNull { it.screenCode == permission.rememberType } ?: RememberType.ALWAYS)
+        .let { if (it == RememberType.NEVER) RememberType.ALWAYS else it }
+
+    fun set(newIndex: Int, newType: RememberType) {
+        val time = newType.acceptUntil()
+        onChange(
+            permission.copy(
+                acceptable = newIndex == 0 || newIndex == 2,
+                acceptUntil = if (newIndex == 0) time else 0L,
+                rejectUntil = if (newIndex == 1) time else 0L,
+                rememberType = newType.screenCode,
+            ),
+        )
+    }
+
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .border(BorderStroke(1.dp, MaterialTheme.colorScheme.primary), RoundedCornerShape(6.dp))
+            .padding(horizontal = 12.dp, vertical = 8.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(title, style = MaterialTheme.typography.bodyLarge)
+                if (permission.kind == 22242 && permission.relay.isNotEmpty()) {
+                    Text(
+                        if (permission.relay == "*") Strings.get("for_all_relays", language) else permission.relay,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            IconButton(onClick = onDelete) {
+                Icon(Icons.Default.Delete, Strings.get("d_delete_permission", language))
+            }
+        }
+
+        Text(
+            Strings.get("action", language),
+            style = MaterialTheme.typography.labelMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            listOf(0 to "allow", 1 to "deny", 2 to "ask").forEach { (index, key) ->
+                FilterChip(
+                    selected = optionIndex == index,
+                    onClick = { set(index, rememberType) },
+                    label = { Text(Strings.get(key, language)) },
+                )
+            }
+        }
+
+        if (optionIndex != 2) {
+            Text(
+                Strings.get("automatically_sign_this_for", language),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+            Row(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                listOf(
+                    RememberType.FIVE_MINUTES,
+                    RememberType.TEN_MINUTES,
+                    RememberType.ONE_HOUR,
+                    RememberType.ONE_DAY,
+                    RememberType.ONE_WEEK,
+                    RememberType.ALWAYS,
+                ).forEach { type ->
+                    FilterChip(
+                        selected = rememberType == type,
+                        onClick = { set(optionIndex, type) },
+                        label = { Text(type.shortLabel(language)) },
+                    )
+                }
+            }
+        }
     }
 }

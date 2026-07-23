@@ -22,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -144,7 +143,8 @@ private fun NostrConnectDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AmberTextButton(
+                text = Strings.get("add", language),
                 onClick = {
                     scope.launch {
                         if (!uri.trim().startsWith("nostrconnect://")) {
@@ -159,10 +159,13 @@ private fun NostrConnectDialog(
                         }
                     }
                 },
-            ) { Text(Strings.get("add", language)) }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(Strings.get("cancel", language)) }
+            AmberTextButton(
+                text = Strings.get("cancel", language),
+                onClick = onDismiss,
+            )
         },
     )
 }
@@ -206,11 +209,12 @@ private fun NewBunkerDialog(
         confirmButton = {
             val uri = bunkerUri
             if (uri == null) {
-                TextButton(
+                AmberTextButton(
+                    text = Strings.get("d_create", language),
                     onClick = {
                         if (name.isBlank()) {
                             Toaster.toast(Strings.get("d_name_required", language))
-                            return@TextButton
+                            return@AmberTextButton
                         }
                         scope.launch {
                             bunkerUri = AmberDesktop.engine.createBunkerConnection(
@@ -220,18 +224,22 @@ private fun NewBunkerDialog(
                             )
                         }
                     },
-                ) { Text(Strings.get("d_create", language)) }
+                )
             } else {
-                TextButton(
+                AmberTextButton(
+                    text = Strings.get("copy", language).trim(),
                     onClick = {
                         clipboard.setText(AnnotatedString(uri))
                         Toaster.toast(Strings.get("d_copied_clipboard", language))
                     },
-                ) { Text(Strings.get("copy", language).trim()) }
+                )
             }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(if (bunkerUri == null) Strings.get("cancel", language) else Strings.get("d_close", language)) }
+            AmberTextButton(
+                text = if (bunkerUri == null) Strings.get("cancel", language) else Strings.get("d_close", language),
+                onClick = onDismiss,
+            )
         },
     )
 }

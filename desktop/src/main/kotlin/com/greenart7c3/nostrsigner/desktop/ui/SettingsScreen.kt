@@ -22,7 +22,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -172,13 +171,15 @@ fun SettingsScreen(account: DesktopAccount) {
                     }
                 }
                 if (record.npub != account.npub) {
-                    TextButton(onClick = { scope.launch { Session.switchTo(record.npub) } }) {
-                        Text(Strings.get("d_switch", language))
-                    }
+                    AmberTextButton(
+                        text = Strings.get("d_switch", language),
+                        onClick = { scope.launch { Session.switchTo(record.npub) } },
+                    )
                 }
-                TextButton(onClick = { showLogoutConfirm = record.npub }) {
-                    Text(Strings.get("d_log_out", language))
-                }
+                AmberTextButton(
+                    text = Strings.get("d_log_out", language),
+                    onClick = { showLogoutConfirm = record.npub },
+                )
             }
             HorizontalDivider()
         }
@@ -212,15 +213,19 @@ fun SettingsScreen(account: DesktopAccount) {
             title = { Text(Strings.get("d_log_out_q", language)) },
             text = { Text(Strings.get("d_log_out_confirm", language)) },
             confirmButton = {
-                TextButton(
+                AmberTextButton(
+                    text = Strings.get("d_log_out", language),
                     onClick = {
                         showLogoutConfirm = null
                         scope.launch { Session.logout(npub) }
                     },
-                ) { Text(Strings.get("d_log_out", language)) }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showLogoutConfirm = null }) { Text(Strings.get("cancel", language)) }
+                AmberTextButton(
+                    text = Strings.get("cancel", language),
+                    onClick = { showLogoutConfirm = null },
+                )
             },
         )
     }
@@ -335,7 +340,8 @@ private fun SecuritySection() {
                 Text(Strings.get("d_remove_passphrase_desc", language))
             },
             confirmButton = {
-                TextButton(
+                AmberTextButton(
+                    text = Strings.get("remove", language),
                     onClick = {
                         showRemoveConfirm = false
                         scope.launch {
@@ -343,10 +349,13 @@ private fun SecuritySection() {
                             Toaster.toast(Strings.get("d_passphrase_removed", language))
                         }
                     },
-                ) { Text(Strings.get("remove", language)) }
+                )
             },
             dismissButton = {
-                TextButton(onClick = { showRemoveConfirm = false }) { Text(Strings.get("cancel", language)) }
+                AmberTextButton(
+                    text = Strings.get("cancel", language),
+                    onClick = { showRemoveConfirm = false },
+                )
             },
         )
     }
@@ -407,16 +416,17 @@ private fun PassphraseDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AmberTextButton(
+                text = if (working) Strings.get("d_working", language) else Strings.get("save", language),
                 enabled = !working,
                 onClick = {
                     if (new.length < 8) {
                         Toaster.toast(Strings.get("d_use_8_chars", language))
-                        return@TextButton
+                        return@AmberTextButton
                     }
                     if (new != confirm) {
                         Toaster.toast(Strings.get("d_passphrases_no_match", language))
-                        return@TextButton
+                        return@AmberTextButton
                     }
                     working = true
                     scope.launch {
@@ -439,10 +449,14 @@ private fun PassphraseDialog(
                         working = false
                     }
                 },
-            ) { Text(if (working) Strings.get("d_working", language) else Strings.get("save", language)) }
+            )
         },
         dismissButton = {
-            TextButton(enabled = !working, onClick = onDismiss) { Text(Strings.get("cancel", language)) }
+            AmberTextButton(
+                text = Strings.get("cancel", language),
+                enabled = !working,
+                onClick = onDismiss,
+            )
         },
     )
 }
@@ -474,22 +488,24 @@ private fun BackupDialog(
                         Text(seedWords, fontFamily = FontFamily.Monospace, style = MaterialTheme.typography.bodySmall)
                     }
                 } else {
-                    TextButton(
+                    AmberTextButton(
+                        text = Strings.get("d_show", language),
                         onClick = {
                             showSecret = true
                             scope.launch { seedWords = AccountManager.seedWords(account.npub) }
                         },
-                    ) { Text(Strings.get("d_show", language)) }
+                    )
                 }
                 Row {
-                    TextButton(
+                    AmberTextButton(
+                        text = Strings.get("d_copy_nsec", language),
                         onClick = {
                             clipboard.setText(AnnotatedString(account.getNsec()))
                             account.didBackup = true
                             Session.saveMeta(account)
                             Toaster.toast(Strings.get("d_nsec_copied", language))
                         },
-                    ) { Text(Strings.get("d_copy_nsec", language)) }
+                    )
                 }
 
                 Spacer(Modifier.height(12.dp))
@@ -510,11 +526,12 @@ private fun BackupDialog(
                         modifier = Modifier.heightIn(max = 90.dp).verticalScroll(rememberScrollState()),
                     )
                 }
-                TextButton(
+                AmberTextButton(
+                    text = Strings.get("d_encrypt_and_copy", language),
                     onClick = {
                         if (password.isBlank()) {
                             Toaster.toast(Strings.get("d_password_required", language))
-                            return@TextButton
+                            return@AmberTextButton
                         }
                         ncryptsec = account.nip49Encrypt(password)
                         clipboard.setText(AnnotatedString(ncryptsec))
@@ -522,11 +539,14 @@ private fun BackupDialog(
                         Session.saveMeta(account)
                         Toaster.toast(Strings.get("d_encrypted_key_copied", language))
                     },
-                ) { Text(Strings.get("d_encrypt_and_copy", language)) }
+                )
             }
         },
         confirmButton = {
-            TextButton(onClick = onDismiss) { Text(Strings.get("d_close", language)) }
+            AmberTextButton(
+                text = Strings.get("d_close", language),
+                onClick = onDismiss,
+            )
         },
     )
 }
@@ -559,14 +579,18 @@ private fun LogsDialog(
             }
         },
         confirmButton = {
-            TextButton(
+            AmberTextButton(
+                text = Strings.get("d_clear", language),
                 onClick = {
                     store.clearLogs()
                 },
-            ) { Text(Strings.get("d_clear", language)) }
+            )
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) { Text(Strings.get("d_close", language)) }
+            AmberTextButton(
+                text = Strings.get("d_close", language),
+                onClick = onDismiss,
+            )
         },
     )
 }

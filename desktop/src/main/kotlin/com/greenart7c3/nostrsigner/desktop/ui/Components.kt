@@ -14,6 +14,7 @@ import androidx.compose.material3.TabRow
 import androidx.compose.material3.TabRowDefaults
 import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -22,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.graphics.toComposeImageBitmap
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -104,15 +106,40 @@ fun AmberButton(
     }
 }
 
+/**
+ * TextButton with a readable accent in both themes. The Material default uses
+ * `primary` — our light amber — which is unreadable on the light background,
+ * so pick the dark orange variant there and keep amber on dark surfaces.
+ */
+@Composable
+fun AmberTextButton(
+    text: String,
+    modifier: Modifier = Modifier,
+    enabled: Boolean = true,
+    onClick: () -> Unit,
+) {
+    val darkTheme = MaterialTheme.colorScheme.background.luminance() < 0.5f
+    TextButton(
+        onClick = onClick,
+        modifier = modifier,
+        enabled = enabled,
+        colors = ButtonDefaults.textButtonColors(contentColor = if (darkTheme) primaryColor else primaryVariant),
+    ) {
+        Text(text)
+    }
+}
+
 @Composable
 fun AmberOutlinedButton(
     modifier: Modifier = Modifier,
     text: String,
+    enabled: Boolean = true,
     fillWidth: Boolean = false,
     onClick: () -> Unit,
 ) {
     OutlinedButton(
         onClick = onClick,
+        enabled = enabled,
         shape = ButtonBorder,
         modifier = if (fillWidth) modifier.fillMaxWidth() else modifier,
     ) {

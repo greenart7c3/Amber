@@ -9,6 +9,10 @@ import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Tab
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.TabRowDefaults
+import androidx.compose.material3.TabRowDefaults.tabIndicatorOffset
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -36,6 +40,43 @@ object Toaster {
 
     fun toast(message: String) {
         messages.tryEmit(message)
+    }
+}
+
+/**
+ * TabRow with readable colors in both themes. The Material default paints the
+ * tab container with `surface`, which the light palette sets to amber — making
+ * the amber-tinted labels unreadable. Use the screen background instead, with
+ * high-contrast label colors and the orange accent as the indicator.
+ */
+@Composable
+fun AmberTabRow(
+    selectedTabIndex: Int,
+    titles: List<String>,
+    onSelect: (Int) -> Unit,
+) {
+    TabRow(
+        selectedTabIndex = selectedTabIndex,
+        containerColor = Color.Transparent,
+        contentColor = MaterialTheme.colorScheme.onBackground,
+        indicator = { tabPositions ->
+            if (selectedTabIndex < tabPositions.size) {
+                TabRowDefaults.SecondaryIndicator(
+                    Modifier.tabIndicatorOffset(tabPositions[selectedTabIndex]),
+                    color = orange,
+                )
+            }
+        },
+    ) {
+        titles.forEachIndexed { index, title ->
+            Tab(
+                selected = index == selectedTabIndex,
+                onClick = { onSelect(index) },
+                text = { Text(title) },
+                selectedContentColor = MaterialTheme.colorScheme.onBackground,
+                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+            )
+        }
     }
 }
 

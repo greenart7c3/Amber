@@ -847,7 +847,6 @@
     <string name="d_accept">Chấp nhận</string>
     <string name="d_delete_permission">Xóa quyền</string>
     <string name="d_no_activity">Chưa có hoạt động nào</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">đã chấp nhận</string>
     <string name="d_rejected">đã từ chối</string>
     <string name="d_disconnect_delete">Ngắt kết nối và xóa ứng dụng</string>
@@ -871,4 +870,6 @@
     <string name="d_tray_hide">Ẩn Amber</string>
     <string name="d_tray_open">Mở Amber</string>
     <string name="d_tray_quit">Thoát Amber</string>
+    <string name="switch_relays">muốn chuyển relay</string>
+    <string name="invalid_request">đã gửi một yêu cầu không hợp lệ</string>
 </resources>

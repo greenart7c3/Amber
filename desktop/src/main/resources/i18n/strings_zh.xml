@@ -852,7 +852,6 @@
     <string name="d_accept">接受</string>
     <string name="d_delete_permission">删除权限</string>
     <string name="d_no_activity">尚无活动</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">已接受</string>
     <string name="d_rejected">已拒绝</string>
     <string name="d_disconnect_delete">断开连接并删除应用程序</string>
@@ -876,4 +875,6 @@
     <string name="d_tray_hide">隐藏 Amber</string>
     <string name="d_tray_open">打开 Amber</string>
     <string name="d_tray_quit">退出 Amber</string>
+    <string name="switch_relays">想要切换中继</string>
+    <string name="invalid_request">发送了无效的请求</string>
 </resources>

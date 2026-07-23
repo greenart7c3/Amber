@@ -847,7 +847,6 @@
     <string name="d_accept">承認</string>
     <string name="d_delete_permission">権限を削除</string>
     <string name="d_no_activity">アクティビティはまだありません</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">承認済み</string>
     <string name="d_rejected">拒否済み</string>
     <string name="d_disconnect_delete">アプリを切断して削除</string>
@@ -871,4 +870,6 @@
     <string name="d_tray_hide">Amber を隠す</string>
     <string name="d_tray_open">Amber を開く</string>
     <string name="d_tray_quit">Amber を終了</string>
+    <string name="switch_relays">Relay の切り替えを求めています</string>
+    <string name="invalid_request">無効なリクエストを送信しました</string>
 </resources>

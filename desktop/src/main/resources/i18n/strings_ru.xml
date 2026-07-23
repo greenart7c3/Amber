@@ -871,7 +871,6 @@
     <string name="d_accept">Принять</string>
     <string name="d_delete_permission">Удалить разрешение</string>
     <string name="d_no_activity">Пока нет активности</string>
-    <string name="d_kind_paren">тип %1$s</string>
     <string name="d_accepted">принято</string>
     <string name="d_rejected">отклонено</string>
     <string name="d_disconnect_delete">Отключить и удалить приложение</string>
@@ -895,4 +894,6 @@
     <string name="d_tray_hide">Скрыть Amber</string>
     <string name="d_tray_open">Открыть Amber</string>
     <string name="d_tray_quit">Выйти из Amber</string>
+    <string name="switch_relays">хочет сменить Relay-серверы</string>
+    <string name="invalid_request">отправил недопустимый запрос</string>
 </resources>

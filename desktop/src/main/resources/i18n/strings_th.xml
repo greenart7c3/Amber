@@ -847,7 +847,6 @@
     <string name="d_accept">ยอมรับ</string>
     <string name="d_delete_permission">ลบสิทธิ์</string>
     <string name="d_no_activity">ยังไม่มีกิจกรรม</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">ยอมรับแล้ว</string>
     <string name="d_rejected">ปฏิเสธแล้ว</string>
     <string name="d_disconnect_delete">ตัดการเชื่อมต่อและลบแอปพลิเคชัน</string>
@@ -871,4 +870,6 @@
     <string name="d_tray_hide">ซ่อน Amber</string>
     <string name="d_tray_open">เปิด Amber</string>
     <string name="d_tray_quit">ออกจาก Amber</string>
+    <string name="switch_relays">ต้องการเปลี่ยน Relay</string>
+    <string name="invalid_request">ส่งคำขอที่ไม่ถูกต้อง</string>
 </resources>

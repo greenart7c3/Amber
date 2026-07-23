@@ -867,7 +867,6 @@
     <string name="d_accept">Kabul et</string>
     <string name="d_delete_permission">İzni sil</string>
     <string name="d_no_activity">Henüz etkinlik yok</string>
-    <string name="d_kind_paren">tür %1$s</string>
     <string name="d_accepted">kabul edildi</string>
     <string name="d_rejected">reddedildi</string>
     <string name="d_disconnect_delete">Bağlantıyı kes ve uygulamayı sil</string>
@@ -891,4 +890,6 @@
     <string name="d_tray_hide">Amber'i gizle</string>
     <string name="d_tray_open">Amber'i aç</string>
     <string name="d_tray_quit">Amber'den çık</string>
+    <string name="switch_relays">Relay'leri değiştirmek istiyor</string>
+    <string name="invalid_request">geçersiz bir istek gönderdi</string>
 </resources>

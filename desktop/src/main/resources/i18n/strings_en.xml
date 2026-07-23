@@ -879,7 +879,6 @@
     <string name="d_accept">Accept</string>
     <string name="d_delete_permission">Delete permission</string>
     <string name="d_no_activity">No activity yet</string>
-    <string name="d_kind_paren">kind %1$s</string>
     <string name="d_accepted">accepted</string>
     <string name="d_rejected">rejected</string>
     <string name="d_disconnect_delete">Disconnect and delete application</string>

@@ -42,6 +42,18 @@ enum class RememberType(val screenCode: Int, val labelKey: String) {
     /** Localized display label. */
     fun label(language: String = Strings.currentLanguage.value): String = Strings.get(labelKey, language)
 
+    /** Compact label, mirroring the Android `shortResourceId` ("5m", "1h", …). */
+    fun shortLabel(language: String = Strings.currentLanguage.value): String = when (this) {
+        NEVER -> Strings.get("never", language)
+        ONE_MINUTE -> Strings.get("one_minute_short", language)
+        FIVE_MINUTES -> Strings.get("five_minutes_short", language)
+        TEN_MINUTES -> Strings.get("ten_minutes_short", language)
+        ALWAYS -> Strings.get("always", language)
+        ONE_HOUR -> Strings.get("one_hour_short", language)
+        ONE_DAY -> Strings.get("one_day_short", language)
+        ONE_WEEK -> Strings.get("one_week_short", language)
+    }
+
     fun acceptUntil(): Long = when (this) {
         ALWAYS -> Long.MAX_VALUE / 1000
         ONE_MINUTE -> TimeUtils.now() + 60

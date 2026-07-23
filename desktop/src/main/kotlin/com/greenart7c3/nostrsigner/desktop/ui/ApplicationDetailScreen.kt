@@ -194,7 +194,7 @@ fun ApplicationDetailScreen(
                     val entry = appHistory[index]
                     Column(Modifier.fillMaxWidth().padding(vertical = 4.dp)) {
                         Text(
-                            entry.type + (entry.kind?.let { " (${Strings.format("d_kind_paren", it, language = language)})" } ?: ""),
+                            permissionTitle(entry.type, entry.kind, language),
                             style = MaterialTheme.typography.bodyMedium,
                         )
                         Text(
@@ -229,6 +229,19 @@ fun ApplicationDetailScreen(
 }
 
 /**
+ * Localized display title for a permission or history entry — the kind /
+ * method description, wrapped in "Sign %1$s" for signing types like the
+ * mobile screens do.
+ */
+private fun permissionTitle(type: String, kind: Int?, language: String): String {
+    val description = SignerDescriptions.permission(type, kind, language)
+    return when (type.trim().lowercase()) {
+        "sign_event", "nip" -> Strings.format("sign", description, language = language)
+        else -> description
+    }
+}
+
+/**
  * One permission, with the same options as the mobile `PermissionRow`:
  * an Allow / Deny / Ask action and, when not asking, the "automatically
  * sign this for" duration. State is derived from the record so the card
@@ -241,13 +254,7 @@ private fun PermissionCard(
     onChange: (AppPermissionRecord) -> Unit,
     onDelete: () -> Unit,
 ) {
-    val typeLower = permission.type.trim().lowercase()
-    val description = SignerDescriptions.permission(permission.type, permission.kind, language)
-    val title = if (typeLower == "sign_event" || typeLower == "nip") {
-        Strings.format("sign", description, language = language)
-    } else {
-        description
-    }
+    val title = permissionTitle(permission.type, permission.kind, language)
 
     // Mirrors the mobile mapping: accept window -> Allow, reject window ->
     // Deny, neither -> Ask; a NEVER remember choice edits as ALWAYS.

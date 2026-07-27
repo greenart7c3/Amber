@@ -630,8 +630,6 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">Date</string>
     <string name="tags">Tags</string>
-    <string name="discard_all">Rejeter la sélection</string>
-    <string name="approve_all">Approuver la sélection</string>
     <string name="requests_message">Requêtes %1$s</string>
     <string name="trust_excellent">Excellent</string>
     <string name="trust_good">Bon</string>

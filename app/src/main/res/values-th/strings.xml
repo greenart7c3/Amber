@@ -609,8 +609,6 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">วันที่</string>
     <string name="tags">แท็ก</string>
-    <string name="discard_all">ยกเลิกรายการที่เลือก</string>
-    <string name="approve_all">อนุมัติรายการที่เลือก</string>
     <string name="requests_message">คำขอ %1$s</string>
     <string name="trust_excellent">ยอดเยี่ยม</string>
     <string name="trust_good">ดี</string>

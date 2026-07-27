@@ -629,8 +629,6 @@
     <string name="pubkey">Pubkey (Açık anahtar)</string>
     <string name="date">Tarih</string>
     <string name="tags">Etiketler</string>
-    <string name="discard_all">Seçilenleri yoksay</string>
-    <string name="approve_all">Seçilenleri onayla</string>
     <string name="requests_message">İstekler: %1$s</string>
     <string name="trust_excellent">Mükemmel</string>
     <string name="trust_good">İyi</string>

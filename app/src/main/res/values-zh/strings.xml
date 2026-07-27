@@ -614,8 +614,6 @@
     <string name="pubkey">公钥</string>
     <string name="date">日期</string>
     <string name="tags">标签</string>
-    <string name="discard_all">拒绝所选</string>
-    <string name="approve_all">批准所选</string>
     <string name="requests_message">请求 %1$s</string>
     <string name="trust_excellent">极佳</string>
     <string name="trust_good">良好</string>

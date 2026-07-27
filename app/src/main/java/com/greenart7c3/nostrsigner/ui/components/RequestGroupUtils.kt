@@ -12,14 +12,13 @@ import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.unit.dp
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
@@ -226,6 +225,7 @@ fun RequestGroupOptions(
         RememberMyChoiceToggles(
             selected = rememberType,
             onSelected = onRememberTypeChanged,
+            label = stringResource(R.string.remember_my_choice_for),
         )
     }
 }
@@ -234,36 +234,51 @@ fun RequestGroupOptions(
 fun RequestGroupHeader(
     label: String,
     count: Int,
-    state: ToggleableState,
+    approved: Boolean,
     expanded: Boolean,
-    onToggle: () -> Unit,
+    onApproveChanged: (Boolean) -> Unit,
     onExpandToggle: () -> Unit,
 ) {
     val rotation by animateFloatAsState(
         targetValue = if (expanded) 180f else 0f,
         label = "group header chevron rotation",
     )
-    Row(
-        verticalAlignment = Alignment.CenterVertically,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onExpandToggle() },
+    Column(
+        Modifier.fillMaxWidth(),
     ) {
-        TriStateCheckbox(
-            state = state,
-            onClick = onToggle,
-        )
-        Text(
-            text = "$label ($count)",
-            style = MaterialTheme.typography.titleSmall,
-            modifier = Modifier.weight(1f),
-        )
-        Icon(
-            imageVector = Icons.Default.ExpandMore,
-            contentDescription = null,
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
-                .padding(end = 12.dp)
-                .rotate(rotation),
+                .fillMaxWidth()
+                .clickable { onExpandToggle() },
+        ) {
+            Text(
+                text = "$label ($count)",
+                style = MaterialTheme.typography.titleSmall,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                imageVector = Icons.Default.ExpandMore,
+                contentDescription = null,
+                modifier = Modifier
+                    .padding(end = 12.dp)
+                    .rotate(rotation),
+            )
+        }
+
+        AmberToggles(
+            selected = approved,
+            options = listOf(true, false),
+            onSelected = onApproveChanged,
+            label = {
+                if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+            },
+            indicatorColor = {
+                if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+            },
+            selectedTextColor = {
+                if (it) Color.Black else MaterialTheme.colorScheme.onError
+            },
         )
     }
 }

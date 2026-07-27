@@ -63,9 +63,10 @@ fun LabeledBorderBox(
 fun RememberMyChoiceToggles(
     selected: RememberType,
     onSelected: (RememberType) -> Unit,
+    label: String = stringResource(R.string.automatically_sign_this_for),
 ) {
     LabeledBorderBox(
-        label = stringResource(R.string.automatically_sign_this_for),
+        label = label,
     ) {
         AmberToggles(
             selected = selected,

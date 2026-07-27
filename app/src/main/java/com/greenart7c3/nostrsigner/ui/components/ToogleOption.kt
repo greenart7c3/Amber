@@ -25,11 +25,12 @@ import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
 fun ToggleOption(
     text: String,
     isSelected: Boolean,
+    selectedTextColor: Color,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     val textColor by animateColorAsState(
-        targetValue = if (isSelected) Color.Black else MaterialTheme.colorScheme.onSurfaceVariant,
+        targetValue = if (isSelected) selectedTextColor else MaterialTheme.colorScheme.onSurfaceVariant,
         animationSpec = tween(durationMillis = 200),
         label = "textColor",
     )
@@ -59,12 +60,14 @@ fun ToggleOptionPreview() {
             ToggleOption(
                 text = "Always",
                 isSelected = true,
+                selectedTextColor = Color.Black,
                 modifier = Modifier.width(80.dp),
                 onClick = {},
             )
             ToggleOption(
                 text = "Never",
                 isSelected = false,
+                selectedTextColor = Color.Black,
                 modifier = Modifier.width(80.dp),
                 onClick = {},
             )

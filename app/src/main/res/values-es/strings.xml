@@ -633,6 +633,9 @@
     <string name="pubkey">Clave pública</string>
     <string name="date">Fecha</string>
     <string name="tags">Etiquetas</string>
+    <string name="approve">Aprobar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="remember_my_choice_for">Recordar mi elección para</string>
     <string name="requests_message">Solicitudes %1$s</string>
     <string name="trust_excellent">Excelente</string>
     <string name="trust_good">Bueno</string>

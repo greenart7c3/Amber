@@ -633,6 +633,9 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">Tanggal</string>
     <string name="tags">Tag</string>
+    <string name="approve">Setujui</string>
+    <string name="confirm">Konfirmasi</string>
+    <string name="remember_my_choice_for">Ingat pilihan saya untuk</string>
     <string name="requests_message">Permintaan %1$s</string>
     <string name="trust_excellent">Sangat baik</string>
     <string name="trust_good">Baik</string>

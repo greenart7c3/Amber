@@ -630,6 +630,9 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">Date</string>
     <string name="tags">Tags</string>
+    <string name="approve">Approuver</string>
+    <string name="confirm">Confirmer</string>
+    <string name="remember_my_choice_for">Mémoriser mon choix pour</string>
     <string name="requests_message">Requêtes %1$s</string>
     <string name="trust_excellent">Excellent</string>
     <string name="trust_good">Bon</string>

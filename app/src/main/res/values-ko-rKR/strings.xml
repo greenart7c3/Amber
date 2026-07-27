@@ -633,6 +633,9 @@
     <string name="pubkey">공개 키</string>
     <string name="date">날짜</string>
     <string name="tags">태그</string>
+    <string name="approve">승인</string>
+    <string name="confirm">확인</string>
+    <string name="remember_my_choice_for">내 선택 기억</string>
     <string name="requests_message">요청 %1$s</string>
     <string name="trust_excellent">매우 좋음</string>
     <string name="trust_good">좋음</string>

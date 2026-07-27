@@ -633,6 +633,9 @@
     <string name="pubkey">Публичный ключ</string>
     <string name="date">Дата</string>
     <string name="tags">Теги</string>
+    <string name="approve">Одобрить</string>
+    <string name="confirm">Подтвердить</string>
+    <string name="remember_my_choice_for">Запомнить мой выбор для</string>
     <string name="requests_message">Запросы %1$s</string>
     <string name="trust_excellent">Отлично</string>
     <string name="trust_good">Хорошо</string>

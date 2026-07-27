@@ -609,6 +609,9 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">Ngày</string>
     <string name="tags">Thẻ</string>
+    <string name="approve">Phê duyệt</string>
+    <string name="confirm">Xác nhận</string>
+    <string name="remember_my_choice_for">Ghi nhớ lựa chọn của tôi cho</string>
     <string name="requests_message">Yêu cầu %1$s</string>
     <string name="trust_excellent">Xuất sắc</string>
     <string name="trust_good">Tốt</string>

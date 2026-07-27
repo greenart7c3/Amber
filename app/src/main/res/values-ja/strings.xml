@@ -609,6 +609,9 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">日付</string>
     <string name="tags">タグ</string>
+    <string name="approve">承認</string>
+    <string name="confirm">確認</string>
+    <string name="remember_my_choice_for">この選択を記憶する対象</string>
     <string name="requests_message">リクエスト %1$s</string>
     <string name="trust_excellent">非常に高い</string>
     <string name="trust_good">高い</string>

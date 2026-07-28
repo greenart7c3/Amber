@@ -136,3 +136,4 @@ lint/outputs/
 lint/tmp/
 # lint/reports/
 quartz/
+.ai-jail

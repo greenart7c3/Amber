@@ -628,8 +628,9 @@
     <string name="pubkey">Chave</string>
     <string name="date">Data</string>
     <string name="tags">Tags</string>
-    <string name="discard_all">Descartar selecionado</string>
-    <string name="approve_all">Aprovar selecionados</string>
+    <string name="approve">Aprovar</string>
+    <string name="confirm">Confirmar</string>
+    <string name="remember_my_choice_for">Lembrar minha escolha para</string>
     <string name="requests_message">Solicitações %1$s</string>
     <string name="trust_excellent">Excelente</string>
     <string name="trust_good">Bom</string>

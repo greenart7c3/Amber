@@ -23,6 +23,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
@@ -47,6 +48,8 @@ fun <T> AmberToggles(
     onSelected: (T) -> Unit,
     modifier: Modifier = Modifier,
     label: @Composable (T) -> String,
+    indicatorColor: @Composable (T) -> Color = { MaterialTheme.colorScheme.primary },
+    selectedTextColor: @Composable (T) -> Color = { Color.Black },
 ) {
     val count = options.size.coerceAtLeast(1)
     val selectedIndex = options.indexOf(selected).coerceAtLeast(0)
@@ -100,7 +103,7 @@ fun <T> AmberToggles(
                             .width(segmentWidth)
                             .fillMaxHeight()
                             .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primary),
+                            .background(indicatorColor(selected)),
                     )
 
                     Row(modifier = Modifier.fillMaxHeight()) {
@@ -109,6 +112,7 @@ fun <T> AmberToggles(
                                 modifier = Modifier.width(segmentWidth),
                                 text = label(option),
                                 isSelected = option == selected,
+                                selectedTextColor = selectedTextColor(option),
                                 onClick = { onSelected(option) },
                             )
                         }

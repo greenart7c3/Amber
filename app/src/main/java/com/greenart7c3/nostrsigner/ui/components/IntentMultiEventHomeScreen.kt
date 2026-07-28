@@ -4,22 +4,16 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TriStateCheckbox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -32,7 +26,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.state.ToggleableState
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.toLowerCase
@@ -58,7 +51,6 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
-import com.greenart7c3.nostrsigner.ui.theme.orange
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.ImmutableList
@@ -82,6 +74,7 @@ fun IntentMultiEventHomeScreen(
     LaunchedEffect(Unit) {
         MultiEventScreenIntents.checkedStates.clear()
         MultiEventScreenIntents.rememberType = RememberType.NEVER
+        // checkedStates now holds the per-request decision: true = Approve, false = Deny.
         intents.forEach { MultiEventScreenIntents.checkedStates[it.id] = true }
     }
 
@@ -99,30 +92,6 @@ fun IntentMultiEventHomeScreen(
 
         SigningAs(accountParam)
 
-        val allCheckedState = when {
-            intents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.On
-            intents.none { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.Off
-            else -> ToggleableState.Indeterminate
-        }
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    val newValue = allCheckedState != ToggleableState.On
-                    MultiEventScreenIntents.checkedStates.putAll(intents.associate { it.id to newValue })
-                },
-        ) {
-            TriStateCheckbox(
-                state = allCheckedState,
-                onClick = {
-                    val newValue = allCheckedState != ToggleableState.On
-                    MultiEventScreenIntents.checkedStates.putAll(intents.associate { it.id to newValue })
-                },
-            )
-            Text(stringResource(R.string.select_deselect_all))
-        }
-
         val groups = remember(intents) {
             groupRequests(intents) {
                 requestGroupKey(it.type, it.event?.kind, it.encryptedData, it.nip44v3Kind)
@@ -136,19 +105,14 @@ fun IntentMultiEventHomeScreen(
                 val expanded = groups.size == 1 || (expandedGroups[groupKey] ?: false)
                 if (groups.size > 1) {
                     item(key = "group-header:${groupKey.type.name}:${groupKey.payload?.name ?: ""}:${groupKey.kind ?: ""}") {
-                        val groupState = when {
-                            groupIntents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.On
-                            groupIntents.none { MultiEventScreenIntents.checkedStates[it.id] ?: true } -> ToggleableState.Off
-                            else -> ToggleableState.Indeterminate
-                        }
+                        val groupApproved = groupIntents.all { MultiEventScreenIntents.checkedStates[it.id] ?: true }
                         RequestGroupHeader(
                             label = groupKey.toLabel(context),
                             count = groupIntents.size,
-                            state = groupState,
+                            approved = groupApproved,
                             expanded = expanded,
-                            onToggle = {
-                                val newValue = groupState != ToggleableState.On
-                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to newValue })
+                            onApproveChanged = { approve ->
+                                MultiEventScreenIntents.checkedStates.putAll(groupIntents.associate { it.id to approve })
                             },
                             onExpandToggle = {
                                 expandedGroups[groupKey] = !(expandedGroups[groupKey] ?: false)
@@ -174,10 +138,9 @@ fun IntentMultiEventHomeScreen(
                         IntentRequestCard(
                             context = context,
                             intent = intent,
-                            checked = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
-                            onToggleChecked = {
-                                val current = MultiEventScreenIntents.checkedStates[intent.id] ?: true
-                                MultiEventScreenIntents.checkedStates[intent.id] = !current
+                            approved = MultiEventScreenIntents.checkedStates[intent.id] ?: true,
+                            onApproveChanged = {
+                                MultiEventScreenIntents.checkedStates[intent.id] = it
                             },
                         )
                     }
@@ -185,19 +148,16 @@ fun IntentMultiEventHomeScreen(
             }
         }
 
-        Row(
+        AmberButton(
             Modifier
                 .fillMaxWidth()
                 .padding(vertical = 16.dp),
-            horizontalArrangement = Arrangement.spacedBy(8.dp),
-        ) {
-            AmberButton(
-                Modifier.weight(1f),
-                colors = ButtonDefaults.buttonColors().copy(
-                    containerColor = orange,
-                ),
-                onClick = {
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+            text = stringResource(R.string.confirm),
+            onClick = {
+                onLoading(true)
+                Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                    try {
+                        val results = mutableListOf<Result>()
                         var closeApp = true
                         onRemoveIntentData(intents, IntentResultType.REMOVE)
                         val localKey = packageName ?: return@launch
@@ -211,6 +171,7 @@ fun IntentMultiEventHomeScreen(
                             } ?: continue
 
                             val dao = Amber.instance.dao(thisAccount.npub)
+                            val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
                             val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
                                 application = ApplicationEntity(
                                     localKey,
@@ -236,247 +197,163 @@ fun IntentMultiEventHomeScreen(
                             }
 
                             var permissionsChanged = false
+                            val historyList = mutableListOf<HistoryEntity>()
+
                             for (intentData in accountIntents) {
-                                val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
-                                val groupKey = requestGroupKey(intentData.type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
+                                val isApproved = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
+                                val type = intentData.type
+                                val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
                                 val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
-                                if (rememberType != RememberType.NEVER && isChecked) {
-                                    val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(intentData.type)
-                                    val rejectKind = when {
-                                        intentData.type == SignerType.SIGN_EVENT -> intentData.event?.kind
-                                        intentData.type == SignerType.NIP44_V3_ENCRYPT || intentData.type == SignerType.NIP44_V3_DECRYPT ->
-                                            if (decryptTypeScope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
-                                        else -> null
-                                    }
-                                    val rejectRelay = if (intentData.type == SignerType.SIGN_EVENT && intentData.event?.kind == 22242) {
-                                        if ((groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL) {
-                                            "*"
+
+                                if (type == SignerType.SIGN_EVENT) {
+                                    val localEvent = intentData.event!!
+
+                                    if (rememberType != RememberType.NEVER) {
+                                        val signRelay = if (localEvent.kind == 22242) {
+                                            if ((groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL) {
+                                                "*"
+                                            } else {
+                                                RelayUrlUtils.extractHostAndPort(AmberEvent.relay(localEvent))
+                                            }
                                         } else {
-                                            RelayUrlUtils.extractHostAndPort(AmberEvent.relay(intentData.event))
+                                            ""
+                                        }
+                                        AmberUtils.updatePermission(
+                                            application,
+                                            localKey,
+                                            type,
+                                            localEvent.kind,
+                                            isApproved,
+                                            rememberType,
+                                            relay = signRelay,
+                                            encryptedData = intentData.encryptedData,
+                                        )
+                                        permissionsChanged = true
+                                    }
+
+                                    historyList.add(
+                                        HistoryEntity(
+                                            0,
+                                            localKey,
+                                            type.toString(),
+                                            localEvent.kind,
+                                            TimeUtils.now(),
+                                            isApproved,
+                                            content = localEvent.toJson(),
+                                        ),
+                                    )
+
+                                    if (isApproved) {
+                                        val signature = if (localEvent is LnZapRequestEvent &&
+                                            localEvent.tags.any { tag ->
+                                                tag.any { t -> t == "anon" }
+                                            }
+                                        ) {
+                                            localEvent.toJson()
+                                        } else {
+                                            localEvent.sig
+                                        }
+                                        results.add(
+                                            Result(
+                                                null,
+                                                signature = signature,
+                                                result = signature,
+                                                id = intentData.id,
+                                                rejected = null,
+                                            ),
+                                        )
+                                    } else {
+                                        results.add(
+                                            Result(
+                                                null,
+                                                signature = null,
+                                                result = null,
+                                                id = intentData.id,
+                                                rejected = true,
+                                            ),
+                                        )
+                                    }
+                                } else {
+                                    if (rememberType != RememberType.NEVER) {
+                                        val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(type)
+                                        val permissionKind = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
+                                            if (decryptTypeScope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
+                                        } else {
+                                            null
+                                        }
+                                        AmberUtils.updatePermission(
+                                            application,
+                                            localKey,
+                                            type,
+                                            permissionKind,
+                                            isApproved,
+                                            rememberType,
+                                            encryptedData = intentData.encryptedData,
+                                            decryptTypeScope = decryptTypeScope,
+                                        )
+                                        permissionsChanged = true
+                                    }
+
+                                    historyList.add(
+                                        HistoryEntity(
+                                            0,
+                                            localKey,
+                                            type.toString(),
+                                            null,
+                                            TimeUtils.now(),
+                                            isApproved,
+                                            content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
+                                                intentData.encryptedData?.result ?: ""
+                                            } else {
+                                                intentData.data
+                                            },
+                                        ),
+                                    )
+
+                                    if (isApproved) {
+                                        val signature = intentData.encryptedData?.result
+                                        if (signature != null) {
+                                            results.add(
+                                                Result(
+                                                    null,
+                                                    signature = signature,
+                                                    result = signature,
+                                                    id = intentData.id,
+                                                    rejected = null,
+                                                ),
+                                            )
                                         }
                                     } else {
-                                        ""
+                                        results.add(
+                                            Result(
+                                                null,
+                                                signature = null,
+                                                result = null,
+                                                id = intentData.id,
+                                                rejected = true,
+                                            ),
+                                        )
                                     }
-                                    AmberUtils.updatePermission(
-                                        application,
-                                        localKey,
-                                        intentData.type,
-                                        rejectKind,
-                                        false,
-                                        rememberType,
-                                        relay = rejectRelay,
-                                        encryptedData = intentData.encryptedData,
-                                        decryptTypeScope = decryptTypeScope,
-                                    )
-                                    permissionsChanged = true
                                 }
                             }
 
                             if (permissionsChanged || application.application.key.isBlank()) {
                                 dao.insertApplicationWithPermissions(application)
                             }
+                            historyDatabase.dao().addHistory(historyList, thisAccount.npub)
                         }
 
-                        sendRejectIntent(
-                            results = intents.map {
-                                Result(
-                                    null,
-                                    signature = null,
-                                    result = null,
-                                    id = it.id,
-                                    rejected = true,
-                                )
-                            }.toMutableList(),
-                        )
+                        if (results.isNotEmpty()) {
+                            sendResultIntent(results)
+                        }
+
                         finishActivity(closeApp)
+                    } finally {
+                        onLoading(false)
                     }
-                },
-                text = stringResource(R.string.discard_all),
-            )
-
-            AmberButton(
-                Modifier.weight(1f),
-                text = stringResource(R.string.approve_all),
-                onClick = {
-                    onLoading(true)
-                    Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                        try {
-                            val results = mutableListOf<Result>()
-                            var closeApp = true
-                            onRemoveIntentData(intents, IntentResultType.REMOVE)
-                            val localKey = packageName ?: return@launch
-                            val intentsByAccount = intents.groupBy { it.currentAccount.ifBlank { accountParam.npub } }
-
-                            for ((accountNpub, accountIntents) in intentsByAccount) {
-                                val thisAccount = if (accountNpub == accountParam.npub) {
-                                    accountParam
-                                } else {
-                                    LocalPreferences.loadFromEncryptedStorage(context, accountNpub)
-                                } ?: continue
-
-                                val dao = Amber.instance.dao(thisAccount.npub)
-                                val historyDatabase = Amber.instance.getHistoryDatabase(thisAccount.npub)
-                                val application = dao.getByKey(localKey) ?: ApplicationWithPermissions(
-                                    application = ApplicationEntity(
-                                        localKey,
-                                        "",
-                                        listOf(),
-                                        "",
-                                        "",
-                                        "",
-                                        thisAccount.hexKey,
-                                        true,
-                                        "",
-                                        false,
-                                        thisAccount.signPolicy,
-                                        true,
-                                        0L,
-                                        lastUsed = TimeUtils.now(),
-                                    ),
-                                    permissions = mutableListOf(),
-                                )
-
-                                if (!application.application.closeApplication) {
-                                    closeApp = false
-                                }
-
-                                var permissionsChanged = false
-                                val historyList = mutableListOf<HistoryEntity>()
-
-                                for (intentData in accountIntents) {
-                                    val isChecked = MultiEventScreenIntents.checkedStates[intentData.id] ?: true
-                                    val type = intentData.type
-                                    val groupKey = requestGroupKey(type, intentData.event?.kind, intentData.encryptedData, intentData.nip44v3Kind)
-                                    val rememberType = groupRememberTypes[groupKey] ?: RememberType.NEVER
-
-                                    if (type == SignerType.SIGN_EVENT) {
-                                        val localEvent = intentData.event!!
-
-                                        if (rememberType != RememberType.NEVER && isChecked) {
-                                            val signRelay = if (localEvent.kind == 22242) {
-                                                if ((groupRelayAuthScopes[groupKey] ?: RelayAuthScope.SPECIFIC) == RelayAuthScope.ALL) {
-                                                    "*"
-                                                } else {
-                                                    RelayUrlUtils.extractHostAndPort(AmberEvent.relay(localEvent))
-                                                }
-                                            } else {
-                                                ""
-                                            }
-                                            AmberUtils.updatePermission(
-                                                application,
-                                                localKey,
-                                                type,
-                                                localEvent.kind,
-                                                true,
-                                                rememberType,
-                                                relay = signRelay,
-                                                encryptedData = intentData.encryptedData,
-                                            )
-                                            permissionsChanged = true
-                                        }
-
-                                        historyList.add(
-                                            HistoryEntity(
-                                                0,
-                                                localKey,
-                                                type.toString(),
-                                                localEvent.kind,
-                                                TimeUtils.now(),
-                                                isChecked,
-                                                content = localEvent.toJson(),
-                                            ),
-                                        )
-
-                                        if (isChecked) {
-                                            val signature = if (localEvent is LnZapRequestEvent &&
-                                                localEvent.tags.any { tag ->
-                                                    tag.any { t -> t == "anon" }
-                                                }
-                                            ) {
-                                                localEvent.toJson()
-                                            } else {
-                                                localEvent.sig
-                                            }
-                                            results.add(
-                                                Result(
-                                                    null,
-                                                    signature = signature,
-                                                    result = signature,
-                                                    id = intentData.id,
-                                                    rejected = null,
-                                                ),
-                                            )
-                                        }
-                                    } else {
-                                        if (rememberType != RememberType.NEVER && isChecked) {
-                                            val decryptTypeScope = groupDecryptScopes[groupKey] ?: defaultDecryptTypeScope(type)
-                                            val permissionKind = if (type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT) {
-                                                if (decryptTypeScope == DecryptTypeScope.SPECIFIC) intentData.nip44v3Kind else null
-                                            } else {
-                                                null
-                                            }
-                                            AmberUtils.updatePermission(
-                                                application,
-                                                localKey,
-                                                type,
-                                                permissionKind,
-                                                true,
-                                                rememberType,
-                                                encryptedData = intentData.encryptedData,
-                                                decryptTypeScope = decryptTypeScope,
-                                            )
-                                            permissionsChanged = true
-                                        }
-
-                                        historyList.add(
-                                            HistoryEntity(
-                                                0,
-                                                localKey,
-                                                type.toString(),
-                                                null,
-                                                TimeUtils.now(),
-                                                isChecked,
-                                                content = if (type == SignerType.NIP04_DECRYPT || type == SignerType.NIP44_DECRYPT || type == SignerType.DECRYPT_ZAP_EVENT) {
-                                                    intentData.encryptedData?.result ?: ""
-                                                } else {
-                                                    intentData.data
-                                                },
-                                            ),
-                                        )
-
-                                        val signature = intentData.encryptedData?.result
-                                        if (isChecked && signature != null) {
-                                            results.add(
-                                                Result(
-                                                    null,
-                                                    signature = signature,
-                                                    result = signature,
-                                                    id = intentData.id,
-                                                    rejected = null,
-                                                ),
-                                            )
-                                        }
-                                    }
-                                }
-
-                                if (permissionsChanged || application.application.key.isBlank()) {
-                                    dao.insertApplicationWithPermissions(application)
-                                }
-                                historyDatabase.dao().addHistory(historyList, thisAccount.npub)
-                            }
-
-                            if (results.isNotEmpty()) {
-                                sendResultIntent(results)
-                            }
-
-                            finishActivity(closeApp)
-                        } finally {
-                            onLoading(false)
-                        }
-                    }
-                },
-            )
-        }
+                }
+            },
+        )
     }
 }
 
@@ -484,8 +361,8 @@ fun IntentMultiEventHomeScreen(
 private fun IntentRequestCard(
     context: Context,
     intent: IntentData,
-    checked: Boolean,
-    onToggleChecked: () -> Unit,
+    approved: Boolean,
+    onApproveChanged: (Boolean) -> Unit,
 ) {
     val type = intent.type
     var showDetails by remember { mutableStateOf(false) }
@@ -569,42 +446,49 @@ private fun IntentRequestCard(
         ),
         border = BorderStroke(1.dp, Color.Gray),
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .clickable { onToggleChecked() },
+        Column(
+            Modifier.padding(8.dp),
         ) {
-            Checkbox(
-                checked = checked,
-                onCheckedChange = { onToggleChecked() },
-                colors = CheckboxDefaults.colors().copy(
-                    uncheckedBorderColor = Color.Gray,
-                ),
-            )
-            Column(
-                Modifier
-                    .weight(1f)
-                    .padding(top = 8.dp, bottom = 8.dp, end = 8.dp),
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.fillMaxWidth(),
             ) {
-                Text(
-                    text = label,
-                    color = if (checked) Color.Unspecified else Color.Gray,
-                )
-                if (preview.isNotBlank()) {
-                    Text(
-                        text = preview,
-                        color = Color.Gray,
-                        maxLines = 2,
-                    )
-                }
-                if (hasDetails) {
-                    RawJsonButton(
-                        onCLick = { showDetails = true },
-                        text = stringResource(R.string.show_details),
-                    )
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .padding(end = 8.dp),
+                ) {
+                    Text(text = label)
+                    if (preview.isNotBlank()) {
+                        Text(
+                            text = preview,
+                            color = Color.Gray,
+                            maxLines = 2,
+                        )
+                    }
+                    if (hasDetails) {
+                        RawJsonButton(
+                            onCLick = { showDetails = true },
+                            text = stringResource(R.string.show_details),
+                        )
+                    }
                 }
             }
+
+            AmberToggles(
+                selected = approved,
+                options = listOf(true, false),
+                onSelected = onApproveChanged,
+                label = {
+                    if (it) stringResource(R.string.approve) else stringResource(R.string.deny)
+                },
+                indicatorColor = {
+                    if (it) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.error
+                },
+                selectedTextColor = {
+                    if (it) Color.Black else MaterialTheme.colorScheme.onError
+                },
+            )
         }
     }
 
@@ -630,15 +514,6 @@ private fun finishActivity(closeApp: Boolean) {
     if (closeApp) {
         activity?.finishAndRemoveTask()
     }
-}
-
-private fun sendRejectIntent(
-    results: MutableList<Result>,
-) {
-    val json = Permission.mapper.writeValueAsString(results)
-    val intent = Intent()
-    intent.putExtra("results", json)
-    Amber.instance.getMainActivity()?.setResult(Activity.RESULT_OK, intent)
 }
 
 private fun sendResultIntent(

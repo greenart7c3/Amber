@@ -661,8 +661,9 @@
     <string name="pubkey">Pubkey</string>
     <string name="date">Date</string>
     <string name="tags">Tags</string>
-    <string name="discard_all">Discard selected</string>
-    <string name="approve_all">Approve selected</string>
+    <string name="approve">Approve</string>
+    <string name="confirm">Confirm</string>
+    <string name="remember_my_choice_for">Remember my choice for</string>
     <string name="requests_message">Requests %1$s</string>
     <string name="trust_excellent">Excellent</string>
     <string name="trust_good">Good</string>

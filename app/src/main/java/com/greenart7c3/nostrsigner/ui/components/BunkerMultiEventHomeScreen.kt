@@ -5,6 +5,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -23,6 +24,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalInspectionMode
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.capitalize
 import androidx.compose.ui.text.intl.Locale
@@ -36,7 +38,9 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.AmberBunkerRequest
+import com.greenart7c3.nostrsigner.models.BunkerClientMetadata
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.EncryptionType
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
@@ -51,13 +55,21 @@ import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.service.toShortenHex
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
+import com.vitorpamplona.quartz.nip01Core.core.Event
+import com.vitorpamplona.quartz.nip01Core.signers.EventTemplate
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
+import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip44Decrypt
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestSign
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerResponse
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlin.collections.forEach
 import kotlin.collections.set
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -85,25 +97,29 @@ fun BunkerMultiEventHomeScreen(
         bunkerRequests.forEach { MultiEventScreenIntents.checkedStates[it.request.id] = true }
     }
 
-    LaunchedEffect(Unit) {
-        launch(Dispatchers.IO) {
-            localAccount = LocalPreferences.loadFromEncryptedStorage(
-                context,
-                bunkerRequests.first().currentAccount,
-            )?.npub?.toShortenHex() ?: ""
+    // Skipped in previews: encrypted storage and the Amber singleton don't
+    // exist in the preview renderer.
+    if (!LocalInspectionMode.current) {
+        LaunchedEffect(Unit) {
+            launch(Dispatchers.IO) {
+                localAccount = LocalPreferences.loadFromEncryptedStorage(
+                    context,
+                    bunkerRequests.first().currentAccount,
+                )?.npub?.toShortenHex() ?: ""
 
-            val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
-            if (ApplicationNameCache["$localAccount-$key"] == null) {
-                app?.let {
-                    appName = it.application.name
-                    ApplicationNameCache["$localAccount-$key"] = it.application.name
+                val app = Amber.instance.getDatabase(accountParam.npub).dao().getByKey(key)
+                if (ApplicationNameCache["$localAccount-$key"] == null) {
+                    app?.let {
+                        appName = it.application.name
+                        ApplicationNameCache["$localAccount-$key"] = it.application.name
+                    }
+                } else {
+                    ApplicationNameCache["$localAccount-$key"]?.let {
+                        appName = it
+                    }
                 }
-            } else {
-                ApplicationNameCache["$localAccount-$key"]?.let {
-                    appName = it
-                }
+                app?.application?.icon?.let { if (it.isNotBlank()) appIcon = it }
             }
-            app?.application?.icon?.let { if (it.isNotBlank()) appIcon = it }
         }
     }
 
@@ -591,4 +607,84 @@ private fun finishActivity(closeApp: Boolean) {
 
 private suspend fun reconnectToRelays() {
     Amber.instance.checkForNewRelaysAndUpdateAllFilters()
+}
+
+private const val PREVIEW_LOCAL_KEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"
+
+private fun previewBunkerRequest(
+    request: BunkerRequest,
+    signedEvent: Event? = null,
+    encryptedData: ClearTextEncryptedDataKind? = null,
+) = AmberBunkerRequest(
+    request = request,
+    localKey = PREVIEW_LOCAL_KEY,
+    relays = listOf(),
+    currentAccount = "",
+    nostrConnectSecret = "",
+    closeApplication = false,
+    name = "",
+    signedEvent = signedEvent,
+    encryptedData = encryptedData,
+    encryptionType = EncryptionType.NIP44,
+    isNostrConnectUri = false,
+    clientMetadata = BunkerClientMetadata(name = "Amethyst", url = "https://amethyst.social"),
+)
+
+private fun previewSignRequest(id: String, content: String) = previewBunkerRequest(
+    request = BunkerRequestSign(
+        id = id,
+        event = EventTemplate(
+            createdAt = 1735689600,
+            kind = 1,
+            tags = arrayOf(arrayOf("t", "amber")),
+            content = content,
+        ),
+    ),
+    signedEvent = Event(
+        id = "0".repeat(64),
+        pubKey = PREVIEW_LOCAL_KEY,
+        createdAt = 1735689600,
+        kind = 1,
+        tags = arrayOf(arrayOf("t", "amber")),
+        content = content,
+        sig = "",
+    ),
+)
+
+@ThemePreviews
+@Composable
+fun BunkerMultiEventHomeScreenPreview() {
+    // The screen normally resolves the app name from the database, which is
+    // skipped in previews — seed the cache so the header shows a real name.
+    ApplicationNameCache["-$PREVIEW_LOCAL_KEY"] = "Amethyst"
+
+    AmberPreview {
+        BunkerMultiEventHomeScreen(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(700.dp)
+                .padding(16.dp),
+            bunkerRequests = persistentListOf(
+                previewBunkerRequest(
+                    request = BunkerRequestConnect(
+                        id = "preview-connect",
+                        remoteKey = PREVIEW_LOCAL_KEY,
+                    ),
+                ),
+                previewSignRequest("preview-sign-1", "Hello Nostr!"),
+                previewSignRequest("preview-sign-2", "GM from Amber"),
+                previewBunkerRequest(
+                    request = BunkerRequestNip44Decrypt(
+                        id = "preview-nip44-decrypt",
+                        pubKey = PREVIEW_LOCAL_KEY,
+                        ciphertext = "encrypted-payload",
+                    ),
+                    encryptedData = ClearTextEncryptedDataKind("encrypted-payload", "Hello Nostr!"),
+                ),
+            ),
+            packageName = null,
+            accountParam = previewAccount(),
+            onLoading = {},
+        )
+    }
 }

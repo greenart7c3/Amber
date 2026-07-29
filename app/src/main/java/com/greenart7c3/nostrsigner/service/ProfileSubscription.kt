@@ -39,6 +39,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip65RelayList.AdvertisedRelayListEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -52,17 +53,21 @@ class ProfileSubscription(
     val appContext: Context,
     val scope: CoroutineScope,
 ) : RelayConnectionListener {
+    // All maps are concurrent: mutated from UI/coroutine threads (updateFilter, closeSub)
+    // and read/iterated from relay I/O threads (onIncomingMessage) at the same time.
+    // Plain LinkedHashMaps crash with NegativeArraySizeException under that race.
+
     // hexKey -> subId of the kind-0 metadata subscription
-    private val subIds = mutableMapOf<String, String>()
+    private val subIds = ConcurrentHashMap<String, String>()
 
     // hexKey -> subId of the kind-10002 relay list subscription that runs before the metadata one
-    private val relayListSubIds = mutableMapOf<String, String>()
-    private val relaysPerSubId = mutableMapOf<String, MutableSet<NormalizedRelayUrl>>()
-    private val timeoutJobs = mutableMapOf<String, Job>()
+    private val relayListSubIds = ConcurrentHashMap<String, String>()
+    private val relaysPerSubId = ConcurrentHashMap<String, MutableSet<NormalizedRelayUrl>>()
+    private val timeoutJobs = ConcurrentHashMap<String, Job>()
 
     // hexKey -> the cached Account instance a live composable cares about. Updating the
     // StateFlows on these instances is what reflects fresh metadata in the UI.
-    private val accounts = mutableMapOf<String, Account>()
+    private val accounts = ConcurrentHashMap<String, Account>()
 
     init {
         // listens until the app crashes.
@@ -162,7 +167,7 @@ class ProfileSubscription(
         val subId = relayListSubIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
         val relayListFilter = createRelayListFilter(account)
         timeoutJobs.remove(subId)?.cancel()
-        relaysPerSubId[subId] = relayListFilter.keys.toMutableSet()
+        relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(relayListFilter.keys) }
         client.subscribe(subId, relayListFilter)
         timeoutJobs[subId] = scope.launch {
             delay(EOSE_TIMEOUT_MS)
@@ -178,7 +183,7 @@ class ProfileSubscription(
         val subId = subIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
         val profileFilter = createProfileFilter(account)
         timeoutJobs.remove(subId)?.cancel()
-        relaysPerSubId[subId] = profileFilter.keys.toMutableSet()
+        relaysPerSubId[subId] = ConcurrentHashMap.newKeySet<NormalizedRelayUrl>().apply { addAll(profileFilter.keys) }
         client.subscribe(subId, profileFilter)
         timeoutJobs[subId] = scope.launch {
             delay(EOSE_TIMEOUT_MS)

@@ -36,6 +36,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.filters.Filter
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import java.util.UUID
+import java.util.concurrent.ConcurrentHashMap
 import kotlinx.coroutines.launch
 
 class NotificationSubscription(
@@ -43,7 +44,10 @@ class NotificationSubscription(
     val appContext: Context,
 ) : RelayConnectionListener {
     private val eventNotificationConsumer = EventNotificationConsumer(appContext)
-    private val subIds = mutableMapOf<String, String>()
+
+    // Concurrent: mutated in updateFilter/closeAllSubs (coroutines) while relay I/O
+    // threads iterate it in onIncomingMessage (containsValue).
+    private val subIds = ConcurrentHashMap<String, String>()
 
     init {
         // listens until the app crashes.
@@ -101,11 +105,9 @@ class NotificationSubscription(
                 if (connRelays.isEmpty()) continue
 
                 activeSubKeys.add(subKey)
-                if (!subIds.containsKey(subKey)) {
-                    subIds[subKey] = UUID.randomUUID().toString()
-                }
+                val subId = subIds.getOrPut(subKey) { UUID.randomUUID().toString() }
                 client.subscribe(
-                    subIds[subKey]!!,
+                    subId,
                     connRelays.associateWith {
                         listOf(
                             Filter(
@@ -125,11 +127,9 @@ class NotificationSubscription(
                     .filterNot { RelayHealthTracker.isDead(it) }
                 if (relays.isNotEmpty()) {
                     activeSubKeys.add(account.hexKey)
-                    if (!subIds.containsKey(account.hexKey)) {
-                        subIds[account.hexKey] = UUID.randomUUID().toString()
-                    }
+                    val subId = subIds.getOrPut(account.hexKey) { UUID.randomUUID().toString() }
                     client.subscribe(
-                        subIds[account.hexKey]!!,
+                        subId,
                         relays.associateWith {
                             listOf(
                                 Filter(

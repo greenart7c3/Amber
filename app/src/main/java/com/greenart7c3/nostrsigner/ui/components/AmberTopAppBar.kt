@@ -238,18 +238,13 @@ fun AmberTopAppBar(
 fun rememberAppDisplayInfo(packageName: String): AppDisplayInfo {
     val context = LocalContext.current
     return remember(packageName) {
-        val appInfo = runCatching {
-            context.packageManager.getApplicationInfo(packageName, 0)
-        }.getOrNull()
-
-        if (appInfo != null) {
+        runCatching {
+            val appInfo = context.packageManager.getApplicationInfo(packageName, 0)
             AppDisplayInfo(
                 name = context.packageManager.getApplicationLabel(appInfo).toString(),
                 icon = context.packageManager.getApplicationIcon(appInfo),
             )
-        } else {
-            AppDisplayInfo(name = packageName, icon = null)
-        }
+        }.getOrNull() ?: AppDisplayInfo(name = packageName, icon = null)
     }
 }
 

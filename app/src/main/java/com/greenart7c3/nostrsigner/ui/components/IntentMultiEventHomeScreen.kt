@@ -7,6 +7,7 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -38,12 +39,14 @@ import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.models.Account
 import com.greenart7c3.nostrsigner.models.ClearTextEncryptedDataKind
+import com.greenart7c3.nostrsigner.models.CompressionType
 import com.greenart7c3.nostrsigner.models.EventEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.IntentData
 import com.greenart7c3.nostrsigner.models.IntentResultType
 import com.greenart7c3.nostrsigner.models.Permission
 import com.greenart7c3.nostrsigner.models.PrivateZapEncryptedDataKind
 import com.greenart7c3.nostrsigner.models.Result
+import com.greenart7c3.nostrsigner.models.ReturnType
 import com.greenart7c3.nostrsigner.models.SignerType
 import com.greenart7c3.nostrsigner.models.TagArrayEncryptedDataKind
 import com.greenart7c3.nostrsigner.service.AmberUtils
@@ -51,9 +54,14 @@ import com.greenart7c3.nostrsigner.service.MultiEventScreenIntents
 import com.greenart7c3.nostrsigner.service.RelayUrlUtils
 import com.greenart7c3.nostrsigner.service.model.AmberEvent
 import com.greenart7c3.nostrsigner.ui.RememberType
+import com.greenart7c3.nostrsigner.ui.theme.AmberPreview
+import com.greenart7c3.nostrsigner.ui.theme.ThemePreviews
+import com.greenart7c3.nostrsigner.ui.theme.previewAccount
+import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip57Zaps.LnZapRequestEvent
 import com.vitorpamplona.quartz.utils.TimeUtils
 import kotlinx.collections.immutable.ImmutableList
+import kotlinx.collections.immutable.persistentListOf
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
@@ -505,6 +513,71 @@ private fun IntentRequestCard(
                 onDismiss = { showDetails = false },
             )
         }
+    }
+}
+
+private const val PREVIEW_PUBKEY = "460c25e682fda7832b52d1f22d3d22b3176d972f60dcdc3212ed8c92ef85065c"
+
+private fun previewIntent(
+    id: String,
+    type: SignerType,
+    data: String = "",
+    event: Event? = null,
+    encryptedData: ClearTextEncryptedDataKind? = null,
+) = IntentData(
+    data = data,
+    name = "",
+    type = type,
+    pubKey = PREVIEW_PUBKEY,
+    id = id,
+    callBackUrl = null,
+    compression = CompressionType.NONE,
+    returnType = ReturnType.SIGNATURE,
+    permissions = null,
+    currentAccount = "",
+    route = null,
+    event = event,
+    encryptedData = encryptedData,
+)
+
+private fun previewSignIntent(id: String, content: String) = previewIntent(
+    id = id,
+    type = SignerType.SIGN_EVENT,
+    event = Event(
+        id = "0".repeat(64),
+        pubKey = PREVIEW_PUBKEY,
+        createdAt = 1735689600,
+        kind = 1,
+        tags = arrayOf(arrayOf("t", "amber")),
+        content = content,
+        sig = "",
+    ),
+)
+
+@ThemePreviews
+@Composable
+fun IntentMultiEventHomeScreenPreview() {
+    AmberPreview {
+        IntentMultiEventHomeScreen(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(700.dp)
+                .padding(16.dp),
+            intents = persistentListOf(
+                previewSignIntent("preview-sign-1", "Hello Nostr!"),
+                previewSignIntent("preview-sign-2", "GM from Amber"),
+                previewIntent(
+                    id = "preview-nip44-decrypt",
+                    type = SignerType.NIP44_DECRYPT,
+                    data = "encrypted-payload",
+                    encryptedData = ClearTextEncryptedDataKind("encrypted-payload", "Hello Nostr!"),
+                ),
+            ),
+            packageName = "com.vitorpamplona.amethyst",
+            accountParam = previewAccount(),
+            onRemoveIntentData = { _, _ -> },
+            onLoading = {},
+        )
     }
 }
 

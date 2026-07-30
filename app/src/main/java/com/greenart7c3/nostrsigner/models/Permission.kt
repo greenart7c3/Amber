@@ -122,32 +122,60 @@ data class Permission(
                 12 -> context.getString(R.string.event_kind_12)
                 13 -> context.getString(R.string.event_kind_13)
                 14 -> context.getString(R.string.event_kind_14)
+                15 -> context.getString(R.string.event_kind_15)
                 16 -> context.getString(R.string.event_kind_16)
                 17 -> context.getString(R.string.event_kind_17)
                 20 -> context.getString(R.string.event_kind_20)
+                21 -> context.getString(R.string.event_kind_21)
+                22 -> context.getString(R.string.event_kind_22)
+                24 -> context.getString(R.string.event_kind_24)
+                30 -> context.getString(R.string.event_kind_30)
                 40 -> context.getString(R.string.event_kind_40)
                 41 -> context.getString(R.string.event_kind_41)
                 42 -> context.getString(R.string.event_kind_42)
                 43 -> context.getString(R.string.event_kind_43)
                 44 -> context.getString(R.string.event_kind_44)
+                54 -> context.getString(R.string.event_kind_54)
+                62 -> context.getString(R.string.event_kind_62)
                 64 -> context.getString(R.string.event_kind_64)
+                78 -> context.getString(R.string.event_kind_78)
+                82 -> context.getString(R.string.event_kind_82)
                 443 -> context.getString(R.string.event_kind_443)
                 444 -> context.getString(R.string.event_kind_444)
                 445 -> context.getString(R.string.event_kind_445)
+                446 -> context.getString(R.string.event_kind_446)
+                447 -> context.getString(R.string.event_kind_447)
+                448 -> context.getString(R.string.event_kind_448)
+                449 -> context.getString(R.string.event_kind_449)
                 818 -> context.getString(R.string.event_kind_818)
+                1010 -> context.getString(R.string.event_kind_1010)
                 1018 -> context.getString(R.string.event_kind_1018)
                 1021 -> context.getString(R.string.event_kind_1021)
                 1022 -> context.getString(R.string.event_kind_1022)
                 1040 -> context.getString(R.string.event_kind_1040)
                 1059 -> context.getString(R.string.event_kind_1059)
                 1063 -> context.getString(R.string.event_kind_1063)
+                1064 -> context.getString(R.string.event_kind_1064)
+                1065 -> context.getString(R.string.event_kind_1065)
                 1068 -> context.getString(R.string.event_kind_1068)
                 1111 -> context.getString(R.string.event_kind_1111)
+                1163 -> context.getString(R.string.event_kind_1163)
+                1222 -> context.getString(R.string.event_kind_1222)
+                1244 -> context.getString(R.string.event_kind_1244)
+                1301 -> context.getString(R.string.event_kind_1301)
                 1311 -> context.getString(R.string.event_kind_1311)
+                1312 -> context.getString(R.string.event_kind_1312)
+                1313 -> context.getString(R.string.event_kind_1313)
+                1315 -> context.getString(R.string.event_kind_1315)
+                1316 -> context.getString(R.string.event_kind_1316)
+                1337 -> context.getString(R.string.event_kind_1337)
                 1617 -> context.getString(R.string.event_kind_1617)
+                1618 -> context.getString(R.string.event_kind_1618)
+                1619 -> context.getString(R.string.event_kind_1619)
                 1621 -> context.getString(R.string.event_kind_1621)
                 1622 -> context.getString(R.string.event_kind_1622)
                 in 1630..1633 -> context.getString(R.string.event_kind_1630_1633)
+                1808 -> context.getString(R.string.event_kind_1808)
                 1971 -> context.getString(R.string.event_kind_1971)
                 1984 -> context.getString(R.string.event_kind_1984)
                 1985 -> context.getString(R.string.event_kind_1985)
@@ -156,9 +184,11 @@ data class Permission(
                 2003 -> context.getString(R.string.event_kind_2003)
                 2004 -> context.getString(R.string.event_kind_2004)
                 2022 -> context.getString(R.string.event_kind_2022)
+                2473 -> context.getString(R.string.event_kind_2473)
                 3063 -> context.getString(R.string.event_kind_3063)
                 3367 -> context.getString(R.string.event_kind_3367)
                 4223 -> context.getString(R.string.event_kind_4223)
+                4312 -> context.getString(R.string.event_kind_4312)
                 4454 -> context.getString(R.string.event_kind_4454)
                 4455 -> context.getString(R.string.event_kind_4455)
                 4550 -> context.getString(R.string.event_kind_4550)
@@ -169,7 +199,10 @@ data class Permission(
                 7375 -> context.getString(R.string.event_kind_7375)
                 7376 -> context.getString(R.string.event_kind_7376)
                 7516 -> context.getString(R.string.event_kind_7516)
+                8000 -> context.getString(R.string.event_kind_8000)
+                8001 -> context.getString(R.string.event_kind_8001)
                 8211 -> context.getString(R.string.event_kind_8211)
+                8333 -> context.getString(R.string.event_kind_8333)
                 9000 -> context.getString(R.string.event_kind_9000)
                 9001 -> context.getString(R.string.event_kind_9001)
                 9002 -> context.getString(R.string.event_kind_9002)
@@ -186,6 +219,7 @@ data class Permission(
                 9733 -> context.getString(R.string.event_kind_9733)
                 9734 -> context.getString(R.string.event_kind_9734)
                 9735 -> context.getString(R.string.event_kind_9735)
+                9736 -> context.getString(R.string.event_kind_9736)
                 9802 -> context.getString(R.string.event_kind_9802)
                 10000 -> context.getString(R.string.event_kind_10000)
                 10001 -> context.getString(R.string.event_kind_10001)
@@ -195,48 +229,92 @@ data class Permission(
                 10005 -> context.getString(R.string.event_kind_10005)
                 10006 -> context.getString(R.string.event_kind_10006)
                 10007 -> context.getString(R.string.event_kind_10007)
+                10008 -> context.getString(R.string.event_kind_10008)
                 10009 -> context.getString(R.string.event_kind_10009)
+                10011 -> context.getString(R.string.event_kind_10011)
                 10012 -> context.getString(R.string.event_kind_10012)
                 10013 -> context.getString(R.string.event_kind_10013)
                 10015 -> context.getString(R.string.event_kind_10015)
+                10017 -> context.getString(R.string.event_kind_10017)
+                10018 -> context.getString(R.string.event_kind_10018)
+                10019 -> context.getString(R.string.event_kind_10019)
                 10020 -> context.getString(R.string.event_kind_10020)
+                10023 -> context.getString(R.string.event_kind_10023)
                 10030 -> context.getString(R.string.event_kind_10030)
+                10040 -> context.getString(R.string.event_kind_10040)
                 10044 -> context.getString(R.string.event_kind_10044)
                 10050 -> context.getString(R.string.event_kind_10050)
                 10051 -> context.getString(R.string.event_kind_10051)
+                10054 -> context.getString(R.string.event_kind_10054)
+                10058 -> context.getString(R.string.event_kind_10058)
                 10063 -> context.getString(R.string.event_kind_10063)
+                10064 -> context.getString(R.string.event_kind_10064)
+                10081 -> context.getString(R.string.event_kind_10081)
                 10086 -> context.getString(R.string.event_kind_10086)
                 10087 -> context.getString(R.string.event_kind_10087)
                 10088 -> context.getString(R.string.event_kind_10088)
                 10089 -> context.getString(R.string.event_kind_10089)
+                10090 -> context.getString(R.string.event_kind_10090)
                 10096 -> context.getString(R.string.event_kind_10096)
                 10101 -> context.getString(R.string.event_kind_10101)
                 10102 -> context.getString(R.string.event_kind_10102)
+                10112 -> context.getString(R.string.event_kind_10112)
+                10133 -> context.getString(R.string.event_kind_10133)
+                10154 -> context.getString(R.string.event_kind_10154)
+                10166 -> context.getString(R.string.event_kind_10166)
+                10312 -> context.getString(R.string.event_kind_10312)
+                10317 -> context.getString(R.string.event_kind_10317)
                 10443 -> context.getString(R.string.event_kind_10443)
                 11125 -> context.getString(R.string.event_kind_11125)
+                11871 -> context.getString(R.string.event_kind_11871)
                 12022 -> context.getString(R.string.event_kind_12022)
+                12473 -> context.getString(R.string.event_kind_12473)
                 13194 -> context.getString(R.string.event_kind_13194)
+                13302 -> context.getString(R.string.event_kind_13302)
+                13534 -> context.getString(R.string.event_kind_13534)
                 14919 -> context.getString(R.string.event_kind_14919)
                 14920 -> context.getString(R.string.event_kind_14920)
                 14921 -> context.getString(R.string.event_kind_14921)
                 15128 -> context.getString(R.string.event_kind_15128)
+                15129 -> context.getString(R.string.event_kind_15129)
                 16158 -> context.getString(R.string.event_kind_16158)
                 16767 -> context.getString(R.string.event_kind_16767)
                 16769 -> context.getString(R.string.event_kind_16769)
+                17375 -> context.getString(R.string.event_kind_17375)
+                20013 -> context.getString(R.string.event_kind_20013)
+                20014 -> context.getString(R.string.event_kind_20014)
                 21000 -> context.getString(R.string.event_kind_21000)
+                21001 -> context.getString(R.string.event_kind_21001)
+                21002 -> context.getString(R.string.event_kind_21002)
+                21003 -> context.getString(R.string.event_kind_21003)
+                21059 -> context.getString(R.string.event_kind_21059)
                 22242 -> context.getString(R.string.event_kind_22242)
                 23194 -> context.getString(R.string.event_kind_23194)
                 23195 -> context.getString(R.string.event_kind_23195)
+                23197 -> context.getString(R.string.event_kind_23197)
+                23333 -> context.getString(R.string.event_kind_23333)
+                23903 -> context.getString(R.string.event_kind_23903)
                 24133 -> context.getString(R.string.event_kind_24133)
                 24242 -> context.getString(R.string.event_kind_24242)
                 25050 -> context.getString(R.string.event_kind_25050)
+                25051 -> context.getString(R.string.event_kind_25051)
+                25052 -> context.getString(R.string.event_kind_25052)
+                25053 -> context.getString(R.string.event_kind_25053)
+                25054 -> context.getString(R.string.event_kind_25054)
+                25055 -> context.getString(R.string.event_kind_25055)
                 27235 -> context.getString(R.string.event_kind_27235)
                 22456 -> context.getString(R.string.event_kind_22456)
+                28934 -> context.getString(R.string.event_kind_28934)
+                28935 -> context.getString(R.string.event_kind_28935)
+                28936 -> context.getString(R.string.event_kind_28936)
                 30000 -> context.getString(R.string.event_kind_30000)
                 30001 -> context.getString(R.string.event_kind_30001)
                 30002 -> context.getString(R.string.event_kind_30002)
                 30003 -> context.getString(R.string.event_kind_30003)
                 30004 -> context.getString(R.string.event_kind_30004)
+                30005 -> context.getString(R.string.event_kind_30005)
+                30006 -> context.getString(R.string.event_kind_30006)
+                30007 -> context.getString(R.string.event_kind_30007)
                 30008 -> context.getString(R.string.event_kind_30008)
                 30009 -> context.getString(R.string.event_kind_30009)
                 30015 -> context.getString(R.string.event_kind_30015)
@@ -249,24 +327,52 @@ data class Permission(
                 30030 -> context.getString(R.string.event_kind_30030)
                 30040 -> context.getString(R.string.event_kind_30040)
                 30041 -> context.getString(R.string.event_kind_30041)
+                30053 -> context.getString(R.string.event_kind_30053)
+                30054 -> context.getString(R.string.event_kind_30054)
+                30055 -> context.getString(R.string.event_kind_30055)
                 30063 -> context.getString(R.string.event_kind_30063)
+                30064 -> context.getString(R.string.event_kind_30064)
+                30065 -> context.getString(R.string.event_kind_30065)
+                30066 -> context.getString(R.string.event_kind_30066)
+                30067 -> context.getString(R.string.event_kind_30067)
+                30068 -> context.getString(R.string.event_kind_30068)
                 30078 -> context.getString(R.string.event_kind_30078)
+                30166 -> context.getString(R.string.event_kind_30166)
                 30267 -> context.getString(R.string.event_kind_30267)
+                30296 -> context.getString(R.string.event_kind_30296)
+                30297 -> context.getString(R.string.event_kind_30297)
+                30298 -> context.getString(R.string.event_kind_30298)
                 30311 -> context.getString(R.string.event_kind_30311)
+                30312 -> context.getString(R.string.event_kind_30312)
+                30313 -> context.getString(R.string.event_kind_30313)
                 30315 -> context.getString(R.string.event_kind_30315)
+                30382 -> context.getString(R.string.event_kind_30382)
+                30383 -> context.getString(R.string.event_kind_30383)
+                30384 -> context.getString(R.string.event_kind_30384)
+                30385 -> context.getString(R.string.event_kind_30385)
                 30402 -> context.getString(R.string.event_kind_30402)
                 30403 -> context.getString(R.string.event_kind_30403)
                 30443 -> context.getString(R.string.event_kind_10443)
+                30617 -> context.getString(R.string.event_kind_30617)
                 30618 -> context.getString(R.string.event_kind_30618)
+                30817 -> context.getString(R.string.event_kind_30817)
+                30818 -> context.getString(R.string.event_kind_30818)
                 31124 -> context.getString(R.string.event_kind_31124)
                 31125 -> context.getString(R.string.event_kind_31125)
                 31234 -> context.getString(R.string.event_kind_31234)
+                31337 -> context.getString(R.string.event_kind_31337)
+                31871 -> context.getString(R.string.event_kind_31871)
+                31872 -> context.getString(R.string.event_kind_31872)
+                31873 -> context.getString(R.string.event_kind_31873)
+                31890 -> context.getString(R.string.event_kind_31890)
                 31922 -> context.getString(R.string.event_kind_31922)
                 31923 -> context.getString(R.string.event_kind_31923)
                 31924 -> context.getString(R.string.event_kind_31924)
                 31925 -> context.getString(R.string.event_kind_31925)
                 31989 -> context.getString(R.string.event_kind_31989)
                 31990 -> context.getString(R.string.event_kind_31990)
+                33401 -> context.getString(R.string.event_kind_33401)
+                33863 -> context.getString(R.string.event_kind_33863)
                 34235 -> context.getString(R.string.event_kind_34235)
                 34236 -> context.getString(R.string.event_kind_34236)
                 34237 -> context.getString(R.string.event_kind_34237)
@@ -274,10 +380,17 @@ data class Permission(
                 32267 -> context.getString(R.string.event_kind_32267)
                 34139 -> context.getString(R.string.event_kind_34139)
                 34550 -> context.getString(R.string.event_kind_34550)
+                34551 -> context.getString(R.string.event_kind_34551)
+                35128 -> context.getString(R.string.event_kind_35128)
+                35129 -> context.getString(R.string.event_kind_35129)
                 36767 -> context.getString(R.string.event_kind_36767)
                 36787 -> context.getString(R.string.event_kind_36787)
                 37375 -> context.getString(R.string.event_kind_37375)
                 37516 -> context.getString(R.string.event_kind_37516)
+                38000 -> context.getString(R.string.event_kind_38000)
+                38172 -> context.getString(R.string.event_kind_38172)
+                38173 -> context.getString(R.string.event_kind_38173)
+                38192 -> context.getString(R.string.event_kind_38192)
                 38383 -> context.getString(R.string.event_kind_38383)
                 39000 -> context.getString(R.string.event_kind_39000)
                 39001 -> context.getString(R.string.event_kind_39001)
@@ -410,6 +523,7 @@ val kindsByNip = listOf(
     KindNip(1059..1059, "59"),
     KindNip(1063..1063, "94"),
     KindNip(1311..1311, "53"),
+    KindNip(10312..10312, "53"),
     KindNip(1617..1633, "34"),
     KindNip(1971..1971, "https://github.com/nostrocket/NIPS/blob/main/Problems.md"),
     KindNip(1984..1985, "56"),
@@ -449,12 +563,37 @@ val kindsByNip = listOf(
     KindNip(34235..34237, "71"),
     KindNip(34550..34550, "72"),
     KindNip(39000..39009, "29"),
+    KindNip(15..15, "17"),
+    KindNip(21..22, "71"),
+    KindNip(30..30, "64"),
+    KindNip(62..62, "62"),
+    KindNip(78..78, "78"),
+    KindNip(1312..1313, "53"),
+    KindNip(8000..8001, "43"),
+    KindNip(10040..10040, "85"),
+    KindNip(10166..10166, "66"),
+    KindNip(10317..10317, "34"),
+    KindNip(13534..13534, "43"),
+    KindNip(17375..17375, "60"),
+    KindNip(21059..21059, "59"),
+    KindNip(23197..23197, "47"),
+    KindNip(28934..28936, "43"),
+    KindNip(30006..30007, "51"),
+    KindNip(30064..30068, "64"),
+    KindNip(30166..30166, "66"),
+    KindNip(30312..30313, "53"),
+    KindNip(30382..30385, "85"),
+    KindNip(34551..34551, "72"),
+    KindNip(38000..38000, "87"),
+    KindNip(38172..38173, "87"),
     KindNip(31234..31234, "https://github.com/nostr-protocol/nips/pull/1124"),
     KindNip(9467..9467, "https://wikistr.com/tidal-nostr"),
     KindNip(24242..24242, "https://wikistr.com/blossom"),
     KindNip(10063..10063, "https://wikistr.com/blossom"),
     KindNip(30040..30041, "https://wikistr.com/nkbip-01"),
     KindNip(1987..1987, "https://wikistr.com/nkbip-02"),
+    KindNip(13302..13302, "https://github.com/concord-protocol/concord"),
+    KindNip(20013..20014, "https://github.com/concord-protocol/concord"),
 )
 
 val supportedKindNumbers = listOf(
@@ -471,35 +610,63 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 11),
     Permission("sign_event", 12),
     Permission("sign_event", 13),
+    Permission("sign_event", 15),
     Permission("sign_event", 16),
     Permission("sign_event", 17),
     Permission("sign_event", 20),
+    Permission("sign_event", 21),
+    Permission("sign_event", 22),
+    Permission("sign_event", 24),
+    Permission("sign_event", 30),
     Permission("sign_event", 40),
     Permission("sign_event", 41),
     Permission("sign_event", 42),
     Permission("sign_event", 43),
     Permission("sign_event", 44),
+    Permission("sign_event", 54),
+    Permission("sign_event", 62),
     Permission("sign_event", 64),
+    Permission("sign_event", 78),
+    Permission("sign_event", 82),
     Permission("sign_event", 443),
     Permission("sign_event", 444),
     Permission("sign_event", 445),
+    Permission("sign_event", 446),
+    Permission("sign_event", 447),
+    Permission("sign_event", 448),
+    Permission("sign_event", 449),
     Permission("sign_event", 818),
+    Permission("sign_event", 1010),
     Permission("sign_event", 1018),
     Permission("sign_event", 1021),
     Permission("sign_event", 1022),
     Permission("sign_event", 1040),
     Permission("sign_event", 1059),
     Permission("sign_event", 1063),
+    Permission("sign_event", 1064),
+    Permission("sign_event", 1065),
     Permission("sign_event", 1068),
     Permission("sign_event", 1111),
+    Permission("sign_event", 1163),
+    Permission("sign_event", 1222),
+    Permission("sign_event", 1244),
+    Permission("sign_event", 1301),
     Permission("sign_event", 1311),
+    Permission("sign_event", 1312),
+    Permission("sign_event", 1313),
+    Permission("sign_event", 1315),
+    Permission("sign_event", 1316),
+    Permission("sign_event", 1337),
     Permission("sign_event", 1617),
+    Permission("sign_event", 1618),
+    Permission("sign_event", 1619),
     Permission("sign_event", 1621),
     Permission("sign_event", 1622),
     Permission("sign_event", 1630),
     Permission("sign_event", 1631),
     Permission("sign_event", 1632),
     Permission("sign_event", 1633),
+    Permission("sign_event", 1808),
     Permission("sign_event", 1971),
     Permission("sign_event", 1984),
     Permission("sign_event", 1985),
@@ -508,7 +675,78 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 2003),
     Permission("sign_event", 2004),
     Permission("sign_event", 2022),
+    Permission("sign_event", 2473),
+    Permission("sign_event", 4312),
+    Permission("sign_event", 8000),
+    Permission("sign_event", 8001),
+    Permission("sign_event", 8333),
+    Permission("sign_event", 9736),
+    Permission("sign_event", 10008),
+    Permission("sign_event", 10011),
+    Permission("sign_event", 10017),
+    Permission("sign_event", 10019),
+    Permission("sign_event", 10023),
+    Permission("sign_event", 10040),
+    Permission("sign_event", 10054),
+    Permission("sign_event", 10058),
+    Permission("sign_event", 10064),
+    Permission("sign_event", 10081),
+    Permission("sign_event", 10090),
+    Permission("sign_event", 10112),
+    Permission("sign_event", 10133),
+    Permission("sign_event", 10154),
+    Permission("sign_event", 10166),
+    Permission("sign_event", 10317),
+    Permission("sign_event", 11871),
     Permission("sign_event", 12022),
+    Permission("sign_event", 12473),
+    Permission("sign_event", 13534),
+    Permission("sign_event", 15129),
+    Permission("sign_event", 17375),
+    Permission("sign_event", 21001),
+    Permission("sign_event", 21002),
+    Permission("sign_event", 21003),
+    Permission("sign_event", 21059),
+    Permission("sign_event", 23197),
+    Permission("sign_event", 23333),
+    Permission("sign_event", 23903),
+    Permission("sign_event", 25051),
+    Permission("sign_event", 25052),
+    Permission("sign_event", 25053),
+    Permission("sign_event", 25054),
+    Permission("sign_event", 25055),
+    Permission("sign_event", 28934),
+    Permission("sign_event", 28935),
+    Permission("sign_event", 28936),
+    Permission("sign_event", 30005),
+    Permission("sign_event", 30006),
+    Permission("sign_event", 30007),
+    Permission("sign_event", 30053),
+    Permission("sign_event", 30054),
+    Permission("sign_event", 30055),
+    Permission("sign_event", 30064),
+    Permission("sign_event", 30065),
+    Permission("sign_event", 30066),
+    Permission("sign_event", 30067),
+    Permission("sign_event", 30068),
+    Permission("sign_event", 30166),
+    Permission("sign_event", 30296),
+    Permission("sign_event", 30297),
+    Permission("sign_event", 30298),
+    Permission("sign_event", 30312),
+    Permission("sign_event", 30313),
+    Permission("sign_event", 30382),
+    Permission("sign_event", 30383),
+    Permission("sign_event", 30384),
+    Permission("sign_event", 30385),
+    Permission("sign_event", 30617),
+    Permission("sign_event", 30817),
+    Permission("sign_event", 30818),
+    Permission("sign_event", 31337),
+    Permission("sign_event", 31871),
+    Permission("sign_event", 31872),
+    Permission("sign_event", 31873),
+    Permission("sign_event", 31890),
     Permission("sign_event", 32022),
     Permission("sign_event", 4550),
     Permission("sign_event", 5000),
@@ -572,13 +810,18 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 10009),
     Permission("sign_event", 10013),
     Permission("sign_event", 10015),
+    Permission("sign_event", 10018),
     Permission("sign_event", 10020),
     Permission("sign_event", 10030),
     Permission("sign_event", 10050),
     Permission("sign_event", 10051),
     Permission("sign_event", 10063),
     Permission("sign_event", 10096),
+    Permission("sign_event", 10312),
     Permission("sign_event", 13194),
+    Permission("sign_event", 13302),
+    Permission("sign_event", 20013),
+    Permission("sign_event", 20014),
     Permission("sign_event", 21000),
     Permission("sign_event", 22242),
     Permission("sign_event", 23194),
@@ -617,10 +860,19 @@ val supportedKindNumbers = listOf(
     Permission("sign_event", 31925),
     Permission("sign_event", 31989),
     Permission("sign_event", 31990),
+    Permission("sign_event", 33401),
+    Permission("sign_event", 33863),
     Permission("sign_event", 34235),
     Permission("sign_event", 34236),
     Permission("sign_event", 34550),
+    Permission("sign_event", 34551),
+    Permission("sign_event", 35128),
+    Permission("sign_event", 35129),
     Permission("sign_event", 37375),
+    Permission("sign_event", 38000),
+    Permission("sign_event", 38172),
+    Permission("sign_event", 38173),
+    Permission("sign_event", 38192),
     Permission("sign_event", 38383),
     Permission("sign_event", 39000),
     Permission("sign_event", 39001),

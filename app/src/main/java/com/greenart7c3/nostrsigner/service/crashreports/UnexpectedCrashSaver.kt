@@ -20,6 +20,7 @@
  */
 package com.greenart7c3.nostrsigner.service.crashreports
 
+import java.util.concurrent.TimeoutException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
@@ -33,12 +34,29 @@ class UnexpectedCrashSaver(
         t: Thread,
         e: Throwable,
     ) {
-        if (e !is OutOfMemoryError) {
-            // OOM reports are junk
+        if (!isJunkReport(e)) {
             scope.launch {
                 cache.writeReport(ReportAssembler().buildReport(e))
             }
         }
         defaultUEH!!.uncaughtException(t, e)
+    }
+
+    companion object {
+        /**
+         * Crashes we never prompt the user to report because nobody can act on them:
+         * - OutOfMemoryError: junk reports.
+         * - Platform finalizer-watchdog timeouts (e.g.
+         *   `BinderInternal$GcWatcher.finalize() timed out after 10 seconds`): a known
+         *   AOSP issue raised on the FinalizerDaemon thread with no app frames. The OS
+         *   kills the process regardless; app code cannot catch, prevent, or fix it.
+         */
+        fun isJunkReport(e: Throwable): Boolean = e is OutOfMemoryError || isPlatformFinalizerTimeout(e)
+
+        private fun isPlatformFinalizerTimeout(e: Throwable): Boolean = e is TimeoutException &&
+            (
+                e.message?.contains("finalize() timed out") == true ||
+                    e.stackTrace.any { it.className.startsWith("java.lang.Daemons\$FinalizerDaemon") }
+                )
     }
 }

@@ -24,11 +24,27 @@ object SecureCryptoHelper {
     private val mutex = Mutex()
 
     suspend fun encrypt(plainText: String): String = mutex.withLock {
+        encryptBlocking(plainText)
+    }
+
+    suspend fun decrypt(encryptedText: String): String = mutex.withLock {
+        decryptBlocking(encryptedText)
+    }
+
+    /**
+     * Non-suspending equivalent of [encrypt] for callers that cannot suspend
+     * (Room [Migration.migrate] callbacks, [getByKeySync] synchronous DAO
+     * reads). The AndroidKeyStore Cipher instance is thread-safe to obtain and
+     * use; the suspend variant's [mutex] only guards against concurrent
+     * in-flight cipher init within coroutines and is intentionally omitted
+     * here so blocking callers do not need a [kotlinx.coroutines.runBlocking]
+     * bridge.
+     */
+    fun encryptBlocking(plainText: String): String {
         val key = getOrCreateSecretKey()
         val cipher = Cipher.getInstance(TRANSFORMATION)
-
         cipher.init(Cipher.ENCRYPT_MODE, key)
-        val iv = cipher.iv // System-generated, allowed
+        val iv = cipher.iv
 
         val cipherText = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
 
@@ -39,7 +55,11 @@ object SecureCryptoHelper {
         return Base64.encodeToString(combined.array(), Base64.NO_WRAP)
     }
 
-    suspend fun decrypt(encryptedText: String): String = mutex.withLock {
+    /**
+     * Non-suspending equivalent of [decrypt]. See [encryptBlocking] for the
+     * rationale.
+     */
+    fun decryptBlocking(encryptedText: String): String {
         val key = getOrCreateSecretKey()
         val data = Base64.decode(encryptedText, Base64.NO_WRAP)
         val buffer = ByteBuffer.wrap(data)

@@ -9,6 +9,7 @@ import androidx.room.migration.Migration
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
+import com.greenart7c3.nostrsigner.SecureCryptoHelper
 import java.util.concurrent.Executors
 
 val MIGRATION_1_2 =
@@ -165,12 +166,61 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+/**
+ * GHSA-5fjp-ghh8-wch8 (CWE-312): envelope-encrypt the two NIP-46 secret columns
+ * of the `application` table — `secret` (bunker shared secret) and `localKey`
+ * (a full Nostr private key used for the relay-side connection identity) —
+ * with the existing Keystore-backed AES-256-GCM key in [SecureCryptoHelper].
+ *
+ * Pre-migration these columns are ciphertext-unaware plaintext TEXT, so the
+ * migration reads each row, encrypts the non-empty values in place, and writes
+ * them back. Empty values stay `""` (sentinel — see
+ * [ApplicationEntity.encryptForStorage]) to preserve `WHERE localKey != ''`
+ * enumeration in `NotificationSubscription.kt:90-96`.
+ *
+ * Idempotency: Room migrations run exactly once per version bump. The
+ * migration is not safe to re-run on already-encrypted data (it would
+ * double-encrypt), so it must only run between schema 18 and 19.
+ */
+val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.beginTransaction()
+        try {
+            val cursor = db.query("SELECT `key`, `secret`, `localKey` FROM application")
+            val updateStmt = db.compileStatement(
+                "UPDATE application SET `secret` = ?, `localKey` = ? WHERE `key` = ?",
+            )
+            cursor.use { c ->
+                while (c.moveToNext()) {
+                    val key = c.getString(0)
+                    val secret = c.getString(1)
+                    val localKey = c.getString(2)
+                    val newSecret = if (secret.isEmpty()) "" else SecureCryptoHelper.encryptBlocking(secret)
+                    val newLocalKey = if (localKey.isEmpty()) "" else SecureCryptoHelper.encryptBlocking(localKey)
+                    updateStmt.bindString(1, newSecret)
+                    updateStmt.bindString(2, newLocalKey)
+                    updateStmt.bindString(3, key)
+                    updateStmt.executeUpdateDelete()
+                    // Reuse the compiled statement for the next row.
+                    updateStmt.clearBindings()
+                }
+            }
+            db.setTransactionSuccessful()
+        } catch (e: Exception) {
+            AmberLog.e(Amber.TAG, "MIGRATION_18_19: failed to envelope-encrypt application secrets", e)
+            throw e
+        } finally {
+            db.endTransaction()
+        }
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
     ],
-    version = 18,
+    version = 19,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
@@ -209,6 +259,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_15_16)
                     .addMigrations(MIGRATION_16_17)
                     .addMigrations(MIGRATION_17_18)
+                    .addMigrations(MIGRATION_18_19)
                     .build()
 
             instance

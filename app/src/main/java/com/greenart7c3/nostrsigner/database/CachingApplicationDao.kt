@@ -230,6 +230,43 @@ class CachingApplicationDao(
         invalidateApp(key)
     }
 
+    // -------- *Raw delegations (envelope-encrypted persistence boundary) --------
+    //
+    // ApplicationDao now splits methods that touch the [ApplicationEntity.secret]
+    // / [ApplicationEntity.localKey] columns into a Room-generated `*Raw`
+    // (encrypted column values) and a public default-method wrapper that
+    // envelope-encrypts/decrypts via [ApplicationEntity.encryptForStorage].
+    // CachingApplicationDao is a decorator over a Room-generated ApplicationDao,
+    // so its `*Raw` overrides simply forward to [delegate] — they are never
+    // invoked from the cache layer (the public wrappers above are the entry
+    // points), but Kotlin requires every interface member to be implemented.
+
+    override suspend fun getAllRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllRaw(pubKey)
+
+    override suspend fun getAllNotConnectedRaw(): List<ApplicationWithPermissions> = delegate.getAllNotConnectedRaw()
+
+    override fun getAllPagingRaw(pubKey: String): PagingSource<Int, ApplicationEntity> = delegate.getAllPagingRaw(pubKey)
+
+    override suspend fun getByKeyRaw(key: String): ApplicationWithPermissions? = delegate.getByKeyRaw(key)
+
+    override fun getByKeySyncRaw(key: String): ApplicationWithPermissions? = delegate.getByKeySyncRaw(key)
+
+    override suspend fun getByNameRaw(name: String): ApplicationWithPermissions? = delegate.getByNameRaw(name)
+
+    override suspend fun getAllApplicationsRaw(): List<ApplicationEntity> = delegate.getAllApplicationsRaw()
+
+    override suspend fun getAllWithLocalKeyRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKeyRaw(pubKey)
+
+    override suspend fun insertApplicationRaw(event: ApplicationEntity): Long? = delegate.insertApplicationRaw(event)
+
+    override fun insertAllRaw(events: List<ApplicationEntity>): List<Long>? = delegate.insertAllRaw(events)
+
+    override suspend fun insertPermissions2Raw(permissions: List<ApplicationPermissionsEntity>): List<Long>? = delegate.insertPermissions2Raw(permissions)
+
+    override suspend fun insertPermissionsRaw(permissions: List<ApplicationPermissionsEntity>): List<Long>? = delegate.insertPermissionsRaw(permissions)
+
+    override suspend fun deleteRaw(entity: ApplicationEntity) = delegate.deleteRaw(entity)
+
     companion object {
         private const val MAX_ENTRIES = 512
     }

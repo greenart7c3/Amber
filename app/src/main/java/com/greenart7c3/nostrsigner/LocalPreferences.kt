@@ -78,6 +78,7 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
     TRUST_SCORE_ENABLED("trust_score_enabled"),
+    REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
 }
 
 @Immutable
@@ -158,6 +159,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
                 putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
+                putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, settings.requireUnlockedDevice)
             }
         }
     }
@@ -322,6 +324,7 @@ object LocalPreferences {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, true),
+                requireUnlockedDevice = getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false),
             )
         }
     }
@@ -614,6 +617,23 @@ object LocalPreferences {
         }
     }
 
+    /**
+     * Toggles the opt-in "require unlocked device" key policy (GHSA-8844-q5vh-9j8f, L1).
+     * The Keystore flag is set at key-generation time, so changing the setting
+     * requires rotating the AMBER_AES_KEY: decrypt all stored secrets with the
+     * old key, delete it, generate a new one with/without
+     * setUnlockedDeviceRequired, and re-encrypt everything.
+     */
+    suspend fun updateRequireUnlockedDevice(context: Context, enabled: Boolean) {
+        SecureCryptoHelper.rotateKey(context, requireUnlockedDevice = enabled)
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
     fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
         sharedPrefs(context).edit {
             apply {
@@ -659,7 +679,7 @@ object LocalPreferences {
     fun getWebDavFilename(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_FILENAME.key, "amber_backup.txt") ?: "amber_backup.txt"
 
     suspend fun getWebDavPassword(context: Context): String {
-        val encrypted = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
+        val encrypted = getWebDavPasswordEncrypted(context)
         return if (encrypted.isBlank()) {
             ""
         } else {
@@ -667,6 +687,25 @@ object LocalPreferences {
                 SecureCryptoHelper.decrypt(encrypted)
             } catch (e: Exception) {
                 ""
+            }
+        }
+    }
+
+    /**
+     * Returns the still-encrypted WebDAV password (raw SharedPreferences
+     * value). Used by [SecureCryptoHelper.rotateKey] to avoid mutex
+     * reentrancy.
+     */
+    fun getWebDavPasswordEncrypted(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
+
+    /**
+     * Stores an already-encrypted WebDAV password. Used by
+     * [SecureCryptoHelper.rotateKey].
+     */
+    fun saveWebDavPasswordEncrypted(context: Context, encryptedPassword: String) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
             }
         }
     }

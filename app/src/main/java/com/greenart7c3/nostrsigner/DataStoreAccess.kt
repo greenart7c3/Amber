@@ -59,6 +59,28 @@ object DataStoreAccess {
         return SecureCryptoHelper.decrypt(encrypted)
     }
 
+    /**
+     * Raw read: returns the still-encrypted value without decrypting. Used by
+     * [SecureCryptoHelper.rotateKey] to avoid mutex reentrancy (the public
+     * [getEncryptedKey] calls SecureCryptoHelper.decrypt which acquires the
+     * mutex that rotateKey already holds).
+     */
+    suspend fun getEncryptedRaw(context: Context, npub: String, key: Preferences.Key<String>): String? {
+        val prefs = getDataStore(context, npub).data.first()
+        if (prefs.asMap().keys.isEmpty()) return null
+        return prefs[key]
+    }
+
+    /**
+     * Raw write: stores an already-encrypted value without encrypting. Used by
+     * [SecureCryptoHelper.rotateKey] to avoid mutex reentrancy.
+     */
+    suspend fun saveEncryptedRaw(context: Context, npub: String, key: Preferences.Key<String>, encryptedValue: String) {
+        getDataStore(context, npub).edit { prefs ->
+            prefs[key] = encryptedValue
+        }
+    }
+
     suspend fun clearCacheForNpub(context: Context, npub: String) {
         getDataStore(context, npub).edit { prefs ->
             prefs.clear()
@@ -79,5 +101,18 @@ object DataStoreAccess {
         val prefs = getAppDataStore(context).data.first()
         val encrypted = prefs[PIN] ?: return null
         return SecureCryptoHelper.decrypt(encrypted)
+    }
+
+    /** Raw read for the PIN — see [getEncryptedRaw] for rationale. */
+    suspend fun getPinRaw(context: Context): String? {
+        val prefs = getAppDataStore(context).data.first()
+        return prefs[PIN]
+    }
+
+    /** Raw write for the PIN — see [saveEncryptedRaw] for rationale. */
+    suspend fun savePinRaw(context: Context, encryptedValue: String) {
+        getAppDataStore(context).edit { prefs ->
+            prefs[PIN] = encryptedValue
+        }
     }
 }

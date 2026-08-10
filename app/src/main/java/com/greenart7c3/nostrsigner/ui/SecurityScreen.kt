@@ -51,6 +51,7 @@ fun SecurityScreen(
     var enableBiometrics by remember { mutableStateOf(Amber.instance.settings.useAuth) }
     val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
     var privacyMode by remember { mutableStateOf(Amber.instance.settings.privacyMode) }
+    var requireUnlockedDevice by remember { mutableStateOf(Amber.instance.settings.requireUnlockedDevice) }
     var biometricsIndex by remember {
         mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
     }
@@ -116,6 +117,44 @@ fun SecurityScreen(
                             privacyMode = enabled
                             scope.launch(Dispatchers.IO) {
                                 LocalPreferences.updatePrivacyMode(context, enabled)
+                            }
+                        },
+                    )
+                }
+
+                // GHSA-8844-q5vh-9j8f, L1: opt-in toggle
+                Row(
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 8.dp, vertical = 4.dp)
+                        .clickable {
+                            val newValue = !requireUnlockedDevice
+                            requireUnlockedDevice = newValue
+                            // Use the application-scoped IOScope, not the
+                            // composition scope: key rotation must complete
+                            // even if the user leaves the screen/app, or
+                            // stored secrets could be left inaccessible.
+                            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                                LocalPreferences.updateRequireUnlockedDevice(context, newValue)
+                            }
+                        },
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = stringResource(R.string.require_unlocked_device))
+                        Text(
+                            text = stringResource(R.string.require_unlocked_device_description),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Color.Gray,
+                        )
+                    }
+                    Switch(
+                        checked = requireUnlockedDevice,
+                        onCheckedChange = { enabled ->
+                            requireUnlockedDevice = enabled
+                            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+                                LocalPreferences.updateRequireUnlockedDevice(context, enabled)
                             }
                         },
                     )

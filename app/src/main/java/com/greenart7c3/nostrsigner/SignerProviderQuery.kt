@@ -108,40 +108,40 @@ object SignerProviderQuery {
                     val historyDatabase = Amber.instance.getHistoryDatabase(account.npub)
                     val permDao = Amber.instance.dao(account.npub)
 
-                    // For kind 22242 (NIP-42 relay auth), extract relay host once for both whitelist and permission checks
+                    // For kind 22242 (NIP-42 relay auth), extract relay host once for the
+                    // whitelist gate and the requester-scoped permission checks below.
                     val relayHost = if (event.kind == 22242) {
                         RelayUrlUtils.extractHostAndPort(AmberEvent.relay(event))
                     } else {
                         ""
                     }
 
-                    val whitelistAutoAccept = if (event.kind == 22242) {
+                    // The auth whitelist is only a relay constraint: when non-empty, relays
+                    // outside the list are auto-rejected. Membership never authorizes signing
+                    // by itself — a requester-scoped permission (or user prompt) is still
+                    // required, otherwise any app/NIP-46 client could silently obtain
+                    // relay-auth signatures (GHSA-vx4h-56qj-wcp7).
+                    if (event.kind == 22242) {
                         val authWhitelist = Amber.instance.settings.authWhitelist
-                        when {
-                            authWhitelist.isEmpty() -> false
-                            relayHost in authWhitelist -> true
-                            else -> {
-                                scope.launch {
-                                    historyDatabase.dao().addHistory(
-                                        listOf(
-                                            HistoryEntity(
-                                                0,
-                                                requesterId,
-                                                uriString.replace("content://$appId.", ""),
-                                                event.kind,
-                                                TimeUtils.now(),
-                                                false,
-                                                content = event.toJson(),
-                                            ),
+                        if (authWhitelist.isNotEmpty() && relayHost !in authWhitelist) {
+                            scope.launch {
+                                historyDatabase.dao().addHistory(
+                                    listOf(
+                                        HistoryEntity(
+                                            0,
+                                            requesterId,
+                                            uriString.replace("content://$appId.", ""),
+                                            event.kind,
+                                            TimeUtils.now(),
+                                            false,
+                                            content = event.toJson(),
                                         ),
-                                        account.npub,
-                                    )
-                                }
-                                return MatrixCursor(arrayOf("rejected")).also { it.addRow(arrayOf("true")) }
+                                    ),
+                                    account.npub,
+                                )
                             }
+                            return rejectedCursor()
                         }
-                    } else {
-                        false
                     }
 
                     var permission = if (event.kind == 22242) {
@@ -172,7 +172,7 @@ object SignerProviderQuery {
                         }
                     }
                     val signPolicy = permDao.getSignPolicy(requesterId)
-                    val isRemembered = whitelistAutoAccept || IntentUtils.isRemembered(signPolicy, permission) ?: return null
+                    val isRemembered = IntentUtils.isRemembered(signPolicy, permission) ?: return null
                     if (!isRemembered) {
                         scope.launch {
                             historyDatabase.dao().addHistory(

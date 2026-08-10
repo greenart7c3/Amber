@@ -545,6 +545,20 @@ fun QrCodeScreen(
     modifier: Modifier,
     content: String,
 ) {
+    // Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this screen renders the
+    // raw nsec/ncryptsec as a QR code (via Route.QrCode). Prevent
+    // screenshots/screen recording for the lifetime of the screen.
+    val context = LocalContext.current
+    DisposableEffect(Unit) {
+        val window = (context as? Activity)?.window
+        window?.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE,
+        )
+        onDispose {
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+        }
+    }
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
@@ -579,10 +593,18 @@ fun QrCodeDialog(
         window?.attributes = window.attributes?.apply {
             screenBrightness = 1f
         }
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L4): this dialog renders the
+        // raw nsec as a QR code. Prevent screenshots/screen recording for the
+        // lifetime of the dialog. Mirrors SeedWordsPage/RandomPinInput.
+        window?.setFlags(
+            WindowManager.LayoutParams.FLAG_SECURE,
+            WindowManager.LayoutParams.FLAG_SECURE,
+        )
         onDispose {
             window?.attributes = window.attributes?.apply {
                 screenBrightness = originalBrightness ?: WindowManager.LayoutParams.BRIGHTNESS_OVERRIDE_NONE
             }
+            window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
         }
     }
 

@@ -33,6 +33,7 @@ import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.SignerProviderQuery
 import com.greenart7c3.nostrsigner.database.ApplicationWithPermissions
+import com.greenart7c3.nostrsigner.database.BunkerEventEntity
 import com.greenart7c3.nostrsigner.database.HistoryEntity
 import com.greenart7c3.nostrsigner.database.LogEntity
 import com.greenart7c3.nostrsigner.models.Account
@@ -56,6 +57,7 @@ import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.signers.NostrSignerInternal
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip04Dm.crypto.EncryptedInfo
+import com.vitorpamplona.quartz.nip40Expiration.expiration
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequest
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestConnect
 import com.vitorpamplona.quartz.nip46RemoteSigner.BunkerRequestNip04Decrypt
@@ -130,6 +132,22 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             return
         }
 
+        val now = TimeUtils.now()
+        if (event.createdAt < now - TimeUtils.FIVE_MINUTES) {
+            saveLog("Event ${event.id} is too old: ${now - event.createdAt}s ago", relay.url)
+            return
+        }
+        if (event.createdAt > now + TimeUtils.FIVE_MINUTES) {
+            saveLog("Event ${event.id} is in the future: ${event.createdAt - now}s ahead", relay.url)
+            return
+        }
+
+        val expiration = event.expiration()
+        if (expiration != null && expiration < now) {
+            saveLog("Event ${event.id} has expired", relay.url)
+            return
+        }
+
         NotificationUtils.getOrCreateBunkerChannel(applicationContext)
         NotificationUtils.getOrCreateErrorsChannel(applicationContext)
 
@@ -167,6 +185,14 @@ class EventNotificationConsumer(private val applicationContext: Context) {
             saveLog("Tagged account ${taggedKey.toNPub()} not logged in", relay.url)
             return
         }
+
+        val bunkerEventDao = Amber.instance.getDatabase(acc.npub).bunkerEventDao()
+        if (bunkerEventDao.exists(event.id)) {
+            saveLog("Event ${event.id} already processed (persistent cache)", relay.url)
+            return
+        }
+        bunkerEventDao.insert(BunkerEventEntity(0, event.id, event.createdAt))
+
         notify(event, acc, relay, connectionPrivKey)
     }
 

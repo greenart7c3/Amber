@@ -47,6 +47,12 @@ class ClearLogsWorker(appContext: Context, workerParams: WorkerParameters) : Cor
                     AmberLog.d(Amber.TAG, "Trimmed $excessLogs excess log entries (cap: $MAX_LOG_ENTRIES)")
                 }
 
+                val bunkerEventDao = Amber.instance.getDatabase(it.npub).bunkerEventDao()
+                val deletedBunkerEvents = bunkerEventDao.deleteOld(threeDaysAgo / 1000)
+                if (deletedBunkerEvents > 0) {
+                    AmberLog.d(Amber.TAG, "Deleted $deletedBunkerEvents old bunker event entries")
+                }
+
                 val dao = Amber.instance.dao(it.npub)
                 dao.updateExpiredPermissions(TimeUtils.now())
                 val deleted = dao.deleteOldApplications(now / 1000)

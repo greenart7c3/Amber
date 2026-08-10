@@ -557,6 +557,7 @@
     <string name="wss">wss://…</string>
     <string name="require_unlocked_device">Require unlocked device for key access</string>
     <string name="require_unlocked_device_description">When enabled, the Keystore key used to decrypt your stored account keys cannot be used while the device is locked. This prevents any code running in Amber\'s process from decrypting your keys while the screen is locked. Note: this disables background NIP-46 signing while the device is locked. Toggling this requires re-encrypting all stored keys.</string>
+    <string name="insecure_relay_warning">Insecure (cleartext, ws://) relay over the public internet exposes NIP-46 metadata and ciphertext to network observers. Prefer wss://, or use ws:// only for .onion / local-network relays.</string>
     <string name="name_cannot_be_empty">"Name can't be empty "</string>
     <string name="your_nsec_bunker_has_been_created">Your nsecbunker is ready!</string>
     <string name="use_this_url_in_your_app">Use this url in your app:</string>

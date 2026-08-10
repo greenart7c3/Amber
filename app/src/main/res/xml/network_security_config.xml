@@ -1,5 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- Cleartext is intentionally allowed: users can connect to local/onion relays over ws:// -->
+<!-- Cleartext is intentionally allowed (GHSA-8844-q5vh-9j8f, I4): users can
+     connect to local / onion relays over ws://. Global scope is required
+     because relay URLs are user-entered, not a fixed domain allowlist. The
+     EditRelaysDialog surfaces an in-app warning when the user explicitly
+     types a ws:// URL for a non-onion / non-private relay, so cleartext
+     NIP-46 traffic is opt-in and informed. -->
 <network-security-config xmlns:tools="http://schemas.android.com/tools">
     <base-config
         cleartextTrafficPermitted="true"

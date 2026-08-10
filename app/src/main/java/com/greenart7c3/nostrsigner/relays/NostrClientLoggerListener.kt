@@ -133,7 +133,11 @@ class NostrClientLoggerListener(
     }
 
     override fun onSent(relay: IRelayClient, cmdStr: String, cmd: Command, success: Boolean) {
-        AmberLog.d(Amber.TAG, "onSent: ${relay.url.url} success: $success cmd: $cmdStr")
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L2): never log raw relay
+        // frames verbatim — they can carry NIP-46 envelopes, DM/gift-wrap
+        // ciphertexts and event content. Log only the command type and the
+        // wire size, which is enough for debugging without leaking payloads.
+        AmberLog.d(Amber.TAG, "onSent: ${relay.url.url} success: $success cmd: ${cmd.javaClass.simpleName} bytes: ${cmdStr.toByteArray().size}")
 
         if (cmd is ReqCmd) {
             saveLog(relay.url.url, "onSent", "Subscribed to relay: $success")
@@ -156,7 +160,10 @@ class NostrClientLoggerListener(
     }
 
     override fun onIncomingMessage(relay: IRelayClient, msgStr: String, msg: Message) {
-        AmberLog.d(Amber.TAG, "onIncomingMessage: ${relay.url.url} msg: $msgStr")
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, L2): log only the message
+        // type and wire size, not the raw frame (which may carry NIP-46
+        // envelopes, DM/gift-wrap ciphertexts and event content).
+        AmberLog.d(Amber.TAG, "onIncomingMessage: ${relay.url.url} msg: ${msg.javaClass.simpleName} bytes: ${msgStr.toByteArray().size}")
 
         if (msg is OkMessage) {
             saveLog(relay.url.url, "onIncomingMessage", "Relay accepted message: ${msg.success}")

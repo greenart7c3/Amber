@@ -242,6 +242,14 @@ object LocalPreferences {
         currentAccount = null
         savedAccounts = null
         accountCache.clear()
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): decrypting and caching
+        // every account's private key process-wide is a memory-dump risk.
+        // Loading only the active account here would reduce exposure, but
+        // the UI account-switcher in approval screens reads
+        // allCachedAccounts() synchronously, so we keep the eager load and
+        // mitigate the other surface — loadFromEncryptedStorageSync no
+        // longer warms the whole cache on a cold miss, and logout zeroizes
+        // the private-key bytes — in this change.
         allSavedAccounts(context).forEach {
             loadFromEncryptedStorage(context, it.npub)
         }
@@ -421,6 +429,12 @@ object LocalPreferences {
      */
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the
+        // private-key byte array of the logging-out account before dropping
+        // the reference from the cache, so the key material does not linger
+        // in heap until GC. KeyPair.privKey is a `val` referencing a mutable
+        // ByteArray, so we overwrite its contents in place.
+        accountCache.get(npub)?.signer?.keyPair?.privKey?.fill(0)
         accountCache.remove(npub)
         // Close Room handles BEFORE deleting on-disk preference/data files so
         // we release file locks and worker-pool threads instead of leaking
@@ -506,19 +520,18 @@ object LocalPreferences {
     }
 
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
-        if (savedAccounts == null || accountCache.size() == 0 || savedAccounts?.size != accountCache.size()) {
-            AmberLog.d(Amber.TAG, "accountCache is null loading accounts")
-            runBlocking {
-                allSavedAccounts(context).forEach {
-                    loadFromEncryptedStorage(context, it.npub)
-                }
-            }
-        }
-        if (npub == null) {
-            val currentAccount = currentAccount(context) ?: return null
-            return accountCache.get(currentAccount)
-        }
-        return accountCache.get(npub)
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed
+        // the entire cache (runBlocking over all saved accounts) on any cold
+        // cache / size mismatch, decrypting every account's private key
+        // process-wide on the first IPC/relay lookup. Lazy-load only the
+        // requested account. The UI account switcher relies on
+        // allCachedAccounts() being populated, which reloadApp() handles at
+        // startup; this path is for direct lookups (SignerProvider / NIP-46)
+        // that always know which npub they want.
+        val targetNpub = npub ?: currentAccount(context) ?: return null
+        accountCache.get(targetNpub)?.let { return it }
+        if (!containsAccount(context, targetNpub)) return null
+        return runBlocking { loadFromEncryptedStorage(context, targetNpub) }
     }
 
     fun setAccountName(

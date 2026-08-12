@@ -33,7 +33,7 @@
     <string name="active_account">Activar cuenta</string>
     <string name="edit_name">Editar nombre</string>
     <string name="copy">"Copiar "</string>
-    <string name="data_copied_to_the_clipboard"></string>
+    <string name="data_copied_to_the_clipboard">Datos copiados al portapapeles</string>
     <string name="connect_app">Conectar app</string>
     <string name="event_copied_to_the_clipboard">Evento copiado al portapapeles</string>
     <string name="select_deselect_all">Seleccionar/Deseleccionar todo</string>
@@ -865,4 +865,10 @@
     <string name="logs_subtitle">Ver la actividad de la app</string>
     <string name="give_us_feedback_subtitle">Informar de un error o solicitar una función</string>
     <string name="update_settings_subtitle">Buscar nuevas versiones</string>
+    <string name="require_unlocked_device">Requerir dispositivo desbloqueado para acceder a la clave</string>
+    <string name="require_unlocked_device_description">Cuando está habilitado, la clave de Keystore utilizada para descifrar las claves de su cuenta almacenadas no se puede usar mientras el dispositivo está bloqueado. Esto evita que cualquier código que se ejecute en el proceso de Amber descifre sus claves mientras la pantalla está bloqueada. Nota: esto deshabilita la firma NIP-46 en segundo plano mientras el dispositivo está bloqueado. Cambiar esto requiere volver a cifrar todas las claves almacenadas.</string>
+    <string name="insecure_relay_warning">Un relay inseguro (texto plano, ws://) a través de la Internet pública expone los metadatos y el texto cifrado de NIP-46 a los observadores de la red. Prefiera wss://, o use ws:// solo para relays .onion / de red local.</string>
+    <string name="tor_connecting">Conectando a Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Conexión a Tor fallida</string>
+    <string name="tor_restart">Reiniciar</string>
 </resources>

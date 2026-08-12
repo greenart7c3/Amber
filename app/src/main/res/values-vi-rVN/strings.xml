@@ -841,4 +841,10 @@
     <string name="logs_subtitle">Xem hoạt động của ứng dụng</string>
     <string name="give_us_feedback_subtitle">Báo lỗi hoặc yêu cầu tính năng</string>
     <string name="update_settings_subtitle">Kiểm tra phiên bản mới</string>
+    <string name="require_unlocked_device">Yêu cầu mở khóa thiết bị để truy cập khóa</string>
+    <string name="require_unlocked_device_description">Khi được bật, khóa Keystore dùng để giải mã các khóa tài khoản đã lưu của bạn không thể sử dụng được khi thiết bị đang khóa. Điều này ngăn bất kỳ mã nào chạy trong quy trình của Amber giải mã khóa của bạn khi màn hình đang khóa. Lưu ý: điều này sẽ vô hiệu hóa việc ký NIP-46 trong nền khi thiết bị đang khóa. Việc bật/tắt tính năng này yêu cầu mã hóa lại tất cả các khóa đã lưu.</string>
+    <string name="insecure_relay_warning">Relay không an toàn (văn bản thuần túy, ws://) qua internet công cộng sẽ để lộ siêu dữ liệu NIP-46 và văn bản mã hóa cho những người quan sát mạng. Ưu tiên wss:// hoặc chỉ sử dụng ws:// cho các relay .onion / mạng cục bộ.</string>
+    <string name="tor_connecting">Đang kết nối với Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Kết nối Tor thất bại</string>
+    <string name="tor_restart">Khởi động lại</string>
 </resources>

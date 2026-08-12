@@ -841,4 +841,10 @@
     <string name="logs_subtitle">アプリのアクティビティを表示</string>
     <string name="give_us_feedback_subtitle">バグを報告または機能をリクエスト</string>
     <string name="update_settings_subtitle">新しいバージョンを確認</string>
+    <string name="require_unlocked_device">キーアクセスにデバイスのロック解除を要求する</string>
+    <string name="require_unlocked_device_description">有効にすると、保存されたアカウントキーを復号化するために使用されるKeystoreキーは、デバイスがロックされている間は使用できなくなります。これにより、画面がロックされている間にAmberのプロセスで実行されているコードがキーを復号化するのを防ぎます。注：これにより、デバイスがロックされている間、バックグラウンドでのNIP-46署名が無効になります。これを切り替えるには、すべての保存されたキーの再暗号化が必要です。</string>
+    <string name="insecure_relay_warning">公開インターネットを介した安全でない（クリアテキスト、ws://）リレーは、NIP-46のメタデータと暗号文をネットワークオブザーバーにさらします。wss://を優先するか、.onion / ローカルネットワークリレーの場合のみws://を使用してください。</string>
+    <string name="tor_connecting">Torに接続中: %1$d%%</string>
+    <string name="tor_connection_failed">Torへの接続に失敗しました</string>
+    <string name="tor_restart">再起動</string>
 </resources>

@@ -465,7 +465,7 @@
     <string name="applications">Anwendungen</string>
     <string name="incoming_request">Eingehende Anfrage</string>
     <string name="back_to">Zurück zu %1$s</string>
-    <string name="scan_qr_code"></string>
+    <string name="scan_qr_code">Einen QR-Code scannen</string>
     <string name="add_a_nsecbunker">Einen nsecbunker hinzufügen</string>
     <string name="nsecbunker_description">Mit dieser Option kann ein nsecbunker manuell hinzugefügt und mit jeder App verwendet werden, die Nostr Connect (NIP-46) unterstützt</string>
     <string name="nostr_connect_qr_description">Wenn deine App einen Nostr-Connect-QR-Code anbietet, kannst du ihn hier scannen. Dieser Anmeldemodus wird üblicherweise von Web-Apps angeboten.</string>
@@ -862,4 +862,10 @@
     <string name="logs_subtitle">App-Aktivität anzeigen</string>
     <string name="give_us_feedback_subtitle">Fehler melden oder Funktion vorschlagen</string>
     <string name="update_settings_subtitle">Nach neuen Versionen suchen</string>
+    <string name="require_unlocked_device">Entsperrtes Gerät für den Schlüsselzugriff anfordern</string>
+    <string name="require_unlocked_device_description">Wenn aktiviert, kann der Keystore-Schlüssel zum Entschlüsseln Ihrer gespeicherten Kontoschlüssel nicht verwendet werden, während das Gerät gesperrt ist. Dies verhindert, dass Code, der im Amber-Prozess ausgeführt wird, Ihre Schlüssel entschlüsselt, während der Bildschirm gesperrt ist. Hinweis: Dies deaktiviert die Hintergrund-NIP-46-Signierung, während das Gerät gesperrt ist. Das Umschalten erfordert eine erneute Verschlüsselung aller gespeicherten Schlüssel.</string>
+    <string name="insecure_relay_warning">Unsicheres (Klartext, ws://) Relay über das öffentliche Internet legt NIP-46-Metadaten und Chiffretext für Netzwerkbeobachter offen. Bevorzugen Sie wss://, oder verwenden Sie ws:// nur für .onion / lokale Netzwerk-Relays.</string>
+    <string name="tor_connecting">Verbinde mit Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Tor-Verbindung fehlgeschlagen</string>
+    <string name="tor_restart">Neustart</string>
 </resources>

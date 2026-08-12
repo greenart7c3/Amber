@@ -865,4 +865,10 @@
     <string name="logs_subtitle">Visualizza l\'attività dell\'app</string>
     <string name="give_us_feedback_subtitle">Segnala un bug o richiedi una funzionalità</string>
     <string name="update_settings_subtitle">Controlla nuove versioni</string>
+    <string name="require_unlocked_device">Richiedi dispositivo sbloccato per l\'accesso alle chiavi</string>
+    <string name="require_unlocked_device_description">Se abilitato, la chiave Keystore utilizzata per decrittografare le chiavi del tuo account memorizzate non può essere utilizzata mentre il dispositivo è bloccato. Ciò impedisce a qualsiasi codice in esecuzione nel processo di Amber di decrittografare le tue chiavi mentre lo schermo è bloccato. Nota: questo disabilita la firma NIP-46 in background mentre il dispositivo è bloccato. L\'attivazione di questa opzione richiede la ri-crittografia di tutte le chiavi memorizzate.</string>
+    <string name="insecure_relay_warning">Un relay non sicuro (testo in chiaro, ws://) su internet pubblico espone i metadati NIP-46 e il testo cifrato agli osservatori di rete. Preferisci wss://, o usa ws:// solo per relay .onion / di rete locale.</string>
+    <string name="tor_connecting">Connessione a Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Connessione a Tor fallita</string>
+    <string name="tor_restart">Riavvia</string>
 </resources>

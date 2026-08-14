@@ -165,16 +165,27 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `bunker_event` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `eventId` TEXT NOT NULL, `time` INTEGER NOT NULL)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_bunker_event_id` ON `bunker_event` (`eventId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_bunker_event_time` ON `bunker_event` (`time`)")
+    }
+}
+
 @Database(
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
+        BunkerEventEntity::class,
     ],
-    version = 18,
+    version = 19,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): ApplicationDao
+
+    abstract fun bunkerEventDao(): BunkerEventDao
 
     companion object {
         fun getDatabase(
@@ -209,6 +220,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_15_16)
                     .addMigrations(MIGRATION_16_17)
                     .addMigrations(MIGRATION_17_18)
+                    .addMigrations(MIGRATION_18_19)
                     .build()
 
             instance

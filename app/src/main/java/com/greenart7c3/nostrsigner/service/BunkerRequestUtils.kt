@@ -143,7 +143,11 @@ object BunkerRequestUtils {
         onDone: (Boolean) -> Unit,
     ) {
         val connSigner = if (bunkerRequest.signerPrivKey.isNotEmpty()) {
-            NostrSignerInternal(KeyPair(privKey = bunkerRequest.signerPrivKey.hexToByteArray()))
+            try {
+                NostrSignerInternal(KeyPair(privKey = bunkerRequest.signerPrivKey.hexToByteArray()))
+            } catch (_: Exception) {
+                null
+            }
         } else {
             null
         }

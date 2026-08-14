@@ -16,7 +16,11 @@ import kotlin.collections.joinToString
 
 fun generateBunkerPrivKey(): String = Nip01Crypto.privKeyCreate().toHexKey()
 
-fun localPubKeyFromPrivKey(privKeyHex: String): String = KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
+fun localPubKeyFromPrivKey(privKeyHex: String): String = try {
+    KeyPair(privKey = privKeyHex.hexToByteArray()).pubKey.toHexKey()
+} catch (_: Exception) {
+    ""
+}
 
 @Entity(
     tableName = "application",

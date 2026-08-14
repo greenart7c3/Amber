@@ -7,21 +7,57 @@ import androidx.room.Insert
 import androidx.room.OnConflictStrategy
 import androidx.room.Query
 import androidx.room.Transaction
+import com.greenart7c3.nostrsigner.SecureCryptoHelper
 
+/**
+ * Room DAO for the per-account `application` table.
+ *
+ * **At-rest envelope encryption** (GHSA-5fjp-ghh8-wch8, CWE-312): the two
+ * NIP-46 secret columns [ApplicationEntity.secret] and
+ * [ApplicationEntity.localKey] are persisted as Keystore-encrypted
+ * (`SecureCryptoHelper.encryptBlocking`) Base64 ciphertext. The non-`Raw`
+ * methods below are interface default methods that transparently encrypt on
+ * write and decrypt on read via the [ApplicationEntity.encryptForStorage] /
+ * [ApplicationEntity.decryptFromStorage] mappers, so every consumer of
+ * `ApplicationEntity` / `ApplicationWithPermissions` continues to see the
+ * plaintext values it already expects. The only at-rest reader is Room itself.
+ *
+ * The `*Raw` methods are Room-generated `@Query` / `@Insert` implementations
+ * operating on the raw (encrypted) column values. Callers must use the public
+ * default-method wrappers; the `Raw` methods are the persistence boundary.
+ *
+ * Sentinel: an empty `secret` or `localKey` is stored as `""` (not encrypted),
+ * matching `LocalPreferences.kt:661-681`'s WebDAV password idiom and preserving
+ * `WHERE localKey != ''` enumeration semantics in
+ * `NotificationSubscription.kt:90-96`.
+ *
+ * `getBySecret` cannot use a SQL `WHERE secret = :secret` predicate because
+ * GCM uses a random IV — the same plaintext produces a distinct ciphertext
+ * each call. The lookup is carried out in Kotlin by decrypting all rows of the
+ * (small, per-account) `application` table and filtering by the plaintext
+ * secret. Caller call-sites: `BunkerSingleEventHomeScreen.kt:83`,
+ * `BunkerConnectRequestScreen.kt:125`.
+ */
 @Dao
 interface ApplicationDao {
     @Query("SELECT signPolicy FROM application WHERE `key` = :key")
     fun getSignPolicy(key: String): Int?
 
     @Query("SELECT * FROM application where pubKey = :pubKey order by name")
-    suspend fun getAll(pubKey: String): List<ApplicationEntity>
+    suspend fun getAllRaw(pubKey: String): List<ApplicationEntity>
+
+    suspend fun getAll(pubKey: String): List<ApplicationEntity> = getAllRaw(pubKey).map { it.decryptFromStorage() }
 
     @Query("SELECT * FROM application where isConnected = 0")
     @Transaction
-    suspend fun getAllNotConnected(): List<ApplicationWithPermissions>
+    suspend fun getAllNotConnectedRaw(): List<ApplicationWithPermissions>
+
+    suspend fun getAllNotConnected(): List<ApplicationWithPermissions> = getAllNotConnectedRaw().map { it.decryptFromStorage() }
 
     @Query("SELECT a.* FROM application a WHERE a.pubKey = :pubKey ORDER BY a.lastUsed DESC")
-    fun getAllPaging(pubKey: String): PagingSource<Int, ApplicationEntity>
+    fun getAllPagingRaw(pubKey: String): PagingSource<Int, ApplicationEntity>
+
+    fun getAllPaging(pubKey: String): PagingSource<Int, ApplicationEntity> = DecryptingPagingSource(getAllPagingRaw(pubKey))
 
     @Query("SELECT DISTINCT relays FROM application")
     fun getAllRelayLists(): List<RelayListWrapper>
@@ -31,22 +67,48 @@ interface ApplicationDao {
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
-    suspend fun getByKey(key: String): ApplicationWithPermissions?
+    suspend fun getByKeyRaw(key: String): ApplicationWithPermissions?
+
+    suspend fun getByKey(key: String): ApplicationWithPermissions? = getByKeyRaw(key)?.decryptFromStorage()
 
     @Query("SELECT * FROM application WHERE `key` = :key")
     @Transaction
-    fun getByKeySync(key: String): ApplicationWithPermissions?
+    fun getByKeySyncRaw(key: String): ApplicationWithPermissions?
+
+    fun getByKeySync(key: String): ApplicationWithPermissions? = getByKeySyncRaw(key)?.decryptFromStorage()
 
     @Query("SELECT * FROM application WHERE `name` = :name LIMIT 1")
     @Transaction
-    suspend fun getByName(name: String): ApplicationWithPermissions?
+    suspend fun getByNameRaw(name: String): ApplicationWithPermissions?
 
-    @Query("SELECT * FROM application WHERE secret = :secret")
-    @Transaction
-    suspend fun getBySecret(secret: String): ApplicationWithPermissions?
+    suspend fun getByName(name: String): ApplicationWithPermissions? = getByNameRaw(name)?.decryptFromStorage()
+
+    @Query("SELECT * FROM application")
+    suspend fun getAllApplicationsRaw(): List<ApplicationEntity>
+
+    /**
+     * Lookup by NIP-46 bunker connection `secret`. Cannot use SQL
+     * `WHERE secret = :secret` after envelope encryption (random GCM IV);
+     * decrypt all rows of the per-account table and filter in Kotlin.
+     * Tables are bounded by NIP-46 connection count (typically < 100).
+     */
+    suspend fun getBySecret(secret: String): ApplicationWithPermissions? {
+        val matchKey = getAllApplicationsRaw().firstOrNull { row ->
+            if (row.secret.isEmpty()) {
+                secret.isEmpty()
+            } else {
+                runCatching { SecureCryptoHelper.decryptBlocking(row.secret) }.getOrDefault(null) == secret
+            }
+        }?.key ?: return null
+        // Eager-load the related permissions via the wrapped getByKey so callers
+        // receive the same shape the original @Transaction/SELECT joined query did.
+        return getByKey(matchKey)
+    }
 
     @Query("SELECT * FROM application WHERE pubKey = :pubKey AND localKey != ''")
-    suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity>
+    suspend fun getAllWithLocalKeyRaw(pubKey: String): List<ApplicationEntity>
+
+    suspend fun getAllWithLocalKey(pubKey: String): List<ApplicationEntity> = getAllWithLocalKeyRaw(pubKey).map { it.decryptFromStorage() }
 
     @Query("UPDATE applicationPermission set acceptUntil = 0, rejectUntil = 0, rememberType = 0 where (acceptUntil < :time OR rejectUntil < :time) AND rememberType <> 4")
     fun updateExpiredPermissions(time: Long)
@@ -107,13 +169,25 @@ interface ApplicationDao {
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
-    suspend fun insertApplication(event: ApplicationEntity): Long?
+    suspend fun insertApplicationRaw(event: ApplicationEntity): Long?
+
+    suspend fun insertApplication(event: ApplicationEntity): Long? = insertApplicationRaw(event.encryptForStorage())
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
-    fun insertAll(events: List<ApplicationEntity>): List<Long>?
+    fun insertAllRaw(events: List<ApplicationEntity>): List<Long>?
+
+    fun insertAll(events: List<ApplicationEntity>): List<Long>? = insertAllRaw(events.map { it.encryptForStorage() })
+
+    @Insert(onConflict = OnConflictStrategy.IGNORE)
+    @Transaction
+    suspend fun insertPermissions2Raw(permissions: List<ApplicationPermissionsEntity>): List<Long>?
+
+    suspend fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>? = insertPermissions2Raw(permissions)
 
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     @Transaction
+    suspend fun insertPermissionsRaw(permissions: List<ApplicationPermissionsEntity>): List<Long>?
+
     suspend fun insertPermissions(permissions: List<ApplicationPermissionsEntity>): List<Long>? {
         permissions.forEach {
             if (it.kind != null) {
@@ -132,12 +206,46 @@ interface ApplicationDao {
                 deletePermissions(it.pkKey, it.type)
             }
         }
-        return insertPermissions2(permissions)
+        return insertPermissions2Raw(permissions)
     }
 
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
     @Transaction
-    suspend fun insertPermissions2(permissions: List<ApplicationPermissionsEntity>): List<Long>?
+    suspend fun insertApplicationWithPermissions(application: ApplicationWithPermissions) {
+        deletePermissions(application.application.key)
+        insertApplicationRaw(application.application.encryptForStorage())?.let {
+            application.permissions.forEach {
+                it.pkKey = application.application.key
+            }
+
+            insertPermissions(application.permissions)
+        }
+    }
+
+    @Delete
+    @Transaction
+    suspend fun deleteRaw(entity: ApplicationEntity)
+
+    suspend fun delete(entity: ApplicationEntity) = deleteRaw(entity)
+
+    @Query("DELETE FROM application WHERE `key` = :key")
+    @Transaction
+    suspend fun delete(key: String)
+
+    @Query("UPDATE application SET lastUsed = :time where `key` = :key")
+    @Transaction
+    suspend fun updateLastUsed(key: String, time: Long)
+
+    @Query("UPDATE application SET name = :name, icon = :icon WHERE `key` = :key")
+    @Transaction
+    suspend fun updateNameAndIcon(key: String, name: String, icon: String)
+
+    @Delete
+    @Transaction
+    suspend fun deletePermission(permission: ApplicationPermissionsEntity)
+
+    @Query("DELETE FROM application WHERE deleteAfter < :time AND deleteAfter > 0")
+    @Transaction
+    suspend fun deleteOldApplications(time: Long): Int
 
     @Query("DELETE FROM applicationPermission WHERE pkKey = :key")
     @Transaction
@@ -174,41 +282,4 @@ interface ApplicationDao {
         type: String,
         kind: Int,
     )
-
-    @Insert(onConflict = OnConflictStrategy.IGNORE)
-    @Transaction
-    suspend fun insertApplicationWithPermissions(application: ApplicationWithPermissions) {
-        deletePermissions(application.application.key)
-        insertApplication(application.application)?.let {
-            application.permissions.forEach {
-                it.pkKey = application.application.key
-            }
-
-            insertPermissions(application.permissions)
-        }
-    }
-
-    @Delete
-    @Transaction
-    suspend fun delete(entity: ApplicationEntity)
-
-    @Query("DELETE FROM application WHERE `key` = :key")
-    @Transaction
-    suspend fun delete(key: String)
-
-    @Query("UPDATE application SET lastUsed = :time where `key` = :key")
-    @Transaction
-    suspend fun updateLastUsed(key: String, time: Long)
-
-    @Query("UPDATE application SET name = :name, icon = :icon WHERE `key` = :key")
-    @Transaction
-    suspend fun updateNameAndIcon(key: String, name: String, icon: String)
-
-    @Delete
-    @Transaction
-    suspend fun deletePermission(permission: ApplicationPermissionsEntity)
-
-    @Query("DELETE FROM application WHERE deleteAfter < :time AND deleteAfter > 0")
-    @Transaction
-    suspend fun deleteOldApplications(time: Long): Int
 }

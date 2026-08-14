@@ -78,6 +78,7 @@ private enum class SettingsKeys(val key: String) {
     RATE_LIMIT_WINDOW_SECONDS("rate_limit_window_seconds"),
     PROFILE_FETCH_INTERVAL("profile_fetch_interval"),
     TRUST_SCORE_ENABLED("trust_score_enabled"),
+    REQUIRE_UNLOCKED_DEVICE("require_unlocked_device"),
 }
 
 @Immutable
@@ -158,6 +159,7 @@ object LocalPreferences {
                 putInt(SettingsKeys.RATE_LIMIT_MAX_PER_WINDOW.key, settings.rateLimitMaxPerWindow)
                 putInt(SettingsKeys.RATE_LIMIT_WINDOW_SECONDS.key, settings.rateLimitWindowSeconds)
                 putBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, settings.trustScoreEnabled)
+                putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, settings.requireUnlockedDevice)
             }
         }
     }
@@ -240,6 +242,14 @@ object LocalPreferences {
         currentAccount = null
         savedAccounts = null
         accountCache.clear()
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): decrypting and caching
+        // every account's private key process-wide is a memory-dump risk.
+        // Loading only the active account here would reduce exposure, but
+        // the UI account-switcher in approval screens reads
+        // allCachedAccounts() synchronously, so we keep the eager load and
+        // mitigate the other surface — loadFromEncryptedStorageSync no
+        // longer warms the whole cache on a cold miss, and logout zeroizes
+        // the private-key bytes — in this change.
         allSavedAccounts(context).forEach {
             loadFromEncryptedStorage(context, it.npub)
         }
@@ -322,6 +332,7 @@ object LocalPreferences {
                     ProfileFetchInterval.FIFTEEN_MINUTES
                 },
                 trustScoreEnabled = getBoolean(SettingsKeys.TRUST_SCORE_ENABLED.key, true),
+                requireUnlockedDevice = getBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, false),
             )
         }
     }
@@ -418,6 +429,12 @@ object LocalPreferences {
      */
     @SuppressLint("ApplySharedPref")
     fun updatePrefsForLogout(npub: String, context: Context): Boolean {
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): best-effort zeroize the
+        // private-key byte array of the logging-out account before dropping
+        // the reference from the cache, so the key material does not linger
+        // in heap until GC. KeyPair.privKey is a `val` referencing a mutable
+        // ByteArray, so we overwrite its contents in place.
+        accountCache.get(npub)?.signer?.keyPair?.privKey?.fill(0)
         accountCache.remove(npub)
         // Close Room handles BEFORE deleting on-disk preference/data files so
         // we release file locks and worker-pool threads instead of leaking
@@ -503,19 +520,18 @@ object LocalPreferences {
     }
 
     fun loadFromEncryptedStorageSync(context: Context, npub: String? = null): Account? {
-        if (savedAccounts == null || accountCache.size() == 0 || savedAccounts?.size != accountCache.size()) {
-            AmberLog.d(Amber.TAG, "accountCache is null loading accounts")
-            runBlocking {
-                allSavedAccounts(context).forEach {
-                    loadFromEncryptedStorage(context, it.npub)
-                }
-            }
-        }
-        if (npub == null) {
-            val currentAccount = currentAccount(context) ?: return null
-            return accountCache.get(currentAccount)
-        }
-        return accountCache.get(npub)
+        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): previously this warmed
+        // the entire cache (runBlocking over all saved accounts) on any cold
+        // cache / size mismatch, decrypting every account's private key
+        // process-wide on the first IPC/relay lookup. Lazy-load only the
+        // requested account. The UI account switcher relies on
+        // allCachedAccounts() being populated, which reloadApp() handles at
+        // startup; this path is for direct lookups (SignerProvider / NIP-46)
+        // that always know which npub they want.
+        val targetNpub = npub ?: currentAccount(context) ?: return null
+        accountCache.get(targetNpub)?.let { return it }
+        if (!containsAccount(context, targetNpub)) return null
+        return runBlocking { loadFromEncryptedStorage(context, targetNpub) }
     }
 
     fun setAccountName(
@@ -614,6 +630,23 @@ object LocalPreferences {
         }
     }
 
+    /**
+     * Toggles the opt-in "require unlocked device" key policy (GHSA-8844-q5vh-9j8f, L1).
+     * The Keystore flag is set at key-generation time, so changing the setting
+     * requires rotating the AMBER_AES_KEY: decrypt all stored secrets with the
+     * old key, delete it, generate a new one with/without
+     * setUnlockedDeviceRequired, and re-encrypt everything.
+     */
+    suspend fun updateRequireUnlockedDevice(context: Context, enabled: Boolean) {
+        SecureCryptoHelper.rotateKey(context, requireUnlockedDevice = enabled)
+        sharedPrefs(context).edit {
+            apply {
+                putBoolean(SettingsKeys.REQUIRE_UNLOCKED_DEVICE.key, enabled)
+            }
+        }
+        Amber.instance.settings = loadSettingsFromEncryptedStorage()
+    }
+
     fun updateUpdateCheckFrequency(context: Context, frequency: UpdateCheckFrequency) {
         sharedPrefs(context).edit {
             apply {
@@ -659,7 +692,7 @@ object LocalPreferences {
     fun getWebDavFilename(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_FILENAME.key, "amber_backup.txt") ?: "amber_backup.txt"
 
     suspend fun getWebDavPassword(context: Context): String {
-        val encrypted = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
+        val encrypted = getWebDavPasswordEncrypted(context)
         return if (encrypted.isBlank()) {
             ""
         } else {
@@ -667,6 +700,25 @@ object LocalPreferences {
                 SecureCryptoHelper.decrypt(encrypted)
             } catch (e: Exception) {
                 ""
+            }
+        }
+    }
+
+    /**
+     * Returns the still-encrypted WebDAV password (raw SharedPreferences
+     * value). Used by [SecureCryptoHelper.rotateKey] to avoid mutex
+     * reentrancy.
+     */
+    fun getWebDavPasswordEncrypted(context: Context): String = sharedPrefs(context).getString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, "") ?: ""
+
+    /**
+     * Stores an already-encrypted WebDAV password. Used by
+     * [SecureCryptoHelper.rotateKey].
+     */
+    fun saveWebDavPasswordEncrypted(context: Context, encryptedPassword: String) {
+        sharedPrefs(context).edit {
+            apply {
+                putString(SettingsKeys.WEBDAV_PASSWORD_ENCRYPTED.key, encryptedPassword)
             }
         }
     }

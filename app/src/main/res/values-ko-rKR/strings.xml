@@ -865,4 +865,10 @@
     <string name="logs_subtitle">앱 활동 보기</string>
     <string name="give_us_feedback_subtitle">버그 신고 또는 기능 요청</string>
     <string name="update_settings_subtitle">새 버전 확인</string>
+    <string name="require_unlocked_device">키 액세스를 위해 잠금 해제된 장치 필요</string>
+    <string name="require_unlocked_device_description">활성화하면 저장된 계정 키를 복호화하는 데 사용되는 Keystore 키를 장치가 잠겨 있는 동안 사용할 수 없습니다. 이는 화면이 잠겨 있는 동안 Amber 프로세스에서 실행되는 코드가 키를 복호화하는 것을 방지합니다. 참고: 장치가 잠겨 있는 동안 백그라운드 NIP-46 서명이 비활성화됩니다. 이를 전환하려면 저장된 모든 키를 다시 암호화해야 합니다.</string>
+    <string name="insecure_relay_warning">공개 인터넷을 통한 안전하지 않은(일반 텍스트, ws://) 릴레이는 NIP-46 메타데이터와 암호문을 네트워크 관찰자에게 노출합니다. wss://를 선호하거나, .onion / 로컬 네트워크 릴레이에 대해서만 ws://를 사용하십시오.</string>
+    <string name="tor_connecting">Tor 연결 중: %1$d%%</string>
+    <string name="tor_connection_failed">Tor 연결 실패</string>
+    <string name="tor_restart">재시작</string>
 </resources>

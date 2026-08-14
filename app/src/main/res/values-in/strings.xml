@@ -865,4 +865,10 @@
     <string name="logs_subtitle">Lihat aktivitas aplikasi</string>
     <string name="give_us_feedback_subtitle">Laporkan bug atau minta fitur</string>
     <string name="update_settings_subtitle">Periksa versi baru</string>
+    <string name="require_unlocked_device">Wajibkan perangkat tidak terkunci untuk akses kunci</string>
+    <string name="require_unlocked_device_description">Saat diaktifkan, kunci Keystore yang digunakan untuk mendekripsi kunci akun yang Anda simpan tidak dapat digunakan saat perangkat terkunci. Ini mencegah kode apa pun yang berjalan di proses Amber mendekripsi kunci Anda saat layar terkunci. Catatan: ini menonaktifkan penandatanganan NIP-46 di latar belakang saat perangkat terkunci. Mengalihkan ini memerlukan enkripsi ulang semua kunci yang disimpan.</string>
+    <string name="insecure_relay_warning">Relay yang tidak aman (teks biasa, ws://) melalui internet publik mengekspos metadata dan teks sandi NIP-46 ke pengamat jaringan. Pilih wss://, atau gunakan ws:// hanya untuk relay .onion / jaringan lokal.</string>
+    <string name="tor_connecting">Menghubungkan ke Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Koneksi Tor gagal</string>
+    <string name="tor_restart">Mulai ulang</string>
 </resources>

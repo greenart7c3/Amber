@@ -731,10 +731,10 @@
     <string name="recover_from_backup">Recuperar do backup</string>
     <string name="importing_account">Importando conta %1$d</string>
     <string name="could_not_connect_to_relay">Não foi possível conectar ao relay. Gostaria de adicioná-lo mesmo assim?</string>
-    <string name="event_kind_25050"></string>
+    <string name="event_kind_25050">Sinalização WebRTC</string>
     <string name="event_kind_9733">Zap privado</string>
     <string name="event_kind_10101">Bons autores da wiki</string>
-    <string name="event_kind_10102"></string>
+    <string name="event_kind_10102">Bons relays de wiki</string>
     <string name="status_service_description">Notificação de relay</string>
     <string name="status">Status do relay</string>
     <string name="kind">Tipo</string>
@@ -860,4 +860,10 @@
     <string name="logs_subtitle">Ver a atividade do app</string>
     <string name="give_us_feedback_subtitle">Relatar um erro ou solicitar um recurso</string>
     <string name="update_settings_subtitle">Verificar novas versões</string>
+    <string name="require_unlocked_device">Exigir dispositivo desbloqueado para acesso à chave</string>
+    <string name="require_unlocked_device_description">Quando ativado, a chave do Keystore usada para descriptografar as chaves da sua conta armazenada não pode ser usada enquanto o dispositivo estiver bloqueado. Isso evita que qualquer código em execução no processo do Amber descriptografe suas chaves enquanto a tela estiver bloqueada. Observação: isso desativa a assinatura NIP-46 em segundo plano enquanto o dispositivo estiver bloqueado. Alternar isso requer a criptografia de todas as chaves armazenadas.</string>
+    <string name="insecure_relay_warning">Um relay inseguro (texto simples, ws://) pela internet pública expõe metadados e texto cifrado do NIP-46 a observadores de rede. Prefira wss://, ou use ws:// apenas para relays .onion / de rede local.</string>
+    <string name="tor_connecting">Conectando ao Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Falha na conexão ao Tor</string>
+    <string name="tor_restart">Reiniciar</string>
 </resources>

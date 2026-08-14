@@ -277,7 +277,7 @@
     <string name="event_kind_30020">创建或更新市场产品出售形式为拍卖</string>
     <string name="event_kind_30023">长篇内容</string>
     <string name="event_kind_30024">长篇内容草稿</string>
-    <string name="event_kind_30030"></string>
+    <string name="event_kind_30030">表情符号集</string>
     <string name="event_kind_30063">发行产物合集</string>
     <string name="event_kind_30078">特定应用数据</string>
     <string name="event_kind_30311">直播事件</string>
@@ -846,4 +846,10 @@
     <string name="logs_subtitle">查看应用活动</string>
     <string name="give_us_feedback_subtitle">报告错误或请求功能</string>
     <string name="update_settings_subtitle">检查新版本</string>
+    <string name="require_unlocked_device">访问密钥需要解锁设备</string>
+    <string name="require_unlocked_device_description">启用后，在设备锁定期间，将无法使用用于解密存储的帐户密钥的密钥库密钥。这可以防止在屏幕锁定期间 Amber 进程中运行的任何代码解密您的密钥。注意：这会在设备锁定期间禁用后台 NIP-46 签名。切换此设置需要重新加密所有存储的密钥。</string>
+    <string name="insecure_relay_warning">通过公共互联网进行的不安全（明文，ws://）中继会将 NIP-46 元数据和密文暴露给网络观察者。建议优先使用 wss://，或仅对 .onion / 本地网络中继使用 ws://。</string>
+    <string name="tor_connecting">正在连接到 Tor: %1$d%%</string>
+    <string name="tor_connection_failed">Tor 连接失败</string>
+    <string name="tor_restart">重启</string>
 </resources>

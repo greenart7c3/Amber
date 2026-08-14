@@ -578,7 +578,11 @@ fun parseRememberType(screenCode: Int): RememberType = when (screenCode) {
     RememberType.ONE_HOUR.screenCode -> RememberType.ONE_HOUR
     RememberType.ONE_DAY.screenCode -> RememberType.ONE_DAY
     RememberType.ONE_WEEK.screenCode -> RememberType.ONE_WEEK
-    else -> RememberType.ALWAYS
+    RememberType.ALWAYS.screenCode -> RememberType.ALWAYS
+    // Defense-in-depth (GHSA-8844-q5vh-9j8f, I2): unknown screenCode values
+    // previously failed open to ALWAYS. Fail closed to NEVER so a corrupted
+    // or unrecognized stored policy cannot grant indefinite auto-accept.
+    else -> RememberType.NEVER
 }
 
 enum class DeleteAfterType(val screenCode: Int, val resourceId: Int) {

@@ -862,4 +862,10 @@
     <string name="logs_subtitle">Voir l\'activité de l\'application</string>
     <string name="give_us_feedback_subtitle">Signaler un bug ou demander une fonctionnalité</string>
     <string name="update_settings_subtitle">Rechercher de nouvelles versions</string>
+    <string name="require_unlocked_device">Exiger un appareil déverrouillé pour l\'accès aux clés</string>
+    <string name="require_unlocked_device_description">Une fois activée, la clé Keystore utilisée pour déchiffrer les clés de votre compte stockées ne peut pas être utilisée lorsque l\'appareil est verrouillé. Cela empêche tout code s\'exécutant dans le processus d\'Amber de déchiffrer vos clés lorsque l\'écran est verrouillé. Remarque : cela désactive la signature NIP-46 en arrière-plan lorsque l\'appareil est verrouillé. L\'activation de cette option nécessite le rechiffrement de toutes les clés stockées.</string>
+    <string name="insecure_relay_warning">Un relais non sécurisé (texte clair, ws://) sur l\'Internet public expose les métadonnées et le texte chiffré NIP-46 aux observateurs du réseau. Préférez wss://, ou utilisez ws:// uniquement pour les relais .onion / réseau local.</string>
+    <string name="tor_connecting">Connexion à Tor : %1$d%%</string>
+    <string name="tor_connection_failed">Échec de la connexion à Tor</string>
+    <string name="tor_restart">Redémarrer</string>
 </resources>

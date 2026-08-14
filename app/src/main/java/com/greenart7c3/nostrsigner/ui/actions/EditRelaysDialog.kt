@@ -275,6 +275,26 @@ fun DefaultRelaysScreen(
                     },
                 )
 
+                // Defense-in-depth (GHSA-8844-q5vh-9j8f, I4): warn when the
+                // user explicitly types a ws:// URL for a non-onion /
+                // non-private-network relay, since NIP-46 traffic over
+                // cleartext exposes metadata + ciphertext to network
+                // observers. wss:// is the default; ws:// is auto-prefixed
+                // only for .onion / private IPs in onAddRelay.
+                val text = textFieldRelay.value.text
+                val showInsecureWarning = text.startsWith("ws://") &&
+                    !text.endsWith(".onion") &&
+                    !text.endsWith(".onion/") &&
+                    !Amber.instance.isPrivateIp(text)
+                if (showInsecureWarning) {
+                    Text(
+                        text = stringResource(R.string.insecure_relay_warning),
+                        color = MaterialTheme.colorScheme.error,
+                        modifier = Modifier.padding(vertical = 8.dp),
+                        fontSize = 12.sp,
+                    )
+                }
+
                 LazyColumn(
                     Modifier
                         .weight(1f),

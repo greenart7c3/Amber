@@ -166,6 +166,14 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
     }
 }
 
+val MIGRATION_18_19 = object : Migration(18, 19) {
+    override fun migrate(db: SupportSQLiteDatabase) {
+        db.execSQL("CREATE TABLE IF NOT EXISTS `bunker_event` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `eventId` TEXT NOT NULL, `time` INTEGER NOT NULL)")
+        db.execSQL("CREATE UNIQUE INDEX IF NOT EXISTS `index_bunker_event_id` ON `bunker_event` (`eventId`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_bunker_event_time` ON `bunker_event` (`time`)")
+    }
+}
+
 /**
  * GHSA-5fjp-ghh8-wch8 (CWE-312): envelope-encrypt the two NIP-46 secret columns
  * of the `application` table — `secret` (bunker shared secret) and `localKey`
@@ -180,9 +188,9 @@ val MIGRATION_17_18 = object : Migration(17, 18) {
  *
  * Idempotency: Room migrations run exactly once per version bump. The
  * migration is not safe to re-run on already-encrypted data (it would
- * double-encrypt), so it must only run between schema 18 and 19.
+ * double-encrypt), so it must only run between schema 19 and 20.
  */
-val MIGRATION_18_19 = object : Migration(18, 19) {
+val MIGRATION_19_20 = object : Migration(19, 20) {
     override fun migrate(db: SupportSQLiteDatabase) {
         db.beginTransaction()
         try {
@@ -207,7 +215,7 @@ val MIGRATION_18_19 = object : Migration(18, 19) {
             }
             db.setTransactionSuccessful()
         } catch (e: Exception) {
-            AmberLog.e(Amber.TAG, "MIGRATION_18_19: failed to envelope-encrypt application secrets", e)
+            AmberLog.e(Amber.TAG, "MIGRATION_19_20: failed to envelope-encrypt application secrets", e)
             throw e
         } finally {
             db.endTransaction()
@@ -219,12 +227,15 @@ val MIGRATION_18_19 = object : Migration(18, 19) {
     entities = [
         ApplicationEntity::class,
         ApplicationPermissionsEntity::class,
+        BunkerEventEntity::class,
     ],
-    version = 19,
+    version = 20,
 )
 @TypeConverters(Converters::class)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun dao(): ApplicationDao
+
+    abstract fun bunkerEventDao(): BunkerEventDao
 
     companion object {
         fun getDatabase(
@@ -260,6 +271,7 @@ abstract class AppDatabase : RoomDatabase() {
                     .addMigrations(MIGRATION_16_17)
                     .addMigrations(MIGRATION_17_18)
                     .addMigrations(MIGRATION_18_19)
+                    .addMigrations(MIGRATION_19_20)
                     .build()
 
             instance

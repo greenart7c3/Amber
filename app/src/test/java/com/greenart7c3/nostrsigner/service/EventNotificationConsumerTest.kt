@@ -1,6 +1,7 @@
 package com.greenart7c3.nostrsigner.service
 
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.database.AppDatabase
 import com.greenart7c3.nostrsigner.database.ApplicationDao
@@ -9,6 +10,7 @@ import com.greenart7c3.nostrsigner.models.Account
 import com.vitorpamplona.quartz.nip01Core.core.Event
 import com.vitorpamplona.quartz.nip01Core.crypto.verify
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
+import com.vitorpamplona.quartz.nip01Core.tags.people.PTag
 import com.vitorpamplona.quartz.nip01Core.tags.people.taggedUsers
 import com.vitorpamplona.quartz.nip40Expiration.ExpirationTag
 import com.vitorpamplona.quartz.nip46RemoteSigner.NostrConnectEvent
@@ -41,7 +43,7 @@ class EventNotificationConsumerTest {
 
     @Before
     fun setUp() {
-        mockkStatic("com.vitorpamplona.quartz.nip01Core.crypto.EventKt")
+        mockkStatic("com.vitorpamplona.quartz.nip01Core.crypto.EventExtKt")
         mockkStatic("com.vitorpamplona.quartz.nip01Core.tags.people.EventExtKt")
         mockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
 
@@ -52,28 +54,42 @@ class EventNotificationConsumerTest {
         every { database.dao() } returns dao
 
         amber = mockk(relaxed = true)
+        every { amber.applicationIOScope } returns scope
         every { amber.getDatabase(any()) } returns database
         every { amber.dao(any()) } returns dao
         installAmberInstance(amber)
+
+        mockkObject(AmberLog)
+        every { AmberLog.d(any(), any()) } returns Unit
+        every { AmberLog.d(any(), any(), any()) } returns Unit
 
         mockkObject(LocalPreferences)
         account = newTestAccount(scope)
 
         consumer = spyk(EventNotificationConsumer(mockk(relaxed = true)))
-        every { consumer["notificationManager"]() } returns mockk(relaxed = true)
+        every { consumer.saveLog(any(), any(), any()) } returns Unit
+        val nm = mockk<android.app.NotificationManager>(relaxed = true)
+        every { nm.areNotificationsEnabled() } returns true
+        every { consumer.notificationManager() } returns nm
+
+        mockkObject(NotificationUtils)
+        every { NotificationUtils.getOrCreateBunkerChannel(any()) } returns mockk(relaxed = true)
+        every { NotificationUtils.getOrCreateErrorsChannel(any()) } returns mockk(relaxed = true)
     }
 
     @After
     fun tearDown() {
+        unmockkObject(NotificationUtils)
+        unmockkObject(AmberLog)
         unmockkObject(LocalPreferences)
-        unmockkStatic("com.vitorpamplona.quartz.nip01Core.crypto.EventKt")
+        unmockkStatic("com.vitorpamplona.quartz.nip01Core.crypto.EventExtKt")
         unmockkStatic("com.vitorpamplona.quartz.nip01Core.tags.people.EventExtKt")
         unmockkStatic("com.vitorpamplona.quartz.nip40Expiration.EventExtKt")
     }
 
     @Test
     fun `consume rejects old events`() = runBlocking {
-        val event = mockk<Event>()
+        val event = mockk<Event>(relaxed = true)
         every { event.verify() } returns true
         every { event.kind } returns NostrConnectEvent.KIND
         every { event.createdAt } returns (TimeUtils.now() - TimeUtils.FIVE_MINUTES - 1)
@@ -85,7 +101,7 @@ class EventNotificationConsumerTest {
 
     @Test
     fun `consume rejects future events`() = runBlocking {
-        val event = mockk<Event>()
+        val event = mockk<Event>(relaxed = true)
         every { event.verify() } returns true
         every { event.kind } returns NostrConnectEvent.KIND
         every { event.createdAt } returns (TimeUtils.now() + TimeUtils.FIVE_MINUTES + 1)
@@ -97,7 +113,7 @@ class EventNotificationConsumerTest {
 
     @Test
     fun `consume rejects expired events`() = runBlocking {
-        val event = mockk<Event>()
+        val event = mockk<Event>(relaxed = true)
         every { event.verify() } returns true
         every { event.kind } returns NostrConnectEvent.KIND
         every { event.createdAt } returns TimeUtils.now()
@@ -111,19 +127,20 @@ class EventNotificationConsumerTest {
 
     @Test
     fun `consume rejects duplicate events persistently`() = runBlocking {
-        val event = mockk<Event>()
+        val event = mockk<Event>(relaxed = true)
         every { event.id } returns "event1"
         every { event.verify() } returns true
         every { event.kind } returns NostrConnectEvent.KIND
         every { event.createdAt } returns TimeUtils.now()
         every { event.tags } returns arrayOf(arrayOf("p", account.hexKey))
+        every { event.taggedUsers() } returns listOf(PTag(account.hexKey))
 
         coEvery { LocalPreferences.loadFromEncryptedStorageSync(any(), any()) } returns account
         coEvery { bunkerEventDao.exists("event1") } returns true
 
         consumer.consume(event, NormalizedRelayUrl("wss://relay.com"))
 
-        coVerify(exactly = 1) { bunkerEventDao.exists("event1") }
+        coVerify(exactly = 1) { bunkerEventDao.exists(any()) }
         coVerify(exactly = 0) { bunkerEventDao.insert(any()) }
     }
 }

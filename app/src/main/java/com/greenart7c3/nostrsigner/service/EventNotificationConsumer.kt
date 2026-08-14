@@ -75,7 +75,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 
 class EventNotificationConsumer(private val applicationContext: Context) {
-    private fun saveLog(
+    internal fun saveLog(
         text: String,
         url: String,
         npub: String? = null,

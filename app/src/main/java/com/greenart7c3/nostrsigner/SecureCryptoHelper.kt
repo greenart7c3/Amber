@@ -40,9 +40,7 @@ object SecureCryptoHelper {
      * here so blocking callers do not need a [kotlinx.coroutines.runBlocking]
      * bridge.
      */
-    fun encryptBlocking(plainText: String): String {
-        return encryptWithKey(getOrCreateSecretKey(), plainText)
-    }
+    fun encryptBlocking(plainText: String): String = encryptWithKey(getOrCreateSecretKey(), plainText)
 
     private fun encryptWithKey(key: SecretKey, plainText: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -62,9 +60,7 @@ object SecureCryptoHelper {
      * Non-suspending equivalent of [decrypt]. See [encryptBlocking] for the
      * rationale.
      */
-    fun decryptBlocking(encryptedText: String): String {
-        return decryptWithKey(getOrCreateSecretKey(), encryptedText)
-    }
+    fun decryptBlocking(encryptedText: String): String = decryptWithKey(getOrCreateSecretKey(), encryptedText)
 
     private fun decryptWithKey(key: SecretKey, encryptedText: String): String {
         val data = Base64.decode(encryptedText, Base64.NO_WRAP)

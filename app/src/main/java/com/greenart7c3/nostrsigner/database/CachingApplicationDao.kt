@@ -257,6 +257,10 @@ class CachingApplicationDao(
 
     override suspend fun getAllWithLocalKeyRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllWithLocalKeyRaw(pubKey)
 
+    // Key-rotation write path: secret/localKey never feed a cached read, so a
+    // plain delegation with no invalidation is correct.
+    override suspend fun updateEncryptedColumnsRaw(key: String, secret: String, localKey: String) = delegate.updateEncryptedColumnsRaw(key, secret, localKey)
+
     override suspend fun insertApplicationRaw(event: ApplicationEntity): Long? = delegate.insertApplicationRaw(event)
 
     override fun insertAllRaw(events: List<ApplicationEntity>): List<Long>? = delegate.insertAllRaw(events)

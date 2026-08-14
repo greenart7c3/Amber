@@ -173,6 +173,51 @@ class ApplicationEntityCryptoTest {
         assertEquals("empty", found?.key)
     }
 
+    /**
+     * Key-rotation write path (SecureCryptoHelper.rotateKey step 4): the DAO
+     * must accept already-encrypted column values written under the target
+     * Keystore key so the wrapper reads decrypt them back to plaintext.
+     */
+    @Test
+    fun updateEncryptedColumnsRaw_rewritesRowCiphertext_readBackThroughWrapper() = runBlocking {
+        dao.insertApplication(newEntity(key = "rot"))
+
+        val newSecret = "99999999-8888-7777-6666-555555555555"
+        val newLocalKey = "ef".repeat(32)
+        dao.updateEncryptedColumnsRaw(
+            key = "rot",
+            secret = SecureCryptoHelper.encryptBlocking(newSecret),
+            localKey = SecureCryptoHelper.encryptBlocking(newLocalKey),
+        )
+
+        val read = dao.getByKey("rot")?.application
+        assertNotNull(read)
+        assertEquals(newSecret, read?.secret)
+        assertEquals(newLocalKey, read?.localKey)
+        // Raw columns were replaced, not duplicated/concatenated.
+        val rawCursor = db.openHelper.readableDatabase.query(
+            "SELECT `secret` FROM application WHERE `key` = ?",
+            arrayOf("rot"),
+        )
+        rawCursor.use { c ->
+            assertTrue(c.moveToFirst())
+            assertNotEquals(newSecret, c.getString(0))
+            assertEquals(newSecret, SecureCryptoHelper.decryptBlocking(c.getString(0)))
+        }
+    }
+
+    @Test
+    fun updateEncryptedColumnsRaw_emptySentinel_roundTripsEmpty() = runBlocking {
+        dao.insertApplication(newEntity(key = "rotEmpty"))
+
+        dao.updateEncryptedColumnsRaw(key = "rotEmpty", secret = "", localKey = "")
+
+        val read = dao.getByKey("rotEmpty")?.application
+        assertNotNull(read)
+        assertEquals("", read?.secret)
+        assertEquals("", read?.localKey)
+    }
+
     @Test
     fun insertApplicationWithPermissions_encryptsAndReReadsPlaintext() = runBlocking {
         val entity = newEntity(key = "permApp")

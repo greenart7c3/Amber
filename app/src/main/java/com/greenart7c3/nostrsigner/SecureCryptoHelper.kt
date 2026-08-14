@@ -18,6 +18,7 @@ import kotlinx.coroutines.sync.withLock
 object SecureCryptoHelper {
     private const val ANDROID_KEYSTORE = "AndroidKeyStore"
     private const val KEY_ALIAS = "AMBER_AES_KEY"
+    private const val TAG = "SecureCryptoHelper"
     private const val TRANSFORMATION = "AES/GCM/NoPadding"
     private const val IV_SIZE = 12 // 96 bits
     private const val TAG_SIZE = 128 // bits
@@ -117,7 +118,7 @@ object SecureCryptoHelper {
                 keyGenerator.init(paramsBuilder.build())
                 return keyGenerator.generateKey()
             } catch (e: Exception) {
-                AmberLog.w("SecureCryptoHelper", "StrongBox generation failed, falling back to TEE", e)
+                AmberLog.w(TAG, "StrongBox generation failed, falling back to TEE", e)
                 paramsBuilder.setIsStrongBoxBacked(false)
                 keyGenerator.init(paramsBuilder.build())
                 return keyGenerator.generateKey()
@@ -130,7 +131,9 @@ object SecureCryptoHelper {
 
     /**
      * Rotates the [KEY_ALIAS] Keystore key, re-encrypting every stored secret
-     * (per-account DataStore keys, app DataStore PIN, and WebDAV password).
+     * (per-account DataStore keys, app DataStore PIN, WebDAV password, and the
+     * per-account Room `application` tables' envelope-encrypted `secret` /
+     * `localKey` columns — see `ApplicationEntityCrypto.kt`).
      *
      * The Keystore `setUnlockedDeviceRequired` flag is set at key-generation
      * time, so toggling the opt-in policy requires destroying and recreating
@@ -140,8 +143,8 @@ object SecureCryptoHelper {
      * it runs after all decryptions succeed).
      *
      * Uses internal non-locking cipher methods ([encryptWithKey]/
-     * [decryptWithKey]) and raw DataStore helpers to avoid mutex reentrancy
-     * (Kotlin's [Mutex] is not reentrant).
+     * [decryptWithKey]) and raw DataStore/DAO helpers to avoid mutex
+     * reentrancy (Kotlin's [Mutex] is not reentrant).
      */
     suspend fun rotateKey(context: Context, requireUnlockedDevice: Boolean) = mutex.withLock {
         val keyStore = getKeyStore()
@@ -198,6 +201,28 @@ object SecureCryptoHelper {
             null
         }
 
+        // 1b. Read the per-account Room `application` tables and decrypt the
+        // envelope-encrypted `secret`/`localKey` columns (GHSA-5fjp-ghh8-wch8)
+        // with the old key — still before any destructive step. Rows whose
+        // columns fail to decrypt keep their raw ciphertext on write-back
+        // (rotation must not destroy data it cannot recover).
+        val decryptedAppRows = mutableMapOf<String, List<RotatedAppRow>>()
+        for (acc in accounts) {
+            val rows = runCatching { Amber.instance.dao(acc.npub).getAllApplicationsRaw() }
+                .onFailure { AmberLog.w(TAG, "Key rotation: failed to read application rows", it) }
+                .getOrElse { emptyList() }
+            decryptedAppRows[acc.npub] = rows.mapNotNull { row ->
+                if (row.secret.isEmpty() && row.localKey.isEmpty()) return@mapNotNull null
+                RotatedAppRow(
+                    key = row.key,
+                    secretPlain = row.secret.decryptOrNullWith(oldKey),
+                    localKeyPlain = row.localKey.decryptOrNullWith(oldKey),
+                    secretRaw = row.secret,
+                    localKeyRaw = row.localKey,
+                )
+            }
+        }
+
         // 2. Delete the old key and generate a new one with the new policy.
         keyStore.deleteEntry(KEY_ALIAS)
         val newKey = generateSecretKey(requireUnlockedDevice)
@@ -218,8 +243,52 @@ object SecureCryptoHelper {
             LocalPreferences.saveWebDavPasswordEncrypted(context, encryptWithKey(newKey, it))
         }
 
-        AmberLog.d("SecureCryptoHelper", "Key rotation complete (requireUnlockedDevice=$requireUnlockedDevice)")
+        // 4. Re-encrypt the per-account `application` rows with the new key
+        // and write them back through the raw (ciphertext-in, ciphertext-out)
+        // update. Columns whose old-key decryption failed are written back
+        // verbatim, matching the `decryptField` failure contract in
+        // ApplicationEntityCrypto.kt.
+        for ((npub, rows) in decryptedAppRows) {
+            val dao = runCatching { Amber.instance.dao(npub) }.getOrNull() ?: continue
+            for (row in rows) {
+                runCatching {
+                    dao.updateEncryptedColumnsRaw(
+                        key = row.key,
+                        secret = row.secretPlain?.let { encryptWithKey(newKey, it) } ?: row.secretRaw,
+                        localKey = row.localKeyPlain?.let { encryptWithKey(newKey, it) } ?: row.localKeyRaw,
+                    )
+                }.onFailure {
+                    AmberLog.w(TAG, "Key rotation: failed to re-encrypt application row", it)
+                }
+            }
+        }
+
+        AmberLog.d(TAG, "Key rotation complete (requireUnlockedDevice=$requireUnlockedDevice)")
     }
+
+    private fun String.decryptOrNullWith(key: SecretKey): String? = if (isEmpty()) {
+        null
+    } else {
+        try {
+            decryptWithKey(key, this)
+        } catch (_: Exception) {
+            null
+        }
+    }
+
+    /**
+     * One `application`-table row staged during key rotation: [secretPlain] /
+     * [localKeyPlain] hold the old-key decryption result (or `null` when the
+     * ciphertext was unreadable — those rows keep [secretRaw]/[localKeyRaw]
+     * verbatim on write-back so no data is lost).
+     */
+    private data class RotatedAppRow(
+        val key: String,
+        val secretPlain: String?,
+        val localKeyPlain: String?,
+        val secretRaw: String,
+        val localKeyRaw: String,
+    )
 }
 
 fun Context.hasStrongBox(): Boolean {

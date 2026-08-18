@@ -15,8 +15,8 @@ android {
     defaultConfig {
         applicationId = "com.greenart7c3.nostrsigner"
         minSdk = 26
-        versionCode = 200
-        versionName = "6.5.1"
+        versionCode = 201
+        versionName = "6.5.2"
 
         buildConfigField("boolean", "IS_FDROID_BUILD", "false")
 

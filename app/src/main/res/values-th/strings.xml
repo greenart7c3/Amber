@@ -843,6 +843,8 @@
     <string name="update_settings_subtitle">ตรวจหาเวอร์ชันใหม่</string>
     <string name="require_unlocked_device">ต้องปลดล็อกอุปกรณ์เพื่อเข้าถึงคีย์</string>
     <string name="require_unlocked_device_description">เมื่อเปิดใช้งาน คีย์ Keystore ที่ใช้ในการถอดรหัสคีย์บัญชีที่เก็บไว้ของคุณจะไม่สามารถใช้งานได้ในขณะที่อุปกรณ์ถูกล็อก ซึ่งจะช่วยป้องกันไม่ให้โค้ดใดๆ ที่ทำงานในกระบวนการของ Amber ถอดรหัสคีย์ของคุณในขณะที่หน้าจอถูกล็อก หมายเหตุ: การดำเนินการนี้จะปิดใช้งานการลงนาม NIP-46 ในเบื้องหลังในขณะที่อุปกรณ์ถูกล็อก การสลับการตั้งค่านี้ต้องมีการเข้ารหัสคีย์ที่เก็บไว้ทั้งหมดใหม่</string>
+    <string name="require_unlocked_device_updating">กำลังเข้ารหัสคีย์ที่เก็บไว้ทั้งหมดใหม่…</string>
+    <string name="require_unlocked_device_do_not_close">อย่าปิดแอปหรือล็อกหน้าจอจนกว่าจะเสร็จสิ้น</string>
     <string name="insecure_relay_warning">รีเลย์ที่ไม่ปลอดภัย (ข้อความธรรมดา, ws://) ผ่านอินเทอร์เน็ตสาธารณะจะเปิดเผยข้อมูลเมตาและข้อความไซเฟอร์เท็กซ์ของ NIP-46 ต่อผู้สังเกตการณ์เครือข่าย แนะนำให้ใช้ wss:// หรือใช้ ws:// เฉพาะสำหรับรีเลย์ .onion / เครือข่ายท้องถิ่นเท่านั้น</string>
     <string name="tor_connecting">กำลังเชื่อมต่อกับ Tor: %1$d%%</string>
     <string name="tor_connection_failed">การเชื่อมต่อ Tor ล้มเหลว</string>

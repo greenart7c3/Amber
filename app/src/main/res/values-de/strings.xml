@@ -864,6 +864,8 @@
     <string name="update_settings_subtitle">Nach neuen Versionen suchen</string>
     <string name="require_unlocked_device">Entsperrtes Gerät für den Schlüsselzugriff anfordern</string>
     <string name="require_unlocked_device_description">Wenn aktiviert, kann der Keystore-Schlüssel zum Entschlüsseln Ihrer gespeicherten Kontoschlüssel nicht verwendet werden, während das Gerät gesperrt ist. Dies verhindert, dass Code, der im Amber-Prozess ausgeführt wird, Ihre Schlüssel entschlüsselt, während der Bildschirm gesperrt ist. Hinweis: Dies deaktiviert die Hintergrund-NIP-46-Signierung, während das Gerät gesperrt ist. Das Umschalten erfordert eine erneute Verschlüsselung aller gespeicherten Schlüssel.</string>
+    <string name="require_unlocked_device_updating">Alle gespeicherten Schlüssel werden neu verschlüsselt…</string>
+    <string name="require_unlocked_device_do_not_close">Schließen Sie die App nicht und sperren Sie den Bildschirm nicht, bis dies abgeschlossen ist.</string>
     <string name="insecure_relay_warning">Unsicheres (Klartext, ws://) Relay über das öffentliche Internet legt NIP-46-Metadaten und Chiffretext für Netzwerkbeobachter offen. Bevorzugen Sie wss://, oder verwenden Sie ws:// nur für .onion / lokale Netzwerk-Relays.</string>
     <string name="tor_connecting">Verbinde mit Tor: %1$d%%</string>
     <string name="tor_connection_failed">Tor-Verbindung fehlgeschlagen</string>

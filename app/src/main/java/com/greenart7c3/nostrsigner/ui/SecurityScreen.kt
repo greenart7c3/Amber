@@ -8,6 +8,8 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -27,6 +29,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 import com.greenart7c3.nostrsigner.Amber
+import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.LocalPreferences
 import com.greenart7c3.nostrsigner.R
 import com.greenart7c3.nostrsigner.ui.components.AmberButton
@@ -52,11 +55,31 @@ fun SecurityScreen(
     val setupPin by remember { mutableStateOf(Amber.instance.settings.usePin) }
     var privacyMode by remember { mutableStateOf(Amber.instance.settings.privacyMode) }
     var requireUnlockedDevice by remember { mutableStateOf(Amber.instance.settings.requireUnlockedDevice) }
+    var requireUnlockedDeviceUpdating by remember { mutableStateOf(false) }
     var biometricsIndex by remember {
         mutableIntStateOf(Amber.instance.settings.biometricsTimeType.screenCode)
     }
     val scope = rememberCoroutineScope()
     val context = LocalContext.current
+    fun toggleRequireUnlockedDevice(enabled: Boolean) {
+        requireUnlockedDevice = enabled
+        requireUnlockedDeviceUpdating = true
+        // Use the application-scoped IOScope, not the
+        // composition scope: key rotation must complete
+        // even if the user leaves the screen/app, or
+        // stored secrets could be left inaccessible.
+        Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
+            try {
+                LocalPreferences.updateRequireUnlockedDevice(context, enabled)
+            } catch (e: Exception) {
+                AmberLog.e(Amber.TAG, "Error toggling require unlocked device", e)
+            } finally {
+                // Re-sync the toggle with the persisted setting (reverts on failure)
+                requireUnlockedDevice = Amber.instance.settings.requireUnlockedDevice
+                requireUnlockedDeviceUpdating = false
+            }
+        }
+    }
     Surface(
         modifier.fillMaxSize(),
         color = MaterialTheme.colorScheme.background,
@@ -129,16 +152,8 @@ fun SecurityScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 8.dp, vertical = 4.dp)
-                        .clickable {
-                            val newValue = !requireUnlockedDevice
-                            requireUnlockedDevice = newValue
-                            // Use the application-scoped IOScope, not the
-                            // composition scope: key rotation must complete
-                            // even if the user leaves the screen/app, or
-                            // stored secrets could be left inaccessible.
-                            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                                LocalPreferences.updateRequireUnlockedDevice(context, newValue)
-                            }
+                        .clickable(enabled = !requireUnlockedDeviceUpdating) {
+                            toggleRequireUnlockedDevice(!requireUnlockedDevice)
                         },
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
@@ -148,14 +163,32 @@ fun SecurityScreen(
                             style = MaterialTheme.typography.bodySmall,
                             color = Color.Gray,
                         )
+                        if (requireUnlockedDeviceUpdating) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(16.dp),
+                                    strokeWidth = 2.dp,
+                                )
+                                Text(
+                                    text = stringResource(R.string.require_unlocked_device_updating),
+                                    style = MaterialTheme.typography.bodySmall,
+                                )
+                            }
+                            Text(
+                                text = stringResource(R.string.require_unlocked_device_do_not_close),
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
                     }
                     Switch(
                         checked = requireUnlockedDevice,
+                        enabled = !requireUnlockedDeviceUpdating,
                         onCheckedChange = { enabled ->
-                            requireUnlockedDevice = enabled
-                            Amber.instance.applicationIOScope.launch(Dispatchers.IO) {
-                                LocalPreferences.updateRequireUnlockedDevice(context, enabled)
-                            }
+                            toggleRequireUnlockedDevice(enabled)
                         },
                     )
                 }

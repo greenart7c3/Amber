@@ -60,6 +60,7 @@ See `CLAUDE.md` for the key-files table (verified accurate against the current t
 
 - ktlint `android_studio` code style (`.editorconfig`); star imports effectively disabled; trailing commas allowed; `@Composable` functions exempt from the function-naming rule. Run `ktlintFormat` rather than hand-formatting.
 - Translations live in `app/src/main/res/values-<locale>/strings.xml`; `MissingTranslation` lint is intentionally disabled and the shipped locales are pinned by `androidResources.localeFilters` in `app/build.gradle.kts`.
+- **Always translate string resources.** Whenever you add or change a string in `app/src/main/res/values/strings.xml`, add the translated entry to **every** existing `app/src/main/res/values-*/strings.xml` locale file in the same change (list them with `ls app/src/main/res | grep '^values-'`, ignoring `values-night`). Do not ship English placeholders in locale files — write the actual translation, matching the existing tone/registers of that file. Escape apostrophes as `\'` in languages that use them (e.g. French, Italian, Turkish), exactly like neighboring entries.
 - Git hooks (`git-hooks/pre-commit`, `pre-push`) are auto-installed by the root `build.gradle.kts` `installGitHook` task wired into `:app` `preBuild`. Do not rely on them as a substitute for running checks directly.
 
 ## Codex Web / cloud setup

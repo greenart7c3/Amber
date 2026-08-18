@@ -862,6 +862,8 @@
     <string name="update_settings_subtitle">Verificar novas versões</string>
     <string name="require_unlocked_device">Exigir dispositivo desbloqueado para acesso à chave</string>
     <string name="require_unlocked_device_description">Quando ativado, a chave do Keystore usada para descriptografar as chaves da sua conta armazenada não pode ser usada enquanto o dispositivo estiver bloqueado. Isso evita que qualquer código em execução no processo do Amber descriptografe suas chaves enquanto a tela estiver bloqueada. Observação: isso desativa a assinatura NIP-46 em segundo plano enquanto o dispositivo estiver bloqueado. Alternar isso requer a criptografia de todas as chaves armazenadas.</string>
+    <string name="require_unlocked_device_updating">Recriptografando todas as chaves armazenadas…</string>
+    <string name="require_unlocked_device_do_not_close">Não feche o aplicativo nem bloqueie a tela até que isso seja concluído.</string>
     <string name="insecure_relay_warning">Um relay inseguro (texto simples, ws://) pela internet pública expõe metadados e texto cifrado do NIP-46 a observadores de rede. Prefira wss://, ou use ws:// apenas para relays .onion / de rede local.</string>
     <string name="tor_connecting">Conectando ao Tor: %1$d%%</string>
     <string name="tor_connection_failed">Falha na conexão ao Tor</string>

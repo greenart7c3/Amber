@@ -863,6 +863,8 @@
     <string name="update_settings_subtitle">Yeni sürümleri kontrol edin</string>
     <string name="require_unlocked_device">Anahtar erişimi için kilit açılmış cihaz gerektir</string>
     <string name="require_unlocked_device_description">Etkinleştirildiğinde, kayıtlı hesap anahtarlarınızı çözmek için kullanılan Keystore anahtarı cihaz kilitliyken kullanılamaz. Bu, ekran kilitliyken Amber\'ın sürecinde çalışan herhangi bir kodun anahtarlarınızı çözmesini engeller. Not: Bu, cihaz kilitliyken arka planda NIP-46 imzalama işlemini devre dışı bırakır. Bunu değiştirmek, kayıtlı tüm anahtarların yeniden şifrelenmesini gerektirir.</string>
+    <string name="require_unlocked_device_updating">Kayıtlı tüm anahtarlar yeniden şifreleniyor…</string>
+    <string name="require_unlocked_device_do_not_close">Bu işlem bitene kadar uygulamayı kapatmayın veya ekranı kilitlemeyin.</string>
     <string name="insecure_relay_warning">Genel internet üzerindeki güvensiz (açık metin, ws://) röle, NIP-46 meta verilerini ve şifreli metni ağ gözlemcilerine ifşa eder. wss:// tercih edin veya ws://\'yi yalnızca .onion / yerel ağ röleleri için kullanın.</string>
     <string name="tor_connecting">Tor\'a bağlanılıyor: %1$d%%</string>
     <string name="tor_connection_failed">Tor bağlantısı başarısız oldu</string>

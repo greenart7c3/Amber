@@ -1,7 +1,5 @@
 package com.greenart7c3.nostrsigner.database
 
-import androidx.paging.PagingSource
-import androidx.paging.PagingState
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.SecureCryptoHelper
@@ -65,28 +63,3 @@ fun ApplicationEntity.decryptFromStorage(): ApplicationEntity = copy(
 
 /** Decrypts the embedded [ApplicationWithPermissions.application] after a Room read. */
 fun ApplicationWithPermissions.decryptFromStorage(): ApplicationWithPermissions = copy(application = application.decryptFromStorage())
-
-/**
- * Wraps a raw (encrypted-column) [PagingSource] and decrypts every
- * [ApplicationEntity] emitted by a successful [LoadResult.Page]. Error and
- * Invalid results are passed through unchanged. Used by
- * [ApplicationDao.getAllPaging] so the `ApplicationsScreen` Pager sees
- * plaintext entities exactly like the non-paging DAO reads.
- */
-internal class DecryptingPagingSource(
-    private val delegate: PagingSource<Int, ApplicationEntity>,
-) : PagingSource<Int, ApplicationEntity>() {
-    override fun getRefreshKey(state: PagingState<Int, ApplicationEntity>): Int? = delegate.getRefreshKey(state)
-
-    override suspend fun load(params: PagingSource.LoadParams<Int>): PagingSource.LoadResult<Int, ApplicationEntity> = when (val result = delegate.load(params)) {
-        is PagingSource.LoadResult.Page -> PagingSource.LoadResult.Page(
-            data = result.data.map { it.decryptFromStorage() },
-            prevKey = result.prevKey,
-            nextKey = result.nextKey,
-            itemsBefore = result.itemsBefore,
-            itemsAfter = result.itemsAfter,
-        )
-        is PagingSource.LoadResult.Error -> result
-        is PagingSource.LoadResult.Invalid -> result
-    }
-}

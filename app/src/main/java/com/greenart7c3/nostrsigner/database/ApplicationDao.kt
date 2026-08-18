@@ -54,13 +54,19 @@ interface ApplicationDao {
 
     suspend fun getAllNotConnected(): List<ApplicationWithPermissions> = getAllNotConnectedRaw().map { it.decryptFromStorage() }
 
-    @Query("SELECT a.* FROM application a WHERE a.pubKey = :pubKey ORDER BY a.lastUsed DESC")
-    fun getAllPagingRaw(pubKey: String): PagingSource<Int, ApplicationEntity>
-
-    fun getAllPaging(pubKey: String): PagingSource<Int, ApplicationEntity> = DecryptingPagingSource(getAllPagingRaw(pubKey))
-
     @Query("SELECT DISTINCT relays FROM application")
     fun getAllRelayLists(): List<RelayListWrapper>
+
+    /**
+     * Paged Applications-list projection. Selects only the rendered columns
+     * ([ApplicationListItem]) and deliberately NOT the envelope-encrypted
+     * `secret`/`localKey` columns: each Keystore decrypt is a binder + TEE
+     * round trip, and the list screen renders neither field, so a `SELECT *`
+     * here made the screen pay 2 × rows cipher operations per page (Paging's
+     * initial load is 3 × pageSize rows) for values it never reads.
+     */
+    @Query("SELECT `key`, name, relays, icon, lastUsed FROM application WHERE pubKey = :pubKey ORDER BY lastUsed DESC")
+    fun getApplicationListItemsPaging(pubKey: String): PagingSource<Int, ApplicationListItem>
 
     @Query("SELECT name FROM application WHERE `key` = :key LIMIT 1")
     suspend fun getAppName(key: String): String?

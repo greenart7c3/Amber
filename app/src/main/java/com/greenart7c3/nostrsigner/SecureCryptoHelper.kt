@@ -7,7 +7,11 @@ import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import java.nio.ByteBuffer
+import java.security.InvalidKeyException
 import java.security.KeyStore
+import java.security.KeyStoreException
+import java.security.ProviderException
+import java.security.UnrecoverableKeyException
 import javax.crypto.Cipher
 import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
@@ -24,12 +28,26 @@ object SecureCryptoHelper {
     private const val TAG_SIZE = 128 // bits
     private val mutex = Mutex()
 
+    /**
+     * Cached handle to the [KEY_ALIAS] key. An AndroidKeyStore [SecretKey] is
+     * a lightweight reference (the material never leaves the TEE/StrongBox),
+     * but fetching it costs a fresh KeyStore load plus `containsAlias`/
+     * `getEntry` binder round-trips to the keystore daemon — milliseconds
+     * each, sequential. Re-fetching it per cipher operation made every
+     * envelope-encrypted DAO read pay a keystore lookup per field
+     * (see ApplicationEntityCrypto.kt), which dominated load times.
+     * Invalidated by [rotateKey] and by [withFreshKeyRetry] when a
+     * cached handle is found unusable.
+     */
+    @Volatile
+    private var cachedSecretKey: SecretKey? = null
+
     suspend fun encrypt(plainText: String): String = mutex.withLock {
-        encryptWithKey(getOrCreateSecretKey(), plainText)
+        withFreshKeyRetry { key -> encryptWithKey(key, plainText) }
     }
 
     suspend fun decrypt(encryptedText: String): String = mutex.withLock {
-        decryptWithKey(getOrCreateSecretKey(), encryptedText)
+        withFreshKeyRetry { key -> decryptWithKey(key, encryptedText) }
     }
 
     /**
@@ -41,7 +59,7 @@ object SecureCryptoHelper {
      * here so blocking callers do not need a [kotlinx.coroutines.runBlocking]
      * bridge.
      */
-    fun encryptBlocking(plainText: String): String = encryptWithKey(getOrCreateSecretKey(), plainText)
+    fun encryptBlocking(plainText: String): String = withFreshKeyRetry { key -> encryptWithKey(key, plainText) }
 
     private fun encryptWithKey(key: SecretKey, plainText: String): String {
         val cipher = Cipher.getInstance(TRANSFORMATION)
@@ -61,7 +79,7 @@ object SecureCryptoHelper {
      * Non-suspending equivalent of [decrypt]. See [encryptBlocking] for the
      * rationale.
      */
-    fun decryptBlocking(encryptedText: String): String = decryptWithKey(getOrCreateSecretKey(), encryptedText)
+    fun decryptBlocking(encryptedText: String): String = withFreshKeyRetry { key -> decryptWithKey(key, encryptedText) }
 
     private fun decryptWithKey(key: SecretKey, encryptedText: String): String {
         val data = Base64.decode(encryptedText, Base64.NO_WRAP)
@@ -78,7 +96,43 @@ object SecureCryptoHelper {
         return String(plainBytes, Charsets.UTF_8)
     }
 
+    /**
+     * Runs [block] with the current key handle, retrying exactly once with a
+     * re-fetched handle when the cached one has gone stale (the entry was
+     * deleted or invalidated underneath us — e.g. a concurrent [rotateKey],
+     * or the opt-in unlocked-device policy refusing key use while locked).
+     * Data errors — chiefly GCM's AEADBadTagException for corrupt or
+     * wrong-key ciphertext — are not stale-handle errors and propagate to the
+     * caller on the first attempt, preserving the decryptField failure
+     * contract in ApplicationEntityCrypto.kt.
+     */
+    private inline fun <T> withFreshKeyRetry(block: (SecretKey) -> T): T {
+        try {
+            return block(getOrCreateSecretKey())
+        } catch (e: InvalidKeyException) {
+            AmberLog.w(TAG, "Cached Keystore key unusable, re-fetching once", e)
+        } catch (e: KeyStoreException) {
+            AmberLog.w(TAG, "Keystore failure with cached key, re-fetching once", e)
+        } catch (e: UnrecoverableKeyException) {
+            AmberLog.w(TAG, "Cached Keystore key unrecoverable, re-fetching once", e)
+        } catch (e: ProviderException) {
+            AmberLog.w(TAG, "Keystore provider failure, re-fetching key once", e)
+        }
+        cachedSecretKey = null
+        return block(getOrCreateSecretKey())
+    }
+
     private fun getOrCreateSecretKey(): SecretKey {
+        cachedSecretKey?.let { return it }
+        return synchronized(this) {
+            cachedSecretKey?.let { return it }
+            val key = loadOrCreateSecretKey()
+            cachedSecretKey = key
+            key
+        }
+    }
+
+    private fun loadOrCreateSecretKey(): SecretKey {
         val keyStore = KeyStore.getInstance(ANDROID_KEYSTORE).apply { load(null) }
         if (keyStore.containsAlias(KEY_ALIAS)) {
             val entry = keyStore.getEntry(KEY_ALIAS, null) as? KeyStore.SecretKeyEntry
@@ -144,12 +198,15 @@ object SecureCryptoHelper {
      *
      * Uses internal non-locking cipher methods ([encryptWithKey]/
      * [decryptWithKey]) and raw DataStore/DAO helpers to avoid mutex
-     * reentrancy (Kotlin's [Mutex] is not reentrant).
+     * reentrancy (Kotlin's [Mutex] is not reentrant). The cached-key path
+     * ([getOrCreateSecretKey]/[withFreshKeyRetry]) is deliberately not used
+     * here because this function manages the cache itself and must address
+     * the old/new keys explicitly.
      */
     suspend fun rotateKey(context: Context, requireUnlockedDevice: Boolean) = mutex.withLock {
         val keyStore = getKeyStore()
         if (!keyStore.containsAlias(KEY_ALIAS)) {
-            generateSecretKey(requireUnlockedDevice)
+            cachedSecretKey = generateSecretKey(requireUnlockedDevice)
             return@withLock
         }
 
@@ -224,8 +281,11 @@ object SecureCryptoHelper {
         }
 
         // 2. Delete the old key and generate a new one with the new policy.
+        // Update the handle cache in the same critical section so concurrent
+        // blocking callers never observe the deleted old key.
         keyStore.deleteEntry(KEY_ALIAS)
         val newKey = generateSecretKey(requireUnlockedDevice)
+        cachedSecretKey = newKey
 
         // 3. Re-encrypt and store all secrets with the new key.
         for ((npub, keys) in decryptedAccountKeys) {

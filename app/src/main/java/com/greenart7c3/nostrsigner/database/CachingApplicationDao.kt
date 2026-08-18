@@ -182,7 +182,7 @@ class CachingApplicationDao(
 
     override suspend fun getAllNotConnected(): List<ApplicationWithPermissions> = delegate.getAllNotConnected()
 
-    override fun getAllPaging(pubKey: String): PagingSource<Int, ApplicationEntity> = delegate.getAllPaging(pubKey)
+    override fun getApplicationListItemsPaging(pubKey: String): PagingSource<Int, ApplicationListItem> = delegate.getApplicationListItemsPaging(pubKey)
 
     override fun getAllRelayLists(): List<RelayListWrapper> = delegate.getAllRelayLists()
 
@@ -244,8 +244,6 @@ class CachingApplicationDao(
     override suspend fun getAllRaw(pubKey: String): List<ApplicationEntity> = delegate.getAllRaw(pubKey)
 
     override suspend fun getAllNotConnectedRaw(): List<ApplicationWithPermissions> = delegate.getAllNotConnectedRaw()
-
-    override fun getAllPagingRaw(pubKey: String): PagingSource<Int, ApplicationEntity> = delegate.getAllPagingRaw(pubKey)
 
     override suspend fun getByKeyRaw(key: String): ApplicationWithPermissions? = delegate.getByKeyRaw(key)
 

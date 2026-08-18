@@ -25,6 +25,8 @@ import com.vitorpamplona.quartz.nip01Core.relay.client.NostrClient
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.NormalizedRelayUrl
 import com.vitorpamplona.quartz.nip01Core.relay.normalizer.displayUrl
 import kotlinx.coroutines.FlowPreview
+import kotlinx.coroutines.channels.BufferOverflow
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.onEach
@@ -38,6 +40,23 @@ class AmberRelayStats(
     var oldMessage = ""
     var available = emptySet<NormalizedRelayUrl>()
     var connected = emptySet<NormalizedRelayUrl>()
+
+    // Counter updates arrive per relay event (NostrClientLoggerListener.onSent),
+    // which can burst at 30+ events/sec and trip Android's per-app notification
+    // rate limit (~5/sec): NotificationManager sheds every update and the status
+    // notification freezes on stale text until the burst ends. Emitting a tick
+    // defers notify() to the debounced collector started in
+    // createNotificationChannel(), so a burst collapses into one notification
+    // update. Connection-state changes keep their own (also debounced)
+    // collectors so connect/disconnect still shows promptly.
+    // Unit events instead of a numeric counter: nothing to overflow or wrap no
+    // matter how long the app runs. DROP_OLDEST + capacity 1 keeps only the
+    // newest tick, so tryEmit never fails and the last event of a burst always
+    // renders.
+    private val counterTick = MutableSharedFlow<Unit>(
+        extraBufferCapacity = 1,
+        onBufferOverflow = BufferOverflow.DROP_OLDEST,
+    )
 
     @OptIn(FlowPreview::class)
     @SuppressLint("MissingPermission")
@@ -104,6 +123,14 @@ class AmberRelayStats(
         Amber.instance.applicationIOScope.launch {
             Amber.instance.client.connectedRelaysFlow().debounce(300).collect {
                 connected = it
+                updateNotification()
+            }
+        }
+        Amber.instance.applicationIOScope.launch {
+            // Trailing-edge debounce for the counter path (addSent/addFailed):
+            // the last tick of a burst always renders, at most one notify per
+            // 300ms window.
+            counterTick.debounce(300).collect {
                 updateNotification()
             }
         }
@@ -253,12 +280,16 @@ class AmberRelayStats(
 
     fun addSent(url: NormalizedRelayUrl) {
         get(url).addSent()
-        updateNotification()
+        scheduleNotificationUpdate()
     }
 
     fun addFailed(url: NormalizedRelayUrl) {
         get(url).addFailed()
-        updateNotification()
+        scheduleNotificationUpdate()
+    }
+
+    private fun scheduleNotificationUpdate() {
+        counterTick.tryEmit(Unit)
     }
 }
 

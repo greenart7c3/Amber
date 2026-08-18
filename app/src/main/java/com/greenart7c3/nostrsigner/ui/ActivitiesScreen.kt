@@ -46,7 +46,6 @@ import androidx.paging.LoadState
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import com.greenart7c3.nostrsigner.Amber
 import com.greenart7c3.nostrsigner.AmberLog
 import com.greenart7c3.nostrsigner.R
@@ -163,9 +162,12 @@ fun ActivitiesScreen(
                 }
             }
 
+            // No item keys: history rows are inserted continuously and Room pages
+            // are independent LIMIT/OFFSET queries, so a row can transiently appear
+            // in two loaded pages. Keying by the database id then crashes with
+            // "Key X was already used". Positional keys are always unique.
             items(
                 count = lazyPagingItems.itemCount,
-                key = lazyPagingItems.itemKey { it.id },
             ) { index ->
                 val activity = lazyPagingItems[index]
                 if (activity != null) {

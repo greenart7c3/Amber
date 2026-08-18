@@ -61,6 +61,14 @@ class AccountStateViewModel(npub: String?) : ViewModel() {
             if (forceLogout) {
                 currentUser = null
             }
+            // Warm the full account cache BEFORE any UI state is emitted: the
+            // account switcher in approval screens reads allCachedAccounts()
+            // synchronously in remember {}, and it used to be populated by the
+            // eager load in loadFromEncryptedStorageSync. ConnectivityService's
+            // reloadApp() cannot be relied on — it starts via an AlarmManager
+            // PendingIntent (a race with composition) and doesn't exist in the
+            // offline flavor — so warm here, at the deterministic app start.
+            LocalPreferences.warmAccountCache(Amber.instance)
             LocalPreferences.loadFromEncryptedStorageSync(Amber.instance, currentUser)?.let {
                 startUI(it, route)
             }

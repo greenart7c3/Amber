@@ -423,7 +423,7 @@ fun MainScreen(
                                     .padding(horizontal = verticalPadding)
                                     .padding(top = verticalPadding * 1.5f),
                                 account = account,
-                                navController = navController.navController,
+                                navControllerWrapper = navController,
                             )
                         },
                     )

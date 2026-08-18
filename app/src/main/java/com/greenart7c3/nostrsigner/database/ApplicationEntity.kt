@@ -114,3 +114,18 @@ data class ApplicationKeyName(
     val key: String,
     val name: String,
 )
+
+/**
+ * Row projection for the Applications list screen ([ApplicationDao.getApplicationListItemsPaging]):
+ * exactly the columns that screen renders. Deliberately excludes the
+ * envelope-encrypted `secret`/`localKey` columns — every Keystore cipher
+ * operation is a binder + TEE round trip, so a `SELECT *` paged load made
+ * the screen pay 2 × rows decrypts per page for fields it never displays.
+ */
+data class ApplicationListItem(
+    val key: String,
+    val name: String,
+    val relays: List<NormalizedRelayUrl>,
+    val icon: String,
+    val lastUsed: Long,
+)

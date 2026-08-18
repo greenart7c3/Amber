@@ -35,7 +35,6 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigation.NavController
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -59,16 +58,24 @@ import kotlinx.coroutines.launch
 fun ApplicationsScreen(
     modifier: Modifier,
     account: Account,
-    navController: NavController,
+    navControllerWrapper: NavHostControllerWrapper,
 ) {
+    // remember: without it every recomposition (killSwitch / backup-warning
+    // state flips) builds a new Pager + cold flow and re-runs the initial
+    // load from scratch. Keyed on the account so switching accounts reloads.
     val pager =
-        Pager(
-            PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-            ),
-        ) {
-            Amber.instance.getDatabase(account.npub).dao().getAllPaging(account.hexKey)
+        remember(account.hexKey) {
+            Pager(
+                PagingConfig(
+                    pageSize = 20,
+                    enablePlaceholders = false,
+                ),
+            ) {
+                // Projection excludes the envelope-encrypted secret/localKey
+                // columns: the list renders neither, and each Keystore decrypt
+                // is a binder + TEE round trip (2 x rows per page).
+                Amber.instance.getDatabase(account.npub).dao().getApplicationListItemsPaging(account.hexKey)
+            }
         }
 
     val lazyPagingItems = pager.flow.collectAsLazyPagingItems()
@@ -111,7 +118,7 @@ fun ApplicationsScreen(
                     message = stringResource(R.string.make_backup_message),
                     buttonText = stringResource(R.string.backup),
                     onClick = {
-                        navController.navigate(Route.AccountBackup.route)
+                        navControllerWrapper.navController.navigate(Route.AccountBackup.route)
                     },
                 )
             }
@@ -163,7 +170,7 @@ fun ApplicationsScreen(
                 AmberButton(
                     modifier = Modifier.padding(top = 20.dp),
                     onClick = {
-                        navController.navigate(Route.Activities.route)
+                        navControllerWrapper.navController.navigate(Route.Activities.route)
                     },
                     text = stringResource(R.string.activity),
                 )
@@ -181,9 +188,9 @@ fun ApplicationsScreen(
                                 // tap (or a tap landing while the NavHost graph is being recreated) can
                                 // otherwise fire navigate() against a graph that no longer contains the
                                 // Permission destination, crashing with IllegalArgumentException.
-                                if (navController.currentDestination?.route == Route.Applications.route) {
+                                if (navControllerWrapper.navController.currentDestination?.route == Route.Applications.route) {
                                     runCatching {
-                                        navController.navigate("Permission/${applicationWithHistory.key}")
+                                        navControllerWrapper.navController.navigate("Permission/${applicationWithHistory.key}")
                                     }.onFailure {
                                         AmberLog.e("ApplicationsScreen", "Failed to open permissions for ${applicationWithHistory.key}", it)
                                     }

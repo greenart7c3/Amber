@@ -242,17 +242,7 @@ object LocalPreferences {
         currentAccount = null
         savedAccounts = null
         accountCache.clear()
-        // Defense-in-depth (GHSA-8844-q5vh-9j8f, I3): decrypting and caching
-        // every account's private key process-wide is a memory-dump risk.
-        // Loading only the active account here would reduce exposure, but
-        // the UI account-switcher in approval screens reads
-        // allCachedAccounts() synchronously, so we keep the eager load and
-        // mitigate the other surface — loadFromEncryptedStorageSync no
-        // longer warms the whole cache on a cold miss, and logout zeroizes
-        // the private-key bytes — in this change.
-        allSavedAccounts(context).forEach {
-            loadFromEncryptedStorage(context, it.npub)
-        }
+        warmAccountCache(context)
         context.settings = loadSettingsFromEncryptedStorage(context)
         context.settings.language?.let {
             AppCompatDelegate.setApplicationLocales(
@@ -512,6 +502,25 @@ object LocalPreferences {
 
     fun allCachedAccounts(): List<Account> = accountCache.values().toList()
 
+    /**
+     * Eagerly decrypts and caches every saved account.
+     *
+     * The account switcher in the approval screens (LoginWithPubKey,
+     * BunkerConnectRequestScreen) reads allCachedAccounts() synchronously
+     * inside remember {}, so the cache must be fully populated before the
+     * first approval screen composes. AccountStateViewModel calls this at
+     * app start — the only deterministic startup point that covers both
+     * flavors (ConnectivityService runs reloadApp() asynchronously and does
+     * not exist in the offline flavor). loadFromEncryptedStorageSync stays
+     * lazy for the SignerProvider / NIP-46 paths that only ever need one
+     * known npub (GHSA-8844-q5vh-9j8f, I3).
+     */
+    suspend fun warmAccountCache(context: Context) {
+        allSavedAccounts(context).forEach {
+            loadFromEncryptedStorage(context, it.npub)
+        }
+    }
+
     suspend fun allAccounts(context: Context): List<Account> {
         val accountInfos = allSavedAccounts(context)
         return accountInfos.mapNotNull {
@@ -525,8 +534,9 @@ object LocalPreferences {
         // cache / size mismatch, decrypting every account's private key
         // process-wide on the first IPC/relay lookup. Lazy-load only the
         // requested account. The UI account switcher relies on
-        // allCachedAccounts() being populated, which reloadApp() handles at
-        // startup; this path is for direct lookups (SignerProvider / NIP-46)
+        // allCachedAccounts() being populated, which warmAccountCache()
+        // handles at app start (called from AccountStateViewModel); this
+        // path is for direct lookups (SignerProvider / NIP-46)
         // that always know which npub they want.
         val targetNpub = npub ?: currentAccount(context) ?: return null
         accountCache.get(targetNpub)?.let { return it }

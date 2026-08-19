@@ -536,9 +536,9 @@ class EventNotificationConsumer(private val applicationContext: Context) {
         }
 
         val data = BunkerRequestUtils.getDataFromBunker(bunkerRequest)
-        val projection = when {
-            type == SignerType.PING -> arrayOf(acc.npub)
-            type == SignerType.NIP44_V3_ENCRYPT || type == SignerType.NIP44_V3_DECRYPT -> {
+        val projection = when (type) {
+            SignerType.PING -> arrayOf(acc.npub)
+            SignerType.NIP44_V3_ENCRYPT, SignerType.NIP44_V3_DECRYPT -> {
                 val kind = BunkerRequestUtils.getNip44v3Kind(bunkerRequest)
                 val scope = BunkerRequestUtils.getNip44v3Scope(bunkerRequest)
                 // A v3 request that can never succeed — missing/invalid kind, a
